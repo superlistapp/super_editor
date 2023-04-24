@@ -46,6 +46,21 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     super.dispose();
   }
 
+  void _cut() {
+    _docOps.cut();
+    _overlayController.hideToolbar();
+  }
+
+  void _copy() {
+    _docOps.copy();
+    _overlayController.hideToolbar();
+  }
+
+  void _paste() {
+    _docOps.paste();
+    _overlayController.hideToolbar();
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildScaffold(
@@ -57,12 +72,13 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
               documentLayoutKey: _docLayoutKey,
               editor: _docEditor,
               composer: _composer,
+              overlayController: _overlayController,
               gestureMode: DocumentGestureMode.iOS,
               inputSource: TextInputSource.ime,
               iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-                onCutPressed: () => _docOps.cut(),
-                onCopyPressed: () => _docOps.copy(),
-                onPastePressed: () => _docOps.paste(),
+                onCutPressed: _cut,
+                onCopyPressed: _copy,
+                onPastePressed: _paste,
                 focalPoint: _overlayController.toolbarTopAnchor!,
               ),
               stylesheet: defaultStylesheet.copyWith(
