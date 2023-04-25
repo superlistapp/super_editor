@@ -34,13 +34,13 @@ class SuperTextFieldInspector {
     return state.controller.selection;
   }
 
-  /// Finds and returns scroll offset within a [SuperTextField].
+  /// Finds and returns the scroll offset within a [SuperTextField].
   ///
   /// {@macro supertextfield_finder}
   static double? findScrollOffset([Finder? superTextFieldFinder]) {
     final finder = superTextFieldFinder ?? find.byType(SuperTextField);
 
-    final fieldFinder = _findInnerPlatformTextField(finder);
+    final fieldFinder = findInnerPlatformTextField(finder);
     final match = fieldFinder.evaluate().single.widget;
 
     if (match is SuperDesktopTextField) {
@@ -69,7 +69,12 @@ class SuperTextFieldInspector {
     return textScrollView.textScrollController.scrollOffset;
   }
 
-  static Finder _findInnerPlatformTextField(Finder rootFieldFinder) {
+  /// Finds and returns the platform textfield within a [SuperTextField].
+  ///
+  /// {@macro supertextfield_finder}
+  static Finder findInnerPlatformTextField([Finder? superTextFieldFinder]) {
+    final rootFieldFinder = superTextFieldFinder ?? find.byType(SuperTextField);
+
     final rootMatches = rootFieldFinder.evaluate();
     if (rootMatches.isEmpty) {
       throw Exception("Couldn't find a super text field variant with the given finder: $rootFieldFinder");
