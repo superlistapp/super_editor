@@ -995,7 +995,7 @@ class TextScrollController with ChangeNotifier {
         // Scroll the content down.
         _scrollOffset = rect.top;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rect.bottom > _delegate!.viewportHeight!) {
+      } else if ((rect.bottom - _scrollOffset) > _delegate!.viewportHeight!) {
         // The character is entirely or partially below the bottom of the viewport.
         // Scroll the content up.
         _scrollOffset = rect.bottom - _delegate!.viewportHeight!;

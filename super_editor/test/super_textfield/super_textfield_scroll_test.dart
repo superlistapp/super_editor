@@ -5,6 +5,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../test_tools.dart';
+import 'super_textfield_inspector.dart';
 
 void main() {
   group('SuperTextField', () {
@@ -66,6 +67,41 @@ void main() {
 
       // Ensure the text field scrolled its content vertically
       expect(textBottom, lessThanOrEqualTo(viewportBottom));
+    });
+
+    testWidgetsOnAllPlatforms("multi-line doesn't jump scroll position vertically when selection extent is visible",
+        (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
+      );
+
+      // Pump the widget tree with a SuperTextField which is two lines tall.
+      await _pumpTestApp(
+        tester,
+        textController: controller,
+        minLines: 1,
+        maxLines: 2,
+        maxHeight: 40,
+      );
+
+      // Move selection to the end of the text.
+      // This will scroll the text field to the end.
+      controller.selection = const TextSelection.collapsed(offset: 45);
+      await tester.pumpAndSettle();
+
+      final scrollOffsetBefore = SuperTextFieldInspector.findScrollOffset();
+
+      // Place the caret at "Third| Line".
+      // As we have room for two lines, this line is already visible,
+      // and thus shouldn't cause the text field to scroll.
+      controller.selection = const TextSelection.collapsed(offset: 28);
+      await tester.pumpAndSettle();
+
+      // Ensure the content didn't scrolled.
+      expect(
+        SuperTextFieldInspector.findScrollOffset(),
+        scrollOffsetBefore,
+      );
     });
 
     testWidgetsOnDesktop("doesn't scroll vertically when maxLines is null", (tester) async {
