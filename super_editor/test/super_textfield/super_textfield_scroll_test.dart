@@ -69,6 +69,43 @@ void main() {
       expect(textBottom, lessThanOrEqualTo(viewportBottom));
     });
 
+    testWidgetsOnAllPlatforms("multi-line jump scroll position vertically up when selection extent changes",
+        (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
+      );
+
+      // Pump the widget tree with a SuperTextField which is two lines tall.
+      await _pumpTestApp(
+        tester,
+        textController: controller,
+        minLines: 1,
+        maxLines: 2,
+        maxHeight: 40,
+      );
+
+      // Move selection to the end of the text.
+      // This will scroll the text field to the end.
+      controller.selection = const TextSelection.collapsed(offset: 45);
+      await tester.pumpAndSettle();
+
+      // Ensure the text field has scrolled.
+      expect(
+        SuperTextFieldInspector.findScrollOffset(),
+        greaterThan(0.0),
+      );
+
+      // Place the caret at the beginning of the text.
+      controller.selection = const TextSelection.collapsed(offset: 0);
+      await tester.pumpAndSettle();
+
+      // Ensure the text field scrolled to the top.
+      expect(
+        SuperTextFieldInspector.findScrollOffset(),
+        0.0,
+      );
+    });
+
     testWidgetsOnAllPlatforms("multi-line doesn't jump scroll position vertically when selection extent is visible",
         (tester) async {
       final controller = AttributedTextEditingController(
@@ -136,15 +173,16 @@ void main() {
       );
       await tester.pump();
 
-      // In the running app, the estimated line height and actual line height differ. 
-      // This test ensures that we account for that. Ideally, this test would check that the scrollview doesn't scroll. 
+      // In the running app, the estimated line height and actual line height differ.
+      // This test ensures that we account for that. Ideally, this test would check that the scrollview doesn't scroll.
       // However, in test suites, the estimated and actual line heights are always identical.
-      // Therefore, this test ensures that we add up the appropriate dimensions, 
+      // Therefore, this test ensures that we add up the appropriate dimensions,
       // rather than verify the scrollview's max scroll extent.
 
       final viewportHeight = tester.getRect(find.byType(SuperTextFieldScrollview)).height;
 
-      final layoutState = (find.byType(SuperDesktopTextField).evaluate().single as StatefulElement).state as SuperDesktopTextFieldState;
+      final layoutState =
+          (find.byType(SuperDesktopTextField).evaluate().single as StatefulElement).state as SuperDesktopTextFieldState;
       final contentHeight = layoutState.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
 
       // Vertical padding is added to both top and bottom
@@ -183,4 +221,12 @@ Future<void> _pumpTestApp(
       ),
     ),
   );
+
+  // The textfield scrolling takes into account its viewport height to compute the scroll offset.
+  //
+  // In the first frame, it's possible that we get zero as the viewport height. This causes our scroll offset
+  // to be wrong.
+  //
+  // Request another frame, so we can get the correct viewport height.
+  await tester.pumpAndSettle();
 }

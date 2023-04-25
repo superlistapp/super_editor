@@ -991,12 +991,12 @@ class TextScrollController with ChangeNotifier {
 
     _log.finer('Ensuring rect is visible: $rectInContentSpace');
     if (_delegate!.isMultiline) {
-      if (rectInContentSpace.top < 0) {
+      if (rectInContentSpace.top - _scrollOffset < 0) {
         // The character is entirely or partially above the top of the viewport.
         // Scroll the content down.
         _scrollOffset = rectInContentSpace.top;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if ((rectInContentSpace.bottom - _scrollOffset) > _delegate!.viewportHeight!) {
+      } else if (rectInContentSpace.bottom - _scrollOffset > _delegate!.viewportHeight!) {
         // The character is entirely or partially below the bottom of the viewport.
         // Scroll the content up.
         _scrollOffset = rectInContentSpace.bottom - _delegate!.viewportHeight!;
