@@ -804,6 +804,61 @@ Second Paragraph
       expect(_caretFinder(), findsOneWidget);
     });
 
+    testWidgetsOnAllPlatforms("doesn't restore previous selection upon re-focusing when selected node was deleted",
+        (tester) async {
+      final focusNode = FocusNode();
+
+      await tester
+          .createDocument()
+          .withLongTextContent()
+          .withInputSource(TextInputSource.ime)
+          .withFocusNode(focusNode)
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    const TextField(),
+                    Expanded(child: superEditor),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      final doc = SuperEditorInspector.findDocument()! as MutableDocument;
+
+      // Place caret at the beginning of the text.
+      await tester.placeCaretInParagraph('1', 0);
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+
+      // Focus the textfield.
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      // Ensure selection was cleared.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+      // Delete the selected node.
+      doc.deleteNodeAt(0);
+
+      // Focus the editor.
+      focusNode.requestFocus();
+      await tester.pumpAndSettle();
+
+      // Ensure no selection was restored.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+    });
+
     testWidgetsOnAllPlatforms('retains composer initial selection upon first editor focus', (tester) async {
       final focusNode = FocusNode();
 
