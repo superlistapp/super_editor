@@ -20,7 +20,7 @@ void main() {
         ),
       );
 
-      // Double tap to select "pointing".
+      // Select a word so that the popover toolbar appears.
       await tester.doubleTapAtSuperTextField(6);
 
       await screenMatchesGolden(tester, 'super_textfield_ios_toolbar_pointing_down');
@@ -36,12 +36,29 @@ void main() {
         ),
       );
 
-      // Double tap to select "pointing".
+      // Select a word so that the popover toolbar appears.
       await tester.doubleTapAtSuperTextField(6);
 
       await screenMatchesGolden(tester, 'super_textfield_ios_toolbar_pointing_up');
     });
   });
+}
+
+/// Pumps a widget tree which displays the [child] inside a [Stack].
+Future<void> _pumpSuperTextfieldToolbarTestApp(
+  WidgetTester tester, {
+  required Widget child,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Stack(
+          children: [child],
+        ),
+      ),
+    ),
+  );
 }
 
 Widget _buildSuperTextField({
@@ -66,23 +83,6 @@ Widget _buildSuperTextField({
           fontSize: 20,
         );
       },
-    ),
-  );
-}
-
-/// Pumps a widget tree which displays the [child] inside a [Stack].
-Future<void> _pumpSuperTextfieldToolbarTestApp(
-  WidgetTester tester, {
-  required Widget child,
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: Stack(
-          children: [child],
-        ),
-      ),
     ),
   );
 }
