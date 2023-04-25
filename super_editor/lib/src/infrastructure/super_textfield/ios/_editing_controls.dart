@@ -358,12 +358,13 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
       ),
     );
 
-    final textFieldGlobalOffset =
-        (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
+    final textFieldRenderBox = (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox);
+
+    final textFieldGlobalOffset = textFieldRenderBox.localToGlobal(Offset.zero);
 
     widget.editingController.overlayController.positionToolbar(
-      topAnchor: toolbarTopAnchor,
-      bottomAnchor: toolbarBottomAnchor,
+      topAnchor: textFieldRenderBox.localToGlobal(toolbarTopAnchor),
+      bottomAnchor: textFieldRenderBox.localToGlobal(toolbarBottomAnchor),
     );
 
     // TODO: figure out why this approach works. Why isn't the text field's
