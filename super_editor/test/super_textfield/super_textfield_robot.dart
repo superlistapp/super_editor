@@ -77,11 +77,37 @@ extension SuperTextFieldRobot on WidgetTester {
     }
 
     if (match is SuperAndroidTextField) {
-      throw Exception("Entering text on an Android SuperTextField is not yet supported");
+      bool didTap = await _tapAtTextPositionOnAndroid(state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+      await pump(kDoubleTapMinTime);
+
+      didTap = await _tapAtTextPositionOnAndroid(state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+
+      await pumpAndSettle();
+
+      return;
     }
 
     if (match is SuperIOSTextField) {
-      throw Exception("Entering text on an iOS SuperTextField is not yet supported");
+      bool didTap = await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+      await pump(kDoubleTapMinTime);
+
+      didTap = await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+
+      await pumpAndSettle();
+
+      return;
     }
 
     throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
