@@ -69,7 +69,8 @@ void main() {
       expect(textBottom, lessThanOrEqualTo(viewportBottom));
     });
 
-    testWidgetsOnAllPlatforms("multi-line jump scroll position vertically up when selection extent changes",
+    testWidgetsOnAllPlatforms(
+        "multi-line jumps scroll position vertically when selection extent moves above or below the visible viewport area",
         (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
@@ -222,11 +223,6 @@ Future<void> _pumpTestApp(
     ),
   );
 
-  // The textfield scrolling takes into account its viewport height to compute the scroll offset.
-  //
-  // In the first frame, it's possible that we get zero as the viewport height. This causes our scroll offset
-  // to be wrong.
-  //
-  // Request another frame, so we can get the correct viewport height.
-  await tester.pumpAndSettle();
+  // The first frame might have a zero viewport height. Pump a second frame to account for the final viewport size.
+  await tester.pump();
 }

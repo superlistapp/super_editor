@@ -197,6 +197,9 @@ class _TextScrollViewState extends State<TextScrollView>
   double get startScrollOffset => 0.0;
 
   @override
+  EdgeInsets? get padding => widget.padding;
+
+  @override
   double get endScrollOffset {
     final viewportHeight = this.viewportHeight;
     if (viewportHeight == null) {
@@ -981,8 +984,15 @@ class TextScrollController with ChangeNotifier {
     final characterIndex = _textController.selection.extentOffset >= _textController.text.text.length
         ? _textController.text.text.length - 1
         : _textController.selection.extentOffset;
-    final extentCharacterRectInContentSpace =
-        _delegate!.getCharacterRectAtPosition(TextPosition(offset: characterIndex));
+
+    final padding = _delegate!.padding ?? const EdgeInsets.all(0.0);
+
+    // The padding is applied inside of the scrollable area,
+    // so we need to adjust the rect to account for it.
+    final extentCharacterRectInContentSpace = _delegate!
+        .getCharacterRectAtPosition(TextPosition(offset: characterIndex))
+        .translate(padding.left, padding.top);
+
     _ensureRectIsVisible(extentCharacterRectInContentSpace);
   }
 
@@ -1036,6 +1046,9 @@ abstract class TextScrollControllerDelegate {
 
   /// The scroll offset for the last character in the text.
   double get endScrollOffset;
+
+  /// The padding around the text.
+  EdgeInsets? get padding;
 
   /// Whether the given [TextPosition] is currently visible in
   /// viewport.
