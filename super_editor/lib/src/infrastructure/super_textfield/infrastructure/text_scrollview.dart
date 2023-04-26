@@ -267,7 +267,13 @@ class _TextScrollViewState extends State<TextScrollView>
 
   @override
   Rect getCharacterRectAtPosition(TextPosition position) {
-    return _textLayout.getCharacterBox(position)?.toRect() ?? Rect.fromLTRB(0, 0, 0, _textLayout.estimatedLineHeight);
+    final padding = widget.padding ?? const EdgeInsets.all(0.0);
+    final characterBox =
+        _textLayout.getCharacterBox(position)?.toRect() ?? Rect.fromLTRB(0, 0, 0, _textLayout.estimatedLineHeight);
+
+    // The padding is applied inside of the scrollable area,
+    // so we need to adjust the rect to account for it.
+    return characterBox.translate(padding.left, padding.top);
   }
 
   @override
@@ -997,15 +1003,15 @@ class TextScrollController with ChangeNotifier {
     _log.finer('Ensuring rect is visible: $rectInContentSpace');
     if (_delegate!.isMultiline) {
       final padding = _delegate!.padding ?? const EdgeInsets.all(0.0);
-      if (rectInContentSpace.top - _scrollOffset < 0) {
+      if (rectInContentSpace.top - padding.top - _scrollOffset < 0) {
         // The character is entirely or partially above the top of the viewport.
         // Scroll the content down.
-        _scrollOffset = rectInContentSpace.top;
+        _scrollOffset = rectInContentSpace.top - padding.top;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rectInContentSpace.bottom - _scrollOffset + padding.vertical > _delegate!.viewportHeight!) {
+      } else if (rectInContentSpace.bottom - _scrollOffset + padding.bottom > _delegate!.viewportHeight!) {
         // The character is entirely or partially below the bottom of the viewport.
         // Scroll the content up.
-        _scrollOffset = rectInContentSpace.bottom - _delegate!.viewportHeight! + padding.vertical;
+        _scrollOffset = rectInContentSpace.bottom - _delegate!.viewportHeight! + padding.bottom;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
       }
     } else {
