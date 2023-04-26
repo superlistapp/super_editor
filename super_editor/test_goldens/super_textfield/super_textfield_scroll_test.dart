@@ -17,7 +17,7 @@ void main() {
         minLines: 1,
         maxLines: 2,
         maxHeight: 50,
-        padding: const EdgeInsets.symmetric(vertical: 10.0),
+        padding: const EdgeInsets.all(10.0),
         configuration: SuperTextFieldPlatformConfiguration.android,
       );
 
@@ -47,7 +47,7 @@ void main() {
         minLines: 1,
         maxLines: 2,
         maxHeight: 50,
-        padding: const EdgeInsets.symmetric(vertical: 10.0),
+        padding: const EdgeInsets.all(10.0),
         configuration: SuperTextFieldPlatformConfiguration.iOS,
       );
 
@@ -63,6 +63,36 @@ void main() {
       await tester.pumpAndSettle();
 
       await screenMatchesGolden(tester, 'super_textfield_scrolled_up_ios');
+    });
+
+    testGoldens("multi-line accounts for padding when jumping scroll position vertically (on iOS)", (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
+      );
+
+      // Pump the widget tree with a SuperTextField which is two lines tall.
+      await _pumpTestApp(
+        tester,
+        textController: controller,
+        minLines: 1,
+        maxLines: 2,
+        maxHeight: 50,
+        padding: const EdgeInsets.all(10.0),
+        configuration: SuperTextFieldPlatformConfiguration.desktop,
+      );
+
+      // Move selection to the end of the text.
+      // This will scroll the text field to the end.
+      controller.selection = const TextSelection.collapsed(offset: 45);
+      await tester.pumpAndSettle();
+
+      await screenMatchesGolden(tester, 'super_textfield_scrolled_down_desktop');
+
+      // Place the caret at the beginning of the text.
+      controller.selection = const TextSelection.collapsed(offset: 0);
+      await tester.pumpAndSettle();
+
+      await screenMatchesGolden(tester, 'super_textfield_scrolled_up_desktop');
     });
   });
 }
@@ -86,14 +116,17 @@ Future<void> _pumpTestApp(
             maxWidth: maxWidth ?? double.infinity,
             maxHeight: maxHeight ?? double.infinity,
           ),
-          child: SuperTextField(
-            textController: textController,
-            lineHeight: 20,
-            textStyleBuilder: (_) => const TextStyle(fontSize: 20, color: Colors.black, fontFamily: 'Roboto'),
-            minLines: minLines,
-            maxLines: maxLines,
-            padding: padding,
-            configuration: configuration,
+          child: ColoredBox(
+            color: Colors.yellow,
+            child: SuperTextField(
+              textController: textController,
+              lineHeight: 20,
+              textStyleBuilder: (_) => const TextStyle(fontSize: 20, color: Colors.black, fontFamily: 'Roboto'),
+              minLines: minLines,
+              maxLines: maxLines,
+              padding: padding,
+              configuration: configuration,
+            ),
           ),
         ),
       ),

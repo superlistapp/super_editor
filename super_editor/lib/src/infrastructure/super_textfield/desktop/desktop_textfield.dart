@@ -1193,7 +1193,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
             widget.scrollController.offset +
             gutterExtent +
             (widget.estimatedLineHeight / 2) + // manual adjustment to avoid line getting half cut off
-            widget.padding.vertical / 2,
+            widget.padding.vertical,
         0);
 
     _log.finer('_ensureSelectionExtentIsVisible - Ensuring extent is visible.');
