@@ -548,6 +548,7 @@ class SuperEditorState extends State<SuperEditor> {
       focusNode: _focusNode,
       child: EditorSelectionAndFocusPolicy(
         focusNode: _focusNode,
+        document: widget.editor.document,
         selection: _composer.selectionNotifier,
         isDocumentLayoutAvailable: () => _docLayoutKey.currentContext != null,
         getDocumentLayout: () => editContext.documentLayout,

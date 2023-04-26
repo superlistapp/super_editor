@@ -8,6 +8,7 @@ class EditorSelectionAndFocusPolicy extends StatefulWidget {
   const EditorSelectionAndFocusPolicy({
     Key? key,
     required this.focusNode,
+    required this.document,
     required this.selection,
     required this.isDocumentLayoutAvailable,
     required this.getDocumentLayout,
@@ -30,6 +31,9 @@ class EditorSelectionAndFocusPolicy extends StatefulWidget {
   ///
   /// When focus is lost, this widget may clear the editor's selection.
   final FocusNode focusNode;
+
+  /// The editor's [Document].
+  final Document document;
 
   /// The document editor's current selection.
   final ValueNotifier<DocumentSelection?> selection;
@@ -109,6 +113,12 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
     // Ensure the editor has a selection when focused.
     if (!_wasFocused && widget.focusNode.hasFocus) {
       if (widget.restorePreviousSelectionOnGainFocus && _previousSelection != null) {
+        if (widget.document.getNodeById(_previousSelection!.base.nodeId) == null ||
+            widget.document.getNodeById(_previousSelection!.extent.nodeId) == null) {
+          editorPoliciesLog.info(
+              "[${widget.runtimeType}] - not restoring previous editor selection because one of the selected nodes was deleted");
+          return;
+        }
         // Restore the previous selection.
         editorPoliciesLog
             .info("[${widget.runtimeType}] - restoring previous editor selection because the editor re-gained focus");
