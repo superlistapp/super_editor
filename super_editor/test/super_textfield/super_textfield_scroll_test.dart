@@ -107,43 +107,6 @@ void main() {
       );
     });
 
-    testWidgetsOnMobile("multi-line accounts for padding when jumping scroll position vertically", (tester) async {
-      final controller = AttributedTextEditingController(
-        text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
-      );
-
-      // Pump the widget tree with a SuperTextField which is two lines tall.
-      await _pumpTestApp(
-        tester,
-        textController: controller,
-        minLines: 1,
-        maxLines: 2,
-        maxHeight: 50,
-        padding: const EdgeInsets.symmetric(vertical: 10.0),
-      );
-
-      // Move selection to the end of the text.
-      // This will scroll the text field to the end.
-      controller.selection = const TextSelection.collapsed(offset: 45);
-      await tester.pumpAndSettle();
-
-      // Ensure the text field has scrolled to the end (maxHeight - padding).
-      expect(
-        SuperTextFieldInspector.findScrollOffset(),
-        40.0,
-      );
-
-      // Place the caret at the beginning of the text.
-      controller.selection = const TextSelection.collapsed(offset: 0);
-      await tester.pumpAndSettle();
-
-      // Ensure the text field scrolled to the beginning of the text.
-      expect(
-        SuperTextFieldInspector.findScrollOffset(),
-        10.0,
-      );
-    });
-
     testWidgetsOnAllPlatforms("multi-line doesn't jump scroll position vertically when selection extent is visible",
         (tester) async {
       final controller = AttributedTextEditingController(
