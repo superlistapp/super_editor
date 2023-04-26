@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -197,9 +199,6 @@ class _TextScrollViewState extends State<TextScrollView>
   double get startScrollOffset => 0.0;
 
   @override
-  EdgeInsets? get padding => widget.padding;
-
-  @override
   double get endScrollOffset {
     final viewportHeight = this.viewportHeight;
     if (viewportHeight == null) {
@@ -208,7 +207,8 @@ class _TextScrollViewState extends State<TextScrollView>
 
     final lastCharacterPosition = TextPosition(offset: widget.textEditingController.text.text.length - 1);
     return (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) -
-        viewportHeight;
+        viewportHeight +
+        (widget.padding?.vertical ?? 0.0);
   }
 
   @override
@@ -1002,16 +1002,27 @@ class TextScrollController with ChangeNotifier {
 
     _log.finer('Ensuring rect is visible: $rectInContentSpace');
     if (_delegate!.isMultiline) {
-      final padding = _delegate!.padding ?? const EdgeInsets.all(0.0);
-      if (rectInContentSpace.top - padding.top - _scrollOffset < 0) {
+      final firstCharRect = _delegate!.getCharacterRectAtPosition(const TextPosition(offset: 0));
+      final lastCharRect =
+          _delegate!.getCharacterRectAtPosition(TextPosition(offset: _textController.text.text.length - 1));
+
+      final isAtFirstLine = rectInContentSpace.top == firstCharRect.top;
+      final isAtLastLine = rectInContentSpace.top == lastCharRect.top;
+
+      // If we are at the first or last line, add some space between the line
+      // and the textfield's edge.
+      final extraSpace = isAtFirstLine || isAtLastLine ? rectInContentSpace.height / 2 : 0;
+
+      if (rectInContentSpace.top - extraSpace - _scrollOffset < 0) {
         // The character is entirely or partially above the top of the viewport.
         // Scroll the content down.
-        _scrollOffset = rectInContentSpace.top - padding.top;
+        _scrollOffset = max(rectInContentSpace.top - extraSpace, 0);
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rectInContentSpace.bottom - _scrollOffset + padding.bottom > _delegate!.viewportHeight!) {
+      } else if (rectInContentSpace.bottom - _scrollOffset + extraSpace > _delegate!.viewportHeight!) {
         // The character is entirely or partially below the bottom of the viewport.
         // Scroll the content up.
-        _scrollOffset = rectInContentSpace.bottom - _delegate!.viewportHeight! + padding.bottom;
+        _scrollOffset =
+            min(rectInContentSpace.bottom - _delegate!.viewportHeight! + extraSpace, _delegate!.endScrollOffset);
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
       }
     } else {
@@ -1048,9 +1059,6 @@ abstract class TextScrollControllerDelegate {
 
   /// The scroll offset for the last character in the text.
   double get endScrollOffset;
-
-  /// The padding around the text.
-  EdgeInsets? get padding;
 
   /// Whether the given [TextPosition] is currently visible in
   /// viewport.

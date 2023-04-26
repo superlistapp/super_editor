@@ -1185,15 +1185,29 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     const gutterExtent = 0; // _dragGutterExtent
     final extentLineIndex = (extentOffset.dy / widget.estimatedLineHeight).round();
 
+    final firstCharY = _textLayout.getCharacterBox(const TextPosition(offset: 0))?.top ?? 0.0;
+    final lastCharY =
+        _textLayout.getCharacterBox(TextPosition(offset: widget.textController.text.text.length - 1))?.top ??
+            _textLayout.estimatedLineHeight;
+
+    final isAtFirstLine = extentOffset.dy == firstCharY;
+    final isAtLastLine = extentOffset.dy == lastCharY;
+
+    // If we are at the first or last line, add some space between the line
+    // and the textfield's edge.
+    final extraSpace = isAtFirstLine || isAtLastLine ? _textLayout.getLineHeightAtPosition(selection.extent) / 2 : 0;
+
     final myBox = context.findRenderObject() as RenderBox;
-    final beyondTopExtent = min<double>(extentOffset.dy - widget.scrollController.offset - gutterExtent, 0).abs();
+    final beyondTopExtent =
+        min<double>(extentOffset.dy - widget.scrollController.offset - gutterExtent - extraSpace, 0).abs();
     final beyondBottomExtent = max<double>(
         ((extentLineIndex + 1) * widget.estimatedLineHeight) -
             myBox.size.height -
             widget.scrollController.offset +
             gutterExtent +
+            extraSpace +
             (widget.estimatedLineHeight / 2) + // manual adjustment to avoid line getting half cut off
-            widget.padding.vertical,
+            (widget.padding.vertical / 2),
         0);
 
     _log.finer('_ensureSelectionExtentIsVisible - Ensuring extent is visible.');
