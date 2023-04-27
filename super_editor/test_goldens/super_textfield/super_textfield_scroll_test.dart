@@ -10,6 +10,9 @@ void main() {
         text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
       );
 
+      const description =
+          'A SuperTextField scrolled to the end should have the last line fully visible with space below it';
+
       // Use a Row as a wrapper to fill the available width.
       final builder = GoldenBuilder.column(
         wrap: (child) => Row(
@@ -17,7 +20,7 @@ void main() {
         ),
       )
         ..addScenario(
-          'SuperTextField with padding, scrolled to the end (on Android)',
+          '$description (on Android)',
           _buildTextField(
             textController: controller,
             minLines: 1,
@@ -29,7 +32,7 @@ void main() {
           ),
         )
         ..addScenario(
-          'SuperTextField with padding, scrolled to the end (on iOS)',
+          '$description (on iOS)',
           _buildTextField(
             textController: controller,
             minLines: 1,
@@ -41,7 +44,7 @@ void main() {
           ),
         )
         ..addScenario(
-          'SuperTextField with padding, scrolled to the end (on Desktop)',
+          '$description  (on Desktop)',
           _buildTextField(
             textController: controller,
             minLines: 1,
@@ -67,6 +70,9 @@ void main() {
         text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
       );
 
+      const description =
+          'A SuperTextField scrolled to the beginning should have the first line fully visible with space above it';
+
       // Use a Row as a wrapper to fill the available width.
       final builder = GoldenBuilder.column(
         wrap: (child) => Row(
@@ -74,7 +80,7 @@ void main() {
         ),
       )
         ..addScenario(
-          'SuperTextField with padding, scrolled to the beginning (on Android)',
+          '$description (on Android)',
           _buildTextField(
             textController: controller,
             minLines: 1,
@@ -86,7 +92,7 @@ void main() {
           ),
         )
         ..addScenario(
-          'SuperTextField with padding, scrolled to the beginning (on iOS)',
+          '$description (on iOS)',
           _buildTextField(
             textController: controller,
             minLines: 1,
@@ -98,7 +104,7 @@ void main() {
           ),
         )
         ..addScenario(
-          'SuperTextField with padding, scrolled to the beginning (on Desktop)',
+          '$description (on Desktop)',
           _buildTextField(
             textController: controller,
             minLines: 1,

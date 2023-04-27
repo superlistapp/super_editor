@@ -1186,11 +1186,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     final extentLineIndex = (extentOffset.dy / widget.estimatedLineHeight).round();
 
     final firstCharY = _textLayout.getCharacterBox(const TextPosition(offset: 0))?.top ?? 0.0;
-    final lastCharY =
-        _textLayout.getCharacterBox(TextPosition(offset: widget.textController.text.text.length - 1))?.top ?? 0.0;
-
     final isAtFirstLine = extentOffset.dy == firstCharY;
-    final isAtLastLine = extentOffset.dy == lastCharY;
 
     final myBox = context.findRenderObject() as RenderBox;
     final beyondTopExtent = min<double>(
@@ -1200,6 +1196,11 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
                 (isAtFirstLine ? _textLayout.getLineHeightAtPosition(selection.extent) / 2 : 0),
             0)
         .abs();
+
+    final lastCharY =
+        _textLayout.getCharacterBox(TextPosition(offset: widget.textController.text.text.length - 1))?.top ?? 0.0;
+    final isAtLastLine = extentOffset.dy == lastCharY;
+
     final beyondBottomExtent = max<double>(
         ((extentLineIndex + 1) * widget.estimatedLineHeight) -
             myBox.size.height -

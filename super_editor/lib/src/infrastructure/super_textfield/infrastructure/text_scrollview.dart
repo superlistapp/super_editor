@@ -1003,23 +1003,23 @@ class TextScrollController with ChangeNotifier {
     _log.finer('Ensuring rect is visible: $rectInContentSpace');
     if (_delegate!.isMultiline) {
       final firstCharRect = _delegate!.getCharacterRectAtPosition(const TextPosition(offset: 0));
+      final isAtFirstLine = rectInContentSpace.top == firstCharRect.top;
+      final extraSpacingAboveTop = (isAtFirstLine ? rectInContentSpace.height / 2 : 0);
+
       final lastCharRect =
           _delegate!.getCharacterRectAtPosition(TextPosition(offset: _textController.text.text.length - 1));
-
-      final isAtFirstLine = rectInContentSpace.top == firstCharRect.top;
       final isAtLastLine = rectInContentSpace.top == lastCharRect.top;
+      final extraSpacingBelowBottom = (isAtLastLine ? rectInContentSpace.height / 2 : 0);
 
-      if (rectInContentSpace.top - (isAtFirstLine ? rectInContentSpace.height / 2 : 0) - _scrollOffset < 0) {
+      if (rectInContentSpace.top - extraSpacingAboveTop - _scrollOffset < 0) {
         // The character is entirely or partially above the top of the viewport.
         // Scroll the content down.
-        _scrollOffset = max(rectInContentSpace.top - (isAtFirstLine ? rectInContentSpace.height / 2 : 0), 0);
+        _scrollOffset = max(rectInContentSpace.top - extraSpacingAboveTop, 0);
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rectInContentSpace.bottom - _scrollOffset + (isAtLastLine ? rectInContentSpace.height / 2 : 0) >
-          _delegate!.viewportHeight!) {
+      } else if (rectInContentSpace.bottom - _scrollOffset + extraSpacingBelowBottom > _delegate!.viewportHeight!) {
         // The character is entirely or partially below the bottom of the viewport.
         // Scroll the content up.
-        _scrollOffset = min(
-            rectInContentSpace.bottom - _delegate!.viewportHeight! + (isAtLastLine ? rectInContentSpace.height / 2 : 0),
+        _scrollOffset = min(rectInContentSpace.bottom - _delegate!.viewportHeight! + extraSpacingBelowBottom,
             _delegate!.endScrollOffset);
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
       }
