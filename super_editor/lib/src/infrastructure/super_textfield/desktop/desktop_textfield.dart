@@ -1187,25 +1187,25 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
 
     final firstCharY = _textLayout.getCharacterBox(const TextPosition(offset: 0))?.top ?? 0.0;
     final lastCharY =
-        _textLayout.getCharacterBox(TextPosition(offset: widget.textController.text.text.length - 1))?.top ??
-            _textLayout.estimatedLineHeight;
+        _textLayout.getCharacterBox(TextPosition(offset: widget.textController.text.text.length - 1))?.top ?? 0.0;
 
     final isAtFirstLine = extentOffset.dy == firstCharY;
     final isAtLastLine = extentOffset.dy == lastCharY;
 
-    // If we are at the first or last line, add some space between the line
-    // and the textfield's edge.
-    final extraSpace = isAtFirstLine || isAtLastLine ? _textLayout.getLineHeightAtPosition(selection.extent) / 2 : 0;
-
     final myBox = context.findRenderObject() as RenderBox;
-    final beyondTopExtent =
-        min<double>(extentOffset.dy - widget.scrollController.offset - gutterExtent - extraSpace, 0).abs();
+    final beyondTopExtent = min<double>(
+            extentOffset.dy - //
+                widget.scrollController.offset -
+                gutterExtent -
+                (isAtFirstLine ? _textLayout.getLineHeightAtPosition(selection.extent) / 2 : 0),
+            0)
+        .abs();
     final beyondBottomExtent = max<double>(
         ((extentLineIndex + 1) * widget.estimatedLineHeight) -
             myBox.size.height -
             widget.scrollController.offset +
             gutterExtent +
-            extraSpace +
+            (isAtLastLine ? _textLayout.getLineHeightAtPosition(selection.extent) / 2 : 0) +
             (widget.estimatedLineHeight / 2) + // manual adjustment to avoid line getting half cut off
             (widget.padding.vertical / 2),
         0);

@@ -17,6 +17,7 @@ void main() {
         minLines: 1,
         maxLines: 2,
         maxHeight: 50,
+        maxWidth: 200,
         padding: const EdgeInsets.all(10.0),
         configuration: SuperTextFieldPlatformConfiguration.android,
       );
@@ -47,6 +48,7 @@ void main() {
         minLines: 1,
         maxLines: 2,
         maxHeight: 50,
+        maxWidth: 200,
         padding: const EdgeInsets.all(10.0),
         configuration: SuperTextFieldPlatformConfiguration.iOS,
       );
@@ -77,6 +79,7 @@ void main() {
         minLines: 1,
         maxLines: 2,
         maxHeight: 50,
+        maxWidth: 200,
         padding: const EdgeInsets.all(10.0),
         configuration: SuperTextFieldPlatformConfiguration.desktop,
       );
@@ -111,21 +114,26 @@ Future<void> _pumpTestApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        body: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: maxWidth ?? double.infinity,
-            maxHeight: maxHeight ?? double.infinity,
-          ),
-          child: ColoredBox(
-            color: Colors.yellow,
-            child: SuperTextField(
-              textController: textController,
-              lineHeight: 20,
-              textStyleBuilder: (_) => const TextStyle(fontSize: 20, color: Colors.black, fontFamily: 'Roboto'),
-              minLines: minLines,
-              maxLines: maxLines,
-              padding: padding,
-              configuration: configuration,
+        body: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: maxWidth ?? double.infinity,
+              maxHeight: maxHeight ?? double.infinity,
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.yellow,
+                border: Border.all(),
+              ),
+              child: SuperTextField(
+                textController: textController,
+                lineHeight: 20,
+                textStyleBuilder: (_) => const TextStyle(fontSize: 20, color: Colors.black, fontFamily: 'Roboto'),
+                minLines: minLines,
+                maxLines: maxLines,
+                padding: padding,
+                configuration: configuration,
+              ),
             ),
           ),
         ),

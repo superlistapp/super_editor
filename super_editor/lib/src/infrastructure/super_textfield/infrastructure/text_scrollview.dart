@@ -1009,20 +1009,18 @@ class TextScrollController with ChangeNotifier {
       final isAtFirstLine = rectInContentSpace.top == firstCharRect.top;
       final isAtLastLine = rectInContentSpace.top == lastCharRect.top;
 
-      // If we are at the first or last line, add some space between the line
-      // and the textfield's edge.
-      final extraSpace = isAtFirstLine || isAtLastLine ? rectInContentSpace.height / 2 : 0;
-
-      if (rectInContentSpace.top - extraSpace - _scrollOffset < 0) {
+      if (rectInContentSpace.top - (isAtFirstLine ? rectInContentSpace.height / 2 : 0) - _scrollOffset < 0) {
         // The character is entirely or partially above the top of the viewport.
         // Scroll the content down.
-        _scrollOffset = max(rectInContentSpace.top - extraSpace, 0);
+        _scrollOffset = max(rectInContentSpace.top - (isAtFirstLine ? rectInContentSpace.height / 2 : 0), 0);
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rectInContentSpace.bottom - _scrollOffset + extraSpace > _delegate!.viewportHeight!) {
+      } else if (rectInContentSpace.bottom - _scrollOffset + (isAtLastLine ? rectInContentSpace.height / 2 : 0) >
+          _delegate!.viewportHeight!) {
         // The character is entirely or partially below the bottom of the viewport.
         // Scroll the content up.
-        _scrollOffset =
-            min(rectInContentSpace.bottom - _delegate!.viewportHeight! + extraSpace, _delegate!.endScrollOffset);
+        _scrollOffset = min(
+            rectInContentSpace.bottom - _delegate!.viewportHeight! + (isAtLastLine ? rectInContentSpace.height / 2 : 0),
+            _delegate!.endScrollOffset);
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
       }
     } else {
