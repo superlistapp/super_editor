@@ -5,6 +5,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../test_tools.dart';
+import 'super_textfield_inspector.dart';
 
 void main() {
   group('SuperTextField', () {
@@ -68,6 +69,79 @@ void main() {
       expect(textBottom, lessThanOrEqualTo(viewportBottom));
     });
 
+    testWidgetsOnAllPlatforms(
+        "multi-line jumps scroll position vertically when selection extent moves above or below the visible viewport area",
+        (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
+      );
+
+      // Pump the widget tree with a SuperTextField which is two lines tall.
+      await _pumpTestApp(
+        tester,
+        textController: controller,
+        minLines: 1,
+        maxLines: 2,
+        maxHeight: 40,
+      );
+
+      // Move selection to the end of the text.
+      // This will scroll the text field to the end.
+      controller.selection = const TextSelection.collapsed(offset: 45);
+      await tester.pumpAndSettle();
+
+      // Ensure the text field has scrolled.
+      expect(
+        SuperTextFieldInspector.findScrollOffset(),
+        greaterThan(0.0),
+      );
+
+      // Place the caret at the beginning of the text.
+      controller.selection = const TextSelection.collapsed(offset: 0);
+      await tester.pumpAndSettle();
+
+      // Ensure the text field scrolled to the top.
+      expect(
+        SuperTextFieldInspector.findScrollOffset(),
+        0.0,
+      );
+    });
+
+    testWidgetsOnAllPlatforms("multi-line doesn't jump scroll position vertically when selection extent is visible",
+        (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
+      );
+
+      // Pump the widget tree with a SuperTextField which is two lines tall.
+      await _pumpTestApp(
+        tester,
+        textController: controller,
+        minLines: 1,
+        maxLines: 2,
+        maxHeight: 40,
+      );
+
+      // Move selection to the end of the text.
+      // This will scroll the text field to the end.
+      controller.selection = const TextSelection.collapsed(offset: 45);
+      await tester.pumpAndSettle();
+
+      final scrollOffsetBefore = SuperTextFieldInspector.findScrollOffset();
+
+      // Place the caret at "Third| Line".
+      // As we have room for two lines, this line is already visible,
+      // and thus shouldn't cause the text field to scroll.
+      controller.selection = const TextSelection.collapsed(offset: 28);
+      await tester.pumpAndSettle();
+
+      // Ensure the content didn't scrolled.
+      expect(
+        SuperTextFieldInspector.findScrollOffset(),
+        scrollOffsetBefore,
+      );
+    });
+
     testWidgetsOnDesktop("doesn't scroll vertically when maxLines is null", (tester) async {
       // With the Ahem font the estimated line height is equal to the true line height
       // so we need to use a custom font.
@@ -100,15 +174,16 @@ void main() {
       );
       await tester.pump();
 
-      // In the running app, the estimated line height and actual line height differ. 
-      // This test ensures that we account for that. Ideally, this test would check that the scrollview doesn't scroll. 
+      // In the running app, the estimated line height and actual line height differ.
+      // This test ensures that we account for that. Ideally, this test would check that the scrollview doesn't scroll.
       // However, in test suites, the estimated and actual line heights are always identical.
-      // Therefore, this test ensures that we add up the appropriate dimensions, 
+      // Therefore, this test ensures that we add up the appropriate dimensions,
       // rather than verify the scrollview's max scroll extent.
 
       final viewportHeight = tester.getRect(find.byType(SuperTextFieldScrollview)).height;
 
-      final layoutState = (find.byType(SuperDesktopTextField).evaluate().single as StatefulElement).state as SuperDesktopTextFieldState;
+      final layoutState =
+          (find.byType(SuperDesktopTextField).evaluate().single as StatefulElement).state as SuperDesktopTextFieldState;
       final contentHeight = layoutState.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
 
       // Vertical padding is added to both top and bottom
@@ -127,6 +202,7 @@ Future<void> _pumpTestApp(
   required int maxLines,
   double? maxWidth,
   double? maxHeight,
+  EdgeInsets? padding,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -142,9 +218,13 @@ Future<void> _pumpTestApp(
             textStyleBuilder: (_) => const TextStyle(fontSize: 20),
             minLines: minLines,
             maxLines: maxLines,
+            padding: padding,
           ),
         ),
       ),
     ),
   );
+
+  // The first frame might have a zero viewport height. Pump a second frame to account for the final viewport size.
+  await tester.pump();
 }
