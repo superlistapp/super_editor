@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -205,7 +207,8 @@ class _TextScrollViewState extends State<TextScrollView>
 
     final lastCharacterPosition = TextPosition(offset: widget.textEditingController.text.text.length - 1);
     return (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) -
-        viewportHeight;
+        viewportHeight +
+        (widget.padding?.vertical ?? 0.0);
   }
 
   @override
@@ -264,7 +267,13 @@ class _TextScrollViewState extends State<TextScrollView>
 
   @override
   Rect getCharacterRectAtPosition(TextPosition position) {
-    return _textLayout.getCharacterBox(position)?.toRect() ?? Rect.fromLTRB(0, 0, 0, _textLayout.estimatedLineHeight);
+    final padding = widget.padding ?? const EdgeInsets.all(0.0);
+    final characterBox =
+        _textLayout.getCharacterBox(position)?.toRect() ?? Rect.fromLTRB(0, 0, 0, _textLayout.estimatedLineHeight);
+
+    // The padding is applied inside of the scrollable area,
+    // so we need to adjust the rect to account for it.
+    return characterBox.translate(padding.left, padding.top);
   }
 
   @override
@@ -981,36 +990,49 @@ class TextScrollController with ChangeNotifier {
     final characterIndex = _textController.selection.extentOffset >= _textController.text.text.length
         ? _textController.text.text.length - 1
         : _textController.selection.extentOffset;
-    final extentCharacterRect = _delegate!.getCharacterRectAtPosition(TextPosition(offset: characterIndex));
-    _ensureRectIsVisible(extentCharacterRect);
+
+    final extentCharacterRectInContentSpace =
+        _delegate!.getCharacterRectAtPosition(TextPosition(offset: characterIndex));
+
+    _ensureRectIsVisible(extentCharacterRectInContentSpace);
   }
 
-  void _ensureRectIsVisible(Rect rect) {
+  void _ensureRectIsVisible(Rect rectInContentSpace) {
     assert(_delegate != null);
 
-    _log.finer('Ensuring rect is visible: $rect');
+    _log.finer('Ensuring rect is visible: $rectInContentSpace');
     if (_delegate!.isMultiline) {
-      if (rect.top < 0) {
+      final firstCharRect = _delegate!.getCharacterRectAtPosition(const TextPosition(offset: 0));
+      final isAtFirstLine = rectInContentSpace.top == firstCharRect.top;
+      final extraSpacingAboveTop = (isAtFirstLine ? rectInContentSpace.height / 2 : 0);
+
+      final lastCharRect =
+          _delegate!.getCharacterRectAtPosition(TextPosition(offset: _textController.text.text.length - 1));
+      final isAtLastLine = rectInContentSpace.top == lastCharRect.top;
+      final extraSpacingBelowBottom = (isAtLastLine ? rectInContentSpace.height / 2 : 0);
+
+      if (rectInContentSpace.top - extraSpacingAboveTop - _scrollOffset < 0) {
         // The character is entirely or partially above the top of the viewport.
         // Scroll the content down.
-        _scrollOffset = rect.top;
+        _scrollOffset = max(rectInContentSpace.top - extraSpacingAboveTop, 0);
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rect.bottom > _delegate!.viewportHeight!) {
+      } else if (rectInContentSpace.bottom - _scrollOffset + extraSpacingBelowBottom > _delegate!.viewportHeight!) {
         // The character is entirely or partially below the bottom of the viewport.
         // Scroll the content up.
-        _scrollOffset = rect.bottom - _delegate!.viewportHeight!;
+        _scrollOffset = min(rectInContentSpace.bottom - _delegate!.viewportHeight! + extraSpacingBelowBottom,
+            _delegate!.endScrollOffset);
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
       }
     } else {
-      if (rect.left < 0) {
+      if (rectInContentSpace.left < 0) {
         // The character is entirely or partially before the start of the viewport.
         // Scroll the content right.
-        _scrollOffset = rect.left;
+        _scrollOffset = rectInContentSpace.left;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rect.right > _delegate!.viewportWidth!) {
+      } else if (rectInContentSpace.right > _delegate!.viewportWidth!) {
         // The character is entirely or partially after the end of the viewport.
         // Scroll the content left.
-        _scrollOffset = rect.right - _delegate!.viewportWidth!;
+        _scrollOffset = rectInContentSpace.right - _delegate!.viewportWidth!;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
       }
     }
