@@ -9,6 +9,7 @@ import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/ime_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
@@ -473,6 +474,10 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       focusNode: _focusNode,
       child: CompositedTransformTarget(
         link: _textFieldLayerLink,
+        child: SuperTextFieldImeControls(
+          focusNode: _focusNode,
+          textKey: _textContentKey,
+          textController: _textEditingController,
         child: IOSTextFieldTouchInteractor(
           focusNode: _focusNode,
           selectableTextKey: _textContentKey,
@@ -527,6 +532,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             ),
           ),
         ),
+      ),
       ),
     );
   }

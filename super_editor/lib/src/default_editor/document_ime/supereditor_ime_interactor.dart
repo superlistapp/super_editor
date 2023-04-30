@@ -147,6 +147,10 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       floatingCursorController: widget.floatingCursorController,
     );
 
+    widget.editContext.editor.document.addListener(_scheduleUpdateImeVisualInformation);
+    widget.editContext.composer.addListener(_scheduleUpdateImeVisualInformation);
+    _focusNode.addListener(_scheduleUpdateImeVisualInformation);
+
     _imeClient = DeltaTextInputClientDecorator();
     _configureImeClientDecorators();
 
@@ -170,6 +174,23 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       oldWidget.imeOverrides?.client = null;
       _configureImeClientDecorators();
     }
+
+    if (widget.editContext.editor != oldWidget.editContext.editor) {
+      oldWidget.editContext.editor.document.removeListener(_scheduleUpdateImeVisualInformation);
+      widget.editContext.editor.document.addListener(_scheduleUpdateImeVisualInformation);
+    }
+
+    if (widget.editContext.composer != oldWidget.editContext.composer) {
+      oldWidget.editContext.composer.removeListener(_scheduleUpdateImeVisualInformation);
+      widget.editContext.composer.addListener(_scheduleUpdateImeVisualInformation);
+    }
+
+    if (widget.focusNode != oldWidget.focusNode) {
+      if (oldWidget.focusNode != null) {
+        oldWidget.focusNode!.removeListener(_scheduleUpdateImeVisualInformation);
+      }
+      _focusNode.addListener(_scheduleUpdateImeVisualInformation);
+    }
   }
 
   @override
@@ -184,6 +205,10 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
+
+    widget.editContext.editor.document.removeListener(_scheduleUpdateImeVisualInformation);
+    widget.editContext.composer.removeListener(_scheduleUpdateImeVisualInformation);
+    _focusNode.removeListener(_scheduleUpdateImeVisualInformation);
 
     super.dispose();
   }
@@ -202,6 +227,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     } else {
       _configureImeClientDecorators();
       _documentImeConnection.value = _documentImeClient;
+      _scheduleUpdateImeVisualInformation();
     }
   }
 
@@ -212,6 +238,63 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     // If we were given IME overrides, point our primary IME client to that client. Otherwise,
     // point our primary IME client directly towards the _documentImeClient.
     _imeClient.client = widget.imeOverrides ?? _documentImeClient;
+  }
+
+  /// Update our size, transform to the root node coordinates, and caret rect on the IME.
+  ///
+  /// This is needed to display the OS emoji & symbols panel at the editor selected position.
+  void _scheduleUpdateImeVisualInformation() {
+    WidgetsBinding.instance.addPostFrameCallback(
+      (timeStamp) {
+        _updateEditorSizeAndTransformOnIme();
+        _updateCaretRectOnIme();
+      },
+    );
+  }
+
+  /// Set the caret rect on IME.
+  ///
+  /// This is needed to display the OS emoji & symbols panel at the editor selected position.
+  void _updateCaretRectOnIme() {
+    if (!isAttachedToIme) {
+      return;
+    }
+
+    final selection = widget.editContext.composer.selection;
+    if (selection == null) {
+      return;
+    }
+
+    final docLayout = widget.editContext.documentLayout;
+    final rectInDocLayoutSpace = docLayout.getRectForPosition(selection.extent);
+
+    if (rectInDocLayoutSpace == null) {
+      return;
+    }
+
+    final renderBox = context.findRenderObject() as RenderBox;
+
+    // The value returned from getRectForPosition is in the document's layout coordinates.
+    // As the document layout is scrollable, this rect might be outside of the viewport height.
+    // Map the offset to the editor's viewport coordinates.
+    final caretOffset = renderBox.globalToLocal(
+      docLayout.getGlobalOffsetFromDocumentOffset(rectInDocLayoutSpace.topLeft),
+    );
+
+    _imeConnection.value!.setCaretRect(caretOffset & rectInDocLayoutSpace.size);
+  }
+
+  /// Update our size and transform to the root node coordinates.
+  ///
+  /// This is needed to display the OS emoji & symbols panel at the editor selected position.
+  void _updateEditorSizeAndTransformOnIme() {
+    if (!isAttachedToIme) {
+      return;
+    }
+
+    final renderBox = context.findRenderObject() as RenderBox;
+
+    _imeConnection.value!.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
   }
 
   @override

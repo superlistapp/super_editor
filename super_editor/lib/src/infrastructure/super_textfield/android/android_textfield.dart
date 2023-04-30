@@ -8,6 +8,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/android/_editing
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/ime_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -473,6 +474,10 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       onKey: _onKeyPressed,
       child: CompositedTransformTarget(
         link: _textFieldLayerLink,
+        child: SuperTextFieldImeControls(
+          focusNode: _focusNode,
+          textKey: _textContentKey,
+          textController: _textEditingController,
         child: AndroidTextFieldTouchInteractor(
           focusNode: _focusNode,
           textKey: _textContentKey,
@@ -518,6 +523,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             ),
           ),
         ),
+      ),
       ),
     );
   }

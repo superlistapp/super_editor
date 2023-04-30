@@ -11,6 +11,7 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/ime_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -379,6 +380,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       keyboardActions: widget.keyboardHandlers,
       child: widget.inputSource == TextInputSource.ime
           ? SuperTextFieldImeInteractor(
+              textKey: _textKey,
               focusNode: _focusNode,
               textController: _controller,
               isMultiline: isMultiline,
@@ -930,6 +932,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
 class SuperTextFieldImeInteractor extends StatefulWidget {
   const SuperTextFieldImeInteractor({
     Key? key,
+    required this.textKey,
     required this.focusNode,
     required this.textController,
     required this.isMultiline,
@@ -944,6 +947,10 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
 
   /// Whether or not this text field supports multiple lines of text.
   final bool isMultiline;
+
+  /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
+  /// the [ProseTextLayout] widget that paints the text for this text field.
+  final GlobalKey<ProseTextState> textKey;
 
   /// The rest of the subtree for this text field.
   final Widget child;
@@ -1013,7 +1020,12 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return SuperTextFieldImeControls(
+      textKey: widget.textKey,
+      textController: widget.textController,
+      focusNode: widget.focusNode,
+      child: widget.child,
+    );
   }
 }
 

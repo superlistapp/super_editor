@@ -156,6 +156,10 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   void showKeyboard() {
     _isKeyboardDisplayDesired = true;
+    if (!(_inputConnection?.attached ?? false)) {
+      // We aren't connected to the IME. Therefore, we can't show the keyboard.
+      return;
+    }
     _inputConnection?.show();
   }
 
@@ -171,6 +175,16 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   void hideKeyboard() {
     _isKeyboardDisplayDesired = false;
     _inputConnection?.close();
+  }
+
+  /// Sends the text field size and tranform to the root coordinates to the IME.
+  void setEditableSizeAndTransform(Size editableBoxSize, Matrix4 transform) {
+    _inputConnection?.setEditableSizeAndTransform(editableBoxSize, transform);
+  }
+
+  /// Sends the text field caret rect to the IME.
+  void setCaretRect(Rect rectInContentSpace) {
+    _inputConnection?.setCaretRect(rectInContentSpace);
   }
 
   //------ Start TextInputClient ----
