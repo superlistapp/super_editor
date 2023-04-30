@@ -150,9 +150,9 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       floatingCursorController: widget.floatingCursorController,
     );
 
-    widget.editContext.editor.document.addListener(_updateImeVisualInformation);
-    widget.editContext.composer.addListener(_updateImeVisualInformation);
-    _focusNode.addListener(_updateImeVisualInformation);
+    widget.editContext.editor.document.addListener(_scheduleUpdateImeVisualInformation);
+    widget.editContext.composer.addListener(_scheduleUpdateImeVisualInformation);
+    _focusNode.addListener(_scheduleUpdateImeVisualInformation);
 
     _imeClient = DeltaTextInputClientDecorator();
     _configureImeClientDecorators();
@@ -179,20 +179,20 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     }
 
     if (widget.editContext.editor != oldWidget.editContext.editor) {
-      oldWidget.editContext.editor.document.removeListener(_updateImeVisualInformation);
-      widget.editContext.editor.document.addListener(_updateImeVisualInformation);
+      oldWidget.editContext.editor.document.removeListener(_scheduleUpdateImeVisualInformation);
+      widget.editContext.editor.document.addListener(_scheduleUpdateImeVisualInformation);
     }
 
     if (widget.editContext.composer != oldWidget.editContext.composer) {
-      oldWidget.editContext.composer.removeListener(_updateImeVisualInformation);
-      widget.editContext.composer.addListener(_updateImeVisualInformation);
+      oldWidget.editContext.composer.removeListener(_scheduleUpdateImeVisualInformation);
+      widget.editContext.composer.addListener(_scheduleUpdateImeVisualInformation);
     }
 
     if (widget.focusNode != oldWidget.focusNode) {
       if (oldWidget.focusNode != null) {
-        oldWidget.focusNode!.removeListener(_updateImeVisualInformation);
+        oldWidget.focusNode!.removeListener(_scheduleUpdateImeVisualInformation);
       }
-      _focusNode.addListener(_updateImeVisualInformation);
+      _focusNode.addListener(_scheduleUpdateImeVisualInformation);
     }
   }
 
@@ -209,9 +209,9 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       _focusNode.dispose();
     }
 
-    widget.editContext.editor.document.removeListener(_updateImeVisualInformation);
-    widget.editContext.composer.removeListener(_updateImeVisualInformation);
-    _focusNode.removeListener(_updateImeVisualInformation);
+    widget.editContext.editor.document.removeListener(_scheduleUpdateImeVisualInformation);
+    widget.editContext.composer.removeListener(_scheduleUpdateImeVisualInformation);
+    _focusNode.removeListener(_scheduleUpdateImeVisualInformation);
 
     super.dispose();
   }
@@ -230,7 +230,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     } else {
       _configureImeClientDecorators();
       _documentImeConnection.value = _documentImeClient;
-      _updateImeVisualInformation();
+      _scheduleUpdateImeVisualInformation();
     }
   }
 
@@ -246,9 +246,13 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   /// Update our size, transform to the root node coordinates, and caret rect on the IME.
   ///
   /// This is needed to display the OS emoji & symbols panel at the editor selected position.
-  void _updateImeVisualInformation() {
-    _updateEditorSizeAndTransformOnIme();
-    _updateCaretRectOnIme();
+  void _scheduleUpdateImeVisualInformation() {
+    WidgetsBinding.instance.addPostFrameCallback(
+      (timeStamp) {
+        _updateEditorSizeAndTransformOnIme();
+        _updateCaretRectOnIme();
+      },
+    );
   }
 
   /// Set the caret rect on IME.
