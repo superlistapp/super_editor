@@ -9,6 +9,7 @@ import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/ime_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
@@ -473,57 +474,62 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       focusNode: _focusNode,
       child: CompositedTransformTarget(
         link: _textFieldLayerLink,
-        child: IOSTextFieldTouchInteractor(
+        child: SuperTextFieldImeControls(
           focusNode: _focusNode,
-          selectableTextKey: _textContentKey,
-          textFieldLayerLink: _textFieldLayerLink,
+          textKey: _textContentKey,
           textController: _textEditingController,
-          editingOverlayController: _editingOverlayController,
-          textScrollController: _textScrollController,
-          isMultiline: _isMultiline,
-          handleColor: widget.handlesColor,
-          showDebugPaint: widget.showDebugPaint,
-          child: TextScrollView(
-            key: _scrollKey,
+          child: IOSTextFieldTouchInteractor(
+            focusNode: _focusNode,
+            selectableTextKey: _textContentKey,
+            textFieldLayerLink: _textFieldLayerLink,
+            textController: _textEditingController,
+            editingOverlayController: _editingOverlayController,
             textScrollController: _textScrollController,
-            textKey: _textContentKey,
-            textEditingController: _textEditingController,
-            textAlign: widget.textAlign,
-            minLines: widget.minLines,
-            maxLines: widget.maxLines,
-            lineHeight: widget.lineHeight,
-            perLineAutoScrollDuration: const Duration(milliseconds: 100),
+            isMultiline: _isMultiline,
+            handleColor: widget.handlesColor,
             showDebugPaint: widget.showDebugPaint,
-            padding: widget.padding,
-            child: ListenableBuilder(
-              listenable: _textEditingController,
-              builder: (context, _) {
-                final isTextEmpty = _textEditingController.text.text.isEmpty;
-                final showHint = widget.hintBuilder != null &&
-                    ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                        (isTextEmpty &&
-                            !_focusNode.hasFocus &&
-                            widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+            child: TextScrollView(
+              key: _scrollKey,
+              textScrollController: _textScrollController,
+              textKey: _textContentKey,
+              textEditingController: _textEditingController,
+              textAlign: widget.textAlign,
+              minLines: widget.minLines,
+              maxLines: widget.maxLines,
+              lineHeight: widget.lineHeight,
+              perLineAutoScrollDuration: const Duration(milliseconds: 100),
+              showDebugPaint: widget.showDebugPaint,
+              padding: widget.padding,
+              child: ListenableBuilder(
+                listenable: _textEditingController,
+                builder: (context, _) {
+                  final isTextEmpty = _textEditingController.text.text.isEmpty;
+                  final showHint = widget.hintBuilder != null &&
+                      ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                          (isTextEmpty &&
+                              !_focusNode.hasFocus &&
+                              widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-                return CompositedTransformTarget(
-                  link: _textContentLayerLink,
-                  child: Stack(
-                    children: [
-                      if (showHint) widget.hintBuilder!(context),
-                      _buildSelectableText(),
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: IOSFloatingCursor(
-                          controller: _floatingCursorController,
+                  return CompositedTransformTarget(
+                    link: _textContentLayerLink,
+                    child: Stack(
+                      children: [
+                        if (showHint) widget.hintBuilder!(context),
+                        _buildSelectableText(),
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: IOSFloatingCursor(
+                            controller: _floatingCursorController,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
