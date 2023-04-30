@@ -265,7 +265,11 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     }
 
     final docLayout = widget.editContext.documentLayout;
-    final rectInDocLayoutSpace = docLayout.getRectForPosition(selection.extent)!;
+    final rectInDocLayoutSpace = docLayout.getRectForPosition(selection.extent);
+
+    if (rectInDocLayoutSpace == null) {
+      return;
+    }
 
     final renderBox = context.findRenderObject() as RenderBox;
 
