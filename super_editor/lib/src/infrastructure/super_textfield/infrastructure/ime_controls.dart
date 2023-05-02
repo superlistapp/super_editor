@@ -132,7 +132,7 @@ class _SuperTextFieldImeControlsState extends State<SuperTextFieldImeControls> {
     final position = TextPosition(offset: selection.baseOffset);
     final textLayout = text.textLayout;
     final caretOffset = textLayout.getOffsetForCaret(position);
-    final caretHeight = textLayout.getHeightForCaret(position) ?? 0;
+    final caretHeight = textLayout.getHeightForCaret(position) ?? textLayout.estimatedLineHeight;
     final caretRect = caretOffset & Size(1, caretHeight);
 
     // Convert the coordinates from the text layout space to the text field space.
