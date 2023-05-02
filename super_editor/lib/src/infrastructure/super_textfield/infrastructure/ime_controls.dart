@@ -107,6 +107,13 @@ class _SuperTextFieldImeControlsState extends State<SuperTextFieldImeControls> {
     final renderBox = context.findRenderObject() as RenderBox;
 
     widget.textController.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
+
+    // There are some operations that might affect our transform but we can't react to them.
+    // For example, the text field might be resized or moved around the screen.
+    // Because of this, we update our size and transform at every frame.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _updateSizeAndTransform();
+    });
   }
 
   /// Set the caret rect on IME.
@@ -141,6 +148,13 @@ class _SuperTextFieldImeControlsState extends State<SuperTextFieldImeControls> {
     final caretOffsetInTextFieldSpace = caretRect.shift(textOffset);
 
     widget.textController.setCaretRect(caretOffsetInTextFieldSpace);
+
+    // There are some operations that change the caret position without changing the text
+    // or the selection. For example, the text field padding might change, the font size, etc.
+    // Because of this, we update the caret rect at every frame.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _updateCaretRectIfNeeded();
+    });
   }
 
   @override
