@@ -255,6 +255,26 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     );
   }
 
+  /// Update our size and transform to the root node coordinates.
+  ///
+  /// This is needed to display the OS emoji & symbols panel at the editor selected position.
+  void _updateEditorSizeAndTransformOnIme() {
+    if (!isAttachedToIme) {
+      return;
+    }
+
+    final renderBox = context.findRenderObject() as RenderBox;
+
+    _imeConnection.value!.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
+
+    // There are some operations that might affect our transform but we can't react to them.
+    // For example, the editor might be resized or moved around the screen.
+    // Because of this, we update our size and transform at every frame.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _updateEditorSizeAndTransformOnIme();
+    });
+  }
+
   /// Set the caret rect on IME.
   ///
   /// This is needed to display the OS emoji & symbols panel at the editor selected position.
@@ -272,6 +292,11 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     final rectInDocLayoutSpace = docLayout.getRectForPosition(selection.extent);
 
     if (rectInDocLayoutSpace == null) {
+      // We don't have enought information to position the caret yet.
+      // Try again in the next frame.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _updateCaretRectOnIme();
+      });
       return;
     }
 
@@ -285,19 +310,14 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     );
 
     _imeConnection.value!.setCaretRect(caretOffset & rectInDocLayoutSpace.size);
-  }
 
-  /// Update our size and transform to the root node coordinates.
-  ///
-  /// This is needed to display the OS emoji & symbols panel at the editor selected position.
-  void _updateEditorSizeAndTransformOnIme() {
-    if (!isAttachedToIme) {
-      return;
-    }
-
-    final renderBox = context.findRenderObject() as RenderBox;
-
-    _imeConnection.value!.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
+    // There are some operations that change the caret position without changing the document
+    // or the selection. For example, a document component might change it's size, the
+    // editor can be scrolled, a stylesheet change might cause the padding to change, etc.
+    // Because of this, we update the caret rect at every frame.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _updateCaretRectOnIme();
+    });
   }
 
   @override
