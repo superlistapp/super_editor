@@ -11,7 +11,6 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/ime_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -965,6 +964,8 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     super.initState();
     widget.focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
+    widget.textController.onImeConnectionChange = _updateImeVisualInformation;
+
     if (widget.focusNode.hasFocus) {
       // We got an already focused FocusNode, we need to attach to the IME.
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -992,6 +993,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   @override
   void dispose() {
     widget.focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
+    widget.textController.onImeConnectionChange = null;
     super.dispose();
   }
 
@@ -1018,14 +1020,67 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     }
   }
 
+  /// Update our size, transform to the root node coordinates, and caret rect on the IME.
+  ///
+  /// This is needed to display the OS emoji & symbols panel at the text field selected position.
+  ///
+  /// This methods is re-scheduled to run at the end of every frame while we are attached to the IME.
+  void _updateImeVisualInformation() {
+    if (!widget.textController.isAttachedToIme) {
+      return;
+    }
+
+    final renderBox = context.findRenderObject() as RenderBox;
+    widget.textController.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
+
+    final caretRect = _computeCaretRectInContentSpace();
+    if (caretRect != null) {
+      widget.textController.setCaretRect(caretRect);
+    }
+
+    // Without showing the keyboard, the panel is always positioned at the screen center after the first time.
+    // I'm not sure why this is needed in SuperTextField, but not in SuperEditor.
+    widget.textController.showKeyboard();
+
+    // There are some operations that might affect our transform or the caret rect but we can't react to them.
+    // For example, the text field might be resized or moved around the screen.
+    // Because of this, we update our size, transform and caret rect at every frame.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _updateImeVisualInformation();
+    });
+  }
+
+  Rect? _computeCaretRectInContentSpace() {
+    final text = widget.textKey.currentState;
+    if (text == null) {
+      return null;
+    }
+
+    final selection = widget.textController.selection;
+    if (!selection.isValid) {
+      return null;
+    }
+
+    final renderBox = context.findRenderObject() as RenderBox;
+
+    // Compute the caret rect in the text layout space.
+    final position = TextPosition(offset: selection.baseOffset);
+    final textLayout = text.textLayout;
+    final caretOffset = textLayout.getOffsetForCaret(position);
+    final caretHeight = textLayout.getHeightForCaret(position) ?? textLayout.estimatedLineHeight;
+    final caretRect = caretOffset & Size(1, caretHeight);
+
+    // Convert the coordinates from the text layout space to the text field space.
+    final textRenderBox = text.context.findRenderObject() as RenderBox;
+    final textOffset = renderBox.globalToLocal(textRenderBox.localToGlobal(Offset.zero));
+    final caretOffsetInTextFieldSpace = caretRect.shift(textOffset);
+
+    return caretOffsetInTextFieldSpace;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SuperTextFieldImeControls(
-      textKey: widget.textKey,
-      textController: widget.textController,
-      focusNode: widget.focusNode,
-      child: widget.child,
-    );
+    return widget.child;
   }
 }
 

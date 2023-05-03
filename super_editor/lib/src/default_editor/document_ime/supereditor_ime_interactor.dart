@@ -150,10 +150,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       floatingCursorController: widget.floatingCursorController,
     );
 
-    widget.editContext.editor.document.addListener(_scheduleUpdateImeVisualInformation);
-    widget.editContext.composer.addListener(_scheduleUpdateImeVisualInformation);
-    _focusNode.addListener(_scheduleUpdateImeVisualInformation);
-
     _imeClient = DeltaTextInputClientDecorator();
     _configureImeClientDecorators();
 
@@ -177,23 +173,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       oldWidget.imeOverrides?.client = null;
       _configureImeClientDecorators();
     }
-
-    if (widget.editContext.editor != oldWidget.editContext.editor) {
-      oldWidget.editContext.editor.document.removeListener(_scheduleUpdateImeVisualInformation);
-      widget.editContext.editor.document.addListener(_scheduleUpdateImeVisualInformation);
-    }
-
-    if (widget.editContext.composer != oldWidget.editContext.composer) {
-      oldWidget.editContext.composer.removeListener(_scheduleUpdateImeVisualInformation);
-      widget.editContext.composer.addListener(_scheduleUpdateImeVisualInformation);
-    }
-
-    if (widget.focusNode != oldWidget.focusNode) {
-      if (oldWidget.focusNode != null) {
-        oldWidget.focusNode!.removeListener(_scheduleUpdateImeVisualInformation);
-      }
-      _focusNode.addListener(_scheduleUpdateImeVisualInformation);
-    }
   }
 
   @override
@@ -208,10 +187,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
-
-    widget.editContext.editor.document.removeListener(_scheduleUpdateImeVisualInformation);
-    widget.editContext.composer.removeListener(_scheduleUpdateImeVisualInformation);
-    _focusNode.removeListener(_scheduleUpdateImeVisualInformation);
 
     super.dispose();
   }
@@ -230,7 +205,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     } else {
       _configureImeClientDecorators();
       _documentImeConnection.value = _documentImeClient;
-      _scheduleUpdateImeVisualInformation();
+      _updateImeVisualInformation();
     }
   }
 
@@ -246,58 +221,45 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   /// Update our size, transform to the root node coordinates, and caret rect on the IME.
   ///
   /// This is needed to display the OS emoji & symbols panel at the editor selected position.
-  void _scheduleUpdateImeVisualInformation() {
-    WidgetsBinding.instance.addPostFrameCallback(
-      (timeStamp) {
-        _updateEditorSizeAndTransformOnIme();
-        _updateCaretRectOnIme();
-      },
-    );
-  }
-
-  /// Update our size and transform to the root node coordinates.
   ///
-  /// This is needed to display the OS emoji & symbols panel at the editor selected position.
-  void _updateEditorSizeAndTransformOnIme() {
+  /// This methods is re-scheduled to run at the end of every frame while we are attached to the IME.
+  void _updateImeVisualInformation() {
     if (!isAttachedToIme) {
       return;
     }
 
     final renderBox = context.findRenderObject() as RenderBox;
-
     _imeConnection.value!.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
 
-    // There are some operations that might affect our transform but we can't react to them.
+    final caretRect = _computeCaretRectInContentSpace();
+    if (caretRect != null) {
+      _imeConnection.value!.setCaretRect(caretRect);
+    }
+
+    // There are some operations that might affect our transform, size and the caret rect,
+    // but we can't react to them.
     // For example, the editor might be resized or moved around the screen.
-    // Because of this, we update our size and transform at every frame.
+    // Because of this, we update our size, transform and caret rect at every frame.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _updateEditorSizeAndTransformOnIme();
+      _updateImeVisualInformation();
     });
   }
 
-  /// Set the caret rect on IME.
+  /// Compute the caret rect in the editor's content space.
   ///
-  /// This is needed to display the OS emoji & symbols panel at the editor selected position.
-  void _updateCaretRectOnIme() {
-    if (!isAttachedToIme) {
-      return;
-    }
-
+  /// Returns `null` if we don't have a selection or if we can't get the caret rect
+  /// from the document layout.
+  Rect? _computeCaretRectInContentSpace() {
     final selection = widget.editContext.composer.selection;
     if (selection == null) {
-      return;
+      return null;
     }
 
     final docLayout = widget.editContext.documentLayout;
     final rectInDocLayoutSpace = docLayout.getRectForPosition(selection.extent);
 
     if (rectInDocLayoutSpace == null) {
-      // We don't have enought information to position the caret yet.
-      // Try again in the next frame.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _updateCaretRectOnIme();
-      });
-      return;
+      return null;
     }
 
     final renderBox = context.findRenderObject() as RenderBox;
@@ -309,15 +271,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       docLayout.getGlobalOffsetFromDocumentOffset(rectInDocLayoutSpace.topLeft),
     );
 
-    _imeConnection.value!.setCaretRect(caretOffset & rectInDocLayoutSpace.size);
-
-    // There are some operations that change the caret position without changing the document
-    // or the selection. For example, a document component might change it's size, the
-    // editor can be scrolled, a stylesheet change might cause the padding to change, etc.
-    // Because of this, we update the caret rect at every frame.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _updateCaretRectOnIme();
-    });
+    return caretOffset & rectInDocLayoutSpace.size;
   }
 
   @override
