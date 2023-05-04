@@ -2309,7 +2309,7 @@ class _PasteEditorCommand implements EditorCommand {
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
-    if (currentNodeWithSelection is! ParagraphNode) {
+    if (currentNodeWithSelection is! TextNode) {
       throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
     }
 
