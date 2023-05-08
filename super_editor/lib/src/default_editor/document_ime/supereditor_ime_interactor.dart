@@ -205,7 +205,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     } else {
       _configureImeClientDecorators();
       _documentImeConnection.value = _documentImeClient;
-      _updateImeVisualInformation();
+      _reportVisualInformationToIme();
     }
   }
 
@@ -218,12 +218,12 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _imeClient.client = widget.imeOverrides ?? _documentImeClient;
   }
 
-  /// Update our size, transform to the root node coordinates, and caret rect on the IME.
+  /// Report our size, transform to the root node coordinates, and caret rect to the IME.
   ///
   /// This is needed to display the OS emoji & symbols panel at the editor selected position.
   ///
   /// This methods is re-scheduled to run at the end of every frame while we are attached to the IME.
-  void _updateImeVisualInformation() {
+  void _reportVisualInformationToIme() {
     if (!isAttachedToIme) {
       return;
     }
@@ -231,7 +231,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     final renderBox = context.findRenderObject() as RenderBox;
     _imeConnection.value!.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
 
-    final caretRect = _computeCaretRectInContentSpace();
+    final caretRect = _computeCaretRectInViewportSpace();
     if (caretRect != null) {
       _imeConnection.value!.setCaretRect(caretRect);
     }
@@ -241,7 +241,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     // For example, the editor might be resized or moved around the screen.
     // Because of this, we update our size, transform and caret rect at every frame.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _updateImeVisualInformation();
+      _reportVisualInformationToIme();
     });
   }
 
@@ -249,7 +249,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   ///
   /// Returns `null` if we don't have a selection or if we can't get the caret rect
   /// from the document layout.
-  Rect? _computeCaretRectInContentSpace() {
+  Rect? _computeCaretRectInViewportSpace() {
     final selection = widget.editContext.composer.selection;
     if (selection == null) {
       return null;

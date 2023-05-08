@@ -964,7 +964,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     super.initState();
     widget.focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
-    widget.textController.onImeConnectionChange = _updateImeVisualInformation;
+    widget.textController.inputConnectionNotifier.addListener(_reportVisualInformationToIme);
 
     if (widget.focusNode.hasFocus) {
       // We got an already focused FocusNode, we need to attach to the IME.
@@ -993,7 +993,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   @override
   void dispose() {
     widget.focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
-    widget.textController.onImeConnectionChange = null;
+    widget.textController.inputConnectionNotifier.removeListener(_reportVisualInformationToIme);
     super.dispose();
   }
 
@@ -1020,22 +1020,23 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     }
   }
 
-  /// Update our size, transform to the root node coordinates, and caret rect on the IME.
+  /// Report our size, transform to the root node coordinates, and caret rect to the IME.
   ///
   /// This is needed to display the OS emoji & symbols panel at the text field selected position.
   ///
   /// This methods is re-scheduled to run at the end of every frame while we are attached to the IME.
-  void _updateImeVisualInformation() {
+  void _reportVisualInformationToIme() {
     if (!widget.textController.isAttachedToIme) {
       return;
     }
 
     final renderBox = context.findRenderObject() as RenderBox;
-    widget.textController.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
+    widget.textController.inputConnectionNotifier.value!
+        .setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
 
     final caretRect = _computeCaretRectInContentSpace();
     if (caretRect != null) {
-      widget.textController.setCaretRect(caretRect);
+      widget.textController.inputConnectionNotifier.value!.setCaretRect(caretRect);
     }
 
     // Without showing the keyboard, the panel is always positioned at the screen center after the first time.
@@ -1046,7 +1047,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     // For example, the text field might be resized or moved around the screen.
     // Because of this, we update our size, transform and caret rect at every frame.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _updateImeVisualInformation();
+      _reportVisualInformationToIme();
     });
   }
 

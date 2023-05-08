@@ -36,12 +36,10 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     void Function(RawFloatingCursorPoint)? onIOSFloatingCursorChange,
     Brightness keyboardAppearance = Brightness.light,
     TextInputConnectionFactory? inputConnectionFactory,
-    VoidCallback? onImeConnectionChange,
   })  : _realController = controller ?? AttributedTextEditingController(),
         _disposeClientController = disposeClientController,
         _inputConnectionFactory = inputConnectionFactory,
         _onIOSFloatingCursorChange = onIOSFloatingCursorChange,
-        _onImeConnectionChange = onImeConnectionChange,
         _keyboardAppearance = keyboardAppearance {
     _realController.addListener(_onInnerControllerChange);
   }
@@ -92,14 +90,12 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _onIOSFloatingCursorChange = callback;
   }
 
-  VoidCallback? _onImeConnectionChange;
-
-  /// Sets the callback that's invoked whenever the IME conection is opened or closed.
-  set onImeConnectionChange(VoidCallback? callback) {
-    _onImeConnectionChange = callback;
-  }
-
   TextInputConnection? _inputConnection;
+
+  /// Notifies whenever the current [TextInputConnection] changes.
+  ValueNotifier<TextInputConnection?> get inputConnectionNotifier => _inputConnectionNotifier;
+  final ValueNotifier<TextInputConnection?> _inputConnectionNotifier = ValueNotifier<TextInputConnection?>(null);
+
   bool _isKeyboardDisplayDesired = false;
 
   bool get isAttachedToIme => _inputConnection != null && _inputConnection!.attached;
@@ -133,7 +129,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _sendEditingValueToPlatform();
 
     _osCurrentTextEditingValue = _latestTextEditingValueSentToPlatform!;
-    _onImeConnectionChange?.call();
+    _inputConnectionNotifier.value = _inputConnection;
     _log.fine('Is attached to input client? ${_inputConnection!.attached}');
   }
 
@@ -168,7 +164,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
     _inputConnection!.show();
 
-    _onImeConnectionChange?.call();
+    _inputConnectionNotifier.value = _inputConnection;
     _sendEditingValueToPlatform();
 
     _osCurrentTextEditingValue = _latestTextEditingValueSentToPlatform!;
@@ -179,7 +175,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _inputConnection?.close();
 
     _osCurrentTextEditingValue = const TextEditingValue();
-    _onImeConnectionChange?.call();
+    _inputConnectionNotifier.value = null;
   }
 
   void showKeyboard() {
@@ -203,16 +199,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   void hideKeyboard() {
     _isKeyboardDisplayDesired = false;
     _inputConnection?.close();
-  }
-
-  /// Sends the text field size and tranform to the root coordinates to the IME.
-  void setEditableSizeAndTransform(Size editableBoxSize, Matrix4 transform) {
-    _inputConnection?.setEditableSizeAndTransform(editableBoxSize, transform);
-  }
-
-  /// Sends the text field caret rect to the IME.
-  void setCaretRect(Rect rectInContentSpace) {
-    _inputConnection?.setCaretRect(rectInContentSpace);
   }
 
   //------ Start TextInputClient ----
