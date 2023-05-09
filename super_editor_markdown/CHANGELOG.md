@@ -1,4 +1,4 @@
-## [0.1.4+2] - May, 2022
+## [0.1.4+2] - May, 2023
 * Added support for paragraph "justify" alignment in Markdown serialization.
 
 ## [0.1.4+1] - Nov, 2022
