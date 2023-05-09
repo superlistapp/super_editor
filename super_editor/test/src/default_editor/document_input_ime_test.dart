@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -275,7 +276,9 @@ void main() {
         );
         final softwareKeyboardHandler = TextDeltasDocumentEditor(
           editor: editor,
+          documentLayoutResolver: () => FakeDocumentLayout(),
           selection: composer.selectionNotifier,
+          composerPreferences: composer.preferences,
           composingRegion: composer.composingRegion,
           commonOps: commonOps,
           onPerformAction: (_) {},
@@ -413,6 +416,158 @@ void main() {
 
         // Ensure that the empty paragraph now reads "ü".
         expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "ü");
+      });
+    });
+
+    // Note: Some Android devices report ENTER and BACKSPACE as hardware keys. Other Android
+    //       devices report "\n" insertion and deletion IME deltas, instead.
+    group('on Xiaomi Redmi tablet', () {
+      testWidgetsOnAndroid('applies list of deltas when inserting new lines', (tester) async {
+        // This test simulates inserting a line break in the middle of the text,
+        // followed by a non-text delta placing the selection/composing region on the new line.
+        //
+        // This test runs only on Android, because we only map a \n insertion to a new line on Android.
+
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place caret at the start of the document.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Send initial delta.
+        await tester.ime.sendDeltas(
+          const [
+            TextEditingDeltaInsertion(
+              oldText: '',
+              textInserted: 'Before the line break new line',
+              insertionOffset: 0,
+              selection: TextSelection.collapsed(offset: 30),
+              composing: TextRange(start: 0, end: 30),
+            )
+          ],
+          getter: imeClientGetter,
+        );
+
+        // Place the caret at "Before the line break |new line".
+        await tester.placeCaretInParagraph('1', 22);
+
+        // Add a line break and simulate the OS sending a non-text delta to change the composing region.
+        //
+        // The OS thinks the editing text is "Before the line break \nnew line".
+        //
+        // With the insertion of the line break, the paragraph will be split into two and
+        // our current editing text will be "new line".
+        //
+        // The OS selection is invalid to us, as our editing text changed.
+        await tester.ime.sendDeltas(
+          const [
+            TextEditingDeltaInsertion(
+              oldText: 'Before the line break new line',
+              textInserted: '\n',
+              insertionOffset: 22,
+              selection: TextSelection.collapsed(offset: 23),
+              composing: TextRange(start: -1, end: -1),
+            ),
+            TextEditingDeltaNonTextUpdate(
+              oldText: 'Before the line break \nnew line',
+              selection: TextSelection.collapsed(offset: 23),
+              composing: TextRange(start: -1, end: -1),
+            ),
+            TextEditingDeltaNonTextUpdate(
+              oldText: 'Before the line break \nnew line',
+              selection: TextSelection.collapsed(offset: 23),
+              composing: TextRange(start: 23, end: 26),
+            ),
+          ],
+          getter: imeClientGetter,
+        );
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure the paragraph was split.
+        expect(
+          (doc.nodes[0] as ParagraphNode).text.text,
+          'Before the line break ',
+        );
+
+        // Ensure the paragraph was split.
+        expect(
+          (doc.nodes[1] as ParagraphNode).text.text,
+          'new line',
+        );
+
+        // Ensure the selection is at the beginning of the second node.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: doc.nodes[1].id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAndroid('maintains correct selection after merging paragraphs', (tester) async {
+        await tester //
+            .createDocument()
+            .fromMarkdown('''
+Paragraph one
+
+Paragraph two
+''')
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Place caret at the start of the second paragraph.
+        await tester.placeCaretInParagraph(doc.nodes[1].id, 0);
+
+        // Sends the deletion delta followed by non-text deltas.
+        //
+        // This deletion will cause the two paragraphs to be merged.
+        await tester.ime.sendDeltas(
+          const [
+            TextEditingDeltaNonTextUpdate(
+              oldText: '. Paragraph two',
+              selection: TextSelection.collapsed(offset: 2),
+              composing: TextRange(start: -1, end: -1),
+            ),
+            TextEditingDeltaNonTextUpdate(
+              oldText: 'Paragraph two',
+              selection: TextSelection.collapsed(offset: 0),
+              composing: TextRange(start: 2, end: 11),
+            ),
+            TextEditingDeltaDeletion(
+              oldText: '. Paragraph two',
+              deletedRange: TextRange(start: 1, end: 2),
+              selection: TextSelection.collapsed(offset: 1),
+              composing: TextRange(start: -1, end: -1),
+            ),
+          ],
+          getter: imeClientGetter,
+        );
+
+        // Ensure the paragraph was merged.
+        expect(
+          (doc.nodes[0] as ParagraphNode).text.text,
+          'Paragraph oneParagraph two',
+        );
+
+        // Ensure the selection is at "Paragraph one|Paragraph two".
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: doc.nodes[0].id,
+              nodePosition: const TextNodePosition(offset: 13),
+            ),
+          ),
+        );
       });
     });
 

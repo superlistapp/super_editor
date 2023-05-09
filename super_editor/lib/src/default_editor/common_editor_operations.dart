@@ -662,7 +662,7 @@ class CommonEditorOperations {
         // The caret is sitting on the upstream edge of block-level content. Delete the
         // whole block by replacing it with an empty paragraph.
         final nodeId = composer.selection!.extent.nodeId;
-        _replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(nodeId);
+        replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(nodeId);
 
         return true;
       } else {
@@ -695,7 +695,7 @@ class CommonEditorOperations {
             return _moveSelectionToBeginningOfNextNode();
           } else {
             // The next node/component isn't selectable. Delete it.
-            _deleteNonSelectedNode(nodeAfter);
+            deleteNonSelectedNode(nodeAfter);
             return true;
           }
         }
@@ -846,7 +846,7 @@ class CommonEditorOperations {
         // The caret is sitting on the downstream edge of block-level content. Delete the
         // whole block by replacing it with an empty paragraph.
         final nodeId = composer.selection!.extent.nodeId;
-        _replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(nodeId);
+        replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(nodeId);
 
         return true;
       } else {
@@ -871,11 +871,11 @@ class CommonEditorOperations {
 
         if (!componentBefore.isVisualSelectionSupported()) {
           // The node/component above is not selectable. Delete it.
-          _deleteNonSelectedNode(nodeBefore);
+          deleteNonSelectedNode(nodeBefore);
           return true;
         }
 
-        return _moveSelectionToEndOfPrecedingNode();
+        return moveSelectionToEndOfPrecedingNode();
       }
     }
 
@@ -892,16 +892,16 @@ class CommonEditorOperations {
         if (nodeBefore is TextNode) {
           // The caret is at the beginning of one TextNode and is preceded by
           // another TextNode. Merge the two TextNodes.
-          return _mergeTextNodeWithUpstreamTextNode();
+          return mergeTextNodeWithUpstreamTextNode();
         } else if (!componentBefore.isVisualSelectionSupported()) {
           // The node/component above is not selectable. Delete it.
-          _deleteNonSelectedNode(nodeBefore);
+          deleteNonSelectedNode(nodeBefore);
           return true;
         } else if ((node as TextNode).text.text.isEmpty) {
           // The caret is at the beginning of an empty TextNode and the preceding
           // node is not a TextNode. Delete the current TextNode and move the
           // selection up to the preceding node if exist.
-          if (_moveSelectionToEndOfPrecedingNode()) {
+          if (moveSelectionToEndOfPrecedingNode()) {
             editor.executeCommand(EditorCommandFunction((doc, transaction) {
               transaction.deleteNode(node);
             }));
@@ -911,17 +911,17 @@ class CommonEditorOperations {
           // The caret is at the beginning of a non-empty TextNode, and the
           // preceding node is not a TextNode. Move the document selection to the
           // preceding node.
-          return _moveSelectionToEndOfPrecedingNode();
+          return moveSelectionToEndOfPrecedingNode();
         }
       } else {
-        return _deleteUpstreamCharacter();
+        return deleteUpstreamCharacter();
       }
     }
 
     return false;
   }
 
-  bool _moveSelectionToEndOfPrecedingNode() {
+  bool moveSelectionToEndOfPrecedingNode() {
     if (composer.selection == null) {
       return false;
     }
@@ -946,7 +946,7 @@ class CommonEditorOperations {
     return true;
   }
 
-  bool _mergeTextNodeWithUpstreamTextNode() {
+  bool mergeTextNodeWithUpstreamTextNode() {
     final node = editor.document.getNodeById(composer.selection!.extent.nodeId);
     if (node == null) {
       return false;
@@ -977,11 +977,12 @@ class CommonEditorOperations {
         nodePosition: TextNodePosition(offset: aboveParagraphLength),
       ),
     );
+    print("Set selection to:\n${composer.selection}");
 
     return true;
   }
 
-  bool _deleteUpstreamCharacter() {
+  bool deleteUpstreamCharacter() {
     if (composer.selection == null) {
       return false;
     }
@@ -1028,7 +1029,7 @@ class CommonEditorOperations {
   ///
   /// This can be used, for example, to effectively delete an image by replacing
   /// it with an empty paragraph.
-  void _replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(String nodeId) {
+  void replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(String nodeId) {
     editor.executeCommand(EditorCommandFunction((doc, transaction) {
       final oldNode = doc.getNodeById(nodeId);
       if (oldNode == null) {
@@ -1188,7 +1189,7 @@ class CommonEditorOperations {
     return newSelectionPosition;
   }
 
-  void _deleteNonSelectedNode(DocumentNode node) {
+  void deleteNonSelectedNode(DocumentNode node) {
     assert(composer.selection?.base.nodeId != node.id);
     assert(composer.selection?.extent.nodeId != node.id);
 

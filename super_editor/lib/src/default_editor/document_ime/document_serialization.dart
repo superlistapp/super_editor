@@ -22,20 +22,20 @@ class DocumentImeSerializer {
 
   DocumentImeSerializer(
     this._doc,
-    this._selection,
-    this._composingRegion, [
+    this.selection,
+    this.composingRegion, [
     this._prependedCharacterPolicy = PrependedCharacterPolicy.automatic,
   ]) {
     _serialize();
   }
 
   final Document _doc;
-  final DocumentSelection _selection;
-  final DocumentRange? _composingRegion;
-  final _imeRangesToDocTextNodes = <TextRange, String>{};
-  final _docTextNodesToImeRanges = <String, TextRange>{};
-  final _selectedNodes = <DocumentNode>[];
-  late String _imeText;
+  DocumentSelection selection;
+  DocumentRange? composingRegion;
+  final imeRangesToDocTextNodes = <TextRange, String>{};
+  final docTextNodesToImeRanges = <String, TextRange>{};
+  final selectedNodes = <DocumentNode>[];
+  late String imeText;
   final PrependedCharacterPolicy _prependedCharacterPolicy;
   String _prependedPlaceholder = '';
 
@@ -45,6 +45,7 @@ class DocumentImeSerializer {
     int characterCount = 0;
 
     if (_shouldPrependPlaceholder()) {
+      print("Doc serializer is assuming a prepended string");
       // Put an arbitrary character at the front of the text so that
       // the IME will report backspace buttons when the caret sits at
       // the beginning of the node. For example, the caret is at the
@@ -57,12 +58,13 @@ class DocumentImeSerializer {
       buffer.write(_prependedPlaceholder);
       characterCount = _prependedPlaceholder.length;
     } else {
+      print("Doc serializer is assuming NO prepended string");
       _prependedPlaceholder = '';
     }
 
-    _selectedNodes.clear();
-    _selectedNodes.addAll(_doc.getNodesInContentOrder(_selection));
-    for (int i = 0; i < _selectedNodes.length; i += 1) {
+    selectedNodes.clear();
+    selectedNodes.addAll(_doc.getNodesInContentOrder(selection));
+    for (int i = 0; i < selectedNodes.length; i += 1) {
       // Append a newline character before appending another node's text.
       //
       // The choice to separate each node with a newline was a judgement call.
@@ -73,14 +75,14 @@ class DocumentImeSerializer {
         characterCount += 1;
       }
 
-      final node = _selectedNodes[i];
+      final node = selectedNodes[i];
       if (node is! TextNode) {
         buffer.write('~');
         characterCount += 1;
 
         final imeRange = TextRange(start: characterCount - 1, end: characterCount);
-        _imeRangesToDocTextNodes[imeRange] = node.id;
-        _docTextNodesToImeRanges[node.id] = imeRange;
+        imeRangesToDocTextNodes[imeRange] = node.id;
+        docTextNodesToImeRanges[node.id] = imeRange;
 
         continue;
       }
@@ -89,16 +91,16 @@ class DocumentImeSerializer {
       // so that we can easily convert between the two, when requested.
       final imeRange = TextRange(start: characterCount, end: characterCount + node.text.text.length);
       editorImeLog.finer("IME range $imeRange -> text node content '${node.text.text}'");
-      _imeRangesToDocTextNodes[imeRange] = node.id;
-      _docTextNodesToImeRanges[node.id] = imeRange;
+      imeRangesToDocTextNodes[imeRange] = node.id;
+      docTextNodesToImeRanges[node.id] = imeRange;
 
       // Concatenate this node's text with the previous nodes.
       buffer.write(node.text.text);
       characterCount += node.text.text.length;
     }
 
-    _imeText = buffer.toString();
-    editorImeLog.fine("IME serialization:\n'$_imeText'");
+    imeText = buffer.toString();
+    editorImeLog.fine("IME serialization:\n'$imeText'");
   }
 
   bool _shouldPrependPlaceholder() {
@@ -118,11 +120,11 @@ class DocumentImeSerializer {
     // another node above the selected node. Without the arbitrary character,
     // the IME would assume that there's no content before the current node and
     // therefore it wouldn't report the backspace button.
-    final selectedNode = _doc.getNode(_selection.extent)!;
+    final selectedNode = _doc.getNode(selection.extent)!;
     final selectedNodeIndex = _doc.getNodeIndexById(selectedNode.id);
     return selectedNodeIndex > 0 &&
-        _selection.isCollapsed &&
-        _selection.extent.nodePosition == selectedNode.beginningPosition;
+        selection.isCollapsed &&
+        selection.extent.nodePosition == selectedNode.beginningPosition;
   }
 
   bool get didPrependPlaceholder => _prependedPlaceholder.isNotEmpty;
@@ -225,13 +227,13 @@ class DocumentImeSerializer {
   }
 
   DocumentPosition _imeToDocumentPosition(TextPosition imePosition, {required bool isUpstream}) {
-    for (final range in _imeRangesToDocTextNodes.keys) {
+    for (final range in imeRangesToDocTextNodes.keys) {
       if (range.start <= imePosition.offset && imePosition.offset <= range.end) {
-        final node = _doc.getNodeById(_imeRangesToDocTextNodes[range]!)!;
+        final node = _doc.getNodeById(imeRangesToDocTextNodes[range]!)!;
 
         if (node is TextNode) {
           return DocumentPosition(
-            nodeId: _imeRangesToDocTextNodes[range]!,
+            nodeId: imeRangesToDocTextNodes[range]!,
             nodePosition: TextNodePosition(offset: imePosition.offset - range.start),
           );
         } else {
@@ -256,19 +258,20 @@ class DocumentImeSerializer {
     editorImeLog.shout("Couldn't map an IME position to a document position.");
     editorImeLog.shout("Desired IME position: '$imePosition'");
     editorImeLog.shout("");
-    editorImeLog.shout("IME text: '$_imeText'");
+    editorImeLog.shout("IME text: '$imeText'");
     editorImeLog.shout("IME prepended placeholder: '$_prependedPlaceholder'");
     editorImeLog.shout("");
-    editorImeLog.shout("Document selection: $_selection");
-    editorImeLog.shout("Document composing region: $_composingRegion");
+    editorImeLog.shout("Document selection: $selection");
+    editorImeLog.shout("Document composing region: $composingRegion");
     editorImeLog.shout("");
     editorImeLog.shout("IME Ranges to text nodes:");
-    for (final entry in _imeRangesToDocTextNodes.entries) {
+    for (final entry in imeRangesToDocTextNodes.entries) {
       editorImeLog.shout(" - IME range: ${entry.key} -> Text node: ${entry.value}");
       editorImeLog.shout("    ^ node content: '${(_doc.getNodeById(entry.value) as TextNode).text.text}'");
     }
     editorImeLog.shout("-----------------------------------------------------------");
-    throw Exception("Couldn't map an IME position to a document position. IME position: $imePosition");
+    throw Exception(
+        "Couldn't map an IME position to a document position. \nTextEditingValue: '$imeText'\nIME position: $imePosition");
   }
 
   TextSelection documentToImeSelection(DocumentSelection docSelection) {
@@ -307,7 +310,7 @@ class DocumentImeSerializer {
 
   TextPosition _documentToImePosition(DocumentPosition docPosition) {
     editorImeLog.fine("Converting DocumentPosition to IME TextPosition: $docPosition");
-    final imeRange = _docTextNodesToImeRanges[docPosition.nodeId];
+    final imeRange = docTextNodesToImeRanges[docPosition.nodeId];
     if (imeRange == null) {
       throw Exception("No such document position in the IME content: $docPosition");
     }
@@ -336,15 +339,15 @@ class DocumentImeSerializer {
   }
 
   TextEditingValue toTextEditingValue() {
-    editorImeLog.fine("Creating TextEditingValue from document. Selection: $_selection");
-    editorImeLog.fine("Text:\n'$_imeText'");
-    final imeSelection = documentToImeSelection(_selection);
+    editorImeLog.fine("Creating TextEditingValue from document. Selection: $selection");
+    editorImeLog.fine("Text:\n'$imeText'");
+    final imeSelection = documentToImeSelection(selection);
     editorImeLog.fine("Selection: $imeSelection");
-    final imeComposingRegion = documentToImeRange(_composingRegion);
+    final imeComposingRegion = documentToImeRange(composingRegion);
     editorImeLog.fine("Composing region: $imeComposingRegion");
 
     return TextEditingValue(
-      text: _imeText,
+      text: imeText,
       selection: imeSelection,
       composing: imeComposingRegion,
     );

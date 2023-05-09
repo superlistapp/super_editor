@@ -134,7 +134,9 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
 
     _textDeltasDocumentEditor = TextDeltasDocumentEditor(
       editor: widget.editContext.editor,
+      documentLayoutResolver: () => widget.editContext.documentLayout,
       selection: widget.editContext.composer.selectionNotifier,
+      composerPreferences: widget.editContext.composer.preferences,
       composingRegion: widget.editContext.composer.composingRegion,
       commonOps: widget.editContext.commonOps,
       onPerformAction: (action) => _imeClient.performAction(action),
