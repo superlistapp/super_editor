@@ -421,7 +421,7 @@ void main() {
 
     // Note: Some Android devices report ENTER and BACKSPACE as hardware keys. Other Android
     //       devices report "\n" insertion and deletion IME deltas, instead.
-    group('on Xiaomi Redmi tablet', () {
+    group('on Xiaomi Redmi tablet (Android 12 SP1A)', () {
       testWidgetsOnAndroid('applies list of deltas when inserting new lines', (tester) async {
         // This test simulates inserting a line break in the middle of the text,
         // followed by a non-text delta placing the selection/composing region on the new line.
