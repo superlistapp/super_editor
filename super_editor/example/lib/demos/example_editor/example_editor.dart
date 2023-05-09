@@ -305,7 +305,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: _brightness,
-      builder: (context, _) {
+      builder: (context) {
         return Theme(
           data: ThemeData(brightness: _brightness.value),
           child: Builder(
@@ -426,7 +426,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
           androidToolbarBuilder: (_) => ListenableBuilder(
             listenable: _brightness,
-            builder: (context, _) {
+            builder: (context) {
               return Theme(
                 data: ThemeData(brightness: _brightness.value),
                 child: AndroidTextEditingFloatingToolbar(
@@ -440,7 +440,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           ),
           iOSToolbarBuilder: (_) => ListenableBuilder(
             listenable: _brightness,
-            builder: (context, _) {
+            builder: (context) {
               return Theme(
                 data: ThemeData(brightness: _brightness.value),
                 child: IOSTextEditingFloatingToolbar(
