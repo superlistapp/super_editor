@@ -37,7 +37,7 @@ void main() {
           .useStylesheet(_stylesheet)
           .pump();
 
-      final doc = testContext.editContext.editor.document;
+      final doc = testContext.editContext.document;
 
       final firstParagraphId = doc.nodes[0].id;
       final secondParagraphId = doc.nodes[1].id;
@@ -46,9 +46,9 @@ void main() {
       expect(SuperEditorInspector.findParagraphStyle(firstParagraphId)!.color, Colors.red);
 
       // Remove the second paragraph.
-      testContext.editContext.editor.executeCommand(
-        DeleteNodeCommand(nodeId: secondParagraphId),
-      );
+      testContext.editContext.editor.execute([
+        DeleteNodeRequest(nodeId: secondParagraphId),
+      ]);
       await tester.pump();
 
       // The first paragraph is now the only paragraph in the document.

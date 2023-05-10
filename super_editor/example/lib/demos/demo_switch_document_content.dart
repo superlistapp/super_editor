@@ -12,23 +12,25 @@ class SwitchDocumentDemo extends StatefulWidget {
 
 class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
   late Document _doc1;
-  DocumentEditor? _docEditor1;
+  late Editor _docEditor1;
 
   late Document _doc2;
-  DocumentEditor? _docEditor2;
+  late Editor _docEditor2;
 
-  DocumentEditor? _activeDocumentEditor;
+  late Editor _activeDocumentEditor;
+  late Document _activeDocument;
 
   @override
   void initState() {
     super.initState();
     _doc1 = _createDocument1();
-    _docEditor1 = DocumentEditor(document: _doc1 as MutableDocument);
+    _docEditor1 = createDefaultDocumentEditor(document: _doc1 as MutableDocument);
 
     _doc2 = _createDocument2();
-    _docEditor2 = DocumentEditor(document: _doc2 as MutableDocument);
+    _docEditor2 = createDefaultDocumentEditor(document: _doc2 as MutableDocument);
 
     _activeDocumentEditor = _docEditor1;
+    _activeDocument = _doc1;
   }
 
   @override
@@ -44,7 +46,8 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
           _buildDocSelector(),
           Expanded(
             child: SuperEditor(
-              editor: _activeDocumentEditor!,
+              editor: _activeDocumentEditor,
+              document: _activeDocument,
               stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
               ),
@@ -85,7 +88,7 @@ Document _createDocument1() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'Document #1',
         ),
@@ -94,7 +97,7 @@ Document _createDocument1() {
         },
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text:
               'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
@@ -108,7 +111,7 @@ Document _createDocument2() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'Document #2',
         ),
@@ -117,7 +120,7 @@ Document _createDocument2() {
         },
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
             text:
                 'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),

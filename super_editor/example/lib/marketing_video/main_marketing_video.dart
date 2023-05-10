@@ -19,27 +19,28 @@ class MarketingVideo extends StatefulWidget {
 
 class _MarketingVideoState extends State<MarketingVideo> {
   final _docLayoutKey = GlobalKey();
-  late DocumentEditor _editor;
+  late MutableDocument _document;
+  late Editor _editor;
   DocumentComposer? _composer;
 
   @override
   void initState() {
     super.initState();
 
-    final doc = MutableDocument(
+    _document = MutableDocument(
       nodes: [
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(text: ''),
         ),
       ],
     );
-    _editor = DocumentEditor(document: doc);
+    _editor = createDefaultDocumentEditor(document: _document);
     _composer = DocumentComposer(
         initialSelection: DocumentSelection.collapsed(
       position: DocumentPosition(
-        nodeId: doc.nodes.first.id,
-        nodePosition: doc.nodes.first.endPosition,
+        nodeId: _document.nodes.first.id,
+        nodePosition: _document.nodes.first.endPosition,
       ),
     ));
 
@@ -55,6 +56,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
   Future<void> _startRobot() async {
     final robot = DocumentEditingRobot(
       editor: _editor,
+      document: _document,
       composer: _composer!,
       documentLayoutFinder: () => _docLayoutKey.currentState as DocumentLayout?,
     );
@@ -197,6 +199,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
         child: SuperEditor(
           documentLayoutKey: _docLayoutKey,
           editor: _editor,
+          document: _document,
           composer: _composer,
           stylesheet: defaultStylesheet.copyWith(
             documentPadding: const EdgeInsets.all(16),
@@ -250,19 +253,21 @@ const headerAttribution = NamedAttribution('header');
 
 class DocumentEditingRobot {
   DocumentEditingRobot({
-    required DocumentEditor editor,
+    required Editor editor,
+    required Document document,
     required DocumentComposer composer,
     required DocumentLayoutFinder documentLayoutFinder,
     int? randomSeed,
-  })  : _editor = editor,
+  })  : _document = document,
         _composer = composer,
         _editorOps = CommonEditorOperations(
             editor: editor,
+            document: document,
             composer: composer,
             documentLayoutResolver: documentLayoutFinder as DocumentLayout Function()),
         _random = Random(randomSeed);
 
-  final DocumentEditor _editor;
+  final Document _document;
   final DocumentComposer _composer;
   final CommonEditorOperations _editorOps;
   final _actionQueue = <RobotAction>[];
@@ -294,12 +299,12 @@ class DocumentEditingRobot {
         () {
           _composer.selection = DocumentSelection(
             base: DocumentPosition(
-              nodeId: _editor.document.nodes.first.id,
-              nodePosition: _editor.document.nodes.first.beginningPosition,
+              nodeId: _document.nodes.first.id,
+              nodePosition: _document.nodes.first.beginningPosition,
             ),
             extent: DocumentPosition(
-              nodeId: _editor.document.nodes.last.id,
-              nodePosition: _editor.document.nodes.last.endPosition,
+              nodeId: _document.nodes.last.id,
+              nodePosition: _document.nodes.last.endPosition,
             ),
           );
         },
@@ -363,10 +368,6 @@ class DocumentEditingRobot {
         _randomPauseBefore(
           () {
             _editorOps.insertCharacter(character);
-
-            if (character == ' ') {
-              _editorOps.convertParagraphByPatternMatching(_composer.selection!.extent.nodeId);
-            }
           },
         ),
       );
@@ -379,10 +380,6 @@ class DocumentEditingRobot {
         _randomPauseBefore(
           () {
             _editorOps.insertCharacter(character);
-
-            if (character == ' ') {
-              _editorOps.convertParagraphByPatternMatching(_composer.selection!.extent.nodeId);
-            }
           },
           true,
         ),

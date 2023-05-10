@@ -580,12 +580,13 @@ void main() {
 }
 
 Widget _buildHardwareKeyboardEditor(MutableDocument document, DocumentComposer composer) {
-  final editor = DocumentEditor(document: document);
+  final editor = createDefaultDocumentEditor(document: document);
 
   return MaterialApp(
     home: Scaffold(
       body: SuperEditor(
         editor: editor,
+        document: document,
         composer: composer,
         // Make the text small so that the test paragraphs fit on a single
         // line, so that we can place the caret on the left/right halves

@@ -323,12 +323,15 @@ void main() {
 }
 
 Widget _createTestApp({required DocumentGestureMode gestureMode, required GlobalKey docKey}) {
-  final editor = _createTestDocEditor();
+  final doc = _createTestDocument();
+  final editor = _createTestDocEditor(doc);
+
   return MaterialApp(
     home: Scaffold(
       body: SuperEditor(
         documentLayoutKey: docKey,
         editor: editor,
+        document: doc,
         gestureMode: gestureMode,
       ),
     ),
@@ -386,8 +389,8 @@ Offset _computeExpectedMobileCaretOffset(WidgetTester tester, GlobalKey docKey, 
   return Offset(extentRect.left, extentRect.top);
 }
 
-DocumentEditor _createTestDocEditor() {
-  return DocumentEditor(document: _createTestDocument());
+Editor _createTestDocEditor(MutableDocument document) {
+  return createDefaultDocumentEditor(document: document);
 }
 
 MutableDocument _createTestDocument() {

@@ -379,7 +379,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
   }
 
-  void _onDocumentChange() {
+  void _onDocumentChange(_) {
     _editingController.hideToolbar();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {

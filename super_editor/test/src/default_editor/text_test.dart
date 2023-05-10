@@ -17,9 +17,9 @@ void main() {
             )
           ],
         );
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
 
-        final command = ToggleTextAttributionsCommand(
+        final request = ToggleTextAttributionsRequest(
           documentSelection: const DocumentSelection(
             base: DocumentPosition(
               nodeId: 'paragraph',
@@ -38,7 +38,7 @@ void main() {
           attributions: {boldAttribution},
         );
 
-        editor.executeCommand(command);
+        editor.execute([request]);
 
         final boldedText = (document.nodes.first as ParagraphNode).text;
         expect(boldedText.getAllAttributionsAt(0), <dynamic>{});
@@ -107,7 +107,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -145,7 +145,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a non-text node to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           HorizontalRuleNode(id: 'horizontal_rule'),
         );
 
@@ -176,7 +176,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -227,7 +227,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -257,7 +257,7 @@ void main() {
         // The handler should insert a character
         expect(result, ExecutionInstruction.haltExecution);
         expect(
-          (editContext.editor.document.nodes.first as TextNode).text.text,
+          (editContext.document.nodes.first as TextNode).text.text,
           'aThis is some text',
         );
       });
@@ -266,7 +266,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -296,7 +296,7 @@ void main() {
         // The handler should insert a character
         expect(result, ExecutionInstruction.haltExecution);
         expect(
-          (editContext.editor.document.nodes.first as TextNode).text.text,
+          (editContext.document.nodes.first as TextNode).text.text,
           'ßThis is some text',
         );
       });
@@ -375,17 +375,19 @@ void main() {
   });
 }
 
-EditContext _createEditContext() {
+SuperEditorContext _createEditContext() {
   final document = MutableDocument();
-  final documentEditor = DocumentEditor(document: document);
+  final documentEditor = createDefaultDocumentEditor(document: document);
   final fakeLayout = FakeDocumentLayout();
   final composer = DocumentComposer();
-  return EditContext(
+  return SuperEditorContext(
     editor: documentEditor,
+    document: document,
     getDocumentLayout: () => fakeLayout,
     composer: composer,
     commonOps: CommonEditorOperations(
       editor: documentEditor,
+      document: document,
       composer: composer,
       documentLayoutResolver: () => fakeLayout,
     ),

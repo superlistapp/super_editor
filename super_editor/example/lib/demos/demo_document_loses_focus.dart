@@ -11,13 +11,13 @@ class LoseFocusDemo extends StatefulWidget {
 
 class _LoseFocusDemoState extends State<LoseFocusDemo> {
   late Document _doc;
-  late DocumentEditor _docEditor;
+  late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createDocument1();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
   }
 
   @override
@@ -39,6 +39,7 @@ class _LoseFocusDemoState extends State<LoseFocusDemo> {
               ),
               child: SuperEditor(
                 editor: _docEditor,
+                document: _doc,
                 inputSource: TextInputSource.ime,
                 stylesheet: defaultStylesheet.copyWith(
                   documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
@@ -67,7 +68,7 @@ Document _createDocument1() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'Document #1',
         ),
@@ -76,7 +77,7 @@ Document _createDocument1() {
         },
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text:
               'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',

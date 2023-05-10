@@ -19,7 +19,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
   late Document _doc;
-  late DocumentEditor _docEditor;
+  final _docChangeSignal = SignalNotifier();
+  late Editor _docEditor;
   late DocumentComposer _composer;
   late CommonEditorOperations _docOps;
 
@@ -45,12 +46,13 @@ class _ExampleEditorState extends State<ExampleEditor> {
   @override
   void initState() {
     super.initState();
-    _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _doc = createInitialDocument()..addListener(_onDocumentChange);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
     _composer = DocumentComposer();
     _composer.selectionNotifier.addListener(_hideOrShowToolbar);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
+      document: _doc,
       composer: _composer,
       documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
     );
@@ -68,6 +70,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _editorFocusNode.dispose();
     _composer.dispose();
     super.dispose();
+  }
+
+  void _onDocumentChange(_) {
+    _hideOrShowToolbar();
+    _docChangeSignal.notifyListeners();
   }
 
   void _hideOrShowToolbar() {
@@ -139,6 +146,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           anchor: _textSelectionAnchor,
           editorFocusNode: _editorFocusNode,
           editor: _docEditor,
+          document: _doc,
           composer: _composer,
           closeToolbar: _hideEditorToolbar,
         );
@@ -397,6 +405,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         config: _debugConfig ?? const SuperEditorDebugVisualsConfig(),
         child: SuperEditor(
           editor: _docEditor,
+          document: _doc,
           composer: _composer,
           focusNode: _editorFocusNode,
           scrollController: _scrollController,
@@ -461,7 +470,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
   Widget _buildMountedToolbar() {
     return MultiListenableBuilder(
       listenables: <Listenable>{
-        _doc,
+        _docChangeSignal,
         _composer.selectionNotifier,
       },
       builder: (_) {

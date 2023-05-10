@@ -12,6 +12,7 @@ export 'src/core/document_interaction.dart';
 export 'src/core/document_layout.dart';
 export 'src/core/document_selection.dart';
 export 'src/core/edit_context.dart';
+export 'src/core/editor.dart';
 export 'src/core/styles.dart';
 
 // Super Editor
@@ -20,6 +21,8 @@ export 'src/default_editor/blockquote.dart';
 export 'src/default_editor/box_component.dart';
 export 'src/default_editor/common_editor_operations.dart';
 export 'src/default_editor/debug_visualization.dart';
+export 'src/default_editor/default_document_editor.dart';
+export 'src/default_editor/default_document_editor_reactions.dart';
 export 'src/default_editor/document_caret_overlay.dart';
 export 'src/default_editor/document_focus_and_selection_policies.dart';
 export 'src/infrastructure/document_gestures.dart';
@@ -58,6 +61,7 @@ export 'src/infrastructure/platforms/android/android_document_controls.dart';
 export 'src/infrastructure/platforms/ios/ios_document_controls.dart';
 export 'src/infrastructure/platforms/mobile_documents.dart';
 export 'src/infrastructure/scrolling_diagnostics/scrolling_diagnostics.dart';
+export 'src/infrastructure/signal_notifier.dart';
 export 'src/infrastructure/strings.dart';
 export 'src/infrastructure/super_textfield/super_textfield.dart';
 export 'src/infrastructure/touch_controls.dart';

@@ -41,7 +41,7 @@ void main() {
           ),
         ]);
 
-        final listItemNode = editContext.editor.document.nodes.first;
+        final listItemNode = editContext.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
       });
@@ -80,7 +80,7 @@ void main() {
           ),
         ]);
 
-        final listItemNode = editContext.editor.document.nodes.first;
+        final listItemNode = editContext.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
       });
@@ -112,7 +112,7 @@ void main() {
           ),
         ]);
 
-        final listItemNode = editContext.editor.document.nodes.first;
+        final listItemNode = editContext.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
       });
@@ -151,7 +151,7 @@ void main() {
           ),
         ]);
 
-        final listItemNode = editContext.editor.document.nodes.first;
+        final listItemNode = editContext.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
       });
@@ -176,7 +176,7 @@ void main() {
           ),
         ]);
 
-        final paragraphNode = editContext.editor.document.nodes.first;
+        final paragraphNode = editContext.document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, "1 ");
       });
@@ -208,7 +208,7 @@ void main() {
           ),
         ]);
 
-        final paragraphNode = editContext.editor.document.nodes.first;
+        final paragraphNode = editContext.document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, " 1 ");
       });
@@ -428,7 +428,7 @@ void main() {
   });
 }
 
-EditContext _createEditContextWithParagraph() {
+SuperEditorContext _createEditContextWithParagraph() {
   final document = MutableDocument(
     nodes: [
       ParagraphNode(
@@ -451,7 +451,7 @@ EditContext _createEditContextWithParagraph() {
   );
 }
 
-void _typeKeys(EditContext editContext, List<FakeRawKeyDownEvent> keys) {
+void _typeKeys(SuperEditorContext editContext, List<FakeRawKeyDownEvent> keys) {
   for (final key in keys) {
     anyCharacterToInsertInParagraph(
       editContext: editContext,

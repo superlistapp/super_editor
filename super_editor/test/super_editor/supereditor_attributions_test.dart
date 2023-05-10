@@ -212,7 +212,7 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final doc = context.editContext.editor.document;
+        final doc = context.editContext.document;
         final composer = context.editContext.composer;
 
         // Place the caret at the end of the paragraph.

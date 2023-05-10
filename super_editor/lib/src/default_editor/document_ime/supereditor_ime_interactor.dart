@@ -42,7 +42,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
   final bool autofocus;
 
   /// All resources that are needed to edit a document.
-  final EditContext editContext;
+  final SuperEditorContext editContext;
 
   /// Whether the editor's selection should be removed when the editor closes or loses
   /// its IME connection.
@@ -134,6 +134,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
 
     _textDeltasDocumentEditor = TextDeltasDocumentEditor(
       editor: widget.editContext.editor,
+      document: widget.editContext.document,
       documentLayoutResolver: () => widget.editContext.documentLayout,
       selection: widget.editContext.composer.selectionNotifier,
       composerPreferences: widget.editContext.composer.preferences,

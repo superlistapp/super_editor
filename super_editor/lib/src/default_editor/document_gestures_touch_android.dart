@@ -371,7 +371,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
   }
 
-  void _onDocumentChange() {
+  void _onDocumentChange(_) {
     _editingController.hideToolbar();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {

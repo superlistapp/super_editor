@@ -260,7 +260,7 @@ void main() {
             text: AttributedText(text: "This is a sentence"),
           ),
         ]);
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -271,11 +271,13 @@ void main() {
         );
         final commonOps = CommonEditorOperations(
           editor: editor,
+          document: document,
           composer: composer,
           documentLayoutResolver: () => FakeDocumentLayout(),
         );
         final softwareKeyboardHandler = TextDeltasDocumentEditor(
           editor: editor,
+          document: document,
           documentLayoutResolver: () => FakeDocumentLayout(),
           selection: composer.selectionNotifier,
           composerPreferences: composer.preferences,
@@ -354,6 +356,7 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editContext.editor,
+                document: editContext.document,
                 composer: editContext.composer,
                 inputSource: TextInputSource.ime,
                 gestureMode: DocumentGestureMode.mouse,
@@ -389,7 +392,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Ensure that the empty paragraph now reads "¨".
-        expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "¨");
+        expect((editContext.document.nodes[1] as ParagraphNode).text.text, "¨");
 
         // Ensure that the reported composing region respects the removal of the
         // invisible placeholder characters. THIS IS WHERE THE ORIGINAL BUG HAPPENED.
@@ -415,7 +418,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Ensure that the empty paragraph now reads "ü".
-        expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "ü");
+        expect((editContext.document.nodes[1] as ParagraphNode).text.text, "ü");
       });
     });
 
@@ -705,7 +708,7 @@ Paragraph two
         final selection = SuperEditorInspector.findDocumentSelection()!;
         final base = (selection.base.nodePosition as TextNodePosition).offset;
         final extent = (selection.extent.nodePosition as TextNodePosition).offset;
-        final affinity = context.editContext.editor.document.getAffinityForSelection(selection);
+        final affinity = context.editContext.document.getAffinityForSelection(selection);
 
         // Ensure we sent the same base, extent and affinity to the platform.
         expect(selectionBase, base);

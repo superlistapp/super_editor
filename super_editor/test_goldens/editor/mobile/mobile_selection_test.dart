@@ -730,7 +730,8 @@ void _testParagraphSelection(
 
     final dragLine = ValueNotifier<_Line?>(null);
 
-    final editor = _createSingleParagraphEditor();
+    final document = _createSingleParagraphDoc();
+    final editor = _createSingleParagraphEditor(document);
     final composer = DocumentComposer();
 
     final content = _buildScaffold(
@@ -738,6 +739,7 @@ void _testParagraphSelection(
       child: SuperEditor(
         documentLayoutKey: docKey,
         editor: editor,
+        document: document,
         composer: composer,
         gestureMode: platform,
         stylesheet: Stylesheet(
@@ -791,8 +793,8 @@ TextStyle _textStyleBuilder(attributions) {
   );
 }
 
-DocumentEditor _createSingleParagraphEditor() {
-  return DocumentEditor(document: _createSingleParagraphDoc());
+Editor _createSingleParagraphEditor(MutableDocument document) {
+  return createDefaultDocumentEditor(document: document);
 }
 
 MutableDocument _createSingleParagraphDoc() {

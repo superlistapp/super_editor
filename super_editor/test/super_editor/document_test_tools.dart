@@ -333,17 +333,19 @@ class TestDocumentConfigurator {
 
     final layoutKey = GlobalKey();
     final focusNode = _focusNode ?? FocusNode();
-    final editor = DocumentEditor(document: _document!);
+    final editor = createDefaultDocumentEditor(document: _document!);
     final composer = DocumentComposer(initialSelection: _selection);
     // ignore: prefer_function_declarations_over_variables
     final layoutResolver = () => layoutKey.currentState as DocumentLayout;
     final commonOps = CommonEditorOperations(
       editor: editor,
+      document: _document!,
       documentLayoutResolver: layoutResolver,
       composer: composer,
     );
-    final editContext = EditContext(
+    final editContext = SuperEditorContext(
       editor: editor,
+      document: _document!,
       getDocumentLayout: layoutResolver,
       composer: composer,
       commonOps: commonOps,
@@ -392,6 +394,7 @@ class TestDocumentConfigurator {
       key: _key,
       documentLayoutKey: testDocumentContext.layoutKey,
       editor: testDocumentContext.editContext.editor,
+      document: testDocumentContext.editContext.document,
       composer: testDocumentContext.editContext.composer,
       focusNode: testDocumentContext.focusNode,
       inputSource: _inputSource,
@@ -426,7 +429,7 @@ class TestDocumentContext {
 
   final FocusNode focusNode;
   final GlobalKey layoutKey;
-  final EditContext editContext;
+  final SuperEditorContext editContext;
 }
 
 class ConfiguredSuperEditorWidget {
@@ -633,4 +636,12 @@ class FakeImageComponentBuilder implements ComponentBuilder {
       ),
     );
   }
+}
+
+class StandardEditorPieces {
+  StandardEditorPieces(this.document, this.composer, this.editor);
+
+  final Document document;
+  final DocumentComposer composer;
+  final Editor editor;
 }

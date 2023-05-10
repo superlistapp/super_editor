@@ -133,7 +133,6 @@ class KeyboardEditingToolbar extends StatelessWidget {
         nodePosition: const TextNodePosition(offset: 4),
       ),
     );
-    commonOps.convertParagraphByPatternMatching(selectedNode.id);
   }
 
   void _closeKeyboard() {

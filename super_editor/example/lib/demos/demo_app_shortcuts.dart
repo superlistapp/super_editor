@@ -8,7 +8,25 @@ class AppShortcutsDemo extends StatefulWidget {
 }
 
 class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
+  late MutableDocument _doc;
+  late Editor _editor;
+
   String _message = '';
+
+  @override
+  void initState() {
+    super.initState();
+
+    _doc = MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(text: 'Random paragraph....'),
+        ),
+      ],
+    );
+    _editor = createDefaultDocumentEditor(document: _doc);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,16 +51,8 @@ class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
               children: [
                 Expanded(
                   child: SuperEditor(
-                    editor: DocumentEditor(
-                      document: MutableDocument(
-                        nodes: [
-                          ParagraphNode(
-                            id: DocumentEditor.createNodeId(),
-                            text: AttributedText(text: 'Random paragraph....'),
-                          ),
-                        ],
-                      ),
-                    ),
+                    editor: _editor,
+                    document: _doc,
                   ),
                 ),
                 const TextField(

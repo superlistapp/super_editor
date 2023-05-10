@@ -261,7 +261,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     editorImeLog.fine("[DocumentImeInputClient] - Selection: ${textDeltasDocumentEditor.selection.value}");
     editorImeLog.fine("[DocumentImeInputClient] - Composing region: ${textDeltasDocumentEditor.composingRegion.value}");
     final imeSerialization = DocumentImeSerializer(
-      textDeltasDocumentEditor.editor.document,
+      textDeltasDocumentEditor.document,
       textDeltasDocumentEditor.selection.value!,
       textDeltasDocumentEditor.composingRegion.value,
     );

@@ -28,23 +28,25 @@ class TaskAndChatWithCustomScrollViewDemo extends StatefulWidget {
 class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCustomScrollViewDemo> {
   final _scrollViewportKey = GlobalKey();
 
-  late DocumentEditor _editor;
+  late MutableDocument _doc;
+  late Editor _editor;
 
   @override
   void initState() {
     super.initState();
 
-    _editor = DocumentEditor(
-      document: MutableDocument(
-        nodes: [
-          ParagraphNode(
-            id: '1234',
-            text: AttributedText(
-                text:
-                    'Notice that when this document is short enough, the messages are pushed to the bottom of the viewport.\n\nTry adding more content to see things scroll.'),
-          )
-        ],
-      ),
+    _doc = MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: '1234',
+          text: AttributedText(
+              text:
+                  'Notice that when this document is short enough, the messages are pushed to the bottom of the viewport.\n\nTry adding more content to see things scroll.'),
+        )
+      ],
+    );
+    _editor = createDefaultDocumentEditor(
+      document: _doc,
     );
   }
 
@@ -63,6 +65,7 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
                 SliverToBoxAdapter(
                   child: SuperEditor(
                     editor: _editor,
+                    document: _doc,
                     stylesheet: defaultStylesheet.copyWith(
                       documentPadding: const EdgeInsets.all(48),
                     ),

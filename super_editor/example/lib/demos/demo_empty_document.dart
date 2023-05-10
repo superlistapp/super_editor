@@ -16,13 +16,13 @@ class EmptyDocumentDemo extends StatefulWidget {
 
 class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
   late Document _doc;
-  late DocumentEditor _docEditor;
+  late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createDocument1();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
   }
 
   @override
@@ -35,6 +35,7 @@ class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
     return SafeArea(
       child: SuperEditor(
         editor: _docEditor,
+        document: _doc,
         gestureMode: DocumentGestureMode.mouse,
         inputSource: TextInputSource.keyboard,
       ),

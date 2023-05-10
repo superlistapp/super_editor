@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
@@ -7,10 +8,11 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import '../default_editor/document_ime/document_input_ime.dart';
 import 'document_selection.dart';
+import 'editor.dart';
 
 /// Maintains a [DocumentSelection] within a [Document] and
 /// uses that selection to edit the document.
-class DocumentComposer with ChangeNotifier {
+class DocumentComposer with ChangeNotifier implements Editable {
   /// Constructs a [DocumentComposer] with the given [initialSelection].
   ///
   /// The [initialSelection] may be omitted if no initial selection is
@@ -139,6 +141,16 @@ class DocumentComposer with ChangeNotifier {
 
   /// Returns the composition preferences for this composer.
   ComposerPreferences get preferences => _preferences;
+
+  @override
+  void onTransactionEnd(List<EditEvent> edits) {
+    // TODO: implement onTransactionEnd
+  }
+
+  @override
+  void onTransactionStart() {
+    // TODO: implement onTransactionStart
+  }
 }
 
 /// Holds preferences about user input, to be used for the
@@ -207,6 +219,147 @@ class ComposerPreferences with ChangeNotifier {
   }
 }
 
+/// A [ChangeSelectionRequest] that represents a user's desire to push the caret upstream
+/// or downstream, such as when pressing LEFT or RIGHT.
+///
+/// It's useful to capture the user's desire to push the caret because sometimes the caret
+/// needs to jump past a piece of content that doesn't allow partial selection, such as a
+/// user tag. In the case of pushing the caret, we know which direction to jump over that
+/// content.
+class PushCaretRequest extends ChangeSelectionRequest {
+  PushCaretRequest(
+    DocumentPosition newPosition,
+    this.direction,
+  ) : super(DocumentSelection.collapsed(position: newPosition), SelectionChangeType.pushCaret,
+            SelectionReason.userInteraction);
+
+  final TextAffinity direction;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other && other is PushCaretRequest && runtimeType == other.runtimeType && direction == other.direction;
+
+  @override
+  int get hashCode => super.hashCode ^ direction.hashCode;
+}
+
+/// A [ChangeSelectionRequest] that represents a user's desire to expand an existing selection
+/// further upstream or downstream, such as when pressing SHIFT+LEFT or SHIFT+RIGHT.
+///
+/// It's useful to capture the user's desire to expand the current selection because sometimes
+/// the selection needs to jump past a piece of content that doesn't allow partial selection,
+/// such as a user tag. In the case of expanding the selection, we know which direction to jump
+/// over that content.
+class ExpandSelectionRequest extends ChangeSelectionRequest {
+  const ExpandSelectionRequest(
+    DocumentSelection newSelection,
+  ) : super(newSelection, SelectionChangeType.expandSelection, SelectionReason.userInteraction);
+}
+
+/// A [ChangeSelectionRequest] that represents a user's desire to expand an existing selection
+/// further upstream or downstream, such as when pressing SHIFT+LEFT or SHIFT+RIGHT.
+///
+/// It's useful to capture the user's desire to expand the current selection because sometimes
+/// the selection needs to jump past a piece of content that doesn't allow partial selection,
+/// such as a user tag. In the case of expanding the selection, we know which direction to jump
+/// over that content.
+class CollapseSelectionRequest extends ChangeSelectionRequest {
+  CollapseSelectionRequest(
+    DocumentPosition newPosition,
+  ) : super(DocumentSelection.collapsed(position: newPosition), SelectionChangeType.collapseSelection,
+            SelectionReason.userInteraction);
+}
+
+/// [EditRequest] that changes the [DocumentSelection] to the given [newSelection].
+class ChangeSelectionRequest implements EditRequest {
+  const ChangeSelectionRequest(
+    this.newSelection,
+    this.changeType,
+    this.reason, {
+    this.notifyListeners = true,
+  });
+
+  final DocumentSelection? newSelection;
+
+  /// Whether to notify [DocumentComposer] listeners when the selection is changed.
+  // TODO: configure the composer so it plugs into the editor in way that this is unnecessary.
+  final bool notifyListeners;
+
+  final SelectionChangeType changeType;
+
+  /// The reason that the selection changed, such as "user interaction".
+  final String reason;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChangeSelectionRequest &&
+          runtimeType == other.runtimeType &&
+          newSelection == other.newSelection &&
+          notifyListeners == other.notifyListeners &&
+          reason == other.reason;
+
+  @override
+  int get hashCode => newSelection.hashCode ^ notifyListeners.hashCode ^ reason.hashCode;
+}
+
+/// An [EditCommand] that changes the [DocumentSelection] in the [DocumentComposer]
+/// to the [newSelection].
+class ChangeSelectionCommand implements EditCommand {
+  const ChangeSelectionCommand(
+    this.newSelection,
+    this.changeType,
+    this.reason, {
+    this.notifyListeners = true,
+  });
+
+  final DocumentSelection? newSelection;
+
+  /// Whether to notify [DocumentComposer] listeners when the selection is changed.
+  // TODO: configure the composer so it plugs into the editor in way that this is unnecessary.
+  final bool notifyListeners;
+
+  final SelectionChangeType changeType;
+
+  final String reason;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final composer = context.find<DocumentComposer>(Editor.composerKey);
+    final initialSelection = composer.selection;
+    composer.selection = newSelection;
+
+    executor.logChanges([
+      SelectionChangeEvent(
+        oldSelection: initialSelection,
+        newSelection: newSelection,
+        changeType: changeType,
+        reason: reason,
+      )
+    ]);
+  }
+}
+
+/// A [EditEvent] that represents a change to the user's selection within a document.
+class SelectionChangeEvent implements EditEvent {
+  const SelectionChangeEvent({
+    required this.oldSelection,
+    required this.newSelection,
+    required this.changeType,
+    required this.reason,
+  });
+
+  final DocumentSelection? oldSelection;
+  final DocumentSelection? newSelection;
+  final SelectionChangeType changeType;
+  // TODO: can we replace the concept of a `reason` with `changeType`
+  final String reason;
+
+  @override
+  String toString() => "[SelectionChangeEvent] - New selection: $newSelection, change type: $changeType";
+}
+
 /// Represents a change of a [DocumentSelection].
 ///
 /// The [reason] represents what cause the selection to change.
@@ -239,4 +392,27 @@ class SelectionReason {
 
   /// Represents a changed caused by an event which was not initiated by the user.
   static const contentChange = "contentChange";
+}
+
+enum SelectionChangeType {
+  /// Place the caret, or an expanded selection, somewhere in the document, with no relationship to the previous selection.
+  place,
+
+  /// Place the caret based on a desire to move the previous caret position upstream or downstream.
+  pushCaret,
+
+  /// Expand a caret to an expanded selection, or move the base or extent of an already expanded selection.
+  expandSelection,
+
+  /// Collapse an expanded selection down to a caret.
+  collapseSelection,
+
+  /// Change the selection as the result of inserting content, e.g., typing a character, pasting content.
+  insertContent,
+
+  /// Change the selection by deleting content, e.g., pressing backspace or delete.
+  deleteContent,
+
+  /// Clears the document selection, such as when a user taps in a textfield outside the editor.
+  clearSelection,
 }

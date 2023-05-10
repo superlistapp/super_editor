@@ -10,13 +10,13 @@ class DocumentStylesDemo extends StatefulWidget {
 
 class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
   late Document _doc;
-  late DocumentEditor _docEditor;
+  late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createSampleDocument();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
   }
 
   Stylesheet _createStyles() {
@@ -135,6 +135,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
+      document: _doc,
       stylesheet: _createStyles(),
     );
   }
@@ -144,41 +145,41 @@ MutableDocument _createSampleDocument() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(text: 'Header 1'),
         metadata: {'blockType': header1Attribution},
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(text: 'Header 2'),
         metadata: {'blockType': header2Attribution},
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(text: 'Header 3'),
         metadata: {'blockType': header3Attribution},
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(text: 'Header 4'),
         metadata: {'blockType': header4Attribution},
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(text: 'Header 5'),
         metadata: {'blockType': header5Attribution},
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(text: 'Header 6'),
         metadata: {'blockType': header6Attribution},
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(text: 'This is a paragraph of regular text'),
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(text: 'This is a blockquote'),
         metadata: {'blockType': blockquoteAttribution},
       ),

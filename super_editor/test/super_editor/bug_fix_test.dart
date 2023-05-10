@@ -13,7 +13,7 @@ void main() {
             ParagraphNode(id: "1", text: AttributedText(text: "")),
           ],
         );
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -28,6 +28,7 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
+                document: document,
                 composer: composer,
                 gestureMode: DocumentGestureMode.mouse,
                 inputSource: TextInputSource.keyboard,
@@ -82,7 +83,7 @@ void main() {
             ParagraphNode(id: "1", text: AttributedText(text: "")),
           ],
         );
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -97,6 +98,7 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
+                document: document,
                 composer: composer,
                 gestureMode: DocumentGestureMode.mouse,
                 inputSource: TextInputSource.keyboard,
