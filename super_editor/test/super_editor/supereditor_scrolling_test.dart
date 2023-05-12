@@ -143,12 +143,18 @@ void main() {
 
       // Place the caret at the end of the document, which causes the editor to
       // scroll to the bottom.
-      docContext.editContext.composer.selection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: lastParagraph.id,
-          nodePosition: lastParagraph.endPosition,
+      docContext.editContext.editor.execute([
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: lastParagraph.id,
+              nodePosition: lastParagraph.endPosition,
+            ),
+          ),
+          SelectionChangeType.place,
+          SelectionReason.userInteraction,
         ),
-      );
+      ]);
 
       docContext.focusNode.requestFocus();
       await tester.pumpAndSettle();
@@ -201,12 +207,18 @@ void main() {
 
       // Place the caret at the end of the document, which should cause the
       // editor to scroll to the bottom.
-      docContext.editContext.composer.selection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: lastParagraph.id,
-          nodePosition: lastParagraph.endPosition,
+      docContext.editContext.editor.execute([
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: lastParagraph.id,
+              nodePosition: lastParagraph.endPosition,
+            ),
+          ),
+          SelectionChangeType.place,
+          SelectionReason.userInteraction,
         ),
-      );
+      ]);
       docContext.focusNode.requestFocus();
       await tester.pumpAndSettle();
 
@@ -227,7 +239,7 @@ void main() {
       final scrollController = ScrollController();
 
       // Pump a editor with a size we know will cause the editor to be scrollable.
-      final testContext = await tester //
+      final docContext = await tester //
           .createDocument()
           .withLongTextContent()
           .withEditorSize(const Size(300, 100))
@@ -239,15 +251,18 @@ void main() {
 
       // Place the caret at the last paragraph, simulating an event that wasn't initiated by the user.
       // This paragraph is outside the viewport.
-      testContext.editContext.composer.setSelectionWithReason(
-        const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: '4',
-            nodePosition: TextNodePosition(offset: 0),
+      docContext.editContext.editor.execute([
+        const ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: '4',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
           ),
+          SelectionChangeType.place,
+          SelectionReason.contentChange,
         ),
-        SelectionReason.contentChange,
-      );
+      ]);
       await tester.pumpAndSettle();
 
       // Ensure the editor didn't scroll.

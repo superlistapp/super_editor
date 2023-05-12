@@ -808,7 +808,7 @@ Second Paragraph
         (tester) async {
       final focusNode = FocusNode();
 
-      await tester
+      final context = await tester
           .createDocument()
           .withLongTextContent()
           .withInputSource(TextInputSource.ime)
@@ -826,8 +826,6 @@ Second Paragraph
             ),
           )
           .pump();
-
-      final doc = SuperEditorInspector.findDocument()! as MutableDocument;
 
       // Place caret at the beginning of the text.
       await tester.placeCaretInParagraph('1', 0);
@@ -849,7 +847,9 @@ Second Paragraph
       expect(SuperEditorInspector.findDocumentSelection(), isNull);
 
       // Delete the selected node.
-      doc.deleteNodeAt(0);
+      context.editContext.editor.execute([
+        DeleteNodeRequest(nodeId: "1"),
+      ]);
 
       // Focus the editor.
       focusNode.requestFocus();
@@ -919,55 +919,6 @@ Second Paragraph
           ),
         ),
       );
-    });
-
-    test("emits a DocumentSelectionChange when changing selection by the notifier", () async {
-      final composer = DocumentComposer();
-
-      const newSelection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: "1",
-          nodePosition: TextNodePosition(offset: 0),
-        ),
-      );
-
-      // Ensure the stream emits the DocumentSelectionChange.
-      expectLater(
-        composer.selectionChanges,
-        emits(
-          DocumentSelectionChange(
-            selection: newSelection,
-            reason: SelectionReason.userInteraction,
-          ),
-        ),
-      );
-
-      // Update the selection, which should cause the stream to emit a value.
-      composer.selection = newSelection;
-    }, timeout: const Timeout(Duration(milliseconds: 500)));
-
-    test("notifies selectionNotifier when a new DocumentSelection is emitted", () {
-      final composer = DocumentComposer();
-
-      // Holds the selection emitted by the selectionNotifier.
-      DocumentSelection? emittedSelection;
-
-      const newSelection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: "1",
-          nodePosition: TextNodePosition(offset: 0),
-        ),
-      );
-
-      composer.selectionNotifier.addListener(() {
-        emittedSelection = composer.selectionNotifier.value;
-      });
-
-      // Emit a DocumentSelectionChange.
-      composer.setSelectionWithReason(newSelection);
-
-      // Ensure the listener was called and the selection in the selectionNotifier is correct.
-      expect(emittedSelection, newSelection);
     });
   });
 }

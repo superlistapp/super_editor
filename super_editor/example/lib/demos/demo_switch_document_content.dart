@@ -11,26 +11,32 @@ class SwitchDocumentDemo extends StatefulWidget {
 }
 
 class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
-  late Document _doc1;
+  late MutableDocument _doc1;
+  late MutableDocumentComposer _composer1;
   late Editor _docEditor1;
 
-  late Document _doc2;
+  late MutableDocument _doc2;
+  late MutableDocumentComposer _composer2;
   late Editor _docEditor2;
 
-  late Editor _activeDocumentEditor;
   late Document _activeDocument;
+  late DocumentComposer _activeComposer;
+  late Editor _activeDocumentEditor;
 
   @override
   void initState() {
     super.initState();
     _doc1 = _createDocument1();
-    _docEditor1 = createDefaultDocumentEditor(document: _doc1 as MutableDocument);
+    _composer1 = MutableDocumentComposer();
+    _docEditor1 = createDefaultDocumentEditor(document: _doc1, composer: _composer1);
 
     _doc2 = _createDocument2();
-    _docEditor2 = createDefaultDocumentEditor(document: _doc2 as MutableDocument);
+    _composer2 = MutableDocumentComposer();
+    _docEditor2 = createDefaultDocumentEditor(document: _doc2, composer: _composer2);
 
-    _activeDocumentEditor = _docEditor1;
     _activeDocument = _doc1;
+    _activeComposer = _composer1;
+    _activeDocumentEditor = _docEditor1;
   }
 
   @override
@@ -48,6 +54,7 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
             child: SuperEditor(
               editor: _activeDocumentEditor,
               document: _activeDocument,
+              composer: _activeComposer,
               stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
               ),
@@ -84,7 +91,7 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
   }
 }
 
-Document _createDocument1() {
+MutableDocument _createDocument1() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
@@ -107,7 +114,7 @@ Document _createDocument1() {
   );
 }
 
-Document _createDocument2() {
+MutableDocument _createDocument2() {
   return MutableDocument(
     nodes: [
       ParagraphNode(

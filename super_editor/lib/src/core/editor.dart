@@ -19,10 +19,10 @@ import 'document_composer.dart';
 /// experience:
 ///
 ///  - [EditRequest] - a desired change.
-///  - [EditCommand] - mutates editables to achieve a change.
+///  - [EditCommand] - mutates [Editable]s to achieve a change.
 ///  - [EditEvent] - describes a change that was made.
 ///  - [EditReaction] - (optionally) requests more changes after some original change.
-///  - [EditListener] - is notified of all changes made by a [Editor].
+///  - [EditListener] - is notified of all changes made by an [Editor].
 class Editor implements RequestDispatcher {
   static const Uuid _uuid = Uuid();
 
@@ -123,6 +123,12 @@ class Editor implements RequestDispatcher {
   /// of [EditEvent]s.
   @override
   void execute(List<EditRequest> requests) {
+    // print("Request execution:");
+    // for (final request in requests) {
+    //   print(" - ${request.runtimeType}");
+    // }
+    // print(StackTrace.current);
+
     if (_activeCommandCount == 0) {
       // This is the start of a new transaction.
       for (final editable in _context._resources.values) {
@@ -420,7 +426,7 @@ class DocumentEdit implements EditEvent {
 /// commands that were just executed.
 ///
 /// An [EditReaction] can use the given [executor] to spawn additional
-/// [EditCommand]s that should run in response the [changeList].
+/// [EditCommand]s that should run in response to the [changeList].
 abstract class EditReaction {
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList);
 }

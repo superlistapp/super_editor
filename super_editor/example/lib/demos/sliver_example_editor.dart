@@ -20,7 +20,8 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
   late ScrollController _scrollController;
   final _minimapKey = GlobalKey(debugLabel: "sliver_minimap");
 
-  late Document _doc;
+  late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
   late Editor _docEditor;
 
   @override
@@ -30,7 +31,8 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
     _scrollController = ScrollController();
 
     _doc = _createInitialDocument();
-    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -77,6 +79,7 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
                   child: SuperEditor(
                     editor: _docEditor,
                     document: _doc,
+                    composer: _composer,
                     stylesheet: defaultStylesheet.copyWith(
                       documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
                     ),
@@ -136,7 +139,7 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
   }
 }
 
-Document _createInitialDocument() {
+MutableDocument _createInitialDocument() {
   return MutableDocument(
     nodes: [
       ImageNode(

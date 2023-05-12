@@ -31,9 +31,9 @@ class TextDeltasDocumentEditor {
   final Editor editor;
   final Document document;
   final DocumentLayoutResolver documentLayoutResolver;
-  final ValueNotifier<DocumentSelection?> selection;
+  final ValueListenable<DocumentSelection?> selection;
+  final ValueListenable<DocumentRange?> composingRegion;
   final ComposerPreferences composerPreferences;
-  final ValueNotifier<DocumentRange?> composingRegion;
   final CommonEditorOperations commonOps;
 
   /// Handles newlines that are inserted as text, e.g., "\n" in deltas.
@@ -89,7 +89,11 @@ class TextDeltasDocumentEditor {
     // the IME composing region.
     editorImeLog.fine("After applying all deltas, converting the final composing region to a document range.");
     editorImeLog.fine("Raw IME delta composing region: ${textEditingDeltas.last.composing}");
-    composingRegion.value = _serializedDoc.imeToDocumentRange(textEditingDeltas.last.composing);
+    editor.execute([
+      ChangeComposingRegionRequest(
+        _serializedDoc.imeToDocumentRange(textEditingDeltas.last.composing),
+      ),
+    ]);
     editorImeLog.fine("Document composing region: ${composingRegion.value}");
 
     _nextImeValue = null;
@@ -150,11 +154,8 @@ class TextDeltasDocumentEditor {
       document,
       selection.value!,
       composingRegion.value,
+      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
     )..imeText = _previousImeValue.text;
-
-    editorOpsLog.fine("Updating Document Composer selection after text insertion.");
-    final newSelection = _serializedDoc.imeToDocumentSelection(delta.selection)!;
-    selection.value = newSelection;
   }
 
   void _applyReplacement(TextEditingDeltaReplacement delta) {
@@ -216,7 +217,13 @@ class TextDeltasDocumentEditor {
       // We got a selection from the platform.
       // This could happen in some software keyboards, like GBoard,
       // where the user can swipe over the spacebar to change the selection.
-      selection.value = docSelection;
+      editor.execute([
+        ChangeSelectionRequest(
+          docSelection,
+          SelectionChangeType.place,
+          SelectionReason.userInteraction,
+        ),
+      ]);
     }
 
     // Update the local IME value that changes with each delta.
@@ -228,7 +235,13 @@ class TextDeltasDocumentEditor {
     editorImeLog
         .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
     final selectionBeforeInsertion = selection.value;
-    selection.value = insertionSelection;
+    editor.execute([
+      ChangeSelectionRequest(
+        insertionSelection,
+        SelectionChangeType.place,
+        SelectionReason.userInteraction,
+      ),
+    ]);
 
     editorImeLog.fine("Inserting the text at the Document Composer's selection");
     final didInsert = _insertPlainText(
@@ -239,7 +252,13 @@ class TextDeltasDocumentEditor {
 
     if (!didInsert) {
       editorImeLog.fine("Failed to insert characters. Restoring previous selection.");
-      selection.value = selectionBeforeInsertion;
+      editor.execute([
+        ChangeSelectionRequest(
+          selectionBeforeInsertion,
+          SelectionChangeType.place,
+          SelectionReason.contentChange,
+        ),
+      ]);
     }
   }
 
@@ -288,7 +307,13 @@ class TextDeltasDocumentEditor {
     ));
 
     if (replacementSelection != null) {
-      selection.value = replacementSelection;
+      editor.execute([
+        ChangeSelectionRequest(
+          replacementSelection,
+          SelectionChangeType.place,
+          SelectionReason.contentChange,
+        ),
+      ]);
     }
     editorImeLog.fine("Replacing selection: $replacementSelection");
     editorImeLog.fine('With text: "$replacementText"');
@@ -327,7 +352,13 @@ class TextDeltasDocumentEditor {
     }
 
     editorImeLog.fine("Running selection deletion operation");
-    selection.value = docSelectionToDelete;
+    editor.execute([
+      ChangeSelectionRequest(
+        docSelectionToDelete,
+        SelectionChangeType.place,
+        SelectionReason.contentChange,
+      ),
+    ]);
     commonOps.deleteSelection();
   }
 
@@ -464,12 +495,18 @@ class TextDeltasDocumentEditor {
       ]);
 
       final newTextNode = document.getNodeById(newNodeId)!;
-      selection.value = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: newTextNode.id,
-          nodePosition: newTextNode.beginningPosition,
+      editor.execute([
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newTextNode.id,
+              nodePosition: newTextNode.beginningPosition,
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
         ),
-      );
+      ]);
 
       final newImeValue = _nextImeValue!;
       final imeNewlineIndex = newImeValue.text.indexOf("\n");

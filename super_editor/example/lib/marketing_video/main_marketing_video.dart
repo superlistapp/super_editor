@@ -20,8 +20,8 @@ class MarketingVideo extends StatefulWidget {
 class _MarketingVideoState extends State<MarketingVideo> {
   final _docLayoutKey = GlobalKey();
   late MutableDocument _document;
+  late MutableDocumentComposer _composer;
   late Editor _editor;
-  DocumentComposer? _composer;
 
   @override
   void initState() {
@@ -35,21 +35,22 @@ class _MarketingVideoState extends State<MarketingVideo> {
         ),
       ],
     );
-    _editor = createDefaultDocumentEditor(document: _document);
-    _composer = DocumentComposer(
-        initialSelection: DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: _document.nodes.first.id,
-        nodePosition: _document.nodes.first.endPosition,
+    _composer = MutableDocumentComposer(
+      initialSelection: DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: _document.nodes.first.id,
+          nodePosition: _document.nodes.first.endPosition,
+        ),
       ),
-    ));
+    );
+    _editor = createDefaultDocumentEditor(document: _document, composer: _composer);
 
     _startRobot();
   }
 
   @override
   void dispose() {
-    _composer!.dispose();
+    _composer.dispose();
     super.dispose();
   }
 
@@ -57,7 +58,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
     final robot = DocumentEditingRobot(
       editor: _editor,
       document: _document,
-      composer: _composer!,
+      composer: _composer,
       documentLayoutFinder: () => _docLayoutKey.currentState as DocumentLayout?,
     );
 
@@ -258,7 +259,8 @@ class DocumentEditingRobot {
     required DocumentComposer composer,
     required DocumentLayoutFinder documentLayoutFinder,
     int? randomSeed,
-  })  : _document = document,
+  })  : _editor = editor,
+        _document = document,
         _composer = composer,
         _editorOps = CommonEditorOperations(
             editor: editor,
@@ -267,6 +269,7 @@ class DocumentEditingRobot {
             documentLayoutResolver: documentLayoutFinder as DocumentLayout Function()),
         _random = Random(randomSeed);
 
+  final Editor _editor;
   final Document _document;
   final DocumentComposer _composer;
   final CommonEditorOperations _editorOps;
@@ -277,7 +280,13 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.selection = DocumentSelection.collapsed(position: position);
+          _editor.execute([
+            ChangeSelectionRequest(
+              DocumentSelection.collapsed(position: position),
+              SelectionChangeType.place,
+              SelectionReason.userInteraction,
+            ),
+          ]);
         },
       ),
     );
@@ -287,7 +296,13 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.selection = selection;
+          _editor.execute([
+            ChangeSelectionRequest(
+              selection,
+              SelectionChangeType.place,
+              SelectionReason.userInteraction,
+            ),
+          ]);
         },
       ),
     );
@@ -297,16 +312,22 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.selection = DocumentSelection(
-            base: DocumentPosition(
-              nodeId: _document.nodes.first.id,
-              nodePosition: _document.nodes.first.beginningPosition,
+          _editor.execute([
+            ChangeSelectionRequest(
+              DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: _document.nodes.first.id,
+                  nodePosition: _document.nodes.first.beginningPosition,
+                ),
+                extent: DocumentPosition(
+                  nodeId: _document.nodes.last.id,
+                  nodePosition: _document.nodes.last.endPosition,
+                ),
+              ),
+              SelectionChangeType.expandSelection,
+              SelectionReason.userInteraction,
             ),
-            extent: DocumentPosition(
-              nodeId: _document.nodes.last.id,
-              nodePosition: _document.nodes.last.endPosition,
-            ),
-          );
+          ]);
         },
       ),
     );

@@ -85,7 +85,7 @@ void main() {
           nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))],
         );
 
-        final composer = DocumentComposer(
+        final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -152,7 +152,7 @@ void main() {
           nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))],
         );
 
-        final composer = DocumentComposer(
+        final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -193,7 +193,7 @@ void main() {
           nodes: [ParagraphNode(id: "1", text: AttributedText(text: ""))],
         );
 
-        final composer = DocumentComposer(
+        final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -283,7 +283,7 @@ void main() {
           nodes: [ParagraphNode(id: "1", text: AttributedText(text: ""))],
         );
 
-        final composer = DocumentComposer(
+        final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -493,7 +493,7 @@ StandardEditorPieces _createStandardEditor({
 }) {
   final document = initialDocument ?? singleParagraphEmptyDoc();
 
-  final composer = DocumentComposer(initialSelection: initialSelection);
+  final composer = MutableDocumentComposer(initialSelection: initialSelection);
   final editor = Editor(
     editables: {
       Editor.documentKey: document,

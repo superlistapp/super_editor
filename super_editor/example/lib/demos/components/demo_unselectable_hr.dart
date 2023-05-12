@@ -11,13 +11,15 @@ class UnselectableHrDemo extends StatefulWidget {
 
 class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
   late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
   late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createDocument();
-    _docEditor = createDefaultDocumentEditor(document: _doc);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -53,6 +55,7 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
     return SuperEditor(
       editor: _docEditor,
       document: _doc,
+      composer: _composer,
       stylesheet: defaultStylesheet.copyWith(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
       ),

@@ -550,7 +550,8 @@ Future<void> _pumpEditorWithUnselectableHrsAndFakeToolbar(
   required GlobalKey toolbarKey,
 }) async {
   final document = paragraphThenHrThenParagraphDoc();
-  final editor = createDefaultDocumentEditor(document: document);
+  final composer = MutableDocumentComposer();
+  final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
   await tester.pumpWidget(
     MaterialApp(
@@ -558,6 +559,7 @@ Future<void> _pumpEditorWithUnselectableHrsAndFakeToolbar(
         body: SuperEditor(
           editor: editor,
           document: document,
+          composer: composer,
           gestureMode: debugDefaultTargetPlatformOverride == TargetPlatform.android
               ? DocumentGestureMode.android
               : DocumentGestureMode.iOS,

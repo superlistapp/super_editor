@@ -3,6 +3,7 @@ import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 
 import 'common_editor_operations.dart';
@@ -10,10 +11,8 @@ import 'default_document_editor_reactions.dart';
 
 Editor createDefaultDocumentEditor({
   required MutableDocument document,
-  DocumentComposer? composer,
+  required MutableDocumentComposer composer,
 }) {
-  composer ??= DocumentComposer();
-
   final editor = Editor(
     editables: {
       Editor.documentKey: document,
@@ -47,6 +46,19 @@ final defaultRequestHandlers = [
           notifyListeners: request.notifyListeners,
         )
       : null,
+  (request) => request is ClearSelectionRequest
+      ? const ChangeSelectionCommand(
+          null,
+          SelectionChangeType.clearSelection,
+          SelectionReason.userInteraction,
+        )
+      : null,
+  (request) => request is ChangeComposingRegionRequest //
+      ? ChangeComposingRegionCommand(request.composingRegion)
+      : null,
+  (request) => request is ChangeInteractionModeRequest //
+      ? ChangeInteractionModeCommand(isInteractionModeDesired: request.isInteractionModeDesired)
+      : null,
   (request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,
@@ -78,11 +90,18 @@ final defaultRequestHandlers = [
   (request) => request is ReplaceNodeWithEmptyParagraphWithCaretRequest
       ? ReplaceNodeWithEmptyParagraphWithCaretCommand(nodeId: request.nodeId)
       : null,
-  (request) =>
-      request is DeleteSelectionRequest ? DeleteSelectionCommand(documentSelection: request.documentSelection) : null,
-  (request) => request is DeleteNodeRequest ? DeleteNodeCommand(nodeId: request.nodeId) : null,
-  (request) => request is DeleteUpstreamCharacterRequest ? const DeleteUpstreamCharacterCommand() : null,
-  (request) => request is DeleteDownstreamCharacterRequest ? const DeleteDownstreamCharacterCommand() : null,
+  (request) => request is DeleteSelectionRequest //
+      ? DeleteSelectionCommand(documentSelection: request.documentSelection)
+      : null,
+  (request) => request is DeleteNodeRequest //
+      ? DeleteNodeCommand(nodeId: request.nodeId)
+      : null,
+  (request) => request is DeleteUpstreamCharacterRequest //
+      ? const DeleteUpstreamCharacterCommand()
+      : null,
+  (request) => request is DeleteDownstreamCharacterRequest //
+      ? const DeleteDownstreamCharacterCommand()
+      : null,
   (request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,
@@ -103,6 +122,24 @@ final defaultRequestHandlers = [
           replicateExistingMetadata: request.replicateExistingMetadata,
         )
       : null,
+  (request) => request is ConvertParagraphToTaskRequest
+      ? ConvertParagraphToTaskCommand(
+          nodeId: request.nodeId,
+          isComplete: request.isComplete,
+        )
+      : null,
+  (request) => request is ChangeTaskCompletionRequest
+      ? ChangeTaskCompletionCommand(
+          nodeId: request.nodeId,
+          isComplete: request.isComplete,
+        )
+      : null,
+  (request) => request is SplitExistingTaskRequest
+      ? SplitExistingTaskCommand(
+          nodeId: request.nodeId,
+          splitOffset: request.splitOffset,
+        )
+      : null,
   (request) => request is SplitListItemRequest
       ? SplitListItemCommand(
           nodeId: request.nodeId,
@@ -110,13 +147,18 @@ final defaultRequestHandlers = [
           newNodeId: request.newNodeId,
         )
       : null,
-  (request) => request is IndentListItemRequest ? IndentListItemCommand(nodeId: request.nodeId) : null,
-  (request) => request is UnIndentListItemRequest ? UnIndentListItemCommand(nodeId: request.nodeId) : null,
+  (request) => request is IndentListItemRequest //
+      ? IndentListItemCommand(nodeId: request.nodeId)
+      : null,
+  (request) => request is UnIndentListItemRequest //
+      ? UnIndentListItemCommand(nodeId: request.nodeId)
+      : null,
   (request) => request is ChangeListItemTypeRequest
       ? ChangeListItemTypeCommand(nodeId: request.nodeId, newType: request.newType)
       : null,
-  (request) =>
-      request is ConvertListItemToParagraphRequest ? ConvertListItemToParagraphCommand(nodeId: request.nodeId) : null,
+  (request) => request is ConvertListItemToParagraphRequest //
+      ? ConvertListItemToParagraphCommand(nodeId: request.nodeId)
+      : null,
   (request) => request is ConvertParagraphToListItemRequest
       ? ConvertParagraphToListItemCommand(nodeId: request.nodeId, type: request.type)
       : null,

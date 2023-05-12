@@ -1446,7 +1446,7 @@ class InsertCharacterAtCaretCommand extends EditCommand {
   @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
-    final composer = context.find<DocumentComposer>(Editor.composerKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
 
     if (composer.selection == null) {
       return;

@@ -6,7 +6,8 @@ import 'package:super_text_layout/super_text_layout.dart';
 void main() {
   group('Blockquote', () {
     final doc = _singleBlockquoteDoc();
-    final editor = createDefaultDocumentEditor(document: doc);
+    final composer = MutableDocumentComposer();
+    final editor = createDefaultDocumentEditor(document: doc, composer: composer);
 
     testWidgets("applies the textStyle from SuperEditor's styleSheet", (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -15,6 +16,7 @@ void main() {
             body: SuperEditor(
               editor: editor,
               document: doc,
+              composer: composer,
               stylesheet: _styleSheet,
             ),
           ),

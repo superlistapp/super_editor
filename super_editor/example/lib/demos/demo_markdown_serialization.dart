@@ -16,7 +16,8 @@ class MarkdownSerializationDemo extends StatefulWidget {
 
 class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
   final _docKey = GlobalKey();
-  late Document _doc;
+  late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
   late Editor _docEditor;
 
   String _markdown = '';
@@ -28,7 +29,8 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
   void initState() {
     super.initState();
     _doc = _createInitialDocument()..addListener(_onDocumentChange);
-    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
 
     _updateMarkdown();
   }
@@ -65,6 +67,7 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
               key: _docKey,
               editor: _docEditor,
               document: _doc,
+              composer: _composer,
               stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
               ),
@@ -94,7 +97,7 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
   }
 }
 
-Document _createInitialDocument() {
+MutableDocument _createInitialDocument() {
   return MutableDocument(
     nodes: [
       ImageNode(

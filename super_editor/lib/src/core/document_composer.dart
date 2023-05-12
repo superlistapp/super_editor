@@ -12,7 +12,7 @@ import 'editor.dart';
 
 /// Maintains a [DocumentSelection] within a [Document] and
 /// uses that selection to edit the document.
-class DocumentComposer with ChangeNotifier implements Editable {
+abstract class DocumentComposer with ChangeNotifier {
   /// Constructs a [DocumentComposer] with the given [initialSelection].
   ///
   /// The [initialSelection] may be omitted if no initial selection is
@@ -22,8 +22,8 @@ class DocumentComposer with ChangeNotifier implements Editable {
     SuperEditorImeConfiguration? imeConfiguration,
   }) : _preferences = ComposerPreferences() {
     _streamController = StreamController<DocumentSelectionChange>.broadcast();
-    selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
-    selectionNotifier.value = initialSelection;
+    _selectionNotifier.value = initialSelection;
+    // selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
       notifyListeners();
@@ -33,7 +33,7 @@ class DocumentComposer with ChangeNotifier implements Editable {
   @override
   void dispose() {
     _preferences.dispose();
-    selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
+    // selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
     _streamController.close();
     super.dispose();
   }
@@ -41,45 +41,18 @@ class DocumentComposer with ChangeNotifier implements Editable {
   /// Returns the current [DocumentSelection] for a [Document].
   DocumentSelection? get selection => selectionNotifier.value;
 
-  /// Sets the current [selection] for a [Document] using [SelectionReason.userInteraction] as the reason.
-  set selection(DocumentSelection? newSelection) {
-    if (newSelection != selectionNotifier.value) {
-      selectionNotifier.value = newSelection;
-    }
-  }
-
-  /// Sets the current [selection] for a [Document].
-  ///
-  /// [reason] represents what caused the selection change to happen.
-  void setSelectionWithReason(DocumentSelection? newSelection, [Object reason = SelectionReason.userInteraction]) {
-    _latestSelectionChange = DocumentSelectionChange(
-      selection: newSelection,
-      reason: reason,
-    );
-
-    _streamController.sink.add(_latestSelectionChange);
-
-    // Remove the listener, so we don't emit another DocumentSelectionChange.
-    selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
-
-    // Updates the selection, so both _latestSelectionChange and selectionNotifier are in sync.
-    selectionNotifier.value = newSelection;
-
-    selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
-  }
-
   /// Returns the reason for the most recent selection change in the composer.
   ///
   /// For example, a selection might change as a result of user interaction, or as
   /// a result of another user editing content, or some other reason.
-  Object? get latestSelectionChangeReason => _latestSelectionChange.reason;
+  Object? get latestSelectionChangeReason => _latestSelectionChange?.reason;
 
   /// Returns the most recent selection change in the composer.
   ///
   /// The [DocumentSelectionChange] includes the most recent document selection,
   /// along with the reason that the selection changed.
-  DocumentSelectionChange get latestSelectionChange => _latestSelectionChange;
-  late DocumentSelectionChange _latestSelectionChange;
+  DocumentSelectionChange? get latestSelectionChange => _latestSelectionChange;
+  DocumentSelectionChange? _latestSelectionChange;
 
   /// A stream of document selection changes.
   ///
@@ -93,34 +66,33 @@ class DocumentComposer with ChangeNotifier implements Editable {
   /// Notifies whenever the current [DocumentSelection] changes.
   ///
   /// If the selection change reason is needed, use [selectionChanges] instead.
-  final selectionNotifier = ValueNotifier<DocumentSelection?>(null);
+  ValueListenable<DocumentSelection?> get selectionNotifier => _selectionNotifier;
+  final _selectionNotifier = PausableValueNotifier<DocumentSelection?>(null);
 
-  /// Clears the current [selection].
-  void clearSelection() {
-    selection = null;
-  }
-
-  void _onSelectionChangedBySelectionNotifier() {
-    _latestSelectionChange = DocumentSelectionChange(
-      selection: selectionNotifier.value,
-      reason: SelectionReason.userInteraction,
-    );
-
-    // Reset the composing region whenever the selection changes.
-    // After a selection change, if the IME wants a composing region,
-    // we expect the IME to call us back with that region.
-    composingRegion.value = null;
-
-    _streamController.sink.add(_latestSelectionChange);
-
-    notifyListeners();
-  }
+  // void _onSelectionChangedBySelectionNotifier() {
+  //   _latestSelectionChange = DocumentSelectionChange(
+  //     selection: selectionNotifier.value,
+  //     reason: SelectionReason.userInteraction,
+  //   );
+  //
+  //   // Reset the composing region whenever the selection changes.
+  //   // After a selection change, if the IME wants a composing region,
+  //   // we expect the IME to call us back with that region.
+  //   _composingRegion.value = null;
+  //
+  //   if (_latestSelectionChange != null) {
+  //     _streamController.sink.add(_latestSelectionChange!);
+  //   }
+  //
+  //   notifyListeners();
+  // }
 
   /// The current composing region, which signifies spans of text
   /// that the IME is thinking about changing.
   ///
-  /// Only valid when editing a document with an IME input method.
-  final composingRegion = ValueNotifier<DocumentRange?>(null);
+  /// Only valid when editing a document with an IME input method
+  ValueListenable<DocumentRange?> get composingRegion => _composingRegion;
+  final _composingRegion = PausableValueNotifier<DocumentRange?>(null);
 
   /// Whether the editor should allow special user interactions with the
   /// document content, such as clicking to open a link.
@@ -135,21 +107,97 @@ class DocumentComposer with ChangeNotifier implements Editable {
   /// your app, consider using the `window_manager` plugin to find out when
   /// your app window loses focus (called "blurring") and then set this value
   /// to `false`.
-  ValueNotifier<bool> isInInteractionMode = ValueNotifier(false);
+  ValueListenable<bool> get isInInteractionMode => _isInInteractionMode;
+  final _isInInteractionMode = PausableValueNotifier(false);
 
   final ComposerPreferences _preferences;
 
   /// Returns the composition preferences for this composer.
   ComposerPreferences get preferences => _preferences;
+}
 
-  @override
-  void onTransactionEnd(List<EditEvent> edits) {
-    // TODO: implement onTransactionEnd
+class MutableDocumentComposer extends DocumentComposer implements Editable {
+  MutableDocumentComposer({
+    DocumentSelection? initialSelection,
+    SuperEditorImeConfiguration? imeConfiguration,
+  }) : super(
+          initialSelection: initialSelection,
+          imeConfiguration: imeConfiguration,
+        );
+
+  /// Sets the current [selection] for a [Document].
+  ///
+  /// [reason] represents what caused the selection change to happen.
+  void setSelectionWithReason(DocumentSelection? newSelection, [Object reason = SelectionReason.userInteraction]) {
+    _latestSelectionChange = DocumentSelectionChange(
+      selection: newSelection,
+      reason: reason,
+    );
+
+    // _streamController.sink.add(_latestSelectionChange);
+
+    // Remove the listener, so we don't emit another DocumentSelectionChange.
+    // selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
+
+    // Updates the selection, so both _latestSelectionChange and selectionNotifier are in sync.
+    _selectionNotifier.value = newSelection;
+
+    // selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
   }
+
+  /// Clears the current [selection].
+  void clearSelection() {
+    setSelectionWithReason(null, SelectionReason.userInteraction);
+  }
+
+  void setIsInteractionMode(bool newValue) => _isInInteractionMode.value = newValue;
 
   @override
   void onTransactionStart() {
-    // TODO: implement onTransactionStart
+    _selectionNotifier.pauseNotifications();
+
+    _composingRegion.pauseNotifications();
+
+    _isInInteractionMode.pauseNotifications();
+  }
+
+  @override
+  void onTransactionEnd(List<EditEvent> edits) {
+    _selectionNotifier.resumeNotifications();
+    if (_latestSelectionChange != null) {
+      _streamController.sink.add(_latestSelectionChange!);
+    }
+
+    _composingRegion.resumeNotifications();
+
+    _isInInteractionMode.resumeNotifications();
+  }
+}
+
+class PausableValueNotifier<T> extends ValueNotifier<T> {
+  PausableValueNotifier(T value) : super(value);
+
+  bool _isPaused = false;
+
+  late T _currentValueDuringPause;
+
+  @override
+  set value(T newValue) {
+    if (_isPaused) {
+      _currentValueDuringPause = newValue;
+    } else {
+      super.value = newValue;
+    }
+  }
+
+  void pauseNotifications() {
+    _isPaused = true;
+    _currentValueDuringPause = value;
+  }
+
+  void resumeNotifications() {
+    _isPaused = false;
+    super.value = _currentValueDuringPause;
   }
 }
 
@@ -271,6 +319,10 @@ class CollapseSelectionRequest extends ChangeSelectionRequest {
             SelectionReason.userInteraction);
 }
 
+class ClearSelectionRequest implements EditRequest {
+  const ClearSelectionRequest();
+}
+
 /// [EditRequest] that changes the [DocumentSelection] to the given [newSelection].
 class ChangeSelectionRequest implements EditRequest {
   const ChangeSelectionRequest(
@@ -326,9 +378,10 @@ class ChangeSelectionCommand implements EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final composer = context.find<DocumentComposer>(Editor.composerKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final initialSelection = composer.selection;
-    composer.selection = newSelection;
+
+    composer.setSelectionWithReason(newSelection, reason);
 
     executor.logChanges([
       SelectionChangeEvent(
@@ -415,4 +468,62 @@ enum SelectionChangeType {
 
   /// Clears the document selection, such as when a user taps in a textfield outside the editor.
   clearSelection,
+}
+
+class ChangeComposingRegionRequest implements EditRequest {
+  ChangeComposingRegionRequest(this.composingRegion);
+
+  final DocumentRange? composingRegion;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChangeComposingRegionRequest &&
+          runtimeType == other.runtimeType &&
+          composingRegion == other.composingRegion;
+
+  @override
+  int get hashCode => composingRegion.hashCode;
+}
+
+class ChangeComposingRegionCommand implements EditCommand {
+  ChangeComposingRegionCommand(this.composingRegion);
+
+  final DocumentRange? composingRegion;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    context.find<MutableDocumentComposer>(Editor.composerKey)._composingRegion.value = composingRegion;
+  }
+}
+
+class ChangeInteractionModeRequest implements EditRequest {
+  ChangeInteractionModeRequest({
+    required this.isInteractionModeDesired,
+  });
+
+  final bool isInteractionModeDesired;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChangeInteractionModeRequest &&
+          runtimeType == other.runtimeType &&
+          isInteractionModeDesired == other.isInteractionModeDesired;
+
+  @override
+  int get hashCode => isInteractionModeDesired.hashCode;
+}
+
+class ChangeInteractionModeCommand implements EditCommand {
+  ChangeInteractionModeCommand({
+    required this.isInteractionModeDesired,
+  });
+
+  final bool isInteractionModeDesired;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    context.find<MutableDocumentComposer>(Editor.composerKey).setIsInteractionMode(isInteractionModeDesired);
+  }
 }

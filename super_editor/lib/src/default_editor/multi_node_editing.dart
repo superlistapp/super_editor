@@ -129,7 +129,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
   @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
-    final composer = context.find<DocumentComposer>(Editor.composerKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
 
     if (composer.selection == null) {
       return;
@@ -138,23 +138,21 @@ class InsertNodeAtCaretCommand extends EditCommand {
       return;
     }
 
-    final nodeId = composer.selection!.base.nodeId;
-    final node = document.getNodeById(nodeId);
-    if (node is! ParagraphNode) {
+    final selectedNodeId = composer.selection!.base.nodeId;
+    final selectedNode = document.getNodeById(selectedNodeId);
+    if (selectedNode is! ParagraphNode) {
       return;
     }
 
     final paragraphPosition = composer.selection!.extent.nodePosition as TextNodePosition;
-    final endOfParagraph = node.endPosition;
+    final beginningOfParagraph = selectedNode.beginningPosition;
+    final endOfParagraph = selectedNode.endPosition;
 
     DocumentSelection newSelection;
-    if (node.text.text.isEmpty) {
-      // Convert empty paragraph to block item.
-      document.replaceNode(oldNode: node, newNode: newNode);
+    if (selectedNode.text.text.isEmpty) {
+      // Insert new block node above selected paragraph.
+      document.insertNodeBefore(existingNode: selectedNode, newNode: newNode);
       executor.logChanges([
-        DocumentEdit(
-          NodeRemovedEvent(node.id),
-        ),
         DocumentEdit(
           NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
         ),
@@ -162,39 +160,54 @@ class InsertNodeAtCaretCommand extends EditCommand {
 
       newSelection = DocumentSelection.collapsed(
         position: DocumentPosition(
-          nodeId: nodeId,
-          nodePosition: newNode.endPosition,
+          nodeId: selectedNodeId,
+          nodePosition: selectedNode.beginningPosition,
         ),
       );
-    } else if (paragraphPosition == endOfParagraph) {
+    } else if (paragraphPosition == beginningOfParagraph) {
       // Insert block item after the paragraph.
-      document.insertNodeAfter(existingNode: node, newNode: newNode);
+      document.insertNodeAt(document.getNodeIndexById(selectedNode.id), newNode);
       executor.logChanges([
         DocumentEdit(
-          NodeInsertedEvent(node.id, document.getNodeIndexById(node.id)),
+          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
         )
       ]);
 
       newSelection = DocumentSelection.collapsed(
         position: DocumentPosition(
-          nodeId: nodeId,
+          nodeId: selectedNode.id,
+          nodePosition: selectedNode.beginningPosition,
+        ),
+      );
+    } else if (paragraphPosition == endOfParagraph) {
+      // Insert block item after the paragraph.
+      document.insertNodeAfter(existingNode: selectedNode, newNode: newNode);
+      executor.logChanges([
+        DocumentEdit(
+          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
+        )
+      ]);
+
+      newSelection = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: selectedNodeId,
           nodePosition: newNode.endPosition,
         ),
       );
     } else {
       // Split the paragraph and inset image in between.
-      final textBefore = node.text.copyText(0, paragraphPosition.offset);
-      final textAfter = node.text.copyText(paragraphPosition.offset);
+      final textBefore = selectedNode.text.copyText(0, paragraphPosition.offset);
+      final textAfter = selectedNode.text.copyText(paragraphPosition.offset);
 
       final newParagraph = ParagraphNode(id: Editor.createNodeId(), text: textAfter);
 
-      node.text = textBefore;
+      selectedNode.text = textBefore;
       document
-        ..insertNodeAfter(existingNode: node, newNode: newNode)
+        ..insertNodeAfter(existingNode: selectedNode, newNode: newNode)
         ..insertNodeAfter(existingNode: newNode, newNode: newParagraph);
       executor.logChanges([
         DocumentEdit(
-          NodeChangeEvent(nodeId),
+          NodeChangeEvent(selectedNodeId),
         ),
         DocumentEdit(
           NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
@@ -206,7 +219,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
 
       newSelection = DocumentSelection.collapsed(
         position: DocumentPosition(
-          nodeId: nodeId,
+          nodeId: newParagraph.id,
           nodePosition: newParagraph.beginningPosition,
         ),
       );

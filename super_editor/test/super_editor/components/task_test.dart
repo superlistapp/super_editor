@@ -17,7 +17,8 @@ void main() {
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
         ],
       );
-      final editor = createDefaultDocumentEditor(document: document);
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -25,6 +26,7 @@ void main() {
             body: SuperEditor(
               editor: editor,
               document: document,
+              composer: composer,
               componentBuilders: [
                 TaskComponentBuilder(editor),
                 ...defaultComponentBuilders,
@@ -60,7 +62,8 @@ void main() {
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
         ],
       );
-      final editor = createDefaultDocumentEditor(document: document);
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -68,6 +71,7 @@ void main() {
             body: SuperEditor(
               editor: editor,
               document: document,
+              composer: composer,
               componentBuilders: [
                 TaskComponentBuilder(editor),
                 ...defaultComponentBuilders,
@@ -102,7 +106,8 @@ void main() {
           ParagraphNode(id: "1", text: AttributedText(text: "This will be a task")),
         ],
       );
-      final editor = createDefaultDocumentEditor(document: document);
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -110,6 +115,7 @@ void main() {
             body: SuperEditor(
               editor: editor,
               document: document,
+              composer: composer,
               componentBuilders: [
                 TaskComponentBuilder(editor),
                 ...defaultComponentBuilders,
@@ -134,7 +140,8 @@ void main() {
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
         ],
       );
-      final editor = createDefaultDocumentEditor(document: document);
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
       final task = document.getNodeAt(0) as TaskNode;
       await tester.pumpWidget(
         MaterialApp(
@@ -142,6 +149,7 @@ void main() {
             body: SuperEditor(
               editor: editor,
               document: document,
+              composer: composer,
               componentBuilders: [
                 TaskComponentBuilder(editor),
                 ...defaultComponentBuilders,
@@ -180,13 +188,15 @@ void main() {
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
         ],
       );
-      final editor = createDefaultDocumentEditor(document: document);
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: SuperEditor(
               editor: editor,
               document: document,
+              composer: composer,
               componentBuilders: [
                 TaskComponentBuilder(editor),
               ],

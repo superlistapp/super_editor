@@ -236,7 +236,13 @@ class CombineParagraphsCommand implements EditCommand {
     // Combine the text and delete the currently selected node.
     final isTopNodeEmpty = nodeAbove.text.text.isEmpty;
     nodeAbove.text = nodeAbove.text.copyAndAppend(secondNode.text);
-    if (isTopNodeEmpty) {
+
+    // Avoid overriding the metadata when the nodeAbove isn't a ParagraphNode.
+    //
+    // If we are combining different kinds of nodes, e.g., a list item and a paragraph,
+    // overriding the metadata will cause the nodeAbove to end up with an incorrect blockType.
+    // This will cause incorrect styles to be applied.
+    if (isTopNodeEmpty && nodeAbove is ParagraphNode) {
       // If the top node was empty, we want to retain everything in the
       // bottom node, including the block attribution and styles.
       nodeAbove.metadata = secondNode.metadata;
@@ -329,7 +335,7 @@ class SplitParagraphCommand implements EditCommand {
     editorDocLog.info(' - inserted new node: ${newNode.id} after old one: ${node.id}');
 
     // Move the caret to the new node.
-    final composer = context.find<DocumentComposer>(Editor.composerKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final oldSelection = composer.selection;
     final newSelection = DocumentSelection.collapsed(
       position: DocumentPosition(
@@ -337,7 +343,7 @@ class SplitParagraphCommand implements EditCommand {
         nodePosition: const TextNodePosition(offset: 0),
       ),
     );
-    composer.selection = newSelection;
+    composer.setSelectionWithReason(newSelection, SelectionReason.userInteraction);
 
     final documentChanges = [
       DocumentEdit(
@@ -547,9 +553,15 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     nodePosition: nodeAbove.endPosition,
   );
 
-  editContext.composer.selection = DocumentSelection.collapsed(
-    position: newDocumentPosition,
-  );
+  editContext.editor.execute([
+    ChangeSelectionRequest(
+      DocumentSelection.collapsed(
+        position: newDocumentPosition,
+      ),
+      SelectionChangeType.deleteContent,
+      SelectionReason.userInteraction,
+    ),
+  ]);
 
   return ExecutionInstruction.haltExecution;
 }

@@ -18,10 +18,10 @@ class ExampleEditor extends StatefulWidget {
 class _ExampleEditorState extends State<ExampleEditor> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
-  late Document _doc;
+  late MutableDocument _doc;
   final _docChangeSignal = SignalNotifier();
+  late MutableDocumentComposer _composer;
   late Editor _docEditor;
-  late DocumentComposer _composer;
   late CommonEditorOperations _docOps;
 
   late FocusNode _editorFocusNode;
@@ -47,9 +47,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
   void initState() {
     super.initState();
     _doc = createInitialDocument()..addListener(_onDocumentChange);
-    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer();
+    _composer = MutableDocumentComposer();
     _composer.selectionNotifier.addListener(_hideOrShowToolbar);
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       document: _doc,
@@ -481,6 +481,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         }
 
         return KeyboardEditingToolbar(
+          editor: _docEditor,
           document: _doc,
           composer: _composer,
           commonOps: _docOps,

@@ -228,6 +228,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
         autofocus: widget.autofocus,
         child: DocumentSelectionOpenAndCloseImePolicy(
           focusNode: _focusNode,
+          editor: widget.editContext.editor,
           selection: widget.editContext.composer.selectionNotifier,
           imeConnection: _imeConnection,
           imeClientFactory: () => _imeClient,

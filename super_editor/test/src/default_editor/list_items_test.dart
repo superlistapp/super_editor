@@ -440,7 +440,7 @@ SuperEditorContext _createEditContextWithParagraph() {
 
   return createEditContext(
     document: document,
-    documentComposer: DocumentComposer(
+    documentComposer: MutableDocumentComposer(
       initialSelection: const DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: 'paragraph',

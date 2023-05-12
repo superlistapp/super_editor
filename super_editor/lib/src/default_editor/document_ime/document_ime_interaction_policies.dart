@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter_scheduler.dart';
 
@@ -122,6 +125,7 @@ class DocumentSelectionOpenAndCloseImePolicy extends StatefulWidget {
     Key? key,
     required this.focusNode,
     this.isEnabled = true,
+    required this.editor,
     required this.selection,
     required this.imeConnection,
     required this.imeClientFactory,
@@ -147,8 +151,11 @@ class DocumentSelectionOpenAndCloseImePolicy extends StatefulWidget {
   /// When `false`, this widget does nothing.
   final bool isEnabled;
 
+  /// The [Editor] that alters the [selection].
+  final Editor editor;
+
   /// The document editor's current selection.
-  final ValueNotifier<DocumentSelection?> selection;
+  final ValueListenable<DocumentSelection?> selection;
 
   /// The current connection from this app to the platform IME.
   final ValueNotifier<TextInputConnection?> imeConnection;
@@ -274,7 +281,9 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
 
     if (!widget.focusNode.hasFocus && widget.clearSelectionWhenEditorLosesFocus) {
       editorPoliciesLog.info("[${widget.runtimeType}] - clearing editor selection because the editor lost all focus");
-      widget.selection.value = null;
+      widget.editor.execute([
+        const ClearSelectionRequest(),
+      ]);
     }
   }
 
@@ -356,7 +365,9 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
     // selection when that happens.
     editorPoliciesLog.info(
         "[${widget.runtimeType}] - clearing document selection because the IME closed and the editor didn't have non-primary focus");
-    widget.selection.value = null;
+    widget.editor.execute([
+      const ClearSelectionRequest(),
+    ]);
 
     // If we clear SuperEditor's selection, but leave SuperEditor with primary focus,
     // then SuperEditor will automatically place the caret at the end of the document.

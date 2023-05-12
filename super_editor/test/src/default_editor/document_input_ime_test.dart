@@ -260,8 +260,7 @@ void main() {
             text: AttributedText(text: "This is a sentence"),
           ),
         ]);
-        final editor = createDefaultDocumentEditor(document: document);
-        final composer = DocumentComposer(
+        final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -269,6 +268,7 @@ void main() {
             ),
           ),
         );
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
         final commonOps = CommonEditorOperations(
           editor: editor,
           document: document,
@@ -337,7 +337,7 @@ void main() {
           // Use a two-paragraph document so that the selection in the 2nd
           // paragraph sends a hidden placeholder to the IME for backspace.
           document: document,
-          documentComposer: DocumentComposer(
+          documentComposer: MutableDocumentComposer(
             initialSelection: const DocumentSelection.collapsed(
               position: DocumentPosition(
                 // Start the caret in the 2nd paragraph so that we send a

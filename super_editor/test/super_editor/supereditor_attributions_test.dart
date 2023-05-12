@@ -24,13 +24,13 @@ void main() {
 
           final doc = SuperEditorInspector.findDocument()!;
 
-          // Place the caret at bold|.
+          // Place the caret at "bold|".
           await tester.placeCaretInParagraph(doc.nodes.first.id, 6);
 
           // Type at an offset that should expand the bold attribution.
           await tester.typeImeText("er");
 
-          // Place the caret at text|.
+          // Place the caret at "text|".
           await tester.placeCaretInParagraph(doc.nodes.first.id, 13);
 
           // Type at an offset that shouldn't expand any attributions.

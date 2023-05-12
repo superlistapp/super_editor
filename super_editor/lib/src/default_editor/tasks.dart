@@ -350,11 +350,11 @@ class ChangeTaskCompletionCommand implements EditCommand {
 class ConvertParagraphToTaskRequest implements EditRequest {
   const ConvertParagraphToTaskRequest({
     required this.nodeId,
-    this.isCompleted = false,
+    this.isComplete = false,
   });
 
   final String nodeId;
-  final bool isCompleted;
+  final bool isComplete;
 
   @override
   bool operator ==(Object other) =>
@@ -362,20 +362,20 @@ class ConvertParagraphToTaskRequest implements EditRequest {
       other is ConvertParagraphToTaskRequest &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
-          isCompleted == other.isCompleted;
+          isComplete == other.isComplete;
 
   @override
-  int get hashCode => nodeId.hashCode ^ isCompleted.hashCode;
+  int get hashCode => nodeId.hashCode ^ isComplete.hashCode;
 }
 
 class ConvertParagraphToTaskCommand implements EditCommand {
   const ConvertParagraphToTaskCommand({
     required this.nodeId,
-    this.isCompleted = false,
+    this.isComplete = false,
   });
 
   final String nodeId;
-  final bool isCompleted;
+  final bool isComplete;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -409,8 +409,8 @@ class SplitExistingTaskRequest implements EditRequest {
   final int splitOffset;
 }
 
-class InsertNewTaskOrSplitExistingTaskCommand implements EditCommand {
-  const InsertNewTaskOrSplitExistingTaskCommand({
+class SplitExistingTaskCommand implements EditCommand {
+  const SplitExistingTaskCommand({
     required this.nodeId,
     required this.splitOffset,
   });
@@ -421,7 +421,7 @@ class InsertNewTaskOrSplitExistingTaskCommand implements EditCommand {
   @override
   void execute(EditContext editContext, CommandExecutor executor) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final composer = editContext.find<DocumentComposer>(Editor.composerKey);
+    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     final selection = composer.selection;
 
     // We only care when the caret sits at the end of a TaskNode.
@@ -454,12 +454,14 @@ class InsertNewTaskOrSplitExistingTaskCommand implements EditCommand {
 
     // Move the caret to the beginning of the new TaskNode.
     final oldSelection = composer.selection;
-    composer.selection = DocumentSelection.collapsed(
+    final newSelection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newTaskNode.id,
         nodePosition: const TextNodePosition(offset: 0),
       ),
     );
+
+    composer.setSelectionWithReason(newSelection, SelectionReason.userInteraction);
 
     executor.logChanges([
       DocumentEdit(
@@ -470,7 +472,7 @@ class InsertNewTaskOrSplitExistingTaskCommand implements EditCommand {
       ),
       SelectionChangeEvent(
         oldSelection: oldSelection,
-        newSelection: composer.selection,
+        newSelection: newSelection,
         changeType: SelectionChangeType.pushCaret,
         reason: SelectionReason.userInteraction,
       ),

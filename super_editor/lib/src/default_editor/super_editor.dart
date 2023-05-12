@@ -92,7 +92,7 @@ class SuperEditor extends StatefulWidget {
     this.focusNode,
     required this.editor,
     required this.document,
-    this.composer,
+    required this.composer,
     this.scrollController,
     this.documentLayoutKey,
     Stylesheet? stylesheet,
@@ -251,7 +251,7 @@ class SuperEditor extends StatefulWidget {
 
   /// Owns the editor's current selection, the current attributions for
   /// text input, and other transitive editor configurations.
-  final DocumentComposer? composer;
+  final DocumentComposer composer;
 
   /// Priority list of widget factories that create instances of
   /// each visual component displayed in the document layout, e.g.,
@@ -309,8 +309,8 @@ class SuperEditorState extends State<SuperEditor> {
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
-    _composer = widget.composer ?? DocumentComposer();
-    _composer.addListener(_updateComposerPreferencesAtSelection);
+    _composer = widget.composer;
+    _composer.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
 
     _autoScrollController = AutoScrollController();
 
@@ -323,18 +323,11 @@ class SuperEditorState extends State<SuperEditor> {
   @override
   void didUpdateWidget(SuperEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.composer != oldWidget.composer) {
-      _composer.removeListener(_updateComposerPreferencesAtSelection);
+    if (widget.composer.selectionNotifier != oldWidget.composer.selectionNotifier) {
+      _composer.selectionNotifier.removeListener(_updateComposerPreferencesAtSelection);
 
-      _composer = widget.composer ?? DocumentComposer();
-      _composer.addListener(_updateComposerPreferencesAtSelection);
-    }
-
-    if (widget.editor != oldWidget.editor) {
-      // The content displayed in this Editor was switched
-      // out. Remove any content selection from the previous
-      // document.
-      _composer.selection = null;
+      _composer = widget.composer;
+      _composer.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
     }
 
     if (widget.focusNode != oldWidget.focusNode) {
@@ -363,11 +356,7 @@ class SuperEditorState extends State<SuperEditor> {
   void dispose() {
     _contentTapDelegate?.dispose();
 
-    _composer.removeListener(_updateComposerPreferencesAtSelection);
-
-    if (widget.composer == null) {
-      _composer.dispose();
-    }
+    _composer.selectionNotifier.removeListener(_updateComposerPreferencesAtSelection);
 
     _focusNode.removeListener(_onFocusChange);
     if (widget.focusNode == null) {
@@ -554,6 +543,7 @@ class SuperEditorState extends State<SuperEditor> {
       focusNode: _focusNode,
       child: EditorSelectionAndFocusPolicy(
         focusNode: _focusNode,
+        editor: widget.editor,
         document: widget.document,
         selection: _composer.selectionNotifier,
         isDocumentLayoutAvailable: () => _docLayoutKey.currentContext != null,
@@ -613,6 +603,7 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.android:
         return AndroidDocumentTouchInteractor(
           focusNode: _focusNode,
+          editor: editContext.editor,
           document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
@@ -629,6 +620,7 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.iOS:
         return IOSDocumentTouchInteractor(
           focusNode: _focusNode,
+          editor: editContext.editor,
           document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
@@ -679,6 +671,7 @@ class SuperEditorState extends State<SuperEditor> {
                 Positioned.fill(
                   child: DocumentMouseInteractor(
                     focusNode: _focusNode,
+                    editor: editContext.editor,
                     document: editContext.document,
                     getDocumentLayout: () => editContext.documentLayout,
                     selectionChanges: editContext.composer.selectionChanges,

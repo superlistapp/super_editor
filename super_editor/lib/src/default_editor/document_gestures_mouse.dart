@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -8,6 +9,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
@@ -41,6 +43,7 @@ class DocumentMouseInteractor extends StatefulWidget {
   const DocumentMouseInteractor({
     Key? key,
     this.focusNode,
+    required this.editor,
     required this.document,
     required this.getDocumentLayout,
     required this.selectionNotifier,
@@ -53,10 +56,11 @@ class DocumentMouseInteractor extends StatefulWidget {
 
   final FocusNode? focusNode;
 
+  final Editor editor;
   final Document document;
   final DocumentLayoutResolver getDocumentLayout;
   final Stream<DocumentSelectionChange> selectionChanges;
-  final ValueNotifier<DocumentSelection?> selectionNotifier;
+  final ValueListenable<DocumentSelection?> selectionNotifier;
 
   /// Optional handler that responds to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
@@ -172,12 +176,14 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
 
     final selection = widget.selectionNotifier.value;
-    if (selection != null) {
-      final node = widget.document.getNodeById(selection.extent.nodeId);
-      if (node is BlockNode) {
-        // We don't want auto-scroll block components.
-        return;
-      }
+    if (selection == null) {
+      return;
+    }
+
+    final node = widget.document.getNodeById(selection.extent.nodeId);
+    if (node is BlockNode) {
+      // We don't want auto-scroll block components.
+      return;
     }
 
     // Use a post-frame callback to "ensure selection extent is visible"
@@ -260,9 +266,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     if (expandSelection) {
       // The user tapped while pressing shift and there's an existing
       // selection. Move the extent of the selection to where the user tapped.
-      widget.selectionNotifier.value = _currentSelection!.copyWith(
-        extent: docPosition,
-      );
+      widget.editor.execute([
+        ChangeSelectionRequest(
+          _currentSelection!.copyWith(
+            extent: docPosition,
+          ),
+          SelectionChangeType.expandSelection,
+          SelectionReason.userInteraction,
+        ),
+      ]);
     } else {
       // Place the document selection at the location where the
       // user tapped.
@@ -323,7 +335,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }) {
     final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.selectionNotifier.value = newSelection;
+      widget.editor.execute([
+        ChangeSelectionRequest(
+          newSelection,
+          SelectionChangeType.expandSelection,
+          SelectionReason.userInteraction,
+        ),
+      ]);
       return true;
     } else {
       return false;
@@ -335,16 +353,22 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       return false;
     }
 
-    widget.selectionNotifier.value = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+    widget.editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection(
+          base: DocumentPosition(
+            nodeId: position.nodeId,
+            nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+          ),
+          extent: DocumentPosition(
+            nodeId: position.nodeId,
+            nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+          ),
+        ),
+        SelectionChangeType.place,
+        SelectionReason.userInteraction,
       ),
-      extent: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
-      ),
-    );
+    ]);
 
     return true;
   }
@@ -401,7 +425,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }) {
     final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.selectionNotifier.value = newSelection;
+      widget.editor.execute([
+        ChangeSelectionRequest(
+          newSelection,
+          SelectionChangeType.expandSelection,
+          SelectionReason.userInteraction,
+        ),
+      ]);
       return true;
     } else {
       return false;
@@ -415,9 +445,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   void _selectPosition(DocumentPosition position) {
     editorGesturesLog.fine("Setting document selection to $position");
-    widget.selectionNotifier.value = DocumentSelection.collapsed(
-      position: position,
-    );
+    widget.editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: position,
+        ),
+        SelectionChangeType.place,
+        SelectionReason.userInteraction,
+      ),
+    ]);
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -622,17 +658,26 @@ Updating drag selection:
       extentPosition = extentWordSelection.extent;
     }
 
-    widget.selectionNotifier.value = DocumentSelection(
-      // If desired, expand the selection instead of replacing it.
-      base: expandSelection ? _currentSelection?.base ?? basePosition : basePosition,
-      extent: extentPosition,
-    );
+    widget.editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection(
+          // If desired, expand the selection instead of replacing it.
+          base: expandSelection ? _currentSelection?.base ?? basePosition : basePosition,
+          extent: extentPosition,
+        ),
+        SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+
     editorGesturesLog.fine("Selected region: $_currentSelection");
   }
 
   void _clearSelection() {
     editorGesturesLog.fine("Clearing document selection");
-    widget.selectionNotifier.value = null;
+    widget.editor.execute([
+      const ClearSelectionRequest(),
+    ]);
   }
 
   void _moveToNearestSelectableComponent(
@@ -641,9 +686,10 @@ Updating drag selection:
     bool expandSelection = false,
   }) {
     moveSelectionToNearestSelectableNode(
+      editor: widget.editor,
       document: widget.document,
       documentLayoutResolver: widget.getDocumentLayout,
-      selection: widget.selectionNotifier,
+      currentSelection: widget.selectionNotifier.value,
       startingNode: widget.document.getNodeById(nodeId)!,
       expand: expandSelection,
     );

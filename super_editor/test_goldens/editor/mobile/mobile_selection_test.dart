@@ -731,8 +731,8 @@ void _testParagraphSelection(
     final dragLine = ValueNotifier<_Line?>(null);
 
     final document = _createSingleParagraphDoc();
-    final editor = _createSingleParagraphEditor(document);
-    final composer = DocumentComposer();
+    final composer = MutableDocumentComposer();
+    final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
     final content = _buildScaffold(
       dragLine: dragLine,
@@ -791,10 +791,6 @@ TextStyle _textStyleBuilder(attributions) {
     fontSize: 16,
     height: 1.4,
   );
-}
-
-Editor _createSingleParagraphEditor(MutableDocument document) {
-  return createDefaultDocumentEditor(document: document);
 }
 
 MutableDocument _createSingleParagraphDoc() {

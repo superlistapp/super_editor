@@ -9,6 +9,7 @@ class AppShortcutsDemo extends StatefulWidget {
 
 class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
   late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
   late Editor _editor;
 
   String _message = '';
@@ -25,7 +26,8 @@ class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
         ),
       ],
     );
-    _editor = createDefaultDocumentEditor(document: _doc);
+    _composer = MutableDocumentComposer();
+    _editor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -53,6 +55,7 @@ class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
                   child: SuperEditor(
                     editor: _editor,
                     document: _doc,
+                    composer: _composer,
                   ),
                 ),
                 const TextField(

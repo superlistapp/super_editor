@@ -1,7 +1,7 @@
 import 'package:flutter/rendering.dart';
 import 'package:super_editor/super_editor.dart';
 
-Document createInitialDocument() {
+MutableDocument createInitialDocument() {
   return MutableDocument(
     nodes: [
       ImageNode(

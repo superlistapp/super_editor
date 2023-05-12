@@ -3,8 +3,10 @@ import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
+import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -20,12 +22,14 @@ import '../attributions.dart';
 class KeyboardEditingToolbar extends StatelessWidget {
   const KeyboardEditingToolbar({
     Key? key,
+    required this.editor,
     required this.document,
     required this.composer,
     required this.commonOps,
     this.brightness,
   }) : super(key: key);
 
+  final Editor editor;
   final Document document;
   final DocumentComposer composer;
   final CommonEditorOperations commonOps;
@@ -126,17 +130,35 @@ class KeyboardEditingToolbar extends StatelessWidget {
   void _convertToHr() {
     final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
 
-    selectedNode.text = AttributedText(text: '--- ');
-    composer.selection = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: selectedNode.id,
-        nodePosition: const TextNodePosition(offset: 4),
+    editor.execute([
+      ReplaceNodeRequest(
+        existingNodeId: selectedNode.id,
+        newNode: TextNode(
+          id: selectedNode.id,
+          text: AttributedText(text: '--- '),
+        ),
       ),
-    );
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: selectedNode.id,
+            nodePosition: const TextNodePosition(offset: 4),
+          ),
+        ),
+        SelectionChangeType.insertContent,
+        SelectionReason.userInteraction,
+      ),
+    ]);
   }
 
   void _closeKeyboard() {
-    composer.selection = null;
+    editor.execute([
+      const ChangeSelectionRequest(
+        null,
+        SelectionChangeType.clearSelection,
+        SelectionReason.userInteraction,
+      ),
+    ]);
   }
 
   @override

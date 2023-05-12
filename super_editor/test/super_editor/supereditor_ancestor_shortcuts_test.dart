@@ -69,7 +69,8 @@ Future<void> _pumpShortcutsAndSuperEditor(
       ParagraphNode(id: "1", text: AttributedText(text: "")),
     ],
   );
-  final editor = createDefaultDocumentEditor(document: document);
+  final composer = MutableDocumentComposer();
+  final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
   await tester.pumpWidget(
     MaterialApp(
@@ -88,6 +89,7 @@ Future<void> _pumpShortcutsAndSuperEditor(
             child: SuperEditor(
               editor: editor,
               document: document,
+              composer: composer,
               keyboardActions: keyboardActions,
             ),
           ),

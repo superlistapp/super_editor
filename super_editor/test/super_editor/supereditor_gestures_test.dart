@@ -514,7 +514,9 @@ spans multiple lines.''',
             // when/how to activate interaction mode on mobile. Rather than
             // add buttons in our test just for this purpose, we'll explicitly
             // activate interaction mode.
-            context.editContext.composer.isInInteractionMode.value = true;
+            context.editContext.editor.execute([
+              ChangeInteractionModeRequest(isInteractionModeDesired: true),
+            ]);
           } else if (defaultTargetPlatform == TargetPlatform.macOS) {
             // Press CMD to activate interaction mode on Mac.
             await tester.sendKeyDownEvent(LogicalKeyboardKey.meta);

@@ -29,6 +29,7 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
   final _scrollViewportKey = GlobalKey();
 
   late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
   late Editor _editor;
 
   @override
@@ -45,9 +46,8 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
         )
       ],
     );
-    _editor = createDefaultDocumentEditor(
-      document: _doc,
-    );
+    _composer = MutableDocumentComposer();
+    _editor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -66,6 +66,7 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
                   child: SuperEditor(
                     editor: _editor,
                     document: _doc,
+                    composer: _composer,
                     stylesheet: defaultStylesheet.copyWith(
                       documentPadding: const EdgeInsets.all(48),
                     ),

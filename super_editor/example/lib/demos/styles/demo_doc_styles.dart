@@ -9,14 +9,16 @@ class DocumentStylesDemo extends StatefulWidget {
 }
 
 class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
-  late Document _doc;
+  late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
   late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createSampleDocument();
-    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   Stylesheet _createStyles() {
@@ -136,6 +138,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
     return SuperEditor(
       editor: _docEditor,
       document: _doc,
+      composer: _composer,
       stylesheet: _createStyles(),
     );
   }

@@ -17,10 +17,10 @@ class MobileEditingAndroidDemo extends StatefulWidget {
 class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
-  late Document _doc;
+  late MutableDocument _doc;
   final _docChangeSignal = SignalNotifier();
   late Editor _docEditor;
-  late DocumentComposer _composer;
+  late MutableDocumentComposer _composer;
   late CommonEditorOperations _docOps;
   late MagnifierAndToolbarController _overlayController;
 
@@ -31,8 +31,8 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   void initState() {
     super.initState();
     _doc = _createInitialDocument()..addListener(_onDocumentChange);
-    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer()..addListener(_configureImeActionButton);
+    _composer = MutableDocumentComposer()..addListener(_configureImeActionButton);
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       document: _doc,
@@ -143,6 +143,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
     }
 
     return KeyboardEditingToolbar(
+      editor: _docEditor,
       document: _doc,
       composer: _composer,
       commonOps: CommonEditorOperations(

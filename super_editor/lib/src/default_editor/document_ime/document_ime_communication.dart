@@ -48,7 +48,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   }
 
   /// The document's current selection.
-  final ValueNotifier<DocumentSelection?> selection;
+  final ValueListenable<DocumentSelection?> selection;
 
   /// The document's current composing region, which represents a section
   /// of content that the platform IME is thinking about changing, such as spelling

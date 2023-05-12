@@ -10,12 +10,12 @@ SuperEditorContext createEditContext({
   required MutableDocument document,
   Editor? documentEditor,
   DocumentLayout? documentLayout,
-  DocumentComposer? documentComposer,
+  MutableDocumentComposer? documentComposer,
   CommonEditorOperations? commonOps,
 }) {
-  final editor = documentEditor ?? createDefaultDocumentEditor(document: document);
+  final composer = documentComposer ?? MutableDocumentComposer();
+  final editor = documentEditor ?? createDefaultDocumentEditor(document: document, composer: composer);
   DocumentLayout layoutResolver() => documentLayout ?? FakeDocumentLayout();
-  final composer = documentComposer ?? DocumentComposer();
 
   return SuperEditorContext(
     editor: editor,
@@ -32,7 +32,7 @@ SuperEditorContext createEditContext({
   );
 }
 
-Document createExampleDocument() {
+MutableDocument createExampleDocument() {
   return MutableDocument(
     nodes: [
       ParagraphNode(

@@ -20,13 +20,15 @@ class TextWithHintDemo extends StatefulWidget {
 
 class _TextWithHintDemoState extends State<TextWithHintDemo> {
   late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
   late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createDocument();
-    _docEditor = createDefaultDocumentEditor(document: _doc);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -71,6 +73,7 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
     return SuperEditor(
       editor: _docEditor,
       document: _doc,
+      composer: _composer,
       stylesheet: Stylesheet(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
         rules: defaultStylesheet.rules,

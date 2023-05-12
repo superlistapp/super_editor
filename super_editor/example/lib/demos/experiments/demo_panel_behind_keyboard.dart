@@ -19,9 +19,9 @@ class PanelBehindKeyboardDemo extends StatefulWidget {
 
 class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   late final FocusNode _focusNode;
-  late Editor _editor;
   late MutableDocument _doc;
-  late DocumentComposer _composer;
+  late MutableDocumentComposer _composer;
+  late Editor _editor;
   final _keyboardController = SoftwareKeyboardController();
   final _keyboardState = ValueNotifier(_InputState.closed);
   final _nonKeyboardEditorState = ValueNotifier(_InputState.closed);
@@ -33,12 +33,9 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
     _focusNode = FocusNode();
 
     _doc = _createDocument();
-    _editor = createDefaultDocumentEditor(
-      document: _doc,
-    );
-
-    _composer = DocumentComposer() //
+    _composer = MutableDocumentComposer() //
       ..selectionNotifier.addListener(_onSelectionChange);
+    _editor = createDefaultDocumentEditor(document: _doc, composer: _composer);
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // Check the IME connection at the end of the frame so that SuperEditor has
@@ -155,7 +152,10 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   void _endEditing() {
     print("End editing");
     _keyboardController.close();
-    _composer.selection = null;
+
+    _editor.execute([
+      ClearSelectionRequest(),
+    ]);
 
     // If we clear SuperEditor's selection, but leave SuperEditor focused, then
     // SuperEditor will automatically place the caret at the end of the document.

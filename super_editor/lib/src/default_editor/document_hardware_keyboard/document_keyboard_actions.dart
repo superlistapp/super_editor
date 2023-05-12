@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
@@ -16,10 +17,18 @@ ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
 }) {
   if (keyEvent.isPrimaryShortcutKeyPressed && !editContext.composer.isInInteractionMode.value) {
     editorKeyLog.fine("Activating editor interaction mode");
-    editContext.composer.isInInteractionMode.value = true;
+    editContext.editor.execute([
+      ChangeInteractionModeRequest(
+        isInteractionModeDesired: true,
+      ),
+    ]);
   } else if (editContext.composer.isInInteractionMode.value) {
     editorKeyLog.fine("De-activating editor interaction mode");
-    editContext.composer.isInInteractionMode.value = false;
+    editContext.editor.execute([
+      ChangeInteractionModeRequest(
+        isInteractionModeDesired: false,
+      ),
+    ]);
   }
 
   return ExecutionInstruction.continueExecution;
@@ -277,15 +286,18 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
       firstNodeId: node.id,
       secondNodeId: nextNode.id,
     ),
-  ]);
-
-  // Place the cursor at the point where the text came together.
-  editContext.composer.selection = DocumentSelection.collapsed(
-    position: DocumentPosition(
-      nodeId: node.id,
-      nodePosition: TextNodePosition(offset: currentParagraphLength),
+    // Place the cursor at the point where the text came together.
+    ChangeSelectionRequest(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: TextNodePosition(offset: currentParagraphLength),
+        ),
+      ),
+      SelectionChangeType.deleteContent,
+      SelectionReason.userInteraction,
     ),
-  );
+  ]);
 
   return ExecutionInstruction.haltExecution;
 }

@@ -676,7 +676,7 @@ void main() {
 
           final editContext = createEditContext(
             document: document,
-            documentComposer: DocumentComposer(
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -729,7 +729,7 @@ void main() {
           );
           final editContext = createEditContext(
             document: document,
-            documentComposer: DocumentComposer(
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -782,7 +782,7 @@ void main() {
           );
           final editContext = createEditContext(
             document: document,
-            documentComposer: DocumentComposer(
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -838,7 +838,7 @@ void main() {
           );
           final editContext = createEditContext(
             document: document,
-            documentComposer: DocumentComposer(
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -936,7 +936,7 @@ void main() {
         );
         final editContext = createEditContext(
           document: document,
-          documentComposer: DocumentComposer(
+          documentComposer: MutableDocumentComposer(
             initialSelection: const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: '1',
@@ -990,7 +990,7 @@ Future<SuperEditorContext> _pumpCaretMovementTestSetup(
   required int textOffsetInFirstNode,
 }) async {
   final document = singleParagraphDoc();
-  final composer = DocumentComposer(
+  final composer = MutableDocumentComposer(
     initialSelection: DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: "1",
