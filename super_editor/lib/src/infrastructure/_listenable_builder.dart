@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/widgets.dart' hide ListenableBuilder;
 
 /// Builder that runs every time one of the given [listenables] changes.
 class MultiListenableBuilder extends StatefulWidget {
