@@ -1,3 +1,7 @@
+## [0.1.5] - May, 2023
+* Added explicit support for Dart 3
+* Bumped `super_editor` dependency to `v0.2.5`
+
 ## [0.1.4+2] - May, 2023
 * Added support for paragraph "justify" alignment in Markdown serialization.
 
