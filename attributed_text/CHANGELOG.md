@@ -1,3 +1,6 @@
+## [0.2.2] - May, 2023
+Upgrade Dart constraints to explicitly include Dart 3. Make `markers` public on `AttributedSpans`.
+
 ## [0.2.1] - January, 2023
 Add `getAttributedRange()`, which returns a range that includes a given set of attributions.
 
