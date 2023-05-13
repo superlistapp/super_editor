@@ -1,3 +1,6 @@
+## [0.2.5] - May 12, 2023:
+ * Add support for Dart 3 and Flutter 3.10
+
 ## [0.2.4-dev.1] - May 08, 2023: 
  * The same as v0.2.4+1, but compatible with Flutter `master`
 
