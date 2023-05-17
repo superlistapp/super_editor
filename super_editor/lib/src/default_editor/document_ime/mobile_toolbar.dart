@@ -84,7 +84,12 @@ class KeyboardEditingToolbar extends StatelessWidget {
         },
       );
     } else {
-      selectedNode.putMetadataValue('blockType', header1Attribution);
+      editor.execute([
+        ChangeParagraphBlockTypeRequest(
+          nodeId: selectedNode.id,
+          blockType: header1Attribution,
+        ),
+      ]);
     }
   }
 
@@ -101,7 +106,12 @@ class KeyboardEditingToolbar extends StatelessWidget {
         },
       );
     } else {
-      selectedNode.putMetadataValue('blockType', header2Attribution);
+      editor.execute([
+        ChangeParagraphBlockTypeRequest(
+          nodeId: selectedNode.id,
+          blockType: header2Attribution,
+        ),
+      ]);
     }
   }
 

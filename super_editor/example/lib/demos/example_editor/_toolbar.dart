@@ -38,7 +38,7 @@ class EditorToolbar extends StatefulWidget {
   /// text blob, e.g., paragraph, header, blockquote, or
   /// to apply styles to text.
   final Editor? editor;
-  
+
   final Document document;
 
   /// The [composer] provides access to the user's current
@@ -189,9 +189,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
       ]);
     } else {
       // Apply a new block type to an existing paragraph node.
-      final existingNode =
-      widget.document.getNodeById(widget.composer.selection!.extent.nodeId)! as ParagraphNode;
-      existingNode.putMetadataValue('blockType', _getBlockTypeAttribution(newType));
+      widget.editor!.execute([
+        ChangeParagraphBlockTypeRequest(
+          nodeId: widget.composer.selection!.extent.nodeId,
+          blockType: _getBlockTypeAttribution(newType),
+        ),
+      ]);
     }
   }
 

@@ -114,6 +114,12 @@ final defaultRequestHandlers = [
           ignoreComposerAttributions: request.ignoreComposerAttributions,
         )
       : null,
+  (request) => request is ChangeParagraphBlockTypeRequest
+      ? ChangeParagraphBlockTypeCommand(
+          nodeId: request.nodeId,
+          blockType: request.blockType,
+        )
+      : null,
   (request) => request is SplitParagraphRequest
       ? SplitParagraphCommand(
           nodeId: request.nodeId,

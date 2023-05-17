@@ -180,6 +180,51 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       highlightWhenEmpty.hashCode;
 }
 
+class ChangeParagraphBlockTypeRequest implements EditRequest {
+  ChangeParagraphBlockTypeRequest({
+    required this.nodeId,
+    required this.blockType,
+  });
+
+  final String nodeId;
+  final Attribution? blockType;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChangeParagraphBlockTypeRequest &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          blockType == other.blockType;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ blockType.hashCode;
+}
+
+class ChangeParagraphBlockTypeCommand implements EditCommand {
+  const ChangeParagraphBlockTypeCommand({
+    required this.nodeId,
+    required this.blockType,
+  });
+
+  final String nodeId;
+  final Attribution? blockType;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    final existingNode = document.getNodeById(nodeId)! as ParagraphNode;
+    existingNode.putMetadataValue('blockType', blockType);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      ),
+    ]);
+  }
+}
+
 /// [EditRequest] to combine the [ParagraphNode] with [firstNodeId] with the [ParagraphNode] after it, which
 /// should have the [secondNodeId].
 class CombineParagraphsRequest implements EditRequest {
