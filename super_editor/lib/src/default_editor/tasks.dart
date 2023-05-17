@@ -454,6 +454,7 @@ class SplitExistingTaskCommand implements EditCommand {
 
     // Move the caret to the beginning of the new TaskNode.
     final oldSelection = composer.selection;
+    final oldComposingRegion = composer.composingRegion.value;
     final newSelection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newTaskNode.id,
@@ -462,6 +463,7 @@ class SplitExistingTaskCommand implements EditCommand {
     );
 
     composer.setSelectionWithReason(newSelection, SelectionReason.userInteraction);
+    composer.setComposingRegion(null);
 
     executor.logChanges([
       DocumentEdit(
@@ -473,6 +475,8 @@ class SplitExistingTaskCommand implements EditCommand {
       SelectionChangeEvent(
         oldSelection: oldSelection,
         newSelection: newSelection,
+        oldComposingRegion: oldComposingRegion,
+        newComposingRegion: null,
         changeType: SelectionChangeType.pushCaret,
         reason: SelectionReason.userInteraction,
       ),

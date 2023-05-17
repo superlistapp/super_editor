@@ -69,24 +69,6 @@ abstract class DocumentComposer with ChangeNotifier {
   ValueListenable<DocumentSelection?> get selectionNotifier => _selectionNotifier;
   final _selectionNotifier = PausableValueNotifier<DocumentSelection?>(null);
 
-  // void _onSelectionChangedBySelectionNotifier() {
-  //   _latestSelectionChange = DocumentSelectionChange(
-  //     selection: selectionNotifier.value,
-  //     reason: SelectionReason.userInteraction,
-  //   );
-  //
-  //   // Reset the composing region whenever the selection changes.
-  //   // After a selection change, if the IME wants a composing region,
-  //   // we expect the IME to call us back with that region.
-  //   _composingRegion.value = null;
-  //
-  //   if (_latestSelectionChange != null) {
-  //     _streamController.sink.add(_latestSelectionChange!);
-  //   }
-  //
-  //   notifyListeners();
-  // }
-
   /// The current composing region, which signifies spans of text
   /// that the IME is thinking about changing.
   ///
@@ -134,20 +116,17 @@ class MutableDocumentComposer extends DocumentComposer implements Editable {
       reason: reason,
     );
 
-    // _streamController.sink.add(_latestSelectionChange);
-
-    // Remove the listener, so we don't emit another DocumentSelectionChange.
-    // selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
-
     // Updates the selection, so both _latestSelectionChange and selectionNotifier are in sync.
     _selectionNotifier.value = newSelection;
-
-    // selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
   }
 
   /// Clears the current [selection].
   void clearSelection() {
     setSelectionWithReason(null, SelectionReason.userInteraction);
+  }
+
+  void setComposingRegion(DocumentRange? newComposingRegion) {
+    _composingRegion.value = newComposingRegion;
   }
 
   void setIsInteractionMode(bool newValue) => _isInInteractionMode.value = newValue;
@@ -182,6 +161,9 @@ class PausableValueNotifier<T> extends ValueNotifier<T> {
   late T _currentValueDuringPause;
 
   @override
+  T get value => _isPaused ? _currentValueDuringPause : super.value;
+
+  @override
   set value(T newValue) {
     if (_isPaused) {
       _currentValueDuringPause = newValue;
@@ -192,7 +174,7 @@ class PausableValueNotifier<T> extends ValueNotifier<T> {
 
   void pauseNotifications() {
     _isPaused = true;
-    _currentValueDuringPause = value;
+    _currentValueDuringPause = super.value;
   }
 
   void resumeNotifications() {
@@ -329,10 +311,12 @@ class ChangeSelectionRequest implements EditRequest {
     this.newSelection,
     this.changeType,
     this.reason, {
+    this.newComposingRegion,
     this.notifyListeners = true,
   });
 
   final DocumentSelection? newSelection;
+  final DocumentRange? newComposingRegion;
 
   /// Whether to notify [DocumentComposer] listeners when the selection is changed.
   // TODO: configure the composer so it plugs into the editor in way that this is unnecessary.
@@ -349,11 +333,12 @@ class ChangeSelectionRequest implements EditRequest {
       other is ChangeSelectionRequest &&
           runtimeType == other.runtimeType &&
           newSelection == other.newSelection &&
+          newComposingRegion == other.newComposingRegion &&
           notifyListeners == other.notifyListeners &&
           reason == other.reason;
 
   @override
-  int get hashCode => newSelection.hashCode ^ notifyListeners.hashCode ^ reason.hashCode;
+  int get hashCode => newSelection.hashCode ^ newComposingRegion.hashCode ^ notifyListeners.hashCode ^ reason.hashCode;
 }
 
 /// An [EditCommand] that changes the [DocumentSelection] in the [DocumentComposer]
@@ -363,10 +348,12 @@ class ChangeSelectionCommand implements EditCommand {
     this.newSelection,
     this.changeType,
     this.reason, {
+    this.newComposingRegion,
     this.notifyListeners = true,
   });
 
   final DocumentSelection? newSelection;
+  final DocumentRange? newComposingRegion;
 
   /// Whether to notify [DocumentComposer] listeners when the selection is changed.
   // TODO: configure the composer so it plugs into the editor in way that this is unnecessary.
@@ -380,13 +367,17 @@ class ChangeSelectionCommand implements EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final initialSelection = composer.selection;
+    final initialComposingRegion = composer.composingRegion.value;
 
     composer.setSelectionWithReason(newSelection, reason);
+    composer.setComposingRegion(newComposingRegion);
 
     executor.logChanges([
       SelectionChangeEvent(
         oldSelection: initialSelection,
         newSelection: newSelection,
+        oldComposingRegion: initialComposingRegion,
+        newComposingRegion: newComposingRegion,
         changeType: changeType,
         reason: reason,
       )
@@ -399,12 +390,16 @@ class SelectionChangeEvent implements EditEvent {
   const SelectionChangeEvent({
     required this.oldSelection,
     required this.newSelection,
+    required this.oldComposingRegion,
+    required this.newComposingRegion,
     required this.changeType,
     required this.reason,
   });
 
   final DocumentSelection? oldSelection;
   final DocumentSelection? newSelection;
+  final DocumentRange? oldComposingRegion;
+  final DocumentRange? newComposingRegion;
   final SelectionChangeType changeType;
   // TODO: can we replace the concept of a `reason` with `changeType`
   final String reason;

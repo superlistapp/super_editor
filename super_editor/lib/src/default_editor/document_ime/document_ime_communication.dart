@@ -265,6 +265,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       textDeltasDocumentEditor.selection.value!,
       textDeltasDocumentEditor.composingRegion.value,
     );
+
     editorImeLog
         .fine("[DocumentImeInputClient] - Adding invisible characters?: ${imeSerialization.didPrependPlaceholder}");
     TextEditingValue textEditingValue = imeSerialization.toTextEditingValue();

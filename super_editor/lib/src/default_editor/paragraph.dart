@@ -337,13 +337,16 @@ class SplitParagraphCommand implements EditCommand {
     // Move the caret to the new node.
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final oldSelection = composer.selection;
+    final oldComposingRegion = composer.composingRegion.value;
     final newSelection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newNodeId,
         nodePosition: const TextNodePosition(offset: 0),
       ),
     );
+
     composer.setSelectionWithReason(newSelection, SelectionReason.userInteraction);
+    composer.setComposingRegion(null);
 
     final documentChanges = [
       DocumentEdit(
@@ -355,6 +358,8 @@ class SplitParagraphCommand implements EditCommand {
       SelectionChangeEvent(
         oldSelection: oldSelection,
         newSelection: newSelection,
+        oldComposingRegion: oldComposingRegion,
+        newComposingRegion: null,
         changeType: SelectionChangeType.insertContent,
         reason: SelectionReason.userInteraction,
       ),
