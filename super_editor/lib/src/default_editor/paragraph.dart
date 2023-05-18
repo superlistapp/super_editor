@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -26,7 +27,7 @@ class ParagraphNode extends TextNode {
           metadata: metadata,
         ) {
     if (getMetadataValue("blockType") == null) {
-      putMetadataValue("blockType", const NamedAttribution("paragraph"));
+      putMetadataValue("blockType", paragraphAttribution);
     }
   }
 }

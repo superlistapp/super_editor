@@ -13,6 +13,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
@@ -1303,7 +1304,7 @@ class ConvertTextNodeToParagraphRequest implements EditRequest {
   });
 
   final String nodeId;
-  final Map<String, Attribution>? newMetadata;
+  final Map<String, dynamic>? newMetadata;
 }
 
 class ConvertTextNodeToParagraphCommand extends EditCommand {
@@ -1313,7 +1314,7 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
   });
 
   final String nodeId;
-  final Map<String, Attribution>? newMetadata;
+  final Map<String, dynamic>? newMetadata;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1321,7 +1322,7 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
 
     final extentNode = document.getNodeById(nodeId) as TextNode;
     if (extentNode is ParagraphNode) {
-      extentNode.putMetadataValue('blockType', null);
+      extentNode.putMetadataValue('blockType', paragraphAttribution);
     } else {
       final newParagraphNode = ParagraphNode(
         id: extentNode.id,

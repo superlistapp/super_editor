@@ -1927,7 +1927,7 @@ class CommonEditorOperations {
     if (extentNode is! TextNode) {
       return false;
     }
-    if (extentNode is ParagraphNode && !extentNode.hasMetadataValue('blockType')) {
+    if (extentNode is ParagraphNode && extentNode.getMetadataValue('blockType') == paragraphAttribution) {
       // This content is already a regular paragraph.
       return false;
     }
