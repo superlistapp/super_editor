@@ -163,7 +163,7 @@ final defaultRequestHandlers = [
       ? ChangeListItemTypeCommand(nodeId: request.nodeId, newType: request.newType)
       : null,
   (request) => request is ConvertListItemToParagraphRequest //
-      ? ConvertListItemToParagraphCommand(nodeId: request.nodeId)
+      ? ConvertListItemToParagraphCommand(nodeId: request.nodeId, paragraphMetadata: request.paragraphMetadata)
       : null,
   (request) => request is ConvertParagraphToListItemRequest
       ? ConvertParagraphToListItemCommand(nodeId: request.nodeId, type: request.type)
