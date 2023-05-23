@@ -375,6 +375,18 @@ class LinkifyReaction implements EditReaction {
         final wordStartOffset = _moveOffsetByWord(text, linkifyCandidate.offset, true) ?? 0;
         final word = text.substring(wordStartOffset, linkifyCandidate.offset);
 
+        // Ensure that the preceding word doesn't already contain a full or partial
+        // link attribution.
+        if (textNode.text
+            .getAttributionSpansInRange(
+              attributionFilter: (attribution) => attribution is LinkAttribution,
+              range: SpanRange(start: wordStartOffset, end: linkifyCandidate.offset),
+            )
+            .isNotEmpty) {
+          // There are link attributions in the preceding word. We don't want to mess with them.
+          continue;
+        }
+
         final extractedLinks = linkify(
           word,
           options: const LinkifyOptions(
