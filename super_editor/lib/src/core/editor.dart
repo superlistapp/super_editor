@@ -705,7 +705,7 @@ class MutableDocument implements Document, Editable {
   @override
   void onTransactionEnd(List<EditEvent> edits) {
     final documentChanges = edits.whereType<DocumentEdit>().map((edit) => edit.change).toList();
-    if (edits.isEmpty) {
+    if (documentChanges.isEmpty) {
       return;
     }
 
