@@ -257,6 +257,9 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
   if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }

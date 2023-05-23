@@ -5,6 +5,7 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/pausable_value_notifier.dart';
 
 import '../default_editor/document_ime/document_input_ime.dart';
 import 'document_selection.dart';
@@ -23,7 +24,6 @@ abstract class DocumentComposer with ChangeNotifier {
   }) : _preferences = ComposerPreferences() {
     _streamController = StreamController<DocumentSelectionChange>.broadcast();
     _selectionNotifier.value = initialSelection;
-    // selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
       notifyListeners();
@@ -33,7 +33,6 @@ abstract class DocumentComposer with ChangeNotifier {
   @override
   void dispose() {
     _preferences.dispose();
-    // selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
     _streamController.close();
     super.dispose();
   }
@@ -153,36 +152,6 @@ class MutableDocumentComposer extends DocumentComposer implements Editable {
   }
 }
 
-class PausableValueNotifier<T> extends ValueNotifier<T> {
-  PausableValueNotifier(T value) : super(value);
-
-  bool _isPaused = false;
-
-  late T _currentValueDuringPause;
-
-  @override
-  T get value => _isPaused ? _currentValueDuringPause : super.value;
-
-  @override
-  set value(T newValue) {
-    if (_isPaused) {
-      _currentValueDuringPause = newValue;
-    } else {
-      super.value = newValue;
-    }
-  }
-
-  void pauseNotifications() {
-    _isPaused = true;
-    _currentValueDuringPause = super.value;
-  }
-
-  void resumeNotifications() {
-    _isPaused = false;
-    super.value = _currentValueDuringPause;
-  }
-}
-
 /// Holds preferences about user input, to be used for the
 /// next character that is entered. This facilitates things
 /// like a "bold mode" or "italics mode" when there is no
@@ -287,7 +256,7 @@ class ExpandSelectionRequest extends ChangeSelectionRequest {
   ) : super(newSelection, SelectionChangeType.expandSelection, SelectionReason.userInteraction);
 }
 
-/// A [ChangeSelectionRequest] that represents a user's desire to expand an existing selection
+/// A [ChangeSelectionRequest] that represents a user's desire to collapse an existing selection
 /// further upstream or downstream, such as when pressing SHIFT+LEFT or SHIFT+RIGHT.
 ///
 /// It's useful to capture the user's desire to expand the current selection because sometimes
@@ -297,8 +266,11 @@ class ExpandSelectionRequest extends ChangeSelectionRequest {
 class CollapseSelectionRequest extends ChangeSelectionRequest {
   CollapseSelectionRequest(
     DocumentPosition newPosition,
-  ) : super(DocumentSelection.collapsed(position: newPosition), SelectionChangeType.collapseSelection,
-            SelectionReason.userInteraction);
+  ) : super(
+          DocumentSelection.collapsed(position: newPosition),
+          SelectionChangeType.collapseSelection,
+          SelectionReason.userInteraction,
+        );
 }
 
 class ClearSelectionRequest implements EditRequest {
@@ -335,10 +307,16 @@ class ChangeSelectionRequest implements EditRequest {
           newSelection == other.newSelection &&
           newComposingRegion == other.newComposingRegion &&
           notifyListeners == other.notifyListeners &&
+          changeType == other.changeType &&
           reason == other.reason;
 
   @override
-  int get hashCode => newSelection.hashCode ^ newComposingRegion.hashCode ^ notifyListeners.hashCode ^ reason.hashCode;
+  int get hashCode =>
+      newSelection.hashCode ^
+      newComposingRegion.hashCode ^
+      notifyListeners.hashCode ^
+      changeType.hashCode ^
+      reason.hashCode;
 }
 
 /// An [EditCommand] that changes the [DocumentSelection] in the [DocumentComposer]

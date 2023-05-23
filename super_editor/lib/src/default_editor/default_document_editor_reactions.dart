@@ -267,7 +267,7 @@ class ImageUrlConversionReaction implements EditReaction {
       editorOpsLog.finer('The URL is an image. Converting the ParagraphNode to an ImageNode.');
       final node = document.getNodeById(previousNode.id);
       if (node is! ParagraphNode) {
-        editorOpsLog.finer('The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
+        editorOpsLog.finer('The node has become something other than a ParagraphNode ($node). Can\'t convert node.');
         return;
       }
       final currentText = node.text.text;
@@ -325,6 +325,11 @@ class ImageUrlConversionReaction implements EditReaction {
   }
 }
 
+/// An [EditReaction] which converts a URL into a styled link.
+///
+/// This reaction only applies when the user enters a space " " after a token that
+/// looks like a URL. If the user doesn't enter a trailing space, or the preceding
+/// token doesn't look like a URL, then no reaction occurs.
 class LinkifyReaction implements EditReaction {
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> edits) {
@@ -446,11 +451,14 @@ class EditInspector {
       return false;
     }
 
-    final selectionEvent = edits.last;
+    // If the user typed a space, then the last event should be a selection change.
+    final selectionEvent = edits[edits.length - 1];
     if (selectionEvent is! SelectionChangeEvent) {
       return false;
     }
 
+    // If the user typed a space, then the second to last event should be a text
+    // insertion event with a space " ".
     final edit = edits[edits.length - 2];
     if (edit is! DocumentEdit) {
       return false;

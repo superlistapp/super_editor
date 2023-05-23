@@ -106,8 +106,9 @@ class DocumentChangeLog {
   }
 }
 
+/// Marker interface for all document changes.
 abstract class DocumentChange {
-  // Marker interface for all document changes.
+  // Marker interface
 }
 
 /// A [DocumentChange] that impacts a single, specified [DocumentNode] with [nodeId].
@@ -127,10 +128,10 @@ class NodeInsertedEvent implements NodeDocumentChange {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is NodeInsertedEvent &&
-              runtimeType == other.runtimeType &&
-              nodeId == other.nodeId &&
-              insertionIndex == other.insertionIndex;
+      other is NodeInsertedEvent &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          insertionIndex == other.insertionIndex;
 
   @override
   int get hashCode => nodeId.hashCode ^ insertionIndex.hashCode;
@@ -152,11 +153,11 @@ class NodeMovedEvent implements NodeDocumentChange {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is NodeMovedEvent &&
-              runtimeType == other.runtimeType &&
-              nodeId == other.nodeId &&
-              from == other.from &&
-              to == other.to;
+      other is NodeMovedEvent &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          from == other.from &&
+          to == other.to;
 
   @override
   int get hashCode => nodeId.hashCode ^ from.hashCode ^ to.hashCode;
