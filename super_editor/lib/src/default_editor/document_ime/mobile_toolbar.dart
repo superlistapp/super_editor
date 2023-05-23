@@ -20,14 +20,21 @@ import '../attributions.dart';
 /// This toolbar is intended to be placed just above the keyboard on a
 /// mobile device.
 class KeyboardEditingToolbar extends StatelessWidget {
-  const KeyboardEditingToolbar({
+  KeyboardEditingToolbar({
     Key? key,
     required this.editor,
     required this.document,
     required this.composer,
     required this.commonOps,
     this.brightness,
-  }) : super(key: key);
+  }) : super(key: key) {
+    _toolbarOps = KeyboardEditingToolbarOperations(
+      editor: editor,
+      document: document,
+      composer: composer,
+      commonOps: commonOps,
+    );
+  }
 
   final Editor editor;
   final Document document;
@@ -35,141 +42,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
   final CommonEditorOperations commonOps;
   final Brightness? brightness;
 
-  bool get _isBoldActive => _doesSelectionHaveAttributions({boldAttribution});
-  void _toggleBold() => _toggleAttributions({boldAttribution});
-
-  bool get _isItalicsActive => _doesSelectionHaveAttributions({italicsAttribution});
-  void _toggleItalics() => _toggleAttributions({italicsAttribution});
-
-  bool get _isUnderlineActive => _doesSelectionHaveAttributions({underlineAttribution});
-  void _toggleUnderline() => _toggleAttributions({underlineAttribution});
-
-  bool get _isStrikethroughActive => _doesSelectionHaveAttributions({strikethroughAttribution});
-  void _toggleStrikethrough() => _toggleAttributions({strikethroughAttribution});
-
-  bool _doesSelectionHaveAttributions(Set<Attribution> attributions) {
-    final selection = composer.selection;
-    if (selection == null) {
-      return false;
-    }
-
-    if (selection.isCollapsed) {
-      return composer.preferences.currentAttributions.containsAll(attributions);
-    }
-
-    return document.doesSelectedTextContainAttributions(selection, attributions);
-  }
-
-  void _toggleAttributions(Set<Attribution> attributions) {
-    final selection = composer.selection;
-    if (selection == null) {
-      return;
-    }
-
-    selection.isCollapsed
-        ? commonOps.toggleComposerAttributions(attributions)
-        : commonOps.toggleAttributionsOnSelection(attributions);
-  }
-
-  void _convertToHeader1() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId);
-    if (selectedNode is! TextNode) {
-      return;
-    }
-
-    if (selectedNode is ListItemNode) {
-      commonOps.convertToParagraph(
-        newMetadata: {
-          'blockType': header1Attribution,
-        },
-      );
-    } else {
-      editor.execute([
-        ChangeParagraphBlockTypeRequest(
-          nodeId: selectedNode.id,
-          blockType: header1Attribution,
-        ),
-      ]);
-    }
-  }
-
-  void _convertToHeader2() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId);
-    if (selectedNode is! TextNode) {
-      return;
-    }
-
-    if (selectedNode is ListItemNode) {
-      commonOps.convertToParagraph(
-        newMetadata: {
-          'blockType': header2Attribution,
-        },
-      );
-    } else {
-      editor.execute([
-        ChangeParagraphBlockTypeRequest(
-          nodeId: selectedNode.id,
-          blockType: header2Attribution,
-        ),
-      ]);
-    }
-  }
-
-  void _convertToParagraph() {
-    commonOps.convertToParagraph();
-  }
-
-  void _convertToOrderedListItem() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
-
-    commonOps.convertToListItem(ListItemType.ordered, selectedNode.text);
-  }
-
-  void _convertToUnorderedListItem() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
-
-    commonOps.convertToListItem(ListItemType.unordered, selectedNode.text);
-  }
-
-  void _convertToBlockquote() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
-
-    commonOps.convertToBlockquote(selectedNode.text);
-  }
-
-  void _convertToHr() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
-
-    editor.execute([
-      ReplaceNodeRequest(
-        existingNodeId: selectedNode.id,
-        newNode: TextNode(
-          id: selectedNode.id,
-          text: AttributedText(text: '--- '),
-        ),
-      ),
-      ChangeSelectionRequest(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: const TextNodePosition(offset: 4),
-          ),
-        ),
-        SelectionChangeType.insertContent,
-        SelectionReason.userInteraction,
-      ),
-    ]);
-  }
-
-  void _closeKeyboard() {
-    editor.execute([
-      const ChangeSelectionRequest(
-        null,
-        SelectionChangeType.clearSelection,
-        SelectionReason.userInteraction,
-      ),
-    ]);
-  }
+  late final KeyboardEditingToolbarOperations _toolbarOps;
 
   @override
   Widget build(BuildContext context) {
@@ -210,30 +83,30 @@ class KeyboardEditingToolbar extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                onPressed: selectedNode is TextNode ? _toggleBold : null,
+                                onPressed: selectedNode is TextNode ? _toolbarOps.toggleBold : null,
                                 icon: const Icon(Icons.format_bold),
-                                color: _isBoldActive ? Theme.of(context).primaryColor : null,
+                                color: _toolbarOps.isBoldActive ? Theme.of(context).primaryColor : null,
                               ),
                               IconButton(
-                                onPressed: selectedNode is TextNode ? _toggleItalics : null,
+                                onPressed: selectedNode is TextNode ? _toolbarOps.toggleItalics : null,
                                 icon: const Icon(Icons.format_italic),
-                                color: _isItalicsActive ? Theme.of(context).primaryColor : null,
+                                color: _toolbarOps.isItalicsActive ? Theme.of(context).primaryColor : null,
                               ),
                               IconButton(
-                                onPressed: selectedNode is TextNode ? _toggleUnderline : null,
+                                onPressed: selectedNode is TextNode ? _toolbarOps.toggleUnderline : null,
                                 icon: const Icon(Icons.format_underline),
-                                color: _isUnderlineActive ? Theme.of(context).primaryColor : null,
+                                color: _toolbarOps.isUnderlineActive ? Theme.of(context).primaryColor : null,
                               ),
                               IconButton(
-                                onPressed: selectedNode is TextNode ? _toggleStrikethrough : null,
+                                onPressed: selectedNode is TextNode ? _toolbarOps.toggleStrikethrough : null,
                                 icon: const Icon(Icons.strikethrough_s),
-                                color: _isStrikethroughActive ? Theme.of(context).primaryColor : null,
+                                color: _toolbarOps.isStrikethroughActive ? Theme.of(context).primaryColor : null,
                               ),
                               IconButton(
                                 onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode &&
                                             selectedNode.getMetadataValue('blockType') != header1Attribution)
-                                    ? _convertToHeader1
+                                    ? _toolbarOps.convertToHeader1
                                     : null,
                                 icon: const Icon(Icons.title),
                               ),
@@ -241,7 +114,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode &&
                                             selectedNode.getMetadataValue('blockType') != header2Attribution)
-                                    ? _convertToHeader2
+                                    ? _toolbarOps.convertToHeader2
                                     : null,
                                 icon: const Icon(Icons.title),
                                 iconSize: 18,
@@ -251,7 +124,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                         ((selectedNode is ParagraphNode &&
                                                 selectedNode.hasMetadataValue('blockType')) ||
                                             (selectedNode is TextNode && selectedNode is! ParagraphNode))
-                                    ? _convertToParagraph
+                                    ? _toolbarOps.convertToParagraph
                                     : null,
                                 icon: const Icon(Icons.wrap_text),
                               ),
@@ -259,7 +132,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode && selectedNode is! ListItemNode ||
                                             (selectedNode is ListItemNode && selectedNode.type != ListItemType.ordered))
-                                    ? _convertToOrderedListItem
+                                    ? _toolbarOps.convertToOrderedListItem
                                     : null,
                                 icon: const Icon(Icons.looks_one_rounded),
                               ),
@@ -268,7 +141,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                         (selectedNode is TextNode && selectedNode is! ListItemNode ||
                                             (selectedNode is ListItemNode &&
                                                 selectedNode.type != ListItemType.unordered))
-                                    ? _convertToUnorderedListItem
+                                    ? _toolbarOps.convertToUnorderedListItem
                                     : null,
                                 icon: const Icon(Icons.list),
                               ),
@@ -277,7 +150,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                         selectedNode is TextNode &&
                                         (selectedNode is! ParagraphNode ||
                                             selectedNode.getMetadataValue('blockType') != blockquoteAttribution)
-                                    ? _convertToBlockquote
+                                    ? _toolbarOps.convertToBlockquote
                                     : null,
                                 icon: const Icon(Icons.format_quote),
                               ),
@@ -285,7 +158,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 onPressed: isSingleNodeSelected &&
                                         selectedNode is ParagraphNode &&
                                         selectedNode.text.text.isEmpty
-                                    ? _convertToHr
+                                    ? _toolbarOps.convertToHr
                                     : null,
                                 icon: const Icon(Icons.horizontal_rule),
                               ),
@@ -300,7 +173,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                   color: const Color(0xFFCCCCCC),
                 ),
                 IconButton(
-                  onPressed: _closeKeyboard,
+                  onPressed: _toolbarOps.closeKeyboard,
                   icon: const Icon(Icons.keyboard_hide),
                 ),
               ],
@@ -309,5 +182,159 @@ class KeyboardEditingToolbar extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+@visibleForTesting
+class KeyboardEditingToolbarOperations {
+  KeyboardEditingToolbarOperations({
+    required this.editor,
+    required this.document,
+    required this.composer,
+    required this.commonOps,
+    this.brightness,
+  });
+
+  final Editor editor;
+  final Document document;
+  final DocumentComposer composer;
+  final CommonEditorOperations commonOps;
+  final Brightness? brightness;
+
+  bool get isBoldActive => _doesSelectionHaveAttributions({boldAttribution});
+  void toggleBold() => _toggleAttributions({boldAttribution});
+
+  bool get isItalicsActive => _doesSelectionHaveAttributions({italicsAttribution});
+  void toggleItalics() => _toggleAttributions({italicsAttribution});
+
+  bool get isUnderlineActive => _doesSelectionHaveAttributions({underlineAttribution});
+  void toggleUnderline() => _toggleAttributions({underlineAttribution});
+
+  bool get isStrikethroughActive => _doesSelectionHaveAttributions({strikethroughAttribution});
+  void toggleStrikethrough() => _toggleAttributions({strikethroughAttribution});
+
+  bool _doesSelectionHaveAttributions(Set<Attribution> attributions) {
+    final selection = composer.selection;
+    if (selection == null) {
+      return false;
+    }
+
+    if (selection.isCollapsed) {
+      return composer.preferences.currentAttributions.containsAll(attributions);
+    }
+
+    return document.doesSelectedTextContainAttributions(selection, attributions);
+  }
+
+  void _toggleAttributions(Set<Attribution> attributions) {
+    final selection = composer.selection;
+    if (selection == null) {
+      return;
+    }
+
+    selection.isCollapsed
+        ? commonOps.toggleComposerAttributions(attributions)
+        : commonOps.toggleAttributionsOnSelection(attributions);
+  }
+
+  void convertToHeader1() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId);
+    if (selectedNode is! TextNode) {
+      return;
+    }
+
+    if (selectedNode is ListItemNode) {
+      commonOps.convertToParagraph(
+        newMetadata: {
+          'blockType': header1Attribution,
+        },
+      );
+    } else {
+      editor.execute([
+        ChangeParagraphBlockTypeRequest(
+          nodeId: selectedNode.id,
+          blockType: header1Attribution,
+        ),
+      ]);
+    }
+  }
+
+  void convertToHeader2() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId);
+    if (selectedNode is! TextNode) {
+      return;
+    }
+
+    if (selectedNode is ListItemNode) {
+      commonOps.convertToParagraph(
+        newMetadata: {
+          'blockType': header2Attribution,
+        },
+      );
+    } else {
+      editor.execute([
+        ChangeParagraphBlockTypeRequest(
+          nodeId: selectedNode.id,
+          blockType: header2Attribution,
+        ),
+      ]);
+    }
+  }
+
+  void convertToParagraph() {
+    commonOps.convertToParagraph();
+  }
+
+  void convertToOrderedListItem() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+
+    commonOps.convertToListItem(ListItemType.ordered, selectedNode.text);
+  }
+
+  void convertToUnorderedListItem() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+
+    commonOps.convertToListItem(ListItemType.unordered, selectedNode.text);
+  }
+
+  void convertToBlockquote() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+
+    commonOps.convertToBlockquote(selectedNode.text);
+  }
+
+  void convertToHr() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+
+    editor.execute([
+      ReplaceNodeRequest(
+        existingNodeId: selectedNode.id,
+        newNode: ParagraphNode(
+          id: selectedNode.id,
+          text: AttributedText(text: '---'),
+        ),
+      ),
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: selectedNode.id,
+            nodePosition: const TextNodePosition(offset: 3),
+          ),
+        ),
+        SelectionChangeType.insertContent,
+        SelectionReason.userInteraction,
+      ),
+      const InsertCharacterAtCaretRequest(character: " "),
+    ]);
+  }
+
+  void closeKeyboard() {
+    editor.execute([
+      const ChangeSelectionRequest(
+        null,
+        SelectionChangeType.clearSelection,
+        SelectionReason.userInteraction,
+      ),
+    ]);
   }
 }
