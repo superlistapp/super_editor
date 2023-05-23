@@ -2118,7 +2118,7 @@ class PasteEditorCommand implements EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
-    if (currentNodeWithSelection is! ParagraphNode) {
+    if (currentNodeWithSelection is! TextNode) {
       throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
     }
 
