@@ -62,8 +62,6 @@ class TextDeltasDocumentEditor {
     for (final delta in textEditingDeltas) {
       editorImeLog.info("---------------------------------------------------");
 
-      print("Delta: \n$delta\n");
-
       editorImeLog.info("Applying delta: $delta");
 
       _nextImeValue = delta.apply(_previousImeValue);
@@ -73,7 +71,6 @@ class TextDeltasDocumentEditor {
         _applyReplacement(delta);
       } else if (delta is TextEditingDeltaDeletion) {
         _applyDeletion(delta);
-        print("Selection after _applyDeletion()\n${selection.value}");
       } else if (delta is TextEditingDeltaNonTextUpdate) {
         _applyNonTextChange(delta);
       } else {
@@ -91,8 +88,6 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine("Raw IME delta composing region: ${textEditingDeltas.last.composing}");
     composingRegion.value = _serializedDoc.imeToDocumentRange(textEditingDeltas.last.composing);
     editorImeLog.fine("Document composing region: ${composingRegion.value}");
-
-    print("Selection at the end of all deltas: ${selection.value}");
 
     _nextImeValue = null;
   }
@@ -116,7 +111,7 @@ class TextDeltasDocumentEditor {
         editorImeLog.fine("Skipping insertion delta because its a newline");
       }
 
-      // Update the local IME value that changes with each delta
+      // Update the local IME value that changes with each delta.
       _previousImeValue = delta.apply(_previousImeValue);
 
       return;
@@ -126,7 +121,7 @@ class TextDeltasDocumentEditor {
       // On iOS, tabs pressed at the the software keyboard are reported here.
       commonOps.indentListItem();
 
-      // Update the local IME value that changes with each delta
+      // Update the local IME value that changes with each delta.
       _previousImeValue = delta.apply(_previousImeValue);
 
       return;
@@ -145,7 +140,7 @@ class TextDeltasDocumentEditor {
 
     insert(insertionSelection, delta.textInserted);
 
-    // Update the local IME value that changes with each delta
+    // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
 
     // Update the IME to document serialization based on the insertion changes.
@@ -189,7 +184,7 @@ class TextDeltasDocumentEditor {
 
     replace(delta.replacedRange, delta.replacementText);
 
-    // Update the local IME value that changes with each delta
+    // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
   }
 
@@ -203,7 +198,7 @@ class TextDeltasDocumentEditor {
 
     delete(delta.deletedRange);
 
-    // Update the local IME value that changes with each delta
+    // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
 
     editorImeLog.fine("Deletion operation complete");
@@ -214,19 +209,7 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine("OS-side selection - ${delta.selection}");
     editorImeLog.fine("OS-side composing - ${delta.composing}");
 
-    print("");
-    print("Non-text change:");
-    print("IME selection: \n${delta.selection}\n");
-    print("Existing composer selection: \n${selection.value}\n");
-
-    // final docSelection = DocumentImeSerializer(
-    //   editor.document,
-    //   selection.value!,
-    //   null,
-    // ).imeToDocumentSelection(delta.selection);
     final docSelection = _serializedDoc.imeToDocumentSelection(delta.selection);
-    print("New composer selection: \n$docSelection\n");
-
     if (docSelection != null) {
       // We got a selection from the platform.
       // This could happen in some software keyboards, like GBoard,
@@ -234,7 +217,7 @@ class TextDeltasDocumentEditor {
       selection.value = docSelection;
     }
 
-    // Update the local IME value that changes with each delta
+    // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
   }
 
@@ -251,7 +234,6 @@ class TextDeltasDocumentEditor {
       textInserted,
     );
     editorImeLog.fine("Insertion successful? $didInsert");
-    print("Insertion successful? $didInsert");
 
     if (!didInsert) {
       editorImeLog.fine("Failed to insert characters. Restoring previous selection.");
@@ -294,7 +276,6 @@ class TextDeltasDocumentEditor {
       ),
     );
     editorOpsLog.finer("Text after insertion: '${textNode.text.text}'");
-    print("Text after insertion: '${textNode.text.text}'");
 
     return true;
   }
@@ -333,7 +314,6 @@ class TextDeltasDocumentEditor {
       extentOffset: rangeToDelete.end,
     ));
     editorImeLog.fine("Doc selection to delete: $docSelectionToDelete");
-    print("Doc selection to delete: $docSelectionToDelete");
 
     if (docSelectionToDelete == null) {
       final selectedNodeIndex = editor.document.getNodeIndexById(
@@ -345,7 +325,6 @@ class TextDeltasDocumentEditor {
         // that there's more content before this node. Instruct the editor
         // to run a delete action upstream, which will take the desired
         // "backspace" behavior at the start of this node.
-        print("Running delete upstream");
         final node = editor.document.getNodeAt(selectedNodeIndex)!;
         _deleteUpstream(DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition));
         editorImeLog.fine("Deleted upstream. New selection: ${selection.value}");
@@ -354,7 +333,6 @@ class TextDeltasDocumentEditor {
     }
 
     editorImeLog.fine("Running selection deletion operation");
-    print("Running standard deletion");
     selection.value = docSelectionToDelete;
     commonOps.deleteSelection();
   }
@@ -373,13 +351,7 @@ class TextDeltasDocumentEditor {
   /// Returns [true] if content was deleted, or [false] if no upstream
   /// content exists.
   bool _deleteUpstream(DocumentPosition deletionPosition) {
-    print("_deleteUpstream at position: $deletionPosition");
     final node = editor.document.getNodeById(deletionPosition.nodeId)!;
-
-    // If the caret is at the beginning of a list item, unindent the list item.
-    // if (node is ListItemNode && (composer.selection!.extent.nodePosition as TextNodePosition).offset == 0) {
-    //   return unindentListItem();
-    // }
 
     if (deletionPosition.nodePosition is UpstreamDownstreamNodePosition) {
       final nodePosition = deletionPosition.nodePosition as UpstreamDownstreamNodePosition;
@@ -400,8 +372,6 @@ class TextDeltasDocumentEditor {
           return false;
         }
 
-        final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
-
         if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
           editor.executeCommand(EditorCommandFunction((doc, transaction) {
             transaction.deleteNode(nodeBefore);
@@ -409,6 +379,7 @@ class TextDeltasDocumentEditor {
           return true;
         }
 
+        final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
         if (!componentBefore.isVisualSelectionSupported()) {
           // The node/component above is not selectable. Delete it.
           commonOps.deleteNonSelectedNode(nodeBefore);
@@ -421,20 +392,17 @@ class TextDeltasDocumentEditor {
 
     if (deletionPosition.nodePosition is TextNodePosition) {
       final textPosition = deletionPosition.nodePosition as TextNodePosition;
-      print("Deleting upstream from a TextNodePosition: $textPosition");
       if (textPosition.offset == 0) {
         final nodeBefore = editor.document.getNodeBefore(node);
         if (nodeBefore == null) {
           return false;
         }
 
-        print("YOLO");
         final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
 
         if (nodeBefore is TextNode) {
           // The caret is at the beginning of one TextNode and is preceded by
           // another TextNode. Merge the two TextNodes.
-          print("Merging text node with upstream text node");
           return commonOps.mergeTextNodeWithUpstreamTextNode();
         } else if (!componentBefore.isVisualSelectionSupported()) {
           // The node/component above is not selectable. Delete it.
@@ -500,21 +468,16 @@ class TextDeltasDocumentEditor {
 
       final newTextNode = editor.document.getNodeById(newNodeId)!;
       selection.value = DocumentSelection.collapsed(
-          position: DocumentPosition(
-        nodeId: newTextNode.id,
-        nodePosition: newTextNode.beginningPosition,
-      ));
+        position: DocumentPosition(
+          nodeId: newTextNode.id,
+          nodePosition: newTextNode.beginningPosition,
+        ),
+      );
 
       final newImeValue = _nextImeValue!;
       final imeNewlineIndex = newImeValue.text.indexOf("\n");
       final topImeToDocTextRange = TextRange(start: 0, end: imeNewlineIndex);
       final bottomImeToDocTextRange = TextRange(start: imeNewlineIndex + 1, end: newImeValue.text.length);
-      print("Breaking paragraph at newline insertion");
-      print(
-          " - text before newline: '${newImeValue.text.substring(topImeToDocTextRange.start, topImeToDocTextRange.end)}'");
-      print(
-          " - text after newline: '${newImeValue.text.substring(bottomImeToDocTextRange.start, bottomImeToDocTextRange.end)}'");
-      print(" - new selection: ${newImeValue.selection}");
 
       // Update mapping from Document nodes to IME ranges.
       _serializedDoc.docTextNodesToImeRanges[extentNode.id] = topImeToDocTextRange;

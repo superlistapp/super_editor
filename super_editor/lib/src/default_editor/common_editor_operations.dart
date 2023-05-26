@@ -977,7 +977,6 @@ class CommonEditorOperations {
         nodePosition: TextNodePosition(offset: aboveParagraphLength),
       ),
     );
-    print("Set selection to:\n${composer.selection}");
 
     return true;
   }
