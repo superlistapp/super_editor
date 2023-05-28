@@ -40,7 +40,7 @@ class ReadOnlyDocumentKeyboardInteractor extends StatelessWidget {
   final FocusNode focusNode;
 
   /// Service locator for document display dependencies.
-  final ReaderContext readerContext;
+  final SuperReaderContext readerContext;
 
   /// All the actions that the user can execute with keyboard keys.
   ///
@@ -100,7 +100,7 @@ class ReadOnlyDocumentKeyboardInteractor extends StatelessWidget {
 /// It is possible that an action does nothing and then returns
 /// [ExecutionInstruction.haltExecution] to prevent further execution.
 typedef ReadOnlyDocumentKeyboardAction = ExecutionInstruction Function({
-  required ReaderContext documentContext,
+  required SuperReaderContext documentContext,
   required RawKeyEvent keyEvent,
 });
 
@@ -134,7 +134,7 @@ final readOnlyDefaultKeyboardActions = <ReadOnlyDocumentKeyboardAction>[
 /// if it's collapsed.
 final removeCollapsedSelectionWhenShiftIsReleased = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     final selection = documentContext.selection.value;
@@ -155,7 +155,7 @@ final removeCollapsedSelectionWhenShiftIsReleased = createShortcut(
 
 final scrollUpWithArrowKey = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     documentContext.scrollController.jumpBy(-20);
@@ -167,7 +167,7 @@ final scrollUpWithArrowKey = createShortcut(
 
 final scrollDownWithArrowKey = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     documentContext.scrollController.jumpBy(20);
@@ -179,7 +179,7 @@ final scrollDownWithArrowKey = createShortcut(
 
 final expandSelectionWithLeftArrow = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
@@ -208,7 +208,7 @@ final expandSelectionWithLeftArrow = createShortcut(
 
 final expandSelectionWithRightArrow = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
@@ -250,7 +250,7 @@ MovementModifier? _getHorizontalMovementModifier(RawKeyEvent keyEvent) {
 
 final expandSelectionWithUpArrow = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
@@ -275,7 +275,7 @@ final expandSelectionWithUpArrow = createShortcut(
 
 final expandSelectionWithDownArrow = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
@@ -300,7 +300,7 @@ final expandSelectionWithDownArrow = createShortcut(
 
 final expandSelectionToLineStartWithHomeOnWindowsAndLinux = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     final didMove = moveCaretUpstream(
@@ -320,7 +320,7 @@ final expandSelectionToLineStartWithHomeOnWindowsAndLinux = createShortcut(
 
 final expandSelectionToLineEndWithEndOnWindowsAndLinux = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     final didMove = moveCaretDownstream(
@@ -340,7 +340,7 @@ final expandSelectionToLineEndWithEndOnWindowsAndLinux = createShortcut(
 
 final expandSelectionToLineStartWithCtrlAOnWindowsAndLinux = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     final didMove = moveCaretUpstream(
@@ -361,7 +361,7 @@ final expandSelectionToLineStartWithCtrlAOnWindowsAndLinux = createShortcut(
 
 final expandSelectionToLineEndWithCtrlEOnWindowsAndLinux = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     final didMove = moveCaretDownstream(
@@ -382,7 +382,7 @@ final expandSelectionToLineEndWithCtrlEOnWindowsAndLinux = createShortcut(
 
 final selectAllWhenCmdAIsPressedOnMac = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     final didSelectAll = selectAll(documentContext.document, documentContext.selection);
@@ -395,7 +395,7 @@ final selectAllWhenCmdAIsPressedOnMac = createShortcut(
 
 final selectAllWhenCtlAIsPressedOnWindowsAndLinux = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     final didSelectAll = selectAll(documentContext.document, documentContext.selection);
@@ -413,7 +413,7 @@ final selectAllWhenCtlAIsPressedOnWindowsAndLinux = createShortcut(
 
 final copyWhenCmdCIsPressedOnMac = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     if (documentContext.selection.value == null) {
@@ -438,7 +438,7 @@ final copyWhenCmdCIsPressedOnMac = createShortcut(
 
 final copyWhenCtlCIsPressedOnWindowsAndLinux = createShortcut(
   ({
-    required ReaderContext documentContext,
+    required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
     if (documentContext.selection.value == null) {
@@ -494,7 +494,7 @@ ReadOnlyDocumentKeyboardAction createShortcut(
         "Invalid shortcut definition. Both onKeyUp and onKeyDown are false. This shortcut will never be triggered.");
   }
 
-  return ({required ReaderContext documentContext, required RawKeyEvent keyEvent}) {
+  return ({required SuperReaderContext documentContext, required RawKeyEvent keyEvent}) {
     if (keyEvent is RawKeyUpEvent && !onKeyUp) {
       return ExecutionInstruction.continueExecution;
     }
