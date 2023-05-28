@@ -8,13 +8,13 @@ import 'package:super_editor/src/default_editor/document_scrollable.dart';
 ///
 /// In particular, the context contains the [Document], [DocumentSelection],
 /// and [DocumentLayout].
-class ReaderContext {
+class SuperReaderContext {
   /// Creates document context that makes up a collection of core artifacts for
   /// displaying a read-only document.
   ///
   /// The [documentLayout] is passed as a [getDocumentLayout] callback that
   /// should return the current layout as it might change.
-  ReaderContext({
+  SuperReaderContext({
     required this.document,
     required DocumentLayout Function() getDocumentLayout,
     required this.selection,

@@ -29,7 +29,7 @@ import 'attributions.dart';
 import 'blockquote.dart';
 import 'document_caret_overlay.dart';
 import 'document_focus_and_selection_policies.dart';
-import 'document_gestures_interaction_overrides.dart';
+import '../infrastructure/document_gestures_interaction_overrides.dart';
 import 'document_gestures_mouse.dart';
 import 'document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_ime/document_input_ime.dart';
@@ -106,7 +106,7 @@ class SuperEditor extends StatefulWidget {
     this.imeOverrides,
     List<DocumentKeyboardAction>? keyboardActions,
     this.gestureMode,
-    this.contentTapDelegateFactory = launchLinkTapHandlerFactory,
+    this.contentTapDelegateFactory = superEditorLaunchLinkTapHandlerFactory,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
@@ -215,7 +215,7 @@ class SuperEditor extends StatefulWidget {
   ///
   /// A [ContentTapDelegate] might be used, for example, to launch a URL
   /// when a user taps on a link.
-  final ContentTapDelegateFactory? contentTapDelegateFactory;
+  final SuperEditorContentTapDelegateFactory? contentTapDelegateFactory;
 
   /// Color of the text selection drag handles on Android.
   final Color? androidHandleColor;
@@ -1065,16 +1065,18 @@ const defaultSelectionStyle = SelectionStyles(
   selectionColor: Color(0xFFACCEF7),
 );
 
-LaunchLinkTapHandler launchLinkTapHandlerFactory(EditContext editContext) =>
-    LaunchLinkTapHandler(editContext.editor.document, editContext.composer);
+typedef SuperEditorContentTapDelegateFactory = ContentTapDelegate Function(EditContext editContext);
+
+SuperEditorLaunchLinkTapHandler superEditorLaunchLinkTapHandlerFactory(EditContext editContext) =>
+    SuperEditorLaunchLinkTapHandler(editContext.editor.document, editContext.composer);
 
 /// A [ContentTapDelegate] that opens links when the user taps text with
 /// a [LinkAttribution].
 ///
 /// This delegate only opens links when [composer.isInInteractionMode] is
 /// `true`.
-class LaunchLinkTapHandler extends ContentTapDelegate {
-  LaunchLinkTapHandler(this.document, this.composer) {
+class SuperEditorLaunchLinkTapHandler extends ContentTapDelegate {
+  SuperEditorLaunchLinkTapHandler(this.document, this.composer) {
     composer.isInInteractionMode.addListener(notifyListeners);
   }
 

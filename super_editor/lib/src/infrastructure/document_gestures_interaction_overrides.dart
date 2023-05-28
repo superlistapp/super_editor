@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 
-typedef ContentTapDelegateFactory = ContentTapDelegate Function(EditContext editContext);
-
 /// Delegate for mouse status and clicking on special types of content,
 /// e.g., tapping on a link open the URL.
 ///

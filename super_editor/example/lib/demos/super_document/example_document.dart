@@ -118,6 +118,22 @@ Document createInitialDocument() {
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
+          text: "Built by the Flutter Bounty Hunters",
+          spans: AttributedSpans(attributions: [
+            SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse("https://flutterbountyhunters.com")),
+                offset: 13,
+                markerType: SpanMarkerType.start),
+            SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse("https://flutterbountyhunters.com")),
+                offset: 34,
+                markerType: SpanMarkerType.end),
+          ]),
+        ),
+      ),
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
           text: "",
         ),
       ),
