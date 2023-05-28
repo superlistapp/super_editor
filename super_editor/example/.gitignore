@@ -1,3 +1,8 @@
+# Typically, you're supposed to commit pubspec.lock for app projects. However,
+# this file seems to change constantly and it has become a source control
+# nuisance. So we're not committing it, anymore.
+pubspec.lock
+
 # Miscellaneous
 *.class
 *.log
