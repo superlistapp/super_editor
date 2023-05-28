@@ -198,6 +198,8 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
         ? textEditingDeltas
         : textEditingDeltas.where((e) => e is! TextEditingDeltaNonTextUpdate).toList();
     if (allowedDeltas.isEmpty) {
+      editorImeLog
+          .fine("Ignoring this delta because it's a non-text update that came in right after we setEditingState()");
       return;
     }
 
