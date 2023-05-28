@@ -1,6 +1,9 @@
-## [x.y.z] - ???
+## [0.2.6] - May 28, 2023
  * FEATURE: `SuperReader` now launches URLs when tapping a link (#1151)
  * FIX: `SuperEditor` now correctly handles "\n" newlines reported by Android IME deltas (#1086)
+
+## [0.2.6-dev.1] - May 28, 2023
+* The same as v0.2.6+1, but compatible with Flutter `master`
 
 ## [0.2.5] - May 12, 2023:
  * Add support for Dart 3 and Flutter 3.10
