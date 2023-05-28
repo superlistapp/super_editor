@@ -106,7 +106,6 @@ class TextDeltasDocumentEditor {
       if (defaultTargetPlatform == TargetPlatform.android || kIsWeb) {
         editorImeLog.fine("Received a newline insertion on Android. Forwarding to newline input action.");
         onPerformAction(TextInputAction.newline);
-        return;
       } else {
         editorImeLog.fine("Skipping insertion delta because its a newline");
       }
@@ -398,17 +397,20 @@ class TextDeltasDocumentEditor {
           return false;
         }
 
-        final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
-
         if (nodeBefore is TextNode) {
           // The caret is at the beginning of one TextNode and is preceded by
           // another TextNode. Merge the two TextNodes.
           return commonOps.mergeTextNodeWithUpstreamTextNode();
-        } else if (!componentBefore.isVisualSelectionSupported()) {
+        }
+
+        final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
+        if (!componentBefore.isVisualSelectionSupported()) {
           // The node/component above is not selectable. Delete it.
           commonOps.deleteNonSelectedNode(nodeBefore);
           return true;
-        } else if ((node as TextNode).text.text.isEmpty) {
+        }
+
+        if ((node as TextNode).text.text.isEmpty) {
           // The caret is at the beginning of an empty TextNode and the preceding
           // node is not a TextNode. Delete the current TextNode and move the
           // selection up to the preceding node if exist.
@@ -418,12 +420,12 @@ class TextDeltasDocumentEditor {
             }));
           }
           return true;
-        } else {
-          // The caret is at the beginning of a non-empty TextNode, and the
-          // preceding node is not a TextNode. Move the document selection to the
-          // preceding node.
-          return commonOps.moveSelectionToEndOfPrecedingNode();
         }
+
+        // The caret is at the beginning of a non-empty TextNode, and the
+        // preceding node is not a TextNode. Move the document selection to the
+        // preceding node.
+        return commonOps.moveSelectionToEndOfPrecedingNode();
       } else {
         return commonOps.deleteUpstreamCharacter();
       }

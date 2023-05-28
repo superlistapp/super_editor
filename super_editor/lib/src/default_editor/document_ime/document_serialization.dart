@@ -45,7 +45,6 @@ class DocumentImeSerializer {
     int characterCount = 0;
 
     if (_shouldPrependPlaceholder()) {
-      print("Doc serializer is assuming a prepended string");
       // Put an arbitrary character at the front of the text so that
       // the IME will report backspace buttons when the caret sits at
       // the beginning of the node. For example, the caret is at the
@@ -58,7 +57,6 @@ class DocumentImeSerializer {
       buffer.write(_prependedPlaceholder);
       characterCount = _prependedPlaceholder.length;
     } else {
-      print("Doc serializer is assuming NO prepended string");
       _prependedPlaceholder = '';
     }
 
