@@ -14,7 +14,7 @@ import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart'
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import '../infrastructure/document_gestures.dart';
-import 'document_gestures_interaction_overrides.dart';
+import '../infrastructure/document_gestures_interaction_overrides.dart';
 import '../infrastructure/super_textfield/metrics.dart';
 import 'document_gestures_touch.dart';
 import 'selection_upstream_downstream.dart';

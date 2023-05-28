@@ -25,7 +25,7 @@ export 'src/default_editor/document_focus_and_selection_policies.dart';
 export 'src/infrastructure/document_gestures.dart';
 export 'src/default_editor/document_gestures_mouse.dart';
 export 'src/default_editor/document_gestures_touch.dart';
-export 'src/default_editor/document_gestures_interaction_overrides.dart';
+export 'src/infrastructure/document_gestures_interaction_overrides.dart';
 export 'src/default_editor/document_ime/document_input_ime.dart';
 export 'src/default_editor/document_hardware_keyboard/document_input_keyboard.dart';
 export 'src/default_editor/horizontal_rule.dart';

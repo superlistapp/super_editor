@@ -19,7 +19,7 @@ import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/document_gestures.dart';
-import 'document_gestures_interaction_overrides.dart';
+import '../infrastructure/document_gestures_interaction_overrides.dart';
 import '../infrastructure/super_textfield/metrics.dart';
 import 'document_gestures_touch.dart';
 import 'selection_upstream_downstream.dart';
