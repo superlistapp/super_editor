@@ -21,13 +21,13 @@ void main() {
       await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
 
       // Type a URL. It shouldn't linkify until we add a space.
-      await tester.typeImeText("www.google.com");
+      await tester.typeImeText("https://www.google.com");
 
       // Ensure it's not linkified yet.
       final nodeId = doc.nodes.first.id;
       var text = SuperEditorInspector.findTextInParagraph(nodeId);
 
-      expect(text.text, "www.google.com");
+      expect(text.text, "https://www.google.com");
       expect(
         text.getAttributionSpansInRange(
           attributionFilter: (attribution) => true,
@@ -42,11 +42,46 @@ void main() {
       // Ensure it's linkified.
       text = SuperEditorInspector.findTextInParagraph(nodeId);
 
+      expect(text.text, "https://www.google.com ");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(start: 0, end: text.text.length - 2),
+        ),
+        isTrue,
+      );
+    });
+
+    testWidgetsOnAllPlatforms('inserts https scheme if it is missing', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final doc = SuperEditorInspector.findDocument()!;
+
+      // Place the caret at the beginning of the empty document.
+      await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+
+      // Type a URL. It shouldn't linkify until we add a space.
+      await tester.typeImeText("www.google.com");
+
+      // Type a space, to cause a linkify reaction.
+      await tester.typeImeText(" ");
+
+      // Ensure it's linkified with a URL schema.
+      final nodeId = doc.nodes.first.id;
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
       expect(text.text, "www.google.com ");
       expect(
         text.hasAttributionsThroughout(
           attributions: {
-            LinkAttribution(url: Uri.parse("www.google.com")),
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
           },
           range: SpanRange(start: 0, end: text.text.length - 2),
         ),

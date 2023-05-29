@@ -401,8 +401,12 @@ class LinkifyReaction implements EditReaction {
         final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
         if (linkCount == 1) {
           // The word is a single URL. Linkify it.
+          final uri = word.startsWith("http://") || word.startsWith("https://") //
+              ? Uri.parse(word)
+              : Uri.parse("https://$word");
+
           textNode.text.addAttribution(
-            LinkAttribution(url: Uri.parse(word)),
+            LinkAttribution(url: uri),
             SpanRange(start: wordStartOffset, end: linkifyCandidate.offset - 1),
           );
         }
