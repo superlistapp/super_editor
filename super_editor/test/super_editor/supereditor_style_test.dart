@@ -157,6 +157,40 @@ A paragraph
       // Ensure only the changed component was marked as dirty.
       expect(componentChangedCount, 1);
     });
+
+    testWidgetsOnArbitraryDesktop('rebuilds moved nodes', (tester) async {
+      int componentAddedCount = 0;
+      int componentChangedCount = 0;
+      int componentRemovedCount = 0;
+
+      final testContext = await tester
+          .createDocument() //
+          .withLongTextContent()
+          .pump();
+
+      final presenter = tester.state<SuperEditorState>(find.byType(SuperEditor)).presenter;
+      presenter.addChangeListener(SingleColumnLayoutPresenterChangeListener(
+        onViewModelChange: ({required addedComponents, required changedComponents, required removedComponents}) {
+          if (componentChangedCount != 0) {
+            throw Exception("Expected only one view model change, but there was more than one.");
+          }
+
+          componentAddedCount = addedComponents.length;
+          componentChangedCount = changedComponents.length;
+          componentRemovedCount = removedComponents.length;
+        },
+      ));
+
+      // Move the 2nd node to the end of the document.
+      testContext.editContext.editor.execute([
+        const MoveNodeRequest(nodeId: "2", newIndex: 3),
+      ]);
+
+      // Ensure that the relevant nodes were moved, but nothing was added or removed.
+      expect(componentAddedCount, 0);
+      expect(componentRemovedCount, 0);
+      expect(componentChangedCount, 3);
+    });
   });
 }
 
