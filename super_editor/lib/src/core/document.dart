@@ -151,6 +151,9 @@ class NodeMovedEvent implements NodeDocumentChange {
   final int to;
 
   @override
+  String toString() => "[NodeMovedEvent] - $nodeId: $from -> $to";
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is NodeMovedEvent &&

@@ -259,12 +259,23 @@ class MoveNodeCommand extends EditCommand {
     // Log all the move changes that will happen when we move the target node
     // elsewhere in the document.
     final nodeMoveEvents = <DocumentEdit>[];
+
     final targetNodeIndex = document.getNodeIndexById(nodeId);
     final startIndex = min(targetNodeIndex, newIndex);
     final endIndex = max(targetNodeIndex, newIndex);
+
+    // When moving one node to another index, all nodes between those indices
+    // are pushed up, or down, depending on whether the new node index is
+    // higher or lower than the existing node index. This direction tells us
+    // which way the other nodes will move.
+    final otherNodeMovementDirection = newIndex > targetNodeIndex ? 1 : -1;
+
+    // Collect change events for everything that will happen when we tell the
+    // MutableDocument to move the desired node to its new index.
     for (int i = startIndex; i <= endIndex; i += 1) {
       if (i == targetNodeIndex) {
-        // This is the node that we care about moving.
+        // This is the node that we care about moving. Report its move to the
+        // new index.
         nodeMoveEvents.add(
           DocumentEdit(
             NodeMovedEvent(nodeId: nodeId, from: targetNodeIndex, to: newIndex),
@@ -273,11 +284,11 @@ class MoveNodeCommand extends EditCommand {
         continue;
       }
 
-      // This is a node that got moved up by one as a consequence of moving
-      // the target node.
+      // This is a node that got moved up/down by one spot, as a consequence of moving
+      // the target node. Report its change of index.
       nodeMoveEvents.add(
         DocumentEdit(
-          NodeMovedEvent(nodeId: document.getNodeAt(i)!.id, from: i, to: i - 1),
+          NodeMovedEvent(nodeId: document.getNodeAt(i)!.id, from: i, to: i - otherNodeMovementDirection),
         ),
       );
     }

@@ -454,7 +454,7 @@ void main() {
         expect(changeEventCount, 5);
       });
 
-      test('moves a document node to a new position', () {
+      test('moves a document node to a higher index', () {
         final editorPieces = _createStandardEditor(
           initialDocument: longTextDoc(),
           initialSelection: const DocumentSelection.collapsed(
@@ -464,12 +464,18 @@ void main() {
             ),
           ),
         );
+
         int changeLogCount = 0;
         int changeEventCount = 0;
         editorPieces.editor.addListener(FunctionalEditListener((changeList) {
           changeLogCount += 1;
           changeEventCount += changeList.length;
         }));
+
+        late DocumentChangeLog documentChangeLog;
+        editorPieces.document.addListener((changeLog) {
+          documentChangeLog = changeLog;
+        });
 
         editorPieces.editor.execute([const MoveNodeRequest(nodeId: "1", newIndex: 2)]);
 
@@ -478,9 +484,64 @@ void main() {
         expect(editorPieces.document.getNodeAt(1)!.id, "3");
         expect(editorPieces.document.getNodeAt(2)!.id, "1");
 
-        // Verify reported changes.
+        // Verify reported editor changes.
         expect(changeLogCount, 1);
         expect(changeEventCount, 3); // 3 nodes were moved
+
+        // Verify reported document changes.
+        expect(
+          documentChangeLog.changes,
+          [
+            const NodeMovedEvent(nodeId: "1", from: 0, to: 2),
+            const NodeMovedEvent(nodeId: "2", from: 1, to: 0),
+            const NodeMovedEvent(nodeId: "3", from: 2, to: 1),
+          ],
+        );
+      });
+
+      test('moves a document node to a lower index', () {
+        final editorPieces = _createStandardEditor(
+          initialDocument: longTextDoc(),
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+
+        int changeLogCount = 0;
+        int changeEventCount = 0;
+        editorPieces.editor.addListener(FunctionalEditListener((changeList) {
+          changeLogCount += 1;
+          changeEventCount += changeList.length;
+        }));
+
+        late DocumentChangeLog documentChangeLog;
+        editorPieces.document.addListener((changeLog) {
+          documentChangeLog = changeLog;
+        });
+
+        editorPieces.editor.execute([const MoveNodeRequest(nodeId: "3", newIndex: 0)]);
+
+        // Verify final node indices.
+        expect(editorPieces.document.getNodeAt(0)!.id, "3");
+        expect(editorPieces.document.getNodeAt(1)!.id, "1");
+        expect(editorPieces.document.getNodeAt(2)!.id, "2");
+
+        // Verify reported editor changes.
+        expect(changeLogCount, 1);
+        expect(changeEventCount, 3); // 3 nodes were moved
+
+        // Verify reported document changes.
+        expect(
+          documentChangeLog.changes,
+          [
+            const NodeMovedEvent(nodeId: "1", from: 0, to: 1),
+            const NodeMovedEvent(nodeId: "2", from: 1, to: 2),
+            const NodeMovedEvent(nodeId: "3", from: 2, to: 0),
+          ],
+        );
       });
     });
   });
