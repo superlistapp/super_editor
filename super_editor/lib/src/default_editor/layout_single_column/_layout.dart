@@ -111,10 +111,11 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
   void _onViewModelChange({
     required List<String> addedComponents,
+    required List<String> movedComponents,
     required List<String> changedComponents,
     required List<String> removedComponents,
   }) {
-    if (addedComponents.isNotEmpty || removedComponents.isNotEmpty) {
+    if (addedComponents.isNotEmpty || movedComponents.isNotEmpty || removedComponents.isNotEmpty) {
       setState(() {
         // Re-flow the whole layout.
       });
@@ -852,6 +853,7 @@ class _PresenterComponentBuilderState extends State<_PresenterComponentBuilder> 
 
   void _onViewModelChange({
     required List<String> addedComponents,
+    required List<String> movedComponents,
     required List<String> changedComponents,
     required List<String> removedComponents,
   }) {

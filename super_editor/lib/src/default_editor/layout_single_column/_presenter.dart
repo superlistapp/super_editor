@@ -210,6 +210,7 @@ class SingleColumnLayoutPresenter {
     editorLayoutLog.finer("Computing layout view model changes to notify listeners of those changes.");
 
     final addedComponents = <String>[];
+    final movedComponents = <String>[];
     final removedComponents = <String>[];
     final changedComponents = <String>[];
 
@@ -219,7 +220,8 @@ class SingleColumnLayoutPresenter {
     //  -1 - the component was removed
     //   0 - the component is unchanged
     //   1 - the component changed
-    //   2 - the component was added
+    //   2 - the component was moved
+    //   3 - the component was added
     final changeMap = <String, int>{};
 
     // Catalog the components in the previous view model.
@@ -241,7 +243,7 @@ class SingleColumnLayoutPresenter {
       if (!nodeIdToComponentMap.containsKey(nodeId)) {
         // This component is new.
         editorLayoutLog.fine("New component was added for node $nodeId");
-        changeMap[nodeId] = 2;
+        changeMap[nodeId] = 3;
         continue;
       }
 
@@ -249,7 +251,7 @@ class SingleColumnLayoutPresenter {
         // This component moved somewhere else. Mark this view model as changed.
         editorLayoutLog.fine(
             "Component for node $nodeId was at index ${nodeIdToPreviousOrderMap[nodeId]} but now it's at $i, marking the view model as changed");
-        changeMap[nodeId] = 1;
+        changeMap[nodeId] = 2;
         continue;
       }
 
@@ -288,6 +290,9 @@ class SingleColumnLayoutPresenter {
           changedComponents.add(entry.key);
           break;
         case 2:
+          movedComponents.add(entry.key);
+          break;
+        case 3:
           addedComponents.add(entry.key);
           break;
         default:
@@ -298,7 +303,7 @@ class SingleColumnLayoutPresenter {
       }
     }
 
-    if (addedComponents.isEmpty && changedComponents.isEmpty && removedComponents.isEmpty) {
+    if (addedComponents.isEmpty && movedComponents.isEmpty && changedComponents.isEmpty && removedComponents.isEmpty) {
       // No changes to report.
       editorLayoutLog.fine("Nothing has changed in the view model. Not notifying any listeners.");
       return;
@@ -306,11 +311,13 @@ class SingleColumnLayoutPresenter {
 
     editorLayoutLog.fine("Notifying layout presenter listeners of changes:");
     editorLayoutLog.fine(" - added: $addedComponents");
+    editorLayoutLog.fine(" - added: $movedComponents");
     editorLayoutLog.fine(" - changed: $changedComponents");
     editorLayoutLog.fine(" - removed: $removedComponents");
     for (final listener in _listeners.toList()) {
       listener.onViewModelChange(
         addedComponents: addedComponents,
+        movedComponents: movedComponents,
         changedComponents: changedComponents,
         removedComponents: removedComponents,
       );
@@ -334,11 +341,13 @@ class SingleColumnLayoutPresenterChangeListener {
 
   void onViewModelChange({
     required List<String> addedComponents,
+    required List<String> movedComponents,
     required List<String> changedComponents,
     required List<String> removedComponents,
   }) {
     _onViewModelChange?.call(
       addedComponents: addedComponents,
+      movedComponents: movedComponents,
       changedComponents: changedComponents,
       removedComponents: removedComponents,
     );
@@ -347,6 +356,7 @@ class SingleColumnLayoutPresenterChangeListener {
 
 typedef ViewModelChangeCallback = void Function({
   required List<String> addedComponents,
+  required List<String> movedComponents,
   required List<String> changedComponents,
   required List<String> removedComponents,
 });
