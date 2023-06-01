@@ -483,6 +483,7 @@ void main() {
         expect(editorPieces.document.getNodeAt(0)!.id, "2");
         expect(editorPieces.document.getNodeAt(1)!.id, "3");
         expect(editorPieces.document.getNodeAt(2)!.id, "1");
+        expect(editorPieces.document.getNodeAt(3)!.id, "4");
 
         // Verify reported editor changes.
         expect(changeLogCount, 1);
