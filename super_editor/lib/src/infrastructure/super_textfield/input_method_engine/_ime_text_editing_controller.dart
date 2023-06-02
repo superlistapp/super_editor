@@ -93,6 +93,11 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   bool get isAttachedToIme => _inputConnection != null && _inputConnection!.attached;
 
+  /// Holds the current editing value in the IME.
+  ///
+  /// Used to determine whether or not we need to send our editing value to the IME.
+  TextEditingValue _osCurrentTextEditingValue = const TextEditingValue();
+
   void attachToIme({
     bool autocorrect = true,
     bool enableSuggestions = true,
@@ -115,6 +120,8 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
     _inputConnection!.show();
     _sendEditingValueToPlatform();
+
+    _osCurrentTextEditingValue = _latestTextEditingValueSentToPlatform!;
     _log.fine('Is attached to input client? ${_inputConnection!.attached}');
   }
 
@@ -147,11 +154,15 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
     _inputConnection!.show();
     _sendEditingValueToPlatform();
+
+    _osCurrentTextEditingValue = _latestTextEditingValueSentToPlatform!;
   }
 
   void detachFromIme() {
     _log.fine('Closing input connection');
     _inputConnection?.close();
+
+    _osCurrentTextEditingValue = const TextEditingValue();
   }
 
   void showKeyboard() {
@@ -181,6 +192,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   // When changes come from the app, we want to forward those to platform. But,
   // when changes originate from the platform, we don't want to send those back
   // to the platform as changes. This flag differentiates between the two situations.
+  TextEditingValue? _latestTextEditingValueSentToPlatform;
   bool _sendTextChangesToPlatform = true;
 
   /// Whether we should handle [TextEditingDeltaNonTextUpdate]s.
@@ -197,12 +209,16 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     notifyListeners();
   }
 
-  TextEditingValue? _latestPlatformTextEditingValue;
-
   void _onReceivedTextEditingValueFromPlatform(TextEditingValue newValue) {
-    if (newValue == _latestPlatformTextEditingValue) {
+    if (newValue == _latestTextEditingValueSentToPlatform) {
       // The value didn't change. Don't let us get into an infinite loop
       // with the IME where it keeps sending us the same value over and over.
+      return;
+    }
+
+    if (currentTextEditingValue == _osCurrentTextEditingValue) {
+      // We applied the deltas and our editing value ended up the same as the IME thinks it is.
+      // We don't need to update the value.
       return;
     }
 
@@ -231,7 +247,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     });
 
     _log.fine('Sending TextEditingValue to platform: $currentTextEditingValue');
-    _latestPlatformTextEditingValue = currentTextEditingValue;
+    _latestTextEditingValueSentToPlatform = currentTextEditingValue;
     _inputConnection!.setEditingState(currentTextEditingValue!);
   }
 
@@ -249,9 +265,11 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   @override
   void updateEditingValue(TextEditingValue value) {
     _log.fine('New platform TextEditingValue: $value');
+
+    _osCurrentTextEditingValue = value;
     _onReceivedTextEditingValueFromPlatform(value);
 
-    if (_latestPlatformTextEditingValue != currentTextEditingValue) {
+    if (_latestTextEditingValueSentToPlatform != currentTextEditingValue) {
       _sendTextChangesToPlatform = false;
       text = AttributedText(text: value.text);
       selection = value.selection;
@@ -265,6 +283,11 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _log.fine('Received text editing deltas from platform...');
     if (deltas.isEmpty) {
       return;
+    }
+
+    // Update our view from the OS editing value.
+    for (final delta in deltas) {
+      _osCurrentTextEditingValue = delta.apply(_osCurrentTextEditingValue);
     }
 
     // After we call setEditingState(), we ignore non-text deltas until the end of the current frame.
@@ -368,7 +391,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   void connectionClosed() {
     _log.info('TextInputClient: connectionClosed()');
     _inputConnection = null;
-    _latestPlatformTextEditingValue = null;
+    _latestTextEditingValueSentToPlatform = null;
   }
 
   @override
