@@ -73,22 +73,67 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
-        testWidgetsOnAllPlatforms('and sends composing region to the platform', (tester) async {
+        testWidgetsOnAllPlatforms('and don\'t send editing value back to IME if matches the expected value',
+            (tester) async {
           await _pumpEmptySuperTextField(tester);
           await tester.placeCaretInSuperTextField(0);
 
+          bool sentToPlatform = false;
+
+          // Intercept the setEditingState message sent to the platform.
+          tester
+              .interceptChannel(SystemChannels.textInput.name) //
+              .interceptMethod(
+            'TextInput.setEditingState',
+            (methodCall) {
+              if (methodCall.method == 'TextInput.setEditingState') {
+                sentToPlatform = true;
+              }
+              return null;
+            },
+          );
+
+          // Type "a".
+          // The IME now sees "a" as the editing value.
+          await tester.ime.typeText('a', getter: imeClientGetter);
+
+          // Ensure that after the insertion our value is also "a".
+          expect(SuperTextFieldInspector.findText().text, 'a');
+
+          // Ensure we don't send the value back to the OS.
+          //
+          // As both us and the IME agree on what's the current editing value, we don't need to send it back.
+          expect(sentToPlatform, false);
+        });
+
+        testWidgetsOnAllPlatforms('and send editing value back to IME if it doesn\'t match the expected value',
+            (tester) async {
+          final controller = ImeAttributedTextEditingController(
+            controller: _ObscuringTextController(text: AttributedText(text: 'n')),
+          );
+          await _pumpSuperTextField(tester, controller);
+
+          // Place the caret at the end of the textfield.
+          await tester.placeCaretInSuperTextField(1);
+
+          bool sentToPlatform = false;
           int composingBase = -1;
           int composingExtent = -1;
 
-          // Intercept messages sent to the platform.
-          tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
-            final methodCall = const JSONMethodCodec().decodeMethodCall(message);
-            if (methodCall.method == 'TextInput.setEditingState') {
-              composingBase = methodCall.arguments["composingBase"];
-              composingExtent = methodCall.arguments["composingExtent"];
-            }
-            return null;
-          });
+          // Intercept the setEditingState message sent to the platform.
+          tester
+              .interceptChannel(SystemChannels.textInput.name) //
+              .interceptMethod(
+            'TextInput.setEditingState',
+            (methodCall) {
+              if (methodCall.method == 'TextInput.setEditingState') {
+                sentToPlatform = true;
+                composingBase = methodCall.arguments["composingBase"];
+                composingExtent = methodCall.arguments["composingExtent"];
+              }
+              return null;
+            },
+          );
 
           // Simulate the user begining the input of the compound character 'ã'.
           //
@@ -100,17 +145,25 @@ void main() {
           // Otherwise, we get two insertion deltas and the final text will be '~a'.
           await tester.ime.sendDeltas(const [
             TextEditingDeltaInsertion(
-              oldText: "",
+              oldText: "n",
               textInserted: "~",
-              insertionOffset: 0,
-              selection: TextSelection.collapsed(offset: 1),
-              composing: TextRange(start: 0, end: 0),
+              insertionOffset: 1,
+              selection: TextSelection.collapsed(offset: 2),
+              composing: TextRange(start: 1, end: 1),
             )
           ], getter: imeClientGetter);
 
+          // We are using a custom controller which changes every character but the last one to "*".
+          // After typing "~" the IME thinks the text is "n~". However, for us the text is "*~".
+          // As our value is different from what the IME thinks it is, we need to send our current value
+          // back to the IME.
+
+          // Ensure we sent the value back to the IME.
+          expect(sentToPlatform, true);
+
           // Ensure we honored the composing region we got from the IME.
-          expect(composingBase, 0);
-          expect(composingExtent, 0);
+          expect(composingBase, 1);
+          expect(composingExtent, 1);
         });
       });
 
@@ -445,4 +498,65 @@ Widget _buildScaffold({
       ),
     ),
   );
+}
+
+/// An [AttributedTextEditingController] that uppon insertion replaces every character
+/// but the last one with a "*".
+class _ObscuringTextController extends AttributedTextEditingController {
+  _ObscuringTextController({
+    AttributedText? text,
+  }) : super(text: text);
+
+  @override
+  void insertAtCaret({
+    required String text,
+    TextRange? newComposingRegion,
+  }) {
+    final attributedText = super.text;
+
+    final textAfterInsertion = attributedText.insertString(
+      textToInsert: text,
+      startOffset: selection.extentOffset,
+      applyAttributions: Set.from(composingAttributions),
+    );
+
+    // Replace everything but the last char with *.
+    final updatedText = (''.padLeft(textAfterInsertion.text.length - 1, '*')) +
+        textAfterInsertion.text.substring(textAfterInsertion.text.length - 1);
+
+    final updatedSelection = _moveSelectionForInsertion(
+      selection: selection,
+      insertIndex: selection.extentOffset,
+      newTextLength: text.length,
+    );
+
+    update(
+      text: AttributedText(
+        text: updatedText,
+        spans: textAfterInsertion.spans,
+      ),
+      selection: updatedSelection,
+      composingRegion: newComposingRegion,
+    );
+  }
+
+  // Copied from AttributedTextEditingController.
+  TextSelection _moveSelectionForInsertion({
+    required TextSelection selection,
+    required int insertIndex,
+    required int newTextLength,
+  }) {
+    int newBaseOffset = selection.baseOffset;
+    if ((selection.baseOffset == insertIndex && selection.isCollapsed) || (selection.baseOffset > insertIndex)) {
+      newBaseOffset = selection.baseOffset + newTextLength;
+    }
+
+    final newExtentOffset =
+        selection.extentOffset >= insertIndex ? selection.extentOffset + newTextLength : selection.extentOffset;
+
+    return TextSelection(
+      baseOffset: newBaseOffset,
+      extentOffset: newExtentOffset,
+    );
+  }
 }
