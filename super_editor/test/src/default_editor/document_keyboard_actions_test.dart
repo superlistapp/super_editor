@@ -676,7 +676,7 @@ void main() {
 
           final editContext = createEditContext(
             document: document,
-            documentComposer: DocumentComposer(
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -702,7 +702,7 @@ void main() {
 
           expect(result, ExecutionInstruction.haltExecution);
 
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
@@ -729,7 +729,7 @@ void main() {
           );
           final editContext = createEditContext(
             document: document,
-            documentComposer: DocumentComposer(
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -755,7 +755,7 @@ void main() {
 
           expect(result, ExecutionInstruction.haltExecution);
 
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
@@ -782,7 +782,7 @@ void main() {
           );
           final editContext = createEditContext(
             document: document,
-            documentComposer: DocumentComposer(
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -811,7 +811,7 @@ void main() {
           // execution so that the character is also entered by another handler.
           expect(result, ExecutionInstruction.continueExecution);
 
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
@@ -838,7 +838,7 @@ void main() {
           );
           final editContext = createEditContext(
             document: document,
-            documentComposer: DocumentComposer(
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -865,7 +865,7 @@ void main() {
           expect(result, ExecutionInstruction.haltExecution);
 
           // The text should remain the same
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [SELECTME] selection');
 
           // The selection should be collapsed
@@ -936,7 +936,7 @@ void main() {
         );
         final editContext = createEditContext(
           document: document,
-          documentComposer: DocumentComposer(
+          documentComposer: MutableDocumentComposer(
             initialSelection: const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: '1',
@@ -960,7 +960,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
 
         // The text should remain the same
-        final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+        final paragraph = editContext.document.nodes.first as ParagraphNode;
         expect(paragraph.text.text, 'This is some text');
 
         // The selection should remain the same
@@ -981,16 +981,16 @@ void main() {
 }
 
 /// Pumps a [SuperEditor] with a single-paragraph document, with focus, and returns
-/// the associated [EditContext] for further inspection and control.
+/// the associated [SuperEditorContext] for further inspection and control.
 ///
 /// This particular setup is intended for caret movement testing within a single
 /// paragraph node.
-Future<EditContext> _pumpCaretMovementTestSetup(
+Future<SuperEditorContext> _pumpCaretMovementTestSetup(
   WidgetTester tester, {
   required int textOffsetInFirstNode,
 }) async {
   final document = singleParagraphDoc();
-  final composer = DocumentComposer(
+  final composer = MutableDocumentComposer(
     initialSelection: DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: "1",
@@ -1010,6 +1010,7 @@ Future<EditContext> _pumpCaretMovementTestSetup(
         body: SuperEditor(
           focusNode: focusNode,
           editor: editContext.editor,
+          document: editContext.document,
           composer: composer,
         ),
       ),

@@ -76,7 +76,7 @@ class CalloutElementToNodeConverter implements ElementToNodeConverter {
     }
 
     return ParagraphNode(
-      id: DocumentEditor.createNodeId(),
+      id: Editor.createNodeId(),
       text: _parseInlineText(element),
       metadata: {
         'blockType': const NamedAttribution("callout"),

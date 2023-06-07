@@ -2,13 +2,13 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import '../core/document.dart';
-import '../core/document_editor.dart';
 import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
 import 'text.dart';
@@ -217,7 +217,7 @@ class BlockquoteComponent extends StatelessWidget {
   }
 }
 
-class ConvertBlockquoteToParagraphCommand implements EditorCommand {
+class ConvertBlockquoteToParagraphCommand implements EditCommand {
   ConvertBlockquoteToParagraphCommand({
     required this.nodeId,
   });
@@ -225,19 +225,26 @@ class ConvertBlockquoteToParagraphCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final blockquote = node as ParagraphNode;
     final newParagraphNode = ParagraphNode(
       id: blockquote.id,
       text: blockquote.text,
     );
-    transaction.replaceNode(oldNode: blockquote, newNode: newParagraphNode);
+    document.replaceNode(oldNode: blockquote, newNode: newParagraphNode);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      )
+    ]);
   }
 }
 
 ExecutionInstruction insertNewlineInBlockquote({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
@@ -252,8 +259,8 @@ ExecutionInstruction insertNewlineInBlockquote({
     return ExecutionInstruction.continueExecution;
   }
 
-  final baseNode = editContext.editor.document.getNodeById(editContext.composer.selection!.base.nodeId)!;
-  final extentNode = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId)!;
+  final baseNode = editContext.document.getNodeById(editContext.composer.selection!.base.nodeId)!;
+  final extentNode = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
     return ExecutionInstruction.continueExecution;
   }
@@ -269,7 +276,7 @@ ExecutionInstruction insertNewlineInBlockquote({
 }
 
 ExecutionInstruction splitBlockquoteWhenEnterPressed({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
@@ -280,8 +287,8 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final baseNode = editContext.editor.document.getNodeById(editContext.composer.selection!.base.nodeId)!;
-  final extentNode = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId)!;
+  final baseNode = editContext.document.getNodeById(editContext.composer.selection!.base.nodeId)!;
+  final extentNode = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
     return ExecutionInstruction.continueExecution;
   }
@@ -296,7 +303,7 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
   return didSplit ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-class SplitBlockquoteCommand implements EditorCommand {
+class SplitBlockquoteCommand implements EditCommand {
   SplitBlockquoteCommand({
     required this.nodeId,
     required this.splitPosition,
@@ -308,7 +315,8 @@ class SplitBlockquoteCommand implements EditorCommand {
   final String newNodeId;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final blockquote = node as ParagraphNode;
     final text = blockquote.text;
@@ -330,9 +338,18 @@ class SplitBlockquoteCommand implements EditorCommand {
     );
 
     // Insert the new node after the current node.
-    transaction.insertNodeAfter(
+    document.insertNodeAfter(
       existingNode: node,
       newNode: newNode,
     );
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      ),
+      DocumentEdit(
+        NodeInsertedEvent(newNodeId, document.getNodeIndexById(newNodeId)),
+      ),
+    ]);
   }
 }

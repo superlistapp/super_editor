@@ -17,7 +17,7 @@ import '_presenter.dart';
 class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   SingleColumnLayoutSelectionStyler({
     required Document document,
-    required ValueNotifier<DocumentSelection?> selection,
+    required ValueListenable<DocumentSelection?> selection,
     required SelectionStyles selectionStyles,
   })  : _document = document,
         _selection = selection,
@@ -33,7 +33,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   }
 
   final Document _document;
-  final ValueNotifier<DocumentSelection?> _selection;
+  final ValueListenable<DocumentSelection?> _selection;
 
   SelectionStyles _selectionStyles;
   set selectionStyles(SelectionStyles selectionStyles) {

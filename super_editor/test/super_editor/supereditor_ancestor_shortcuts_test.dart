@@ -64,6 +64,14 @@ Future<void> _pumpShortcutsAndSuperEditor(
   List<DocumentKeyboardAction> keyboardActions,
   VoidCallback onShortcut,
 ) async {
+  final document = MutableDocument(
+    nodes: [
+      ParagraphNode(id: "1", text: AttributedText(text: "")),
+    ],
+  );
+  final composer = MutableDocumentComposer();
+  final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -79,13 +87,9 @@ Future<void> _pumpShortcutsAndSuperEditor(
               _VoidCallbackIntent: _VoidCallbackAction(),
             },
             child: SuperEditor(
-              editor: DocumentEditor(
-                document: MutableDocument(
-                  nodes: [
-                    ParagraphNode(id: "1", text: AttributedText(text: "")),
-                  ],
-                ),
-              ),
+              editor: editor,
+              document: document,
+              composer: composer,
               keyboardActions: keyboardActions,
             ),
           ),

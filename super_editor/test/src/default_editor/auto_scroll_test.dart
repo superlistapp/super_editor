@@ -205,15 +205,17 @@ class _SliverTestEditor extends StatefulWidget {
 }
 
 class _SliverTestEditorState extends State<_SliverTestEditor> {
-  late Document _doc;
-  late DocumentEditor _docEditor;
+  late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
+  late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
 
     _doc = createExampleDocument();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -247,6 +249,8 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
               SliverToBoxAdapter(
                 child: SuperEditor(
                   editor: _docEditor,
+                  document: _doc,
+                  composer: _composer,
                   stylesheet: defaultStylesheet.copyWith(
                     documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
                   ),

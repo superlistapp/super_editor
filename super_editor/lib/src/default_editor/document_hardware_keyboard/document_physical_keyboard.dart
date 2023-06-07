@@ -29,7 +29,7 @@ class SuperEditorHardwareKeyHandler extends StatefulWidget {
   final FocusNode? focusNode;
 
   /// Service locator for document editing dependencies.
-  final EditContext editContext;
+  final SuperEditorContext editContext;
 
   /// All the actions that the user can execute with keyboard keys.
   ///
@@ -110,7 +110,7 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
 /// It is possible that an action does nothing and then returns
 /// `ExecutionInstruction.haltExecution` to prevent further execution.
 typedef DocumentKeyboardAction = ExecutionInstruction Function({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 });
 
@@ -118,7 +118,7 @@ typedef DocumentKeyboardAction = ExecutionInstruction Function({
 /// for any key combination that matches one of the given [keys].
 DocumentKeyboardAction ignoreKeyCombos(List<ShortcutActivator> keys) {
   return ({
-    required EditContext editContext,
+    required SuperEditorContext editContext,
     required RawKeyEvent keyEvent,
   }) {
     for (final key in keys) {

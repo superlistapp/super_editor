@@ -18,7 +18,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 /// content.
 ///
 /// To edit the content of a document, see [DocumentEditor].
-abstract class Document with ChangeNotifier {
+abstract class Document {
   /// Returns all of the content within the document as a list
   /// of [DocumentNode]s.
   List<DocumentNode> get nodes;
@@ -74,6 +74,133 @@ abstract class Document with ChangeNotifier {
   ///
   /// To compare [Document] equality, use the standard [==] operator.
   bool hasEquivalentContent(Document other);
+
+  void addListener(DocumentChangeListener listener);
+
+  void removeListener(DocumentChangeListener listener);
+}
+
+/// Listener that's notified when a document changes.
+///
+/// The [changeLog] includes an ordered list of all changes that were applied
+/// to the [Document] since the last time this listener was notified.
+typedef DocumentChangeListener = void Function(DocumentChangeLog changeLog);
+
+/// One or more document changes that occurred within a single edit transaction.
+///
+/// A [DocumentChangeLog] can be used to rebuild only the parts of a document that changed.
+class DocumentChangeLog {
+  DocumentChangeLog(this.changes);
+
+  final List<DocumentChange> changes;
+
+  /// Returns `true` if the [DocumentNode] with the given [nodeId] was altered in any way
+  /// by the events in this change log.
+  bool wasNodeChanged(String nodeId) {
+    for (final event in changes) {
+      if (event is NodeDocumentChange && event.nodeId == nodeId) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+/// Marker interface for all document changes.
+abstract class DocumentChange {
+  // Marker interface
+}
+
+/// A [DocumentChange] that impacts a single, specified [DocumentNode] with [nodeId].
+abstract class NodeDocumentChange implements DocumentChange {
+  String get nodeId;
+}
+
+/// A new [DocumentNode] was inserted in the [Document].
+class NodeInsertedEvent implements NodeDocumentChange {
+  const NodeInsertedEvent(this.nodeId, this.insertionIndex);
+
+  @override
+  final String nodeId;
+
+  final int insertionIndex;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NodeInsertedEvent &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          insertionIndex == other.insertionIndex;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ insertionIndex.hashCode;
+}
+
+/// A [DocumentNode] was moved to a new index.
+class NodeMovedEvent implements NodeDocumentChange {
+  const NodeMovedEvent({
+    required this.nodeId,
+    required this.from,
+    required this.to,
+  });
+
+  @override
+  final String nodeId;
+  final int from;
+  final int to;
+
+  @override
+  String toString() => "[NodeMovedEvent] - $nodeId: $from -> $to";
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NodeMovedEvent &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          from == other.from &&
+          to == other.to;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ from.hashCode ^ to.hashCode;
+}
+
+/// A [DocumentNode] was removed from the [Document].
+class NodeRemovedEvent implements NodeDocumentChange {
+  const NodeRemovedEvent(this.nodeId);
+
+  @override
+  final String nodeId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is NodeRemovedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+
+  @override
+  int get hashCode => nodeId.hashCode;
+}
+
+/// The content of a [DocumentNode] changed.
+///
+/// A node change might signify a content change, such as text changing in a paragraph, or
+/// it might signify a node changing its type of content, such as converting a paragraph
+/// to an image.
+class NodeChangeEvent implements NodeDocumentChange {
+  const NodeChangeEvent(this.nodeId);
+
+  @override
+  final String nodeId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is NodeChangeEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+
+  @override
+  int get hashCode => nodeId.hashCode;
+
+  @override
+  String toString() => "[NodeChangeEvent] - Node: $nodeId";
 }
 
 /// A span within a [Document] that begins at [start] and

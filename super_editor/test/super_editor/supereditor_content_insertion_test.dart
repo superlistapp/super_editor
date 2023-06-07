@@ -27,7 +27,7 @@ void main() {
         ).pump();
 
         // Place caret at the beginning of the paragraph.
-        await tester.placeCaretInParagraph(context.editContext.editor.document.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 0);
 
         // Insert the image at the current selection.
         context.editContext.commonOps.insertImage('http://image.fake');
@@ -66,7 +66,7 @@ void main() {
         ).pump();
 
         // Place caret at "Before the image| after the image".
-        await tester.placeCaretInParagraph(context.editContext.editor.document.nodes.first.id, 16);
+        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 16);
 
         // Insert the image at the current selection.
         context.editContext.commonOps.insertImage('http://image.fake');
@@ -110,7 +110,7 @@ void main() {
         ).pump();
 
         // Place caret at the end of the paragraph.
-        await tester.placeCaretInParagraph(context.editContext.editor.document.nodes.first.id, 15);
+        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 15);
 
         // Insert the image at the current selection.
         context.editContext.commonOps.insertImage('http://image.fake');
@@ -193,7 +193,7 @@ void main() {
             .pump();
 
         // Place caret at the beginning of the paragraph.
-        await tester.placeCaretInParagraph(context.editContext.editor.document.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 0);
 
         // Insert the horizontal rule at the current selection.
         context.editContext.commonOps.insertHorizontalRule();
@@ -229,7 +229,7 @@ void main() {
             .pump();
 
         // Place caret at "Before the hr| after the hr".
-        await tester.placeCaretInParagraph(context.editContext.editor.document.nodes.first.id, 13);
+        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 13);
 
         // Insert the horizontal rule at the current selection.
         context.editContext.commonOps.insertHorizontalRule();
@@ -270,7 +270,7 @@ void main() {
             .pump();
 
         // Place caret at the end of the paragraph.
-        await tester.placeCaretInParagraph(context.editContext.editor.document.nodes.first.id, 15);
+        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 15);
 
         // Insert the horizontal rule at the current selection.
         context.editContext.commonOps.insertHorizontalRule();

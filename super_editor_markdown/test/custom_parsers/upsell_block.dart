@@ -50,7 +50,7 @@ class UpsellElementToNodeConverter implements ElementToNodeConverter {
       return null;
     }
 
-    return UpsellNode(DocumentEditor.createNodeId());
+    return UpsellNode(Editor.createNodeId());
   }
 }
 

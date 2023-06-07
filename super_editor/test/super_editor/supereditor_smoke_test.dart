@@ -57,7 +57,7 @@ void main() {
 
       // Ensure that we've created the document that we think we have.
       expect(
-        testDocContext.editContext.editor.document,
+        testDocContext.editContext.document,
         documentEquivalentTo(_expectedDocument),
       );
     });

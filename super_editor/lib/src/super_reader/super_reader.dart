@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
-import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -173,9 +172,8 @@ class SuperReader extends StatefulWidget {
 }
 
 class SuperReaderState extends State<SuperReader> {
-  late DocumentEditor _editor;
   @visibleForTesting
-  Document get document => _editor.document;
+  Document get document => widget.document;
 
   late final ValueNotifier<DocumentSelection?> _selection;
   @visibleForTesting
@@ -202,7 +200,6 @@ class SuperReaderState extends State<SuperReader> {
   @override
   void initState() {
     super.initState();
-    _editor = _ReadOnlyDocumentEditor(document: widget.document);
     _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
@@ -220,9 +217,6 @@ class SuperReaderState extends State<SuperReader> {
   void didUpdateWidget(SuperReader oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.document != oldWidget.document) {
-      _editor = _ReadOnlyDocumentEditor(document: widget.document);
-    }
     if (widget.selection != oldWidget.selection) {
       _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
     }
@@ -268,13 +262,13 @@ class SuperReaderState extends State<SuperReader> {
     _docLayoutPerComponentBlockStyler = SingleColumnLayoutCustomComponentStyler();
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
-      document: _editor.document,
+      document: widget.document,
       selection: _selection,
       selectionStyles: widget.selectionStyles,
     );
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
-      document: _editor.document,
+      document: widget.document,
       componentBuilders: widget.componentBuilders,
       pipeline: [
         _docStylesheetStyler,
@@ -440,26 +434,6 @@ class SuperReaderState extends State<SuperReader> {
         ),
       );
     });
-  }
-}
-
-/// A [DocumentEditor] that doesn't edit the given [Document].
-///
-/// A [_ReadOnlyDocumentEditor] can be used to display a [SuperReader], while
-/// forcibly preventing any changes to the underlying document.
-class _ReadOnlyDocumentEditor implements DocumentEditor {
-  const _ReadOnlyDocumentEditor({
-    required this.document,
-  });
-
-  @override
-  final Document document;
-
-  @override
-  void executeCommand(EditorCommand command) {
-    if (kDebugMode) {
-      throw Exception("Attempted to edit a read-only document: $command");
-    }
   }
 }
 
