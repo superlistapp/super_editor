@@ -920,6 +920,61 @@ Second Paragraph
         ),
       );
     });
+
+    testWidgetsOnAllPlatforms("doesn't notify about selection changes when the selection hasn't changed",
+        (tester) async {
+      // The composer pauses and restarts selection notifications, which is an unusual
+      // behavior. We want to ensure that when the selection doesn't actually change,
+      // this system doesn't send selection change notifications.
+
+      final context = await tester //
+          .createDocument()
+          .withLongTextContent()
+          .autoFocus(true)
+          .pump();
+
+      final doc = context.editContext.document;
+      final composer = context.editContext.composer;
+
+      int selectionNotificationCount = 0;
+      composer.selectionNotifier.addListener(() {
+        selectionNotificationCount += 1;
+      });
+      int selectionChangeCount = 0;
+      composer.selectionChanges.listen((event) {
+        selectionChangeCount += 1;
+      });
+
+      // Ensure selection is at the last character of the last paragraph.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: doc.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 477),
+          ),
+        ),
+      );
+
+      // Send a selection change, using the existing selection.
+      context.editContext.editor.execute([
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: doc.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 477),
+            ),
+          ),
+          SelectionChangeType.place,
+          SelectionReason.userInteraction,
+        ),
+      ]);
+      await tester.pump();
+
+      // Ensure that we weren't notified of any selection changes.
+      expect(selectionNotificationCount, 0);
+      expect(selectionChangeCount, 0);
+    });
   });
 }
 

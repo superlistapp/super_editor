@@ -18,14 +18,14 @@ ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
   if (keyEvent.isPrimaryShortcutKeyPressed && !editContext.composer.isInInteractionMode.value) {
     editorKeyLog.fine("Activating editor interaction mode");
     editContext.editor.execute([
-      ChangeInteractionModeRequest(
+      const ChangeInteractionModeRequest(
         isInteractionModeDesired: true,
       ),
     ]);
   } else if (editContext.composer.isInInteractionMode.value) {
     editorKeyLog.fine("De-activating editor interaction mode");
     editContext.editor.execute([
-      ChangeInteractionModeRequest(
+      const ChangeInteractionModeRequest(
         isInteractionModeDesired: false,
       ),
     ]);

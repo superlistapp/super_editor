@@ -106,10 +106,17 @@ class MutableDocumentComposer extends DocumentComposer implements Editable {
           imeConfiguration: imeConfiguration,
         );
 
+  bool _isInTransaction = false;
+  bool _didChangeSelectionDuringTransaction = false;
+
   /// Sets the current [selection] for a [Document].
   ///
   /// [reason] represents what caused the selection change to happen.
   void setSelectionWithReason(DocumentSelection? newSelection, [Object reason = SelectionReason.userInteraction]) {
+    if (_isInTransaction && newSelection != _latestSelectionChange?.selection) {
+      _didChangeSelectionDuringTransaction = true;
+    }
+
     _latestSelectionChange = DocumentSelectionChange(
       selection: newSelection,
       reason: reason,
@@ -137,12 +144,17 @@ class MutableDocumentComposer extends DocumentComposer implements Editable {
     _composingRegion.pauseNotifications();
 
     _isInInteractionMode.pauseNotifications();
+
+    _isInTransaction = true;
+    _didChangeSelectionDuringTransaction = false;
   }
 
   @override
   void onTransactionEnd(List<EditEvent> edits) {
+    _isInTransaction = false;
+
     _selectionNotifier.resumeNotifications();
-    if (_latestSelectionChange != null) {
+    if (_latestSelectionChange != null && _didChangeSelectionDuringTransaction) {
       _streamController.sink.add(_latestSelectionChange!);
     }
 
@@ -471,7 +483,7 @@ class ChangeComposingRegionCommand implements EditCommand {
 }
 
 class ChangeInteractionModeRequest implements EditRequest {
-  ChangeInteractionModeRequest({
+  const ChangeInteractionModeRequest({
     required this.isInteractionModeDesired,
   });
 

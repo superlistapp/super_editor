@@ -85,6 +85,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   late FocusNode _focusNode;
 
+  DocumentSelection? _previousSelection;
+
   // Tracks user drag gestures for selection purposes.
   SelectionType _selectionType = SelectionType.position;
   Offset? _dragStartGlobal;
@@ -106,6 +108,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     super.initState();
     _focusNode = widget.focusNode ?? FocusNode();
     _selectionSubscription = widget.selectionChanges.listen(_onSelectionChange);
+    _previousSelection = widget.selectionNotifier.value;
     widget.autoScroller
       ..addListener(_updateDragSelection)
       ..addListener(_updateMouseCursorAtLatestOffset);
@@ -117,6 +120,9 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
+    }
+    if (widget.selectionNotifier != oldWidget.selectionNotifier) {
+      _previousSelection = widget.selectionNotifier.value;
     }
     if (widget.selectionChanges != oldWidget.selectionChanges) {
       _selectionSubscription.cancel();
@@ -174,6 +180,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       // We don't want auto-scroll.
       return;
     }
+    if (selectionChange.selection == _previousSelection) {
+      // The selection hasn't actually changed. We don't want to auto-scroll.
+      return;
+    }
+    _previousSelection = selectionChange.selection;
 
     final selection = widget.selectionNotifier.value;
     if (selection == null) {
