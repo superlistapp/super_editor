@@ -19,8 +19,9 @@ class PanelBehindKeyboardDemo extends StatefulWidget {
 
 class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   late final FocusNode _focusNode;
-  late DocumentEditor _editor;
-  late DocumentComposer _composer;
+  late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
+  late Editor _editor;
   final _keyboardController = SoftwareKeyboardController();
   final _keyboardState = ValueNotifier(_InputState.closed);
   final _nonKeyboardEditorState = ValueNotifier(_InputState.closed);
@@ -31,77 +32,10 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
 
     _focusNode = FocusNode();
 
-    _editor = DocumentEditor(
-      document: MutableDocument(nodes: [
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: "Example Doc"),
-          metadata: {"blockType": header1Attribution},
-        ),
-        HorizontalRuleNode(id: DocumentEditor.createNodeId()),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: "Unordered list:"),
-        ),
-        ListItemNode(
-          id: DocumentEditor.createNodeId(),
-          itemType: ListItemType.unordered,
-          text: AttributedText(text: "Unordered 1"),
-        ),
-        ListItemNode(
-          id: DocumentEditor.createNodeId(),
-          itemType: ListItemType.unordered,
-          text: AttributedText(text: "Unordered 2"),
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: "Ordered list:"),
-        ),
-        ListItemNode(
-          id: DocumentEditor.createNodeId(),
-          itemType: ListItemType.unordered,
-          text: AttributedText(text: "Ordered 1"),
-        ),
-        ListItemNode(
-          id: DocumentEditor.createNodeId(),
-          itemType: ListItemType.unordered,
-          text: AttributedText(text: "Ordered 2"),
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'A blockquote:'),
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'This is a blockquote.'),
-          metadata: {"blockType": blockquoteAttribution},
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'Some code:'),
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: '{\n  // This is come code.\n}'),
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: "Header"),
-          metadata: {"blockType": header2Attribution},
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'More stuff 1'),
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'More stuff 2'),
-        ),
-      ]),
-    );
-
-    _composer = DocumentComposer() //
+    _doc = _createDocument();
+    _composer = MutableDocumentComposer() //
       ..selectionNotifier.addListener(_onSelectionChange);
+    _editor = createDefaultDocumentEditor(document: _doc, composer: _composer);
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // Check the IME connection at the end of the frame so that SuperEditor has
@@ -116,6 +50,75 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
     _composer.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  MutableDocument _createDocument() {
+    return MutableDocument(nodes: [
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(text: "Example Doc"),
+        metadata: {"blockType": header1Attribution},
+      ),
+      HorizontalRuleNode(id: Editor.createNodeId()),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(text: "Unordered list:"),
+      ),
+      ListItemNode(
+        id: Editor.createNodeId(),
+        itemType: ListItemType.unordered,
+        text: AttributedText(text: "Unordered 1"),
+      ),
+      ListItemNode(
+        id: Editor.createNodeId(),
+        itemType: ListItemType.unordered,
+        text: AttributedText(text: "Unordered 2"),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(text: "Ordered list:"),
+      ),
+      ListItemNode(
+        id: Editor.createNodeId(),
+        itemType: ListItemType.unordered,
+        text: AttributedText(text: "Ordered 1"),
+      ),
+      ListItemNode(
+        id: Editor.createNodeId(),
+        itemType: ListItemType.unordered,
+        text: AttributedText(text: "Ordered 2"),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(text: 'A blockquote:'),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(text: 'This is a blockquote.'),
+        metadata: {"blockType": blockquoteAttribution},
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(text: 'Some code:'),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(text: '{\n  // This is come code.\n}'),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(text: "Header"),
+        metadata: {"blockType": header2Attribution},
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(text: 'More stuff 1'),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(text: 'More stuff 2'),
+      ),
+    ]);
   }
 
   void _onSelectionChange() {
@@ -149,7 +152,10 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   void _endEditing() {
     print("End editing");
     _keyboardController.close();
-    _composer.selection = null;
+
+    _editor.execute([
+      ClearSelectionRequest(),
+    ]);
 
     // If we clear SuperEditor's selection, but leave SuperEditor focused, then
     // SuperEditor will automatically place the caret at the end of the document.
@@ -171,6 +177,7 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
               child: SuperEditor(
                 focusNode: _focusNode,
                 editor: _editor,
+                document: _doc,
                 composer: _composer,
                 softwareKeyboardController: _keyboardController,
                 selectionPolicies: SuperEditorSelectionPolicies(

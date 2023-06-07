@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
@@ -11,22 +12,30 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.isPrimaryShortcutKeyPressed && !editContext.composer.isInInteractionMode.value) {
     editorKeyLog.fine("Activating editor interaction mode");
-    editContext.composer.isInInteractionMode.value = true;
+    editContext.editor.execute([
+      const ChangeInteractionModeRequest(
+        isInteractionModeDesired: true,
+      ),
+    ]);
   } else if (editContext.composer.isInInteractionMode.value) {
     editorKeyLog.fine("De-activating editor interaction mode");
-    editContext.composer.isInInteractionMode.value = false;
+    editContext.editor.execute([
+      const ChangeInteractionModeRequest(
+        isInteractionModeDesired: false,
+      ),
+    ]);
   }
 
   return ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction doNothingWhenThereIsNoSelection({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -41,7 +50,7 @@ ExecutionInstruction doNothingWhenThereIsNoSelection({
 }
 
 ExecutionInstruction pasteWhenCmdVIsPressed({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -61,7 +70,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
 }
 
 ExecutionInstruction selectAllWhenCmdAIsPressed({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -77,7 +86,7 @@ ExecutionInstruction selectAllWhenCmdAIsPressed({
 }
 
 ExecutionInstruction copyWhenCmdCIsPressed({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -101,7 +110,7 @@ ExecutionInstruction copyWhenCmdCIsPressed({
 }
 
 ExecutionInstruction cutWhenCmdXIsPressed({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -125,7 +134,7 @@ ExecutionInstruction cutWhenCmdXIsPressed({
 }
 
 ExecutionInstruction cmdBToToggleBold({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -146,7 +155,7 @@ ExecutionInstruction cmdBToToggleBold({
 }
 
 ExecutionInstruction cmdIToToggleItalics({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -167,7 +176,7 @@ ExecutionInstruction cmdIToToggleItalics({
 }
 
 ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -224,7 +233,7 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
 }
 
 ExecutionInstruction backspaceToRemoveUpstreamContent({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -245,13 +254,12 @@ ExecutionInstruction backspaceToRemoveUpstreamContent({
 }
 
 ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
     return ExecutionInstruction.continueExecution;
   }
-
   if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }
@@ -260,12 +268,12 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
   if (node is! TextNode) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final nextNode = editContext.editor.document.getNodeAfter(node);
+  final nextNode = editContext.document.getNodeAfter(node);
   if (nextNode == null) {
     return ExecutionInstruction.continueExecution;
   }
@@ -276,26 +284,29 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   final currentParagraphLength = node.text.text.length;
 
   // Send edit command.
-  editContext.editor.executeCommand(
-    CombineParagraphsCommand(
+  editContext.editor.execute([
+    CombineParagraphsRequest(
       firstNodeId: node.id,
       secondNodeId: nextNode.id,
     ),
-  );
-
-  // Place the cursor at the point where the text came together.
-  editContext.composer.selection = DocumentSelection.collapsed(
-    position: DocumentPosition(
-      nodeId: node.id,
-      nodePosition: TextNodePosition(offset: currentParagraphLength),
+    // Place the cursor at the point where the text came together.
+    ChangeSelectionRequest(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: TextNodePosition(offset: currentParagraphLength),
+        ),
+      ),
+      SelectionChangeType.deleteContent,
+      SelectionReason.userInteraction,
     ),
-  );
+  ]);
 
   return ExecutionInstruction.haltExecution;
 }
 
 ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -357,7 +368,7 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
 }
 
 ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -391,7 +402,7 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
 }
 
 ExecutionInstruction moveToLineStartWithHome({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -414,7 +425,7 @@ ExecutionInstruction moveToLineStartWithHome({
 }
 
 ExecutionInstruction moveToLineEndWithEnd({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -437,7 +448,7 @@ ExecutionInstruction moveToLineEndWithEnd({
 }
 
 ExecutionInstruction deleteLineWithCmdBksp({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -467,7 +478,7 @@ ExecutionInstruction deleteLineWithCmdBksp({
 }
 
 ExecutionInstruction deleteWordWithAltBksp({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -500,7 +511,7 @@ ExecutionInstruction deleteWordWithAltBksp({
 ///
 /// Do nothing if selection is already collapsed.
 ExecutionInstruction collapseSelectionWhenEscIsPressed({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {

@@ -730,14 +730,16 @@ void _testParagraphSelection(
 
     final dragLine = ValueNotifier<_Line?>(null);
 
-    final editor = _createSingleParagraphEditor();
-    final composer = DocumentComposer();
+    final document = _createSingleParagraphDoc();
+    final composer = MutableDocumentComposer();
+    final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
     final content = _buildScaffold(
       dragLine: dragLine,
       child: SuperEditor(
         documentLayoutKey: docKey,
         editor: editor,
+        document: document,
         composer: composer,
         gestureMode: platform,
         stylesheet: Stylesheet(
@@ -789,10 +791,6 @@ TextStyle _textStyleBuilder(attributions) {
     fontSize: 16,
     height: 1.4,
   );
-}
-
-DocumentEditor _createSingleParagraphEditor() {
-  return DocumentEditor(document: _createSingleParagraphDoc());
 }
 
 MutableDocument _createSingleParagraphDoc() {

@@ -3,10 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
@@ -18,6 +19,7 @@ import 'document_serialization.dart';
 class TextDeltasDocumentEditor {
   TextDeltasDocumentEditor({
     required this.editor,
+    required this.document,
     required this.documentLayoutResolver,
     required this.selection,
     required this.composerPreferences,
@@ -26,11 +28,12 @@ class TextDeltasDocumentEditor {
     required this.onPerformAction,
   });
 
-  final DocumentEditor editor;
+  final Editor editor;
+  final Document document;
   final DocumentLayoutResolver documentLayoutResolver;
-  final ValueNotifier<DocumentSelection?> selection;
+  final ValueListenable<DocumentSelection?> selection;
+  final ValueListenable<DocumentRange?> composingRegion;
   final ComposerPreferences composerPreferences;
-  final ValueNotifier<DocumentRange?> composingRegion;
   final CommonEditorOperations commonOps;
 
   /// Handles newlines that are inserted as text, e.g., "\n" in deltas.
@@ -47,7 +50,7 @@ class TextDeltasDocumentEditor {
     // Apply deltas to the document.
     editorImeLog.fine("Serializing document to perform IME operations");
     _serializedDoc = DocumentImeSerializer(
-      editor.document,
+      document,
       selection.value!,
       composingRegion.value,
     );
@@ -86,7 +89,11 @@ class TextDeltasDocumentEditor {
     // the IME composing region.
     editorImeLog.fine("After applying all deltas, converting the final composing region to a document range.");
     editorImeLog.fine("Raw IME delta composing region: ${textEditingDeltas.last.composing}");
-    composingRegion.value = _serializedDoc.imeToDocumentRange(textEditingDeltas.last.composing);
+    editor.execute([
+      ChangeComposingRegionRequest(
+        _serializedDoc.imeToDocumentRange(textEditingDeltas.last.composing),
+      ),
+    ]);
     editorImeLog.fine("Document composing region: ${composingRegion.value}");
 
     _nextImeValue = null;
@@ -144,14 +151,11 @@ class TextDeltasDocumentEditor {
 
     // Update the IME to document serialization based on the insertion changes.
     _serializedDoc = DocumentImeSerializer(
-      editor.document,
+      document,
       selection.value!,
       composingRegion.value,
+      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
     )..imeText = _previousImeValue.text;
-
-    editorOpsLog.fine("Updating Document Composer selection after text insertion.");
-    final newSelection = _serializedDoc.imeToDocumentSelection(delta.selection)!;
-    selection.value = newSelection;
   }
 
   void _applyReplacement(TextEditingDeltaReplacement delta) {
@@ -213,7 +217,13 @@ class TextDeltasDocumentEditor {
       // We got a selection from the platform.
       // This could happen in some software keyboards, like GBoard,
       // where the user can swipe over the spacebar to change the selection.
-      selection.value = docSelection;
+      editor.execute([
+        ChangeSelectionRequest(
+          docSelection,
+          SelectionChangeType.place,
+          SelectionReason.userInteraction,
+        ),
+      ]);
     }
 
     // Update the local IME value that changes with each delta.
@@ -225,7 +235,13 @@ class TextDeltasDocumentEditor {
     editorImeLog
         .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
     final selectionBeforeInsertion = selection.value;
-    selection.value = insertionSelection;
+    editor.execute([
+      ChangeSelectionRequest(
+        insertionSelection,
+        SelectionChangeType.place,
+        SelectionReason.userInteraction,
+      ),
+    ]);
 
     editorImeLog.fine("Inserting the text at the Document Composer's selection");
     final didInsert = _insertPlainText(
@@ -236,12 +252,14 @@ class TextDeltasDocumentEditor {
 
     if (!didInsert) {
       editorImeLog.fine("Failed to insert characters. Restoring previous selection.");
-      selection.value = selectionBeforeInsertion;
+      editor.execute([
+        ChangeSelectionRequest(
+          selectionBeforeInsertion,
+          SelectionChangeType.place,
+          SelectionReason.contentChange,
+        ),
+      ]);
     }
-
-    commonOps.convertParagraphByPatternMatching(
-      selection.value!.extent.nodeId,
-    );
   }
 
   bool _insertPlainText(
@@ -256,24 +274,24 @@ class TextDeltasDocumentEditor {
       commonOps.insertBlockLevelNewline();
     }
 
-    final extentNode = editor.document.getNodeById(insertionPosition.nodeId)!;
+    final extentNode = document.getNodeById(insertionPosition.nodeId)!;
     if (extentNode is! TextNode || extentNodePosition is! TextNodePosition) {
       editorOpsLog.fine(
           "Couldn't insert text because Super Editor doesn't know how to handle a node of type: $extentNode, with position: $extentNodePosition");
       return false;
     }
 
-    final textNode = editor.document.getNodeById(insertionPosition.nodeId) as TextNode;
+    final textNode = document.getNodeById(insertionPosition.nodeId) as TextNode;
 
     editorOpsLog.fine("Executing text insertion command.");
     editorOpsLog.finer("Text before insertion: '${textNode.text.text}'");
-    editor.executeCommand(
-      InsertTextCommand(
+    editor.execute([
+      InsertTextRequest(
         documentPosition: insertionPosition,
         textToInsert: text,
         attributions: composerPreferences.currentAttributions,
       ),
-    );
+    ]);
     editorOpsLog.finer("Text after insertion: '${textNode.text.text}'");
 
     return true;
@@ -289,7 +307,13 @@ class TextDeltasDocumentEditor {
     ));
 
     if (replacementSelection != null) {
-      selection.value = replacementSelection;
+      editor.execute([
+        ChangeSelectionRequest(
+          replacementSelection,
+          SelectionChangeType.place,
+          SelectionReason.contentChange,
+        ),
+      ]);
     }
     editorImeLog.fine("Replacing selection: $replacementSelection");
     editorImeLog.fine('With text: "$replacementText"');
@@ -300,10 +324,6 @@ class TextDeltasDocumentEditor {
     }
 
     commonOps.insertPlainText(replacementText);
-
-    commonOps.convertParagraphByPatternMatching(
-      selection.value!.extent.nodeId,
-    );
   }
 
   void delete(TextRange deletedRange) {
@@ -315,7 +335,7 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine("Doc selection to delete: $docSelectionToDelete");
 
     if (docSelectionToDelete == null) {
-      final selectedNodeIndex = editor.document.getNodeIndexById(
+      final selectedNodeIndex = document.getNodeIndexById(
         selection.value!.extent.nodeId,
       );
       if (selectedNodeIndex > 0) {
@@ -324,7 +344,7 @@ class TextDeltasDocumentEditor {
         // that there's more content before this node. Instruct the editor
         // to run a delete action upstream, which will take the desired
         // "backspace" behavior at the start of this node.
-        final node = editor.document.getNodeAt(selectedNodeIndex)!;
+        final node = document.getNodeAt(selectedNodeIndex)!;
         _deleteUpstream(DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition));
         editorImeLog.fine("Deleted upstream. New selection: ${selection.value}");
         return;
@@ -332,7 +352,13 @@ class TextDeltasDocumentEditor {
     }
 
     editorImeLog.fine("Running selection deletion operation");
-    selection.value = docSelectionToDelete;
+    editor.execute([
+      ChangeSelectionRequest(
+        docSelectionToDelete,
+        SelectionChangeType.place,
+        SelectionReason.contentChange,
+      ),
+    ]);
     commonOps.deleteSelection();
   }
 
@@ -350,7 +376,7 @@ class TextDeltasDocumentEditor {
   /// Returns [true] if content was deleted, or [false] if no upstream
   /// content exists.
   bool _deleteUpstream(DocumentPosition deletionPosition) {
-    final node = editor.document.getNodeById(deletionPosition.nodeId)!;
+    final node = document.getNodeById(deletionPosition.nodeId)!;
 
     if (deletionPosition.nodePosition is UpstreamDownstreamNodePosition) {
       final nodePosition = deletionPosition.nodePosition as UpstreamDownstreamNodePosition;
@@ -366,15 +392,15 @@ class TextDeltasDocumentEditor {
         //  * If the node above is an empty paragraph, delete it.
         //  * If the node above is non-selectable, delete it.
         //  * Otherwise, move the caret up to the node above.
-        final nodeBefore = editor.document.getNodeBefore(node);
+        final nodeBefore = document.getNodeBefore(node);
         if (nodeBefore == null) {
           return false;
         }
 
         if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
-          editor.executeCommand(EditorCommandFunction((doc, transaction) {
-            transaction.deleteNode(nodeBefore);
-          }));
+          editor.execute([
+            DeleteNodeRequest(nodeId: nodeBefore.id),
+          ]);
           return true;
         }
 
@@ -392,7 +418,7 @@ class TextDeltasDocumentEditor {
     if (deletionPosition.nodePosition is TextNodePosition) {
       final textPosition = deletionPosition.nodePosition as TextNodePosition;
       if (textPosition.offset == 0) {
-        final nodeBefore = editor.document.getNodeBefore(node);
+        final nodeBefore = document.getNodeBefore(node);
         if (nodeBefore == null) {
           return false;
         }
@@ -415,9 +441,9 @@ class TextDeltasDocumentEditor {
           // node is not a TextNode. Delete the current TextNode and move the
           // selection up to the preceding node if exist.
           if (commonOps.moveSelectionToEndOfPrecedingNode()) {
-            editor.executeCommand(EditorCommandFunction((doc, transaction) {
-              transaction.deleteNode(node);
-            }));
+            editor.execute([
+              DeleteNodeRequest(nodeId: node.id),
+            ]);
           }
           return true;
         }
@@ -448,9 +474,9 @@ class TextDeltasDocumentEditor {
     editorOpsLog.fine("Inserting block-level newline");
 
     final caretPosition = selection.value!.extent;
-    final extentNode = editor.document.getNodeById(caretPosition.nodeId)!;
+    final extentNode = document.getNodeById(caretPosition.nodeId)!;
 
-    final newNodeId = DocumentEditor.createNodeId();
+    final newNodeId = Editor.createNodeId();
 
     if (extentNode is ParagraphNode) {
       // Split the paragraph into two. This includes headers, blockquotes, and
@@ -459,22 +485,28 @@ class TextDeltasDocumentEditor {
       final endOfParagraph = extentNode.endPosition;
 
       editorOpsLog.finer("Splitting paragraph in two.");
-      editor.executeCommand(
-        SplitParagraphCommand(
+      editor.execute([
+        SplitParagraphRequest(
           nodeId: extentNode.id,
           splitPosition: currentExtentPosition,
           newNodeId: newNodeId,
           replicateExistingMetadata: currentExtentPosition.offset != endOfParagraph.offset,
         ),
-      );
+      ]);
 
-      final newTextNode = editor.document.getNodeById(newNodeId)!;
-      selection.value = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: newTextNode.id,
-          nodePosition: newTextNode.beginningPosition,
+      final newTextNode = document.getNodeById(newNodeId)!;
+      editor.execute([
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newTextNode.id,
+              nodePosition: newTextNode.beginningPosition,
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
         ),
-      );
+      ]);
 
       final newImeValue = _nextImeValue!;
       final imeNewlineIndex = newImeValue.text.indexOf("\n");
@@ -506,28 +538,28 @@ class TextDeltasDocumentEditor {
         // The caret sits on the downstream edge of block-level content. Insert
         // a new paragraph after this node.
         editorOpsLog.finer("Inserting paragraph after block-level node.");
-        editor.executeCommand(EditorCommandFunction((doc, transaction) {
-          transaction.insertNodeAfter(
-            existingNode: extentNode,
+        editor.execute([
+          InsertNodeAfterNodeRequest(
+            existingNodeId: extentNode.id,
             newNode: ParagraphNode(
               id: newNodeId,
               text: AttributedText(text: ''),
             ),
-          );
-        }));
+          ),
+        ]);
       } else {
         // The caret sits on the upstream edge of block-level content. Insert
         // a new paragraph before this node.
         editorOpsLog.finer("Inserting paragraph before block-level node.");
-        editor.executeCommand(EditorCommandFunction((doc, transaction) {
-          transaction.insertNodeBefore(
-            existingNode: extentNode,
+        editor.execute([
+          InsertNodeBeforeNodeRequest(
+            existingNodeId: extentNode.id,
             newNode: ParagraphNode(
               id: newNodeId,
               text: AttributedText(text: ''),
             ),
-          );
-        }));
+          ),
+        ]);
       }
     } else {
       // We don't know how to handle this type of node position. Do nothing.

@@ -2,16 +2,16 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
 
 import 'document.dart';
 import 'document_composer.dart';
-import 'document_selection.dart';
 
 /// Editor for a document editing experience.
 ///
-/// A [Editor] is the entry point for all mutations within a document editing experience.
+/// An [Editor] is the entry point for all mutations within a document editing experience.
 /// Such changes might impact a [Document], [DocumentComposer], and any other relevant objects
 /// or data structures associated with a document editing experience.
 ///
@@ -19,10 +19,10 @@ import 'document_selection.dart';
 /// experience:
 ///
 ///  - [EditRequest] - a desired change.
-///  - [EditCommand] - mutates editables to achieve a change.
+///  - [EditCommand] - mutates [Editable]s to achieve a change.
 ///  - [EditEvent] - describes a change that was made.
 ///  - [EditReaction] - (optionally) requests more changes after some original change.
-///  - [EditListener] - is notified of all changes made by a [Editor].
+///  - [EditListener] - is notified of all changes made by an [Editor].
 class Editor implements RequestDispatcher {
   static const Uuid _uuid = Uuid();
 
@@ -39,7 +39,7 @@ class Editor implements RequestDispatcher {
   /// Each generated node ID is universally unique.
   static String createNodeId() => _uuid.v4();
 
-  /// Constructs a [Editor] with:
+  /// Constructs an [Editor] with:
   ///  - [editables], which contains all artifacts that will be mutated by [EditCommand]s, such
   ///    as a [Document] and [DocumentComposer].
   ///  - [requestHandlers], which map each [EditRequest] to an [EditCommand].
@@ -123,6 +123,12 @@ class Editor implements RequestDispatcher {
   /// of [EditEvent]s.
   @override
   void execute(List<EditRequest> requests) {
+    // print("Request execution:");
+    // for (final request in requests) {
+    //   print(" - ${request.runtimeType}");
+    // }
+    // print(StackTrace.current);
+
     if (_activeCommandCount == 0) {
       // This is the start of a new transaction.
       for (final editable in _context._resources.values) {
@@ -420,7 +426,7 @@ class DocumentEdit implements EditEvent {
 /// commands that were just executed.
 ///
 /// An [EditReaction] can use the given [executor] to spawn additional
-/// [EditCommand]s that should run in response the [changeList].
+/// [EditCommand]s that should run in response to the [changeList].
 abstract class EditReaction {
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList);
 }
@@ -699,7 +705,7 @@ class MutableDocument implements Document, Editable {
   @override
   void onTransactionEnd(List<EditEvent> edits) {
     final documentChanges = edits.whereType<DocumentEdit>().map((edit) => edit.change).toList();
-    if (edits.isEmpty) {
+    if (documentChanges.isEmpty) {
       return;
     }
 
@@ -731,336 +737,4 @@ class MutableDocument implements Document, Editable {
 
   @override
   int get hashCode => _nodes.hashCode;
-}
-
-// TODO: move the following document stuff into document.dart when we start breaking things.
-
-abstract class Document {
-  /// Returns all of the content within the document as a list
-  /// of [DocumentNode]s.
-  List<DocumentNode> get nodes;
-
-  /// Returns the [DocumentNode] with the given [nodeId], or [null]
-  /// if no such node exists.
-  DocumentNode? getNodeById(String nodeId);
-
-  /// Returns the [DocumentNode] at the given [index], or [null]
-  /// if no such node exists.
-  DocumentNode? getNodeAt(int index);
-
-  /// Returns the index of the given [node], or [-1] if the [node]
-  /// does not exist within this [Document].
-  @Deprecated("Use getNodeIndexById() instead")
-  int getNodeIndex(DocumentNode node);
-
-  /// Returns the index of the `DocumentNode` in this `Document` that
-  /// has the given [nodeId], or `-1` if the node does not exist.
-  int getNodeIndexById(String nodeId);
-
-  /// Returns the [DocumentNode] that appears immediately before the
-  /// given [node] in this [Document], or null if the given [node]
-  /// is the first node, or the given [node] does not exist in this
-  /// [Document].
-  DocumentNode? getNodeBefore(DocumentNode node);
-
-  /// Returns the [DocumentNode] that appears immediately after the
-  /// given [node] in this [Document], or null if the given [node]
-  /// is the last node, or the given [node] does not exist in this
-  /// [Document].
-  DocumentNode? getNodeAfter(DocumentNode node);
-
-  /// Returns the [DocumentNode] at the given [position], or [null] if
-  /// no such node exists in this [Document].
-  DocumentNode? getNode(DocumentPosition position);
-
-  /// Returns a [DocumentRange] that ranges from [position1] to
-  /// [position2], including [position1] and [position2].
-  // TODO: this method is misleading (#48) because if `position1` and
-  //       `position2` are in the same node, they may be returned
-  //       in the wrong order because the document doesn't know
-  //       how to interpret positions within a node.
-  DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2);
-
-  /// Returns all [DocumentNode]s from [position1] to [position2], including
-  /// the nodes at [position1] and [position2].
-  List<DocumentNode> getNodesInside(DocumentPosition position1, DocumentPosition position2);
-
-  /// Returns [true] if the content in the [other] document is equivalent to
-  /// the content in this document, ignoring any details that are unrelated
-  /// to content, such as individual node IDs.
-  ///
-  /// To compare [Document] equality, use the standard [==] operator.
-  bool hasEquivalentContent(Document other);
-
-  void addListener(DocumentChangeListener listener);
-
-  void removeListener(DocumentChangeListener listener);
-}
-
-/// Listener that's notified when a document changes.
-///
-/// The [changeLog] includes an ordered list of all changes that were applied
-/// to the [Document] since the last time this listener was notified.
-typedef DocumentChangeListener = void Function(DocumentChangeLog changeLog);
-
-/// One or more document changes that occurred within a single edit transaction.
-///
-/// A [DocumentChangeLog] can be used to rebuild only the parts of a document that changed.
-class DocumentChangeLog {
-  DocumentChangeLog(this.changes);
-
-  final List<DocumentChange> changes;
-
-  /// Returns `true` if the [DocumentNode] with the given [nodeId] was altered in any way
-  /// by the events in this change log.
-  bool wasNodeChanged(String nodeId) {
-    for (final event in changes) {
-      if (event is NodeDocumentChange && event.nodeId == nodeId) {
-        return true;
-      }
-    }
-    return false;
-  }
-}
-
-abstract class DocumentChange {
-  // Marker interface for all document changes.
-}
-
-/// A [DocumentChange] that impacts a single, specified [DocumentNode] with [nodeId].
-abstract class NodeDocumentChange implements DocumentChange {
-  String get nodeId;
-}
-
-/// A new [DocumentNode] was inserted in the [Document].
-class NodeInsertedEvent implements NodeDocumentChange {
-  const NodeInsertedEvent(this.nodeId, this.insertionIndex);
-
-  @override
-  final String nodeId;
-
-  final int insertionIndex;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NodeInsertedEvent &&
-          runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          insertionIndex == other.insertionIndex;
-
-  @override
-  int get hashCode => nodeId.hashCode ^ insertionIndex.hashCode;
-}
-
-/// A [DocumentNode] was moved to a new index.
-class NodeMovedEvent implements NodeDocumentChange {
-  const NodeMovedEvent({
-    required this.nodeId,
-    required this.from,
-    required this.to,
-  });
-
-  @override
-  final String nodeId;
-  final int from;
-  final int to;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NodeMovedEvent &&
-          runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          from == other.from &&
-          to == other.to;
-
-  @override
-  int get hashCode => nodeId.hashCode ^ from.hashCode ^ to.hashCode;
-}
-
-/// A [DocumentNode] was removed from the [Document].
-class NodeRemovedEvent implements NodeDocumentChange {
-  const NodeRemovedEvent(this.nodeId);
-
-  @override
-  final String nodeId;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is NodeRemovedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
-
-  @override
-  int get hashCode => nodeId.hashCode;
-}
-
-/// The content of a [DocumentNode] changed.
-///
-/// A node change might signify a content change, such as text changing in a paragraph, or
-/// it might signify a node changing its type of content, such as converting a paragraph
-/// to an image.
-class NodeChangeEvent implements NodeDocumentChange {
-  const NodeChangeEvent(this.nodeId);
-
-  @override
-  final String nodeId;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is NodeChangeEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
-
-  @override
-  int get hashCode => nodeId.hashCode;
-
-  @override
-  String toString() => "[NodeChangeEvent] - Node: $nodeId";
-}
-
-// TODO: move the following into document_composer.dart when we start breaking things
-
-extension InspectDocumentAffinity on Document {
-  TextAffinity getAffinityForSelection(DocumentSelection selection) {
-    return getAffinityBetween(base: selection.base, extent: selection.extent);
-  }
-
-  /// Returns the affinity direction implied by the given [base] and [extent].
-  // TODO: Replace TextAffinity with a DocumentAffinity to avoid confusion.
-  TextAffinity getAffinityBetween({
-    required DocumentPosition base,
-    required DocumentPosition extent,
-  }) {
-    final baseNode = getNode(base);
-    if (baseNode == null) {
-      throw Exception('No such position in document: $base');
-    }
-    final baseIndex = getNodeIndexById(baseNode.id);
-
-    final extentNode = getNode(extent);
-    if (extentNode == null) {
-      throw Exception('No such position in document: $extent');
-    }
-    final extentIndex = getNodeIndexById(extentNode.id);
-
-    late TextAffinity affinity;
-    if (extentIndex > baseIndex) {
-      affinity = TextAffinity.downstream;
-    } else if (extentIndex < baseIndex) {
-      affinity = TextAffinity.upstream;
-    } else {
-      // The selection is within the same node. Ask the node which position
-      // comes first.
-      affinity = extentNode.getAffinityBetween(base: base.nodePosition, extent: extent.nodePosition);
-    }
-
-    return affinity;
-  }
-}
-
-extension InspectDocumentSelection on Document {
-  /// Returns a list of all the `DocumentNodes` within the given [selection], ordered
-  /// from upstream to downstream.
-  List<DocumentNode> getNodesInContentOrder(DocumentSelection selection) {
-    final upstreamPosition = selectUpstreamPosition(selection.base, selection.extent);
-    final upstreamIndex = getNodeIndexById(upstreamPosition.nodeId);
-    final downstreamPosition = selectDownstreamPosition(selection.base, selection.extent);
-    final downstreamIndex = getNodeIndexById(downstreamPosition.nodeId);
-
-    return nodes.sublist(upstreamIndex, downstreamIndex + 1);
-  }
-
-  /// Given [docPosition1] and [docPosition2], returns the `DocumentPosition` that
-  /// appears first in the document.
-  DocumentPosition selectUpstreamPosition(DocumentPosition docPosition1, DocumentPosition docPosition2) {
-    final docPosition1Node = getNodeById(docPosition1.nodeId)!;
-    final docPosition1NodeIndex = getNodeIndexById(docPosition1Node.id);
-    final docPosition2Node = getNodeById(docPosition2.nodeId)!;
-    final docPosition2NodeIndex = getNodeIndexById(docPosition2Node.id);
-
-    if (docPosition1NodeIndex < docPosition2NodeIndex) {
-      return docPosition1;
-    } else if (docPosition2NodeIndex < docPosition1NodeIndex) {
-      return docPosition2;
-    }
-
-    // Both document positions are in the same node. Figure out which
-    // node position comes first.
-    final theNode = docPosition1Node;
-    return theNode.selectUpstreamPosition(docPosition1.nodePosition, docPosition2.nodePosition) ==
-            docPosition1.nodePosition
-        ? docPosition1
-        : docPosition2;
-  }
-
-  /// Given [docPosition1] and [docPosition2], returns the `DocumentPosition` that
-  /// appears last in the document.
-  DocumentPosition selectDownstreamPosition(DocumentPosition docPosition1, DocumentPosition docPosition2) {
-    final upstreamPosition = selectUpstreamPosition(docPosition1, docPosition2);
-    return upstreamPosition == docPosition1 ? docPosition2 : docPosition1;
-  }
-
-  /// Returns `true` if, and only if, the given [position] sits within the
-  /// given [selection] in this `Document`.
-  bool doesSelectionContainPosition(DocumentSelection selection, DocumentPosition position) {
-    if (selection.isCollapsed) {
-      return false;
-    }
-
-    final baseNode = getNodeById(selection.base.nodeId)!;
-    final baseNodeIndex = getNodeIndexById(baseNode.id);
-    final extentNode = getNodeById(selection.extent.nodeId)!;
-    final extentNodeIndex = getNodeIndexById(extentNode.id);
-
-    final upstreamNode = baseNodeIndex < extentNodeIndex ? baseNode : extentNode;
-    final upstreamNodeIndex = baseNodeIndex < extentNodeIndex ? baseNodeIndex : extentNodeIndex;
-    final downstreamNode = baseNodeIndex < extentNodeIndex ? extentNode : baseNode;
-    final downstreamNodeIndex = baseNodeIndex < extentNodeIndex ? extentNodeIndex : baseNodeIndex;
-
-    final positionNodeIndex = getNodeIndexById(position.nodeId);
-
-    if (upstreamNodeIndex < positionNodeIndex && positionNodeIndex < downstreamNodeIndex) {
-      // The given position is sandwiched between two other nodes that form
-      // the bounds of the selection. Therefore, the position is definitely within
-      // the selection.
-      return true;
-    }
-
-    if (positionNodeIndex == upstreamNodeIndex) {
-      final upstreamPosition = selectUpstreamPosition(selection.base, selection.extent);
-      final downstreamPosition = upstreamPosition == selection.base ? selection.extent : selection.base;
-
-      // This is the furthest a position could sit in the upstream node
-      // and still contain the given position. Keep in mind that the
-      // upstream position, downstream position, and given position may
-      // all reside in the same node (in fact, they probably do).
-      final downstreamCap =
-          upstreamNodeIndex == downstreamNodeIndex ? downstreamPosition.nodePosition : upstreamNode.endPosition;
-
-      // If and only if the given position comes after the upstream position,
-      // and before the downstream cap, then the position is within the selection.
-      return upstreamNode.selectDownstreamPosition(upstreamPosition.nodePosition, position.nodePosition) ==
-          upstreamNode.selectUpstreamPosition(position.nodePosition, downstreamCap);
-    }
-
-    if (positionNodeIndex == downstreamNodeIndex) {
-      final upstreamPosition = selectUpstreamPosition(selection.base, selection.extent);
-      final downstreamPosition = upstreamPosition == selection.base ? selection.extent : selection.base;
-
-      // This is the furthest upstream that a position could sit in the
-      // downstream node and still contain the given position. Keep in
-      // mind that the upstream position, downstream position, and given
-      // position may all reside in the same node (in fact, they probably do).
-      final upstreamCap =
-          downstreamNodeIndex == upstreamNodeIndex ? upstreamPosition.nodePosition : downstreamNode.beginningPosition;
-
-      // If and only if the given position comes before the downstream position,
-      // and after the upstream cap, then the position is within the selection.
-      return downstreamNode.selectDownstreamPosition(upstreamCap, position.nodePosition) ==
-          downstreamNode.selectUpstreamPosition(position.nodePosition, downstreamPosition.nodePosition);
-    }
-
-    // If we got here, then the position is either before the upstream
-    // selection boundary, or after the downstream selection boundary.
-    // Either way, the position is not in the selection.
-    return false;
-  }
 }

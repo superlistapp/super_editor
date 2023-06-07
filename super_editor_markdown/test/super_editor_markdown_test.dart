@@ -341,10 +341,22 @@ This is some code
               text: 'First LinkSecond Link',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 0, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 9, markerType: SpanMarkerType.end),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 10, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 20, markerType: SpanMarkerType.end),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 0,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 9,
+                      markerType: SpanMarkerType.end),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('github.com', '')),
+                      offset: 10,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('github.com', '')),
+                      offset: 20,
+                      markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -639,58 +651,58 @@ Paragraph3""");
       test('example doc', () {
         final doc = MutableDocument(nodes: [
           ImageNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             imageUrl: 'https://someimage.com/the/image.png',
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'Example Doc'),
             metadata: {'blockType': header1Attribution},
           ),
-          HorizontalRuleNode(id: DocumentEditor.createNodeId()),
+          HorizontalRuleNode(id: Editor.createNodeId()),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'Unordered list:'),
           ),
           ListItemNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             itemType: ListItemType.unordered,
             text: AttributedText(text: 'Unordered 1'),
           ),
           ListItemNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             itemType: ListItemType.unordered,
             text: AttributedText(text: 'Unordered 2'),
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'Ordered list:'),
           ),
           ListItemNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             itemType: ListItemType.ordered,
             text: AttributedText(text: 'Ordered 1'),
           ),
           ListItemNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             itemType: ListItemType.ordered,
             text: AttributedText(text: 'Ordered 2'),
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'A blockquote:'),
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'This is a blockquote.'),
             metadata: {'blockType': blockquoteAttribution},
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'Some code:'),
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: '{\n  // This is some code.\n}'),
             metadata: {'blockType': codeAttribution},
           ),
@@ -1102,8 +1114,7 @@ Paragraph4""";
       });
 
       test('paragraph beginning with multiple blank lines', () {
-        final doc =
-            deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
+        final doc = deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
 
         expect(doc.nodes.length, 2);
 

@@ -5,10 +5,10 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
-import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/debug_visualization.dart';
@@ -91,7 +91,8 @@ class SuperEditor extends StatefulWidget {
     Key? key,
     this.focusNode,
     required this.editor,
-    this.composer,
+    required this.document,
+    required this.composer,
     this.scrollController,
     this.documentLayoutKey,
     Stylesheet? stylesheet,
@@ -238,8 +239,11 @@ class SuperEditor extends StatefulWidget {
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
-  /// Contains a [Document] and alters that document as desired.
-  final DocumentEditor editor;
+  /// Alters the [document] and other artifacts.
+  final Editor editor;
+
+  /// The [Document] that's edited by the [editor].
+  final Document document;
 
   /// Layers that are displayed on top of the document layout, aligned
   /// with the location and size of the document layout.
@@ -247,7 +251,7 @@ class SuperEditor extends StatefulWidget {
 
   /// Owns the editor's current selection, the current attributions for
   /// text input, and other transitive editor configurations.
-  final DocumentComposer? composer;
+  final DocumentComposer composer;
 
   /// Priority list of widget factories that create instances of
   /// each visual component displayed in the document layout, e.g.,
@@ -290,7 +294,7 @@ class SuperEditorState extends State<SuperEditor> {
   DocumentPosition? _previousSelectionExtent;
 
   @visibleForTesting
-  late EditContext editContext;
+  late SuperEditorContext editContext;
 
   ContentTapDelegate? _contentTapDelegate;
 
@@ -305,8 +309,8 @@ class SuperEditorState extends State<SuperEditor> {
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
-    _composer = widget.composer ?? DocumentComposer();
-    _composer.addListener(_updateComposerPreferencesAtSelection);
+    _composer = widget.composer;
+    _composer.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
 
     _autoScrollController = AutoScrollController();
 
@@ -319,18 +323,11 @@ class SuperEditorState extends State<SuperEditor> {
   @override
   void didUpdateWidget(SuperEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.composer != oldWidget.composer) {
-      _composer.removeListener(_updateComposerPreferencesAtSelection);
+    if (widget.composer.selectionNotifier != oldWidget.composer.selectionNotifier) {
+      _composer.selectionNotifier.removeListener(_updateComposerPreferencesAtSelection);
 
-      _composer = widget.composer ?? DocumentComposer();
-      _composer.addListener(_updateComposerPreferencesAtSelection);
-    }
-
-    if (widget.editor != oldWidget.editor) {
-      // The content displayed in this Editor was switched
-      // out. Remove any content selection from the previous
-      // document.
-      _composer.selection = null;
+      _composer = widget.composer;
+      _composer.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
     }
 
     if (widget.focusNode != oldWidget.focusNode) {
@@ -359,11 +356,7 @@ class SuperEditorState extends State<SuperEditor> {
   void dispose() {
     _contentTapDelegate?.dispose();
 
-    _composer.removeListener(_updateComposerPreferencesAtSelection);
-
-    if (widget.composer == null) {
-      _composer.dispose();
-    }
+    _composer.selectionNotifier.removeListener(_updateComposerPreferencesAtSelection);
 
     _focusNode.removeListener(_onFocusChange);
     if (widget.focusNode == null) {
@@ -375,12 +368,14 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   void _createEditContext() {
-    editContext = EditContext(
+    editContext = SuperEditorContext(
       editor: widget.editor,
+      document: widget.document,
       composer: _composer,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
       commonOps: CommonEditorOperations(
         editor: widget.editor,
+        document: widget.document,
         composer: _composer,
         documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
@@ -397,7 +392,7 @@ class SuperEditorState extends State<SuperEditor> {
       _docLayoutPresenter!.dispose();
     }
 
-    final document = editContext.editor.document;
+    final document = editContext.document;
 
     _docStylesheetStyler = SingleColumnStylesheetStyler(stylesheet: widget.stylesheet);
 
@@ -464,7 +459,7 @@ class SuperEditorState extends State<SuperEditor> {
       return;
     }
 
-    final node = widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
+    final node = widget.document.getNodeById(_composer.selection!.extent.nodeId);
     if (node is! TextNode) {
       return;
     }
@@ -548,7 +543,8 @@ class SuperEditorState extends State<SuperEditor> {
       focusNode: _focusNode,
       child: EditorSelectionAndFocusPolicy(
         focusNode: _focusNode,
-        document: widget.editor.document,
+        editor: widget.editor,
+        document: widget.document,
         selection: _composer.selectionNotifier,
         isDocumentLayoutAvailable: () => _docLayoutKey.currentContext != null,
         getDocumentLayout: () => editContext.documentLayout,
@@ -607,7 +603,8 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.android:
         return AndroidDocumentTouchInteractor(
           focusNode: _focusNode,
-          document: editContext.editor.document,
+          editor: editContext.editor,
+          document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
           contentTapHandler: _contentTapDelegate,
@@ -623,7 +620,8 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.iOS:
         return IOSDocumentTouchInteractor(
           focusNode: _focusNode,
-          document: editContext.editor.document,
+          editor: editContext.editor,
+          document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
           contentTapHandler: _contentTapDelegate,
@@ -673,7 +671,8 @@ class SuperEditorState extends State<SuperEditor> {
                 Positioned.fill(
                   child: DocumentMouseInteractor(
                     focusNode: _focusNode,
-                    document: editContext.editor.document,
+                    editor: editContext.editor,
+                    document: editContext.document,
                     getDocumentLayout: () => editContext.documentLayout,
                     selectionChanges: editContext.composer.selectionChanges,
                     selectionNotifier: editContext.composer.selectionNotifier,
@@ -788,7 +787,7 @@ class SuperEditorSelectionPolicies {
 /// Builds widgets that are displayed at the same position and size as
 /// the document layout within a [SuperEditor].
 abstract class DocumentLayerBuilder {
-  Widget build(BuildContext context, EditContext editContext);
+  Widget build(BuildContext context, SuperEditorContext editContext);
 }
 
 /// A [DocumentLayerBuilder] that's implemented with a given function, so
@@ -796,10 +795,10 @@ abstract class DocumentLayerBuilder {
 class FunctionalDocumentLayerBuilder implements DocumentLayerBuilder {
   const FunctionalDocumentLayerBuilder(this._delegate);
 
-  final Widget Function(BuildContext context, EditContext editContext) _delegate;
+  final Widget Function(BuildContext context, SuperEditorContext editContext) _delegate;
 
   @override
-  Widget build(BuildContext context, EditContext editContext) => _delegate(context, editContext);
+  Widget build(BuildContext context, SuperEditorContext editContext) => _delegate(context, editContext);
 }
 
 /// A [DocumentLayerBuilder] that paints a caret at the primary selection extent
@@ -816,7 +815,7 @@ class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
   final CaretStyle caretStyle;
 
   @override
-  Widget build(BuildContext context, EditContext editContext) {
+  Widget build(BuildContext context, SuperEditorContext editContext) {
     return IgnorePointer(
       // ^ ignore pointer so that user gestures fall through to the document gesture
       //   system, which sits beneath the document.
@@ -1065,10 +1064,10 @@ const defaultSelectionStyle = SelectionStyles(
   selectionColor: Color(0xFFACCEF7),
 );
 
-typedef SuperEditorContentTapDelegateFactory = ContentTapDelegate Function(EditContext editContext);
+typedef SuperEditorContentTapDelegateFactory = ContentTapDelegate Function(SuperEditorContext editContext);
 
-SuperEditorLaunchLinkTapHandler superEditorLaunchLinkTapHandlerFactory(EditContext editContext) =>
-    SuperEditorLaunchLinkTapHandler(editContext.editor.document, editContext.composer);
+SuperEditorLaunchLinkTapHandler superEditorLaunchLinkTapHandlerFactory(SuperEditorContext editContext) =>
+    SuperEditorLaunchLinkTapHandler(editContext.document, editContext.composer);
 
 /// A [ContentTapDelegate] that opens links when the user taps text with
 /// a [LinkAttribution].

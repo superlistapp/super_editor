@@ -320,7 +320,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     }
   }
 
-  void _onDocumentChange() {
+  void _onDocumentChange(_) {
     _editingController.hideToolbar();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
