@@ -48,7 +48,7 @@ MutableDocument deserializeMarkdownToDocument(
     // For the user to be able to interact with the editor, at least one
     // node is required, so we add an empty paragraph.
     documentNodes.add(
-      ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: '')),
+      ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: '')),
     );
   }
 
@@ -195,7 +195,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
     _content.add(
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: _parseInlineText(element),
         metadata: {
           'blockType': headerAttribution,
@@ -209,7 +209,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
     _content.add(
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: attributedText,
         metadata: {
           'textAlign': textAlign != null ? textAlign : null,
@@ -221,7 +221,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
   void _addBlockquote(md.Element element) {
     _content.add(
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: _parseInlineText(element),
         metadata: {
           'blockType': blockquoteAttribution,
@@ -241,7 +241,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
     _content.add(
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: element.textContent,
         ),
@@ -258,7 +258,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
   }) {
     _content.add(
       ImageNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         imageUrl: imageUrl,
         altText: altText,
       ),
@@ -267,7 +267,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
   void _addHorizontalRule() {
     _content.add(HorizontalRuleNode(
-      id: DocumentEditor.createNodeId(),
+      id: Editor.createNodeId(),
     ));
   }
 
@@ -278,7 +278,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
   }) {
     _content.add(
       ListItemNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         itemType: listItemType,
         indent: indent,
         text: _parseInlineText(element),

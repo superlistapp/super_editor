@@ -70,7 +70,7 @@ void main() {
           .createDocument() //
           .fromMarkdown("This is paragraph one.\nThis is paragraph two.") //
           .pump();
-      final nodeId = testContext.editContext.editor.document.nodes.first.id;
+      final nodeId = testContext.editContext.document.nodes.first.id;
 
       /// Triple tap on the first line in the paragraph node.
       await tester.tripleTapInParagraph(nodeId, 10);
@@ -101,7 +101,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
+      final firstParagraphId = testContext.editContext.document.nodes.first.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -128,7 +128,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+      final secondParagraphId = testContext.editContext.document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -160,7 +160,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+      final secondParagraphId = testContext.editContext.document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -192,7 +192,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
+      final firstParagraphId = testContext.editContext.document.nodes.first.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -219,8 +219,8 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
-      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+      final firstParagraphId = testContext.editContext.document.nodes.first.id;
+      final secondParagraphId = testContext.editContext.document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -250,8 +250,8 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
-      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+      final firstParagraphId = testContext.editContext.document.nodes.first.id;
+      final secondParagraphId = testContext.editContext.document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -808,7 +808,7 @@ Second Paragraph
         (tester) async {
       final focusNode = FocusNode();
 
-      await tester
+      final context = await tester
           .createDocument()
           .withLongTextContent()
           .withInputSource(TextInputSource.ime)
@@ -826,8 +826,6 @@ Second Paragraph
             ),
           )
           .pump();
-
-      final doc = SuperEditorInspector.findDocument()! as MutableDocument;
 
       // Place caret at the beginning of the text.
       await tester.placeCaretInParagraph('1', 0);
@@ -849,7 +847,9 @@ Second Paragraph
       expect(SuperEditorInspector.findDocumentSelection(), isNull);
 
       // Delete the selected node.
-      doc.deleteNodeAt(0);
+      context.editContext.editor.execute([
+        DeleteNodeRequest(nodeId: "1"),
+      ]);
 
       // Focus the editor.
       focusNode.requestFocus();
@@ -921,53 +921,59 @@ Second Paragraph
       );
     });
 
-    test("emits a DocumentSelectionChange when changing selection by the notifier", () async {
-      final composer = DocumentComposer();
+    testWidgetsOnAllPlatforms("doesn't notify about selection changes when the selection hasn't changed",
+        (tester) async {
+      // The composer pauses and restarts selection notifications, which is an unusual
+      // behavior. We want to ensure that when the selection doesn't actually change,
+      // this system doesn't send selection change notifications.
 
-      const newSelection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: "1",
-          nodePosition: TextNodePosition(offset: 0),
-        ),
-      );
+      final context = await tester //
+          .createDocument()
+          .withLongTextContent()
+          .autoFocus(true)
+          .pump();
 
-      // Ensure the stream emits the DocumentSelectionChange.
-      expectLater(
-        composer.selectionChanges,
-        emits(
-          DocumentSelectionChange(
-            selection: newSelection,
-            reason: SelectionReason.userInteraction,
+      final doc = context.editContext.document;
+      final composer = context.editContext.composer;
+
+      int selectionNotificationCount = 0;
+      composer.selectionNotifier.addListener(() {
+        selectionNotificationCount += 1;
+      });
+      int selectionChangeCount = 0;
+      composer.selectionChanges.listen((event) {
+        selectionChangeCount += 1;
+      });
+
+      // Ensure selection is at the last character of the last paragraph.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: doc.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 477),
           ),
         ),
       );
 
-      // Update the selection, which should cause the stream to emit a value.
-      composer.selection = newSelection;
-    }, timeout: const Timeout(Duration(milliseconds: 500)));
-
-    test("notifies selectionNotifier when a new DocumentSelection is emitted", () {
-      final composer = DocumentComposer();
-
-      // Holds the selection emitted by the selectionNotifier.
-      DocumentSelection? emittedSelection;
-
-      const newSelection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: "1",
-          nodePosition: TextNodePosition(offset: 0),
+      // Send a selection change, using the existing selection.
+      context.editContext.editor.execute([
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: doc.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 477),
+            ),
+          ),
+          SelectionChangeType.place,
+          SelectionReason.userInteraction,
         ),
-      );
+      ]);
+      await tester.pump();
 
-      composer.selectionNotifier.addListener(() {
-        emittedSelection = composer.selectionNotifier.value;
-      });
-
-      // Emit a DocumentSelectionChange.
-      composer.setSelectionWithReason(newSelection);
-
-      // Ensure the listener was called and the selection in the selectionNotifier is correct.
-      expect(emittedSelection, newSelection);
+      // Ensure that we weren't notified of any selection changes.
+      expect(selectionNotificationCount, 0);
+      expect(selectionChangeCount, 0);
     });
   });
 }

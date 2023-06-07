@@ -85,7 +85,7 @@ class SingleColumnLayoutPresenter {
     _listeners.remove(listener);
   }
 
-  void _onDocumentChange() {
+  void _onDocumentChange(_) {
     editorLayoutLog.info("The document changed. Marking the presenter dirty.");
     final wasDirty = isDirty;
 
@@ -207,42 +207,74 @@ class SingleColumnLayoutPresenter {
     required SingleColumnLayoutViewModel oldViewModel,
     required SingleColumnLayoutViewModel newViewModel,
   }) {
+    editorLayoutLog.finer("Computing layout view model changes to notify listeners of those changes.");
+
     final addedComponents = <String>[];
+    final movedComponents = <String>[];
     final removedComponents = <String>[];
     final changedComponents = <String>[];
 
     final nodeIdToComponentMap = <String, SingleColumnLayoutComponentViewModel>{};
+    final nodeIdToPreviousOrderMap = <String, int>{};
     // Maps a component's node ID to a change code:
     //  -1 - the component was removed
     //   0 - the component is unchanged
     //   1 - the component changed
-    //   2 - the component was added
+    //   2 - the component was moved
+    //   3 - the component was added
     final changeMap = <String, int>{};
-    for (final oldComponent in oldViewModel.componentViewModels) {
+
+    // Catalog the components in the previous view model.
+    for (int i = 0; i < oldViewModel.componentViewModels.length; i += 1) {
+      final oldComponent = oldViewModel.componentViewModels[i];
       final nodeId = oldComponent.nodeId;
+
       nodeIdToComponentMap[nodeId] = oldComponent;
+      nodeIdToPreviousOrderMap[nodeId] = i;
+
       changeMap[nodeId] = -1;
     }
-    for (final newComponent in newViewModel.componentViewModels) {
+
+    // Accumulate all changes that we can find between the old view model and the new one.
+    for (int i = 0; i < newViewModel.componentViewModels.length; i += 1) {
+      final newComponent = newViewModel.componentViewModels[i];
       final nodeId = newComponent.nodeId;
-      if (nodeIdToComponentMap.containsKey(nodeId)) {
-        if (nodeIdToComponentMap[nodeId] == newComponent) {
-          // The component hasn't changed.
-          changeMap[nodeId] = 0;
-        } else if (nodeIdToComponentMap[nodeId].runtimeType == newComponent.runtimeType) {
-          // The component still exists, but it changed.
-          changeMap[nodeId] = 1;
-        } else {
-          // The component has changed type, e.g., from an Image to a
-          // Paragraph. This can happen as a result of deletions. Treat
-          // this as a component removal.
-          changeMap[nodeId] = -1;
-          editorLayoutLog.fine("Component node changed type. Assuming this is a removal: $nodeId");
-        }
-      } else {
+
+      if (!nodeIdToComponentMap.containsKey(nodeId)) {
         // This component is new.
-        changeMap[nodeId] = 2;
+        editorLayoutLog.fine("New component was added for node $nodeId");
+        changeMap[nodeId] = 3;
+        continue;
       }
+
+      if (nodeIdToPreviousOrderMap[nodeId] != i) {
+        // This component moved somewhere else. Mark this view model as changed.
+        editorLayoutLog.fine(
+            "Component for node $nodeId was at index ${nodeIdToPreviousOrderMap[nodeId]} but now it's at $i, marking the view model as changed");
+        changeMap[nodeId] = 2;
+        continue;
+      }
+
+      if (nodeIdToComponentMap[nodeId] == newComponent) {
+        // The component hasn't changed.
+        editorLayoutLog.fine("Component for node $nodeId didn't change at all");
+        changeMap[nodeId] = 0;
+        continue;
+      }
+
+      if (nodeIdToComponentMap[nodeId].runtimeType == newComponent.runtimeType) {
+        // The component still exists, but it changed.
+        editorLayoutLog
+            .fine("Component for node $nodeId is the same runtime type, but changed content. Marking as changed.");
+        changeMap[nodeId] = 1;
+        continue;
+      }
+
+      // The component has changed type, e.g., from an Image to a
+      // Paragraph. This can happen as a result of deletions. Treat
+      // this as a component removal.
+      editorLayoutLog.fine("Component for node $nodeId at index $i was removed");
+      changeMap[nodeId] = -1;
     }
 
     // Convert the change map to lists of changes.
@@ -258,6 +290,9 @@ class SingleColumnLayoutPresenter {
           changedComponents.add(entry.key);
           break;
         case 2:
+          movedComponents.add(entry.key);
+          break;
+        case 3:
           addedComponents.add(entry.key);
           break;
         default:
@@ -268,7 +303,7 @@ class SingleColumnLayoutPresenter {
       }
     }
 
-    if (addedComponents.isEmpty && changedComponents.isEmpty && removedComponents.isEmpty) {
+    if (addedComponents.isEmpty && movedComponents.isEmpty && changedComponents.isEmpty && removedComponents.isEmpty) {
       // No changes to report.
       editorLayoutLog.fine("Nothing has changed in the view model. Not notifying any listeners.");
       return;
@@ -276,11 +311,13 @@ class SingleColumnLayoutPresenter {
 
     editorLayoutLog.fine("Notifying layout presenter listeners of changes:");
     editorLayoutLog.fine(" - added: $addedComponents");
+    editorLayoutLog.fine(" - added: $movedComponents");
     editorLayoutLog.fine(" - changed: $changedComponents");
     editorLayoutLog.fine(" - removed: $removedComponents");
     for (final listener in _listeners.toList()) {
       listener.onViewModelChange(
         addedComponents: addedComponents,
+        movedComponents: movedComponents,
         changedComponents: changedComponents,
         removedComponents: removedComponents,
       );
@@ -304,11 +341,13 @@ class SingleColumnLayoutPresenterChangeListener {
 
   void onViewModelChange({
     required List<String> addedComponents,
+    required List<String> movedComponents,
     required List<String> changedComponents,
     required List<String> removedComponents,
   }) {
     _onViewModelChange?.call(
       addedComponents: addedComponents,
+      movedComponents: movedComponents,
       changedComponents: changedComponents,
       removedComponents: removedComponents,
     );
@@ -317,6 +356,7 @@ class SingleColumnLayoutPresenterChangeListener {
 
 typedef ViewModelChangeCallback = void Function({
   required List<String> addedComponents,
+  required List<String> movedComponents,
   required List<String> changedComponents,
   required List<String> removedComponents,
 });

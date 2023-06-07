@@ -32,7 +32,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.editContext.editor.document.nodes.first.id,
+            nodeId: testContext.editContext.document.nodes.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -61,7 +61,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.editContext.editor.document.nodes.first.id,
+            nodeId: testContext.editContext.document.nodes.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -90,7 +90,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.editContext.editor.document.nodes.first.id,
+            nodeId: testContext.editContext.document.nodes.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -119,7 +119,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.editContext.editor.document.nodes.first.id,
+            nodeId: testContext.editContext.document.nodes.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -148,7 +148,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.editContext.editor.document.nodes.first.id,
+            nodeId: testContext.editContext.document.nodes.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -173,7 +173,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.editContext.editor.document.nodes.last.id,
+            nodeId: testContext.editContext.document.nodes.last.id,
             nodePosition: const TextNodePosition(offset: 14),
           ),
         ),
@@ -197,7 +197,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: testContext.editContext.editor.document.nodes.first.id,
+            nodeId: testContext.editContext.document.nodes.first.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -514,7 +514,9 @@ spans multiple lines.''',
             // when/how to activate interaction mode on mobile. Rather than
             // add buttons in our test just for this purpose, we'll explicitly
             // activate interaction mode.
-            context.editContext.composer.isInInteractionMode.value = true;
+            context.editContext.editor.execute([
+              ChangeInteractionModeRequest(isInteractionModeDesired: true),
+            ]);
           } else if (defaultTargetPlatform == TargetPlatform.macOS) {
             // Press CMD to activate interaction mode on Mac.
             await tester.sendKeyDownEvent(LogicalKeyboardKey.meta);

@@ -9,13 +9,15 @@ class AnimatedTaskHeightDemo extends StatefulWidget {
 
 class _AnimatedTaskHeightDemoState extends State<AnimatedTaskHeightDemo> {
   late MutableDocument _doc;
-  late DocumentEditor _docEditor;
+  late MutableDocumentComposer _composer;
+  late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createDocument();
-    _docEditor = DocumentEditor(document: _doc);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -28,7 +30,7 @@ class _AnimatedTaskHeightDemoState extends State<AnimatedTaskHeightDemo> {
     return MutableDocument(
       nodes: [
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(
             text:
                 "Below are several tasks. These tasks will animate the appearance of a subtitle depending on whether they have selection. Try and find out:",
@@ -37,7 +39,7 @@ class _AnimatedTaskHeightDemoState extends State<AnimatedTaskHeightDemo> {
         ...List.generate(
           10,
           (index) => TaskNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: "Task ${index + 1}"),
             isComplete: false,
           ),
@@ -51,6 +53,8 @@ class _AnimatedTaskHeightDemoState extends State<AnimatedTaskHeightDemo> {
     print("Building the entire demo");
     return SuperEditor(
       editor: _docEditor,
+      document: _doc,
+      composer: _composer,
       stylesheet: defaultStylesheet.copyWith(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
       ),

@@ -74,7 +74,7 @@ final taskStyles = StyleRule(
 class TaskComponentBuilder implements ComponentBuilder {
   TaskComponentBuilder(this._editor);
 
-  final DocumentEditor _editor;
+  final Editor _editor;
 
   @override
   TaskComponentViewModel? createViewModel(Document document, DocumentNode node) {
@@ -87,13 +87,12 @@ class TaskComponentBuilder implements ComponentBuilder {
       padding: EdgeInsets.zero,
       isComplete: node.isComplete,
       setComplete: (bool isComplete) {
-        _editor.executeCommand(EditorCommandFunction((document, transaction) {
-          // Technically, this line could be called without the editor, but
-          // that's only because Super Editor hasn't fully separated document
-          // queries from document edits. In the future, all edits will have
-          // to go through a dedicated editing interface.
-          node.isComplete = isComplete;
-        }));
+        _editor.execute([
+          ChangeTaskCompletionRequest(
+            nodeId: node.id,
+            isComplete: isComplete,
+          ),
+        ]);
       },
       text: node.text,
       textStyleBuilder: noStyleBuilder,
@@ -271,7 +270,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
 }
 
 ExecutionInstruction enterToInsertNewTask({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
@@ -290,31 +289,97 @@ ExecutionInstruction enterToInsertNewTask({
   }
 
   // We only care about TaskNodes.
-  final node = editContext.editor.document.getNodeById(selection.extent.nodeId);
+  final node = editContext.document.getNodeById(selection.extent.nodeId);
   if (node is! TaskNode) {
     return ExecutionInstruction.continueExecution;
   }
 
-  // The document selection is a caret sitting at the end of a TaskNode.
-  // Insert a new TaskNode below the current TaskNode, and move the caret down.
-  editContext.editor.executeCommand(
-    InsertNewTaskOrSplitExistingTaskCommand(editContext.composer),
-  );
+  final splitOffset = (selection.extent.nodePosition as TextNodePosition).offset;
+
+  editContext.editor.execute([
+    SplitExistingTaskRequest(
+      nodeId: node.id,
+      splitOffset: splitOffset,
+    ),
+  ]);
 
   return ExecutionInstruction.haltExecution;
 }
 
-class ConvertParagraphToTaskCommand implements EditorCommand {
-  const ConvertParagraphToTaskCommand({
+class ChangeTaskCompletionRequest implements EditRequest {
+  ChangeTaskCompletionRequest({required this.nodeId, required this.isComplete});
+
+  final String nodeId;
+  final bool isComplete;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChangeTaskCompletionRequest &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          isComplete == other.isComplete;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ isComplete.hashCode;
+}
+
+class ChangeTaskCompletionCommand implements EditCommand {
+  ChangeTaskCompletionCommand({required this.nodeId, required this.isComplete});
+
+  final String nodeId;
+  final bool isComplete;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final taskNode = context.find<MutableDocument>(Editor.documentKey).getNodeById(nodeId);
+    if (taskNode is! TaskNode) {
+      return;
+    }
+
+    taskNode.isComplete = isComplete;
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      ),
+    ]);
+  }
+}
+
+class ConvertParagraphToTaskRequest implements EditRequest {
+  const ConvertParagraphToTaskRequest({
     required this.nodeId,
-    this.isCompleted = false,
+    this.isComplete = false,
   });
 
   final String nodeId;
-  final bool isCompleted;
+  final bool isComplete;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ConvertParagraphToTaskRequest &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          isComplete == other.isComplete;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ isComplete.hashCode;
+}
+
+class ConvertParagraphToTaskCommand implements EditCommand {
+  const ConvertParagraphToTaskCommand({
+    required this.nodeId,
+    this.isComplete = false,
+  });
+
+  final String nodeId;
+  final bool isComplete;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final existingNode = document.getNodeById(nodeId);
     if (existingNode is! ParagraphNode) {
       editorOpsLog.warning(
@@ -328,18 +393,36 @@ class ConvertParagraphToTaskCommand implements EditorCommand {
       isComplete: false,
     );
 
-    transaction.replaceNode(oldNode: existingNode, newNode: taskNode);
+    executor.executeCommand(
+      ReplaceNodeCommand(existingNodeId: existingNode.id, newNode: taskNode),
+    );
   }
 }
 
-class InsertNewTaskOrSplitExistingTaskCommand implements EditorCommand {
-  const InsertNewTaskOrSplitExistingTaskCommand(this._composer);
+class SplitExistingTaskRequest implements EditRequest {
+  const SplitExistingTaskRequest({
+    required this.nodeId,
+    required this.splitOffset,
+  });
 
-  final DocumentComposer _composer;
+  final String nodeId;
+  final int splitOffset;
+}
+
+class SplitExistingTaskCommand implements EditCommand {
+  const SplitExistingTaskCommand({
+    required this.nodeId,
+    required this.splitOffset,
+  });
+
+  final String nodeId;
+  final int splitOffset;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
-    final selection = _composer.selection;
+  void execute(EditContext editContext, CommandExecutor executor) {
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
+    final selection = composer.selection;
 
     // We only care when the caret sits at the end of a TaskNode.
     if (selection == null || !selection.isCollapsed) {
@@ -352,26 +435,51 @@ class InsertNewTaskOrSplitExistingTaskCommand implements EditorCommand {
       return;
     }
 
-    // Split the task text at the caret, moving everything after the caret down to the
-    // new TaskNode.
-    //
-    // If the caret sits at the end of the task text, then this behavior is equivalent
-    // to inserting a new, empty TaskNode after the current TaskNode.
-    final selectionTextOffset = (selection.extent.nodePosition as TextNodePosition).offset;
+    // Ensure the split offset is valid.
+    if (splitOffset < 0 || splitOffset > node.text.text.length + 1) {
+      return;
+    }
+
     final newTaskNode = TaskNode(
-      id: DocumentEditor.createNodeId(),
-      text: node.text.copyText(selectionTextOffset),
+      id: Editor.createNodeId(),
+      text: node.text.copyText(splitOffset),
       isComplete: false,
     );
-    node.text = node.text.removeRegion(startOffset: selectionTextOffset, endOffset: node.text.text.length);
 
-    transaction.insertNodeAfter(existingNode: node, newNode: newTaskNode);
+    // Remove the text after the caret from the currently selected TaskNode.
+    node.text = node.text.removeRegion(startOffset: splitOffset, endOffset: node.text.text.length);
 
-    _composer.selectionNotifier.value = DocumentSelection.collapsed(
+    // Insert a new TextNode after the currently selected TaskNode.
+    document.insertNodeAfter(existingNode: node, newNode: newTaskNode);
+
+    // Move the caret to the beginning of the new TaskNode.
+    final oldSelection = composer.selection;
+    final oldComposingRegion = composer.composingRegion.value;
+    final newSelection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newTaskNode.id,
         nodePosition: const TextNodePosition(offset: 0),
       ),
     );
+
+    composer.setSelectionWithReason(newSelection, SelectionReason.userInteraction);
+    composer.setComposingRegion(null);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(node.id),
+      ),
+      DocumentEdit(
+        NodeInsertedEvent(newTaskNode.id, document.getNodeIndexById(newTaskNode.id)),
+      ),
+      SelectionChangeEvent(
+        oldSelection: oldSelection,
+        newSelection: newSelection,
+        oldComposingRegion: oldComposingRegion,
+        newComposingRegion: null,
+        changeType: SelectionChangeType.pushCaret,
+        reason: SelectionReason.userInteraction,
+      ),
+    ]);
   }
 }

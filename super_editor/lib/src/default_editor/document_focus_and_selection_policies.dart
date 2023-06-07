@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -8,6 +9,7 @@ class EditorSelectionAndFocusPolicy extends StatefulWidget {
   const EditorSelectionAndFocusPolicy({
     Key? key,
     required this.focusNode,
+    required this.editor,
     required this.document,
     required this.selection,
     required this.isDocumentLayoutAvailable,
@@ -32,11 +34,14 @@ class EditorSelectionAndFocusPolicy extends StatefulWidget {
   /// When focus is lost, this widget may clear the editor's selection.
   final FocusNode focusNode;
 
+  /// The [Editor], which alters the [document].
+  final Editor editor;
+
   /// The editor's [Document].
   final Document document;
 
   /// The document editor's current selection.
-  final ValueNotifier<DocumentSelection?> selection;
+  final ValueListenable<DocumentSelection?> selection;
 
   /// Document layout, used to locate the last selectable piece of content in a document,
   /// which is needed for [placeCaretAtEndOfDocumentOnGainFocus].
@@ -119,10 +124,22 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
               "[${widget.runtimeType}] - not restoring previous editor selection because one of the selected nodes was deleted");
           return;
         }
+
+        if (widget.selection.value == _previousSelection) {
+          // The editor already has the correct selection.
+          return;
+        }
+
         // Restore the previous selection.
         editorPoliciesLog
             .info("[${widget.runtimeType}] - restoring previous editor selection because the editor re-gained focus");
-        widget.selection.value = _previousSelection;
+        widget.editor.execute([
+          ChangeSelectionRequest(
+            _previousSelection,
+            SelectionChangeType.place,
+            SelectionReason.contentChange,
+          ),
+        ]);
       } else if (widget.placeCaretAtEndOfDocumentOnGainFocus) {
         // Place the caret at the end of the document.
         editorPoliciesLog
@@ -133,6 +150,10 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
           editorPoliciesLog.info(
               "[${widget.runtimeType}] - the document hasn't been laid out yet. Trying again at the end of the frame");
           WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
+            if (!mounted) {
+              return;
+            }
+
             _onFocusChange();
           });
           return;
@@ -140,9 +161,15 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
 
         DocumentPosition? position = widget.getDocumentLayout().findLastSelectablePosition();
         if (position != null) {
-          widget.selection.value = DocumentSelection.collapsed(
-            position: position,
-          );
+          widget.editor.execute([
+            ChangeSelectionRequest(
+              DocumentSelection.collapsed(
+                position: position,
+              ),
+              SelectionChangeType.place,
+              SelectionReason.contentChange,
+            ),
+          ]);
         }
       }
     }
@@ -150,7 +177,9 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
     // (Maybe) remove the editor's selection when it loses focus.
     if (!widget.focusNode.hasFocus && widget.clearSelectionWhenEditorLosesFocus) {
       editorPoliciesLog.info("[${widget.runtimeType}] - clearing editor selection because the editor lost all focus");
-      widget.selection.value = null;
+      widget.editor.execute([
+        const ClearSelectionRequest(),
+      ]);
     }
 
     _wasFocused = widget.focusNode.hasFocus;

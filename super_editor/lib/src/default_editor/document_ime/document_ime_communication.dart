@@ -48,7 +48,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   }
 
   /// The document's current selection.
-  final ValueNotifier<DocumentSelection?> selection;
+  final ValueListenable<DocumentSelection?> selection;
 
   /// The document's current composing region, which represents a section
   /// of content that the platform IME is thinking about changing, such as spelling
@@ -261,10 +261,11 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     editorImeLog.fine("[DocumentImeInputClient] - Selection: ${textDeltasDocumentEditor.selection.value}");
     editorImeLog.fine("[DocumentImeInputClient] - Composing region: ${textDeltasDocumentEditor.composingRegion.value}");
     final imeSerialization = DocumentImeSerializer(
-      textDeltasDocumentEditor.editor.document,
+      textDeltasDocumentEditor.document,
       textDeltasDocumentEditor.selection.value!,
       textDeltasDocumentEditor.composingRegion.value,
     );
+
     editorImeLog
         .fine("[DocumentImeInputClient] - Adding invisible characters?: ${imeSerialization.didPrependPlaceholder}");
     TextEditingValue textEditingValue = imeSerialization.toTextEditingValue();
