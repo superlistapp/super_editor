@@ -22,7 +22,7 @@ class IOSFloatingCursor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    return CustomListenableBuilder(
       listenable: controller,
       builder: (context) {
         return Stack(

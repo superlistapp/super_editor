@@ -69,8 +69,8 @@ class _MultiListenableBuilderState extends State<MultiListenableBuilder> {
 
 /// Widget that rebuilds its `builder` every time the given
 /// `listenable` changes.
-class ListenableBuilder extends StatelessWidget {
-  const ListenableBuilder({
+class CustomListenableBuilder extends StatelessWidget {
+  const CustomListenableBuilder({
     Key? key,
     required this.listenable,
     required this.builder,

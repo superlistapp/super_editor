@@ -1225,7 +1225,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: ListenableBuilder(
+                    child: CustomListenableBuilder(
                         listenable: composer,
                         builder: (context) {
                           final selectedNode = document.getNodeById(selection.extent.nodeId);

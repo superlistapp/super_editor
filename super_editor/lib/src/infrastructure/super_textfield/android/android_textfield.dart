@@ -492,7 +492,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             perLineAutoScrollDuration: const Duration(milliseconds: 100),
             showDebugPaint: widget.showDebugPaint,
             padding: widget.padding,
-            child: ListenableBuilder(
+            child: CustomListenableBuilder(
               listenable: _textEditingController,
               builder: (context) {
                 final isTextEmpty = _textEditingController.text.text.isEmpty;

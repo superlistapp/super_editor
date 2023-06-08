@@ -228,7 +228,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    return CustomListenableBuilder(
         listenable: widget.editingController,
         builder: (context) {
           return Padding(
