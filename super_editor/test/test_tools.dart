@@ -147,6 +147,7 @@ void testWidgetsOnMac(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
 }) {
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
@@ -160,7 +161,7 @@ void testWidgetsOnMac(
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
-  }, skip: skip);
+  }, skip: skip, variant: variant);
 }
 
 /// A Dart test that configures the [Platform] to think its a [MacPlatform],
