@@ -10,6 +10,7 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
@@ -19,9 +20,101 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import 'multi_node_editing.dart';
 
+/// Converts a [ParagraphNode] from a regular paragraph to a header when the
+/// user types "# " (or similar) at the start of the paragraph.
+class HeaderConversionReaction implements EditReaction {
+  const HeaderConversionReaction();
+
+  @override
+  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
+    if (!didTypeSpaceAtEnd) {
+      return;
+    }
+
+    final edit = changeList[changeList.length - 2] as DocumentEdit;
+    final textInsertionEvent = edit.change as TextInsertionEvent;
+    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
+    final headerPatternMatch = RegExp(r'^#{1,6}\s+$');
+    if (!paragraph.text.text.startsWith(headerPatternMatch)) {
+      return;
+    }
+
+    // The user started a paragraph with a header pattern. Convert the paragraph
+    // to the appropriate level of header.
+    final pattern = headerPatternMatch.firstMatch(paragraph.text.text)!.group(0)!;
+    final patternLength = pattern.length - 1; // -1 for the space on the end
+    late Attribution headerAttribution;
+    switch (patternLength) {
+      case 1:
+        headerAttribution = header1Attribution;
+        break;
+      case 2:
+        headerAttribution = header2Attribution;
+        break;
+      case 3:
+        headerAttribution = header3Attribution;
+        break;
+      case 4:
+        headerAttribution = header4Attribution;
+        break;
+      case 5:
+        headerAttribution = header5Attribution;
+        break;
+      case 6:
+        headerAttribution = header6Attribution;
+        break;
+      default:
+        throw Exception(
+            "Matched a header pattern, but the pattern length is invalid - '${pattern.toString()}' -> $patternLength");
+    }
+
+    final paragraphPatternSelection = DocumentSelection(
+      base: DocumentPosition(
+        nodeId: paragraph.id,
+        nodePosition: const TextNodePosition(offset: 0),
+      ),
+      extent: DocumentPosition(
+        nodeId: paragraph.id,
+        nodePosition: TextNodePosition(offset: paragraph.text.text.indexOf(" ") + 1),
+      ),
+    );
+
+    requestDispatcher.execute([
+      // Change the paragraph to a header.
+      ChangeParagraphBlockTypeRequest(
+        nodeId: paragraph.id,
+        blockType: headerAttribution,
+      ),
+      // Delete the header pattern from the content.
+      ChangeSelectionRequest(
+        paragraphPatternSelection,
+        SelectionChangeType.expandSelection,
+        SelectionReason.contentChange,
+      ),
+      DeleteSelectionRequest(
+        documentSelection: paragraphPatternSelection,
+      ),
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: paragraph.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+        SelectionChangeType.deleteContent,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+  }
+}
+
 /// Converts a [ParagraphNode] to an [UnorderedListItemNode] when the
 /// user types "* " (or similar) at the start of the paragraph.
 class UnorderedListItemConversionReaction implements EditReaction {
+  const UnorderedListItemConversionReaction();
+
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
@@ -62,6 +155,8 @@ class UnorderedListItemConversionReaction implements EditReaction {
 /// Converts a [ParagraphNode] to an [OrderedListItemNode] when the
 /// user types " 1. " (or similar) at the start of the paragraph.
 class OrderedListItemConversionReaction implements EditReaction {
+  const OrderedListItemConversionReaction();
+
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
@@ -103,6 +198,8 @@ class OrderedListItemConversionReaction implements EditReaction {
 /// Adjusts a [ParagraphNode] to use a blockquote block attribution when a
 /// user types " > " (or similar) at the start of the paragraph.
 class BlockquoteConversionReaction implements EditReaction {
+  const BlockquoteConversionReaction();
+
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
@@ -148,6 +245,8 @@ class BlockquoteConversionReaction implements EditReaction {
 
 /// Converts full node content that looks like "--- " into a horizontal rule.
 class HorizontalRuleConversionReaction implements EditReaction {
+  const HorizontalRuleConversionReaction();
+
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
@@ -197,6 +296,8 @@ class HorizontalRuleConversionReaction implements EditReaction {
 /// When the user creates a new node, and the previous node is just a URL
 /// to an image, the replaces the previous node with the referenced image.
 class ImageUrlConversionReaction implements EditReaction {
+  const ImageUrlConversionReaction();
+
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     if (changeList.isEmpty) {
@@ -331,6 +432,8 @@ class ImageUrlConversionReaction implements EditReaction {
 /// looks like a URL. If the user doesn't enter a trailing space, or the preceding
 /// token doesn't look like a URL, then no reaction occurs.
 class LinkifyReaction implements EditReaction {
+  const LinkifyReaction();
+
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> edits) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);

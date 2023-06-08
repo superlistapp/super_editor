@@ -20,12 +20,13 @@ Editor createDefaultDocumentEditor({
     },
     requestHandlers: defaultRequestHandlers,
     reactionPipeline: [
-      LinkifyReaction(),
-      UnorderedListItemConversionReaction(),
-      OrderedListItemConversionReaction(),
-      BlockquoteConversionReaction(),
-      HorizontalRuleConversionReaction(),
-      ImageUrlConversionReaction(),
+      const LinkifyReaction(),
+      const HeaderConversionReaction(),
+      const UnorderedListItemConversionReaction(),
+      const OrderedListItemConversionReaction(),
+      const BlockquoteConversionReaction(),
+      const HorizontalRuleConversionReaction(),
+      const ImageUrlConversionReaction(),
     ],
     listeners: [
       // FunctionalEditListener(
