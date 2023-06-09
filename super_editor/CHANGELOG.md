@@ -1,5 +1,7 @@
 ## [x.y.z] - ???
- * FEATURE: For IME keyboard behavior - `option + backspace` deletes a word upstream, `option + delete` deletes a word downstream (#1161)
+ * FEATURE: Delete words in IME mode (#1161)
+   * Mac: `option + backspace` deletes a word upstream, `option + delete` deletes a word downstream
+   * Windows/Linux: `control + backspace` deletes a word upstream, `control + delete` deletes a word downstream
 
 ## [0.2.6] - May 28, 2023
  * FEATURE: `SuperReader` now launches URLs when tapping a link (#1151)

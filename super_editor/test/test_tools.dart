@@ -121,9 +121,10 @@ void testWidgetsOnWindowsAndLinux(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
 }) {
-  testWidgetsOnWindows("$description (on Windows)", test, skip: skip);
-  testWidgetsOnLinux("$description (on Linux)", test, skip: skip);
+  testWidgetsOnWindows("$description (on Windows)", test, skip: skip, variant: variant);
+  testWidgetsOnLinux("$description (on Linux)", test, skip: skip, variant: variant);
 }
 
 /// A widget test that configures itself for an arbitrary desktop environment.
@@ -195,6 +196,7 @@ void testWidgetsOnWindows(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
 }) {
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
@@ -208,7 +210,7 @@ void testWidgetsOnWindows(
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
-  }, skip: skip);
+  }, skip: skip, variant: variant);
 }
 
 /// A Dart test that configures the [Platform] to think its a [WindowsPlatform],
@@ -242,6 +244,7 @@ void testWidgetsOnLinux(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
 }) {
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
@@ -255,7 +258,7 @@ void testWidgetsOnLinux(
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
-  }, skip: skip);
+  }, skip: skip, variant: variant);
 }
 
 /// A Dart test that configures the [Platform] to think its a [LinuxPlatform],
