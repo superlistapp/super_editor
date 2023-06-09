@@ -1,8 +1,9 @@
 import 'dart:io';
 
 import 'package:attributed_text/attributed_text.dart';
+import 'package:characters/characters.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -22,8 +23,6 @@ import 'multi_node_editing.dart';
 /// Converts a [ParagraphNode] from a regular paragraph to a header when the
 /// user types "# " (or similar) at the start of the paragraph.
 class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
-  static final _headerRegExp = RegExp(r'^#{1,6}\s+$');
-
   static Attribution _getHeaderAttributionForLevel(int level) {
     switch (level) {
       case 1:
@@ -44,10 +43,12 @@ class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
     }
   }
 
-  const HeaderConversionReaction([
+  HeaderConversionReaction([
     this.maxLevel = 6,
     this.mapping = _getHeaderAttributionForLevel,
-  ]);
+  ]) {
+    _headerRegExp = RegExp("^#{1,$maxLevel}\\s+\$");
+  }
 
   /// The highest level of header that this reaction will recognize, e.g., `3` -> "### ".
   final int maxLevel;
@@ -57,6 +58,7 @@ class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
 
   @override
   RegExp get pattern => _headerRegExp;
+  late final RegExp _headerRegExp;
 
   @override
   void onPrefixMatched(

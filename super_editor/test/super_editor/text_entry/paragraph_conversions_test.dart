@@ -171,7 +171,7 @@ void main() {
         expect((document.nodes.last as ParagraphNode).text.text.isEmpty, isTrue);
       });
 
-      testWidgetsOnAllPlatforms('does not convert', (tester) async {
+      testWidgetsOnAllPlatforms('does not convert non-HR dashes', (tester) async {
         final context = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
