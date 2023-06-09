@@ -232,7 +232,7 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   return ExecutionInstruction.haltExecution;
 }
 
-ExecutionInstruction backspaceToRemoveUpstreamContent({
+ExecutionInstruction deleteUpstreamContentWithBackspace({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -241,10 +241,6 @@ ExecutionInstruction backspaceToRemoveUpstreamContent({
   }
 
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (keyEvent.isMetaPressed || keyEvent.isAltPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -447,7 +443,7 @@ ExecutionInstruction moveToLineEndWithEnd({
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction deleteLineWithCmdBksp({
+ExecutionInstruction deleteToStartOfLineWithCmdBackspaceOnMac({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -455,6 +451,9 @@ ExecutionInstruction deleteLineWithCmdBksp({
     return ExecutionInstruction.continueExecution;
   }
 
+  if (defaultTargetPlatform != TargetPlatform.macOS) {
+    return ExecutionInstruction.continueExecution;
+  }
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
@@ -477,7 +476,7 @@ ExecutionInstruction deleteLineWithCmdBksp({
   return ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction deleteWordWithAltBksp({
+ExecutionInstruction deleteToEndOfLineWithCmdDeleteOnMac({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -485,6 +484,42 @@ ExecutionInstruction deleteWordWithAltBksp({
     return ExecutionInstruction.continueExecution;
   }
 
+  if (defaultTargetPlatform != TargetPlatform.macOS) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  bool didMove = false;
+
+  didMove = editContext.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.line,
+  );
+
+  if (didMove) {
+    return editContext.commonOps.deleteSelection()
+        ? ExecutionInstruction.haltExecution
+        : ExecutionInstruction.continueExecution;
+  }
+  return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction deleteWordUpstreamWithAltBackspaceOnMac({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform != TargetPlatform.macOS) {
+    return ExecutionInstruction.continueExecution;
+  }
   if (!keyEvent.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
@@ -495,6 +530,105 @@ ExecutionInstruction deleteWordWithAltBksp({
   bool didMove = false;
 
   didMove = editContext.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+
+  if (didMove) {
+    return editContext.commonOps.deleteSelection()
+        ? ExecutionInstruction.haltExecution
+        : ExecutionInstruction.continueExecution;
+  }
+  return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction deleteWordUpstreamWithControlBackspaceOnWindowsAndLinux({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!keyEvent.isControlPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  bool didMove = false;
+
+  didMove = editContext.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+
+  if (didMove) {
+    return editContext.commonOps.deleteSelection()
+        ? ExecutionInstruction.haltExecution
+        : ExecutionInstruction.continueExecution;
+  }
+  return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction deleteWordDownstreamWithAltDeleteOnMac({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform != TargetPlatform.macOS) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!keyEvent.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  bool didMove = false;
+
+  didMove = editContext.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+
+  if (didMove) {
+    return editContext.commonOps.deleteSelection()
+        ? ExecutionInstruction.haltExecution
+        : ExecutionInstruction.continueExecution;
+  }
+  return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction deleteWordDownstreamWithControlDeleteOnWindowsAndLinux({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!keyEvent.isControlPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  bool didMove = false;
+
+  didMove = editContext.commonOps.moveCaretDownstream(
     expand: true,
     movementModifier: MovementModifier.word,
   );
