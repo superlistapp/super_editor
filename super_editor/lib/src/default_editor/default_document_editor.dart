@@ -19,19 +19,7 @@ Editor createDefaultDocumentEditor({
       Editor.composerKey: composer,
     },
     requestHandlers: defaultRequestHandlers,
-    reactionPipeline: [
-      LinkifyReaction(),
-      UnorderedListItemConversionReaction(),
-      OrderedListItemConversionReaction(),
-      BlockquoteConversionReaction(),
-      HorizontalRuleConversionReaction(),
-      ImageUrlConversionReaction(),
-    ],
-    listeners: [
-      // FunctionalEditListener(
-      //   document.onDocumentChange,
-      // ),
-    ],
+    reactionPipeline: defaultEditorReactions,
   );
 
   return editor;
@@ -187,4 +175,14 @@ final defaultRequestHandlers = [
           composer: request.composer,
         )
       : null,
+];
+
+final defaultEditorReactions = [
+  const LinkifyReaction(),
+  HeaderConversionReaction(),
+  const UnorderedListItemConversionReaction(),
+  const OrderedListItemConversionReaction(),
+  const BlockquoteConversionReaction(),
+  const HorizontalRuleConversionReaction(),
+  const ImageUrlConversionReaction(),
 ];

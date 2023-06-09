@@ -102,12 +102,13 @@ void testWidgetsOnAllPlatforms(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
 }) {
-  testWidgetsOnMac("$description (on MAC)", test, skip: skip);
-  testWidgetsOnWindows("$description (on Windows)", test, skip: skip);
-  testWidgetsOnLinux("$description (on Linux)", test, skip: skip);
-  testWidgetsOnAndroid("$description (on Android)", test, skip: skip);
-  testWidgetsOnIos("$description (on iOS)", test, skip: skip);
+  testWidgetsOnMac("$description (on MAC)", test, skip: skip, variant: variant);
+  testWidgetsOnWindows("$description (on Windows)", test, skip: skip, variant: variant);
+  testWidgetsOnLinux("$description (on Linux)", test, skip: skip, variant: variant);
+  testWidgetsOnAndroid("$description (on Android)", test, skip: skip, variant: variant);
+  testWidgetsOnIos("$description (on iOS)", test, skip: skip, variant: variant);
 }
 
 /// A widget test that runs a variant for Windows and Linux.
@@ -292,6 +293,7 @@ void testWidgetsOnAndroid(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
 }) {
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
@@ -300,7 +302,7 @@ void testWidgetsOnAndroid(
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
-  }, skip: skip);
+  }, skip: skip, variant: variant);
 }
 
 /// A widget test that configures itself as a iOS platform before executing the
@@ -310,6 +312,7 @@ void testWidgetsOnIos(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
 }) {
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
@@ -318,7 +321,7 @@ void testWidgetsOnIos(
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
-  }, skip: skip);
+  }, skip: skip, variant: variant);
 }
 
 /// Extension on [WidgetTester] to easily intercept platform messages.

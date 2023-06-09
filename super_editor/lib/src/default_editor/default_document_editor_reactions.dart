@@ -3,12 +3,13 @@ import 'dart:io';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:characters/characters.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
@@ -19,36 +20,131 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import 'multi_node_editing.dart';
 
+/// Converts a [ParagraphNode] from a regular paragraph to a header when the
+/// user types "# " (or similar) at the start of the paragraph.
+class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
+  static Attribution _getHeaderAttributionForLevel(int level) {
+    switch (level) {
+      case 1:
+        return header1Attribution;
+      case 2:
+        return header2Attribution;
+      case 3:
+        return header3Attribution;
+      case 4:
+        return header4Attribution;
+      case 5:
+        return header5Attribution;
+      case 6:
+        return header6Attribution;
+      default:
+        throw Exception(
+            "Tried to match a header pattern level ($level) to a header attribution, but there's no attribution for that level.");
+    }
+  }
+
+  HeaderConversionReaction([
+    this.maxLevel = 6,
+    this.mapping = _getHeaderAttributionForLevel,
+  ]) {
+    _headerRegExp = RegExp("^#{1,$maxLevel}\\s+\$");
+  }
+
+  /// The highest level of header that this reaction will recognize, e.g., `3` -> "### ".
+  final int maxLevel;
+
+  /// The mapping from integer header levels to header [Attribution]s.
+  final HeaderAttributionMapping mapping;
+
+  @override
+  RegExp get pattern => _headerRegExp;
+  late final RegExp _headerRegExp;
+
+  @override
+  void onPrefixMatched(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+    ParagraphNode paragraph,
+    String match,
+  ) {
+    final prefixLength = match.length - 1; // -1 for the space on the end
+    late Attribution headerAttribution = _getHeaderAttributionForLevel(prefixLength);
+
+    final paragraphPatternSelection = DocumentSelection(
+      base: DocumentPosition(
+        nodeId: paragraph.id,
+        nodePosition: const TextNodePosition(offset: 0),
+      ),
+      extent: DocumentPosition(
+        nodeId: paragraph.id,
+        nodePosition: TextNodePosition(offset: paragraph.text.text.indexOf(" ") + 1),
+      ),
+    );
+
+    requestDispatcher.execute([
+      // Change the paragraph to a header.
+      ChangeParagraphBlockTypeRequest(
+        nodeId: paragraph.id,
+        blockType: headerAttribution,
+      ),
+      // Delete the header pattern from the content.
+      ChangeSelectionRequest(
+        paragraphPatternSelection,
+        SelectionChangeType.expandSelection,
+        SelectionReason.contentChange,
+      ),
+      DeleteSelectionRequest(
+        documentSelection: paragraphPatternSelection,
+      ),
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: paragraph.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+        SelectionChangeType.deleteContent,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+  }
+}
+
+typedef HeaderAttributionMapping = Attribution Function(int level);
+
 /// Converts a [ParagraphNode] to an [UnorderedListItemNode] when the
 /// user types "* " (or similar) at the start of the paragraph.
-class UnorderedListItemConversionReaction implements EditReaction {
+class UnorderedListItemConversionReaction extends ParagraphPrefixConversionReaction {
+  static final _unorderedListItemPattern = RegExp(r'^\s*[*-]\s+$');
+
+  const UnorderedListItemConversionReaction();
+
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
-    if (!didTypeSpaceAtEnd) {
-      return;
-    }
+  RegExp get pattern => _unorderedListItemPattern;
 
-    final edit = changeList[changeList.length - 2] as DocumentEdit;
-    final textInsertionEvent = edit.change as TextInsertionEvent;
-    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
-    final unorderedListItemMatch = RegExp(r'^\s*[*-]\s+$');
-    if (!paragraph.text.text.startsWith(unorderedListItemMatch)) {
-      return;
-    }
-
+  @override
+  void onPrefixMatched(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+    ParagraphNode paragraph,
+    String match,
+  ) {
     // The user started a paragraph with an unordered list item pattern.
     // Convert the paragraph to an unordered list item.
     requestDispatcher.execute([
       ReplaceNodeRequest(
         existingNodeId: paragraph.id,
-        newNode: ListItemNode.unordered(id: paragraph.id, text: AttributedText(text: "")),
+        newNode: ListItemNode.unordered(
+          id: paragraph.id,
+          text: AttributedText(text: ""),
+        ),
       ),
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: textInsertionEvent.nodeId,
+            nodeId: paragraph.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -61,35 +157,36 @@ class UnorderedListItemConversionReaction implements EditReaction {
 
 /// Converts a [ParagraphNode] to an [OrderedListItemNode] when the
 /// user types " 1. " (or similar) at the start of the paragraph.
-class OrderedListItemConversionReaction implements EditReaction {
+class OrderedListItemConversionReaction extends ParagraphPrefixConversionReaction {
+  static final _orderedListPattern = RegExp(r'^\s*1[.)]\s+$');
+
+  const OrderedListItemConversionReaction();
+
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
-    if (!didTypeSpaceAtEnd) {
-      return;
-    }
+  RegExp get pattern => _orderedListPattern;
 
-    final edit = changeList[changeList.length - 2] as DocumentEdit;
-    final textInsertionEvent = edit.change as TextInsertionEvent;
-    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
-    // We want to match "1. ", " 1. ", "1) ", " 1) ".
-    final orderedListItemMatch = RegExp(r'^\s*1[.)]\s+$');
-    if (!paragraph.text.text.startsWith(orderedListItemMatch)) {
-      return;
-    }
-
+  @override
+  void onPrefixMatched(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+    ParagraphNode paragraph,
+    String match,
+  ) {
     // The user started a paragraph with an ordered list item pattern.
     // Convert the paragraph to an unordered list item.
     requestDispatcher.execute([
       ReplaceNodeRequest(
         existingNodeId: paragraph.id,
-        newNode: ListItemNode.ordered(id: paragraph.id, text: AttributedText(text: "")),
+        newNode: ListItemNode.ordered(
+          id: paragraph.id,
+          text: AttributedText(text: ""),
+        ),
       ),
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: textInsertionEvent.nodeId,
+            nodeId: paragraph.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -102,23 +199,22 @@ class OrderedListItemConversionReaction implements EditReaction {
 
 /// Adjusts a [ParagraphNode] to use a blockquote block attribution when a
 /// user types " > " (or similar) at the start of the paragraph.
-class BlockquoteConversionReaction implements EditReaction {
+class BlockquoteConversionReaction extends ParagraphPrefixConversionReaction {
+  static final _blockquotePattern = RegExp(r'^>\s$');
+
+  const BlockquoteConversionReaction();
+
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
-    if (!didTypeSpaceAtEnd) {
-      return;
-    }
+  RegExp get pattern => _blockquotePattern;
 
-    final edit = changeList[changeList.length - 2] as DocumentEdit;
-    final textInsertionEvent = edit.change as TextInsertionEvent;
-    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
-    final blockquoteMatch = RegExp(r'^>\s$');
-    if (!paragraph.text.text.startsWith(blockquoteMatch)) {
-      return;
-    }
-
+  @override
+  void onPrefixMatched(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+    ParagraphNode paragraph,
+    String match,
+  ) {
     // The user started a paragraph with blockquote pattern.
     // Convert the paragraph to a blockquote.
     requestDispatcher.execute([
@@ -135,7 +231,7 @@ class BlockquoteConversionReaction implements EditReaction {
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: textInsertionEvent.nodeId,
+            nodeId: paragraph.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
@@ -147,25 +243,26 @@ class BlockquoteConversionReaction implements EditReaction {
 }
 
 /// Converts full node content that looks like "--- " into a horizontal rule.
-class HorizontalRuleConversionReaction implements EditReaction {
+class HorizontalRuleConversionReaction extends ParagraphPrefixConversionReaction {
+  static final _hrPattern = RegExp(r'^---\s$');
+
+  const HorizontalRuleConversionReaction();
+
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
-    if (!didTypeSpaceAtEnd) {
-      return;
-    }
+  RegExp get pattern => _hrPattern;
 
-    final edit = changeList[changeList.length - 2] as DocumentEdit;
-    final textInsertionEvent = edit.change as TextInsertionEvent;
-    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
-    final hrMatch = RegExp(r'^---*\s$');
-    if (!paragraph.text.text.startsWith(hrMatch)) {
-      return;
-    }
-
+  @override
+  void onPrefixMatched(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+    ParagraphNode paragraph,
+    String match,
+  ) {
     // The user started a paragraph with a horizontal rule pattern.
     // Convert the paragraph to a horizontal rule.
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+
     requestDispatcher.execute([
       InsertNodeAtIndexRequest(
         nodeIndex: document.getNodeIndexById(paragraph.id),
@@ -194,9 +291,62 @@ class HorizontalRuleConversionReaction implements EditReaction {
   }
 }
 
+/// Base class for [EditReaction]s that want to take action when the user types text at
+/// the beginning of a paragraph, which matches a given [RegExp].
+abstract class ParagraphPrefixConversionReaction implements EditReaction {
+  const ParagraphPrefixConversionReaction({
+    bool requireSpaceInsertion = true,
+  }) : _requireSpaceInsertion = requireSpaceInsertion;
+
+  /// Whether the [_prefixPattern] requires a trailing space.
+  ///
+  /// The [_prefixPattern] will always be honored. This hint provides a performance
+  /// optimization so that the pattern expression is never evaluated in cases where the
+  /// user didn't insert a space into the paragraph.
+  final bool _requireSpaceInsertion;
+
+  /// Pattern that is matched at the beginning of a paragraph and then passed to
+  /// sub-classes for processing.
+  RegExp get pattern;
+
+  @override
+  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
+    if (_requireSpaceInsertion && !didTypeSpaceAtEnd) {
+      return;
+    }
+
+    final edit = changeList[changeList.length - 2] as DocumentEdit;
+    final textInsertionEvent = edit.change as TextInsertionEvent;
+    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
+    final match = pattern.firstMatch(paragraph.text.text)?.group(0);
+    if (match == null) {
+      return;
+    }
+
+    // The user started a paragraph with the desired pattern. Delegate to the subclass
+    // to do whatever it wants.
+    onPrefixMatched(editContext, requestDispatcher, changeList, paragraph, match);
+  }
+
+  /// Hook, called by the superclass, when the user starts the given [paragraph] with
+  /// the given [match], which fits the desired [pattern].
+  @protected
+  void onPrefixMatched(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+    ParagraphNode paragraph,
+    String match,
+  );
+}
+
 /// When the user creates a new node, and the previous node is just a URL
 /// to an image, the replaces the previous node with the referenced image.
 class ImageUrlConversionReaction implements EditReaction {
+  const ImageUrlConversionReaction();
+
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     if (changeList.isEmpty) {
@@ -331,6 +481,8 @@ class ImageUrlConversionReaction implements EditReaction {
 /// looks like a URL. If the user doesn't enter a trailing space, or the preceding
 /// token doesn't look like a URL, then no reaction occurs.
 class LinkifyReaction implements EditReaction {
+  const LinkifyReaction();
+
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> edits) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
