@@ -47,7 +47,7 @@ class _ScrollingMinimapsState extends State<ScrollingMinimaps> with ScrollingMin
   }
 }
 
-abstract class ScrollingMinimapsRepository {
+abstract mixin class ScrollingMinimapsRepository {
   bool hasInstrumentation(String id) => get(id) != null;
 
   ScrollableInstrumentation? get(String id);

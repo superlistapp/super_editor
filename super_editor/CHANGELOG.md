@@ -1,3 +1,8 @@
+## [x.y.z] - ???
+ * FEATURE: Delete words in IME mode (#1161)
+   * Mac: `option + backspace` deletes a word upstream, `option + delete` deletes a word downstream
+   * Windows/Linux: `control + backspace` deletes a word upstream, `control + delete` deletes a word downstream
+
 ## [0.2.6] - May 28, 2023
  * FEATURE: `SuperReader` now launches URLs when tapping a link (#1151)
  * FIX: `SuperEditor` now correctly handles "\n" newlines reported by Android IME deltas (#1086)

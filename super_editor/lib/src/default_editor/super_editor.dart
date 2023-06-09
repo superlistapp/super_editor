@@ -24,12 +24,12 @@ import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_contr
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../infrastructure/document_gestures_interaction_overrides.dart';
 import '../infrastructure/platforms/mobile_documents.dart';
 import 'attributions.dart';
 import 'blockquote.dart';
 import 'document_caret_overlay.dart';
 import 'document_focus_and_selection_policies.dart';
-import '../infrastructure/document_gestures_interaction_overrides.dart';
 import 'document_gestures_mouse.dart';
 import 'document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_ime/document_input_ime.dart';
@@ -119,7 +119,8 @@ class SuperEditor extends StatefulWidget {
     this.overlayController,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
-        keyboardActions = keyboardActions ?? defaultKeyboardActions,
+        keyboardActions = keyboardActions ??
+            (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions),
         componentBuilders = componentBuilders != null
             ? [...componentBuilders, const UnknownComponentBuilder()]
             : [...defaultComponentBuilders, const UnknownComponentBuilder()],
@@ -861,11 +862,15 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   shiftEnterToInsertNewlineInBlock,
   enterToInsertNewTask,
   enterToInsertBlockNewline,
-  backspaceToRemoveUpstreamContent,
-  deleteToRemoveDownstreamContent,
   moveToLineStartOrEndWithCtrlAOrE,
-  deleteLineWithCmdBksp,
-  deleteWordWithAltBksp,
+  deleteToStartOfLineWithCmdBackspaceOnMac,
+  deleteWordUpstreamWithAltBackspaceOnMac,
+  deleteWordUpstreamWithControlBackspaceOnWindowsAndLinux,
+  deleteUpstreamContentWithBackspace,
+  deleteToEndOfLineWithCmdDeleteOnMac,
+  deleteWordDownstreamWithAltDeleteOnMac,
+  deleteWordDownstreamWithControlDeleteOnWindowsAndLinux,
+  deleteDownstreamContentWithDelete,
   anyCharacterOrDestructiveKeyToDeleteSelection,
   anyCharacterToInsertInParagraph,
   anyCharacterToInsertInTextContent,
@@ -895,8 +900,14 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   cmdBToToggleBold,
   cmdIToToggleItalics,
   shiftEnterToInsertNewlineInBlock,
-  backspaceToRemoveUpstreamContent,
-  deleteToRemoveDownstreamContent,
+  deleteToStartOfLineWithCmdBackspaceOnMac,
+  deleteWordUpstreamWithAltBackspaceOnMac,
+  deleteWordUpstreamWithControlBackspaceOnWindowsAndLinux,
+  deleteUpstreamContentWithBackspace,
+  deleteToEndOfLineWithCmdDeleteOnMac,
+  deleteWordDownstreamWithAltDeleteOnMac,
+  deleteWordDownstreamWithControlDeleteOnWindowsAndLinux,
+  deleteDownstreamContentWithDelete,
 ];
 
 /// Stylesheet applied to all [SuperEditor]s by default.
