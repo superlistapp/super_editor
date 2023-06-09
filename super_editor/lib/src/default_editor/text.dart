@@ -1811,7 +1811,7 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
   return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction deleteToRemoveDownstreamContent({
+ExecutionInstruction deleteDownstreamContentWithDelete({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {

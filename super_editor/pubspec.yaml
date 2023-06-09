@@ -14,7 +14,7 @@ screenshots:
     path: doc/marketing/screenshot_mac_desktop_bold-selection.png
 
 environment:
-  sdk: ">=2.12.0 <4.0.0"
+  sdk: ">=3.0.0 <4.0.0"
   flutter: ">=1.17.0"
 
 dependencies:
