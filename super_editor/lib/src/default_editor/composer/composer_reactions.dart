@@ -128,12 +128,10 @@ class UpdateComposerTextStylesReaction implements EditReaction {
 
     Set<Attribution> allAttributions = node.text.getAllAttributionsAt(offsetWithAttributionsToExtend);
 
-    // TODO: attribution expansion policy should probably be configurable
-
-    // Add non-link attributions.
-    // final newStyles = allAttributions.where((attribution) => attribution is! LinkAttribution).toSet();
+    // Add desired expandable styles.
     final newStyles = allAttributions.where((attribution) => _stylesToExtend.contains(attribution)).toSet();
 
+    // TODO: we shouldn't have such specific behavior in here. Figure out how to generalize this.
     // Add a link attribution only if the selection sits at the middle of the link.
     // As we are dealing with a collapsed selection, we shouldn't have more than one link.
     final linkAttribution = allAttributions.firstWhereOrNull((attribution) => attribution is LinkAttribution);
