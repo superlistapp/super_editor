@@ -471,18 +471,18 @@ class SuperEditorState extends State<SuperEditor> {
       return;
     }
 
-    late int currentAttributionsOffset;
+    late int offsetWithAttributionsToExtend;
     if (textPosition.offset == 0) {
       // The inserted text is at the very beginning of the text blob. Therefore, we should apply the
       // same attributions to the inserted text, as the text that immediately follows the inserted text.
-      currentAttributionsOffset = textPosition.offset + 1;
+      offsetWithAttributionsToExtend = textPosition.offset + 1;
     } else {
       // The inserted text is NOT at the very beginning of the text blob. Therefore, we should apply the
       // same attributions to the inserted text, as the text that immediately precedes the inserted text.
-      currentAttributionsOffset = textPosition.offset - 1;
+      offsetWithAttributionsToExtend = textPosition.offset - 1;
     }
 
-    Set<Attribution> allAttributions = node.text.getAllAttributionsAt(currentAttributionsOffset);
+    Set<Attribution> allAttributions = node.text.getAllAttributionsAt(offsetWithAttributionsToExtend);
 
     // TODO: attribution expansion policy should probably be configurable
 
@@ -493,11 +493,11 @@ class SuperEditorState extends State<SuperEditor> {
     // As we are dealing with a collapsed selection, we shouldn't have more than one link.
     final linkAttribution = allAttributions.firstWhereOrNull((attribution) => attribution is LinkAttribution);
     if (linkAttribution != null) {
-      final range = node.text.getAttributedRange({linkAttribution}, currentAttributionsOffset);
+      final range = node.text.getAttributedRange({linkAttribution}, offsetWithAttributionsToExtend);
 
       if (textPosition.offset > 0 &&
-          currentAttributionsOffset >= range.start &&
-          currentAttributionsOffset < range.end) {
+          offsetWithAttributionsToExtend >= range.start &&
+          offsetWithAttributionsToExtend < range.end) {
         newStyles.add(linkAttribution);
       }
     }
@@ -525,18 +525,7 @@ class SuperEditorState extends State<SuperEditor> {
   /// If the `inputSource` is configured, it is used. Otherwise,
   /// the [TextInputSource] is chosen based on the platform.
   @visibleForTesting
-  TextInputSource get inputSource {
-    if (widget.inputSource != null) {
-      return widget.inputSource!;
-    }
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-        return TextInputSource.ime;
-      default:
-        return TextInputSource.keyboard;
-    }
-  }
+  TextInputSource get inputSource => widget.inputSource ?? TextInputSource.ime;
 
   @override
   Widget build(BuildContext context) {

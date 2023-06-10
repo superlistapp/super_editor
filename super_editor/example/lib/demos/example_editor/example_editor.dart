@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide ListenableBuilder;
@@ -49,7 +51,17 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _doc = createInitialDocument()..addListener(_onDocumentChange);
     _composer = MutableDocumentComposer();
     _composer.selectionNotifier.addListener(_hideOrShowToolbar);
-    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
+    _docEditor = Editor(
+      editables: {
+        Editor.documentKey: _doc,
+        Editor.composerKey: _composer,
+      },
+      requestHandlers: defaultRequestHandlers,
+      reactionPipeline: [
+        TagUserReaction(),
+        ...defaultEditorReactions,
+      ],
+    );
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       document: _doc,
@@ -421,6 +433,23 @@ class _ExampleEditorState extends State<ExampleEditor> {
                   selectionColor: Colors.red.withOpacity(0.3),
                 ),
           stylesheet: defaultStylesheet.copyWith(
+            inlineTextStyler: (attributions, existingStyle) {
+              TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
+
+              if (attributions.contains(userTagComposingAttribution)) {
+                style = style.copyWith(
+                  color: Colors.blue,
+                );
+              }
+
+              if (attributions.whereType<UserTagAttribution>().isNotEmpty) {
+                style = style.copyWith(
+                  color: Colors.red,
+                );
+              }
+
+              return style;
+            },
             addRulesAfter: [
               if (!isLight) ..._darkModeStyles,
               taskStyles,

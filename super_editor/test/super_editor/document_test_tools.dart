@@ -104,6 +104,7 @@ class TestDocumentConfigurator {
   final WidgetTester _widgetTester;
   final MutableDocument? _document;
   final TestDocumentContext? _existingContext;
+  final _addedReactions = <EditReaction>[];
   DocumentGestureMode? _gestureMode;
   TextInputSource? _inputSource;
   SuperEditorSelectionPolicies? _selectionPolicies;
@@ -125,10 +126,15 @@ class TestDocumentConfigurator {
   WidgetBuilder? _iOSToolbarBuilder;
   Key? _key;
 
+  TestDocumentConfigurator withAddedReactions(List<EditReaction> addedReactions) {
+    _addedReactions.addAll(addedReactions);
+    return this;
+  }
+
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
   TestDocumentConfigurator forDesktop({
-    TextInputSource inputSource = TextInputSource.keyboard,
+    TextInputSource inputSource = TextInputSource.ime,
   }) {
     _inputSource = inputSource;
     _gestureMode = DocumentGestureMode.mouse;
@@ -334,7 +340,9 @@ class TestDocumentConfigurator {
     final layoutKey = GlobalKey();
     final focusNode = _focusNode ?? FocusNode();
     final composer = MutableDocumentComposer(initialSelection: _selection);
-    final editor = createDefaultDocumentEditor(document: _document!, composer: composer);
+    final editor = createDefaultDocumentEditor(document: _document!, composer: composer)
+      ..reactionPipeline.insertAll(0, _addedReactions);
+    // TODO:
     // ignore: prefer_function_declarations_over_variables
     final layoutResolver = () => layoutKey.currentState as DocumentLayout;
     final commonOps = CommonEditorOperations(

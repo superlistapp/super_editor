@@ -52,7 +52,7 @@ class Editor implements RequestDispatcher {
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
   })  : _requestHandlers = requestHandlers,
-        _reactionPipeline = reactionPipeline ?? [],
+        reactionPipeline = reactionPipeline ?? [],
         _changeListeners = listeners ?? [] {
     _context = EditContext(editables);
 
@@ -60,7 +60,7 @@ class Editor implements RequestDispatcher {
   }
 
   void dispose() {
-    _reactionPipeline.clear();
+    reactionPipeline.clear();
     _changeListeners.clear();
   }
 
@@ -73,10 +73,10 @@ class Editor implements RequestDispatcher {
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
 
-  /// A pipeline of objects that receive change lists from command execution
+  /// A pipeline of objects that receive change-lists from command execution
   /// and get the first opportunity to spawn additional commands before the
   /// change list is dispatched to regular listeners.
-  final List<EditReaction> _reactionPipeline;
+  final List<EditReaction> reactionPipeline;
 
   /// Listeners that are notified of changes in the form of a change list
   /// after all pending [EditCommand]s are executed, and all members of
@@ -205,7 +205,7 @@ class Editor implements RequestDispatcher {
   }
 
   void _reactToChanges(List<EditEvent> changeList) {
-    for (final reaction in _reactionPipeline) {
+    for (final reaction in reactionPipeline) {
       reaction.react(_context, this, changeList);
     }
   }

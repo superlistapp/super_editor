@@ -20,6 +20,85 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import 'multi_node_editing.dart';
 
+// class ExpandTextStylesReaction implements EditReaction {
+//   ExpandTextStylesReaction({
+//     Set<Attribution>? stylesToExtend,
+//   }) : _stylesToExtend = stylesToExtend ??
+//             {
+//               boldAttribution,
+//               italicsAttribution,
+//               underlineAttribution,
+//               strikethroughAttribution,
+//             };
+//
+//   final Set<Attribution> _stylesToExtend;
+//
+//   @override
+//   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+//     print("Checking for style extensions...");
+//     print("Edits: $changeList");
+//     final extendAttributionsRequests = <EditRequest>[];
+//     for (final edit in changeList) {
+//       if (edit is! DocumentEdit) {
+//         // This event isn't a document change of any type. We're only interested in
+//         // text insertions.
+//         continue;
+//       }
+//
+//       final change = edit.change;
+//       if (change is! TextInsertionEvent) {
+//         // This isn't a text insertion, so we don't want to mess with any attributions.
+//         continue;
+//       }
+//
+//       if (change.offset == 0) {
+//         // There's no text before the offset, therefore there's no attribution to extend.
+//         continue;
+//       }
+//
+//       // This event is a text insertion. Check to see if we should expand attributions.
+//       print("Found a text insertion in the event log: '${change.text}'");
+//       final document = editorContext.find<MutableDocument>(Editor.documentKey);
+//       final editedNode = document.getNodeById(change.nodeId) as TextNode;
+//       final attributionsBeforeInsertion = editedNode.text.getAllAttributionsAt(change.offset - 1);
+//       final attributionsToExtend =
+//           attributionsBeforeInsertion.where((attribution) => _stylesToExtend.contains(attribution));
+//       if (attributionsToExtend.isEmpty) {
+//         print("There weren't any preceding attributions to extend for this edit.");
+//         continue;
+//       }
+//
+//       // We found one or more attributions before the insertion that we want to extend through
+//       // the newly inserted text.
+//       print("Adding attributions to set that we want to extend: $attributionsToExtend");
+//       extendAttributionsRequests.add(
+//         AddTextAttributionsRequest(
+//           documentSelection: DocumentSelection(
+//             base: DocumentPosition(
+//               nodeId: editedNode.id,
+//               nodePosition: TextNodePosition(offset: change.offset),
+//             ),
+//             extent: DocumentPosition(
+//               nodeId: editedNode.id,
+//               nodePosition: TextNodePosition(offset: change.offset + change.text.length),
+//             ),
+//           ),
+//           attributions: attributionsToExtend.toSet(),
+//         ),
+//       );
+//     }
+//
+//     if (extendAttributionsRequests.isEmpty) {
+//       // We didn't find any attributions that we want to extend.
+//       print("Didn't find any attributions to extend");
+//       return;
+//     }
+//
+//     // Extend the attributions.
+//     requestDispatcher.execute(extendAttributionsRequests);
+//   }
+// }
+
 /// Converts a [ParagraphNode] from a regular paragraph to a header when the
 /// user types "# " (or similar) at the start of the paragraph.
 class HeaderConversionReaction extends ParagraphPrefixConversionReaction {

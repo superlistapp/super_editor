@@ -14,6 +14,10 @@ class LogNames {
   static const editorStyle = 'editor.style';
   static const editorDocument = 'editor.document';
   static const editorCommonOps = 'editor.ops';
+  static const editorTokens = 'editor.tokens';
+  static const editorTags = 'editor.tokens.tags';
+  static const editorUserTags = 'editor.tokens.tags.users';
+  static const editorHashTags = 'editor.tokens.tags.hash';
 
   static const reader = 'reader';
   static const readerScrolling = 'reader.scrolling';
@@ -50,6 +54,10 @@ final editorLayoutLog = logging.Logger(LogNames.editorLayout);
 final editorStyleLog = logging.Logger(LogNames.editorStyle);
 final editorDocLog = logging.Logger(LogNames.editorDocument);
 final editorOpsLog = logging.Logger(LogNames.editorCommonOps);
+final editorTokens = logging.Logger(LogNames.editorTokens);
+final editorTags = logging.Logger(LogNames.editorTags);
+final editorUserTags = logging.Logger(LogNames.editorUserTags);
+final editorHashTags = logging.Logger(LogNames.editorHashTags);
 
 final readerLog = logging.Logger(LogNames.reader);
 final readerScrollingLog = logging.Logger(LogNames.readerScrolling);
