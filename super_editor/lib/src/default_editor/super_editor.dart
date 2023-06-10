@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
@@ -292,7 +291,6 @@ class SuperEditorState extends State<SuperEditor> {
   late DocumentComposer _composer;
 
   late AutoScrollController _autoScrollController;
-  DocumentPosition? _previousSelectionExtent;
 
   @visibleForTesting
   late SuperEditorContext editContext;
@@ -311,7 +309,6 @@ class SuperEditorState extends State<SuperEditor> {
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
     _composer = widget.composer;
-    _composer.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
 
     _autoScrollController = AutoScrollController();
 
@@ -324,12 +321,6 @@ class SuperEditorState extends State<SuperEditor> {
   @override
   void didUpdateWidget(SuperEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.composer.selectionNotifier != oldWidget.composer.selectionNotifier) {
-      _composer.selectionNotifier.removeListener(_updateComposerPreferencesAtSelection);
-
-      _composer = widget.composer;
-      _composer.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
-    }
 
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
@@ -356,8 +347,6 @@ class SuperEditorState extends State<SuperEditor> {
   @override
   void dispose() {
     _contentTapDelegate?.dispose();
-
-    _composer.selectionNotifier.removeListener(_updateComposerPreferencesAtSelection);
 
     _focusNode.removeListener(_onFocusChange);
     if (widget.focusNode == null) {
@@ -427,82 +416,6 @@ class SuperEditorState extends State<SuperEditor> {
 
   void _recomputeIfLayoutShouldShowCaret() {
     _docLayoutSelectionStyler.shouldDocumentShowCaret = _focusNode.hasFocus && gestureMode == DocumentGestureMode.mouse;
-  }
-
-  void _updateComposerPreferencesAtSelection() {
-    if (_composer.selection?.extent == _previousSelectionExtent) {
-      return;
-    }
-
-    final selectionExtent = _composer.selection?.extent;
-    if (selectionExtent != null &&
-        selectionExtent.nodePosition is TextNodePosition &&
-        _previousSelectionExtent != null &&
-        _previousSelectionExtent!.nodePosition is TextNodePosition) {
-      // The current and previous selections are text positions. Check for the situation where the two
-      // selections are functionally equivalent, but the affinity changed.
-      final selectedNodePosition = selectionExtent.nodePosition as TextNodePosition;
-      final previousSelectedNodePosition = _previousSelectionExtent!.nodePosition as TextNodePosition;
-
-      if (selectionExtent.nodeId == _previousSelectionExtent!.nodeId &&
-          selectedNodePosition.offset == previousSelectedNodePosition.offset) {
-        // The text selection changed, but only the affinity is different. An affinity change doesn't alter
-        // the selection from the user's perspective, so don't alter any preferences. Return.
-        return;
-      }
-    }
-
-    _previousSelectionExtent = _composer.selection?.extent;
-
-    _composer.preferences.clearStyles();
-
-    if (_composer.selection == null || !_composer.selection!.isCollapsed) {
-      return;
-    }
-
-    final node = widget.document.getNodeById(_composer.selection!.extent.nodeId);
-    if (node is! TextNode) {
-      return;
-    }
-
-    final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
-
-    if (textPosition.offset == 0 && node.text.text.isEmpty) {
-      return;
-    }
-
-    late int offsetWithAttributionsToExtend;
-    if (textPosition.offset == 0) {
-      // The inserted text is at the very beginning of the text blob. Therefore, we should apply the
-      // same attributions to the inserted text, as the text that immediately follows the inserted text.
-      offsetWithAttributionsToExtend = textPosition.offset + 1;
-    } else {
-      // The inserted text is NOT at the very beginning of the text blob. Therefore, we should apply the
-      // same attributions to the inserted text, as the text that immediately precedes the inserted text.
-      offsetWithAttributionsToExtend = textPosition.offset - 1;
-    }
-
-    Set<Attribution> allAttributions = node.text.getAllAttributionsAt(offsetWithAttributionsToExtend);
-
-    // TODO: attribution expansion policy should probably be configurable
-
-    // Add non-link attributions.
-    final newStyles = allAttributions.where((attribution) => attribution is! LinkAttribution).toSet();
-
-    // Add a link attribution only if the selection sits at the middle of the link.
-    // As we are dealing with a collapsed selection, we shouldn't have more than one link.
-    final linkAttribution = allAttributions.firstWhereOrNull((attribution) => attribution is LinkAttribution);
-    if (linkAttribution != null) {
-      final range = node.text.getAttributedRange({linkAttribution}, offsetWithAttributionsToExtend);
-
-      if (textPosition.offset > 0 &&
-          offsetWithAttributionsToExtend >= range.start &&
-          offsetWithAttributionsToExtend < range.end) {
-        newStyles.add(linkAttribution);
-      }
-    }
-
-    _composer.preferences.addStyles(newStyles);
   }
 
   @visibleForTesting

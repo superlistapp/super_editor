@@ -1,5 +1,6 @@
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/composer/composer_reactions.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
@@ -178,6 +179,7 @@ final defaultRequestHandlers = [
 ];
 
 final defaultEditorReactions = [
+  UpdateComposerTextStylesReaction(),
   const LinkifyReaction(),
   HeaderConversionReaction(),
   const UnorderedListItemConversionReaction(),

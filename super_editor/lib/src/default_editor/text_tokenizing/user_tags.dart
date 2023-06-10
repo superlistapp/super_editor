@@ -97,19 +97,14 @@ class TagUserReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
-    print("_commitCompletedTags()");
+    editorUserTags.fine("Looking for completed tags to commit.");
     final document = editContext.find<MutableDocument>(Editor.documentKey);
     final composingTagNodeCandidates = <String>{};
     for (final edit in changeList) {
-      print("edit: $edit");
       if (edit is DocumentEdit && (edit.change is TextInsertionEvent || edit.change is TextDeletedEvent)) {
-        print(" - edit was a change event: ${(edit.change as NodeChangeEvent).nodeId}");
         composingTagNodeCandidates.add((edit.change as NodeChangeEvent).nodeId);
       } else if (edit is SelectionChangeEvent) {
-        print(" - edit was a selection change event");
         final oldSelection = edit.oldSelection;
-        editorUserTags.info("Selection change event. Old selection: $oldSelection");
-        editorUserTags.info("New selection: ${edit.newSelection}");
         if (oldSelection == null) {
           continue;
         }
@@ -134,7 +129,6 @@ class TagUserReaction implements EditReaction {
         // Make sure we don't try to track a node where text was edited, if that
         // node was later removed.
         final change = (edit).change as NodeRemovedEvent;
-        print(" - edit is a node removal. Removing node from candidates: ${change.nodeId}");
         composingTagNodeCandidates.remove(change.nodeId);
       }
     }
@@ -145,11 +139,10 @@ class TagUserReaction implements EditReaction {
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     final selection = composer.selection;
     for (final textNodeId in composingTagNodeCandidates) {
-      print("Inspecting text node: $textNodeId");
-      editorUserTags.info("Checking node $textNodeId for composing tags to change");
+      editorUserTags.fine("Checking node $textNodeId for composing tags to commit");
       final textNode = document.getNodeById(textNodeId) as TextNode;
       final composingTags = _findAllComposingTagsInTextNode(textNode);
-      editorUserTags.info("Composing tags in node: $composingTags");
+      editorUserTags.fine("Composing tags in node: $composingTags");
 
       for (final composingTag in composingTags) {
         if (selection == null || selection.extent.nodeId != textNodeId || selection.base.nodeId != textNodeId) {
@@ -240,6 +233,7 @@ class TagUserReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
+    editorUserTags.fine("Looking for a tag around the caret.");
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     if (composer.selection == null || !composer.selection!.isCollapsed) {
       // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
@@ -259,27 +253,23 @@ class TagUserReaction implements EditReaction {
       return;
     }
 
-    print("Selection at time of tag check:");
-    print(selectionPosition);
-    print("Selected node:");
-    print("'${selectedNode.id}' - $selectedNode");
     // TODO: we handle adding a tag attribution, but what about identifying the situation
     //       where we need to remove one?
     final tokenAroundCaret = _findUntaggedTokenAroundCaret(selectedNode.text, caretPosition);
     if (tokenAroundCaret == null) {
       // There's no tag around the caret.
-      editorUserTags.info("There's no tag around the caret, fizzling");
+      editorUserTags.fine("There's no tag around the caret, fizzling");
       return;
     }
     if (!tokenAroundCaret.token.value.startsWith("@")) {
       // Tags must start with an "@" but the preceding word doesn't. Return.
-      editorUserTags.info("Token doesn't start with @, fizzling");
+      editorUserTags.fine("Token doesn't start with @, fizzling");
       return;
     }
 
     // TODO: check candidates for partial match
 
-    print("Found a user token around caret: ${tokenAroundCaret.token.value}");
+    editorImeLog.fine("Found a user token around caret: ${tokenAroundCaret.token.value}");
 
     requestDispatcher.execute([
       AddTextAttributionsRequest(
@@ -307,7 +297,7 @@ class TagUserReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
-    editorUserTags.info("Removing invalid tags...");
+    editorUserTags.fine("Removing invalid tags.");
     final nodesToInspect = <String>{};
     for (final edit in changeList) {
       // We only care about deleted text, in case the deletion made an existing tag invalid.
@@ -320,19 +310,17 @@ class TagUserReaction implements EditReaction {
       }
 
       // We only care about deleted text when the deleted text contains at least one tag.
-      editorUserTags.info(" - found a TextDeletedEvent. Checking for tags.");
       final tagsInDeletedText = change.deletedText.getAttributionSpansInRange(
         attributionFilter: (attribution) => attribution == userTagComposingAttribution,
         range: SpanRange(start: 0, end: change.deletedText.text.length),
       );
-      editorUserTags.info(" - all tags in deleted text: ${tagsInDeletedText}");
       if (tagsInDeletedText.isEmpty) {
         continue;
       }
 
       nodesToInspect.add(change.nodeId);
     }
-    editorUserTags.info(" - found ${nodesToInspect.length} impacted nodes with tags");
+    editorUserTags.fine("Found ${nodesToInspect.length} impacted nodes with tags that might be invalid");
 
     // Inspect every TextNode where a text deletion impacted a tag. If a tag no longer contains
     // an "@", remove the attribution.
@@ -347,8 +335,8 @@ class TagUserReaction implements EditReaction {
 
       for (final tag in allTags) {
         final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
-        editorUserTags.info("tagText: '$tagText'");
         if (!tagText.startsWith("@")) {
+          editorUserTags.info("Removing tag with value: '$tagText'");
           removeTagRequests.add(
             RemoveTextAttributionsRequest(
               documentSelection: DocumentSelection(
@@ -641,15 +629,12 @@ _TokenAroundCaret? _findAttributedTokenAroundCaret(
   int tokenEndOffset = caretPosition.offset;
   // TODO: use characters package to move forward and backward
   while (tokenStartOffset > 0 && text[tokenStartOffset - 1] != " ") {
-    print("Expanding start offset with character '${text[tokenStartOffset - 1]}'");
     tokenStartOffset -= 1;
   }
   while (tokenEndOffset < text.length && text[tokenEndOffset] != " ") {
-    print("Expanding end offset with character '${text[tokenEndOffset]}'");
     tokenEndOffset += 1;
   }
 
-  print("Token end offset: $tokenEndOffset");
   final tokenRange = SpanRange(start: tokenStartOffset, end: tokenEndOffset - 1);
   final tokenAttributions = paragraphText.getAllAttributionsThroughout(tokenRange);
   if (!isTokenCandidate(tokenAttributions)) {
@@ -657,7 +642,7 @@ _TokenAroundCaret? _findAttributedTokenAroundCaret(
   }
 
   final token = text.substring(tokenStartOffset, tokenEndOffset);
-  editorUserTags.info("Token around caret: '$token'");
+  editorUserTags.fine("Token around caret: '$token'");
 
   return _TokenAroundCaret(
     token: _Token(

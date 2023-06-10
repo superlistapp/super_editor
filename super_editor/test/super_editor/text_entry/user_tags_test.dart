@@ -9,7 +9,7 @@ import '../document_test_tools.dart';
 void main() {
   group("SuperEditor user tags >", () {
     group("composing >", () {
-      initLoggers(Level.ALL, {editorUserTags});
+      // initLoggers(Level.ALL, {editorUserTags});
 
       testWidgetsOnAllPlatforms("can start at the beginning of a paragraph", (tester) async {
         await tester //
@@ -88,7 +88,14 @@ void main() {
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john after");
         expect(
-          text.getAttributedRange({userTagComposingAttribution}, 7),
+          text.getAttributionSpansInRange(
+            attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+            range: const SpanRange(start: 0, end: 18),
+          ),
+          isEmpty,
+        );
+        expect(
+          text.getAttributedRange({const UserTagAttribution("john")}, 7),
           const SpanRange(start: 7, end: 11),
         );
       });

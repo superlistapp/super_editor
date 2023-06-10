@@ -1239,7 +1239,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         DocumentSelection.collapsed(
           position: position,
         ),
-        SelectionChangeType.expandSelection,
+        SelectionChangeType.place,
         SelectionReason.userInteraction,
       ),
     ]);
