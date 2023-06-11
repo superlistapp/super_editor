@@ -152,16 +152,20 @@ class Editor implements RequestDispatcher {
     // many superfluous calls, but in practice it would probably break lots of features
     // by notifying listeners too early, and running the same reactions over and over.
     if (_activeCommandCount == 1) {
-      // Run all reactions. These reactions will likely call `execute()` again, with
-      // their own requests, to make additional changes.
-      _reactToChanges(_activeChangeList!);
+      if (_activeChangeList!.isNotEmpty) {
+        // Run all reactions. These reactions will likely call `execute()` again, with
+        // their own requests, to make additional changes.
+        _reactToChanges(_activeChangeList!);
 
-      // Notify all listeners that care about changes, but won't spawn additional requests.
-      _notifyListeners(_activeChangeList!);
+        // Notify all listeners that care about changes, but won't spawn additional requests.
+        _notifyListeners(_activeChangeList!);
 
-      // This is the end of a transaction.
-      for (final editable in _context._resources.values) {
-        editable.onTransactionEnd(_activeChangeList!);
+        // This is the end of a transaction.
+        for (final editable in _context._resources.values) {
+          editable.onTransactionEnd(_activeChangeList!);
+        }
+      } else {
+        editorOpsLog.warning("We have an empty change list after processing one or more requests: $requests");
       }
 
       _activeChangeList = null;

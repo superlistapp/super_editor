@@ -152,18 +152,11 @@ class TagUserReaction implements EditReaction {
           continue;
         }
 
-        final basePosition = selection.base.nodePosition as TextNodePosition;
-        if (basePosition.offset <= composingTag.startOffset || basePosition.offset > composingTag.endOffset) {
-          editorUserTags
-              .info("Committing tag because the base selection is out of range: '$composingTag', base: $basePosition");
-          _commitTag(requestDispatcher, textNode, composingTag);
-          continue;
-        }
-
         final extentPosition = selection.extent.nodePosition as TextNodePosition;
-        if (extentPosition.offset <= composingTag.startOffset || extentPosition.offset > composingTag.endOffset) {
-          editorUserTags.info(
-              "Committing tag because the extent selection is out of range: '$composingTag', extent: $extentPosition");
+        if (selection.isCollapsed &&
+            (extentPosition.offset <= composingTag.startOffset || extentPosition.offset > composingTag.endOffset)) {
+          editorUserTags
+              .info("Committing tag because the caret is out of range: '$composingTag', extent: $extentPosition");
           _commitTag(requestDispatcher, textNode, composingTag);
           continue;
         }
