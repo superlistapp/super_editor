@@ -10,7 +10,7 @@ import '../document_test_tools.dart';
 void main() {
   group("SuperEditor user tags >", () {
     group("composing >", () {
-      initLoggers(Level.INFO, {editorUserTags});
+      // initLoggers(Level.INFO, {editorUserTags});
 
       testWidgetsOnAllPlatforms("can start at the beginning of a paragraph", (tester) async {
         await tester //
@@ -170,6 +170,66 @@ void main() {
           const SpanRange(start: 7, end: 11),
         );
       });
+
+      testWidgetsOnAllPlatforms("continues when user expands the selection downstream", (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: "1",
+                  text: AttributedText(text: "before  after"),
+                ),
+                ParagraphNode(
+                  id: "2",
+                  text: AttributedText(text: ""),
+                ),
+              ],
+            ))
+            .withAddedReactions([
+          TagUserReaction(),
+        ]).pump();
+
+        // Place the caret at "before | after"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Compose a user token.
+        await tester.typeImeText("@john");
+
+        // Move the caret to "before @|john".
+        await tester.pressLeftArrow();
+        await tester.pressLeftArrow();
+        await tester.pressLeftArrow();
+        await tester.pressLeftArrow();
+
+        // Expand the selection to "before @|john a|fter"
+        await tester.pressShiftRightArrow();
+        await tester.pressShiftRightArrow();
+        await tester.pressShiftRightArrow();
+        await tester.pressShiftRightArrow();
+        await tester.pressShiftRightArrow();
+        await tester.pressShiftRightArrow();
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection(
+            base: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 8),
+            ),
+            extent: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 14),
+            ),
+          ),
+        );
+
+        // Ensure we're still composing
+        AttributedText text = SuperEditorInspector.findTextInParagraph("1");
+        expect(
+          text.getAttributedRange({userTagComposingAttribution}, 7),
+          const SpanRange(start: 7, end: 11),
+        );
+      });
     });
 
     group("commits >", () {
@@ -264,6 +324,103 @@ void main() {
         // Ensure that the token was submitted.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john");
+        expect(
+          text.getAttributedRange({const UserTagAttribution("john")}, 7),
+          const SpanRange(start: 7, end: 11),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("when upstream selection collapses outside of token", (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: "1",
+                  text: AttributedText(text: "before "),
+                ),
+                ParagraphNode(
+                  id: "2",
+                  text: AttributedText(text: ""),
+                ),
+              ],
+            ))
+            .withAddedReactions([
+          TagUserReaction(),
+        ]).pump();
+
+        // Place the caret at "before |"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Compose a user token.
+        await tester.typeImeText("@john");
+
+        // Expand the selection to "befor|e @john|"
+        await tester.pressShiftLeftArrow();
+        await tester.pressShiftLeftArrow();
+        await tester.pressShiftLeftArrow();
+        await tester.pressShiftLeftArrow();
+        await tester.pressShiftLeftArrow();
+        await tester.pressShiftLeftArrow();
+        await tester.pressShiftLeftArrow();
+
+        // Collapse the selection to the upstream position.
+        await tester.pressLeftArrow();
+
+        // Ensure that the token was submitted.
+        final text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "before @john");
+        expect(
+          text.getAttributedRange({const UserTagAttribution("john")}, 7),
+          const SpanRange(start: 7, end: 11),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("when downstream selection collapses outside of token", (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: "1",
+                  text: AttributedText(text: "before  after"),
+                ),
+                ParagraphNode(
+                  id: "2",
+                  text: AttributedText(text: ""),
+                ),
+              ],
+            ))
+            .withAddedReactions([
+          TagUserReaction(),
+        ]).pump();
+
+        // Place the caret at "before | after"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Compose a user token.
+        await tester.typeImeText("@john");
+
+        // Move caret to "before @|john after"
+        await tester.pressLeftArrow();
+        await tester.pressLeftArrow();
+        await tester.pressLeftArrow();
+        await tester.pressLeftArrow();
+
+        // Expand the selection to "before @|john a|fter"
+        await tester.pressShiftRightArrow();
+        await tester.pressShiftRightArrow();
+        await tester.pressShiftRightArrow();
+        await tester.pressShiftRightArrow();
+        await tester.pressShiftRightArrow();
+        await tester.pressShiftRightArrow();
+
+        // Collapse the selection to the downstream position.
+        await tester.pressRightArrow();
+
+        // Ensure that the token was submitted.
+        final text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "before @john after");
         expect(
           text.getAttributedRange({const UserTagAttribution("john")}, 7),
           const SpanRange(start: 7, end: 11),
