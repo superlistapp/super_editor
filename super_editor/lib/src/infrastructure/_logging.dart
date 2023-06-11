@@ -54,10 +54,10 @@ final editorLayoutLog = logging.Logger(LogNames.editorLayout);
 final editorStyleLog = logging.Logger(LogNames.editorStyle);
 final editorDocLog = logging.Logger(LogNames.editorDocument);
 final editorOpsLog = logging.Logger(LogNames.editorCommonOps);
-final editorTokens = logging.Logger(LogNames.editorTokens);
-final editorTags = logging.Logger(LogNames.editorTags);
-final editorUserTags = logging.Logger(LogNames.editorUserTags);
-final editorHashTags = logging.Logger(LogNames.editorHashTags);
+final editorTokensLog = logging.Logger(LogNames.editorTokens);
+final editorTagsLog = logging.Logger(LogNames.editorTags);
+final editorUserTagsLog = logging.Logger(LogNames.editorUserTags);
+final editorHashTagsLog = logging.Logger(LogNames.editorHashTags);
 
 final readerLog = logging.Logger(LogNames.reader);
 final readerScrollingLog = logging.Logger(LogNames.readerScrolling);

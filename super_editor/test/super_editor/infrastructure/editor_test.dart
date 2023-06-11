@@ -149,7 +149,12 @@ void main() {
         int reactionCount = 0;
 
         final document = MutableDocument(
-          nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))],
+          nodes: [
+            ParagraphNode(
+              id: "1",
+              text: AttributedText(text: ""),
+            )
+          ],
         );
 
         final composer = MutableDocumentComposer(

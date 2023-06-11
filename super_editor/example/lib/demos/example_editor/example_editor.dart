@@ -59,6 +59,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       requestHandlers: defaultRequestHandlers,
       reactionPipeline: [
         TagUserReaction(),
+        HashTagReaction(),
         ...defaultEditorReactions,
       ],
     );
@@ -445,6 +446,12 @@ class _ExampleEditorState extends State<ExampleEditor> {
               if (attributions.whereType<UserTagAttribution>().isNotEmpty) {
                 style = style.copyWith(
                   color: Colors.red,
+                );
+              }
+
+              if (attributions.whereType<HashTagAttribution>().isNotEmpty) {
+                style = style.copyWith(
+                  color: Colors.orange,
                 );
               }
 

@@ -6,6 +6,7 @@ import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/default_editor/text_tokenizing/user_tags.dart';
 
 import 'common_editor_operations.dart';
 import 'default_document_editor_reactions.dart';
@@ -179,12 +180,19 @@ final defaultRequestHandlers = [
 ];
 
 final defaultEditorReactions = [
+  //---- Start Tagging ---
+  const KeepCaretOutOfTagReaction(),
   UpdateComposerTextStylesReaction(),
+  //---- End Tagging ---
+
   const LinkifyReaction(),
+
+  //---- Start Content Conversions ----
   HeaderConversionReaction(),
   const UnorderedListItemConversionReaction(),
   const OrderedListItemConversionReaction(),
   const BlockquoteConversionReaction(),
   const HorizontalRuleConversionReaction(),
   const ImageUrlConversionReaction(),
+  //---- End Content Conversions ---
 ];
