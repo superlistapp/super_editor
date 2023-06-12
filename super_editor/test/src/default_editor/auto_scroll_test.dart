@@ -19,10 +19,10 @@ void main() {
           (screenSizeWithoutKeyboard.height - screenSizeWithKeyboard.height) / keyboardExpansionFrameCount;
 
       testWidgets('on Android, keeps caret visible when keyboard appears', (WidgetTester tester) async {
-        tester.binding.window
-          ..physicalSizeTestValue = screenSizeWithoutKeyboard
+        tester.view
+          ..physicalSize = screenSizeWithoutKeyboard
           ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..devicePixelRatioTestValue = 1.0;
+          ..devicePixelRatio = 1.0;
 
         await tester.pumpWidget(
           const _SliverTestEditor(
@@ -56,10 +56,10 @@ void main() {
       });
 
       testWidgets('on iOS, keeps caret visible when keyboard appears', (WidgetTester tester) async {
-        tester.binding.window
-          ..physicalSizeTestValue = screenSizeWithoutKeyboard
+        tester.view
+          ..physicalSize = screenSizeWithoutKeyboard
           ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..devicePixelRatioTestValue = 1.0;
+          ..devicePixelRatio = 1.0;
 
         await tester.pumpWidget(
           const _SliverTestEditor(
@@ -287,7 +287,7 @@ Future<void> _simulateKeyboardAppearance({
     // Shrink the height of the screen by a small amount.
     keyboardHeight += shrinkPerFrame;
     final currentScreenSize = (initialScreenSize - Offset(0, keyboardHeight)) as Size;
-    tester.binding.window.physicalSizeTestValue = currentScreenSize;
+    tester.view.physicalSize = currentScreenSize;
 
     // Let the scrolling system auto-scroll, as desired.
     await tester.pumpAndSettle();

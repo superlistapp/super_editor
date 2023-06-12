@@ -96,10 +96,10 @@ class InsideTheToolbox extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(4),
-          ),    
+          ),
           child: SuperTextWithSelection.single(
             richText: const TextSpan(
-              text: 'This text is selectable. The caret and selection rendering is custom.',              
+              text: 'This text is selectable. The caret and selection rendering is custom.',
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 16,
@@ -110,9 +110,8 @@ class InsideTheToolbox extends StatelessWidget {
                 baseOffset: 13,
                 extentOffset: 23,
               ),
-              
             ),
-          ),          
+          ),
         ),
       ),
     );
@@ -344,7 +343,7 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
   }
 
   int _getCellIndexFromLocalOffset(Offset localOffset) {
-    return ((localOffset.dx / widget.cellWidth).floor()).clamp(0.0, widget.cellCount - 1).toInt();
+    return (localOffset.dx / widget.cellWidth).floor().clamp(0.0, widget.cellCount - 1).toInt();
   }
 
   void _reportSelectedRanges() {

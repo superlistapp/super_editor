@@ -326,11 +326,11 @@ Future<void> _pumpScaffold(
   WidgetTester tester, {
   required Widget child,
 }) async {
-  addTearDown(() => tester.binding.window.clearAllTestValues());
+  addTearDown(() => tester.platformDispatcher.clearAllTestValues());
 
-  tester.binding.window
-    ..physicalSizeTestValue = _windowSize
-    ..devicePixelRatioTestValue = 1.0;
+  tester.view
+    ..physicalSize = _windowSize
+    ..devicePixelRatio = 1.0;
 
   await tester.pumpWidget(
     MaterialApp(

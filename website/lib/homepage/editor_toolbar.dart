@@ -185,7 +185,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       );
     } else {
       // Apply a new block type to an existing paragraph node.
-      final existingNode = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId)!;
+      final existingNode = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId);
       (existingNode as ParagraphNode).metadata['blockType'] = _getBlockTypeAttribution(newType);
 
       // Merely changing the blockType of the ParagraphNode does not trigger any of the document listeners.
@@ -288,7 +288,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Takes appropriate action when the toolbar's link button is
   /// pressed.
-  void _onLinkPressed() {
+  void c_onLinkPressed() {
     final selection = widget.composer.selection;
     final baseOffset = (selection!.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
