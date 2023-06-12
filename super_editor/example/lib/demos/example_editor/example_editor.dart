@@ -12,7 +12,7 @@ import '_toolbar.dart';
 /// capabilities expand.
 class ExampleEditor extends StatefulWidget {
   @override
-  _ExampleEditorState createState() => _ExampleEditorState();
+  State<ExampleEditor> createState() => _ExampleEditorState();
 }
 
 class _ExampleEditorState extends State<ExampleEditor> {
@@ -30,7 +30,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   final _darkBackground = const Color(0xFF222222);
   final _lightBackground = Colors.white;
-  ValueNotifier<Brightness> _brightness = ValueNotifier<Brightness>(Brightness.light);
+  final ValueNotifier<Brightness> _brightness = ValueNotifier<Brightness>(Brightness.light);
 
   SuperEditorDebugVisualsConfig? _debugConfig;
 
@@ -366,7 +366,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         setState(() {
           _debugConfig = _debugConfig != null
               ? null
-              : SuperEditorDebugVisualsConfig(
+              : const SuperEditorDebugVisualsConfig(
                   showFocus: true,
                   showImeConnection: true,
                 );
@@ -412,7 +412,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           documentLayoutKey: _docLayoutKey,
           documentOverlayBuilders: [
             DefaultCaretOverlayBuilder(
-              CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
+              const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
             ),
           ],
           selectionStyle: isLight

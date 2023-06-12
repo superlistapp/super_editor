@@ -7,7 +7,7 @@ import 'package:super_editor/super_editor.dart';
 /// when its content is replaced.
 class SwitchDocumentDemo extends StatefulWidget {
   @override
-  _SwitchDocumentDemoState createState() => _SwitchDocumentDemoState();
+  State<SwitchDocumentDemo> createState() => _SwitchDocumentDemoState();
 }
 
 class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {

@@ -6,7 +6,7 @@ import 'package:super_editor/super_editor.dart';
 /// The user can select around the horizontal rule, but cannot select it, specifically.
 class UnselectableHrDemo extends StatefulWidget {
   @override
-  _UnselectableHrDemoState createState() => _UnselectableHrDemoState();
+  State<UnselectableHrDemo> createState() => _UnselectableHrDemoState();
 }
 
 class _UnselectableHrDemoState extends State<UnselectableHrDemo> {

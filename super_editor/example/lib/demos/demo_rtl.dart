@@ -8,7 +8,7 @@ import 'package:super_editor/super_editor.dart';
 /// package expands.
 class RTLDemo extends StatefulWidget {
   @override
-  _RTLDemoState createState() => _RTLDemoState();
+  State<RTLDemo> createState() => _RTLDemoState();
 }
 
 class _RTLDemoState extends State<RTLDemo> {

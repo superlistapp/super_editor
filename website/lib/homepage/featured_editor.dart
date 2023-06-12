@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
-
-import 'editor_toolbar.dart';
+import 'package:website/homepage/editor_toolbar.dart';
 
 /// A Super Editor that displays itself on top of a white sheet of paper
 /// with a popup editor toolbar.

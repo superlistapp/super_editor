@@ -4,7 +4,7 @@ import 'package:super_editor/super_editor.dart';
 /// Example of a task component whose height is animated.
 class AnimatedTaskHeightDemo extends StatefulWidget {
   @override
-  _AnimatedTaskHeightDemoState createState() => _AnimatedTaskHeightDemoState();
+  State<AnimatedTaskHeightDemo> createState() => _AnimatedTaskHeightDemoState();
 }
 
 class _AnimatedTaskHeightDemoState extends State<AnimatedTaskHeightDemo> {
@@ -98,8 +98,9 @@ class AnimatedTaskComponentBuilder implements ComponentBuilder {
 class _AnimatedTaskComponent extends StatefulWidget {
   const _AnimatedTaskComponent({
     Key? key,
-    required this.viewModel,
+    // ignore: unused_element
     this.showDebugPaint = false,
+    required this.viewModel,
   }) : super(key: key);
 
   final TaskComponentViewModel viewModel;
@@ -166,12 +167,12 @@ class _AnimatedTaskComponentState extends State<_AnimatedTaskComponent>
               key: _animatedSizeKey,
               duration: const Duration(milliseconds: 100),
               child: widget.viewModel.selection != null
-                  ? SizedBox(
+                  ? const SizedBox(
                       height: 20,
                       child: Row(
                         children: [
                           Icon(Icons.label_important_outline, size: 16),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Icon(Icons.timelapse_sharp, size: 16),
                         ],
                       ),

@@ -496,13 +496,15 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 child: DropdownButton<_TextType>(
                   value: _getCurrentTextType(),
                   items: _TextType.values
-                      .map((textType) => DropdownMenuItem<_TextType>(
-                            value: textType,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 16.0),
-                              child: Text(_getTextTypeName(textType)),
-                            ),
-                          ))
+                      .map(
+                        (textType) => DropdownMenuItem<_TextType>(
+                          value: textType,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: Text(_getTextTypeName(textType)),
+                          ),
+                        ),
+                      )
                       .toList(),
                   icon: const Icon(Icons.arrow_drop_down),
                   style: const TextStyle(
@@ -560,13 +562,15 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 child: DropdownButton<TextAlign>(
                   value: _getCurrentTextAlignment(),
                   items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
-                      .map((textAlign) => DropdownMenuItem<TextAlign>(
-                            value: textAlign,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Icon(_buildTextAlignIcon(textAlign)),
-                            ),
-                          ))
+                      .map(
+                        (textAlign) => DropdownMenuItem<TextAlign>(
+                          value: textAlign,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Icon(_buildTextAlignIcon(textAlign)),
+                          ),
+                        ),
+                      )
                       .toList(),
                   icon: const Icon(Icons.arrow_drop_down),
                   style: const TextStyle(

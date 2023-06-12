@@ -11,7 +11,7 @@ import 'package:super_editor/super_editor.dart';
 /// This demo can also be used to quickly hack experiments and tests.
 class EmptyDocumentDemo extends StatefulWidget {
   @override
-  _EmptyDocumentDemoState createState() => _EmptyDocumentDemoState();
+  State<EmptyDocumentDemo> createState() => _EmptyDocumentDemoState();
 }
 
 class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
