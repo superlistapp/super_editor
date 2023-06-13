@@ -98,9 +98,9 @@ class AnimatedTaskComponentBuilder implements ComponentBuilder {
 class _AnimatedTaskComponent extends StatefulWidget {
   const _AnimatedTaskComponent({
     Key? key,
+    required this.viewModel,
     // ignore: unused_element
     this.showDebugPaint = false,
-    required this.viewModel,
   }) : super(key: key);
 
   final TaskComponentViewModel viewModel;
