@@ -30,7 +30,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   final _darkBackground = const Color(0xFF222222);
   final _lightBackground = Colors.white;
-  final ValueNotifier<Brightness> _brightness = ValueNotifier<Brightness>(Brightness.light);
+  final _brightness = ValueNotifier<Brightness>(Brightness.light);
 
   SuperEditorDebugVisualsConfig? _debugConfig;
 

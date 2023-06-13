@@ -26,8 +26,8 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
   final _docLayoutKey = GlobalKey();
 
   late final MutableDocument _doc;
-  late final DocumentEditor _docEditor;
-  late final DocumentComposer _composer;
+  late final Editor _docEditor;
+  late final MutableDocumentComposer _composer;
   late final FocusNode _editorFocusNode;
   late final ScrollController _scrollController;
 
@@ -40,11 +40,7 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
     super.initState();
 
     // Create the initial document content.
-    _doc = _createInitialDocument()..addListener(_updateToolbarDisplay);
-
-    // Create the DocumentEditor, which is responsible for applying all
-    // content changes to the Document.
-    _docEditor = DocumentEditor(document: _doc);
+    _doc = _createInitialDocument()..addListener(_onDocumentChange);
 
     // Create the DocumentComposer, which keeps track of the user's text
     // selection and the current input styles, e.g., bold or italics.
@@ -53,7 +49,7 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
     // over the initial caret position. If you don't need any external
     // control over content selection then you don't need to create your
     // own DocumentComposer. The Editor widget will do that on your behalf.
-    _composer = DocumentComposer(
+    _composer = MutableDocumentComposer(
       initialSelection: DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: _doc.nodes.last.id, // Place caret at end of document
@@ -61,6 +57,10 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
         ),
       ),
     )..addListener(_updateToolbarDisplay);
+
+    // Create the DocumentEditor, which is responsible for applying all
+    // content changes to the Document.
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
 
     // Create a FocusNode so that we can explicitly toggle editor focus.
     _editorFocusNode = FocusNode();
@@ -86,6 +86,7 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
       _formatBarOverlayEntry ??= OverlayEntry(
         builder: (context) {
           return EditorToolbar(
+            doc: _doc,
             anchor: _selectionAnchor,
             editor: _docEditor,
             composer: _composer,
@@ -152,6 +153,10 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
     _editorFocusNode.requestFocus();
   }
 
+  void _onDocumentChange(_) {
+    _updateToolbarDisplay();
+  }
+
   void _updateToolbarDisplay() {
     final selection = _composer.selection;
     if (selection == null) {
@@ -197,6 +202,7 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
+      document: _doc,
       composer: _composer,
       documentLayoutKey: _docLayoutKey,
       focusNode: _editorFocusNode,
@@ -231,7 +237,7 @@ MutableDocument _createInitialDocument() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'A supercharged rich text editor for Flutter',
         ),
@@ -241,7 +247,7 @@ MutableDocument _createInitialDocument() {
         },
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'The missing WYSIWYG editor for Flutter.',
           spans: AttributedSpans(
@@ -261,7 +267,7 @@ MutableDocument _createInitialDocument() {
         ),
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text:
               'Open source and written entirely in Dart. Comes with a modular architecture that allows you to customize it to your needs.',
@@ -282,7 +288,7 @@ MutableDocument _createInitialDocument() {
         ),
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'Try it right here >>',
         ),
