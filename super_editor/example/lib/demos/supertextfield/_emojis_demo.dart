@@ -12,7 +12,7 @@ class EmojisTextFieldDemo extends StatefulWidget {
   final TextAffinity direction;
 
   @override
-  _EmojisTextFieldDemoState createState() => _EmojisTextFieldDemoState();
+  State<EmojisTextFieldDemo> createState() => _EmojisTextFieldDemoState();
 }
 
 class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerProviderStateMixin {

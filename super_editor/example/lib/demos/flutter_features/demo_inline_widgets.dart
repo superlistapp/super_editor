@@ -3,7 +3,7 @@ import 'package:flutter/rendering.dart';
 
 class TextInlineWidgetDemo extends StatefulWidget {
   @override
-  _TextInlineWidgetDemoState createState() => _TextInlineWidgetDemoState();
+  State<TextInlineWidgetDemo> createState() => _TextInlineWidgetDemoState();
 }
 
 class _TextInlineWidgetDemoState extends State<TextInlineWidgetDemo> {
@@ -107,10 +107,10 @@ class _TextInlineWidgetDemoState extends State<TextInlineWidgetDemo> {
                 shape: StadiumBorder(),
                 color: Colors.yellow,
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(
                     Icons.account_circle,
                     size: 14,
@@ -136,10 +136,10 @@ class _TextInlineWidgetDemoState extends State<TextInlineWidgetDemo> {
   }
 
   Widget _buildProgressExample() {
-    return SelectableText.rich(
+    return const SelectableText.rich(
       TextSpan(
         text: "This is a multi-step item with progress",
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.black,
         ),
         children: [
@@ -148,7 +148,7 @@ class _TextInlineWidgetDemoState extends State<TextInlineWidgetDemo> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: const [
+              children: [
                 SizedBox(width: 8),
                 Icon(Icons.check_circle, color: Colors.green, size: 14),
                 SizedBox(width: 4),

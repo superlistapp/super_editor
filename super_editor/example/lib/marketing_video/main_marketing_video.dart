@@ -14,7 +14,7 @@ void main() {
 
 class MarketingVideo extends StatefulWidget {
   @override
-  _MarketingVideoState createState() => _MarketingVideoState();
+  State<MarketingVideo> createState() => _MarketingVideoState();
 }
 
 class _MarketingVideoState extends State<MarketingVideo> {

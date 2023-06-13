@@ -5,7 +5,7 @@ class DocumentStylesDemo extends StatefulWidget {
   const DocumentStylesDemo({Key? key}) : super(key: key);
 
   @override
-  _DocumentStylesDemoState createState() => _DocumentStylesDemoState();
+  State<DocumentStylesDemo> createState() => _DocumentStylesDemoState();
 }
 
 class _DocumentStylesDemoState extends State<DocumentStylesDemo> {

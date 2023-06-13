@@ -1,8 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:super_editor/src/infrastructure/document_gestures.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/_scrolling.dart';
 
 /// Platform independent tools for touch gesture interaction with a
 /// document, such as dragging to scroll a document, and dragging
