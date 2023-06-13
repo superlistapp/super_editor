@@ -4,7 +4,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 /// Demo of a variety of `SelectableText` configurations.
 class SelectableTextDemo extends StatefulWidget {
   @override
-  _SelectableTextDemoState createState() => _SelectableTextDemoState();
+  State<SelectableTextDemo> createState() => _SelectableTextDemoState();
 }
 
 class _SelectableTextDemoState extends State<SelectableTextDemo> {

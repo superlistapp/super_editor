@@ -286,7 +286,7 @@ extension SuperEditorRobot on WidgetTester {
   }
 
   Future<void> _updateFloatingCursor({required String action, required Offset offset}) async {
-    await TestDefaultBinaryMessengerBinding.instance!.defaultBinaryMessenger.handlePlatformMessage(
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
       SystemChannels.textInput.name,
       SystemChannels.textInput.codec.encodeMethodCall(
         MethodCall(

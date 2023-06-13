@@ -11,7 +11,7 @@ import 'package:super_editor_markdown/super_editor_markdown.dart';
 /// current structure of the document in the editor.
 class MarkdownSerializationDemo extends StatefulWidget {
   @override
-  _MarkdownSerializationDemoState createState() => _MarkdownSerializationDemoState();
+  State<MarkdownSerializationDemo> createState() => _MarkdownSerializationDemoState();
 }
 
 class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {

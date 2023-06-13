@@ -80,7 +80,7 @@ class SuperEditorDemoApp extends StatelessWidget {
 /// options in a drawer.
 class HomeScreen extends StatefulWidget {
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -304,7 +304,7 @@ final _menu = <_MenuGroup>[
         icon: Icons.text_snippet,
         title: 'SuperReader',
         pageBuilder: (context) {
-          return SuperReaderDemo();
+          return const SuperReaderDemo();
         },
       ),
       _MenuItem(
