@@ -52,7 +52,7 @@ class EditorToolbar extends StatefulWidget {
   final VoidCallback closeToolbar;
 
   @override
-  _EditorToolbarState createState() => _EditorToolbarState();
+  State<EditorToolbar> createState() => _EditorToolbarState();
 }
 
 class _EditorToolbarState extends State<EditorToolbar> {
@@ -617,9 +617,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
                   inputSource: TextInputSource.ime,
                   hintBehavior: HintBehavior.displayHintUntilTextEntered,
                   hintBuilder: (context) {
-                    return Text(
+                    return const Text(
                       "enter a url...",
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.grey,
                         fontSize: 16,
                       ),
@@ -723,7 +723,7 @@ class ImageFormatToolbar extends StatefulWidget {
   final VoidCallback closeToolbar;
 
   @override
-  _ImageFormatToolbarState createState() => _ImageFormatToolbarState();
+  State<ImageFormatToolbar> createState() => _ImageFormatToolbarState();
 }
 
 class _ImageFormatToolbarState extends State<ImageFormatToolbar> {

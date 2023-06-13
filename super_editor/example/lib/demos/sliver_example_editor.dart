@@ -8,7 +8,7 @@ import 'package:super_editor/super_editor.dart';
 /// the [SuperEditor] has a [SizedBox] wrapped around it to give a height.
 class SliverExampleEditor extends StatefulWidget {
   @override
-  _SliverExampleEditorState createState() => _SliverExampleEditorState();
+  State<SliverExampleEditor> createState() => _SliverExampleEditorState();
 }
 
 class _SliverExampleEditorState extends State<SliverExampleEditor> {

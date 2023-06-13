@@ -14,6 +14,7 @@ class EditorToolbar extends StatefulWidget {
   const EditorToolbar({
     Key? key,
     required this.anchor,
+    required this.doc,
     required this.editor,
     required this.composer,
     required this.closeToolbar,
@@ -26,11 +27,13 @@ class EditorToolbar extends StatefulWidget {
   /// reposition itself as the [Offset] value changes.
   final ValueNotifier<Offset?> anchor;
 
+  final MutableDocument doc;
+
   /// The [editor] is used to alter document content, such as
   /// when the user selects a different block format for a
   /// text blob, e.g., paragraph, header, blockquote, or
   /// to apply styles to text.
-  final DocumentEditor editor;
+  final Editor editor;
 
   /// The [composer] provides access to the user's current
   /// selection within the document, which dictates the
@@ -75,7 +78,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       return false;
     }
 
-    final selectedNode = widget.editor.document.getNodeById(selection.extent.nodeId);
+    final selectedNode = widget.doc.getNodeById(selection.extent.nodeId);
     return selectedNode is ParagraphNode || selectedNode is ListItemNode;
   }
 
@@ -84,7 +87,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Throws an exception if the currently selected node is not a text node.
   _TextType _getCurrentTextType() {
     final selection = widget.composer.selection!;
-    final selectedNode = widget.editor.document.getNodeById(selection.extent.nodeId);
+    final selectedNode = widget.doc.getNodeById(selection.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final type = selectedNode.metadata['blockType'];
 
@@ -111,7 +114,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Throws an exception if the currently selected node is not a text node.
   TextAlign _getCurrentTextAlignment() {
     final selection = widget.composer.selection!;
-    final selectedNode = widget.editor.document.getNodeById(selection.extent.nodeId);
+    final selectedNode = widget.doc.getNodeById(selection.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final align = selectedNode.metadata['textAlign'] as String?;
       switch (align) {
@@ -139,7 +142,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       return false;
     }
 
-    final selectedNode = widget.editor.document.getNodeById(selection.extent.nodeId);
+    final selectedNode = widget.doc.getNodeById(selection.extent.nodeId);
     return selectedNode is ParagraphNode;
   }
 
@@ -161,32 +164,38 @@ class _EditorToolbarState extends State<EditorToolbar> {
     }
 
     if (_isListItem(existingTextType) && _isListItem(newType)) {
-      widget.editor.executeCommand(
-        ChangeListItemTypeCommand(
-          nodeId: widget.composer.selection!.extent.nodeId,
-          newType: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
-        ),
+      widget.editor.execute(
+        [
+          ChangeListItemTypeRequest(
+            nodeId: widget.composer.selection!.extent.nodeId,
+            newType: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
+          ),
+        ],
       );
     } else if (_isListItem(existingTextType) && !_isListItem(newType)) {
-      widget.editor.executeCommand(
-        ConvertListItemToParagraphCommand(
-          nodeId: widget.composer.selection!.extent.nodeId,
-          paragraphMetadata: {
-            'blockType': _getBlockTypeAttribution(newType),
-          },
-        ),
+      widget.editor.execute(
+        [
+          ConvertListItemToParagraphRequest(
+            nodeId: widget.composer.selection!.extent.nodeId,
+            paragraphMetadata: {
+              'blockType': _getBlockTypeAttribution(newType),
+            },
+          ),
+        ],
       );
     } else if (!_isListItem(existingTextType) && _isListItem(newType)) {
-      widget.editor.executeCommand(
-        ConvertParagraphToListItemCommand(
-          nodeId: widget.composer.selection!.extent.nodeId,
-          type: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
-        ),
+      widget.editor.execute(
+        [
+          ConvertParagraphToListItemRequest(
+            nodeId: widget.composer.selection!.extent.nodeId,
+            type: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
+          ),
+        ],
       );
     } else {
       // Apply a new block type to an existing paragraph node.
-      final existingNode = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId)!;
-      (existingNode as ParagraphNode).metadata['blockType'] = _getBlockTypeAttribution(newType);
+      final existingNode = widget.doc.getNodeById(widget.composer.selection!.extent.nodeId);
+      (existingNode! as ParagraphNode).metadata['blockType'] = _getBlockTypeAttribution(newType);
 
       // Merely changing the blockType of the ParagraphNode does not trigger any of the document listeners.
       //
@@ -224,31 +233,37 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Toggles bold styling for the current selected text.
   void _toggleBold() {
-    widget.editor.executeCommand(
-      ToggleTextAttributionsCommand(
-        documentSelection: widget.composer.selection!,
-        attributions: {boldAttribution},
-      ),
+    widget.editor.execute(
+      [
+        ToggleTextAttributionsRequest(
+          documentSelection: widget.composer.selection!,
+          attributions: {boldAttribution},
+        ),
+      ],
     );
   }
 
   /// Toggles italic styling for the current selected text.
   void _toggleItalics() {
-    widget.editor.executeCommand(
-      ToggleTextAttributionsCommand(
-        documentSelection: widget.composer.selection!,
-        attributions: {italicsAttribution},
-      ),
+    widget.editor.execute(
+      [
+        ToggleTextAttributionsRequest(
+          documentSelection: widget.composer.selection!,
+          attributions: {italicsAttribution},
+        ),
+      ],
     );
   }
 
   /// Toggles strikethrough styling for the current selected text.
   void _toggleStrikethrough() {
-    widget.editor.executeCommand(
-      ToggleTextAttributionsCommand(
-        documentSelection: widget.composer.selection!,
-        attributions: {strikethroughAttribution},
-      ),
+    widget.editor.execute(
+      [
+        ToggleTextAttributionsRequest(
+          documentSelection: widget.composer.selection!,
+          attributions: {strikethroughAttribution},
+        ),
+      ],
     );
   }
 
@@ -275,7 +290,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId)! as TextNode;
+    final textNode = widget.doc.getNodeById(selection.extent.nodeId)! as TextNode;
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
@@ -296,7 +311,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId)! as TextNode;
+    final textNode = widget.doc.getNodeById(selection.extent.nodeId)! as TextNode;
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
@@ -349,7 +364,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId)! as TextNode;
+    final textNode = widget.doc.getNodeById(selection.extent.nodeId)! as TextNode;
     final text = textNode.text;
 
     final trimmedRange = _trimTextRangeWhitespace(text, selectionRange);
@@ -410,7 +425,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         return;
     }
 
-    final selectedNode = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId)! as ParagraphNode;
+    final selectedNode = widget.doc.getNodeById(widget.composer.selection!.extent.nodeId)! as ParagraphNode;
     selectedNode.metadata['textAlign'] = newAlignmentValue;
   }
 
@@ -491,28 +506,27 @@ class _EditorToolbarState extends State<EditorToolbar> {
             // Only allow the user to select a new type of text node if
             // the currently selected node can be converted.
             if (_isConvertibleNode()) ...[
-              Tooltip(
-                message: 'Text block type',
-                child: DropdownButton<_TextType>(
-                  value: _getCurrentTextType(),
-                  items: _TextType.values
-                      .map((textType) => DropdownMenuItem<_TextType>(
-                            value: textType,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 16.0),
-                              child: Text(_getTextTypeName(textType)),
-                            ),
-                          ))
-                      .toList(),
-                  icon: const Icon(Icons.arrow_drop_down),
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 12,
-                  ),
-                  underline: const SizedBox(),
-                  elevation: 0,
-                  onChanged: _convertTextToNewType,
+              DropdownButton<_TextType>(
+                value: _getCurrentTextType(),
+                items: _TextType.values
+                    .map(
+                      (textType) => DropdownMenuItem<_TextType>(
+                        value: textType,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: Text(_getTextTypeName(textType)),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                icon: const Icon(Icons.arrow_drop_down),
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 12,
                 ),
+                underline: const SizedBox(),
+                elevation: 0,
+                onChanged: _convertTextToNewType,
               ),
               _buildVerticalDivider(),
             ],
@@ -555,28 +569,27 @@ class _EditorToolbarState extends State<EditorToolbar> {
             // node respects alignment. List items, for example, do not.
             if (_isTextAlignable()) ...[
               _buildVerticalDivider(),
-              Tooltip(
-                message: 'Text Alignment',
-                child: DropdownButton<TextAlign>(
-                  value: _getCurrentTextAlignment(),
-                  items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
-                      .map((textAlign) => DropdownMenuItem<TextAlign>(
-                            value: textAlign,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Icon(_buildTextAlignIcon(textAlign)),
-                            ),
-                          ))
-                      .toList(),
-                  icon: const Icon(Icons.arrow_drop_down),
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 12,
-                  ),
-                  underline: const SizedBox(),
-                  elevation: 0,
-                  onChanged: _changeAlignment,
+              DropdownButton<TextAlign>(
+                value: _getCurrentTextAlignment(),
+                items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
+                    .map(
+                      (textAlign) => DropdownMenuItem<TextAlign>(
+                        value: textAlign,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(_buildTextAlignIcon(textAlign)),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                icon: const Icon(Icons.arrow_drop_down),
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 12,
                 ),
+                underline: const SizedBox(),
+                elevation: 0,
+                onChanged: _changeAlignment,
               ),
             ],
           ],

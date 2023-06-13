@@ -4,7 +4,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 class AttributedTextDemo extends StatefulWidget {
   @override
-  _AttributedTextDemoState createState() => _AttributedTextDemoState();
+  State<AttributedTextDemo> createState() => _AttributedTextDemoState();
 }
 
 class _AttributedTextDemoState extends State<AttributedTextDemo> {
@@ -21,22 +21,22 @@ class _AttributedTextDemoState extends State<AttributedTextDemo> {
   }
 
   void _computeStyledText() {
-    AttributedText _text = AttributedText(
+    AttributedText text = AttributedText(
       text: 'This is some text styled with AttributedText',
     );
 
     for (final range in _boldRanges) {
-      _text.addAttribution(boldAttribution, range);
+      text.addAttribution(boldAttribution, range);
     }
     for (final range in _italicsRanges) {
-      _text.addAttribution(italicsAttribution, range);
+      text.addAttribution(italicsAttribution, range);
     }
     for (final range in _strikethroughRanges) {
-      _text.addAttribution(strikethroughAttribution, range);
+      text.addAttribution(strikethroughAttribution, range);
     }
 
     setState(() {
-      _richText = _text.computeTextSpan((Set<Attribution> attributions) {
+      _richText = text.computeTextSpan((Set<Attribution> attributions) {
         TextStyle newStyle = const TextStyle(
           color: Colors.black,
           fontSize: 30,
@@ -184,7 +184,7 @@ class TextRangeSelector extends StatefulWidget {
   final void Function(List<SpanRange>)? onRangesChange;
 
   @override
-  _TextRangeSelectorState createState() => _TextRangeSelectorState();
+  State<TextRangeSelector> createState() => _TextRangeSelectorState();
 }
 
 class _TextRangeSelectorState extends State<TextRangeSelector> {

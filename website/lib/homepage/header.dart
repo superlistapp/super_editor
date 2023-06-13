@@ -30,8 +30,8 @@ class Header extends StatelessWidget {
   }
 
   Widget _buildNavBar() {
-    return Row(
-      children: const [
+    return const Row(
+      children: [
         _Link(
           url: 'https://github.com/superlistapp/super_editor',
           child: Text('Github'),
@@ -122,8 +122,8 @@ class _DrawerLayoutState extends State<DrawerLayout> {
                       height: 44,
                     ),
                   ),
-                  Column(
-                    children: const [
+                  const Column(
+                    children: [
                       SizedBox(height: 16),
                       _Link(
                         url: 'https://github.com/superlistapp/super_editor',
@@ -166,7 +166,7 @@ class _Link extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextButton(
-      onPressed: () => launch(url),
+      onPressed: () => launchUrl(Uri.parse(url)),
       style: ButtonStyle(
         foregroundColor: MaterialStateProperty.all(Colors.white),
         minimumSize: MaterialStateProperty.all(const Size(72, 48)),
@@ -189,7 +189,7 @@ class _DownloadButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialButton(
       color: const Color(0xFFFAE74F),
-      onPressed: () => launch('https://pub.dev/packages/super_editor'),
+      onPressed: () => launchUrl(Uri.parse('https://pub.dev/packages/super_editor')),
       padding: const EdgeInsets.symmetric(horizontal: 32),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(64)),
       height: 52,

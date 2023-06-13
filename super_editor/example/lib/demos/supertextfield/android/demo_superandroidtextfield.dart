@@ -6,7 +6,7 @@ import 'package:super_editor/super_editor.dart';
 /// Demo of [SuperAndroidTextField].
 class SuperAndroidTextFieldDemo extends StatefulWidget {
   @override
-  _SuperAndroidTextFieldDemoState createState() => _SuperAndroidTextFieldDemoState();
+  State<SuperAndroidTextFieldDemo> createState() => _SuperAndroidTextFieldDemoState();
 }
 
 class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
@@ -46,7 +46,7 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
             return config.styleBuilder(attributions).copyWith(color: Colors.grey);
           }).build,
       selectionColor: Colors.blue.withOpacity(0.4),
-      caretStyle: CaretStyle(color: Colors.green),
+      caretStyle: const CaretStyle(color: Colors.green),
       handlesColor: Colors.lightGreen,
       minLines: config.minLines,
       maxLines: config.maxLines,
