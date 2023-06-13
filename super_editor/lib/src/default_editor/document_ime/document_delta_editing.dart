@@ -189,6 +189,15 @@ class TextDeltasDocumentEditor {
 
     // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
+
+    //If both the text and range have been changed after replacing 'aa' with 'bbb', you need to reinitialize.
+    //https://github.com/superlistapp/super_editor/issues/1168
+    _serializedDoc = DocumentImeSerializer(
+      document,
+      selection.value!,
+      composingRegion.value,
+      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
+    )..imeText = _previousImeValue.text;
   }
 
   void _applyDeletion(TextEditingDeltaDeletion delta) {
