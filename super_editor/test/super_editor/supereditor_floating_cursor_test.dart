@@ -126,9 +126,9 @@ void main() {
         // Ensure the caret is displayed.
         expect(_caretFinder(), findsOneWidget);
 
-        // Ensure the caret is blue.
+        // Ensure the caret has the default color.
         caret = tester.widget<BlinkingCaret>(_caretFinder());
-        expect(caret.color, Colors.blue);
+        expect(caret.color, Theme.of(tester.firstElement(_caretFinder())).primaryColor);
       });
     });
   });
