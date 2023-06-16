@@ -563,12 +563,12 @@ StandardEditorPieces _createStandardEditor({
     },
     requestHandlers: defaultRequestHandlers,
     reactionPipeline: [
-      LinkifyReaction(),
-      UnorderedListItemConversionReaction(),
-      OrderedListItemConversionReaction(),
-      BlockquoteConversionReaction(),
-      HorizontalRuleConversionReaction(),
-      ImageUrlConversionReaction(),
+      const LinkifyReaction(),
+      const UnorderedListItemConversionReaction(),
+      const OrderedListItemConversionReaction(),
+      const BlockquoteConversionReaction(),
+      const HorizontalRuleConversionReaction(),
+      const ImageUrlConversionReaction(),
     ],
   );
 

@@ -15,7 +15,7 @@ import 'package:super_editor/super_editor.dart';
 /// Each of the above steps are demonstrated in this example.
 class TextWithHintDemo extends StatefulWidget {
   @override
-  _TextWithHintDemoState createState() => _TextWithHintDemoState();
+  State<TextWithHintDemo> createState() => _TextWithHintDemoState();
 }
 
 class _TextWithHintDemoState extends State<TextWithHintDemo> {

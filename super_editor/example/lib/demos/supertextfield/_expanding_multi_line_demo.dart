@@ -5,7 +5,7 @@ import '_robot.dart';
 
 class ExpandingMultiLineTextFieldDemo extends StatefulWidget {
   @override
-  _ExpandingMultiLineTextFieldDemoState createState() => _ExpandingMultiLineTextFieldDemoState();
+  State<ExpandingMultiLineTextFieldDemo> createState() => _ExpandingMultiLineTextFieldDemoState();
 }
 
 class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineTextFieldDemo>

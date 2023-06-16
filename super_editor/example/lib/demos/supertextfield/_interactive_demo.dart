@@ -7,7 +7,7 @@ const flutterAttribution = NamedAttribution('flutter');
 
 class InteractiveTextFieldDemo extends StatefulWidget {
   @override
-  _InteractiveTextFieldDemoState createState() => _InteractiveTextFieldDemoState();
+  State<InteractiveTextFieldDemo> createState() => _InteractiveTextFieldDemoState();
 }
 
 class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {

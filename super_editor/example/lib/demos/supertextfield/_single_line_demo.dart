@@ -5,7 +5,7 @@ import '_robot.dart';
 
 class SingleLineTextFieldDemo extends StatefulWidget {
   @override
-  _SingleLineTextFieldDemoState createState() => _SingleLineTextFieldDemoState();
+  State<SingleLineTextFieldDemo> createState() => _SingleLineTextFieldDemoState();
 }
 
 class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with TickerProviderStateMixin {

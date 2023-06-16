@@ -154,7 +154,7 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
     _keyboardController.close();
 
     _editor.execute([
-      ClearSelectionRequest(),
+      const ClearSelectionRequest(),
     ]);
 
     // If we clear SuperEditor's selection, but leave SuperEditor focused, then
@@ -180,10 +180,10 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
                 document: _doc,
                 composer: _composer,
                 softwareKeyboardController: _keyboardController,
-                selectionPolicies: SuperEditorSelectionPolicies(
+                selectionPolicies: const SuperEditorSelectionPolicies(
                   clearSelectionWhenEditorLosesFocus: false,
                 ),
-                imePolicies: SuperEditorImePolicies(
+                imePolicies: const SuperEditorImePolicies(
                   openKeyboardOnSelectionChange: false,
                 ),
               ),
@@ -193,7 +193,7 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: BehindKeyboardPanel(
+            child: _BehindKeyboardPanel(
               keyboardState: _keyboardState,
               nonKeyboardEditorState: _nonKeyboardEditorState,
               onOpenKeyboard: _openKeyboard,
@@ -207,8 +207,8 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   }
 }
 
-class BehindKeyboardPanel extends StatefulWidget {
-  const BehindKeyboardPanel({
+class _BehindKeyboardPanel extends StatefulWidget {
+  const _BehindKeyboardPanel({
     Key? key,
     required this.keyboardState,
     required this.nonKeyboardEditorState,
@@ -224,10 +224,10 @@ class BehindKeyboardPanel extends StatefulWidget {
   final VoidCallback onEndEditing;
 
   @override
-  State<BehindKeyboardPanel> createState() => _BehindKeyboardPanelState();
+  State<_BehindKeyboardPanel> createState() => __BehindKeyboardPanelState();
 }
 
-class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
+class __BehindKeyboardPanelState extends State<_BehindKeyboardPanel> {
   double _maxBottomInsets = 0.0;
   double _latestBottomInsets = 0.0;
 
@@ -236,7 +236,7 @@ class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
     super.didChangeDependencies();
 
     final newBottomInset = MediaQuery.of(context).viewInsets.bottom;
-    print("BehindKeyboardPanel didChangeDependencies() - bottom inset: $newBottomInset");
+    print("_BehindKeyboardPanel didChangeDependencies() - bottom inset: $newBottomInset");
     if (newBottomInset > _maxBottomInsets) {
       print("Setting max bottom insets to: $newBottomInset");
       _maxBottomInsets = newBottomInset;
@@ -296,9 +296,9 @@ class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
               const SizedBox(width: 24),
               GestureDetector(
                 onTap: _closeKeyboardAndPanel,
-                child: Icon(Icons.close),
+                child: const Icon(Icons.close),
               ),
-              Spacer(),
+              const Spacer(),
               GestureDetector(
                 onTap: widget.keyboardState.value == _InputState.open ? widget.onCloseKeyboard : widget.onOpenKeyboard,
                 child: Icon(widget.keyboardState.value == _InputState.open ? Icons.keyboard_hide : Icons.keyboard),

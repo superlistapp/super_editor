@@ -10,7 +10,7 @@ import 'package:super_editor/super_editor.dart';
 /// no matter which platform or form factor you use.
 class MobileEditingIOSDemo extends StatefulWidget {
   @override
-  _MobileEditingIOSDemoState createState() => _MobileEditingIOSDemoState();
+  State<MobileEditingIOSDemo> createState() => _MobileEditingIOSDemoState();
 }
 
 class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {

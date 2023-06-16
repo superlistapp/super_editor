@@ -515,7 +515,7 @@ spans multiple lines.''',
             // add buttons in our test just for this purpose, we'll explicitly
             // activate interaction mode.
             context.editContext.editor.execute([
-              ChangeInteractionModeRequest(isInteractionModeDesired: true),
+              const ChangeInteractionModeRequest(isInteractionModeDesired: true),
             ]);
           } else if (defaultTargetPlatform == TargetPlatform.macOS) {
             // Press CMD to activate interaction mode on Mac.
