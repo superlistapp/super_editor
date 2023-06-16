@@ -12,7 +12,7 @@ import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
-import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/infrastructure/multi_tap_pan_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
@@ -490,7 +490,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   bool _wasScrollingOnTapDown = false;
-  void _onTapDown(TapDownDetails details) {
+  void _onTapDown(TapDragDownDetails details) {
     // When the user scrolls and releases, the scrolling continues with momentum.
     // If the user then taps down again, the momentum stops. When this happens, we
     // still receive tap callbacks. But we don't want to take any further action,
@@ -502,7 +502,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _wasScrollingOnTapDown = _isScrolling;
   }
 
-  void _onTapUp(TapUpDetails details) {
+  void _onTapUp(TapDragUpDetails details) {
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
       // touch down stopped the scrolling momentum. We don't want to take any further
@@ -566,7 +566,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     widget.focusNode.requestFocus();
   }
 
-  void _onDoubleTapDown(TapDownDetails details) {
+  void _onDoubleTapDown(TapDragDownDetails details) {
     editorGesturesLog.info("Double tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -649,7 +649,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     return true;
   }
 
-  void _onTripleTapDown(TapDownDetails details) {
+  void _onTripleTapDown(TapDragDownDetails details) {
     editorGesturesLog.info("Triple tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -1089,6 +1089,22 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     );
   }
 
+  _onMultiTapDown(TapDragDownDetails details, int count) {
+    if (count == 2) {
+      _onDoubleTapDown(details);
+    } else if (count == 3) {
+      _onTripleTapDown(details);
+    } else {
+      _onTapDown(details);
+    }
+  }
+
+  _onMultiTapUp(TapDragUpDetails details, int count) {
+    if (count == 1) {
+      _onTapUp(details);
+    }
+  }
+
   Widget _buildGestureInput({
     required Widget child,
   }) {
@@ -1096,14 +1112,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
       gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-          () => TapSequenceGestureRecognizer(),
-          (TapSequenceGestureRecognizer recognizer) {
+        MultiTapAndPanGesture: GestureRecognizerFactoryWithHandlers<MultiTapAndPanGesture>(
+          () => MultiTapAndPanGesture(),
+          (MultiTapAndPanGesture recognizer) {
             recognizer
-              ..onTapDown = _onTapDown
-              ..onTapUp = _onTapUp
-              ..onDoubleTapDown = _onDoubleTapDown
-              ..onTripleTapDown = _onTripleTapDown
+              ..onMultiTapDown = _onMultiTapDown
+              ..onMultiTapUp = _onMultiTapUp
               ..gestureSettings = gestureSettings;
           },
         ),

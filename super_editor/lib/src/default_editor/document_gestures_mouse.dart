@@ -16,9 +16,9 @@ import 'package:super_editor/src/default_editor/selection_upstream_downstream.da
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
 import '../infrastructure/document_gestures_interaction_overrides.dart';
+import '../infrastructure/multi_tap_pan_gesture.dart';
 
 /// Governs mouse gesture interaction with a document, such as scrolling
 /// a document with a scroll wheel, tapping to place a caret, and
@@ -238,7 +238,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         globalTopLeft.dx, globalTopLeft.dy, selectionExtentRectInDoc.width, selectionExtentRectInDoc.height);
   }
 
-  void _onTapUp(TapUpDetails details) {
+  void _onTapUp(TapDragUpDetails details) {
     editorGesturesLog.info("Tap up on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -294,7 +294,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
   }
 
-  void _onDoubleTapDown(TapDownDetails details) {
+  void _onDoubleTapDown(TapDragDownDetails details) {
     editorGesturesLog.info("Double tap down on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -389,7 +389,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     _selectionType = SelectionType.position;
   }
 
-  void _onTripleTapDown(TapDownDetails details) {
+  void _onTripleTapDown(TapDragDownDetails details) {
     editorGesturesLog.info("Triple down down on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -768,6 +768,24 @@ Updating drag selection:
     );
   }
 
+  void _onMultiTapDown(TapDragDownDetails details, int count) {
+    if (count == 2) {
+      _onDoubleTapDown(details);
+    } else if (count == 3) {
+      _onTripleTapDown(details);
+    }
+  }
+
+  void _onMultiTapUp(TapDragUpDetails details, int count) {
+    if (count == 1) {
+      _onTapUp(details);
+    } else if (count == 2) {
+      _onDoubleTap();
+    } else if (count == 3) {
+      _onTripleTap();
+    }
+  }
+
   Widget _buildGestureInput({
     required Widget child,
   }) {
@@ -775,18 +793,6 @@ Updating drag selection:
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
       gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-          () => TapSequenceGestureRecognizer(),
-          (TapSequenceGestureRecognizer recognizer) {
-            recognizer
-              ..onTapUp = _onTapUp
-              ..onDoubleTapDown = _onDoubleTapDown
-              ..onDoubleTap = _onDoubleTap
-              ..onTripleTapDown = _onTripleTapDown
-              ..onTripleTap = _onTripleTap
-              ..gestureSettings = gestureSettings;
-          },
-        ),
         PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
           () => PanGestureRecognizer(),
           (PanGestureRecognizer recognizer) {
@@ -795,6 +801,15 @@ Updating drag selection:
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
               ..onCancel = _onPanCancel
+              ..gestureSettings = gestureSettings;
+          },
+        ),
+        MultiTapAndPanGesture: GestureRecognizerFactoryWithHandlers<MultiTapAndPanGesture>(
+          () => MultiTapAndPanGesture(),
+          (MultiTapAndPanGesture recognizer) {
+            recognizer
+              ..onMultiTapUp = _onMultiTapUp
+              ..onMultiTapDown = _onMultiTapDown
               ..gestureSettings = gestureSettings;
           },
         ),

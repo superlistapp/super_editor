@@ -11,13 +11,13 @@ import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
+import '../infrastructure/multi_tap_pan_gesture.dart';
 import '../infrastructure/super_textfield/metrics.dart';
 import 'document_gestures_touch.dart';
 import 'selection_upstream_downstream.dart';
@@ -105,8 +105,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   late MagnifierAndToolbarController _overlayController;
+
   // The ScrollPosition attached to the _ancestorScrollable.
   ScrollPosition? _ancestorScrollPosition;
+
   // The actual ScrollPosition that's used for the document layout, either
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
   ScrollPosition? _activeScrollPosition;
@@ -126,6 +128,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
   DragMode? _dragMode;
+
   // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
   //       not collapsed/upstream/downstream. Change the type once it's working.
   HandleType? _dragHandleType;
@@ -496,7 +499,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   bool _wasScrollingOnTapDown = false;
-  void _onTapDown(TapDownDetails details) {
+
+  void _onTapDown(TapDragDownDetails details) {
     // When the user scrolls and releases, the scrolling continues with momentum.
     // If the user then taps down again, the momentum stops. When this happens, we
     // still receive tap callbacks. But we don't want to take any further action,
@@ -515,7 +519,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
   }
 
-  void _onTapUp(TapUpDetails details) {
+  void _onTapUp(TapDragUpDetails details) {
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
       // touch down stopped the scrolling momentum. We don't want to take any further
@@ -604,7 +608,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.focusNode.requestFocus();
   }
 
-  void _onDoubleTapUp(TapUpDetails details) {
+  void _onDoubleTapUp(TapDragUpDetails details) {
     final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
@@ -689,7 +693,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     return true;
   }
 
-  void _onTripleTapUp(TapUpDetails details) {
+  void _onTripleTapUp(TapDragUpDetails details) {
     editorGesturesLog.info("Triple down down on document");
 
     final docOffset = _interactorOffsetToDocOffset(details.localPosition);
@@ -1291,6 +1295,22 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     );
   }
 
+  _onMultiTapDown(TapDragDownDetails details, int count) {
+    if (count == 1) {
+      _onTapDown(details);
+    }
+  }
+
+  _onMultiTapUp(TapDragUpDetails details, int count) {
+    if (count == 1) {
+      _onTapUp(details);
+    } else if (count == 2) {
+      _onDoubleTapUp(details);
+    } else if (count == 3) {
+      _onTripleTapUp(details);
+    }
+  }
+
   Widget _buildGestureInput({
     required Widget child,
   }) {
@@ -1298,18 +1318,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     return RawGestureDetector(
       behavior: HitTestBehavior.opaque,
       gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-          () => TapSequenceGestureRecognizer(),
-          (TapSequenceGestureRecognizer recognizer) {
-            recognizer
-              ..onTapDown = _onTapDown
-              ..onTapUp = _onTapUp
-              ..onDoubleTapUp = _onDoubleTapUp
-              ..onTripleTapUp = _onTripleTapUp
-              ..onTimeout = _onTapTimeout
-              ..gestureSettings = gestureSettings;
-          },
-        ),
         // We use a VerticalDragGestureRecognizer instead of a PanGestureRecognizer
         // because `Scrollable` also uses a VerticalDragGestureRecognizer and we
         // need to beat out any ancestor `Scrollable` in the gesture arena.
@@ -1323,6 +1331,16 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
               ..onCancel = _onPanCancel
+              ..gestureSettings = gestureSettings;
+          },
+        ),
+        MultiTapAndPanGesture: GestureRecognizerFactoryWithHandlers<MultiTapAndPanGesture>(
+          () => MultiTapAndPanGesture(),
+          (MultiTapAndPanGesture recognizer) {
+            recognizer
+              ..onMultiTapDown = _onMultiTapDown
+              ..onMultiTapUp = _onMultiTapUp
+              ..onCancel = _onTapTimeout
               ..gestureSettings = gestureSettings;
           },
         ),
