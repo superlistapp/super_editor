@@ -77,10 +77,11 @@ void testWidgetsOnDesktop(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
 }) {
-  testWidgetsOnMac("$description (on MAC)", test, skip: skip);
-  testWidgetsOnWindows("$description (on Windows)", test, skip: skip);
-  testWidgetsOnLinux("$description (on Linux)", test, skip: skip);
+  testWidgetsOnMac("$description (on MAC)", test, skip: skip, variant: variant);
+  testWidgetsOnWindows("$description (on Windows)", test, skip: skip, variant: variant);
+  testWidgetsOnLinux("$description (on Linux)", test, skip: skip, variant: variant);
 }
 
 /// A widget test that runs a variant for every mobile platform, e.g.,
