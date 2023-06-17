@@ -73,6 +73,45 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
+        testWidgetsOnAllPlatforms('and clears composing region after text changes', (tester) async {
+          final controller = ImeAttributedTextEditingController();
+          await _pumpSuperTextField(tester, controller);
+
+          await tester.placeCaretInSuperTextField(0);
+
+          bool sentToPlatform = false;
+          int? composingBase;
+          int? composingExtent;
+
+          // Intercept the setEditingState message sent to the platform.
+          tester
+              .interceptChannel(SystemChannels.textInput.name) //
+              .interceptMethod(
+            'TextInput.setEditingState',
+            (methodCall) {
+              if (methodCall.method == 'TextInput.setEditingState') {
+                sentToPlatform = true;
+                composingBase = methodCall.arguments["composingBase"];
+                composingExtent = methodCall.arguments["composingExtent"];
+              }
+              return null;
+            },
+          );
+
+          // Type "a".
+          await tester.ime.typeText('a', getter: imeClientGetter);
+
+          // Manually set the value to "b" to send the value to the IME.
+          controller.text = AttributedText(text: 'b');
+
+          // Ensure we send the value back to the IME.
+          expect(sentToPlatform, true);
+
+          // Ensure we cleared the composing region.
+          expect(composingBase, -1);
+          expect(composingExtent, -1);
+        });
+
         testWidgetsOnAllPlatforms('and don\'t send editing value back to IME if matches the expected value',
             (tester) async {
           await _pumpEmptySuperTextField(tester);
@@ -109,16 +148,13 @@ void main() {
         testWidgetsOnAllPlatforms('and send editing value back to IME if it doesn\'t match the expected value',
             (tester) async {
           final controller = ImeAttributedTextEditingController(
-            controller: _ObscuringTextController(text: AttributedText(text: 'n')),
+            controller: _ObscuringTextController(),
           );
           await _pumpSuperTextField(tester, controller);
 
-          // Place the caret at the end of the textfield.
-          await tester.placeCaretInSuperTextField(1);
+          await tester.placeCaretInSuperTextField(0);
 
           bool sentToPlatform = false;
-          int composingBase = -1;
-          int composingExtent = -1;
 
           // Intercept the setEditingState message sent to the platform.
           tester
@@ -128,42 +164,21 @@ void main() {
             (methodCall) {
               if (methodCall.method == 'TextInput.setEditingState') {
                 sentToPlatform = true;
-                composingBase = methodCall.arguments["composingBase"];
-                composingExtent = methodCall.arguments["composingExtent"];
               }
               return null;
             },
           );
 
-          // Simulate the user begining the input of the compound character 'ã'.
-          //
-          // To input this character, the user first presses the '~' key, and then the 'a' key.
-          // The IME first sends us an insertion delta of '~' with a composing region set,
-          // followed by a replacement delta, which replaces '~' with 'ã'.
-          //
-          // For this to work, we need to send the correct composing region to the IME.
-          // Otherwise, we get two insertion deltas and the final text will be '~a'.
-          await tester.ime.sendDeltas(const [
-            TextEditingDeltaInsertion(
-              oldText: "n",
-              textInserted: "~",
-              insertionOffset: 1,
-              selection: TextSelection.collapsed(offset: 2),
-              composing: TextRange(start: 1, end: 1),
-            )
-          ], getter: imeClientGetter);
+          // Type "ab". Our controller will change the text to "*b" when the second delta is processed.
+          await tester.ime.typeText("ab", getter: imeClientGetter);
 
           // We are using a custom controller which changes every character but the last one to "*".
-          // After typing "~" the IME thinks the text is "n~". However, for us the text is "*~".
+          // After typing "b" the IME thinks the text is "ab". However, for us the text is "*b".
           // As our value is different from what the IME thinks it is, we need to send our current value
           // back to the IME.
 
           // Ensure we sent the value back to the IME.
           expect(sentToPlatform, true);
-
-          // Ensure we honored the composing region we got from the IME.
-          expect(composingBase, 1);
-          expect(composingExtent, 1);
         });
       });
 
@@ -502,6 +517,9 @@ Widget _buildScaffold({
 
 /// An [AttributedTextEditingController] that uppon insertion replaces every character
 /// but the last one with a "*".
+///
+/// Used to modify the text when we receive deltas from the IME, causing us to send the editing value
+/// back to the IME.
 class _ObscuringTextController extends AttributedTextEditingController {
   _ObscuringTextController({
     AttributedText? text,
