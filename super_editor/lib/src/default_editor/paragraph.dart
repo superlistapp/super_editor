@@ -300,7 +300,7 @@ class CombineParagraphsCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(secondNode.id),
+        NodeRemovedEvent(secondNode.id, secondNode),
       ),
       DocumentEdit(
         NodeChangeEvent(nodeAbove.id),
@@ -516,7 +516,7 @@ class DeleteParagraphCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(node.id),
+        NodeRemovedEvent(node.id, node),
       )
     ]);
   }

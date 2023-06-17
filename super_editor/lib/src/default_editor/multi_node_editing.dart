@@ -328,7 +328,7 @@ class ReplaceNodeCommand extends EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(existingNodeId),
+        NodeRemovedEvent(existingNodeId, oldNode),
       ),
       DocumentEdit(
         NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
@@ -379,7 +379,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(oldNode.id),
+        NodeRemovedEvent(oldNode.id, oldNode),
       ),
       DocumentEdit(
         NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
@@ -525,7 +525,7 @@ class DeleteSelectionCommand implements EditCommand {
     document.deleteNode(endNodeAfterDeletion);
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(endNodeAfterDeletion.id),
+        NodeRemovedEvent(endNodeAfterDeletion.id, endNodeAfterDeletion),
       )
     ]);
     _log.log('DeleteSelectionCommand', ' - done with selection deletion');
@@ -605,8 +605,9 @@ class DeleteSelectionCommand implements EditCommand {
     final changes = <EditEvent>[];
     for (int i = endIndex - 1; i > startIndex; --i) {
       _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node $i: ${document.getNodeAt(i)?.id}');
+      final removedNode = document.getNodeAt(i)!;
       changes.add(DocumentEdit(
-        NodeRemovedEvent(document.getNodeAt(i)!.id),
+        NodeRemovedEvent(removedNode.id, removedNode),
       ));
       document.deleteNodeAt(i);
     }
@@ -639,7 +640,7 @@ class DeleteSelectionCommand implements EditCommand {
 
         return [
           DocumentEdit(
-            NodeRemovedEvent(node.id),
+            NodeRemovedEvent(node.id, node),
           )
         ];
       } else {
@@ -685,7 +686,7 @@ class DeleteSelectionCommand implements EditCommand {
 
         return [
           DocumentEdit(
-            NodeRemovedEvent(node.id),
+            NodeRemovedEvent(node.id, node),
           )
         ];
       } else {
@@ -729,7 +730,7 @@ class DeleteSelectionCommand implements EditCommand {
 
       return [
         DocumentEdit(
-          NodeRemovedEvent(node.id),
+          NodeRemovedEvent(node.id, node),
         ),
         DocumentEdit(
           NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
@@ -741,7 +742,7 @@ class DeleteSelectionCommand implements EditCommand {
 
       return [
         DocumentEdit(
-          NodeRemovedEvent(node.id),
+          NodeRemovedEvent(node.id, node),
         )
       ];
     }
@@ -779,7 +780,7 @@ class DeleteNodeCommand implements EditCommand {
     _log.log('DeleteNodeCommand', ' - done with node deletion');
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(node.id),
+        NodeRemovedEvent(node.id, node),
       )
     ]);
   }

@@ -544,6 +544,30 @@ void main() {
           ],
         );
       });
+
+      test('reports the node that was removed', () {
+        DocumentNode? removedNode;
+        final editorPieces = _createStandardEditor(
+          initialDocument: longTextDoc(),
+          additionalReactions: [
+            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+              expect(changeList.length, 1);
+
+              final event = changeList.first as DocumentEdit;
+              final change = event.change as NodeRemovedEvent;
+              removedNode = change.removedNode;
+            }),
+          ],
+        );
+
+        final nodeToRemove = editorPieces.document.getNodeById("2")!;
+
+        editorPieces.editor.execute([
+          DeleteNodeRequest(nodeId: nodeToRemove.id),
+        ]);
+
+        expect(removedNode, nodeToRemove);
+      });
     });
   });
 }
@@ -552,6 +576,7 @@ void main() {
 StandardEditorPieces _createStandardEditor({
   MutableDocument? initialDocument,
   DocumentSelection? initialSelection,
+  List<EditReaction> additionalReactions = const [],
 }) {
   final document = initialDocument ?? singleParagraphEmptyDoc();
 
@@ -563,6 +588,7 @@ StandardEditorPieces _createStandardEditor({
     },
     requestHandlers: defaultRequestHandlers,
     reactionPipeline: [
+      ...additionalReactions,
       const LinkifyReaction(),
       const UnorderedListItemConversionReaction(),
       const OrderedListItemConversionReaction(),
