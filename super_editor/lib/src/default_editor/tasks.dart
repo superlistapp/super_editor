@@ -403,20 +403,24 @@ class SplitExistingTaskRequest implements EditRequest {
   const SplitExistingTaskRequest({
     required this.nodeId,
     required this.splitOffset,
+    this.newNodeId,
   });
 
   final String nodeId;
   final int splitOffset;
+  final String? newNodeId;
 }
 
 class SplitExistingTaskCommand implements EditCommand {
   const SplitExistingTaskCommand({
     required this.nodeId,
     required this.splitOffset,
+    this.newNodeId,
   });
 
   final String nodeId;
   final int splitOffset;
+  final String? newNodeId;
 
   @override
   void execute(EditContext editContext, CommandExecutor executor) {
@@ -441,7 +445,7 @@ class SplitExistingTaskCommand implements EditCommand {
     }
 
     final newTaskNode = TaskNode(
-      id: Editor.createNodeId(),
+      id: newNodeId ?? Editor.createNodeId(),
       text: node.text.copyText(splitOffset),
       isComplete: false,
     );

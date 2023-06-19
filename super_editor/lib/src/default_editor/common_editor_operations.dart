@@ -14,6 +14,7 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/super_editor.dart';
 
 import 'attributions.dart';
 import 'horizontal_rule.dart';
@@ -1668,6 +1669,26 @@ class CommonEditorOperations {
           ),
         ]);
       }
+    } else if (extentNode is TaskNode) {
+      final splitOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
+
+      editor.execute([
+        SplitExistingTaskRequest(
+          nodeId: extentNode.id,
+          splitOffset: splitOffset,
+          newNodeId: newNodeId,
+        ),
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      ]);
     } else {
       // We don't know how to handle this type of node position. Do nothing.
       editorOpsLog.fine("Can't insert new block-level inline because we don't recognize the selected content type.");

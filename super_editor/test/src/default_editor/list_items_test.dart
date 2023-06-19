@@ -161,6 +161,221 @@ void main() {
         // Ensure the caret is being displayed at the correct position.
         expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
       });
+
+      testWidgetsOnDesktop("inserts new item on ENTER at end of existing item", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('* Item 1')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at the end of the list item.
+        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+
+        // Press enter to create a new list item.
+        await tester.pressEnter();
+
+        // Ensure that a new, empty list item was created.
+        expect(document.nodes.length, 2);
+
+        // Ensure the existing item remains the same.
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+
+        // Ensure the new item has the correct list item type and indentation.
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAndroid("inserts new item on ENTER at end of existing item with mobile keyboard (on Android)",
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('* Item 1')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at the end of the list item.
+        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+
+        // On Android, pressing ENTER generates a "\n" insertion.
+        await tester.typeImeText("\n");
+
+        // Ensure that a new, empty list item was created.
+        expect(document.nodes.length, 2);
+
+        // Ensure the existing item remains the same.
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+
+        // Ensure the new item has the correct list item type and indentation.
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnIos("inserts new item on ENTER at end of existing item with mobile keyboard (on iOS)",
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('* Item 1')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at the end of the list item.
+        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+
+        // On iOS, pressing ENTER generates a newline action.
+        await tester.testTextInput.receiveAction(TextInputAction.newline);
+
+        // Ensure that a new, empty list item was created.
+        expect(document.nodes.length, 2);
+
+        // Ensure the existing item remains the same.
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+
+        // Ensure the new item has the correct list item type and indentation.
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnDesktop("splits list item into two on ENTER in middle of existing item", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('* List Item')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at "List |Item"
+        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+
+        // Press enter to split the existing item into two.
+        await tester.pressEnter();
+
+        // Ensure that a new item was created with part of the previous item.
+        expect(document.nodes.length, 2);
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "List ");
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "Item");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAndroid(
+          "splits list item into two on ENTER in middle of existing item with mobile keyboard (on Android)",
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('* List Item')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at "List |Item"
+        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+
+        // On Android, pressing ENTER generates a "\n" insertion.
+        await tester.typeImeText("\n");
+
+        // Ensure that a new item was created with part of the previous item.
+        expect(document.nodes.length, 2);
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "List ");
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "Item");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnIos("splits list item into two on ENTER in middle of existing item with mobile keyboard (on iOS)",
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('* List Item')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at "List |Item"
+        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+
+        // On iOS, pressing ENTER generates a newline action.
+        await tester.testTextInput.receiveAction(TextInputAction.newline);
+
+        // Ensure that a new item was created with part of the previous item.
+        expect(document.nodes.length, 2);
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "List ");
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "Item");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
     });
 
     group('ordered list', () {
@@ -221,6 +436,221 @@ void main() {
 
         // Ensure the caret is being displayed at the correct position.
         expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
+      });
+
+      testWidgetsOnDesktop("inserts new item on ENTER at end of existing item", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('1. Item 1')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at the end of the list item.
+        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+
+        // Press enter to create a new list item.
+        await tester.pressEnter();
+
+        // Ensure that a new, empty list item was created.
+        expect(document.nodes.length, 2);
+
+        // Ensure the existing item remains the same.
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+
+        // Ensure the new item has the correct list item type and indentation.
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAndroid("inserts new item on ENTER at end of existing item with mobile keyboard (on Android)",
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('1. Item 1')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at the end of the list item.
+        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+
+        // On Android, pressing ENTER generates a "\n" insertion.
+        await tester.typeImeText("\n");
+
+        // Ensure that a new, empty list item was created.
+        expect(document.nodes.length, 2);
+
+        // Ensure the existing item remains the same.
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+
+        // Ensure the new item has the correct list item type and indentation.
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnIos("inserts new item on ENTER at end of existing item with mobile keyboard (on iOS)",
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('1. Item 1')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at the end of the list item.
+        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+
+        // On iOS, pressing ENTER generates a newline action.
+        await tester.testTextInput.receiveAction(TextInputAction.newline);
+
+        // Ensure that a new, empty list item was created.
+        expect(document.nodes.length, 2);
+
+        // Ensure the existing item remains the same.
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+
+        // Ensure the new item has the correct list item type and indentation.
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnDesktop("splits list item into two on ENTER in middle of existing item", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('1. List Item')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at "List |Item"
+        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+
+        // Press enter to split the existing item into two.
+        await tester.pressEnter();
+
+        // Ensure that a new item was created with part of the previous item.
+        expect(document.nodes.length, 2);
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "List ");
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "Item");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAndroid(
+          "splits list item into two on ENTER in middle of existing item with mobile keyboard (on Android)",
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('1. List Item')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at "List |Item"
+        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+
+        // On Android, pressing ENTER generates a "\n" insertion.
+        await tester.typeImeText("\n");
+
+        // Ensure that a new item was created with part of the previous item.
+        expect(document.nodes.length, 2);
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "List ");
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "Item");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnIos("splits list item into two on ENTER in middle of existing item with mobile keyboard (on iOS)",
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('1. List Item')
+            .pump();
+
+        final document = context.editContext.document;
+
+        // Place the caret at "List |Item"
+        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+
+        // On iOS, pressing ENTER generates a newline action.
+        await tester.testTextInput.receiveAction(TextInputAction.newline);
+
+        // Ensure that a new item was created with part of the previous item.
+        expect(document.nodes.length, 2);
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).text.text, "List ");
+        expect(document.nodes.last, isA<ListItemNode>());
+        expect((document.nodes.last as ListItemNode).text.text, "Item");
+        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: document.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
       });
     });
   });

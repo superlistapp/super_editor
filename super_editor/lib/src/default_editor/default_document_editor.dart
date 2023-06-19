@@ -132,6 +132,7 @@ final defaultRequestHandlers = [
       ? SplitExistingTaskCommand(
           nodeId: request.nodeId,
           splitOffset: request.splitOffset,
+          newNodeId: request.newNodeId,
         )
       : null,
   (request) => request is SplitListItemRequest

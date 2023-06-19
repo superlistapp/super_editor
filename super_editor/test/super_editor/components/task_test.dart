@@ -134,7 +134,7 @@ void main() {
       expect((document.nodes.first as TaskNode).text.text, "This will be a task");
     });
 
-    testWidgetsOnAllPlatforms("inserts new task on ENTER at end of existing task", (tester) async {
+    testWidgetsOnDesktop("inserts new task on ENTER at end of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
@@ -182,7 +182,104 @@ void main() {
       );
     });
 
-    testWidgetsOnAllPlatforms("splits task into two on ENTER in middle of existing task", (tester) async {
+    testWidgetsOnAndroid("inserts new task on ENTER at end of existing task with mobile keyboard (on Android)",
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      final task = document.getNodeAt(0) as TaskNode;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the end of the task.
+      await tester.placeCaretInParagraph("1", task.text.text.length);
+
+      // On Android, pressing ENTER generates a "\n" insertion.
+      await tester.typeImeText("\n");
+
+      // Ensure that a new, empty task was created.
+      expect(document.nodes.length, 2);
+      expect(document.nodes.first, isA<TaskNode>());
+      expect((document.nodes.first as TaskNode).text.text, "This is a task");
+      expect(document.nodes.last, isA<TaskNode>());
+      expect((document.nodes.last as TaskNode).text.text, "");
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: document.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnIos("inserts new task on ENTER at end of existing task with mobile keyboard (on iOS)", (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      final task = document.getNodeAt(0) as TaskNode;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the end of the task.
+      await tester.placeCaretInParagraph("1", task.text.text.length);
+
+      // On iOS, pressing ENTER generates a newline action.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+
+      // Ensure that a new, empty task was created.
+      expect(document.nodes.length, 2);
+      expect(document.nodes.first, isA<TaskNode>());
+      expect((document.nodes.first as TaskNode).text.text, "This is a task");
+      expect(document.nodes.last, isA<TaskNode>());
+      expect((document.nodes.last as TaskNode).text.text, "");
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: document.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnDesktop("splits task into two on ENTER in middle of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
@@ -210,6 +307,100 @@ void main() {
 
       // Press enter to split the existing task into two.
       await tester.pressEnter();
+
+      // Ensure that a new task was created with part of the previous task.
+      expect(document.nodes.length, 2);
+      expect(document.nodes.first, isA<TaskNode>());
+      expect((document.nodes.first as TaskNode).text.text, "This is ");
+      expect(document.nodes.last, isA<TaskNode>());
+      expect((document.nodes.last as TaskNode).text.text, "a task");
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: document.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAndroid("splits task into two on ENTER in middle of existing task with mobile keyboard (on Android)",
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at "This is |a task"
+      await tester.placeCaretInParagraph("1", 8);
+
+      // On Android, pressing ENTER generates a "\n" insertion.
+      await tester.typeImeText("\n");
+
+      // Ensure that a new task was created with part of the previous task.
+      expect(document.nodes.length, 2);
+      expect(document.nodes.first, isA<TaskNode>());
+      expect((document.nodes.first as TaskNode).text.text, "This is ");
+      expect(document.nodes.last, isA<TaskNode>());
+      expect((document.nodes.last as TaskNode).text.text, "a task");
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: document.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnIos("splits task into two on ENTER in middle of existing task with mobile keyboard (on iOS)",
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at "This is |a task"
+      await tester.placeCaretInParagraph("1", 8);
+
+      // On iOS, pressing ENTER generates a newline action.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
 
       // Ensure that a new task was created with part of the previous task.
       expect(document.nodes.length, 2);
