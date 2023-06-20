@@ -361,11 +361,6 @@ class TagUserReaction implements EditReaction {
 
 /// An [EditReaction] that creates, updates, and removes hash tags.
 class HashTagReaction implements EditReaction {
-  // FIXME: the changeList will be wrong if there's more than one reaction.
-  //        The 2nd reaction to run won't be given the changes caused by the
-  //        first reaction. This would likely lead to corrupt attempts to access
-  //        and alter the document.
-
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     editorHashTagsLog.info("Reacting to possible hash tagging");
@@ -374,9 +369,15 @@ class HashTagReaction implements EditReaction {
     editorHashTagsLog.info(
         "Caret position: ${editContext.find<MutableDocumentComposer>(Editor.composerKey).selection?.extent.nodePosition}");
 
+    _splitBackToBackTags(editContext, requestDispatcher, changeList);
+
     _removeInvalidTags(editContext, requestDispatcher, changeList);
 
     _findAndCreateNewTags(editContext, requestDispatcher, changeList);
+  }
+
+  void _splitBackToBackTags(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    // TODO: split attributions around #john#sally
   }
 
   /// Find any text near the caret that fits the pattern of a user tag and convert it into a
@@ -427,6 +428,10 @@ class HashTagReaction implements EditReaction {
     editorHashTagsLog.fine(
         "Found a hash tag around caret: '${tokenAroundCaret.token.value}' - surrounding it with an attribution: ${tokenAroundCaret.token.startOffset} -> ${tokenAroundCaret.token.endOffset}");
 
+    editorHashTagsLog.fine("Existing hash tags attributions near caret: ${selectedNode.text.getAllAttributionsAt(0)}");
+
+    editorHashTagsLog.fine("All attribution markers in test: ${selectedNode.text.spans.markers}");
+
     requestDispatcher.execute([
       // Remove the old hash tag attribution(s).
       RemoveTextAttributionsRequest(
@@ -457,7 +462,7 @@ class HashTagReaction implements EditReaction {
           ),
         ),
         attributions: {
-          HashTagAttribution(tokenAroundCaret.token.value.substring(1)), // Remove the leading "#".
+          const HashTagAttribution(),
         },
       ),
     ]);
@@ -522,7 +527,7 @@ class HashTagReaction implements EditReaction {
                   nodePosition: TextNodePosition(offset: tag.end + 1),
                 ),
               ),
-              attributions: {HashTagAttribution(tagText)},
+              attributions: {const HashTagAttribution()},
             ),
           );
         }
@@ -982,29 +987,14 @@ class UserTagAttribution implements Attribution {
 }
 
 /// An attribution for a hash tag..
-class HashTagAttribution implements Attribution {
-  const HashTagAttribution(this.hashTag);
+class HashTagAttribution extends NamedAttribution {
+  const HashTagAttribution() : super("hashtag");
 
   @override
-  String get id => hashTag;
-
-  final String hashTag;
-
-  @override
-  bool canMergeWith(Attribution other) {
-    return other is HashTagAttribution && other.hashTag == hashTag;
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is HashTagAttribution && runtimeType == other.runtimeType && hashTag == other.hashTag;
-
-  @override
-  int get hashCode => hashTag.hashCode;
+  bool canMergeWith(Attribution other) => other is HashTagAttribution;
 
   @override
   String toString() {
-    return '[HashTagAttribution]: $hashTag';
+    return '[HashTagAttribution]';
   }
 }

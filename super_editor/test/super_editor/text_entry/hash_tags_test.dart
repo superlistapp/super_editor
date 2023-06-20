@@ -11,7 +11,7 @@ import '../test_documents.dart';
 void main() {
   group("SuperEditor hash tags >", () {
     group("composing >", () {
-      // initLoggers(Level.ALL, {editorHashTagsLog});
+      // initLoggers(Level.FINE, {attributionsLog, editorDocLog, editorHashTagsLog});
 
       testWidgetsOnAllPlatforms("can start at the beginning of a paragraph", (tester) async {
         await _pumpTestEditor(
@@ -27,7 +27,7 @@ void main() {
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "#john");
         expect(
-          text.getAttributedRange({const HashTagAttribution("john")}, 0),
+          text.getAttributedRange({const HashTagAttribution()}, 0),
           const SpanRange(start: 0, end: 4),
         );
       });
@@ -55,7 +55,7 @@ void main() {
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before #john after");
         expect(
-          text.getAttributedRange({const HashTagAttribution("john")}, 7),
+          text.getAttributedRange({const HashTagAttribution()}, 7),
           const SpanRange(start: 7, end: 11),
         );
       });
@@ -90,7 +90,7 @@ void main() {
           ),
           {
             const AttributionSpan(
-              attribution: HashTagAttribution("john"),
+              attribution: HashTagAttribution(),
               start: 7,
               end: 11,
             ),
@@ -140,7 +140,7 @@ void main() {
         // Ensure we're still composing
         AttributedText text = SuperEditorInspector.findTextInParagraph("1");
         expect(
-          text.getAttributedRange({const HashTagAttribution("john")}, 7),
+          text.getAttributedRange({const HashTagAttribution()}, 7),
           const SpanRange(start: 7, end: 11),
         );
 
@@ -153,7 +153,7 @@ void main() {
         // Ensure we're still composing
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(
-          text.getAttributedRange({const HashTagAttribution("john")}, 7),
+          text.getAttributedRange({const HashTagAttribution()}, 7),
           const SpanRange(start: 7, end: 11),
         );
 
@@ -164,7 +164,7 @@ void main() {
         // Ensure we're still composing
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(
-          text.getAttributedRange({const HashTagAttribution("john")}, 7),
+          text.getAttributedRange({const HashTagAttribution()}, 7),
           const SpanRange(start: 7, end: 11),
         );
       });
@@ -222,8 +222,54 @@ void main() {
         // Ensure we're still composing
         AttributedText text = SuperEditorInspector.findTextInParagraph("1");
         expect(
-          text.getAttributedRange({const HashTagAttribution("john")}, 7),
+          text.getAttributedRange({const HashTagAttribution()}, 7),
           const SpanRange(start: 7, end: 11),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("can create hash tags back to back (no space)", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a user token.
+        await tester.typeImeText("#john#sally");
+
+        // Ensure that the token has a composing attribution.
+        final text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "#john#sally");
+        expect(
+          text.getAttributedRange({const HashTagAttribution()}, 0),
+          const SpanRange(start: 0, end: 4),
+        );
+        expect(
+          text.getAttributedRange({const HashTagAttribution()}, 5),
+          const SpanRange(start: 5, end: 10),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("can create hash tags back to back (with a space)", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a user token.
+        await tester.typeImeText("#john #sally");
+
+        // Ensure that the token has a composing attribution.
+        final text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "#john #sally");
+        expect(
+          text.getAttributedRange({const HashTagAttribution()}, 0),
+          const SpanRange(start: 0, end: 4),
+        );
+        expect(
+          text.getAttributedRange({const HashTagAttribution()}, 6),
+          const SpanRange(start: 6, end: 11),
         );
       });
     });
@@ -360,6 +406,39 @@ void main() {
               nodePosition: TextNodePosition(offset: 11),
             ),
           ),
+        );
+      });
+    });
+
+    group("editing >", () {
+      testWidgetsOnAllPlatforms("user can delete pieces of tags", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a user token.
+        await tester.typeImeText("#abcdefghij ");
+
+        // Delete part of the end.
+        await tester.placeCaretInParagraph("1", 11);
+        await tester.pressBackspace();
+
+        // Delete part of the middle.
+        await tester.placeCaretInParagraph("1", 6);
+        await tester.pressBackspace();
+
+        // Delete part of the beginning.
+        await tester.placeCaretInParagraph("1", 2);
+        await tester.pressBackspace();
+
+        // Ensure that the token is still marked as a hash tag.
+        final text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "#bcdfghi ");
+        expect(
+          text.getAttributedRange({const HashTagAttribution()}, 0),
+          const SpanRange(start: 0, end: 7),
         );
       });
     });
