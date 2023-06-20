@@ -168,10 +168,12 @@ class NodeMovedEvent implements NodeDocumentChange {
 
 /// A [DocumentNode] was removed from the [Document].
 class NodeRemovedEvent implements NodeDocumentChange {
-  const NodeRemovedEvent(this.nodeId);
+  const NodeRemovedEvent(this.nodeId, this.removedNode);
 
   @override
   final String nodeId;
+
+  final DocumentNode removedNode;
 
   @override
   bool operator ==(Object other) =>
