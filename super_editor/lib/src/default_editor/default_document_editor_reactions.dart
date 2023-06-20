@@ -548,6 +548,7 @@ class LinkifyReaction implements EditReaction {
           word,
           options: const LinkifyOptions(
             humanize: false,
+            looseUrl: true,
           ),
         );
         final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
