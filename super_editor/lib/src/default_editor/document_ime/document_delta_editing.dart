@@ -268,26 +268,34 @@ class TextDeltasDocumentEditor {
   ) {
     editorOpsLog.fine('Attempting to insert "$text" at position: $insertionPosition');
 
-    final extentNodePosition = insertionPosition.nodePosition;
+    DocumentPosition effectiveInsertionPosition = insertionPosition;
+    NodePosition extentNodePosition = insertionPosition.nodePosition;
+    String extentNodeId = insertionPosition.nodeId;
+
     if (extentNodePosition is UpstreamDownstreamNodePosition) {
       editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
-      commonOps.insertBlockLevelNewline();
+      extentNodeId = Editor.createNodeId();
+      commonOps.insertBlockLevelNewline(nodeId: extentNodeId);
+
+      final node = document.getNodeById(extentNodeId)!;
+      extentNodePosition = node.endPosition;
+      effectiveInsertionPosition = DocumentPosition(nodeId: extentNodeId, nodePosition: extentNodePosition);
     }
 
-    final extentNode = document.getNodeById(insertionPosition.nodeId)!;
+    final extentNode = document.getNodeById(extentNodeId)!;
     if (extentNode is! TextNode || extentNodePosition is! TextNodePosition) {
       editorOpsLog.fine(
           "Couldn't insert text because Super Editor doesn't know how to handle a node of type: $extentNode, with position: $extentNodePosition");
       return false;
     }
 
-    final textNode = document.getNodeById(insertionPosition.nodeId) as TextNode;
+    final textNode = document.getNodeById(extentNodeId) as TextNode;
 
     editorOpsLog.fine("Executing text insertion command.");
     editorOpsLog.finer("Text before insertion: '${textNode.text.text}'");
     editor.execute([
       InsertTextRequest(
-        documentPosition: insertionPosition,
+        documentPosition: effectiveInsertionPosition,
         textToInsert: text,
         attributions: composerPreferences.currentAttributions,
       ),
