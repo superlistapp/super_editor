@@ -134,7 +134,7 @@ void main() {
       expect((document.nodes.first as TaskNode).text.text, "This will be a task");
     });
 
-    testWidgetsOnDesktop("inserts new task on ENTER at end of existing task", (tester) async {
+    testWidgetsOnAllPlatforms("inserts new task on ENTER at end of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
@@ -182,8 +182,7 @@ void main() {
       );
     });
 
-    testWidgetsOnAndroid("inserts new task on ENTER at end of existing task with mobile keyboard (on Android)",
-        (tester) async {
+    testWidgetsOnAndroid("inserts new task upon new line insertion at end of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
@@ -231,7 +230,7 @@ void main() {
       );
     });
 
-    testWidgetsOnIos("inserts new task on ENTER at end of existing task with mobile keyboard (on iOS)", (tester) async {
+    testWidgetsOnMobile("inserts new task upon new line input action at end of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
@@ -279,7 +278,7 @@ void main() {
       );
     });
 
-    testWidgetsOnDesktop("splits task into two on ENTER in middle of existing task", (tester) async {
+    testWidgetsOnAllPlatforms("splits task into two on ENTER in middle of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
@@ -325,8 +324,7 @@ void main() {
       );
     });
 
-    testWidgetsOnAndroid("splits task into two on ENTER in middle of existing task with mobile keyboard (on Android)",
-        (tester) async {
+    testWidgetsOnAndroid("splits task into two upon new line insertion in middle of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
@@ -372,8 +370,7 @@ void main() {
       );
     });
 
-    testWidgetsOnIos("splits task into two on ENTER in middle of existing task with mobile keyboard (on iOS)",
-        (tester) async {
+    testWidgetsOnMobile("splits task into two upon new line input action in middle of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),

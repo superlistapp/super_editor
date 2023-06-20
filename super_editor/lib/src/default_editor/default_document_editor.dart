@@ -130,7 +130,7 @@ final defaultRequestHandlers = [
       : null,
   (request) => request is SplitExistingTaskRequest
       ? SplitExistingTaskCommand(
-          nodeId: request.nodeId,
+          nodeId: request.existingNodeId,
           splitOffset: request.splitOffset,
           newNodeId: request.newNodeId,
         )

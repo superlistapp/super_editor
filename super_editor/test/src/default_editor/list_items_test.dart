@@ -162,7 +162,7 @@ void main() {
         expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
       });
 
-      testWidgetsOnDesktop("inserts new item on ENTER at end of existing item", (tester) async {
+      testWidgetsOnAllPlatforms("inserts new item on ENTER at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
             .fromMarkdown('* Item 1')
@@ -199,8 +199,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAndroid("inserts new item on ENTER at end of existing item with mobile keyboard (on Android)",
-          (tester) async {
+      testWidgetsOnAndroid("inserts new item upon new line insertion at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
             .fromMarkdown('* Item 1')
@@ -237,8 +236,7 @@ void main() {
         );
       });
 
-      testWidgetsOnIos("inserts new item on ENTER at end of existing item with mobile keyboard (on iOS)",
-          (tester) async {
+      testWidgetsOnMobile("inserts new item upon new line input action at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
             .fromMarkdown('* Item 1')
@@ -275,7 +273,7 @@ void main() {
         );
       });
 
-      testWidgetsOnDesktop("splits list item into two on ENTER in middle of existing item", (tester) async {
+      testWidgetsOnAllPlatforms("splits list item into two on ENTER in middle of existing item", (tester) async {
         final context = await tester //
             .createDocument()
             .fromMarkdown('* List Item')
@@ -308,8 +306,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAndroid(
-          "splits list item into two on ENTER in middle of existing item with mobile keyboard (on Android)",
+      testWidgetsOnAndroid("splits list item into two upon new line insertion in middle of existing item",
           (tester) async {
         final context = await tester //
             .createDocument()
@@ -343,7 +340,7 @@ void main() {
         );
       });
 
-      testWidgetsOnIos("splits list item into two on ENTER in middle of existing item with mobile keyboard (on iOS)",
+      testWidgetsOnMobile("splits list item into two upon new line input action in middle of existing item",
           (tester) async {
         final context = await tester //
             .createDocument()
@@ -438,7 +435,7 @@ void main() {
         expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
       });
 
-      testWidgetsOnDesktop("inserts new item on ENTER at end of existing item", (tester) async {
+      testWidgetsOnAllPlatforms("inserts new item on ENTER at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
             .fromMarkdown('1. Item 1')
@@ -475,8 +472,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAndroid("inserts new item on ENTER at end of existing item with mobile keyboard (on Android)",
-          (tester) async {
+      testWidgetsOnAndroid("inserts new item upon new line insertion at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
             .fromMarkdown('1. Item 1')
@@ -513,8 +509,7 @@ void main() {
         );
       });
 
-      testWidgetsOnIos("inserts new item on ENTER at end of existing item with mobile keyboard (on iOS)",
-          (tester) async {
+      testWidgetsOnMobile("inserts new item upon new line input action at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
             .fromMarkdown('1. Item 1')
@@ -551,7 +546,7 @@ void main() {
         );
       });
 
-      testWidgetsOnDesktop("splits list item into two on ENTER in middle of existing item", (tester) async {
+      testWidgetsOnAllPlatforms("splits list item into two on ENTER in middle of existing item", (tester) async {
         final context = await tester //
             .createDocument()
             .fromMarkdown('1. List Item')
@@ -584,8 +579,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAndroid(
-          "splits list item into two on ENTER in middle of existing item with mobile keyboard (on Android)",
+      testWidgetsOnAndroid("splits list item into two upon new line insertion in middle of existing item",
           (tester) async {
         final context = await tester //
             .createDocument()
@@ -619,7 +613,7 @@ void main() {
         );
       });
 
-      testWidgetsOnIos("splits list item into two on ENTER in middle of existing item with mobile keyboard (on iOS)",
+      testWidgetsOnMobile("splits list item into two upon new line input action in middle of existing item",
           (tester) async {
         final context = await tester //
             .createDocument()

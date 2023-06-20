@@ -578,7 +578,7 @@ class TextDeltasDocumentEditor {
 
       editor.execute([
         SplitExistingTaskRequest(
-          nodeId: extentNode.id,
+          existingNodeId: extentNode.id,
           splitOffset: splitOffset,
           newNodeId: newNodeId,
         ),

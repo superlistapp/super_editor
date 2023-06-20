@@ -298,7 +298,7 @@ ExecutionInstruction enterToInsertNewTask({
 
   editContext.editor.execute([
     SplitExistingTaskRequest(
-      nodeId: node.id,
+      existingNodeId: node.id,
       splitOffset: splitOffset,
     ),
   ]);
@@ -401,12 +401,12 @@ class ConvertParagraphToTaskCommand implements EditCommand {
 
 class SplitExistingTaskRequest implements EditRequest {
   const SplitExistingTaskRequest({
-    required this.nodeId,
+    required this.existingNodeId,
     required this.splitOffset,
     this.newNodeId,
   });
 
-  final String nodeId;
+  final String existingNodeId;
   final int splitOffset;
   final String? newNodeId;
 }
