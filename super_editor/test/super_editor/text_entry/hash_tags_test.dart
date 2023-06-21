@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -11,7 +10,24 @@ import '../test_documents.dart';
 void main() {
   group("SuperEditor hash tags >", () {
     group("composing >", () {
-      // initLoggers(Level.FINE, {attributionsLog, editorDocLog, editorHashTagsLog});
+      testWidgetsOnAllPlatforms("doesn't attribute a single #", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Insert a single "#".
+        await tester.typeImeText("#");
+
+        // Ensure that no hash tag was created
+        final text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "#");
+        expect(
+          text.hasAttributionAt(0, attribution: const HashTagAttribution()),
+          isFalse,
+        );
+      });
 
       testWidgetsOnAllPlatforms("can start at the beginning of a paragraph", (tester) async {
         await _pumpTestEditor(
@@ -21,14 +37,14 @@ void main() {
         await tester.placeCaretInParagraph("1", 0);
 
         // Compose a user token.
-        await tester.typeImeText("#john");
+        await tester.typeImeText("#flutter");
 
         // Ensure that the token has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
-        expect(text.text, "#john");
+        expect(text.text, "#flutter");
         expect(
           text.getAttributedRange({const HashTagAttribution()}, 0),
-          const SpanRange(start: 0, end: 4),
+          const SpanRange(start: 0, end: 7),
         );
       });
 
@@ -49,14 +65,42 @@ void main() {
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose a user token.
-        await tester.typeImeText("#john");
+        await tester.typeImeText("#flutter");
 
         // Ensure that the token has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
-        expect(text.text, "before #john after");
+        expect(text.text, "before #flutter after");
         expect(
           text.getAttributedRange({const HashTagAttribution()}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(start: 7, end: 14),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("removes tag when deleting back to the #", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a user token.
+        await tester.typeImeText("#flutter");
+
+        // Delete all the way back to the "#".
+        await tester.pressBackspace();
+        await tester.pressBackspace();
+        await tester.pressBackspace();
+        await tester.pressBackspace();
+        await tester.pressBackspace();
+        await tester.pressBackspace();
+        await tester.pressBackspace();
+
+        // Ensure that the token has a composing attribution.
+        final text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "#");
+        expect(
+          text.hasAttributionAt(0, attribution: const HashTagAttribution()),
+          isFalse,
         );
       });
 
@@ -77,12 +121,12 @@ void main() {
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose a hash tag.
-        await tester.typeImeText("#john after");
+        await tester.typeImeText("#flutter after");
 
         // Ensure that there's no more composing attribution because the token
         // should have been committed.
         final text = SuperEditorInspector.findTextInParagraph("1");
-        expect(text.text, "before #john after");
+        expect(text.text, "before #flutter after");
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution is HashTagAttribution,
@@ -92,13 +136,13 @@ void main() {
             const AttributionSpan(
               attribution: HashTagAttribution(),
               start: 7,
-              end: 11,
+              end: 14,
             ),
           },
         );
       });
 
-      testWidgetsOnAllPlatforms("continues when user expands the selection upstream", (tester) async {
+      testWidgetsOnAllPlatforms("does not continue after a period", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -107,10 +151,6 @@ void main() {
                 id: "1",
                 text: AttributedText(text: "before "),
               ),
-              ParagraphNode(
-                id: "2",
-                text: AttributedText(text: ""),
-              ),
             ],
           ),
         );
@@ -118,112 +158,65 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a hash tag.
-        await tester.typeImeText("#john");
+        // Compose a hash tag with a period after it.
+        await tester.typeImeText("#flutter. after");
 
-        // Expand the selection to "before #joh|n|"
-        await tester.pressShiftLeftArrow();
+        // Ensure that the hash tag doesn't include the period.
+        final text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "before #flutter. after");
         expect(
-          SuperEditorInspector.findDocumentSelection(),
-          const DocumentSelection(
-            base: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 12),
-            ),
-            extent: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 11),
-            ),
+          text.getAttributionSpansInRange(
+            attributionFilter: (attribution) => attribution is HashTagAttribution,
+            range: const SpanRange(start: 0, end: 19),
           ),
-        );
-
-        // Ensure we're still composing
-        AttributedText text = SuperEditorInspector.findTextInParagraph("1");
-        expect(
-          text.getAttributedRange({const HashTagAttribution()}, 7),
-          const SpanRange(start: 7, end: 11),
-        );
-
-        // Expand the selection to "before |#john|"
-        await tester.pressShiftLeftArrow();
-        await tester.pressShiftLeftArrow();
-        await tester.pressShiftLeftArrow();
-        await tester.pressShiftLeftArrow();
-
-        // Ensure we're still composing
-        text = SuperEditorInspector.findTextInParagraph("1");
-        expect(
-          text.getAttributedRange({const HashTagAttribution()}, 7),
-          const SpanRange(start: 7, end: 11),
-        );
-
-        // Expand the selection to "befor|e #john|"
-        await tester.pressShiftLeftArrow();
-        await tester.pressShiftLeftArrow();
-
-        // Ensure we're still composing
-        text = SuperEditorInspector.findTextInParagraph("1");
-        expect(
-          text.getAttributedRange({const HashTagAttribution()}, 7),
-          const SpanRange(start: 7, end: 11),
+          {
+            const AttributionSpan(
+              attribution: HashTagAttribution(),
+              start: 7,
+              end: 14,
+            ),
+          },
         );
       });
 
-      testWidgetsOnAllPlatforms("continues when user expands the selection downstream", (tester) async {
+      testWidgetsOnAllPlatforms("shrinks to wherever a period is added", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
             nodes: [
               ParagraphNode(
                 id: "1",
-                text: AttributedText(text: "before  after"),
-              ),
-              ParagraphNode(
-                id: "2",
-                text: AttributedText(text: ""),
+                text: AttributedText(text: "before "),
               ),
             ],
           ),
         );
 
-        // Place the caret at "before | after"
+        // Place the caret at "before |".
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose a hash tag.
-        await tester.typeImeText("#john");
+        await tester.typeImeText("#flutterdart");
 
-        // Move the caret to "before #|john".
-        await tester.pressLeftArrow();
-        await tester.pressLeftArrow();
-        await tester.pressLeftArrow();
-        await tester.pressLeftArrow();
+        // Insert a period between "flutter" and "dart"
+        await tester.placeCaretInParagraph("1", 15);
+        await tester.typeImeText(".");
 
-        // Expand the selection to "before #|john a|fter"
-        await tester.pressShiftRightArrow();
-        await tester.pressShiftRightArrow();
-        await tester.pressShiftRightArrow();
-        await tester.pressShiftRightArrow();
-        await tester.pressShiftRightArrow();
-        await tester.pressShiftRightArrow();
+        // Ensure that the hash tag shrunk to where the period was inserted.
+        final text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "before #flutter.dart");
         expect(
-          SuperEditorInspector.findDocumentSelection(),
-          const DocumentSelection(
-            base: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 8),
-            ),
-            extent: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 14),
-            ),
+          text.getAttributionSpansInRange(
+            attributionFilter: (attribution) => attribution is HashTagAttribution,
+            range: const SpanRange(start: 0, end: 19),
           ),
-        );
-
-        // Ensure we're still composing
-        AttributedText text = SuperEditorInspector.findTextInParagraph("1");
-        expect(
-          text.getAttributedRange({const HashTagAttribution()}, 7),
-          const SpanRange(start: 7, end: 11),
+          {
+            const AttributionSpan(
+              attribution: HashTagAttribution(),
+              start: 7,
+              end: 14,
+            ),
+          },
         );
       });
 
@@ -234,19 +227,33 @@ void main() {
         );
         await tester.placeCaretInParagraph("1", 0);
 
-        // Compose a user token.
-        await tester.typeImeText("#john#sally");
+        // Compose a hash tag.
+        await tester.typeImeText("hello #flutter#d");
 
-        // Ensure that the token has a composing attribution.
-        final text = SuperEditorInspector.findTextInParagraph("1");
-        expect(text.text, "#john#sally");
+        var text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "hello #flutter#d");
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 0),
-          const SpanRange(start: 0, end: 4),
+          text.getAttributedRange({const HashTagAttribution()}, 6),
+          const SpanRange(start: 6, end: 13),
         );
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 5),
-          const SpanRange(start: 5, end: 10),
+          text.getAttributedRange({const HashTagAttribution()}, 14),
+          const SpanRange(start: 14, end: 15),
+        );
+
+        // Finish the second hash tag.
+        await tester.typeImeText("art");
+
+        // Ensure that the token has a composing attribution.
+        text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "hello #flutter#dart");
+        expect(
+          text.getAttributedRange({const HashTagAttribution()}, 6),
+          const SpanRange(start: 6, end: 13),
+        );
+        expect(
+          text.getAttributedRange({const HashTagAttribution()}, 14),
+          const SpanRange(start: 14, end: 18),
         );
       });
 
@@ -258,18 +265,18 @@ void main() {
         await tester.placeCaretInParagraph("1", 0);
 
         // Compose a user token.
-        await tester.typeImeText("#john #sally");
+        await tester.typeImeText("hello #flutter #dart");
 
         // Ensure that the token has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
-        expect(text.text, "#john #sally");
-        expect(
-          text.getAttributedRange({const HashTagAttribution()}, 0),
-          const SpanRange(start: 0, end: 4),
-        );
+        expect(text.text, "hello #flutter #dart");
         expect(
           text.getAttributedRange({const HashTagAttribution()}, 6),
-          const SpanRange(start: 6, end: 11),
+          const SpanRange(start: 6, end: 13),
+        );
+        expect(
+          text.getAttributedRange({const HashTagAttribution()}, 15),
+          const SpanRange(start: 15, end: 19),
         );
       });
     });
@@ -292,7 +299,7 @@ void main() {
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose and submit a hash tag.
-        await tester.typeImeText("#john after");
+        await tester.typeImeText("#flutter after");
 
         // Tap near the end of the token.
         await tester.placeCaretInParagraph("1", 10);
@@ -340,9 +347,9 @@ void main() {
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose and submit a hash tag.
-        await tester.typeImeText("#john after");
+        await tester.typeImeText("#flutter after");
 
-        // Place the caret at "befor|e #john after"
+        // Place the caret at "befor|e #flutter after"
         await tester.placeCaretInParagraph("1", 5);
 
         // Expand downstream until we push one character into the token.
@@ -383,9 +390,9 @@ void main() {
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose and submit a hash tag.
-        await tester.typeImeText("#john after");
+        await tester.typeImeText("#flutter after");
 
-        // Place the caret at "before #john a|fter"
+        // Place the caret at "before #flutter a|fter"
         await tester.placeCaretInParagraph("1", 14);
 
         // Expand upstream until we push one character into the token.
@@ -451,8 +458,6 @@ Future<TestDocumentContext> _pumpTestEditor(WidgetTester tester, MutableDocument
       .withCustomContent(document)
       .withAddedReactions(
     [
-      const KeepCaretOutOfTagReaction(),
-      TagUserReaction(),
       HashTagReaction(),
     ],
   ).pump();

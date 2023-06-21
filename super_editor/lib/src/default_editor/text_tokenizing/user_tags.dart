@@ -8,6 +8,7 @@ import '../../core/document_composer.dart';
 import '../../core/document_selection.dart';
 import '../../core/editor.dart';
 import '../text.dart';
+import 'tag_tokenizer.dart';
 
 // USER TAGGING FEATURE:
 // A user can be tagged when typing a pattern that begins with "@".
@@ -165,7 +166,7 @@ class TagUserReaction implements EditReaction {
     }
   }
 
-  Set<_Token> _findAllComposingTagsInTextNode(TextNode textNode) {
+  Set<TagToken> _findAllComposingTagsInTextNode(TextNode textNode) {
     return textNode.text
         // Find all the composing tag attributions.
         .getAttributionSpansInRange(
@@ -174,7 +175,7 @@ class TagUserReaction implements EditReaction {
         )
         // Convert the attributions into _Token's
         .map(
-          (attributionSpan) => _Token(
+          (attributionSpan) => TagToken(
             textNode.text.text.substring(attributionSpan.start, attributionSpan.end + 1),
             attributionSpan.start,
             attributionSpan.end + 1,
@@ -183,7 +184,7 @@ class TagUserReaction implements EditReaction {
         .toSet();
   }
 
-  void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, _Token tag) {
+  void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, TagToken tag) {
     // TODO: batch all these requests into one transaction
     final tagSelection = DocumentSelection(
       base: DocumentPosition(
@@ -247,11 +248,11 @@ class TagUserReaction implements EditReaction {
 
     // TODO: we handle adding a tag attribution, but what about identifying the situation
     //       where we need to remove one?
-    final tokenAroundCaret = _findUntaggedTokenAroundCaret(
-      "@",
-      selectedNode.text,
-      caretPosition,
-      (tokenAttributions) =>
+    final tokenAroundCaret = TagTokenizer.findUntaggedTokenAroundCaret(
+      triggerSymbol: "@",
+      text: selectedNode.text,
+      caretPosition: caretPosition,
+      tagFilter: (tokenAttributions) =>
           !tokenAttributions.contains(userTagComposingAttribution) &&
           !tokenAttributions.any((attribution) => attribution is UserTagAttribution),
     );
@@ -362,294 +363,6 @@ class TagUserReaction implements EditReaction {
   }
 }
 
-/// An [EditReaction] that creates, updates, and removes hash tags.
-class HashTagReaction implements EditReaction {
-  @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    print("Running HashTagReaction");
-    editorHashTagsLog.info("Reacting to possible hash tagging");
-    editorHashTagsLog.info("Incoming change list:");
-    editorHashTagsLog.info(changeList.map((event) => event.runtimeType).toList());
-    editorHashTagsLog.info(
-        "Caret position: ${editContext.find<MutableDocumentComposer>(Editor.composerKey).selection?.extent.nodePosition}");
-
-    _findAndCreateNewTags(editContext, requestDispatcher, changeList);
-
-    _splitBackToBackTags(editContext, requestDispatcher, changeList);
-
-    _removeInvalidTags(editContext, requestDispatcher, changeList);
-  }
-
-  void _splitBackToBackTags(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    // TODO: split attributions around #john#sally
-
-    final textEdits = changeList
-        .whereType<DocumentEdit>()
-        .where((docEdit) => docEdit.change is NodeChangeEvent)
-        .map((docEdit) => docEdit.change as NodeChangeEvent)
-        .toList(growable: false);
-    if (textEdits.isEmpty) {
-      return;
-    }
-
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    for (final textEdit in textEdits) {
-      final node = document.getNodeById(textEdit.nodeId) as TextNode;
-      _splitBackToBackTagsInTextNode(requestDispatcher, node);
-    }
-  }
-
-  void _splitBackToBackTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
-    final hashTags = node.text.getAttributionSpansInRange(
-      attributionFilter: (attribution) => attribution is HashTagAttribution,
-      range: SpanRange(start: 0, end: node.text.text.length),
-    );
-    if (hashTags.isEmpty) {
-      return;
-    }
-
-    print("Found ${hashTags.length} hash tag attributions");
-    for (final hashTag in hashTags) {
-      print(" - ${hashTag.start} -> ${hashTag.end}");
-    }
-
-    final spanRemovals = <SpanRange>{};
-    final spanCreations = <SpanRange>{};
-
-    for (final hashTag in hashTags) {
-      final tagContent = node.text.text.substring(hashTag.start, hashTag.end + 1);
-      print("Tag content: '$tagContent'");
-      if (tagContent.lastIndexOf("#") == 0) {
-        // There's only one # in this tag, and it's at the beginning. No need
-        // to split the tag.
-        continue;
-      }
-
-      // This tag has multiple #'s in it. We need to split this tag into multiple
-      // pieces.
-      print(" - there are multiple hashes in this tag. Splitting.");
-
-      // Remove the existing attribution, which covers multiple hash tags.
-      spanRemovals.add(SpanRange(start: hashTag.start, end: hashTag.end));
-      print(
-          " - removing span: ${hashTag.start} -> ${hashTag.end}, '${node.text.text.substring(hashTag.start, hashTag.end + 1)}'");
-
-      // Add a new attribution for each individual hash tag.
-      int hashIndex = tagContent.indexOf("#");
-      while (hashIndex >= 0) {
-        final nextHashIndex = tagContent.indexOf("#", hashIndex + 1);
-        final spanEnd = nextHashIndex > 0 ? nextHashIndex - 1 : tagContent.length - 1;
-        if (spanEnd - hashIndex > 1) {
-          // There's a hash, followed by at least one non-hash character. Therefore, this
-          // is a legitimate hash tag. Give it an attribution.
-          print(
-              " - Adding a hash tag span: $hashIndex -> $spanEnd, '${node.text.text.substring(hashIndex, spanEnd + 1)}'");
-          spanCreations.add(SpanRange(start: hashIndex, end: spanEnd));
-        }
-
-        hashIndex = nextHashIndex;
-      }
-    }
-
-    // Execute the attribution removals and additions.
-    requestDispatcher.execute([
-      for (final removal in spanRemovals)
-        RemoveTextAttributionsRequest(
-          documentSelection: DocumentSelection(
-            base: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: TextNodePosition(offset: removal.start),
-            ),
-            extent: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: TextNodePosition(offset: removal.end + 1),
-            ),
-          ),
-          attributions: {const HashTagAttribution()},
-        ),
-      for (final creation in spanCreations)
-        AddTextAttributionsRequest(
-          documentSelection: DocumentSelection(
-            base: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: TextNodePosition(offset: creation.start),
-            ),
-            extent: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: TextNodePosition(offset: creation.end + 1),
-            ),
-          ),
-          attributions: {const HashTagAttribution()},
-        ),
-    ]);
-  }
-
-  /// Find any text near the caret that fits the pattern of a user tag and convert it into a
-  /// composing tag.
-  void _findAndCreateNewTags(
-    EditContext editContext,
-    RequestDispatcher requestDispatcher,
-    List<EditEvent> changeList,
-  ) {
-    editorHashTagsLog.fine("Looking for a tag around the caret.");
-    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
-    if (composer.selection == null || !composer.selection!.isCollapsed) {
-      // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
-      return;
-    }
-    final selectionPosition = composer.selection!.extent;
-    final caretPosition = selectionPosition.nodePosition;
-    if (caretPosition is! TextNodePosition) {
-      // Tagging only happens in the middle of text. The selected content isn't text. Return.
-      return;
-    }
-
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final selectedNode = document.getNodeById(selectionPosition.nodeId);
-    if (selectedNode is! TextNode) {
-      // Tagging only happens in the middle of text. The selected content isn't text. Return.
-      return;
-    }
-
-    // TODO: we handle adding a tag attribution, but what about identifying the situation
-    //       where we need to remove one?
-    final tokenAroundCaret = _findUntaggedTokenAroundCaret(
-      "#",
-      selectedNode.text,
-      caretPosition,
-      (tokenAttributions) => !tokenAttributions.any((attribution) => attribution is HashTagAttribution),
-    );
-    if (tokenAroundCaret == null) {
-      // There's no tag around the caret.
-      editorHashTagsLog.fine("There's no tag around the caret, fizzling");
-      return;
-    }
-    if (!tokenAroundCaret.token.value.startsWith("#")) {
-      // Tags must start with an "#" but the preceding word doesn't. Return.
-      editorHashTagsLog.fine("Token doesn't start with #, fizzling");
-      return;
-    }
-    if (tokenAroundCaret.token.value.length <= 1) {
-      editorHashTagsLog.fine("Token has no content after #, fizzling");
-      return;
-    }
-
-    editorHashTagsLog.fine(
-        "Found a hash tag around caret: '${tokenAroundCaret.token.value}' - surrounding it with an attribution: ${tokenAroundCaret.token.startOffset} -> ${tokenAroundCaret.token.endOffset}");
-
-    editorHashTagsLog.fine("Existing hash tags attributions near caret: ${selectedNode.text.getAllAttributionsAt(0)}");
-
-    editorHashTagsLog.fine("All attribution markers in test: ${selectedNode.text.spans.markers}");
-
-    requestDispatcher.execute([
-      // Remove the old hash tag attribution(s).
-      RemoveTextAttributionsRequest(
-        documentSelection: DocumentSelection(
-          base: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.startOffset),
-          ),
-          extent: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.endOffset),
-          ),
-        ),
-        attributions: {
-          ...selectedNode.text.getAllAttributionsAt(tokenAroundCaret.token.startOffset).whereType<HashTagAttribution>(),
-        },
-      ),
-      // Add the new/updated hash tag attribution.
-      AddTextAttributionsRequest(
-        documentSelection: DocumentSelection(
-          base: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.startOffset),
-          ),
-          extent: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.endOffset),
-          ),
-        ),
-        attributions: {
-          const HashTagAttribution(),
-        },
-      ),
-    ]);
-  }
-
-  /// Find any text that was previously attributed as a composing tag, which no longer meets
-  /// the pattern for a user tag, and remove the tag attribution.
-  void _removeInvalidTags(
-    EditContext editContext,
-    RequestDispatcher requestDispatcher,
-    List<EditEvent> changeList,
-  ) {
-    editorHashTagsLog.fine("Removing invalid tags.");
-    final nodesToInspect = <String>{};
-    for (final edit in changeList) {
-      // We only care about deleted text, in case the deletion made an existing tag invalid.
-      if (edit is! DocumentEdit) {
-        continue;
-      }
-      final change = edit.change;
-      if (change is! TextDeletedEvent) {
-        continue;
-      }
-
-      // We only care about deleted text when the deleted text contains at least one tag.
-      final tagsInDeletedText = change.deletedText.getAttributionSpansInRange(
-        attributionFilter: (attribution) => attribution is HashTagAttribution,
-        range: SpanRange(start: 0, end: change.deletedText.text.length),
-      );
-      if (tagsInDeletedText.isEmpty) {
-        continue;
-      }
-
-      nodesToInspect.add(change.nodeId);
-    }
-    editorHashTagsLog.fine("Found ${nodesToInspect.length} impacted nodes with tags that might be invalid");
-
-    // Inspect every TextNode where a text deletion impacted a tag. If a tag no longer contains
-    // a "#", remove the attribution.
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final removeTagRequests = <EditRequest>{};
-    for (final nodeId in nodesToInspect) {
-      final textNode = document.getNodeById(nodeId) as TextNode;
-      final allTags = textNode.text.getAttributionSpansInRange(
-        attributionFilter: (attribution) => attribution is HashTagAttribution,
-        range: SpanRange(start: 0, end: textNode.text.text.length - 1),
-      );
-
-      for (final tag in allTags) {
-        final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
-        if (!tagText.startsWith("#")) {
-          editorHashTagsLog.info("Removing tag with value: '$tagText'");
-          removeTagRequests.add(
-            RemoveTextAttributionsRequest(
-              documentSelection: DocumentSelection(
-                base: DocumentPosition(
-                  nodeId: textNode.id,
-                  nodePosition: TextNodePosition(offset: tag.start),
-                ),
-                extent: DocumentPosition(
-                  nodeId: textNode.id,
-                  nodePosition: TextNodePosition(offset: tag.end + 1),
-                ),
-              ),
-              attributions: {const HashTagAttribution()},
-            ),
-          );
-        }
-      }
-    }
-
-    // Run all the tag attribution removal requests that we queue'd up.
-    for (final request in removeTagRequests) {
-      requestDispatcher.execute([request]);
-    }
-  }
-}
-
 /// An [EditReaction] that prevents partial selection of a stable user tag.
 class KeepCaretOutOfTagReaction implements EditReaction {
   const KeepCaretOutOfTagReaction();
@@ -718,11 +431,11 @@ class KeepCaretOutOfTagReaction implements EditReaction {
     }
   }
 
-  _TokenAroundCaret? _findTagAroundCaret(
+  TagTokenAroundCaret? _findTagAroundCaret(
       AttributedText paragraphText, TextNodePosition caretPosition, bool Function(Attribution) attributionSelector) {
     // TODO: This reaction only matters when we have committed user tags. Use a standard attribution
     //       query instead of running a text character search to obtain wordAroundCaret.
-    final wordAroundCaret = _findAttributedTokenAroundCaret(
+    final wordAroundCaret = TagTokenizer.findAttributedTokenAroundCaret(
       "@",
       paragraphText,
       caretPosition,
@@ -758,7 +471,7 @@ class KeepCaretOutOfTagReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     SelectionChangeEvent selectionChangeEvent,
     String textNodeId,
-    _TokenAroundCaret tagAroundCaret,
+    TagTokenAroundCaret tagAroundCaret,
   ) {
     DocumentSelection? newSelection;
     editorUserTagsLog.info("oldCaret is null. Pushing caret to end of tag.");
@@ -798,7 +511,7 @@ class KeepCaretOutOfTagReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     SelectionChangeEvent selectionChangeEvent,
     String textNodeId,
-    _TokenAroundCaret tagAroundCaret,
+    TagTokenAroundCaret tagAroundCaret,
   ) {
     editorUserTagsLog.info("Pushing caret to other side of token - tag around caret: $tagAroundCaret");
     final Document document = editContext.find<MutableDocument>(Editor.documentKey);
@@ -957,118 +670,6 @@ abstract class TagDelegate {
   Attribution? commitTag(String symbol, String token);
 }
 
-/// Finds the word that surrounds the [caretPosition] in the [paragraphText], or `null`
-/// if the surrounding word is already tagged, or the caret isn't currently sitting in a word.
-_TokenAroundCaret? _findUntaggedTokenAroundCaret(
-  String tokenSymbol,
-  AttributedText paragraphText,
-  TextNodePosition caretPosition,
-  bool Function(Set<Attribution>) tagFilter,
-) {
-  return _findAttributedTokenAroundCaret(
-    tokenSymbol,
-    paragraphText,
-    caretPosition,
-    tagFilter,
-  );
-}
-
-_TokenAroundCaret? _findAttributedTokenAroundCaret(
-  String tokenSymbol,
-  AttributedText paragraphText,
-  TextNodePosition caretPosition,
-  bool Function(Set<Attribution> tokenAttributions) isTokenCandidate,
-) {
-  final text = paragraphText.text;
-  int tokenStartOffset = caretPosition.offset;
-  int tokenEndOffset = caretPosition.offset;
-  // TODO: use characters package to move forward and backward
-  while (tokenStartOffset > 0 && text[tokenStartOffset - 1] != " ") {
-    tokenStartOffset -= 1;
-  }
-  while (tokenEndOffset < text.length && text[tokenEndOffset] != " " && text[tokenEndOffset] != tokenSymbol) {
-    tokenEndOffset += 1;
-  }
-
-  final tokenRange = SpanRange(start: tokenStartOffset, end: tokenEndOffset - 1);
-  final tokenAttributions = paragraphText.getAllAttributionsThroughout(tokenRange);
-  if (!isTokenCandidate(tokenAttributions)) {
-    return null;
-  }
-
-  final token = text.substring(tokenStartOffset, tokenEndOffset);
-  editorUserTagsLog.fine("Token around caret: '$token'");
-  editorHashTagsLog.fine("Token around caret: '$token'");
-
-  return _TokenAroundCaret(
-    token: _Token(
-      token,
-      tokenStartOffset,
-      tokenEndOffset,
-    ),
-    caretOffset: caretPosition.offset,
-  );
-}
-
-/// A [_Token], along with the current caret offset, which is expected to fall
-/// somewhere within the bounds of the [_Token].
-///
-/// This data structure is useful for inspecting active typing into a token.
-class _TokenAroundCaret {
-  const _TokenAroundCaret({
-    required this.token,
-    required this.caretOffset,
-  });
-
-  final _Token token;
-
-  final int caretOffset;
-
-  int get caretOffsetInToken => caretOffset - token.startOffset;
-
-  @override
-  String toString() =>
-      "[_TokenAroundCaret] - token: '${token.value}', start: ${token.startOffset}, end: ${token.endOffset}, caret offset in token: $caretOffsetInToken";
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is _TokenAroundCaret &&
-          runtimeType == other.runtimeType &&
-          token.value == other.token.value &&
-          caretOffsetInToken == other.caretOffsetInToken;
-
-  @override
-  int get hashCode => token.value.hashCode ^ caretOffsetInToken.hashCode;
-}
-
-/// A text [value], along with its text offsets within some [TextNode].
-class _Token {
-  const _Token(this.value, this.startOffset, this.endOffset);
-
-  final String value;
-
-  final int startOffset;
-
-  // The final index, plus 1, to match normal String semantics, rather than matching AttributionSpan semantics.
-  final int endOffset;
-
-  @override
-  String toString() => "[_Token] - '$value', $startOffset -> $endOffset";
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is _Token &&
-          runtimeType == other.runtimeType &&
-          value == other.value &&
-          startOffset == other.startOffset &&
-          endOffset == other.endOffset;
-
-  @override
-  int get hashCode => value.hashCode ^ startOffset.hashCode ^ endOffset.hashCode;
-}
-
 /// An attribution for a user tag that's currently being composed.
 const userTagComposingAttribution = NamedAttribution("user-tag-composing");
 
@@ -1098,18 +699,5 @@ class UserTagAttribution implements Attribution {
   @override
   String toString() {
     return '[UserTagAttribution]: $userId';
-  }
-}
-
-/// An attribution for a hash tag..
-class HashTagAttribution extends NamedAttribution {
-  const HashTagAttribution() : super("hashtag");
-
-  @override
-  bool canMergeWith(Attribution other) => other is HashTagAttribution;
-
-  @override
-  String toString() {
-    return '[HashTagAttribution]';
   }
 }

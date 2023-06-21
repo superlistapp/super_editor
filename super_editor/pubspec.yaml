@@ -37,7 +37,7 @@ dependencies:
     sdk: flutter
   flutter_test_robots: ^0.0.17
 
-#dependency_overrides:
+dependency_overrides:
 #  # Override to local mono-repo path so devs can test this repo
 #  # against changes that they're making to other mono-repo packages
 #  attributed_text:

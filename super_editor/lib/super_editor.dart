@@ -42,6 +42,7 @@ export 'src/default_editor/super_editor.dart';
 export 'src/default_editor/tasks.dart';
 export 'src/default_editor/text.dart';
 export 'src/default_editor/text_tools.dart';
+export 'src/default_editor/text_tokenizing/hash_tags.dart';
 export 'src/default_editor/text_tokenizing/user_tags.dart';
 export 'src/default_editor/unknown_component.dart';
 

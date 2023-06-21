@@ -159,7 +159,11 @@ final defaultRequestHandlers = [
       ? ConvertParagraphToListItemCommand(nodeId: request.nodeId, type: request.type)
       : null,
   (request) => request is AddTextAttributionsRequest
-      ? AddTextAttributionsCommand(documentSelection: request.documentSelection, attributions: request.attributions)
+      ? AddTextAttributionsCommand(
+          documentSelection: request.documentSelection,
+          attributions: request.attributions,
+          autoMerge: request.autoMerge,
+        )
       : null,
   (request) => request is ToggleTextAttributionsRequest
       ? ToggleTextAttributionsCommand(documentSelection: request.documentSelection, attributions: request.attributions)

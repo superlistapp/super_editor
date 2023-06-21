@@ -155,10 +155,10 @@ class Editor implements RequestDispatcher {
       if (_activeChangeList!.isNotEmpty) {
         // Run all reactions. These reactions will likely call `execute()` again, with
         // their own requests, to make additional changes.
-        _reactToChanges(_activeChangeList!);
+        _reactToChanges();
 
         // Notify all listeners that care about changes, but won't spawn additional requests.
-        _notifyListeners(_activeChangeList!);
+        _notifyListeners();
 
         // This is the end of a transaction.
         for (final editable in _context._resources.values) {
@@ -208,14 +208,19 @@ class Editor implements RequestDispatcher {
     return changeList;
   }
 
-  void _reactToChanges(List<EditEvent> changeList) {
+  void _reactToChanges() {
     for (final reaction in reactionPipeline) {
-      reaction.react(_context, this, changeList);
+      // Note: we pass the active change list because reactions will cause more
+      // changes to be added to that list.
+      reaction.react(_context, this, _activeChangeList!);
     }
   }
 
-  void _notifyListeners(List<EditEvent> changeList) {
+  void _notifyListeners() {
+    final changeList = List<EditEvent>.from(_activeChangeList!, growable: false);
     for (final listener in _changeListeners) {
+      // Note: we pass a given copy of the change list, because listeners should
+      // never cause additional editor changes.
       listener.onEdit(changeList);
     }
   }

@@ -826,10 +826,12 @@ class AddTextAttributionsRequest implements EditRequest {
   AddTextAttributionsRequest({
     required this.documentSelection,
     required this.attributions,
+    this.autoMerge = true,
   });
 
   final DocumentSelection documentSelection;
   final Set<Attribution> attributions;
+  final bool autoMerge;
 }
 
 // TODO: the add/remove/toggle commands are almost identical except for what they
@@ -839,10 +841,12 @@ class AddTextAttributionsCommand implements EditCommand {
   AddTextAttributionsCommand({
     required this.documentSelection,
     required this.attributions,
+    this.autoMerge = true,
   });
 
   final DocumentSelection documentSelection;
   final Set<Attribution> attributions;
+  final bool autoMerge;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -922,6 +926,7 @@ class AddTextAttributionsCommand implements EditCommand {
               newAttribution: attribution,
               start: range.start,
               end: range.end,
+              autoMerge: autoMerge,
             ),
         );
         executor.logChanges([

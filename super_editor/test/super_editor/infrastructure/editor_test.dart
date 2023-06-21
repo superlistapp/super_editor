@@ -369,6 +369,74 @@ void main() {
         // If execution makes it here then the test is successful.
       });
 
+      test('reactions do not run in response to reactions', () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: "1", text: AttributedText(text: ""))],
+        );
+
+        final composer = MutableDocumentComposer(
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+
+        int reactionRunCount = 0;
+
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: defaultRequestHandlers,
+          reactionPipeline: [
+            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+              reactionRunCount += 1;
+
+              // We expect this reaction to run after we execute a command, but we don't
+              // expect this reaction to react to its own command.
+              expect(reactionRunCount, lessThan(2));
+
+              // Insert "e" after "H".
+              requestDispatcher.execute([
+                InsertTextRequest(
+                  documentPosition: const DocumentPosition(
+                    nodeId: "1",
+                    nodePosition: TextNodePosition(offset: 1),
+                  ),
+                  textToInsert: "e",
+                  attributions: {},
+                ),
+                InsertTextRequest(
+                  documentPosition: const DocumentPosition(
+                    nodeId: "1",
+                    nodePosition: TextNodePosition(offset: 2),
+                  ),
+                  textToInsert: "l",
+                  attributions: {},
+                ),
+              ]);
+            }),
+          ],
+        );
+
+        editor.execute([
+          InsertTextRequest(
+            documentPosition: const DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+            textToInsert: "H",
+            attributions: const {},
+          ),
+        ]);
+
+        // Ensure that our reaction ran once, but only once.
+        expect(reactionRunCount, 1);
+      });
+
       test('inserts character at caret', () {
         final editorPieces = _createStandardEditor(
           initialSelection: const DocumentSelection.collapsed(

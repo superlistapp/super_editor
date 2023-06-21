@@ -11,6 +11,9 @@ import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_android.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
+import 'package:example/demos/features/feature_hash_tags.dart';
+import 'package:example/demos/features/feature_linkify.dart';
+import 'package:example/demos/features/feature_user_tags.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
@@ -263,6 +266,32 @@ final _menu = <_MenuGroup>[
         title: 'Animated task height demo',
         pageBuilder: (context) {
           return AnimatedTaskHeightDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'FEATURES',
+    items: [
+      _MenuItem(
+        icon: Icons.tag,
+        title: 'Hash Tags',
+        pageBuilder: (context) {
+          return const HashTagsFeatureDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.account_circle,
+        title: 'User Tags',
+        pageBuilder: (context) {
+          return const UserTagsFeatureDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.link,
+        title: 'Linkify',
+        pageBuilder: (context) {
+          return const LinkifyFeatureDemo();
         },
       ),
     ],
