@@ -279,16 +279,18 @@ class AttributedSpans {
 
   /// Applies the [newAttribution] from [start] to [end], inclusive.
   ///
-  /// If [newAttribution] spans already exist at [start] or [end], and those
-  /// spans are compatible, the spans are expanded to include the new region
-  /// between [start] and [end].
+  /// When [autoMerge] is `true`, the new attribution is merged with any
+  /// preceding or following attribution whose [Attribution.canMergeWith] returns
+  /// `true`.
   ///
-  /// It [newAttribution] overlaps a conflicting span, a
+  /// It [newAttribution] overlaps a conflicting span, or if [newAttribution]
+  /// overlaps a merge-able span but [autoMerge] is `false`, a
   /// [IncompatibleOverlappingAttributionsException] is thrown.
   void addAttribution({
     required Attribution newAttribution,
     required int start,
     required int end,
+    bool autoMerge = true,
   }) {
     if (start < 0 || start > end) {
       _log.warning("Tried to add an attribution ($newAttribution) at an invalid start/end: $start -> $end");
@@ -303,7 +305,7 @@ class AttributedSpans {
     final matchingAttributions = getMatchingAttributionsWithin(attributions: {newAttribution}, start: start, end: end);
     if (matchingAttributions.isNotEmpty) {
       for (final matchingAttribution in matchingAttributions) {
-        if (!newAttribution.canMergeWith(matchingAttribution)) {
+        if (!newAttribution.canMergeWith(matchingAttribution) || !autoMerge) {
           late int conflictStart;
           for (int i = start; i <= end; ++i) {
             if (hasAttributionAt(i, attribution: matchingAttribution)) {
@@ -319,6 +321,25 @@ class AttributedSpans {
           );
         }
       }
+    }
+
+    if (!autoMerge) {
+      // There are not conflicting attributions in the desired range, and we don't
+      // want to merge this new attribution with any other nearby attribution.
+      // Therefore, we can blindly create the new attribution range without any
+      // further adjustments, and then be done.
+      _insertMarker(SpanMarker(
+        attribution: newAttribution,
+        offset: start,
+        markerType: SpanMarkerType.start,
+      ));
+      _insertMarker(SpanMarker(
+        attribution: newAttribution,
+        offset: end,
+        markerType: SpanMarkerType.end,
+      ));
+
+      return;
     }
 
     // Start the new span, either by expanding an existing span, or by

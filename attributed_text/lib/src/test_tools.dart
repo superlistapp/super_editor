@@ -7,6 +7,7 @@ class ExpectedSpans {
   static const bold = NamedAttribution('bold');
   static const italics = NamedAttribution('italics');
   static const strikethrough = NamedAttribution('strikethrough');
+  static const hashTag = NamedAttribution('hashTag');
 
   ExpectedSpans(
     List<String> spanTemplates,

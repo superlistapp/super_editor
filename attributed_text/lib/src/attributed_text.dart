@@ -151,8 +151,16 @@ class AttributedText {
 
   /// Adds the given [attribution] to all characters within the given
   /// [range], inclusive.
-  void addAttribution(Attribution attribution, SpanRange range) {
-    spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
+  ///
+  /// When [autoMerge] is `true`, the new attribution is merged with any
+  /// preceding or following attribution whose [Attribution.canMergeWith] returns
+  /// `true`.
+  void addAttribution(
+    Attribution attribution,
+    SpanRange range, {
+    bool autoMerge = true,
+  }) {
+    spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end, autoMerge: autoMerge);
     _notifyListeners();
   }
 
@@ -422,7 +430,12 @@ class CallbackAttributionVisitor implements AttributionVisitor {
   }
 
   @override
-  void visitAttributions(AttributedText fullText, int index, Set<Attribution> startingAttributions, Set<Attribution> endingAttributions) {
+  void visitAttributions(
+    AttributedText fullText,
+    int index,
+    Set<Attribution> startingAttributions,
+    Set<Attribution> endingAttributions,
+  ) {
     _onVisitAttributions(fullText, index, startingAttributions, endingAttributions);
   }
 
