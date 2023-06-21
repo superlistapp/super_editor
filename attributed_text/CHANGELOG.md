@@ -1,3 +1,6 @@
+## [X.Y.Z] - ???
+ * `AttributedText` now allows you to `addAttribution()` without auto-merging with preceding and following attributions (#1198)
+
 ## [0.2.2] - May, 2023
 Upgrade Dart constraints to explicitly include Dart 3. Make `markers` public on `AttributedSpans`.
 
