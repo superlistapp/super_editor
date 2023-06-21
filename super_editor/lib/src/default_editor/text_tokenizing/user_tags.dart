@@ -63,6 +63,8 @@ import '../text.dart';
 //
 // Code deletes the attribution
 
+// TODO: Make "@" and "#" symbols configurable
+
 /// An [EditReaction] that creates, updates, and removes composing user tags, and commits those
 /// composing tags to stable user tags.
 class TagUserReaction implements EditReaction {
@@ -246,6 +248,7 @@ class TagUserReaction implements EditReaction {
     // TODO: we handle adding a tag attribution, but what about identifying the situation
     //       where we need to remove one?
     final tokenAroundCaret = _findUntaggedTokenAroundCaret(
+      "@",
       selectedNode.text,
       caretPosition,
       (tokenAttributions) =>
@@ -363,21 +366,122 @@ class TagUserReaction implements EditReaction {
 class HashTagReaction implements EditReaction {
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    print("Running HashTagReaction");
     editorHashTagsLog.info("Reacting to possible hash tagging");
     editorHashTagsLog.info("Incoming change list:");
     editorHashTagsLog.info(changeList.map((event) => event.runtimeType).toList());
     editorHashTagsLog.info(
         "Caret position: ${editContext.find<MutableDocumentComposer>(Editor.composerKey).selection?.extent.nodePosition}");
 
+    _findAndCreateNewTags(editContext, requestDispatcher, changeList);
+
     _splitBackToBackTags(editContext, requestDispatcher, changeList);
 
     _removeInvalidTags(editContext, requestDispatcher, changeList);
-
-    _findAndCreateNewTags(editContext, requestDispatcher, changeList);
   }
 
   void _splitBackToBackTags(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     // TODO: split attributions around #john#sally
+
+    final textEdits = changeList
+        .whereType<DocumentEdit>()
+        .where((docEdit) => docEdit.change is NodeChangeEvent)
+        .map((docEdit) => docEdit.change as NodeChangeEvent)
+        .toList(growable: false);
+    if (textEdits.isEmpty) {
+      return;
+    }
+
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    for (final textEdit in textEdits) {
+      final node = document.getNodeById(textEdit.nodeId) as TextNode;
+      _splitBackToBackTagsInTextNode(requestDispatcher, node);
+    }
+  }
+
+  void _splitBackToBackTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
+    final hashTags = node.text.getAttributionSpansInRange(
+      attributionFilter: (attribution) => attribution is HashTagAttribution,
+      range: SpanRange(start: 0, end: node.text.text.length),
+    );
+    if (hashTags.isEmpty) {
+      return;
+    }
+
+    print("Found ${hashTags.length} hash tag attributions");
+    for (final hashTag in hashTags) {
+      print(" - ${hashTag.start} -> ${hashTag.end}");
+    }
+
+    final spanRemovals = <SpanRange>{};
+    final spanCreations = <SpanRange>{};
+
+    for (final hashTag in hashTags) {
+      final tagContent = node.text.text.substring(hashTag.start, hashTag.end + 1);
+      print("Tag content: '$tagContent'");
+      if (tagContent.lastIndexOf("#") == 0) {
+        // There's only one # in this tag, and it's at the beginning. No need
+        // to split the tag.
+        continue;
+      }
+
+      // This tag has multiple #'s in it. We need to split this tag into multiple
+      // pieces.
+      print(" - there are multiple hashes in this tag. Splitting.");
+
+      // Remove the existing attribution, which covers multiple hash tags.
+      spanRemovals.add(SpanRange(start: hashTag.start, end: hashTag.end));
+      print(
+          " - removing span: ${hashTag.start} -> ${hashTag.end}, '${node.text.text.substring(hashTag.start, hashTag.end + 1)}'");
+
+      // Add a new attribution for each individual hash tag.
+      int hashIndex = tagContent.indexOf("#");
+      while (hashIndex >= 0) {
+        final nextHashIndex = tagContent.indexOf("#", hashIndex + 1);
+        final spanEnd = nextHashIndex > 0 ? nextHashIndex - 1 : tagContent.length - 1;
+        if (spanEnd - hashIndex > 1) {
+          // There's a hash, followed by at least one non-hash character. Therefore, this
+          // is a legitimate hash tag. Give it an attribution.
+          print(
+              " - Adding a hash tag span: $hashIndex -> $spanEnd, '${node.text.text.substring(hashIndex, spanEnd + 1)}'");
+          spanCreations.add(SpanRange(start: hashIndex, end: spanEnd));
+        }
+
+        hashIndex = nextHashIndex;
+      }
+    }
+
+    // Execute the attribution removals and additions.
+    requestDispatcher.execute([
+      for (final removal in spanRemovals)
+        RemoveTextAttributionsRequest(
+          documentSelection: DocumentSelection(
+            base: DocumentPosition(
+              nodeId: node.id,
+              nodePosition: TextNodePosition(offset: removal.start),
+            ),
+            extent: DocumentPosition(
+              nodeId: node.id,
+              nodePosition: TextNodePosition(offset: removal.end + 1),
+            ),
+          ),
+          attributions: {const HashTagAttribution()},
+        ),
+      for (final creation in spanCreations)
+        AddTextAttributionsRequest(
+          documentSelection: DocumentSelection(
+            base: DocumentPosition(
+              nodeId: node.id,
+              nodePosition: TextNodePosition(offset: creation.start),
+            ),
+            extent: DocumentPosition(
+              nodeId: node.id,
+              nodePosition: TextNodePosition(offset: creation.end + 1),
+            ),
+          ),
+          attributions: {const HashTagAttribution()},
+        ),
+    ]);
   }
 
   /// Find any text near the caret that fits the pattern of a user tag and convert it into a
@@ -410,6 +514,7 @@ class HashTagReaction implements EditReaction {
     // TODO: we handle adding a tag attribution, but what about identifying the situation
     //       where we need to remove one?
     final tokenAroundCaret = _findUntaggedTokenAroundCaret(
+      "#",
       selectedNode.text,
       caretPosition,
       (tokenAttributions) => !tokenAttributions.any((attribution) => attribution is HashTagAttribution),
@@ -422,6 +527,10 @@ class HashTagReaction implements EditReaction {
     if (!tokenAroundCaret.token.value.startsWith("#")) {
       // Tags must start with an "#" but the preceding word doesn't. Return.
       editorHashTagsLog.fine("Token doesn't start with #, fizzling");
+      return;
+    }
+    if (tokenAroundCaret.token.value.length <= 1) {
+      editorHashTagsLog.fine("Token has no content after #, fizzling");
       return;
     }
 
@@ -611,7 +720,10 @@ class KeepCaretOutOfTagReaction implements EditReaction {
 
   _TokenAroundCaret? _findTagAroundCaret(
       AttributedText paragraphText, TextNodePosition caretPosition, bool Function(Attribution) attributionSelector) {
+    // TODO: This reaction only matters when we have committed user tags. Use a standard attribution
+    //       query instead of running a text character search to obtain wordAroundCaret.
     final wordAroundCaret = _findAttributedTokenAroundCaret(
+      "@",
       paragraphText,
       caretPosition,
       (tokenAttributions) => tokenAttributions.any(attributionSelector),
@@ -848,11 +960,13 @@ abstract class TagDelegate {
 /// Finds the word that surrounds the [caretPosition] in the [paragraphText], or `null`
 /// if the surrounding word is already tagged, or the caret isn't currently sitting in a word.
 _TokenAroundCaret? _findUntaggedTokenAroundCaret(
+  String tokenSymbol,
   AttributedText paragraphText,
   TextNodePosition caretPosition,
   bool Function(Set<Attribution>) tagFilter,
 ) {
   return _findAttributedTokenAroundCaret(
+    tokenSymbol,
     paragraphText,
     caretPosition,
     tagFilter,
@@ -860,6 +974,7 @@ _TokenAroundCaret? _findUntaggedTokenAroundCaret(
 }
 
 _TokenAroundCaret? _findAttributedTokenAroundCaret(
+  String tokenSymbol,
   AttributedText paragraphText,
   TextNodePosition caretPosition,
   bool Function(Set<Attribution> tokenAttributions) isTokenCandidate,
@@ -871,7 +986,7 @@ _TokenAroundCaret? _findAttributedTokenAroundCaret(
   while (tokenStartOffset > 0 && text[tokenStartOffset - 1] != " ") {
     tokenStartOffset -= 1;
   }
-  while (tokenEndOffset < text.length && text[tokenEndOffset] != " ") {
+  while (tokenEndOffset < text.length && text[tokenEndOffset] != " " && text[tokenEndOffset] != tokenSymbol) {
     tokenEndOffset += 1;
   }
 
