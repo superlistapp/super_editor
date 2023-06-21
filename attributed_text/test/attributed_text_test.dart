@@ -63,7 +63,7 @@ void main() {
         );
       });
 
-      test('combines back-to-back spans after addition', () {
+      test('automatically combines back-to-back spans after addition', () {
         final text = AttributedText(text: 'ABCD');
         text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 0, end: 1));
         text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 2, end: 3));
@@ -77,6 +77,47 @@ void main() {
         expect(
           text.spans.markers.last,
           SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
+        );
+      });
+
+      test('keeps back-to-back spans separate when requested', () {
+        final text = AttributedText(text: '#john#sally');
+        text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 0, end: 4));
+        text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 5, end: 10), autoMerge: false);
+
+        // Ensure that the hash tag spans were kept separate
+        expect(text.spans.markers.length, 2 * 2);
+
+        final markers = text.spans.markers.toList();
+
+        // #john
+        expect(
+          markers[0],
+          SpanMarker(attribution: ExpectedSpans.hashTag, offset: 0, markerType: SpanMarkerType.start),
+        );
+        expect(
+          markers[1],
+          SpanMarker(attribution: ExpectedSpans.hashTag, offset: 4, markerType: SpanMarkerType.end),
+        );
+
+        // #sally
+        expect(
+          markers[2],
+          SpanMarker(attribution: ExpectedSpans.hashTag, offset: 5, markerType: SpanMarkerType.start),
+        );
+        expect(
+          markers[3],
+          SpanMarker(attribution: ExpectedSpans.hashTag, offset: 10, markerType: SpanMarkerType.end),
+        );
+      });
+
+      test('throws exception when compatible attributions overlap but auto-merge is false', () {
+        final text = AttributedText(text: '#john#sally');
+        text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 0, end: 4));
+
+        expect(
+          () => text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 0, end: 10), autoMerge: false),
+          throwsA(isA<IncompatibleOverlappingAttributionsException>()),
         );
       });
     });
@@ -214,7 +255,9 @@ void main() {
         expect(range, SpanRange(start: 4, end: 7));
       });
 
-      test('finds all bold, italic and strikethrough text within a word that also includes a span with only bold and italics', () {
+      test(
+          'finds all bold, italic and strikethrough text within a word that also includes a span with only bold and italics',
+          () {
         final attributedText = AttributedText(
           text: 'Hello world',
           spans: AttributedSpans(
@@ -229,7 +272,8 @@ void main() {
           ),
         );
 
-        final range = attributedText.getAttributedRange({ExpectedSpans.bold, ExpectedSpans.italics, ExpectedSpans.strikethrough}, 2);
+        final range = attributedText
+            .getAttributedRange({ExpectedSpans.bold, ExpectedSpans.italics, ExpectedSpans.strikethrough}, 2);
         expect(range, SpanRange(start: 1, end: 3));
       });
     });
