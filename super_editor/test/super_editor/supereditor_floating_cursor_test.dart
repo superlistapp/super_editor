@@ -128,6 +128,11 @@ void main() {
 
         // Ensure the caret has the default color.
         caret = tester.widget<BlinkingCaret>(_caretFinder());
+        // The default caret color is the theme's primary color. Currently
+        // this test will succeed for both Material2 and Material3.
+        // TODO(hansmuller) when the default for ThemeData.useMaterial3 is
+        // changed to true, change this test to check for the default
+        // M3 theme's primary color's value, Color(0xff6750a4).
         expect(caret.color, Theme.of(tester.firstElement(_caretFinder())).primaryColor);
       });
     });
