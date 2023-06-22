@@ -393,7 +393,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditCommand {
           nodePosition: newNode.beginningPosition,
         ),
       ),
-      SelectionChangeType.place,
+      SelectionChangeType.placeCaret,
       SelectionReason.userInteraction,
       notifyListeners: false,
     ));

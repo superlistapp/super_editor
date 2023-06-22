@@ -57,7 +57,7 @@ class UpdateComposerTextStylesReaction implements EditReaction {
 
     // print("Selection change type: ${lastSelectionChange.changeType}");
     switch (lastSelectionChange.changeType) {
-      case SelectionChangeType.place:
+      case SelectionChangeType.placeCaret:
       case SelectionChangeType.collapseSelection:
       case SelectionChangeType.deleteContent:
         _updateComposerStylesAtCaret(editContext);

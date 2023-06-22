@@ -681,7 +681,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
             nodePosition: const UpstreamDownstreamNodePosition.downstream(),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
     ]);
@@ -880,7 +880,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
           DocumentSelection.collapsed(
             position: docDragPosition,
           ),
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -970,7 +970,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       case HandleType.collapsed:
         basePosition = dragPosition;
         extentPosition = dragPosition;
-        changeType = SelectionChangeType.place;
+        changeType = SelectionChangeType.placeCaret;
         break;
       case HandleType.upstream:
         basePosition = dragPosition;
@@ -1239,7 +1239,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         DocumentSelection.collapsed(
           position: position,
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
     ]);

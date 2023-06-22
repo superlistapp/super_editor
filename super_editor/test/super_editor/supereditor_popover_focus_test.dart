@@ -33,7 +33,7 @@ void main() {
       editContext.editContext.editor.execute([
         const ChangeSelectionRequest(
           documentSelection,
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -75,7 +75,7 @@ void main() {
       editContext.editContext.editor.execute([
         const ChangeSelectionRequest(
           documentSelection,
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
       ]);

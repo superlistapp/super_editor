@@ -434,10 +434,18 @@ class SelectionReason {
 
 enum SelectionChangeType {
   /// Place the caret, or an expanded selection, somewhere in the document, with no relationship to the previous selection.
-  place,
+  placeCaret,
+
+  /// Expand/contract a selection by placing the extent at a new location, such as by pressing and
+  /// dragging with the mouse.
+  placeExtent,
 
   /// Place the caret based on a desire to move the previous caret position upstream or downstream.
   pushCaret,
+
+  /// Expand/contract a selection by pushing the extent upstream or downstream, such as by pressing
+  /// SHIFT + LEFT ARROW.
+  pushExtent,
 
   /// Expand a caret to an expanded selection, or move the base or extent of an already expanded selection.
   expandSelection,

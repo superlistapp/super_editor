@@ -457,6 +457,122 @@ void main() {
         );
       });
 
+      testWidgetsOnAllPlatforms("selects entire token when double tapped", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(text: "before "),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "before |"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Compose and submit a user token.
+        await tester.typeImeText("@john after");
+
+        // Double tap on "john"
+        await tester.doubleTapInParagraph("1", 10);
+
+        // Ensure that the selection surrounds the full token, including the "@"
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection(
+            base: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 7),
+            ),
+            extent: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 12),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("pushes caret downstream around the tag", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(text: "before "),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "before |"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Compose and submit a user token.
+        await tester.typeImeText("@john after");
+
+        // Place the caret at "befor|e @john after"
+        await tester.placeCaretInParagraph("1", 5);
+
+        // Push the caret downstream until we push one character into the token.
+        await tester.pressRightArrow();
+        await tester.pressRightArrow();
+        await tester.pressRightArrow();
+
+        // Ensure that the caret was pushed beyond the end of the token.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 12),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("pushes caret upstream around the tag", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(text: "before "),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "before |"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Compose and submit a user token.
+        await tester.typeImeText("@john after");
+
+        // Place the caret at "before @john a|fter"
+        await tester.placeCaretInParagraph("1", 14);
+
+        // Push the caret upstream until we push one character into the token.
+        await tester.pressLeftArrow();
+        await tester.pressLeftArrow();
+        await tester.pressLeftArrow();
+
+        // Ensure that the caret pushed beyond the beginning of the token.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 7),
+            ),
+          ),
+        );
+      });
+
       testWidgetsOnAllPlatforms("pushes expanding downstream selection around the tag", (tester) async {
         await _pumpTestEditor(
           tester,
@@ -538,6 +654,132 @@ void main() {
             extent: DocumentPosition(
               nodeId: "1",
               nodePosition: TextNodePosition(offset: 7),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("deletes entire tag when deleting a character upstream", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(text: "before "),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "before |"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Compose and submit a user token.
+        await tester.typeImeText("@john after");
+
+        // Place the caret at "before @john| after"
+        await tester.placeCaretInParagraph("1", 12);
+
+        // Press BACKSPACE to delete a character upstream.
+        await tester.pressBackspace();
+
+        // Ensure that the entire user tag was deleted.
+        expect(SuperEditorInspector.findTextInParagraph("1").text, "before  after");
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 7),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("deletes entire tag when deleting a character downstream", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(text: "before "),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "before |"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Compose and submit a user token.
+        await tester.typeImeText("@john after");
+
+        // Place the caret at "before |@john after"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Press DELETE to delete a character downstream.
+        await tester.pressDelete();
+
+        // Ensure that the entire user tag was deleted.
+        expect(SuperEditorInspector.findTextInParagraph("1").text, "before  after");
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 7),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("deletes multiple tags when partially selected", (tester) async {
+        final context = await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(text: "one "),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "one |"
+        await tester.placeCaretInParagraph("1", 4);
+
+        // Compose and submit two user tokens.
+        await tester.typeImeText("@john two @sally three");
+
+        // Expand the selection "one @jo|hn two @sa|lly three"
+        (context.editContext.composer as MutableDocumentComposer).setSelectionWithReason(
+          const DocumentSelection(
+            base: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 7),
+            ),
+            extent: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 17),
+            ),
+          ),
+          SelectionReason.userInteraction,
+        );
+
+        // Delete the selected content, which will leave two partial user tags.
+        await tester.pressBackspace();
+
+        // Ensure that both user tags were completely deleted.
+        expect(SuperEditorInspector.findTextInParagraph("1").text, "one  three");
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 4),
             ),
           ),
         );

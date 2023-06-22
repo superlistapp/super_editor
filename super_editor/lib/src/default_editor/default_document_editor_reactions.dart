@@ -227,7 +227,7 @@ class UnorderedListItemConversionReaction extends ParagraphPrefixConversionReact
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
       ),
     ]);
@@ -269,7 +269,7 @@ class OrderedListItemConversionReaction extends ParagraphPrefixConversionReactio
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
       ),
     ]);
@@ -314,7 +314,7 @@ class BlockquoteConversionReaction extends ParagraphPrefixConversionReaction {
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
       ),
     ]);
@@ -363,7 +363,7 @@ class HorizontalRuleConversionReaction extends ParagraphPrefixConversionReaction
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
       ),
     ]);

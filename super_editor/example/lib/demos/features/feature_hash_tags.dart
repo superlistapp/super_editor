@@ -33,7 +33,39 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
       reactionPipeline: [
         HashTagReaction(),
       ],
+      listeners: [
+        FunctionalEditListener(_onEdit),
+      ],
     );
+  }
+
+  void _onEdit(List<EditEvent> changeList) {
+    if (changeList.whereType<DocumentEdit>().isEmpty) {
+      return;
+    }
+
+    _updateHashTagList();
+  }
+
+  void _updateHashTagList() {
+    setState(() {
+      _tags.clear();
+
+      for (final node in _document.nodes) {
+        if (node is! TextNode) {
+          continue;
+        }
+
+        final tagSpans = node.text.getAttributionSpansInRange(
+          attributionFilter: (a) => a is HashTagAttribution,
+          range: SpanRange(start: 0, end: node.text.text.length - 1),
+        );
+
+        for (final tagSpan in tagSpans) {
+          _tags.add(node.text.text.substring(tagSpan.start, tagSpan.end + 1));
+        }
+      }
+    });
   }
 
   @override
@@ -94,7 +126,7 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
             ? SingleChildScrollView(
                 child: Wrap(
                   spacing: 12,
-                  runSpacing: 8,
+                  runSpacing: 12,
                   alignment: WrapAlignment.center,
                   children: [
                     for (final tag in _tags) //
@@ -123,6 +155,7 @@ final _darkModeStyles = [
       return {
         "textStyle": const TextStyle(
           color: Color(0xFFCCCCCC),
+          fontSize: 32,
         ),
       };
     },

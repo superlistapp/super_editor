@@ -466,7 +466,7 @@ void main() {
                   nodePosition: TextNodePosition(offset: 1),
                 ),
               ),
-              SelectionChangeType.place,
+              SelectionChangeType.placeCaret,
               "test",
             ),
           ]);

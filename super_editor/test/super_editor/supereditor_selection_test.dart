@@ -965,7 +965,7 @@ Second Paragraph
               nodePosition: const TextNodePosition(offset: 477),
             ),
           ),
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
       ]);

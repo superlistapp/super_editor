@@ -11,7 +11,7 @@ class TagTokenizer {
     required bool Function(Set<Attribution>) tagFilter,
     Set<String> excludeCharacters = const {},
   }) {
-    return findAttributedTokenAroundCaret(
+    return findAttributedTokenAroundPosition(
       triggerSymbol,
       text,
       caretPosition,
@@ -20,16 +20,16 @@ class TagTokenizer {
     );
   }
 
-  static TagTokenAroundCaret? findAttributedTokenAroundCaret(
+  static TagTokenAroundCaret? findAttributedTokenAroundPosition(
     String triggerSymbol,
     AttributedText paragraphText,
-    TextNodePosition caretPosition,
+    TextNodePosition position,
     bool Function(Set<Attribution> tokenAttributions) isTokenCandidate, {
     Set<String> excludeCharacters = const {},
   }) {
     final text = paragraphText.text;
-    int tokenStartOffset = caretPosition.offset;
-    int tokenEndOffset = caretPosition.offset;
+    int tokenStartOffset = position.offset;
+    int tokenEndOffset = position.offset;
 
     final terminatingCharacters = {
       ...excludeCharacters,
@@ -60,7 +60,7 @@ class TagTokenizer {
         tokenStartOffset,
         tokenEndOffset,
       ),
-      caretOffset: caretPosition.offset,
+      caretOffset: position.offset,
     );
   }
 
