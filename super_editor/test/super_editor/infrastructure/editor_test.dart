@@ -225,7 +225,7 @@ void main() {
                   continue;
                 }
 
-                insertEEvent = change.text.endsWith("e") ? change : null;
+                insertEEvent = change.text.text.endsWith("e") ? change : null;
               }
 
               if (insertEEvent == null) {
@@ -316,7 +316,7 @@ void main() {
                   continue;
                 }
 
-                insertHEvent = change.text == "H" ? change : null;
+                insertHEvent = change.text.text == "H" ? change : null;
               }
 
               if (insertHEvent == null) {
@@ -347,7 +347,7 @@ void main() {
                   continue;
                 }
 
-                insertEEvent = change.text == "e" ? change : null;
+                insertEEvent = change.text.text == "e" ? change : null;
               }
 
               expect(insertEEvent, isNotNull, reason: "Reaction 2 didn't receive the change from reaction 1");

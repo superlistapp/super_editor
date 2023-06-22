@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide ListenableBuilder;

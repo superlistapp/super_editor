@@ -175,17 +175,19 @@ class HashTagReaction implements EditReaction {
   ///     [#flutter][#dart]
   ///
   void _splitBackToBackTags(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+
     final textEdits = changeList
         .whereType<DocumentEdit>()
         .where((docEdit) => docEdit.change is NodeChangeEvent)
         .map((docEdit) => docEdit.change as NodeChangeEvent)
+        .where((nodeChange) => document.getNodeById(nodeChange.nodeId) != null)
         .toList(growable: false);
     if (textEdits.isEmpty) {
       return;
     }
 
     editorHashTagsLog.info("Checking edited text nodes for back-to-back hash tags that need to be split apart");
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
     for (final textEdit in textEdits) {
       final node = document.getNodeById(textEdit.nodeId) as TextNode;
       _splitBackToBackTagsInTextNode(requestDispatcher, node);

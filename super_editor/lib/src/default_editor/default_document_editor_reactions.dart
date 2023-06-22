@@ -569,7 +569,7 @@ class LinkifyReaction implements EditReaction {
     for (final edit in edits) {
       if (edit is DocumentEdit) {
         final change = edit.change;
-        if (change is TextInsertionEvent && change.text == " ") {
+        if (change is TextInsertionEvent && change.text.text == " ") {
           // Every space insertion might appear after a URL.
           linkifyCandidate = change;
         }
@@ -703,7 +703,7 @@ class EditInspector {
     if (textInsertionEvent is! TextInsertionEvent) {
       return false;
     }
-    if (textInsertionEvent.text != " ") {
+    if (textInsertionEvent.text.text != " ") {
       return false;
     }
 

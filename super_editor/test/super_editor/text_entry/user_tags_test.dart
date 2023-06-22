@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -11,8 +10,6 @@ import '../test_documents.dart';
 void main() {
   group("SuperEditor user tags >", () {
     group("composing >", () {
-      // initLoggers(Level.INFO, {editorUserTags});
-
       testWidgetsOnAllPlatforms("can start at the beginning of a paragraph", (tester) async {
         await _pumpTestEditor(
           tester,
@@ -735,7 +732,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms("deletes multiple tags when partially selected", (tester) async {
+      testWidgetsOnAllPlatforms("deletes multiple tags when partially selected in the same node", (tester) async {
         final context = await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -774,6 +771,62 @@ void main() {
 
         // Ensure that both user tags were completely deleted.
         expect(SuperEditorInspector.findTextInParagraph("1").text, "one  three");
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 4),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("deletes multiple tags when partially selected across multiple nodes", (tester) async {
+        final context = await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(text: ""),
+              ),
+              ParagraphNode(
+                id: "2",
+                text: AttributedText(text: ""),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret in the first paragraph and insert a user tag.
+        await tester.placeCaretInParagraph("1", 0);
+        await tester.typeImeText("one @john two");
+
+        // Move the caret to the second paragraph and insert a second user tag.
+        await tester.placeCaretInParagraph("2", 0);
+        await tester.typeImeText("three @sally four");
+
+        // Expand the selection to "one @jo|hn two\nthree @sa|lly three"
+        (context.editContext.composer as MutableDocumentComposer).setSelectionWithReason(
+          const DocumentSelection(
+            base: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 7),
+            ),
+            extent: DocumentPosition(
+              nodeId: "2",
+              nodePosition: TextNodePosition(offset: 9),
+            ),
+          ),
+          SelectionReason.userInteraction,
+        );
+
+        // Delete the selected content, which will leave two partial user tags.
+        await tester.pressBackspace();
+
+        // Ensure that both user tags were completely deleted.
+        expect(SuperEditorInspector.findTextInParagraph("1").text, "one  four");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(

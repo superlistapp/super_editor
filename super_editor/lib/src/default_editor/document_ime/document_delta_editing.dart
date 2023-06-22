@@ -320,7 +320,7 @@ class TextDeltasDocumentEditor {
       editor.execute([
         ChangeSelectionRequest(
           replacementSelection,
-          SelectionChangeType.placeCaret,
+          SelectionChangeType.expandSelection,
           SelectionReason.contentChange,
         ),
       ]);
@@ -365,7 +365,7 @@ class TextDeltasDocumentEditor {
     editor.execute([
       ChangeSelectionRequest(
         docSelectionToDelete,
-        SelectionChangeType.placeCaret,
+        docSelectionToDelete!.isCollapsed ? SelectionChangeType.collapseSelection : SelectionChangeType.expandSelection,
         SelectionReason.contentChange,
       ),
     ]);

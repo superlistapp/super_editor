@@ -128,7 +128,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 1),
               ),
             ),
-            SelectionChangeType.placeCaret,
+            SelectionChangeType.expandSelection,
             SelectionReason.userInteraction,
           ),
         ]);

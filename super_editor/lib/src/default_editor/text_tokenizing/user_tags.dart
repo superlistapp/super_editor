@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
@@ -293,7 +294,8 @@ class TagUserReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
-    editorUserTagsLog.fine("Removing invalid tags.");
+    editorUserTagsLog.info("Removing invalid tags.");
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
     final nodesToInspect = <String>{};
     for (final edit in changeList) {
       // We only care about deleted text, in case the deletion made an existing tag invalid.
@@ -302,6 +304,10 @@ class TagUserReaction implements EditReaction {
       }
       final change = edit.change;
       if (change is! TextDeletedEvent) {
+        continue;
+      }
+      if (document.getNodeById(change.nodeId) == null) {
+        // This node was deleted sometime later. No need to consider it.
         continue;
       }
 
@@ -320,7 +326,6 @@ class TagUserReaction implements EditReaction {
     editorUserTagsLog.fine("Found ${nodesToInspect.length} impacted nodes with tags that might be invalid");
 
     // Inspect every TextNode where a text deletion impacted a tag.
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
     final removeTagRequests = <EditRequest>{};
     // FIXME: this won't actually work for multiple deletions in the same text node because
     //        one deletion will screw up the indices of the next deletion.
@@ -360,10 +365,31 @@ class TagUserReaction implements EditReaction {
       // If a user tag's content no longer matches its attribution value, then
       // assume that the user tried to delete part of it. Delete the whole thing,
       // because we don't allow partial committed user tags.
-      final allUserTags = textNode.text.getAttributionSpansInRange(
-        attributionFilter: (attribution) => attribution is UserTagAttribution,
-        range: SpanRange(start: 0, end: textNode.text.text.length - 1),
-      );
+
+      // Collect all the user tags in this node. The list is sorted such that
+      // later tags appear before earlier tags. This way, as we delete tags, each
+      // deleted tag won't impact the character offsets of the following tags
+      // that we delete.
+      final allUserTags = textNode.text
+          .getAttributionSpansInRange(
+            attributionFilter: (attribution) => attribution is UserTagAttribution,
+            range: SpanRange(start: 0, end: textNode.text.text.length - 1),
+          )
+          .sorted((tag1, tag2) => tag2.start - tag1.start);
+
+      // Track the impact of deletions on selection bounds, then update the selection
+      // to reflect the deletions.
+      final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
+
+      final baseBeforeDeletions = composer.selection!.base;
+      int baseOffsetAfterDeletions = baseBeforeDeletions.nodePosition is TextNodePosition
+          ? (baseBeforeDeletions.nodePosition as TextNodePosition).offset
+          : -1;
+
+      final extentBeforeDeletions = composer.selection!.extent;
+      int extentOffsetAfterDeletions = extentBeforeDeletions.nodePosition is TextNodePosition
+          ? (extentBeforeDeletions.nodePosition as TextNodePosition).offset
+          : -1;
 
       for (final tag in allUserTags) {
         final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
@@ -372,32 +398,72 @@ class TagUserReaction implements EditReaction {
 
         if (attribution.userId != tagText || !containsTrigger) {
           // The tag was partially deleted it. Delete the whole thing.
-          deleteTagRequests.addAll([
+          final deleteFrom = tag.start;
+          final deleteTo = tag.end + 1; // +1 because SpanRange is inclusive and text position is exclusive
+          editorUserTagsLog.info("Deleting partial tag '$tagText': $deleteFrom -> $deleteTo");
+
+          if (baseBeforeDeletions.nodeId == textNode.id) {
+            if (baseOffsetAfterDeletions >= deleteTo) {
+              // The base sits beyond the entire deletion region. Push the base up by the
+              // length of the deletion region.
+              baseOffsetAfterDeletions -= deleteTo - deleteFrom;
+            } else if (baseOffsetAfterDeletions > deleteFrom) {
+              // The base sits somewhere within the deletion region. Move it to the beginning
+              // of the deletion region.
+              baseOffsetAfterDeletions = deleteFrom;
+            }
+          }
+
+          if (extentBeforeDeletions.nodeId == textNode.id) {
+            if (extentOffsetAfterDeletions >= deleteTo) {
+              // The extent sits beyond the entire deletion region. Push the extent up by the
+              // length of the deletion region.
+              extentOffsetAfterDeletions -= deleteTo - deleteFrom;
+            } else if (extentOffsetAfterDeletions > deleteFrom) {
+              // The extent sits somewhere within the deletion region. Move it to the beginning
+              // of the deletion region.
+              extentOffsetAfterDeletions = deleteFrom;
+            }
+          }
+
+          deleteTagRequests.add(
             DeleteSelectionRequest(
               documentSelection: DocumentSelection(
                 base: DocumentPosition(
                   nodeId: textNode.id,
-                  nodePosition: TextNodePosition(offset: tag.start),
+                  nodePosition: TextNodePosition(offset: deleteFrom),
                 ),
                 extent: DocumentPosition(
                   nodeId: textNode.id,
-                  nodePosition: TextNodePosition(
-                      offset: tag.end + 1), // +1 because SpanRange is inclusive and text position is exclusive
+                  nodePosition: TextNodePosition(offset: deleteTo),
                 ),
               ),
             ),
-            ChangeSelectionRequest(
-              DocumentSelection.collapsed(
-                position: DocumentPosition(
-                  nodeId: textNode.id,
-                  nodePosition: TextNodePosition(offset: tag.start),
-                ),
-              ),
-              SelectionChangeType.placeCaret,
-              SelectionReason.contentChange,
-            ),
-          ]);
+          );
         }
+      }
+
+      if (deleteTagRequests.isNotEmpty) {
+        deleteTagRequests.add(
+          ChangeSelectionRequest(
+            DocumentSelection(
+              base: baseOffsetAfterDeletions >= 0
+                  ? DocumentPosition(
+                      nodeId: textNode.id,
+                      nodePosition: TextNodePosition(offset: baseOffsetAfterDeletions),
+                    )
+                  : baseBeforeDeletions,
+              extent: extentOffsetAfterDeletions >= 0
+                  ? DocumentPosition(
+                      nodeId: textNode.id,
+                      nodePosition: TextNodePosition(offset: extentOffsetAfterDeletions),
+                    )
+                  : extentBeforeDeletions,
+            ),
+            SelectionChangeType.placeCaret,
+            SelectionReason.contentChange,
+          ),
+        );
       }
     }
 
@@ -436,14 +502,14 @@ class KeepCaretOutOfTagReaction implements EditReaction {
       return;
     }
 
-    final textNode = document.getNodeById(newCaret.nodeId);
-    if (textNode == null || textNode is! TextNode) {
-      // The selected content isn't text. We don't need to worry about it.
-      editorUserTagsLog.fine(" - selected content isn't text. Fizzling.");
-      return;
-    }
-
     if (selectionChangeEvent.newSelection!.isCollapsed) {
+      final textNode = document.getNodeById(newCaret.nodeId);
+      if (textNode == null || textNode is! TextNode) {
+        // The selected content isn't text. We don't need to worry about it.
+        editorUserTagsLog.fine(" - selected content isn't text. Fizzling.");
+        return;
+      }
+
       _adjustCaretPosition(
         editContext: editContext,
         requestDispatcher: requestDispatcher,
@@ -455,7 +521,6 @@ class KeepCaretOutOfTagReaction implements EditReaction {
       _adjustExpandedSelection(
         editContext: editContext,
         requestDispatcher: requestDispatcher,
-        textNode: textNode,
         selectionChangeEvent: selectionChangeEvent,
         newCaret: newCaret,
       );
@@ -513,14 +578,20 @@ class KeepCaretOutOfTagReaction implements EditReaction {
   void _adjustExpandedSelection({
     required EditContext editContext,
     required RequestDispatcher requestDispatcher,
-    required TextNode textNode,
     required SelectionChangeEvent selectionChangeEvent,
     required DocumentPosition newCaret,
   }) {
     editorUserTagsLog.fine("Adjusting an expanded selection to avoid a partial user tag selection.");
 
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final extentNode = document.getNodeById(newCaret.nodeId);
+    if (extentNode is! TextNode) {
+      // The caret isn't sitting in text. Fizzle.
+      return;
+    }
+
     final tagAroundCaret = _findTagAroundPosition(
-      textNode.text,
+      extentNode.text,
       newCaret.nodePosition as TextNodePosition,
       (attribution) => attribution is UserTagAttribution,
     );
@@ -539,7 +610,7 @@ class KeepCaretOutOfTagReaction implements EditReaction {
         }
 
         // Move the caret to the nearest edge of the tag.
-        _moveCaretToNearestTagEdge(requestDispatcher, selectionChangeEvent, textNode.id, tagAroundCaret);
+        _moveCaretToNearestTagEdge(requestDispatcher, selectionChangeEvent, extentNode.id, tagAroundCaret);
         break;
       case SelectionChangeType.pushExtent:
         if (tagAroundCaret == null) {
@@ -551,14 +622,26 @@ class KeepCaretOutOfTagReaction implements EditReaction {
           editContext,
           requestDispatcher,
           selectionChangeEvent,
-          textNode.id,
+          extentNode.id,
           tagAroundCaret,
           expand: true,
         );
         break;
       case SelectionChangeType.expandSelection:
         // Move the base or extent to the side of the tag in the direction of push motion.
-        _pushExpandedSelectionAroundTags(editContext, requestDispatcher, selectionChangeEvent, textNode);
+        TextNode? baseNode;
+        final basePosition = selectionChangeEvent.newSelection!.base;
+        if (basePosition.nodePosition is TextNodePosition) {
+          baseNode = document.getNodeById(basePosition.nodeId) as TextNode;
+        }
+
+        _pushExpandedSelectionAroundTags(
+          editContext,
+          requestDispatcher,
+          selectionChangeEvent,
+          baseNode: baseNode,
+          extentNode: extentNode,
+        );
         break;
       case SelectionChangeType.placeCaret:
       case SelectionChangeType.pushCaret:
@@ -704,20 +787,23 @@ class KeepCaretOutOfTagReaction implements EditReaction {
   void _pushExpandedSelectionAroundTags(
     EditContext editContext,
     RequestDispatcher requestDispatcher,
-    SelectionChangeEvent selectionChangeEvent,
-    TextNode textNode,
-  ) {
+    SelectionChangeEvent selectionChangeEvent, {
+    required TextNode? baseNode,
+    required TextNode? extentNode,
+  }) {
     editorUserTagsLog.info("Pushing expanded selection to other side(s) of token(s)");
 
     final document = editContext.find<MutableDocument>(Editor.documentKey);
     final selection = selectionChangeEvent.newSelection!;
     final selectionAffinity = document.getAffinityForSelection(selection);
 
-    final tagAroundBase = _findTagAroundPosition(
-      textNode.text,
-      selectionChangeEvent.newSelection!.base.nodePosition as TextNodePosition,
-      (attribution) => attribution is UserTagAttribution,
-    );
+    final tagAroundBase = baseNode != null
+        ? _findTagAroundPosition(
+            baseNode.text,
+            selectionChangeEvent.newSelection!.base.nodePosition as TextNodePosition,
+            (attribution) => attribution is UserTagAttribution,
+          )
+        : null;
 
     DocumentPosition? newBasePosition;
     if (tagAroundBase != null) {
@@ -729,11 +815,14 @@ class KeepCaretOutOfTagReaction implements EditReaction {
       );
     }
 
-    final tagAroundExtent = _findTagAroundPosition(
-      textNode.text,
-      selectionChangeEvent.newSelection!.extent.nodePosition as TextNodePosition,
-      (attribution) => attribution is UserTagAttribution,
-    );
+    final tagAroundExtent = extentNode != null
+        ? _findTagAroundPosition(
+            extentNode.text,
+            selectionChangeEvent.newSelection!.extent.nodePosition as TextNodePosition,
+            (attribution) => attribution is UserTagAttribution,
+          )
+        : null;
+
     DocumentPosition? newExtentPosition;
     if (tagAroundExtent != null) {
       newExtentPosition = DocumentPosition(

@@ -60,7 +60,7 @@ void main() {
                 nodePosition: document.nodes[1].beginningPosition,
               ),
             ),
-            SelectionChangeType.placeCaret,
+            SelectionChangeType.expandSelection,
             SelectionReason.userInteraction,
           ),
         ]);
@@ -133,7 +133,7 @@ void main() {
                 nodePosition: document.nodes[2].endPosition,
               ),
             ),
-            SelectionChangeType.placeCaret,
+            SelectionChangeType.expandSelection,
             SelectionReason.userInteraction,
           ),
         ]);

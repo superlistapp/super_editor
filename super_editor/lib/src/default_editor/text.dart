@@ -1226,7 +1226,7 @@ class InsertTextCommand implements EditCommand {
         TextInsertionEvent(
           nodeId: textNode.id,
           offset: textOffset,
-          text: textToInsert,
+          text: AttributedText(text: textToInsert),
         ),
       ),
     ]);
@@ -1258,10 +1258,10 @@ class TextInsertionEvent extends NodeChangeEvent {
   }) : super(nodeId);
 
   final int offset;
-  final String text;
+  final AttributedText text;
 
   @override
-  String toString() => "[TextInsertionEvent] - node: $nodeId, insertion offset: $offset, text: '$text'";
+  String toString() => "TextInsertionEvent ('$nodeId' - $offset -> '${text.text}')";
 
   @override
   bool operator ==(Object other) =>
@@ -1287,7 +1287,7 @@ class TextDeletedEvent extends NodeChangeEvent {
   final AttributedText deletedText;
 
   @override
-  String toString() => "[TextDeletedEvent] - node: $nodeId, offset: $offset, deleted text: '$deletedText'";
+  String toString() => "TextDeletedEvent ('$nodeId' - $offset -> '${deletedText.text}')";
 
   @override
   bool operator ==(Object other) =>

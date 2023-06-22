@@ -429,6 +429,9 @@ class DocumentEdit implements EditEvent {
   DocumentEdit(this.change);
 
   final DocumentChange change;
+
+  @override
+  String toString() => "DocumentEdit -> $change";
 }
 
 /// An object that's notified with a change list from one or more
