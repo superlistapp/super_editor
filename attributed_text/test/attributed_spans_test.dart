@@ -537,6 +537,40 @@ void main() {
         ]).expectSpans(spans);
       });
 
+      test('looking for multiple', () {
+        final spans = AttributedSpans()
+          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 8)
+          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 1, end: 5)
+          ..addAttribution(newAttribution: ExpectedSpans.strikethrough, start: 5, end: 9);
+
+        ExpectedSpans([
+          'bbbbbbbbb_',
+          '_iiiii____',
+          '_____sssss',
+        ]).expectSpans(spans);
+
+        expect(spans.hasAttributionsWithin(attributions: {
+          ExpectedSpans.bold,
+          ExpectedSpans.italics,
+          ExpectedSpans.strikethrough,
+        }, start: 0, end: 9), true);
+
+        expect(spans.hasAttributionsWithin(attributions: {
+          ExpectedSpans.bold,
+          ExpectedSpans.italics,
+        }, start: 0, end: 9), true);
+
+        expect(spans.hasAttributionsWithin(attributions: {
+          ExpectedSpans.bold,
+          ExpectedSpans.italics,
+        }, start: 0, end: 4), true);
+
+        expect(spans.hasAttributionsWithin(attributions: {
+          ExpectedSpans.bold,
+          ExpectedSpans.strikethrough,
+        }, start: 0, end: 4), false);
+      });
+
       test('incompatible attributions cannot overlap', () {
         final spans = AttributedSpans();
 
