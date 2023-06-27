@@ -245,6 +245,47 @@ void main() {
         // Ensure the given keyboardAppearance was applied.
         expect(keyboardAppearance, 'Brightness.dark');
       });
+
+      testWidgetsOnIos('updates keyboard appearance when not attached to IME', (tester) async {
+        final controller = ImeAttributedTextEditingController(
+          keyboardAppearance: Brightness.light,
+        );
+
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: SuperTextField(
+              textController: controller,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Holds the keyboard appearance sent to the platform.
+        String? keyboardAppearance;
+
+        // Intercept the setClient message sent to the platform.
+        tester
+            .interceptChannel(SystemChannels.textInput.name) //
+            .interceptMethod(
+          'TextInput.setClient',
+          (methodCall) {
+            final params = methodCall.arguments[1] as Map;
+            keyboardAppearance = params['keyboardAppearance'];
+            return null;
+          },
+        );
+
+        // Change the keyboard appearance from light to dark while detached from IME.
+        controller.updateTextInputConfiguration(
+          keyboardAppearance: Brightness.dark,
+        );
+
+        // Tap the text field to show the software keyboard.
+        await tester.placeCaretInSuperTextField(0);
+
+        // Ensure the initial keyboardAppearance was dark.
+        expect(keyboardAppearance, 'Brightness.dark');
+      });
     });
 
     group("selection", () {
