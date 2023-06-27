@@ -125,12 +125,14 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     TextInputType textInputType = TextInputType.text,
     Brightness keyboardAppearance = Brightness.light,
   }) {
+    // Change the keyboard appearance even if we are detached from the IME.
+    // In the next time we attach to the IME, the keyboard appearance is used.
+    _keyboardAppearance = keyboardAppearance;
+
     if (!isAttachedToIme) {
       // We're not attached to the IME, so there is nothing to update.
       return;
     }
-
-    _keyboardAppearance = keyboardAppearance;
 
     // Close the current connection.
     _inputConnection?.close();
