@@ -274,9 +274,11 @@ class TextDeltasDocumentEditor {
 
     if (extentNodePosition is UpstreamDownstreamNodePosition) {
       editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
-      extentNodeId = Editor.createNodeId();
-      commonOps.insertBlockLevelNewline(nodeId: extentNodeId);
+      commonOps.insertBlockLevelNewline();
 
+      // After inserting a block level new line, the selection might change to another node.
+      // Therefore, we need to update the insertion position.
+      extentNodeId = selection.value!.extent.nodeId;
       final node = document.getNodeById(extentNodeId)!;
       extentNodePosition = node.endPosition;
       effectiveInsertionPosition = DocumentPosition(nodeId: extentNodeId, nodePosition: extentNodePosition);

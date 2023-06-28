@@ -1537,12 +1537,9 @@ class CommonEditorOperations {
   /// If the current selection is not collapsed then the current selection
   /// is first deleted, then the aforementioned operation takes place.
   ///
-  /// If [nodeId] is given, it is used as the new node id. Otherwise, a
-  /// new node id is generated.
-  ///
   /// Returns [true] if a new node was inserted or a node was split into two.
   /// Returns [false] if there was no selection.
-  bool insertBlockLevelNewline({String? nodeId}) {
+  bool insertBlockLevelNewline() {
     editorOpsLog.fine("Inserting block-level newline");
     if (composer.selection == null) {
       editorOpsLog.finer("Selection is null. Can't insert newline.");
@@ -1564,7 +1561,7 @@ class CommonEditorOperations {
       _deleteExpandedSelection();
     }
 
-    final newNodeId = nodeId ?? Editor.createNodeId();
+    final newNodeId = Editor.createNodeId();
 
     if (extentNode is ListItemNode) {
       if (extentNode.text.text.isEmpty) {
