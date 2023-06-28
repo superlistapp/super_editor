@@ -341,10 +341,22 @@ This is some code
               text: 'First LinkSecond Link',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 0, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 9, markerType: SpanMarkerType.end),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 10, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 20, markerType: SpanMarkerType.end),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 0,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 9,
+                      markerType: SpanMarkerType.end),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('github.com', '')),
+                      offset: 10,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('github.com', '')),
+                      offset: 20,
+                      markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -399,6 +411,20 @@ This is some code
         ]);
 
         expect(serializeDocumentToMarkdown(doc), '---:\nParagraph1');
+      });
+
+      test('paragraph with justify alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Paragraph1'),
+            metadata: {
+              'textAlign': 'justify',
+            },
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), '-::-\nParagraph1');
       });
 
       test("doesn't serialize text alignment when not using supereditor syntax", () {
@@ -639,58 +665,58 @@ Paragraph3""");
       test('example doc', () {
         final doc = MutableDocument(nodes: [
           ImageNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             imageUrl: 'https://someimage.com/the/image.png',
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'Example Doc'),
             metadata: {'blockType': header1Attribution},
           ),
-          HorizontalRuleNode(id: DocumentEditor.createNodeId()),
+          HorizontalRuleNode(id: Editor.createNodeId()),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'Unordered list:'),
           ),
           ListItemNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             itemType: ListItemType.unordered,
             text: AttributedText(text: 'Unordered 1'),
           ),
           ListItemNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             itemType: ListItemType.unordered,
             text: AttributedText(text: 'Unordered 2'),
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'Ordered list:'),
           ),
           ListItemNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             itemType: ListItemType.ordered,
             text: AttributedText(text: 'Ordered 1'),
           ),
           ListItemNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             itemType: ListItemType.ordered,
             text: AttributedText(text: 'Ordered 2'),
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'A blockquote:'),
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'This is a blockquote.'),
             metadata: {'blockType': blockquoteAttribution},
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: 'Some code:'),
           ),
           ParagraphNode(
-            id: DocumentEditor.createNodeId(),
+            id: Editor.createNodeId(),
             text: AttributedText(text: '{\n  // This is some code.\n}'),
             metadata: {'blockType': codeAttribution},
           ),
@@ -996,6 +1022,14 @@ This is some code
         expect(paragraph.text.text, 'Paragraph1');
       });
 
+      test('paragraph with justify alignment', () {
+        final doc = deserializeMarkdownToDocument('-::-\nParagraph1');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), 'justify');
+        expect(paragraph.text.text, 'Paragraph1');
+      });
+
       test('treats alignment token as text at the end of the document', () {
         final doc = deserializeMarkdownToDocument('---:');
 
@@ -1102,8 +1136,7 @@ Paragraph4""";
       });
 
       test('paragraph beginning with multiple blank lines', () {
-        final doc =
-            deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
+        final doc = deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
 
         expect(doc.nodes.length, 2);
 
@@ -1113,7 +1146,7 @@ Paragraph4""";
         expect(doc.nodes.last, isA<ParagraphNode>());
         expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
       });
-    
+
       test('document ending with an empty paragraph', () {
         final doc = deserializeMarkdownToDocument("""
 First Paragraph.

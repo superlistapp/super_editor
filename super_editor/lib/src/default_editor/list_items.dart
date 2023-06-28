@@ -2,12 +2,12 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import '../core/document.dart';
-import '../core/document_editor.dart';
 import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
 import 'text.dart';
@@ -300,7 +300,8 @@ class UnorderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
     final indentSpace = indentCalculator(textStyle, indent);
-    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.25);
+    final textScaleFactor = MediaQuery.textScaleFactorOf(context);
+    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.25) * textScaleFactor;
     const manualVerticalAdjustment = 3.0;
 
     return Row(
@@ -323,6 +324,7 @@ class UnorderedListItemComponent extends StatelessWidget {
             text: text,
             textStyleBuilder: styleBuilder,
             textSelection: textSelection,
+            textScaleFactor: textScaleFactor,
             selectionColor: selectionColor,
             highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
@@ -389,7 +391,8 @@ class OrderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
     final indentSpace = indentCalculator(textStyle, indent);
-    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.0);
+    final textScaleFactor = MediaQuery.textScaleFactorOf(context);
+    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.0) * textScaleFactor;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,6 +414,7 @@ class OrderedListItemComponent extends StatelessWidget {
             text: text,
             textStyleBuilder: styleBuilder,
             textSelection: textSelection,
+            textScaleFactor: textScaleFactor,
             selectionColor: selectionColor,
             highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
@@ -445,7 +449,15 @@ Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListIt
   );
 }
 
-class IndentListItemCommand implements EditorCommand {
+class IndentListItemRequest implements EditRequest {
+  IndentListItemRequest({
+    required this.nodeId,
+  });
+
+  final String nodeId;
+}
+
+class IndentListItemCommand implements EditCommand {
   IndentListItemCommand({
     required this.nodeId,
   });
@@ -453,9 +465,8 @@ class IndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
-    // TODO: figure out how node changes should work in terms of
-    //       a DocumentEditorTransaction (#67)
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent >= 6) {
@@ -464,10 +475,24 @@ class IndentListItemCommand implements EditorCommand {
     }
 
     listItem.indent += 1;
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      )
+    ]);
   }
 }
 
-class UnIndentListItemCommand implements EditorCommand {
+class UnIndentListItemRequest implements EditRequest {
+  UnIndentListItemRequest({
+    required this.nodeId,
+  });
+
+  final String nodeId;
+}
+
+class UnIndentListItemCommand implements EditCommand {
   UnIndentListItemCommand({
     required this.nodeId,
   });
@@ -475,22 +500,41 @@ class UnIndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent > 0) {
       // TODO: figure out how node changes should work in terms of
       //       a DocumentEditorTransaction (#67)
       listItem.indent -= 1;
+
+      executor.logChanges([
+        DocumentEdit(
+          NodeChangeEvent(nodeId),
+        )
+      ]);
     } else {
-      ConvertListItemToParagraphCommand(
-        nodeId: nodeId,
-      ).execute(document, transaction);
+      executor.executeCommand(
+        ConvertListItemToParagraphCommand(
+          nodeId: nodeId,
+        ),
+      );
     }
   }
 }
 
-class ConvertListItemToParagraphCommand implements EditorCommand {
+class ConvertListItemToParagraphRequest implements EditRequest {
+  ConvertListItemToParagraphRequest({
+    required this.nodeId,
+    this.paragraphMetadata,
+  });
+
+  final String nodeId;
+  final Map<String, dynamic>? paragraphMetadata;
+}
+
+class ConvertListItemToParagraphCommand implements EditCommand {
   ConvertListItemToParagraphCommand({
     required this.nodeId,
     this.paragraphMetadata,
@@ -500,7 +544,8 @@ class ConvertListItemToParagraphCommand implements EditorCommand {
   final Map<String, dynamic>? paragraphMetadata;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
 
@@ -509,11 +554,27 @@ class ConvertListItemToParagraphCommand implements EditorCommand {
       text: listItem.text,
       metadata: paragraphMetadata ?? {},
     );
-    transaction.replaceNode(oldNode: listItem, newNode: newParagraphNode);
+    document.replaceNode(oldNode: listItem, newNode: newParagraphNode);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(listItem.id),
+      )
+    ]);
   }
 }
 
-class ConvertParagraphToListItemCommand implements EditorCommand {
+class ConvertParagraphToListItemRequest implements EditRequest {
+  ConvertParagraphToListItemRequest({
+    required this.nodeId,
+    required this.type,
+  });
+
+  final String nodeId;
+  final ListItemType type;
+}
+
+class ConvertParagraphToListItemCommand implements EditCommand {
   ConvertParagraphToListItemCommand({
     required this.nodeId,
     required this.type,
@@ -523,7 +584,8 @@ class ConvertParagraphToListItemCommand implements EditorCommand {
   final ListItemType type;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final paragraphNode = node as ParagraphNode;
 
@@ -532,11 +594,27 @@ class ConvertParagraphToListItemCommand implements EditorCommand {
       itemType: type,
       text: paragraphNode.text,
     );
-    transaction.replaceNode(oldNode: paragraphNode, newNode: newListItemNode);
+    document.replaceNode(oldNode: paragraphNode, newNode: newListItemNode);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(paragraphNode.id),
+      )
+    ]);
   }
 }
 
-class ChangeListItemTypeCommand implements EditorCommand {
+class ChangeListItemTypeRequest implements EditRequest {
+  ChangeListItemTypeRequest({
+    required this.nodeId,
+    required this.newType,
+  });
+
+  final String nodeId;
+  final ListItemType newType;
+}
+
+class ChangeListItemTypeCommand implements EditCommand {
   ChangeListItemTypeCommand({
     required this.nodeId,
     required this.newType,
@@ -546,7 +624,8 @@ class ChangeListItemTypeCommand implements EditorCommand {
   final ListItemType newType;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final existingListItem = document.getNodeById(nodeId) as ListItemNode;
 
     final newListItemNode = ListItemNode(
@@ -554,11 +633,29 @@ class ChangeListItemTypeCommand implements EditorCommand {
       itemType: newType,
       text: existingListItem.text,
     );
-    transaction.replaceNode(oldNode: existingListItem, newNode: newListItemNode);
+    document.replaceNode(oldNode: existingListItem, newNode: newListItemNode);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(existingListItem.id),
+      )
+    ]);
   }
 }
 
-class SplitListItemCommand implements EditorCommand {
+class SplitListItemRequest implements EditRequest {
+  SplitListItemRequest({
+    required this.nodeId,
+    required this.splitPosition,
+    required this.newNodeId,
+  });
+
+  final String nodeId;
+  final TextPosition splitPosition;
+  final String newNodeId;
+}
+
+class SplitListItemCommand implements EditCommand {
   SplitListItemCommand({
     required this.nodeId,
     required this.splitPosition,
@@ -570,7 +667,8 @@ class SplitListItemCommand implements EditorCommand {
   final String newNodeId;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItemNode = node as ListItemNode;
     final text = listItemNode.text;
@@ -602,19 +700,32 @@ class SplitListItemCommand implements EditorCommand {
 
     // Insert the new node after the current node.
     _log.log('SplitListItemCommand', ' - inserting new node in document');
-    transaction.insertNodeAfter(
+    document.insertNodeAfter(
       existingNode: node,
       newNode: newNode,
     );
 
     _log.log('SplitListItemCommand', ' - inserted new node: ${newNode.id} after old one: ${node.id}');
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      ),
+      DocumentEdit(
+        NodeInsertedEvent(newNodeId, document.getNodeIndexById(newNodeId)),
+      ),
+    ]);
   }
 }
 
 ExecutionInstruction tabToIndentListItem({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
     return ExecutionInstruction.continueExecution;
   }
@@ -628,9 +739,13 @@ ExecutionInstruction tabToIndentListItem({
 }
 
 ExecutionInstruction shiftTabToUnIndentListItem({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
     return ExecutionInstruction.continueExecution;
   }
@@ -644,9 +759,13 @@ ExecutionInstruction shiftTabToUnIndentListItem({
 }
 
 ExecutionInstruction backspaceToUnIndentListItem({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
@@ -658,7 +777,7 @@ ExecutionInstruction backspaceToUnIndentListItem({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -672,14 +791,18 @@ ExecutionInstruction backspaceToUnIndentListItem({
 }
 
 ExecutionInstruction splitListItemWhenEnterPressed({
-  required EditContext editContext,
+  required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }

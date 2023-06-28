@@ -1,7 +1,6 @@
-import 'package:example/demos/example_editor/_task.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:super_editor/super_editor.dart';
 
 import '_example_document.dart';
@@ -13,15 +12,16 @@ import '_toolbar.dart';
 /// capabilities expand.
 class ExampleEditor extends StatefulWidget {
   @override
-  _ExampleEditorState createState() => _ExampleEditorState();
+  State<ExampleEditor> createState() => _ExampleEditorState();
 }
 
 class _ExampleEditorState extends State<ExampleEditor> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
-  late Document _doc;
-  late DocumentEditor _docEditor;
-  late DocumentComposer _composer;
+  late MutableDocument _doc;
+  final _docChangeSignal = SignalNotifier();
+  late MutableDocumentComposer _composer;
+  late Editor _docEditor;
   late CommonEditorOperations _docOps;
 
   late FocusNode _editorFocusNode;
@@ -30,7 +30,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   final _darkBackground = const Color(0xFF222222);
   final _lightBackground = Colors.white;
-  bool _isLight = true;
+  final _brightness = ValueNotifier<Brightness>(Brightness.light);
+
+  SuperEditorDebugVisualsConfig? _debugConfig;
 
   OverlayEntry? _textFormatBarOverlayEntry;
   final _textSelectionAnchor = ValueNotifier<Offset?>(null);
@@ -38,15 +40,19 @@ class _ExampleEditorState extends State<ExampleEditor> {
   OverlayEntry? _imageFormatBarOverlayEntry;
   final _imageSelectionAnchor = ValueNotifier<Offset?>(null);
 
+  final _overlayController = MagnifierAndToolbarController() //
+    ..screenPadding = const EdgeInsets.all(20.0);
+
   @override
   void initState() {
     super.initState();
-    _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer();
+    _doc = createInitialDocument()..addListener(_onDocumentChange);
+    _composer = MutableDocumentComposer();
     _composer.selectionNotifier.addListener(_hideOrShowToolbar);
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
+      document: _doc,
       composer: _composer,
       documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
     );
@@ -64,6 +70,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _editorFocusNode.dispose();
     _composer.dispose();
     super.dispose();
+  }
+
+  void _onDocumentChange(_) {
+    _hideOrShowToolbar();
+    _docChangeSignal.notifyListeners();
   }
 
   void _hideOrShowToolbar() {
@@ -135,6 +146,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           anchor: _textSelectionAnchor,
           editorFocusNode: _editorFocusNode,
           editor: _docEditor,
+          document: _doc,
           composer: _composer,
           closeToolbar: _hideEditorToolbar,
         );
@@ -204,7 +216,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   bool get _isMobile => _gestureMode != DocumentGestureMode.mouse;
 
-  DocumentInputSource get _inputSource {
+  TextInputSource get _inputSource {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
@@ -212,14 +224,26 @@ class _ExampleEditorState extends State<ExampleEditor> {
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
-        return DocumentInputSource.ime;
+        return TextInputSource.ime;
       // return DocumentInputSource.keyboard;
     }
   }
 
-  void _cut() => _docOps.cut();
-  void _copy() => _docOps.copy();
-  void _paste() => _docOps.paste();
+  void _cut() {
+    _docOps.cut();
+    _overlayController.hideToolbar();
+  }
+
+  void _copy() {
+    _docOps.copy();
+    _overlayController.hideToolbar();
+  }
+
+  void _paste() {
+    _docOps.paste();
+    _overlayController.hideToolbar();
+  }
+
   void _selectAll() => _docOps.selectAll();
 
   void _showImageToolbar() {
@@ -287,89 +311,157 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Column(
-          children: [
-            Expanded(
-              child: _buildEditor(),
-            ),
-            if (_isMobile) _buildMountedToolbar(),
-          ],
-        ),
-        Align(
-          alignment: Alignment.bottomRight,
-          child: _buildLightAndDarkModeToggle(),
-        ),
-      ],
+    return ListenableBuilder(
+      listenable: _brightness,
+      builder: (context, _) {
+        return Theme(
+          data: ThemeData(brightness: _brightness.value),
+          child: Builder(
+            builder: (themedContext) {
+              // This builder captures the new theme
+              return Stack(
+                children: [
+                  Column(
+                    children: [
+                      Expanded(
+                        child: _buildEditor(themedContext),
+                      ),
+                      if (_isMobile) _buildMountedToolbar(),
+                    ],
+                  ),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: _buildCornerFabs(),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildLightAndDarkModeToggle() {
+  Widget _buildCornerFabs() {
     return Padding(
-      padding: const EdgeInsets.only(right: 16.0, bottom: 16.0),
-      child: FloatingActionButton(
-        backgroundColor: _isLight ? _darkBackground : _lightBackground,
-        foregroundColor: _isLight ? _lightBackground : _darkBackground,
-        elevation: 5,
-        onPressed: () {
-          setState(() {
-            _isLight = !_isLight;
-          });
-        },
-        child: _isLight
-            ? const Icon(
-                Icons.dark_mode,
-              )
-            : const Icon(
-                Icons.light_mode,
-              ),
+      padding: const EdgeInsets.only(right: 16, bottom: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _buildDebugVisualsToggle(),
+          const SizedBox(height: 16),
+          _buildLightAndDarkModeToggle(),
+        ],
       ),
     );
   }
 
-  Widget _buildEditor() {
+  Widget _buildDebugVisualsToggle() {
+    return FloatingActionButton(
+      backgroundColor: _brightness.value == Brightness.light ? _darkBackground : _lightBackground,
+      foregroundColor: _brightness.value == Brightness.light ? _lightBackground : _darkBackground,
+      elevation: 5,
+      onPressed: () {
+        setState(() {
+          _debugConfig = _debugConfig != null
+              ? null
+              : const SuperEditorDebugVisualsConfig(
+                  showFocus: true,
+                  showImeConnection: true,
+                );
+        });
+      },
+      child: const Icon(
+        Icons.bug_report,
+      ),
+    );
+  }
+
+  Widget _buildLightAndDarkModeToggle() {
+    return FloatingActionButton(
+      backgroundColor: _brightness.value == Brightness.light ? _darkBackground : _lightBackground,
+      foregroundColor: _brightness.value == Brightness.light ? _lightBackground : _darkBackground,
+      elevation: 5,
+      onPressed: () {
+        _brightness.value = _brightness.value == Brightness.light ? Brightness.dark : Brightness.light;
+      },
+      child: _brightness.value == Brightness.light
+          ? const Icon(
+              Icons.dark_mode,
+            )
+          : const Icon(
+              Icons.light_mode,
+            ),
+    );
+  }
+
+  Widget _buildEditor(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return ColoredBox(
-      color: _isLight ? _lightBackground : _darkBackground,
-      child: SuperEditor(
-        editor: _docEditor,
-        composer: _composer,
-        focusNode: _editorFocusNode,
-        scrollController: _scrollController,
-        documentLayoutKey: _docLayoutKey,
-        documentOverlayBuilders: [
-          DefaultCaretOverlayBuilder(
-            CaretStyle().copyWith(color: _isLight ? Colors.black : Colors.redAccent),
-          ),
-        ],
-        selectionStyle: _isLight
-            ? defaultSelectionStyle
-            : SelectionStyles(
-                selectionColor: Colors.red.withOpacity(0.3),
-              ),
-        stylesheet: defaultStylesheet.copyWith(
-          addRulesAfter: [
-            if (!_isLight) ..._darkModeStyles,
-            taskStyles,
+      color: isLight ? _lightBackground : _darkBackground,
+      child: SuperEditorDebugVisuals(
+        config: _debugConfig ?? const SuperEditorDebugVisualsConfig(),
+        child: SuperEditor(
+          editor: _docEditor,
+          document: _doc,
+          composer: _composer,
+          focusNode: _editorFocusNode,
+          scrollController: _scrollController,
+          documentLayoutKey: _docLayoutKey,
+          documentOverlayBuilders: [
+            DefaultCaretOverlayBuilder(
+              const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
+            ),
           ],
-        ),
-        componentBuilders: [
-          ...defaultComponentBuilders,
-          TaskComponentBuilder(_docEditor),
-        ],
-        gestureMode: _gestureMode,
-        inputSource: _inputSource,
-        keyboardActions: _inputSource == DocumentInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
-        androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-          onCutPressed: _cut,
-          onCopyPressed: _copy,
-          onPastePressed: _paste,
-          onSelectAllPressed: _selectAll,
-        ),
-        iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-          onCutPressed: _cut,
-          onCopyPressed: _copy,
-          onPastePressed: _paste,
+          selectionStyle: isLight
+              ? defaultSelectionStyle
+              : SelectionStyles(
+                  selectionColor: Colors.red.withOpacity(0.3),
+                ),
+          stylesheet: defaultStylesheet.copyWith(
+            addRulesAfter: [
+              if (!isLight) ..._darkModeStyles,
+              taskStyles,
+            ],
+          ),
+          componentBuilders: [
+            TaskComponentBuilder(_docEditor),
+            ...defaultComponentBuilders,
+          ],
+          gestureMode: _gestureMode,
+          inputSource: _inputSource,
+          keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
+          androidToolbarBuilder: (_) => ListenableBuilder(
+            listenable: _brightness,
+            builder: (context, _) {
+              return Theme(
+                data: ThemeData(brightness: _brightness.value),
+                child: AndroidTextEditingFloatingToolbar(
+                  onCutPressed: _cut,
+                  onCopyPressed: _copy,
+                  onPastePressed: _paste,
+                  onSelectAllPressed: _selectAll,
+                ),
+              );
+            },
+          ),
+          iOSToolbarBuilder: (_) => ListenableBuilder(
+            listenable: _brightness,
+            builder: (context, _) {
+              return Theme(
+                data: ThemeData(brightness: _brightness.value),
+                child: IOSTextEditingFloatingToolbar(
+                  onCutPressed: _cut,
+                  onCopyPressed: _copy,
+                  onPastePressed: _paste,
+                  focalPoint: _overlayController.toolbarTopAnchor!,
+                ),
+              );
+            },
+          ),
+          overlayController: _overlayController,
         ),
       ),
     );
@@ -378,7 +470,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
   Widget _buildMountedToolbar() {
     return MultiListenableBuilder(
       listenables: <Listenable>{
-        _doc,
+        _docChangeSignal,
         _composer.selectionNotifier,
       },
       builder: (_) {
@@ -389,6 +481,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         }
 
         return KeyboardEditingToolbar(
+          editor: _docEditor,
           document: _doc,
           composer: _composer,
           commonOps: _docOps,

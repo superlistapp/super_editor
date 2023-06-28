@@ -20,6 +20,34 @@ class SuperEditorInspector {
     return superEditor.focusNode.hasFocus;
   }
 
+  /// Returns `true` if the given [SuperEditor] widget currently has an open IME connection,
+  /// or `false` if no IME connection is open, or if [SuperEditor] is in keyboard mode.
+  ///
+  /// {@template supereditor_finder}
+  /// By default, this method expects a single [SuperEditor] in the widget tree and
+  /// finds it `byType`. To specify one [SuperEditor] among many, pass a [superEditorFinder].
+  /// {@endtemplate}
+  static bool isImeConnectionOpen([Finder? finder]) {
+    final element = (finder ?? find.byType(SuperEditor)).evaluate().single as StatefulElement;
+    final superEditor = element.widget as SuperEditor;
+
+    // Keyboard mode never has an IME connection.
+    if (superEditor.inputSource == TextInputSource.keyboard) {
+      return false;
+    }
+
+    final imeInteractorElement = find
+        .descendant(
+          of: find.byWidget(superEditor),
+          matching: find.byType(SuperEditorImeInteractor),
+        )
+        .evaluate()
+        .single as StatefulElement;
+    final imeInteractor = imeInteractorElement.state as SuperEditorImeInteractorState;
+
+    return imeInteractor.isAttachedToIme;
+  }
+
   /// Returns the [Document] within the [SuperEditor] matched by [finder],
   /// or the singular [SuperEditor] in the widget tree, if [finder] is `null`.
   ///
@@ -27,7 +55,17 @@ class SuperEditorInspector {
   static Document? findDocument([Finder? finder]) {
     final element = (finder ?? find.byType(SuperEditor)).evaluate().single as StatefulElement;
     final superEditor = element.state as SuperEditorState;
-    return superEditor.editContext.editor.document;
+    return superEditor.editContext.document;
+  }
+
+  /// Returns the [DocumentComposer] within the [SuperEditor] matched by [finder],
+  /// or the singular [SuperEditor] in the widget tree, if [finder] is `null`.
+  ///
+  /// {@macro supereditor_finder}
+  static DocumentComposer? findComposer([Finder? finder]) {
+    final element = (finder ?? find.byType(SuperEditor)).evaluate().single as StatefulElement;
+    final superEditor = element.state as SuperEditorState;
+    return superEditor.editContext.composer;
   }
 
   /// Returns the current [DocumentSelection] for the [SuperEditor] matched by
@@ -113,7 +151,7 @@ class SuperEditorInspector {
   /// {@macro supereditor_finder}
   static WidgetType findWidgetForComponent<WidgetType>(String nodeId, [Finder? superEditorFinder]) {
     final documentLayout = _findDocumentLayout(superEditorFinder);
-    final widget = (documentLayout.getComponentByNodeId(nodeId) as TextComponentState).widget;
+    final widget = (documentLayout.getComponentByNodeId(nodeId) as State).widget;
     if (widget is! WidgetType) {
       throw Exception("Looking for a component's widget. Expected type $WidgetType, but found ${widget.runtimeType}");
     }

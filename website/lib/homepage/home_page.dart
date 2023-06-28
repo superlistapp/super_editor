@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:website/breakpoints.dart';
+import 'package:website/homepage/call_to_action.dart';
+import 'package:website/homepage/editor_video_showcase.dart';
 import 'package:website/homepage/featured_editor.dart';
+import 'package:website/homepage/features.dart';
+import 'package:website/homepage/footer.dart';
+import 'package:website/homepage/header.dart';
 import 'package:website/homepage/inside_the_toolbox.dart';
-
-import '../breakpoints.dart';
-import 'call_to_action.dart';
-import 'editor_video_showcase.dart';
-import 'features.dart';
-import 'footer.dart';
-import 'header.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage();
@@ -107,7 +106,7 @@ class HomePage extends StatelessWidget {
           ),
           child: SingleChildScrollView(
             child: FeaturedEditor(
-              displayMode: displayMode,              
+              displayMode: displayMode,
             ),
           ),
         ),

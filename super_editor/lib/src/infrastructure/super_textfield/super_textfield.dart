@@ -3,12 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/desktop/desktop_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'styles.dart';
@@ -58,12 +60,15 @@ class SuperTextField extends StatefulWidget {
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
     this.controlsColor,
+    this.caretStyle,
     this.selectionColor,
     this.minLines,
     this.maxLines = 1,
     this.lineHeight,
-    this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
+    this.inputSource,
+    this.keyboardHandlers,
     this.padding,
+    this.textInputAction,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -92,7 +97,14 @@ class SuperTextField extends StatefulWidget {
   final WidgetBuilder? hintBuilder;
 
   /// The color of the caret, drag handles, and other controls.
+  ///
+  /// The color in [caretStyle] overrides the [controlsColor].
   final Color? controlsColor;
+
+  /// The visual representation of the caret.
+  ///
+  /// The color in [caretStyle] overrides the [controlsColor].
+  final CaretStyle? caretStyle;
 
   /// The color of selection rectangles that appear around selected text.
   final Color? selectionColor;
@@ -136,21 +148,34 @@ class SuperTextField extends StatefulWidget {
   /// provided and used for all text field height calculations.
   final double? lineHeight;
 
+  /// The [SuperTextField] input source, e.g., keyboard or Input Method Engine.
+  ///
+  /// Only used on desktop. On mobile platforms, only [TextInputSource.ime] is available.
+  final TextInputSource? inputSource;
+
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
   ///
   /// Only used on desktop.
-  final List<TextFieldKeyboardHandler> keyboardHandlers;
+  final List<TextFieldKeyboardHandler>? keyboardHandlers;
 
   /// Padding placed around the text content of this text field, but within the
   /// scrollable viewport.
   final EdgeInsets? padding;
 
+  /// The main action for the virtual keyboard, e.g. [TextInputAction.done].
+  ///
+  /// When `null`, and in single-line mode, the action will be [TextInputAction.done],
+  /// and when in multi-line mode, the action will be  [TextInputAction.newline].
+  ///
+  /// Only used on mobile.
+  final TextInputAction? textInputAction;
+
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
 }
 
-class SuperTextFieldState extends State<SuperTextField> {
+class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner {
   final _platformFieldKey = GlobalKey();
   late ImeAttributedTextEditingController _controller;
 
@@ -184,7 +209,24 @@ class SuperTextFieldState extends State<SuperTextField> {
   @visibleForTesting
   ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
 
+  @visibleForTesting
+  @override
+  DeltaTextInputClient get imeClient {
+    switch (_configuration) {
+      case SuperTextFieldPlatformConfiguration.desktop:
+        // ignore: invalid_use_of_visible_for_testing_member
+        return (_platformFieldKey.currentState as SuperDesktopTextFieldState).imeClient;
+      case SuperTextFieldPlatformConfiguration.android:
+        return (_platformFieldKey.currentState as SuperAndroidTextFieldState).imeClient;
+      case SuperTextFieldPlatformConfiguration.iOS:
+        return (_platformFieldKey.currentState as SuperIOSTextFieldState).imeClient;
+    }
+  }
+
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
+
+  TextInputAction get _textInputAction =>
+      widget.textInputAction ?? (_isMultiline ? TextInputAction.newline : TextInputAction.done);
 
   SuperTextFieldPlatformConfiguration get _configuration {
     if (widget.configuration != null) {
@@ -201,6 +243,26 @@ class SuperTextFieldState extends State<SuperTextField> {
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
         return SuperTextFieldPlatformConfiguration.desktop;
+    }
+  }
+
+  /// Returns the desired [TextInputSource] for this text field.
+  ///
+  /// If the [widget.inputSource] is configured, it is used. Otherwise,
+  /// the [TextInputSource] is chosen based on the platform.
+  TextInputSource get _inputSource {
+    if (widget.inputSource != null) {
+      return widget.inputSource!;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return TextInputSource.ime;
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return TextInputSource.keyboard;
     }
   }
 
@@ -235,15 +297,17 @@ class SuperTextFieldState extends State<SuperTextField> {
           selectionHighlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor ?? defaultSelectionColor,
           ),
-          caretStyle: CaretStyle(
-            color: widget.controlsColor ?? defaultDesktopCaretColor,
-            width: 1,
-            borderRadius: BorderRadius.zero,
-          ),
+          caretStyle: widget.caretStyle ??
+              CaretStyle(
+                color: widget.controlsColor ?? defaultDesktopCaretColor,
+                width: 1,
+                borderRadius: BorderRadius.zero,
+              ),
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
           padding: widget.padding ?? EdgeInsets.zero,
+          inputSource: _inputSource,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(
@@ -256,13 +320,16 @@ class SuperTextFieldState extends State<SuperTextField> {
             textStyleBuilder: widget.textStyleBuilder,
             hintBehavior: widget.hintBehavior,
             hintBuilder: widget.hintBuilder,
-            caretColor: widget.controlsColor ?? defaultAndroidControlsColor,
+            caretStyle: widget.caretStyle ??
+                CaretStyle(
+                  color: widget.controlsColor ?? defaultAndroidControlsColor,
+                ),
             selectionColor: widget.selectionColor ?? defaultSelectionColor,
             handlesColor: widget.controlsColor ?? defaultAndroidControlsColor,
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
-            textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            textInputAction: _textInputAction,
             padding: widget.padding,
           ),
         );
@@ -277,13 +344,16 @@ class SuperTextFieldState extends State<SuperTextField> {
             textStyleBuilder: widget.textStyleBuilder,
             hintBehavior: widget.hintBehavior,
             hintBuilder: widget.hintBuilder,
-            caretColor: widget.controlsColor ?? defaultIOSControlsColor,
+            caretStyle: widget.caretStyle ??
+                CaretStyle(
+                  color: widget.controlsColor ?? defaultIOSControlsColor,
+                ),
             selectionColor: widget.selectionColor ?? defaultSelectionColor,
             handlesColor: widget.controlsColor ?? defaultIOSControlsColor,
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
-            textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            textInputAction: _textInputAction,
             padding: widget.padding,
           ),
         );

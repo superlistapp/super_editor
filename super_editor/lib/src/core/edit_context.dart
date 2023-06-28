@@ -1,9 +1,9 @@
-import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 
+import 'document.dart';
 import 'document_composer.dart';
-import 'document_editor.dart';
 import 'document_layout.dart';
+import 'editor.dart';
 
 /// Collection of core artifacts used to edit a document.
 ///
@@ -11,14 +11,15 @@ import 'document_layout.dart';
 /// [DocumentComposer], and [DocumentLayout].
 /// In addition, [commonOps] are available for directly applying common, complex
 /// changes to the document using the artifacts.
-class EditContext {
+class SuperEditorContext {
   /// Creates an edit context that makes up a collection of core artifacts for
   /// editing a document.
   ///
   /// The [documentLayout] is passed as a [getDocumentLayout] callback that
   /// should return the current layout as it might change.
-  EditContext({
+  SuperEditorContext({
     required this.editor,
+    required this.document,
     required DocumentLayout Function() getDocumentLayout,
     required this.composer,
     required this.commonOps,
@@ -26,7 +27,9 @@ class EditContext {
 
   /// The editor of the [Document] that allows executing commands that alter the
   /// structure of the document.
-  final DocumentEditor editor;
+  final Editor editor;
+
+  final Document document;
 
   /// The document layout that is a visual representation of the document.
   ///

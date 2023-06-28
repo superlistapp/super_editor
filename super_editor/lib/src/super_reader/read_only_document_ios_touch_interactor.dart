@@ -1,19 +1,23 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/document_operations/selection_operations.dart';
-import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
+import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
+
+import '../infrastructure/super_textfield/metrics.dart';
 
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
 /// drag to scroll, and handles to control selection.
@@ -31,11 +35,13 @@ class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
     required this.documentKey,
     required this.getDocumentLayout,
     required this.selection,
+    this.contentTapHandler,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
+    this.overlayController,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -47,7 +53,14 @@ class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
 
   final ValueNotifier<DocumentSelection?> selection;
 
+  /// Optional handler that responds to taps on content, e.g., opening
+  /// a link when the user taps on text with a link attribution.
+  final ContentTapDelegate? contentTapHandler;
+
   final ScrollController? scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -125,6 +138,9 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   // avoid handling gestures while we are `_waitingForMoreTaps`.
   bool _waitingForMoreTaps = false;
 
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  late MagnifierAndToolbarController _overlayController;
+
   @override
   void initState() {
     super.initState();
@@ -150,9 +166,12 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
+    _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+
     _editingController = IosDocumentGestureEditingController(
       documentLayoutLink: _documentLayerLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
+      overlayController: _overlayController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -202,6 +221,11 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     if (widget.document != oldWidget.document) {
       oldWidget.document.removeListener(_onDocumentChange);
       widget.document.addListener(_onDocumentChange);
+    }
+
+    if (widget.overlayController != oldWidget.overlayController) {
+      _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+      _editingController.overlayController = _overlayController;
     }
 
     if (widget.selection != oldWidget.selection) {
@@ -307,7 +331,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     }
   }
 
-  void _onDocumentChange() {
+  void _onDocumentChange(_) {
     _editingController.hideToolbar();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -423,6 +447,15 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
+    if (widget.contentTapHandler != null && docPosition != null) {
+      final result = widget.contentTapHandler!.onTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
+
     if (docPosition != null &&
         selection != null &&
         !selection.isCollapsed &&
@@ -457,6 +490,15 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null && widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onDoubleTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
 
     widget.selection.value = null;
 
@@ -497,6 +539,15 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null && widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onTripleTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
 
     widget.selection.value = null;
 
@@ -748,6 +799,9 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         documentLayout: _docLayout,
         document: widget.document,
         selection: widget.selection,
+        changeSelection: (newSelection, changeType, changeReason) {
+          widget.selection.value = newSelection;
+        },
         handleColor: widget.handleColor,
         onDoubleTapOnCaret: _selectWordAtCaret,
         onTripleTapOnCaret: _selectParagraphAtCaret,
@@ -810,7 +864,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
-    const toolbarGap = 24.0;
     late Rect selectionRect;
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
@@ -842,8 +895,8 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     //       the left side of the screen. This logic will position the
     //       toolbar near the left side of the content, when the toolbar should
     //       instead be centered across the full width of the document.
-    toolbarTopAnchor = selectionRect.topCenter - const Offset(0, toolbarGap);
-    toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, toolbarGap);
+    toolbarTopAnchor = selectionRect.topCenter - const Offset(0, gapBetweenToolbarAndContent);
+    toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, gapBetweenToolbarAndContent);
 
     _editingController.positionToolbar(
       topAnchor: toolbarTopAnchor,
@@ -933,6 +986,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   Widget _buildGestureInput({
     required Widget child,
   }) {
+    final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return RawGestureDetector(
       behavior: HitTestBehavior.opaque,
       gestures: <Type, GestureRecognizerFactory>{
@@ -943,7 +997,8 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
               ..onTapUp = _onTapUp
               ..onDoubleTapUp = _onDoubleTapUp
               ..onTripleTapUp = _onTripleTapUp
-              ..onTimeout = _onTapTimeout;
+              ..onTimeout = _onTapTimeout
+              ..gestureSettings = gestureSettings;
           },
         ),
         // We use a VerticalDragGestureRecognizer instead of a PanGestureRecognizer
@@ -958,7 +1013,8 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
               ..onStart = _onPanStart
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
-              ..onCancel = _onPanCancel;
+              ..onCancel = _onPanCancel
+              ..gestureSettings = gestureSettings;
           },
         ),
       },

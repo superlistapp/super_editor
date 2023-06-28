@@ -27,6 +27,7 @@ class SuperText extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
+    this.textScaleFactor,
     this.layerBeneathBuilder,
     this.layerAboveBuilder,
     this.debugTrackTextBuilds = false,
@@ -52,6 +53,14 @@ class SuperText extends StatefulWidget {
   /// builds its inner rich text, so that tests can ensure the inner text
   /// is not rebuilt unnecessarily, due to text decorations.
   final bool debugTrackTextBuilds;
+
+  /// The number of font pixels for each logical pixel.
+  ///
+  /// For example, if the text scale factor is 1.5, text will be 50% larger than
+  /// the specified font size.
+  ///
+  /// Defaults to the value obtained from `MediaQuery.textScaleFactorOf`.
+  final double? textScaleFactor;
 
   @override
   State<SuperText> createState() => SuperTextState();
@@ -84,6 +93,7 @@ class SuperTextState extends State<SuperText> with ProseTextBlock {
       text: LayoutAwareRichText(
         text: widget.richText,
         textAlign: widget.textAlign,
+        textScaleFactor: widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
         onMarkNeedsLayout: _invalidateParagraph,
       ),
       background: LayoutBuilder(
@@ -211,6 +221,41 @@ class RenderSuperTextLayout extends RenderBox
   }
 
   @override
+  double computeMinIntrinsicWidth(double height) {
+    final children = getChildrenAsList();
+    final text = children[1];
+    return text.getMinIntrinsicWidth(height);
+  }
+
+  @override
+  double computeMaxIntrinsicWidth(double height) {
+    final children = getChildrenAsList();
+    final text = children[1];
+    return text.getMaxIntrinsicWidth(height);
+  }
+
+  @override
+  double computeMinIntrinsicHeight(double width) {
+    final children = getChildrenAsList();
+    final text = children[1];
+    return text.getMinIntrinsicHeight(width);
+  }
+
+  @override
+  double computeMaxIntrinsicHeight(double width) {
+    final children = getChildrenAsList();
+    final text = children[1];
+    return text.getMaxIntrinsicHeight(width);
+  }
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) {
+    final children = getChildrenAsList();
+    final text = children[1];
+    return text.getDryLayout(constraints);
+  }
+
+  @override
   void performLayout() {
     layoutLog.info("Running SuperText layout. Incoming constraints: $constraints");
     final children = getChildrenAsList();
@@ -253,8 +298,14 @@ class LayoutAwareRichText extends RichText {
     Key? key,
     required InlineSpan text,
     TextAlign textAlign = TextAlign.left,
+    double textScaleFactor = 1.0,
     required this.onMarkNeedsLayout,
-  }) : super(key: key, text: text, textAlign: textAlign);
+  }) : super(
+          key: key,
+          text: text,
+          textAlign: textAlign,
+          textScaleFactor: textScaleFactor,
+        );
 
   /// Callback invoked when the underlying [RenderParagraph] invalidates
   /// its layout.

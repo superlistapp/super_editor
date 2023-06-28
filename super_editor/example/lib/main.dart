@@ -1,6 +1,7 @@
 import 'package:example/demos/components/demo_text_with_hint.dart';
 import 'package:example/demos/components/demo_unselectable_hr.dart';
 import 'package:example/demos/debugging/simple_deltas_input.dart';
+import 'package:example/demos/demo_animated_task_height.dart';
 import 'package:example/demos/demo_app_shortcuts.dart';
 import 'package:example/demos/demo_empty_document.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
@@ -79,7 +80,7 @@ class SuperEditorDemoApp extends StatelessWidget {
 /// options in a drawer.
 class HomeScreen extends StatefulWidget {
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -256,6 +257,13 @@ final _menu = <_MenuGroup>[
           return EmptyDocumentDemo();
         },
       ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Animated task height demo',
+        pageBuilder: (context) {
+          return AnimatedTaskHeightDemo();
+        },
+      ),
     ],
   ),
   _MenuGroup(
@@ -296,7 +304,7 @@ final _menu = <_MenuGroup>[
         icon: Icons.text_snippet,
         title: 'SuperReader',
         pageBuilder: (context) {
-          return SuperReaderDemo();
+          return const SuperReaderDemo();
         },
       ),
       _MenuItem(

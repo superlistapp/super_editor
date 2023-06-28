@@ -97,7 +97,7 @@ class TestDocumentConfigurator {
   /// Configures the [SuperReader] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
   TestDocumentConfigurator forDesktop({
-    DocumentInputSource inputSource = DocumentInputSource.keyboard,
+    TextInputSource inputSource = TextInputSource.keyboard,
   }) {
     _gestureMode = DocumentGestureMode.mouse;
     return this;
@@ -208,7 +208,7 @@ class TestDocumentConfigurator {
     assert(_document != null);
 
     final layoutKey = GlobalKey();
-    final documentContext = ReaderContext(
+    final documentContext = SuperReaderContext(
       document: _document!,
       getDocumentLayout: () => layoutKey.currentState as DocumentLayout,
       selection: ValueNotifier<DocumentSelection?>(_selection),
@@ -287,7 +287,7 @@ class TestDocumentContext {
   // simulate content changes in a read-only document.
   final MutableDocument document;
   final GlobalKey layoutKey;
-  final ReaderContext documentContext;
+  final SuperReaderContext documentContext;
 }
 
 Matcher equalsMarkdown(String markdown) => DocumentEqualsMarkdownMatcher(markdown);

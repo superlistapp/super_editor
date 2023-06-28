@@ -7,7 +7,11 @@
 
 <p align="center">Super Editor was initiated by <a href="https://superlist.com">Superlist</a> and is implemented and maintained by the <a href="https://flutterbountyhunters.com">Flutter Bounty Hunters</a>, Superlist, and the contributors.</p>
 
-<p align="center">Feel free to <a href="https://join.slack.com/t/superlist-community/shared_invite/zt-10cpx277q-uZ~pmjlTWg9QQzH64OK9_w">join us on Slack</a> and say hello 👋.</p>
+
+
+<hr>
+
+<p align="center">Do you use Flutter's <b>stable</b> branch? Be sure to checkout <code>super_editor</code>'s <b><a href="https://github.com/superlistapp/super_editor/commits/stable">stable</a></b> branch, for compatibility.<br>Do you use Flutter's <b>master</b> branch? Be sure to checkout <code>super_editor</code>'s <b><a href="https://github.com/superlistapp/super_editor/commits/main">main</a></b> branch, for compabitility.</p>
 
 <hr>
 

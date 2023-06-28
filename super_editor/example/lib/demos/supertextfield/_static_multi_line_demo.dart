@@ -5,7 +5,7 @@ import '_robot.dart';
 
 class StaticMultiLineTextFieldDemo extends StatefulWidget {
   @override
-  _StaticMultiLineTextFieldDemoState createState() => _StaticMultiLineTextFieldDemoState();
+  State<StaticMultiLineTextFieldDemo> createState() => _StaticMultiLineTextFieldDemoState();
 }
 
 class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldDemo> with TickerProviderStateMixin {

@@ -9,7 +9,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 /// all the rest of Super Editor into the picture.
 class SimpleDeltasInputDemo extends StatefulWidget {
   @override
-  _SimpleDeltasInputState createState() => _SimpleDeltasInputState();
+  State<SimpleDeltasInputDemo> createState() => _SimpleDeltasInputState();
 }
 
 class _SimpleDeltasInputState extends State<SimpleDeltasInputDemo> with TextInputClient, DeltaTextInputClient {

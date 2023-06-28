@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
@@ -13,7 +14,28 @@ extension SuperEditorRobot on WidgetTester {
   ///
   /// The simulated user gesture is probably a tap, but the only guarantee is that
   /// the caret is placed with a gesture.
+  ///
+  /// To explicitly simulate a tap within a paragraph, use [tapInParagraph].
   Future<void> placeCaretInParagraph(
+    String nodeId,
+    int offset, {
+    TextAffinity affinity = TextAffinity.downstream,
+    Finder? superEditorFinder,
+  }) async {
+    await _tapInParagraph(nodeId, offset, affinity, 1, superEditorFinder);
+  }
+
+  /// Simulates a tap at the given [offset] within the paragraph with the
+  /// given [nodeId].
+  ///
+  /// This simulated interaction is intended primarily for purposes other
+  /// than changing the document selection, such as tapping on a link to
+  /// launch a URL.
+  ///
+  /// To place the caret in a paragraph, consider using [placeCaretInParagraph],
+  /// which might choose a different execution path to simulate the selection
+  /// change.
+  Future<void> tapInParagraph(
     String nodeId,
     int offset, {
     TextAffinity affinity = TextAffinity.downstream,
@@ -44,6 +66,7 @@ extension SuperEditorRobot on WidgetTester {
     await _tapInParagraph(nodeId, offset, affinity, 3, superEditorFinder);
   }
 
+  // TODO: rename all of these related behaviors to "text" instead of "paragraph"
   Future<void> _tapInParagraph(
     String nodeId,
     int offset,
@@ -95,6 +118,9 @@ extension SuperEditorRobot on WidgetTester {
       await tapAt(globalTapOffset);
       await pump(kTapMinTime + const Duration(milliseconds: 1));
     }
+
+    // Pump long enough to prevent the next tap from being seen as a sequence on top of these taps.
+    await pump(kTapTimeout);
 
     await pumpAndSettle();
   }
@@ -218,8 +244,34 @@ extension SuperEditorRobot on WidgetTester {
 
   /// Types the given [text] into a [SuperEditor] by simulating IME text deltas from
   /// the platform.
-  Future<void> typeImeText(String text) async {
-    await ime.typeText(text, getter: imeClientGetter);
+  ///
+  /// Provide an [imeOwnerFinder] if there are multiple [ImeOwner]s in the current
+  /// widget tree.
+  Future<void> typeImeText(String text, [Finder? imeOwnerFinder]) async {
+    await ime.typeText(text, getter: () => imeClientGetter(imeOwnerFinder));
+  }
+
+  /// Simulates the user holding the spacebar and starting the floating cursor gesture.
+  ///
+  /// The initial offset is at (0,0).
+  Future<void> startFloatingCursorGesture() async {
+    await _updateFloatingCursor(action: "FloatingCursorDragState.start", offset: Offset.zero);
+  }
+
+  /// Simulates the user swiping the spacebar by [offset].
+  ///
+  /// (0,0) means the point where the user started the gesture.
+  ///
+  /// A floating cursor gesture must be started before calling this method.
+  Future<void> updateFloatingCursorGesture(Offset offset) async {
+    await _updateFloatingCursor(action: "FloatingCursorDragState.update", offset: offset);
+  }
+
+  /// Simulates the user releasing the spacebar and stopping the floating cursor gesture.
+  ///
+  /// A floating cursor gesture must be started before calling this method.
+  Future<void> stopFloatingCursorGesture() async {
+    await _updateFloatingCursor(action: "FloatingCursorDragState.end", offset: Offset.zero);
   }
 
   DocumentLayout _findDocumentLayout([Finder? superEditorFinder]) {
@@ -231,5 +283,22 @@ extension SuperEditorRobot on WidgetTester {
     }
     final documentLayoutElement = layoutFinder.evaluate().single as StatefulElement;
     return documentLayoutElement.state as DocumentLayout;
+  }
+
+  Future<void> _updateFloatingCursor({required String action, required Offset offset}) async {
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
+      SystemChannels.textInput.name,
+      SystemChannels.textInput.codec.encodeMethodCall(
+        MethodCall(
+          "TextInputClient.updateFloatingCursor",
+          [
+            -1,
+            action,
+            {"X": offset.dx, "Y": offset.dy}
+          ],
+        ),
+      ),
+      null,
+    );
   }
 }

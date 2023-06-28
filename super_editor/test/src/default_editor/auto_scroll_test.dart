@@ -19,10 +19,10 @@ void main() {
           (screenSizeWithoutKeyboard.height - screenSizeWithKeyboard.height) / keyboardExpansionFrameCount;
 
       testWidgets('on Android, keeps caret visible when keyboard appears', (WidgetTester tester) async {
-        tester.binding.window
-          ..physicalSizeTestValue = screenSizeWithoutKeyboard
+        tester.view
+          ..physicalSize = screenSizeWithoutKeyboard
           ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..devicePixelRatioTestValue = 1.0;
+          ..devicePixelRatio = 1.0;
 
         await tester.pumpWidget(
           const _SliverTestEditor(
@@ -56,10 +56,10 @@ void main() {
       });
 
       testWidgets('on iOS, keeps caret visible when keyboard appears', (WidgetTester tester) async {
-        tester.binding.window
-          ..physicalSizeTestValue = screenSizeWithoutKeyboard
+        tester.view
+          ..physicalSize = screenSizeWithoutKeyboard
           ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..devicePixelRatioTestValue = 1.0;
+          ..devicePixelRatio = 1.0;
 
         await tester.pumpWidget(
           const _SliverTestEditor(
@@ -101,7 +101,7 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withScrollController(scrollController)
-            .withInputSource(DocumentInputSource.keyboard)
+            .withInputSource(TextInputSource.keyboard)
             .useStylesheet(
               Stylesheet(
                 inlineTextStyler: (Set<Attribution> attributions, TextStyle base) {
@@ -143,7 +143,7 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withScrollController(scrollController)
-            .withInputSource(DocumentInputSource.keyboard)
+            .withInputSource(TextInputSource.keyboard)
             .withEditorSize(const Size(600, 100))
             .useStylesheet(
               Stylesheet(
@@ -205,15 +205,17 @@ class _SliverTestEditor extends StatefulWidget {
 }
 
 class _SliverTestEditorState extends State<_SliverTestEditor> {
-  late Document _doc;
-  late DocumentEditor _docEditor;
+  late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
+  late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
 
     _doc = createExampleDocument();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -247,11 +249,13 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
               SliverToBoxAdapter(
                 child: SuperEditor(
                   editor: _docEditor,
+                  document: _doc,
+                  composer: _composer,
                   stylesheet: defaultStylesheet.copyWith(
                     documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
                   ),
                   gestureMode: widget.gestureMode,
-                  inputSource: DocumentInputSource.ime,
+                  inputSource: TextInputSource.ime,
                 ),
               ),
               SliverList(
@@ -283,7 +287,7 @@ Future<void> _simulateKeyboardAppearance({
     // Shrink the height of the screen by a small amount.
     keyboardHeight += shrinkPerFrame;
     final currentScreenSize = (initialScreenSize - Offset(0, keyboardHeight)) as Size;
-    tester.binding.window.physicalSizeTestValue = currentScreenSize;
+    tester.view.physicalSize = currentScreenSize;
 
     // Let the scrolling system auto-scroll, as desired.
     await tester.pumpAndSettle();

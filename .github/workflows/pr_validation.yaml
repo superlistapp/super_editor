@@ -14,7 +14,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
           architecture: x64
 
       # Download all the packages that the app uses
@@ -38,7 +38,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -61,7 +61,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -70,6 +70,28 @@ jobs:
 
       # Run all tests
       - run: flutter test
+
+  test_goldens_super_editor:
+    if: ${{ github.base_ref == 'main' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./super_editor
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v3
+
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "master"
+          architecture: x64
+
+      # Download all the packages that the app uses
+      - run: flutter pub get
+
+      # Run all golden tests
+      - run: flutter test test_goldens
 
   test_super_editor_markdown:
     runs-on: ubuntu-latest
@@ -83,7 +105,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -105,7 +127,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -117,7 +139,8 @@ jobs:
       - run: flutter test
 
   test_goldens_super_text_layout:
-    runs-on: macos-latest
+    if: ${{ github.base_ref == 'main' }}
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./super_text_layout
@@ -128,7 +151,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
           architecture: x64
 
       # Download all the packages that the app uses

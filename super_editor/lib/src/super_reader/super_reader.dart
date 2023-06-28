@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
-import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -20,8 +19,13 @@ import 'package:super_editor/src/default_editor/layout_single_column/_styler_shy
 import 'package:super_editor/src/default_editor/layout_single_column/_styler_user_selection.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
+import 'package:super_editor/src/infrastructure/links.dart';
 
+import '../infrastructure/platforms/mobile_documents.dart';
 import 'read_only_document_android_touch_interactor.dart';
 import 'read_only_document_ios_touch_interactor.dart';
 import 'read_only_document_keyboard_interactor.dart';
@@ -43,12 +47,14 @@ class SuperReader extends StatefulWidget {
     List<ReadOnlyDocumentKeyboardAction>? keyboardActions,
     SelectionStyles? selectionStyle,
     this.gestureMode,
+    this.contentTapDelegateFactory = superReaderLaunchLinkTapHandlerFactory,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.autofocus = false,
+    this.overlayController,
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? readOnlyDefaultStylesheet,
         selectionStyles = selectionStyle ?? readOnlyDefaultSelectionStyle,
@@ -78,6 +84,9 @@ class SuperReader extends StatefulWidget {
   /// [scrollController] is not used if this [SuperReader] has an ancestor
   /// [Scrollable].
   final ScrollController? scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// Style rules applied through the document presentation.
   final Stylesheet stylesheet;
@@ -116,12 +125,19 @@ class SuperReader extends StatefulWidget {
   /// events, e.g., text entry, newlines, character deletion,
   /// copy, paste, etc.
   ///
-  /// These actions are only used when in [DocumentInputSource.keyboard]
+  /// These actions are only used when in [TextInputSource.keyboard]
   /// mode.
   final List<ReadOnlyDocumentKeyboardAction> keyboardActions;
 
   /// The [SuperReader] gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
+
+  /// Factory that creates a [ContentTapDelegate], which is given an
+  /// opportunity to respond to taps on content before the editor, itself.
+  ///
+  /// A [ContentTapDelegate] might be used, for example, to launch a URL
+  /// when a user taps on a link.
+  final SuperReaderContentTapDelegateFactory? contentTapDelegateFactory;
 
   /// Color of the text selection drag handles on Android.
   final Color? androidHandleColor;
@@ -156,9 +172,8 @@ class SuperReader extends StatefulWidget {
 }
 
 class SuperReaderState extends State<SuperReader> {
-  late DocumentEditor _editor;
   @visibleForTesting
-  Document get document => _editor.document;
+  Document get document => widget.document;
 
   late final ValueNotifier<DocumentSelection?> _selection;
   @visibleForTesting
@@ -172,9 +187,11 @@ class SuperReaderState extends State<SuperReader> {
   late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
   late SingleColumnLayoutSelectionStyler _docLayoutSelectionStyler;
 
+  ContentTapDelegate? _contentTapDelegate;
+
   late AutoScrollController _autoScrollController;
 
-  late ReaderContext _readerContext;
+  late SuperReaderContext _readerContext;
 
   @visibleForTesting
   FocusNode get focusNode => _focusNode;
@@ -183,7 +200,6 @@ class SuperReaderState extends State<SuperReader> {
   @override
   void initState() {
     super.initState();
-    _editor = _ReadOnlyDocumentEditor(document: widget.document);
     _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
@@ -192,12 +208,7 @@ class SuperReaderState extends State<SuperReader> {
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
-    _readerContext = ReaderContext(
-      document: widget.document,
-      getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-      selection: _selection,
-      scrollController: _autoScrollController,
-    );
+    _createReaderContext();
 
     _createLayoutPresenter();
   }
@@ -206,12 +217,39 @@ class SuperReaderState extends State<SuperReader> {
   void didUpdateWidget(SuperReader oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.document != oldWidget.document) {
-      _editor = _ReadOnlyDocumentEditor(document: widget.document);
-    }
     if (widget.selection != oldWidget.selection) {
       _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
     }
+    if (widget.document != oldWidget.document ||
+        widget.selection != oldWidget.selection ||
+        widget.scrollController != oldWidget.scrollController) {
+      _createReaderContext();
+    }
+  }
+
+  @override
+  void dispose() {
+    _contentTapDelegate?.dispose();
+
+    _focusNode.removeListener(_onFocusChange);
+    if (widget.focusNode == null) {
+      // We are using our own private FocusNode. Dispose it.
+      _focusNode.dispose();
+    }
+
+    super.dispose();
+  }
+
+  void _createReaderContext() {
+    _readerContext = SuperReaderContext(
+      document: widget.document,
+      getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+      selection: _selection,
+      scrollController: _autoScrollController,
+    );
+
+    _contentTapDelegate?.dispose();
+    _contentTapDelegate = widget.contentTapDelegateFactory?.call(_readerContext);
   }
 
   void _createLayoutPresenter() {
@@ -224,13 +262,13 @@ class SuperReaderState extends State<SuperReader> {
     _docLayoutPerComponentBlockStyler = SingleColumnLayoutCustomComponentStyler();
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
-      document: _editor.document,
+      document: widget.document,
       selection: _selection,
       selectionStyles: widget.selectionStyles,
     );
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
-      document: _editor.document,
+      document: widget.document,
       componentBuilders: widget.componentBuilders,
       pipeline: [
         _docStylesheetStyler,
@@ -313,11 +351,13 @@ class SuperReaderState extends State<SuperReader> {
           documentKey: _docLayoutKey,
           getDocumentLayout: () => _readerContext.documentLayout,
           selection: _readerContext.selection,
+          contentTapHandler: _contentTapDelegate,
           scrollController: widget.scrollController,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
+          overlayController: widget.overlayController,
           child: documentLayout,
         );
       case DocumentGestureMode.iOS:
@@ -326,12 +366,14 @@ class SuperReaderState extends State<SuperReader> {
           document: _readerContext.document,
           getDocumentLayout: () => _readerContext.documentLayout,
           selection: _readerContext.selection,
+          contentTapHandler: _contentTapDelegate,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
+          overlayController: widget.overlayController,
           child: documentLayout,
         );
     }
@@ -366,6 +408,7 @@ class SuperReaderState extends State<SuperReader> {
                 child: ReadOnlyDocumentMouseInteractor(
                   focusNode: _focusNode,
                   readerContext: _readerContext,
+                  contentTapHandler: _contentTapDelegate,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),
@@ -394,30 +437,65 @@ class SuperReaderState extends State<SuperReader> {
   }
 }
 
-/// A [DocumentEditor] that doesn't edit the given [Document].
-///
-/// A [_ReadOnlyDocumentEditor] can be used to display a [SuperReader], while
-/// forcibly preventing any changes to the underlying document.
-class _ReadOnlyDocumentEditor implements DocumentEditor {
-  const _ReadOnlyDocumentEditor({
-    required this.document,
-  });
-
-  @override
-  final Document document;
-
-  @override
-  void executeCommand(EditorCommand command) {
-    if (kDebugMode) {
-      throw Exception("Attempted to edit a read-only document: $command");
-    }
-  }
-}
-
 /// Builds widgets that are displayed at the same position and size as
 /// the document layout within a [SuperReader].
 abstract class ReadOnlyDocumentLayerBuilder {
-  Widget build(BuildContext context, ReaderContext documentContext);
+  Widget build(BuildContext context, SuperReaderContext documentContext);
+}
+
+typedef SuperReaderContentTapDelegateFactory = ContentTapDelegate Function(SuperReaderContext editContext);
+
+SuperReaderLaunchLinkTapHandler superReaderLaunchLinkTapHandlerFactory(SuperReaderContext readerContext) =>
+    SuperReaderLaunchLinkTapHandler(readerContext.document);
+
+/// A [ContentTapDelegate] that opens links when the user taps text with
+/// a [LinkAttribution].
+class SuperReaderLaunchLinkTapHandler extends ContentTapDelegate {
+  SuperReaderLaunchLinkTapHandler(this.document);
+
+  final Document document;
+
+  @override
+  MouseCursor? mouseCursorForContentHover(DocumentPosition hoverPosition) {
+    final link = _getLinkAtPosition(hoverPosition);
+    return link != null ? SystemMouseCursors.click : null;
+  }
+
+  @override
+  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+    final link = _getLinkAtPosition(tapPosition);
+    if (link != null) {
+      // The user tapped on a link. Launch it.
+      UrlLauncher.instance.launchUrl(link);
+      return TapHandlingInstruction.halt;
+    } else {
+      // The user didn't tap on a link.
+      return TapHandlingInstruction.continueHandling;
+    }
+  }
+
+  Uri? _getLinkAtPosition(DocumentPosition position) {
+    final nodePosition = position.nodePosition;
+    if (nodePosition is! TextNodePosition) {
+      return null;
+    }
+
+    final textNode = document.getNodeById(position.nodeId);
+    if (textNode is! TextNode) {
+      readerGesturesLog
+          .shout("Received a report of a tap on a TextNodePosition, but the node with that ID is a: $textNode");
+      return null;
+    }
+
+    final tappedAttributions = textNode.text.getAllAttributionsAt(nodePosition.offset);
+    for (final tappedAttribution in tappedAttributions) {
+      if (tappedAttribution is LinkAttribution) {
+        return tappedAttribution.url;
+      }
+    }
+
+    return null;
+  }
 }
 
 /// Creates visual components for the standard [SuperReader].

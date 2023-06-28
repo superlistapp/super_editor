@@ -95,10 +95,10 @@ void main() {
       const screenSizeSmaller = Size(250.0, 400.0);
 
       testWidgets('moves caret to next line when available width contracts', (WidgetTester tester) async {
-        tester.binding.window
-          ..devicePixelRatioTestValue = 1.0
+        tester.view
+          ..devicePixelRatio = 1.0
           ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSizeBigger;
+          ..physicalSize = screenSizeBigger;
 
         final docKey = GlobalKey();
         await tester.pumpWidget(
@@ -131,10 +131,10 @@ void main() {
       });
 
       testWidgets('moves caret to preceding line when available width expands', (WidgetTester tester) async {
-        tester.binding.window
-          ..devicePixelRatioTestValue = 1.0
+        tester.view
+          ..devicePixelRatio = 1.0
           ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSizeSmaller;
+          ..physicalSize = screenSizeSmaller;
 
         final docKey = GlobalKey();
         await tester.pumpWidget(
@@ -173,10 +173,10 @@ void main() {
 
       group('on Android', () {
         testWidgets('from portrait to landscape updates caret position', (WidgetTester tester) async {
-          tester.binding.window
-            ..devicePixelRatioTestValue = 1.0
+          tester.view
+            ..devicePixelRatio = 1.0
             ..platformDispatcher.textScaleFactorTestValue = 1.0
-            ..physicalSizeTestValue = screenSizePortrait;
+            ..physicalSize = screenSizePortrait;
 
           final docKey = GlobalKey();
           await tester.pumpWidget(
@@ -198,7 +198,7 @@ void main() {
           expect(initialCaretOffset, expectedInitialCaretOffset);
 
           // Make the window wider, pushing the caret text position up a line.
-          tester.binding.window.physicalSizeTestValue = screenSizeLandscape;
+          tester.view.physicalSize = screenSizeLandscape;
           await tester.pumpAndSettle();
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
@@ -209,10 +209,10 @@ void main() {
         });
 
         testWidgets('from landscape to portrait updates caret position', (WidgetTester tester) async {
-          tester.binding.window
-            ..devicePixelRatioTestValue = 1.0
+          tester.view
+            ..devicePixelRatio = 1.0
             ..platformDispatcher.textScaleFactorTestValue = 1.0
-            ..physicalSizeTestValue = screenSizeLandscape;
+            ..physicalSize = screenSizeLandscape;
 
           final docKey = GlobalKey();
           await tester.pumpWidget(
@@ -234,7 +234,7 @@ void main() {
           expect(initialCaretOffset, expectedInitialCaretOffset);
 
           // Make the window more narrow, pushing the caret text position up a line.
-          tester.binding.window.physicalSizeTestValue = screenSizePortrait;
+          tester.view.physicalSize = screenSizePortrait;
           await tester.pumpAndSettle();
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
@@ -247,10 +247,10 @@ void main() {
 
       group('on iOS', () {
         testWidgets('from portrait to landscape updates caret position', (WidgetTester tester) async {
-          tester.binding.window
-            ..devicePixelRatioTestValue = 1.0
+          tester.view
+            ..devicePixelRatio = 1.0
             ..platformDispatcher.textScaleFactorTestValue = 1.0
-            ..physicalSizeTestValue = screenSizePortrait;
+            ..physicalSize = screenSizePortrait;
 
           final docKey = GlobalKey();
           await tester.pumpWidget(
@@ -272,7 +272,7 @@ void main() {
           expect(initialOffset, expectedInitialCaretOffset);
 
           // Make the window wider, pushing the caret text position up a line.
-          tester.binding.window.physicalSizeTestValue = screenSizeLandscape;
+          tester.view.physicalSize = screenSizeLandscape;
           await tester.pumpAndSettle();
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
@@ -283,10 +283,10 @@ void main() {
         });
 
         testWidgets('from landscape to portrait updates caret position', (WidgetTester tester) async {
-          tester.binding.window
-            ..devicePixelRatioTestValue = 1.0
+          tester.view
+            ..devicePixelRatio = 1.0
             ..platformDispatcher.textScaleFactorTestValue = 1.0
-            ..physicalSizeTestValue = screenSizeLandscape;
+            ..physicalSize = screenSizeLandscape;
 
           final docKey = GlobalKey();
           await tester.pumpWidget(
@@ -308,7 +308,7 @@ void main() {
           expect(initialOffset, expectedInitialCaretOffset);
 
           // Make the window more narrow, pushing the caret text position down a line.
-          tester.binding.window.physicalSizeTestValue = screenSizePortrait;
+          tester.view.physicalSize = screenSizePortrait;
           await tester.pumpAndSettle();
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
@@ -323,12 +323,17 @@ void main() {
 }
 
 Widget _createTestApp({required DocumentGestureMode gestureMode, required GlobalKey docKey}) {
-  final editor = _createTestDocEditor();
+  final doc = _createTestDocument();
+  final composer = MutableDocumentComposer();
+  final editor = createDefaultDocumentEditor(document: doc, composer: composer);
+
   return MaterialApp(
     home: Scaffold(
       body: SuperEditor(
         documentLayoutKey: docKey,
         editor: editor,
+        document: doc,
+        composer: composer,
         gestureMode: gestureMode,
       ),
     ),
@@ -386,10 +391,6 @@ Offset _computeExpectedMobileCaretOffset(WidgetTester tester, GlobalKey docKey, 
   return Offset(extentRect.left, extentRect.top);
 }
 
-DocumentEditor _createTestDocEditor() {
-  return DocumentEditor(document: _createTestDocument());
-}
-
 MutableDocument _createTestDocument() {
   return MutableDocument(
     nodes: [
@@ -420,7 +421,7 @@ Future<void> _resizeWindow({
     resizedWidth += widthShrinkPerFrame;
     resizedHeight += heightShrinkPerFrame;
     final currentScreenSize = (initialScreenSize - Offset(resizedWidth, resizedHeight)) as Size;
-    tester.binding.window.physicalSizeTestValue = currentScreenSize;
+    tester.view.physicalSize = currentScreenSize;
     await tester.pumpAndSettle();
   }
 }

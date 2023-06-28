@@ -22,30 +22,32 @@ import 'package:super_editor/super_editor.dart';
 /// The layout is implemented with a [CustomScrollView] and relevant `Sliver`s.
 class TaskAndChatWithCustomScrollViewDemo extends StatefulWidget {
   @override
-  _TaskAndChatWithCustomScrollViewDemoState createState() => _TaskAndChatWithCustomScrollViewDemoState();
+  State<TaskAndChatWithCustomScrollViewDemo> createState() => _TaskAndChatWithCustomScrollViewDemoState();
 }
 
 class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCustomScrollViewDemo> {
   final _scrollViewportKey = GlobalKey();
 
-  late DocumentEditor _editor;
+  late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
+  late Editor _editor;
 
   @override
   void initState() {
     super.initState();
 
-    _editor = DocumentEditor(
-      document: MutableDocument(
-        nodes: [
-          ParagraphNode(
-            id: '1234',
-            text: AttributedText(
-                text:
-                    'Notice that when this document is short enough, the messages are pushed to the bottom of the viewport.\n\nTry adding more content to see things scroll.'),
-          )
-        ],
-      ),
+    _doc = MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: '1234',
+          text: AttributedText(
+              text:
+                  'Notice that when this document is short enough, the messages are pushed to the bottom of the viewport.\n\nTry adding more content to see things scroll.'),
+        )
+      ],
     );
+    _composer = MutableDocumentComposer();
+    _editor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -63,6 +65,8 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
                 SliverToBoxAdapter(
                   child: SuperEditor(
                     editor: _editor,
+                    document: _doc,
+                    composer: _composer,
                     stylesheet: defaultStylesheet.copyWith(
                       documentPadding: const EdgeInsets.all(48),
                     ),
@@ -108,13 +112,13 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
   }
 
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 48, vertical: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Task and chat scrolling',
             style: TextStyle(
               color: Color(0xFF444444),
@@ -122,9 +126,9 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
-            children: const [
+            children: [
               Icon(
                 Icons.star,
                 color: Color(0xFFDDDDDD),
@@ -144,7 +148,7 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
         ],
       ),
     );

@@ -10,6 +10,33 @@ void main() {
         await _pumpThreeLinePlainText(tester);
         await screenMatchesGolden(tester, "SuperText-reference-render");
       });
+
+      testGoldens("applies textScaleFactor", (tester) async {
+        await tester.pumpWidget(
+          _buildScaffold(
+            // ignore: prefer_const_constructors
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: const [
+                Expanded(
+                  child: SuperText(
+                    richText: _threeLineSpan,
+                    textScaleFactor: 1.0,
+                  ),
+                ),
+                Expanded(
+                  child: SuperText(
+                    richText: _threeLineSpan,
+                    textScaleFactor: 2.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
+        await screenMatchesGolden(tester, "SuperText-text-scale-factor");
+      });
     });
   });
 }
@@ -49,5 +76,6 @@ Widget _buildScaffold({
         child: child,
       ),
     ),
+    debugShowCheckedModeBanner: false,
   );
 }

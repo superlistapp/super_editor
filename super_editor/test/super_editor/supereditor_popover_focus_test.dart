@@ -14,7 +14,7 @@ void main() {
       final editContext = await tester
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .autoFocus(true)
           .pump();
 
@@ -30,7 +30,13 @@ void main() {
           nodePosition: TextNodePosition(offset: 20),
         ),
       );
-      editContext.editContext.composer.selection = documentSelection;
+      editContext.editContext.editor.execute([
+        const ChangeSelectionRequest(
+          documentSelection,
+          SelectionChangeType.place,
+          SelectionReason.userInteraction,
+        ),
+      ]);
       await tester.pumpAndSettle();
       expect(SuperEditorInspector.findDocumentSelection(), documentSelection);
 
@@ -66,7 +72,13 @@ void main() {
           nodePosition: TextNodePosition(offset: 20),
         ),
       );
-      editContext.editContext.composer.selection = documentSelection;
+      editContext.editContext.editor.execute([
+        const ChangeSelectionRequest(
+          documentSelection,
+          SelectionChangeType.place,
+          SelectionReason.userInteraction,
+        ),
+      ]);
       await tester.pumpAndSettle();
       expect(SuperEditorInspector.findDocumentSelection(), documentSelection);
 

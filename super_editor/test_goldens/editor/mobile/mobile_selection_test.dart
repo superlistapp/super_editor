@@ -425,7 +425,7 @@ void main() {
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: "1",
-                  nodePosition: TextNodePosition(offset: 28, affinity: TextAffinity.upstream),
+                  nodePosition: TextNodePosition(offset: 28),
                 ),
               ),
             );
@@ -476,7 +476,7 @@ void main() {
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: "1",
-                  nodePosition: TextNodePosition(offset: 39, affinity: TextAffinity.upstream),
+                  nodePosition: TextNodePosition(offset: 39),
                 ),
               ),
             );
@@ -723,20 +723,23 @@ void _testParagraphSelection(
   final docKey = GlobalKey();
 
   testGoldens(description, (tester) async {
-    tester.binding.window
-      ..physicalSizeTestValue = const Size(800, 200)
-      ..devicePixelRatioTestValue = 1.0;
+    tester.view
+      ..physicalSize = const Size(800, 200)
+      ..devicePixelRatio = 1.0;
     tester.binding.platformDispatcher.textScaleFactorTestValue = 1.0;
 
     final dragLine = ValueNotifier<_Line?>(null);
 
-    final composer = DocumentComposer();
+    final document = _createSingleParagraphDoc();
+    final composer = MutableDocumentComposer();
+    final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
     final content = _buildScaffold(
       dragLine: dragLine,
       child: SuperEditor(
         documentLayoutKey: docKey,
-        editor: _createSingleParagraphEditor(),
+        editor: editor,
+        document: document,
         composer: composer,
         gestureMode: platform,
         stylesheet: Stylesheet(
@@ -758,7 +761,7 @@ void _testParagraphSelection(
     // Compare the golden
     await screenMatchesGolden(tester, goldenName);
 
-    tester.binding.window.clearPhysicalSizeTestValue();
+    tester.view.resetPhysicalSize();
   });
 }
 
@@ -788,10 +791,6 @@ TextStyle _textStyleBuilder(attributions) {
     fontSize: 16,
     height: 1.4,
   );
-}
-
-DocumentEditor _createSingleParagraphEditor() {
-  return DocumentEditor(document: _createSingleParagraphDoc());
 }
 
 MutableDocument _createSingleParagraphDoc() {

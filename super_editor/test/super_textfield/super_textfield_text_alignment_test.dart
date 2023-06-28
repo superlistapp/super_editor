@@ -1,190 +1,13 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 
-import '../test_tools.dart';
+import '../../test/test_tools.dart';
 
-void main() {  
-  // These golden tests are being skipped on macOS because the text seems to be
-  // a bit bigger in this platform, causing the tests to fail.
+void main() {
   group('SuperTextField', () {
-    group('single line', () {
-      group('displays different alignments', () {
-        testGoldens('(on Android)', (tester) async {
-          await _pumpScaffold(
-            tester,
-            children: [
-              _buildSuperTextField(
-                text: "Left",
-                textAlign: TextAlign.left,
-                maxLines: 1,
-                configuration: SuperTextFieldPlatformConfiguration.android,
-              ),
-              _buildSuperTextField(
-                text: "Center",
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                configuration: SuperTextFieldPlatformConfiguration.android,
-              ),
-              _buildSuperTextField(
-                text: "Right",
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                configuration: SuperTextFieldPlatformConfiguration.android,
-              ),
-            ],
-          );
-
-          await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_android');
-        }, skip: Platform.isMacOS);
-
-        testGoldens('(on iOS)', (tester) async {
-          await _pumpScaffold(
-            tester,
-            children: [
-              _buildSuperTextField(
-                text: "Left",
-                textAlign: TextAlign.left,
-                maxLines: 1,
-                configuration: SuperTextFieldPlatformConfiguration.iOS,
-              ),
-              _buildSuperTextField(
-                text: "Center",
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                configuration: SuperTextFieldPlatformConfiguration.iOS,
-              ),
-              _buildSuperTextField(
-                text: "Right",
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                configuration: SuperTextFieldPlatformConfiguration.iOS,
-              ),
-            ],
-          );
-
-          await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_ios');
-        }, skip: Platform.isMacOS);
-
-        testGoldens('(on Desktop)', (tester) async {
-          await _pumpScaffold(
-            tester,
-            children: [
-              _buildSuperTextField(
-                text: "Left",
-                textAlign: TextAlign.left,
-                maxLines: 1,
-                configuration: SuperTextFieldPlatformConfiguration.desktop,
-              ),
-              _buildSuperTextField(
-                text: "Center",
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                configuration: SuperTextFieldPlatformConfiguration.desktop,
-              ),
-              _buildSuperTextField(
-                text: "Right",
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                configuration: SuperTextFieldPlatformConfiguration.desktop,
-              ),
-            ],
-          );
-
-          await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_desktop');
-        }, skip: Platform.isMacOS);
-      });
-    });
-
     group('multi line', () {
       const multilineText = 'First Line\nSecond Line\nThird Line\nFourth Line';
-      group('displays different alignments', () {
-        testGoldens('(on Android)', (tester) async {
-          await _pumpScaffold(
-            tester,
-            children: [
-              _buildSuperTextField(
-                text: multilineText,
-                textAlign: TextAlign.left,
-                maxLines: 4,
-                configuration: SuperTextFieldPlatformConfiguration.android,
-              ),
-              _buildSuperTextField(
-                text: multilineText,
-                textAlign: TextAlign.center,
-                maxLines: 4,
-                configuration: SuperTextFieldPlatformConfiguration.android,
-              ),
-              _buildSuperTextField(
-                text: multilineText,
-                textAlign: TextAlign.right,
-                maxLines: 4,
-                configuration: SuperTextFieldPlatformConfiguration.android,
-              ),
-            ],
-          );
-
-          await screenMatchesGolden(tester, 'super_textfield_alignments_multiline_android');
-        }, skip: Platform.isMacOS);
-
-        testGoldens('(on iOS)', (tester) async {
-          await _pumpScaffold(
-            tester,
-            children: [
-              _buildSuperTextField(
-                text: multilineText,
-                textAlign: TextAlign.left,
-                maxLines: 4,
-                configuration: SuperTextFieldPlatformConfiguration.iOS,
-              ),
-              _buildSuperTextField(
-                text: multilineText,
-                textAlign: TextAlign.center,
-                maxLines: 4,
-                configuration: SuperTextFieldPlatformConfiguration.iOS,
-              ),
-              _buildSuperTextField(
-                text: multilineText,
-                textAlign: TextAlign.right,
-                maxLines: 4,
-                configuration: SuperTextFieldPlatformConfiguration.iOS,
-              ),
-            ],
-          );
-
-          await screenMatchesGolden(tester, 'super_textfield_alignments_multiline_ios');
-        }, skip: Platform.isMacOS);
-
-        testGoldens('(on Desktop)', (tester) async {
-          await _pumpScaffold(
-            tester,
-            children: [
-              _buildSuperTextField(
-                text: multilineText,
-                textAlign: TextAlign.left,
-                maxLines: 4,
-                configuration: SuperTextFieldPlatformConfiguration.desktop,
-              ),
-              _buildSuperTextField(
-                text: multilineText,
-                textAlign: TextAlign.center,
-                maxLines: 4,
-                configuration: SuperTextFieldPlatformConfiguration.desktop,
-              ),
-              _buildSuperTextField(
-                text: multilineText,
-                textAlign: TextAlign.right,
-                maxLines: 4,
-                configuration: SuperTextFieldPlatformConfiguration.desktop,
-              ),
-            ],
-          );
-
-          await screenMatchesGolden(tester, 'super_textfield_alignments_multiline_desktop');
-        });
-      }, skip: Platform.isMacOS);
 
       testWidgetsOnAllPlatforms('makes scrollview fill all the field width', (tester) async {
         await _pumpScaffold(
@@ -212,8 +35,8 @@ void main() {
 
 Widget _buildSuperTextField({
   required String text,
-  required TextAlign textAlign,  
-  SuperTextFieldPlatformConfiguration? configuration,  
+  required TextAlign textAlign,
+  SuperTextFieldPlatformConfiguration? configuration,
   int? maxLines,
 }) {
   final controller = AttributedTextEditingController(
@@ -227,8 +50,8 @@ Widget _buildSuperTextField({
       textController: controller,
       textAlign: textAlign,
       maxLines: maxLines,
-      minLines: 1,      
-      lineHeight: 20,      
+      minLines: 1,
+      lineHeight: 20,
       textStyleBuilder: (_) {
         return const TextStyle(
           color: Colors.black,

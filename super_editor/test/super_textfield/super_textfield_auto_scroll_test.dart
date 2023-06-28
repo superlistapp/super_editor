@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:meta/meta.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/metrics.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -142,18 +143,23 @@ Future<void> _pumpTestApp(
       ),
     ),
   );
+
+  // A SuperTextField configured with maxLines can't render in the first frame.
+  // Ask another frame, so the text field can be found by the finder.
+  await tester.pump();
 }
 
+@isTestGroup
 void _testWidgetsOnMobileWithKeyboard(
   String description,
   Future<void> Function(WidgetTester tester, _KeyboardToggle keyboardToggle) test,
 ) {
   testWidgetsOnMobile(description, (tester) async {
-    tester.binding.window
-      ..physicalSizeTestValue = screenSizeWithoutKeyboard
+    tester.view
+      ..physicalSize = screenSizeWithoutKeyboard
       ..platformDispatcher.textScaleFactorTestValue = 1.0
-      ..devicePixelRatioTestValue = 1.0;
-    addTearDown(() => tester.binding.window.clearAllTestValues());
+      ..devicePixelRatio = 1.0;
+    addTearDown(() => tester.platformDispatcher.clearAllTestValues());
 
     final keyboardToggle = _KeyboardToggle(
       tester: tester,
@@ -190,7 +196,7 @@ class _KeyboardToggle {
       resizedWidth += widthShrinkPerFrame;
       resizedHeight += heightShrinkPerFrame;
       final currentScreenSize = (sizeWithoutKeyboard - Offset(resizedWidth, resizedHeight)) as Size;
-      tester.binding.window.physicalSizeTestValue = currentScreenSize;
+      tester.view.physicalSize = currentScreenSize;
       await tester.pumpAndSettle();
     }
   }

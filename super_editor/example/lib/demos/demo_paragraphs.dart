@@ -5,18 +5,20 @@ import 'package:super_editor/super_editor.dart';
 /// Example of various paragraph configurations in an editor.
 class ParagraphsDemo extends StatefulWidget {
   @override
-  _ParagraphsDemoState createState() => _ParagraphsDemoState();
+  State<ParagraphsDemo> createState() => _ParagraphsDemoState();
 }
 
 class _ParagraphsDemoState extends State<ParagraphsDemo> {
-  late Document _doc;
-  late DocumentEditor _docEditor;
+  late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
+  late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createInitialDocument();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -28,6 +30,8 @@ class _ParagraphsDemoState extends State<ParagraphsDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
+      document: _doc,
+      composer: _composer,
       stylesheet: defaultStylesheet.copyWith(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
       ),
@@ -35,11 +39,11 @@ class _ParagraphsDemoState extends State<ParagraphsDemo> {
   }
 }
 
-Document _createInitialDocument() {
+MutableDocument _createInitialDocument() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'Various paragraph formations',
         ),
@@ -48,13 +52,13 @@ Document _createInitialDocument() {
         },
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'This is a short\nparagraph of text\nthat is left aligned',
         ),
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'This is a short\nparagraph of text\nthat is center aligned',
         ),
@@ -63,7 +67,7 @@ Document _createInitialDocument() {
         },
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'This is a short\nparagraph of text\nthat is right aligned',
         ),
@@ -72,7 +76,7 @@ Document _createInitialDocument() {
         },
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text:
               'orem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',

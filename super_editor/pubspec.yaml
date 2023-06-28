@@ -3,17 +3,17 @@ description: Configurable, composable, extensible text editor and document rende
 publish_to: 'none'
 
 screenshots:
-  - description: 'SuperEditor on Mac desktop'
+  - description: "SuperEditor on Mac desktop"
     path: doc/marketing/screenshot_mac_desktop.png
-  - description: 'SuperEditor dark mode'
+  - description: "SuperEditor dark mode"
     path: doc/marketing/screenshot_mac_desktop_dark-mode.png
-  - description: 'SuperEditor text selection'
+  - description: "SuperEditor text selection"
     path: doc/marketing/screenshot_mac_desktop_text-selection.png
-  - description: 'SuperEditor text styles'
+  - description: "SuperEditor text styles"
     path: doc/marketing/screenshot_mac_desktop_bold-selection.png
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: ">=3.0.0 <4.0.0"
   flutter: ">=1.17.0"
 
 dependencies:
@@ -35,7 +35,9 @@ dependencies:
       url: https://github.com/simpleclub-extended/super_editor
       path: super_text_layout
       ref: simpleclub-stable
+  url_launcher: ^6.1.9
   uuid: ^3.0.3
+  overlord: ^0.0.3
 
   # Dependencies for testing tools that we ship with super_editor
   flutter_test:
@@ -49,6 +51,8 @@ dev_dependencies:
   super_editor_markdown:
     path: ../super_editor_markdown
   text_table: ^4.0.1
+  meta: ^1.8.0
+  args: ^2.3.1
 
 flutter:
   # no Flutter configuration

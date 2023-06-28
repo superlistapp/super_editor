@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -22,9 +24,10 @@ import '../core/document_selection.dart';
 /// Returns `true` if the selection is moved and `false` otherwise, e.g., there
 /// are no selectable nodes in the document.
 bool moveSelectionToNearestSelectableNode({
+  required Editor editor,
   required Document document,
   required DocumentLayoutResolver documentLayoutResolver,
-  required ValueNotifier<DocumentSelection?> selection,
+  required DocumentSelection? currentSelection,
   required DocumentNode startingNode,
   bool expand = false,
 }) {
@@ -60,10 +63,22 @@ bool moveSelectionToNearestSelectableNode({
 
   if (expand) {
     // Selection should be expanded.
-    selection.value = selection.value!.expandTo(newExtent);
+    editor.execute([
+      ChangeSelectionRequest(
+        currentSelection!.expandTo(newExtent),
+        SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
+      ),
+    ]);
   } else {
     // Selection should be replaced by new collapsed position.
-    selection.value = DocumentSelection.collapsed(position: newExtent);
+    editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(position: newExtent),
+        SelectionChangeType.place,
+        SelectionReason.userInteraction,
+      ),
+    ]);
   }
 
   return true;

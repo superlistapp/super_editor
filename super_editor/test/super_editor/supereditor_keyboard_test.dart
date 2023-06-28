@@ -13,7 +13,7 @@ void main() {
       group('moves caret', () {
         testAllInputsOnDesktop("left by one character when LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
@@ -24,7 +24,7 @@ void main() {
 
         testAllInputsOnDesktop("left by one character and expands when SHIFT + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
@@ -35,7 +35,7 @@ void main() {
 
         testAllInputsOnDesktop("right by one character when RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
@@ -46,7 +46,7 @@ void main() {
 
         testAllInputsOnDesktop("right by one character and expands when SHIFT + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
@@ -57,7 +57,7 @@ void main() {
 
         testAllInputsOnMac("to beginning of word when ALT + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -68,7 +68,7 @@ void main() {
 
         testAllInputsOnMac("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -79,7 +79,7 @@ void main() {
 
         testAllInputsOnMac("to end of word when ALT + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -90,7 +90,7 @@ void main() {
 
         testAllInputsOnMac("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -101,7 +101,7 @@ void main() {
 
         testAllInputsOnMac("to beginning of line when CMD + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -112,7 +112,7 @@ void main() {
 
         testAllInputsOnMac("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -123,7 +123,7 @@ void main() {
 
         testAllInputsOnMac("to end of line when CMD + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -134,7 +134,7 @@ void main() {
 
         testAllInputsOnMac("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -148,7 +148,7 @@ void main() {
 
         testAllInputsOnWindowsAndLinux("to beginning of word when CTL + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -159,7 +159,7 @@ void main() {
 
         testAllInputsOnWindowsAndLinux("to beginning of word and expands when SHIFT + CTL + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -170,7 +170,7 @@ void main() {
 
         testAllInputsOnWindowsAndLinux("to end of word when CTL + Right_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -181,7 +181,7 @@ void main() {
 
         testAllInputsOnWindowsAndLinux("to end of word and expands when SHIFT + CTL + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -192,7 +192,7 @@ void main() {
 
         testAllInputsOnDesktop("up one line when UP_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
@@ -203,7 +203,7 @@ void main() {
 
         testAllInputsOnDesktop("up one line and expands when SHIFT + UP_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
@@ -214,7 +214,7 @@ void main() {
 
         testAllInputsOnDesktop("down one line when DOWN_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
@@ -225,7 +225,7 @@ void main() {
 
         testAllInputsOnDesktop("down one line and expands when SHIFT + DOWN_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
@@ -236,7 +236,7 @@ void main() {
 
         testAllInputsOnDesktop("to beginning of line when UP_ARROW is pressed at top of document", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
@@ -247,7 +247,7 @@ void main() {
 
         testAllInputsOnDesktop("to beginning of line and expands when SHIFT + UP_ARROW is pressed at top of document", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
@@ -258,7 +258,7 @@ void main() {
 
         testAllInputsOnDesktop("to end of line when DOWN_ARROW is pressed at end of document", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
@@ -269,7 +269,7 @@ void main() {
 
         testAllInputsOnDesktop("end of line and expands when SHIFT + DOWN_ARROW is pressed at end of document", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
@@ -282,7 +282,402 @@ void main() {
   });
 
   group('SuperEditor software keyboard', () {
-    testWidgetsOnIos('pressing tab indent list', (tester) async {
+    group('in automatic control mode', () {
+      testWidgetsOnAndroid('clears selection when it closes', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
+        final testContext = await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: true,
+                clearSelectionWhenImeConnectionCloses: true,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: true,
+              ),
+            )
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => MaterialApp(
+                home: Scaffold(
+                  resizeToAvoidBottomInset: false,
+                  body: superEditor,
+                ),
+              ),
+            )
+            .pump();
+
+        // Place the caret in Super Editor to open the IME.
+        final nodeId = testContext.editContext.document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Ensure that the document has a selection
+        final selectionBefore = SuperEditorInspector.findDocumentSelection();
+        expect(selectionBefore, isNotNull);
+        expect(selectionBefore!.isCollapsed, isTrue);
+        expect(selectionBefore.extent.nodeId, nodeId);
+
+        // Ensure the IME is open
+        expect(keyboardController.isConnectedToIme, isTrue);
+
+        // Close the IME
+        keyboardController.close();
+        await tester.pumpAndSettle();
+
+        // Ensure the IME is closed
+        expect(keyboardController.isConnectedToIme, isFalse);
+
+        // Ensure the document selection is gone
+        expect(SuperEditorInspector.findDocumentSelection(), null);
+      });
+
+      testWidgetsOnAndroid('re-opens when selection changes', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
+        final testContext = await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: true,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: true,
+              ),
+            )
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => MaterialApp(
+                home: Scaffold(
+                  resizeToAvoidBottomInset: false,
+                  body: superEditor,
+                ),
+              ),
+            )
+            .pump();
+
+        // Place the caret in Super Editor.
+        final nodeId = testContext.editContext.document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Ensure that the document has a selection
+        final selectionBefore = SuperEditorInspector.findDocumentSelection();
+        expect(selectionBefore, isNotNull);
+        expect(selectionBefore!.isCollapsed, isTrue);
+        expect(selectionBefore.extent.nodeId, nodeId);
+
+        // Close the IME
+        keyboardController.close();
+        await tester.pumpAndSettle();
+        // Ensure the IME is closed
+        expect(keyboardController.isConnectedToIme, isFalse);
+
+        // Move the caret somewhere else.
+        await tester.placeCaretInParagraph(nodeId, 5);
+        // Ensure the selection changed.
+        expect(SuperEditorInspector.findDocumentSelection(), isNot(selectionBefore));
+        // Ensure the keyboard re-opened.
+        expect(keyboardController.isConnectedToIme, isTrue);
+
+        // Close the IME
+        keyboardController.close();
+        await tester.pumpAndSettle();
+        // Ensure the IME is closed
+        expect(keyboardController.isConnectedToIme, isFalse);
+
+        // Select a word
+        await tester.doubleTapInParagraph(nodeId, 10);
+        // Ensure the keyboard re-opened.
+        expect(keyboardController.isConnectedToIme, isTrue);
+
+        // Close the IME
+        keyboardController.close();
+        await tester.pumpAndSettle();
+        // Ensure the IME is closed
+        expect(keyboardController.isConnectedToIme, isFalse);
+
+        // Select a paragraph
+        await tester.tripleTapInParagraph(nodeId, 15);
+        // Ensure the keyboard re-opened.
+        expect(keyboardController.isConnectedToIme, isTrue);
+      });
+    });
+
+    group('in manual control mode', () {
+      testWidgetsOnAndroid('leaves selection active when it closes', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
+        final testContext = await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+                clearSelectionWhenImeConnectionCloses: false,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: false,
+              ),
+            )
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => MaterialApp(
+                home: Scaffold(
+                  resizeToAvoidBottomInset: false,
+                  body: superEditor,
+                ),
+              ),
+            )
+            .pump();
+
+        // Place the caret in Super Editor to open the IME.
+        final nodeId = testContext.editContext.document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Ensure that the document has a selection
+        final selectionBefore = SuperEditorInspector.findDocumentSelection();
+        expect(selectionBefore, isNotNull);
+        expect(selectionBefore!.isCollapsed, isTrue);
+        expect(selectionBefore.extent.nodeId, nodeId);
+
+        // Open the keyboard
+        keyboardController.open();
+        await tester.pump();
+
+        // Ensure the IME is open
+        expect(keyboardController.isConnectedToIme, isTrue);
+
+        // Close the IME
+        keyboardController.close();
+        await tester.pumpAndSettle();
+
+        // Ensure the IME is closed
+        expect(keyboardController.isConnectedToIme, isFalse);
+
+        // Ensure the document selection hasn't changed
+        expect(SuperEditorInspector.findDocumentSelection(), selectionBefore);
+      });
+
+      testWidgetsOnAndroid('stays closed when changing selection', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
+        final testContext = await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+                clearSelectionWhenImeConnectionCloses: false,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: false,
+              ),
+            )
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => MaterialApp(
+                home: Scaffold(
+                  resizeToAvoidBottomInset: false,
+                  body: superEditor,
+                ),
+              ),
+            )
+            .pump();
+
+        // Place the caret in Super Editor.
+        final nodeId = testContext.editContext.document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Ensure that the document has a selection
+        final selectionBefore = SuperEditorInspector.findDocumentSelection();
+        expect(selectionBefore, isNotNull);
+        expect(selectionBefore!.isCollapsed, isTrue);
+        expect(selectionBefore.extent.nodeId, nodeId);
+
+        // Open the keyboard
+        keyboardController.open();
+        await tester.pump();
+
+        // Ensure the IME is open
+        expect(keyboardController.isConnectedToIme, isTrue);
+
+        // Close the IME
+        keyboardController.close();
+        await tester.pumpAndSettle();
+
+        // Ensure the IME is closed
+        expect(keyboardController.isConnectedToIme, isFalse);
+
+        // Move the caret somewhere else.
+        await tester.placeCaretInParagraph(nodeId, 5);
+        // Ensure the selection changed.
+        expect(SuperEditorInspector.findDocumentSelection()!.extent, isNot(selectionBefore.extent));
+        // Ensure the keyboard is still closed.
+        expect(keyboardController.isConnectedToIme, isFalse);
+
+        // Select a word
+        await tester.doubleTapInParagraph(nodeId, 10);
+        // Ensure the keyboard is still closed.
+        expect(keyboardController.isConnectedToIme, isFalse);
+
+        // Select a paragraph
+        await tester.tripleTapInParagraph(nodeId, 15);
+        // Ensure the keyboard is still closed.
+        expect(keyboardController.isConnectedToIme, isFalse);
+      });
+
+      testWidgetsOnAndroid('opens when requested after previously closing', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
+        final testContext = await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+                clearSelectionWhenImeConnectionCloses: false,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: false,
+              ),
+            )
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => MaterialApp(
+                home: Scaffold(
+                  resizeToAvoidBottomInset: false,
+                  body: superEditor,
+                ),
+              ),
+            )
+            .pump();
+
+        // Place the caret in Super Editor.
+        final nodeId = testContext.editContext.document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Ensure that the document has a selection
+        final selectionBefore = SuperEditorInspector.findDocumentSelection();
+        expect(selectionBefore, isNotNull);
+        expect(selectionBefore!.isCollapsed, isTrue);
+        expect(selectionBefore.extent.nodeId, nodeId);
+
+        // Open the keyboard
+        keyboardController.open();
+        await tester.pump();
+
+        // Ensure the IME is open
+        expect(keyboardController.isConnectedToIme, isTrue);
+
+        // Close the IME
+        keyboardController.close();
+        await tester.pumpAndSettle();
+
+        // Ensure the IME is closed
+        expect(keyboardController.isConnectedToIme, isFalse);
+
+        // Re-open the IME
+        keyboardController.open();
+        await tester.pumpAndSettle();
+
+        // Ensure the IME is re-opened
+        expect(keyboardController.isConnectedToIme, isTrue);
+
+        // Ensure the selection is unchanged.
+        expect(SuperEditorInspector.findDocumentSelection(), selectionBefore);
+      });
+
+      testWidgetsOnAndroid('closes when requested before navigation', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
+        final navigationKey = GlobalKey<NavigatorState>();
+        final firstPageKey = GlobalKey();
+
+        // Display a page without SuperEditor. We'll pop() back to this page, later.
+        await tester.pumpWidget(
+          MaterialApp(
+            navigatorKey: navigationKey,
+            home: Scaffold(
+              key: firstPageKey,
+              body: const Center(
+                child: Text("Starting Page"),
+              ),
+            ),
+          ),
+        );
+        expect(find.byKey(firstPageKey), findsOneWidget);
+
+        // Push a page with SuperEditor.
+        final superEditorAndContext = tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: false,
+              ),
+            )
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => _CloseKeyboardOnDispose(
+                keyboardController: keyboardController,
+                child: Scaffold(
+                  resizeToAvoidBottomInset: false,
+                  body: superEditor,
+                ),
+              ),
+            )
+            .build();
+        navigationKey.currentState!.push(MaterialPageRoute(builder: (context) {
+          return superEditorAndContext.widget;
+        }));
+        await tester.pumpAndSettle(); // navigation transition
+
+        // Ensure the first page is no longer visible.
+        expect(find.byKey(firstPageKey), findsNothing);
+
+        // Place the caret in Super Editor.
+        final nodeId = superEditorAndContext.context.editContext.document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Ensure that the document has a selection
+        final selectionBefore = SuperEditorInspector.findDocumentSelection();
+        expect(selectionBefore, isNotNull);
+        expect(selectionBefore!.isCollapsed, isTrue);
+        expect(selectionBefore.extent.nodeId, nodeId);
+
+        // Open the keyboard
+        keyboardController.open();
+        await tester.pump();
+
+        // Ensure the IME is open
+        expect(keyboardController.isConnectedToIme, isTrue);
+
+        // Pop navigation back to the first screen.
+        navigationKey.currentState!.pop();
+        await tester.pumpAndSettle();
+
+        // Ensure first page is visible again.
+        expect(find.byKey(firstPageKey), findsOneWidget);
+
+        // By getting to this point in the test without crashing, we know that the
+        // _CloseKeyboardOnDispose widget was able to instruct the keyboard to
+        // close in its `dispose()` method. This should mean that Super Editor users
+        // can close the keyboard when their Super Editor screen navigates elsewhere.
+      });
+    });
+
+    testWidgetsOnIos('tab indents list item', (tester) async {
       await _pumpUnorderedList(tester);
 
       final node = SuperEditorInspector.getNodeAt<ListItemNode>(0);
@@ -353,6 +748,9 @@ void main() {
       // Tap to give focus to the editor.
       await tester.placeCaretInParagraph(document.nodes.first.id, 0);
 
+      // Ensure the document has a selection.
+      expect(SuperEditorInspector.findDocumentSelection(), isNotNull);
+
       // Ensure that IME input is disabled. To check IME input, we arbitrarily simulate a newline action from
       // the IME. If the editor doesn't respond to the newline, it means IME input is disabled.
       // We expect that the document content remains unchanged.
@@ -374,7 +772,7 @@ void main() {
 Future<String> _pumpSingleLineWithCaret(
   WidgetTester tester, {
   required int offset,
-  required DocumentInputSource inputSource,
+  required TextInputSource inputSource,
 }) async {
   final testContext = await tester //
       .createDocument()
@@ -382,7 +780,7 @@ Future<String> _pumpSingleLineWithCaret(
       .withInputSource(inputSource)
       .pump();
 
-  final nodeId = testContext.editContext.editor.document.nodes.first.id;
+  final nodeId = testContext.editContext.document.nodes.first.id;
 
   await tester.placeCaretInParagraph(nodeId, offset);
 
@@ -390,7 +788,7 @@ Future<String> _pumpSingleLineWithCaret(
 }
 
 Future<String> _pumpDoubleLineWithCaret(WidgetTester tester,
-    {required int offset, required DocumentInputSource inputSource}) async {
+    {required int offset, required TextInputSource inputSource}) async {
   final testContext = await tester //
       .createDocument()
       // Text indices:
@@ -400,7 +798,7 @@ Future<String> _pumpDoubleLineWithCaret(WidgetTester tester,
       .fromMarkdown("This is the first paragraph.\nThis is the second paragraph.")
       .pump();
 
-  final nodeId = testContext.editContext.editor.document.nodes.first.id;
+  final nodeId = testContext.editContext.document.nodes.first.id;
 
   await tester.placeCaretInParagraph(nodeId, offset);
 
@@ -420,7 +818,7 @@ Future<TestDocumentContext> _pumpUnorderedList(WidgetTester tester) async {
   final testContext = await tester //
       .createDocument()
       .fromMarkdown(markdown)
-      .withInputSource(DocumentInputSource.ime)
+      .withInputSource(TextInputSource.ime)
       .pump();
 
   return testContext;
@@ -443,4 +841,35 @@ DocumentSelection _selectionInParagraph(
     base: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: from, affinity: fromAffinity)),
     extent: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: to, affinity: toAffinity)),
   );
+}
+
+/// A widget that calls [SoftwareKeyboardController.close] during `dispose()`.
+///
+/// This behavior ensures that Super Editor users can close the keyboard as their
+/// Super Editor experience goes out of existence, such as navigation.
+class _CloseKeyboardOnDispose extends StatefulWidget {
+  const _CloseKeyboardOnDispose({
+    Key? key,
+    required this.keyboardController,
+    required this.child,
+  }) : super(key: key);
+
+  final SoftwareKeyboardController keyboardController;
+  final Widget child;
+
+  @override
+  State<_CloseKeyboardOnDispose> createState() => _CloseKeyboardOnDisposeState();
+}
+
+class _CloseKeyboardOnDisposeState extends State<_CloseKeyboardOnDispose> {
+  @override
+  void dispose() {
+    widget.keyboardController.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
 }

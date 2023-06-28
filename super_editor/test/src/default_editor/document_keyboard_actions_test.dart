@@ -460,7 +460,7 @@ void main() {
               final editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyC,
                     physicalKey: PhysicalKeyboardKey.keyC,
@@ -482,7 +482,7 @@ void main() {
               final editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -504,7 +504,7 @@ void main() {
               final editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                     data: FakeRawKeyEventData(
                       logicalKey: LogicalKeyboardKey.keyA,
                       physicalKey: PhysicalKeyboardKey.keyA,
@@ -534,7 +534,7 @@ void main() {
               );
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -581,7 +581,7 @@ void main() {
               );
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -632,7 +632,7 @@ void main() {
               );
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -665,16 +665,18 @@ void main() {
 
       group('key pressed with selection', () {
         testOnMac('deletes selection if backspace is pressed', () {
+          final document = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(text: 'Text with [DELETEME] selection'),
+              ),
+            ],
+          );
+
           final editContext = createEditContext(
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: '1',
-                  text: AttributedText(text: 'Text with [DELETEME] selection'),
-                ),
-              ],
-            ),
-            documentComposer: DocumentComposer(
+            document: document,
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -690,7 +692,7 @@ void main() {
 
           var result = anyCharacterOrDestructiveKeyToDeleteSelection(
             editContext: editContext,
-            keyEvent: const FakeRawKeyEvent(
+            keyEvent: const FakeRawKeyDownEvent(
               data: FakeRawKeyEventData(
                 logicalKey: LogicalKeyboardKey.backspace,
                 physicalKey: PhysicalKeyboardKey.backspace,
@@ -700,7 +702,7 @@ void main() {
 
           expect(result, ExecutionInstruction.haltExecution);
 
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
@@ -717,16 +719,17 @@ void main() {
         });
 
         testOnMac('deletes selection if delete is pressed', () {
+          final document = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(text: 'Text with [DELETEME] selection'),
+              ),
+            ],
+          );
           final editContext = createEditContext(
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: '1',
-                  text: AttributedText(text: 'Text with [DELETEME] selection'),
-                ),
-              ],
-            ),
-            documentComposer: DocumentComposer(
+            document: document,
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -742,7 +745,7 @@ void main() {
 
           var result = anyCharacterOrDestructiveKeyToDeleteSelection(
             editContext: editContext,
-            keyEvent: const FakeRawKeyEvent(
+            keyEvent: const FakeRawKeyDownEvent(
               data: FakeRawKeyEventData(
                 logicalKey: LogicalKeyboardKey.delete,
                 physicalKey: PhysicalKeyboardKey.delete,
@@ -752,7 +755,7 @@ void main() {
 
           expect(result, ExecutionInstruction.haltExecution);
 
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
@@ -769,16 +772,17 @@ void main() {
         });
 
         testOnMac('deletes selection when character key is pressed', () {
+          final document = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(text: 'Text with [DELETEME] selection'),
+              ),
+            ],
+          );
           final editContext = createEditContext(
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: '1',
-                  text: AttributedText(text: 'Text with [DELETEME] selection'),
-                ),
-              ],
-            ),
-            documentComposer: DocumentComposer(
+            document: document,
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -794,7 +798,7 @@ void main() {
 
           var result = anyCharacterOrDestructiveKeyToDeleteSelection(
             editContext: editContext,
-            keyEvent: const FakeRawKeyEvent(
+            keyEvent: const FakeRawKeyDownEvent(
               data: FakeRawKeyEventData(
                 logicalKey: LogicalKeyboardKey.keyA,
                 physicalKey: PhysicalKeyboardKey.keyA,
@@ -807,7 +811,7 @@ void main() {
           // execution so that the character is also entered by another handler.
           expect(result, ExecutionInstruction.continueExecution);
 
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
@@ -824,16 +828,17 @@ void main() {
         });
 
         testOnMac('collapses selection if escape is pressed', () {
+          final document = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(text: 'Text with [SELECTME] selection'),
+              ),
+            ],
+          );
           final editContext = createEditContext(
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: '1',
-                  text: AttributedText(text: 'Text with [SELECTME] selection'),
-                ),
-              ],
-            ),
-            documentComposer: DocumentComposer(
+            document: document,
+            documentComposer: MutableDocumentComposer(
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -849,7 +854,7 @@ void main() {
 
           final result = collapseSelectionWhenEscIsPressed(
             editContext: editContext,
-            keyEvent: const FakeRawKeyEvent(
+            keyEvent: const FakeRawKeyDownEvent(
               data: FakeRawKeyEventData(
                 logicalKey: LogicalKeyboardKey.escape,
                 physicalKey: PhysicalKeyboardKey.escape,
@@ -860,7 +865,7 @@ void main() {
           expect(result, ExecutionInstruction.haltExecution);
 
           // The text should remain the same
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [SELECTME] selection');
 
           // The selection should be collapsed
@@ -921,16 +926,17 @@ void main() {
       });
 
       testOnMac('does nothing when escape is pressed if the selection is collapsed', () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: '1',
+              text: AttributedText(text: 'This is some text'),
+            ),
+          ],
+        );
         final editContext = createEditContext(
-          document: MutableDocument(
-            nodes: [
-              ParagraphNode(
-                id: '1',
-                text: AttributedText(text: 'This is some text'),
-              ),
-            ],
-          ),
-          documentComposer: DocumentComposer(
+          document: document,
+          documentComposer: MutableDocumentComposer(
             initialSelection: const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: '1',
@@ -942,7 +948,7 @@ void main() {
 
         final result = collapseSelectionWhenEscIsPressed(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.escape,
               physicalKey: PhysicalKeyboardKey.escape,
@@ -954,7 +960,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
 
         // The text should remain the same
-        final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+        final paragraph = editContext.document.nodes.first as ParagraphNode;
         expect(paragraph.text.text, 'This is some text');
 
         // The selection should remain the same
@@ -975,15 +981,16 @@ void main() {
 }
 
 /// Pumps a [SuperEditor] with a single-paragraph document, with focus, and returns
-/// the associated [EditContext] for further inspection and control.
+/// the associated [SuperEditorContext] for further inspection and control.
 ///
 /// This particular setup is intended for caret movement testing within a single
 /// paragraph node.
-Future<EditContext> _pumpCaretMovementTestSetup(
+Future<SuperEditorContext> _pumpCaretMovementTestSetup(
   WidgetTester tester, {
   required int textOffsetInFirstNode,
 }) async {
-  final composer = DocumentComposer(
+  final document = singleParagraphDoc();
+  final composer = MutableDocumentComposer(
     initialSelection: DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: "1",
@@ -992,7 +999,7 @@ Future<EditContext> _pumpCaretMovementTestSetup(
     ),
   );
   final editContext = createEditContext(
-    document: singleParagraphDoc(),
+    document: document,
     documentComposer: composer,
   );
 
@@ -1003,6 +1010,7 @@ Future<EditContext> _pumpCaretMovementTestSetup(
         body: SuperEditor(
           focusNode: focusNode,
           editor: editContext.editor,
+          document: editContext.document,
           composer: composer,
         ),
       ),

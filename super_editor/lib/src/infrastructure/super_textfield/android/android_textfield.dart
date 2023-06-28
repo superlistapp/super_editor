@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -13,6 +13,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/input_method_eng
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../_logging.dart';
+import '../../touch_controls.dart';
 import '../metrics.dart';
 import '../styles.dart';
 import 'android_textfield.dart';
@@ -35,7 +36,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.minLines,
     this.maxLines = 1,
     this.lineHeight,
-    required this.caretColor,
+    required this.caretStyle,
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
@@ -66,8 +67,8 @@ class SuperAndroidTextField extends StatefulWidget {
   /// To easily build a hint with styled text, see [StyledHintBuilder].
   final WidgetBuilder? hintBuilder;
 
-  /// Color of the caret.
-  final Color caretColor;
+  /// The visual representation of the caret.
+  final CaretStyle caretStyle;
 
   /// Color of the selection rectangle for selected text.
   final Color selectionColor;
@@ -121,7 +122,7 @@ class SuperAndroidTextField extends StatefulWidget {
   final bool showDebugPaint;
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
-  final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
+  final Widget Function(BuildContext, AndroidEditingOverlayController, ToolbarConfig) popoverToolbarBuilder;
 
   /// Padding placed around the text content of this text field, but within the
   /// scrollable viewport.
@@ -249,7 +250,9 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       _editingOverlayController.dispose();
     });
 
-    _textEditingController.removeListener(_onTextOrSelectionChange);
+    _textEditingController
+      ..removeListener(_onTextOrSelectionChange)
+      ..detachFromIme();
     if (widget.textController == null) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         // Dispose after the current frame so that other widgets have
@@ -494,7 +497,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             padding: widget.padding,
             child: CustomListenableBuilder(
               listenable: _textEditingController,
-              builder: (context) {
+              builder: (context, _) {
                 final isTextEmpty = _textEditingController.text.text.isEmpty;
                 final showHint = widget.hintBuilder != null &&
                     ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
@@ -529,13 +532,12 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         key: _textContentKey,
         richText: textSpan,
         textAlign: widget.textAlign,
+        textScaleFactor: MediaQuery.textScaleFactorOf(context),
         userSelection: UserSelection(
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,
           ),
-          caretStyle: CaretStyle(
-            color: widget.caretColor,
-          ),
+          caretStyle: widget.caretStyle,
           selection: _textEditingController.selection,
           hasCaret: _focusNode.hasFocus,
         ),
@@ -544,7 +546,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   }
 }
 
-Widget _defaultAndroidToolbarBuilder(BuildContext context, AndroidEditingOverlayController controller) {
+Widget _defaultAndroidToolbarBuilder(
+    BuildContext context, AndroidEditingOverlayController controller, ToolbarConfig config) {
   return AndroidTextEditingFloatingToolbar(
     onCutPressed: () {
       final textController = controller.textController;

@@ -1,3 +1,46 @@
+## [x.y.z] - ???
+ * FEATURE: Delete words in IME mode (#1161)
+   * Mac: `option + backspace` deletes a word upstream, `option + delete` deletes a word downstream
+   * Windows/Linux: `control + backspace` deletes a word upstream, `control + delete` deletes a word downstream
+
+## [0.2.6] - May 28, 2023
+ * FEATURE: `SuperReader` now launches URLs when tapping a link (#1151)
+ * FIX: `SuperEditor` now correctly handles "\n" newlines reported by Android IME deltas (#1086)
+
+## [0.2.6-dev.1] - May 28, 2023
+* The same as v0.2.6+1, but compatible with Flutter `master`
+
+## [0.2.5] - May 12, 2023:
+ * Add support for Dart 3 and Flutter 3.10
+
+## [0.2.4-dev.1] - May 08, 2023: 
+ * The same as v0.2.4+1, but compatible with Flutter `master`
+
+## [0.2.4] - May 08, 2023:
+ * FEATURE: `SuperEditor` includes a built-in concept of a "task"
+ * FEATURE: `SuperEditor` links open on tap, when in "interaction mode"
+ * FEATURE: `SuperEditor`, `SuperReader`, `SuperTextField` all respect `MediaQuery` text scale
+ * FEATURE: `SuperEditor` selection changes now include a "reason", to facilitate multi-user and server interactions
+ * FEATURE: `SuperEditor` supports GBoard spacebar caret movement, and other software keyboard gestures
+ * FEATURE: `SuperEditor` allows a selection even when the software keyboard is closed, and also lets apps open and close the keyboard at their discretion
+ * FEATURE: `SuperEditor` lets apps override what happens when the IME wants to a perform an action, like "done" or "newline"
+ * FEATURE: `SuperEditor` respects inherited `MediaQuery` `GestureSetting`s
+ * FEATURE: `SuperTextField` now exposes configuration for the caret style
+ * FEATURE: `SuperTextField` now exposes configuration for keyboard appearance
+ * FEATURE: `SuperDesktopTextField` now supports IME text entry, which adds support for compound characters
+ * FIX: `SuperEditor` don't scroll while dragging over an image
+ * FIX: `SuperEditor` partial improvements to iOS floating cursor display
+ * FIX: `SuperEditor` fix text styles when backspacing a list item into a preceding paragraph
+ * FIX: `SuperEditor` rebuilds layers when document layout or component layout changes, e.g., rebuilds caret when a list item animates its size
+ * FIX: `SuperTextField` when selection changes, don't auto-scroll if the new selection position is already visible
+ * FIX: `SuperTextField` popup toolbar on iOS shows the arrow pointing towards content, instead of pointing away from content
+ * FIX: `SuperTextField` don't change selection when two fingers move on trackpad
+ * FIX: `SuperTextField` handle numpad ENTER same as regular ENTER
+ * FIX: `SuperTextField` when user taps to stop scroll momentum, don't change the selection
+
+## [0.2.3-dev.1] - Nov 11, 2022: SuperReader, Bug Fixes (pre-release)
+ * The same as v0.2.3+1, but compatible with Flutter `master`
+
 ## [0.2.3+1] - Nov, 2022: Pub.dev listing updates
  * No functional changes
 

@@ -18,6 +18,7 @@ class EditorToolbar extends StatefulWidget {
     required this.anchor,
     required this.editorFocusNode,
     required this.editor,
+    required this.document,
     required this.composer,
     required this.closeToolbar,
   }) : super(key: key);
@@ -36,7 +37,9 @@ class EditorToolbar extends StatefulWidget {
   /// when the user selects a different block format for a
   /// text blob, e.g., paragraph, header, blockquote, or
   /// to apply styles to text.
-  final DocumentEditor? editor;
+  final Editor? editor;
+
+  final Document document;
 
   /// The [composer] provides access to the user's current
   /// selection within the document, which dictates the
@@ -49,7 +52,7 @@ class EditorToolbar extends StatefulWidget {
   final VoidCallback closeToolbar;
 
   @override
-  _EditorToolbarState createState() => _EditorToolbarState();
+  State<EditorToolbar> createState() => _EditorToolbarState();
 }
 
 class _EditorToolbarState extends State<EditorToolbar> {
@@ -61,7 +64,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void initState() {
     super.initState();
     _urlFocusNode = FocusNode();
-    _urlController = SingleLineAttributedTextEditingController(_applyLink);
+    _urlController = SingleLineAttributedTextEditingController(_applyLink) //
+      ..text = AttributedText(text: "https://");
   }
 
   @override
@@ -81,7 +85,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       return false;
     }
 
-    final selectedNode = widget.editor!.document.getNodeById(selection.extent.nodeId);
+    final selectedNode = widget.document.getNodeById(selection.extent.nodeId);
     return selectedNode is ParagraphNode || selectedNode is ListItemNode;
   }
 
@@ -89,7 +93,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   _TextType _getCurrentTextType() {
-    final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId);
+    final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final type = selectedNode.getMetadataValue('blockType');
 
@@ -115,7 +119,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   TextAlign _getCurrentTextAlignment() {
-    final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId);
+    final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final align = selectedNode.getMetadataValue('textAlign');
       switch (align) {
@@ -143,7 +147,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       return false;
     }
 
-    final selectedNode = widget.editor!.document.getNodeById(selection.extent.nodeId);
+    final selectedNode = widget.document.getNodeById(selection.extent.nodeId);
     return selectedNode is ParagraphNode;
   }
 
@@ -161,33 +165,36 @@ class _EditorToolbarState extends State<EditorToolbar> {
     }
 
     if (_isListItem(existingTextType) && _isListItem(newType)) {
-      widget.editor!.executeCommand(
-        ChangeListItemTypeCommand(
+      widget.editor!.execute([
+        ChangeListItemTypeRequest(
           nodeId: widget.composer.selection!.extent.nodeId,
           newType: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
-      );
+      ]);
     } else if (_isListItem(existingTextType) && !_isListItem(newType)) {
-      widget.editor!.executeCommand(
-        ConvertListItemToParagraphCommand(
+      widget.editor!.execute([
+        ConvertListItemToParagraphRequest(
           nodeId: widget.composer.selection!.extent.nodeId,
           paragraphMetadata: {
             'blockType': _getBlockTypeAttribution(newType),
           },
         ),
-      );
+      ]);
     } else if (!_isListItem(existingTextType) && _isListItem(newType)) {
-      widget.editor!.executeCommand(
-        ConvertParagraphToListItemCommand(
+      widget.editor!.execute([
+        ConvertParagraphToListItemRequest(
           nodeId: widget.composer.selection!.extent.nodeId,
           type: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
-      );
+      ]);
     } else {
       // Apply a new block type to an existing paragraph node.
-      final existingNode =
-          widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId)! as ParagraphNode;
-      existingNode.putMetadataValue('blockType', _getBlockTypeAttribution(newType));
+      widget.editor!.execute([
+        ChangeParagraphBlockTypeRequest(
+          nodeId: widget.composer.selection!.extent.nodeId,
+          blockType: _getBlockTypeAttribution(newType),
+        ),
+      ]);
     }
   }
 
@@ -217,32 +224,32 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Toggles bold styling for the current selected text.
   void _toggleBold() {
-    widget.editor!.executeCommand(
-      ToggleTextAttributionsCommand(
+    widget.editor!.execute([
+      ToggleTextAttributionsRequest(
         documentSelection: widget.composer.selection!,
         attributions: {boldAttribution},
       ),
-    );
+    ]);
   }
 
   /// Toggles italic styling for the current selected text.
   void _toggleItalics() {
-    widget.editor!.executeCommand(
-      ToggleTextAttributionsCommand(
+    widget.editor!.execute([
+      ToggleTextAttributionsRequest(
         documentSelection: widget.composer.selection!,
         attributions: {italicsAttribution},
       ),
-    );
+    ]);
   }
 
   /// Toggles strikethrough styling for the current selected text.
   void _toggleStrikethrough() {
-    widget.editor!.executeCommand(
-      ToggleTextAttributionsCommand(
+    widget.editor!.execute([
+      ToggleTextAttributionsRequest(
         documentSelection: widget.composer.selection!,
         attributions: {strikethroughAttribution},
       ),
-    );
+    ]);
   }
 
   /// Returns true if the current text selection includes part
@@ -268,7 +275,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor!.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
@@ -289,7 +296,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor!.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
@@ -342,7 +349,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor!.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
 
     final trimmedRange = _trimTextRangeWhitespace(text, selectionRange);
@@ -403,7 +410,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         break;
     }
 
-    final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId) as ParagraphNode;
+    final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId) as ParagraphNode;
     selectedNode.putMetadataValue('textAlign', newAlignmentValue);
   }
 
@@ -607,11 +614,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
                   textController: _urlController,
                   minLines: 1,
                   maxLines: 1,
+                  inputSource: TextInputSource.ime,
                   hintBehavior: HintBehavior.displayHintUntilTextEntered,
                   hintBuilder: (context) {
-                    return Text(
+                    return const Text(
                       "enter a url...",
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.grey,
                         fontSize: 16,
                       ),
@@ -715,7 +723,7 @@ class ImageFormatToolbar extends StatefulWidget {
   final VoidCallback closeToolbar;
 
   @override
-  _ImageFormatToolbarState createState() => _ImageFormatToolbarState();
+  State<ImageFormatToolbar> createState() => _ImageFormatToolbarState();
 }
 
 class _ImageFormatToolbarState extends State<ImageFormatToolbar> {

@@ -1,11 +1,12 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
@@ -39,7 +40,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.minLines,
     this.maxLines = 1,
     this.lineHeight,
-    required this.caretColor,
+    required this.caretStyle,
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
@@ -70,8 +71,8 @@ class SuperIOSTextField extends StatefulWidget {
   /// To easily build a hint with styled text, see [StyledHintBuilder].
   final WidgetBuilder? hintBuilder;
 
-  /// Color of the caret.
-  final Color caretColor;
+  /// The visual representation of the caret.
+  final CaretStyle caretStyle;
 
   /// Color of the selection rectangle for selected text.
   final Color selectionColor;
@@ -157,6 +158,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   late TextScrollController _textScrollController;
 
+  late MagnifierAndToolbarController _overlayController;
+
   // OverlayEntry that displays the toolbar and magnifier, and
   // positions the invisible touch targets for base/extent
   // dragging.
@@ -181,9 +184,12 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       textController: _textEditingController,
     );
 
+    _overlayController = MagnifierAndToolbarController();
+
     _editingOverlayController = IOSEditingOverlayController(
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
+      overlayController: _overlayController,
     );
 
     WidgetsBinding.instance.addObserver(this);
@@ -260,11 +266,13 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       // Dispose after the current frame so that other widgets have
       // time to remove their listeners.
       _editingOverlayController.dispose();
+      _overlayController.dispose();
     });
 
     _textEditingController
       ..removeListener(_onTextOrSelectionChange)
-      ..onIOSFloatingCursorChange = null;
+      ..onIOSFloatingCursorChange = null
+      ..detachFromIme();
     if (widget.textController == null) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         // Dispose after the current frame so that other widgets have
@@ -489,7 +497,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             padding: widget.padding,
             child: CustomListenableBuilder(
               listenable: _textEditingController,
-              builder: (context) {
+              builder: (context, _) {
                 final isTextEmpty = _textEditingController.text.text.isEmpty;
                 final showHint = widget.hintBuilder != null &&
                     ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
@@ -528,18 +536,24 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
 
+    CaretStyle caretStyle = widget.caretStyle;
+
+    final caretColorOverride = _floatingCursorController.isShowingFloatingCursor ? Colors.grey : null;
+    if (caretColorOverride != null) {
+      caretStyle = caretStyle.copyWith(color: caretColorOverride);
+    }
+
     return FillWidthIfConstrained(
       child: SuperTextWithSelection.single(
         key: _textContentKey,
         richText: textSpan,
         textAlign: widget.textAlign,
+        textScaleFactor: MediaQuery.textScaleFactorOf(context),
         userSelection: UserSelection(
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,
           ),
-          caretStyle: CaretStyle(
-            color: _floatingCursorController.isShowingFloatingCursor ? Colors.grey : widget.caretColor,
-          ),
+          caretStyle: caretStyle,
           selection: _textEditingController.selection,
           hasCaret: _focusNode.hasFocus,
         ),
@@ -550,6 +564,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
 Widget _defaultPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayController controller) {
   return IOSTextEditingFloatingToolbar(
+    focalPoint: controller.overlayController.toolbarTopAnchor!,
     onCutPressed: () {
       final textController = controller.textController;
       final selection = textController.selection;

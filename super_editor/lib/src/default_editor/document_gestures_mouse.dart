@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -8,13 +9,16 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
-import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+
+import '../infrastructure/document_gestures_interaction_overrides.dart';
 
 /// Governs mouse gesture interaction with a document, such as scrolling
 /// a document with a scroll wheel, tapping to place a caret, and
@@ -39,10 +43,12 @@ class DocumentMouseInteractor extends StatefulWidget {
   const DocumentMouseInteractor({
     Key? key,
     this.focusNode,
+    required this.editor,
     required this.document,
     required this.getDocumentLayout,
     required this.selectionNotifier,
     required this.selectionChanges,
+    this.contentTapHandler,
     required this.autoScroller,
     this.showDebugPaint = false,
     required this.child,
@@ -50,10 +56,15 @@ class DocumentMouseInteractor extends StatefulWidget {
 
   final FocusNode? focusNode;
 
+  final Editor editor;
   final Document document;
   final DocumentLayoutResolver getDocumentLayout;
   final Stream<DocumentSelectionChange> selectionChanges;
-  final ValueNotifier<DocumentSelection?> selectionNotifier;
+  final ValueListenable<DocumentSelection?> selectionNotifier;
+
+  /// Optional handler that responds to taps on content, e.g., opening
+  /// a link when the user taps on text with a link attribution.
+  final ContentTapDelegate? contentTapHandler;
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
@@ -69,11 +80,12 @@ class DocumentMouseInteractor extends StatefulWidget {
   State createState() => _DocumentMouseInteractorState();
 }
 
-class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
-    with SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
+class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with SingleTickerProviderStateMixin {
   final _documentWrapperKey = GlobalKey();
 
   late FocusNode _focusNode;
+
+  DocumentSelection? _previousSelection;
 
   // Tracks user drag gestures for selection purposes.
   SelectionType _selectionType = SelectionType.position;
@@ -88,18 +100,19 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
 
   DocumentSelection? get _currentSelection => widget.selectionNotifier.value;
 
+  final _mouseCursor = ValueNotifier<MouseCursor>(SystemMouseCursors.text);
+  Offset? _lastHoverOffset;
+
   @override
   void initState() {
     super.initState();
     _focusNode = widget.focusNode ?? FocusNode();
     _selectionSubscription = widget.selectionChanges.listen(_onSelectionChange);
-    widget.autoScroller.addListener(_updateDragSelection);
-
-    startSyncingSelectionWithFocus(
-      focusNode: _focusNode,
-      getDocumentLayout: widget.getDocumentLayout,
-      selection: widget.selectionNotifier,
-    );
+    _previousSelection = widget.selectionNotifier.value;
+    widget.autoScroller
+      ..addListener(_updateDragSelection)
+      ..addListener(_updateMouseCursorAtLatestOffset);
+    widget.contentTapHandler?.addListener(_updateMouseCursorAtLatestOffset);
   }
 
   @override
@@ -107,30 +120,38 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
-      onFocusNodeReplaced(_focusNode);
+    }
+    if (widget.selectionNotifier != oldWidget.selectionNotifier) {
+      _previousSelection = widget.selectionNotifier.value;
     }
     if (widget.selectionChanges != oldWidget.selectionChanges) {
       _selectionSubscription.cancel();
       _selectionSubscription = widget.selectionChanges.listen(_onSelectionChange);
     }
-    if (widget.selectionNotifier != oldWidget.selectionNotifier) {
-      onDocumentSelectionNotifierReplaced(widget.selectionNotifier);
-    }
     if (widget.autoScroller != oldWidget.autoScroller) {
-      oldWidget.autoScroller.removeListener(_updateDragSelection);
-      widget.autoScroller.addListener(_updateDragSelection);
+      oldWidget.autoScroller
+        ..removeListener(_updateDragSelection)
+        ..removeListener(_updateMouseCursorAtLatestOffset);
+      widget.autoScroller
+        ..addListener(_updateDragSelection)
+        ..addListener(_updateMouseCursorAtLatestOffset);
     }
-    onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
+    if (widget.contentTapHandler != oldWidget.contentTapHandler) {
+      oldWidget.contentTapHandler?.removeListener(_updateMouseCursorAtLatestOffset);
+      widget.contentTapHandler?.addListener(_updateMouseCursorAtLatestOffset);
+    }
   }
 
   @override
   void dispose() {
+    widget.contentTapHandler?.removeListener(_updateMouseCursorAtLatestOffset);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
     _selectionSubscription.cancel();
-    widget.autoScroller.removeListener(_updateDragSelection);
-    stopSyncingSelectionWithFocus();
+    widget.autoScroller
+      ..removeListener(_updateDragSelection)
+      ..removeListener(_updateMouseCursorAtLatestOffset);
     super.dispose();
   }
 
@@ -150,24 +171,47 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
       _currentSelection != null;
 
   void _onSelectionChange(DocumentSelectionChange selectionChange) {
+    if (!mounted) {
+      return;
+    }
+
     if (selectionChange.reason != SelectionReason.userInteraction) {
       // The selection changed, but it isn't caused by an user interaction.
       // We don't want auto-scroll.
       return;
     }
-    if (mounted) {
-      // Use a post-frame callback to "ensure selection extent is visible"
-      // so that any pending visual document changes can happen before
-      // attempting to calculate the visual position of the selection extent.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        editorGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
-
-        final globalExtentRect = _getSelectionExtentAsGlobalRect();
-        if (globalExtentRect != null) {
-          widget.autoScroller.ensureGlobalRectIsVisible(globalExtentRect);
-        }
-      });
+    if (selectionChange.selection == _previousSelection) {
+      // The selection hasn't actually changed. We don't want to auto-scroll.
+      return;
     }
+    _previousSelection = selectionChange.selection;
+
+    final selection = widget.selectionNotifier.value;
+    if (selection == null) {
+      return;
+    }
+
+    final node = widget.document.getNodeById(selection.extent.nodeId);
+    if (node is BlockNode) {
+      // We don't want auto-scroll block components.
+      return;
+    }
+
+    // Use a post-frame callback to "ensure selection extent is visible"
+    // so that any pending visual document changes can happen before
+    // attempting to calculate the visual position of the selection extent.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (!mounted) {
+        return;
+      }
+
+      editorGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
+
+      final globalExtentRect = _getSelectionExtentAsGlobalRect();
+      if (globalExtentRect != null) {
+        widget.autoScroller.ensureGlobalRectIsVisible(globalExtentRect);
+      }
+    });
   }
 
   Rect? _getSelectionExtentAsGlobalRect() {
@@ -209,6 +253,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
       return;
     }
 
+    if (widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
+
     final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
     final expandSelection = _isShiftPressed && _currentSelection != null;
 
@@ -224,9 +277,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     if (expandSelection) {
       // The user tapped while pressing shift and there's an existing
       // selection. Move the extent of the selection to where the user tapped.
-      widget.selectionNotifier.value = _currentSelection!.copyWith(
-        extent: docPosition,
-      );
+      widget.editor.execute([
+        ChangeSelectionRequest(
+          _currentSelection!.copyWith(
+            extent: docPosition,
+          ),
+          SelectionChangeType.expandSelection,
+          SelectionReason.userInteraction,
+        ),
+      ]);
     } else {
       // Place the document selection at the location where the
       // user tapped.
@@ -241,6 +300,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null && widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onDoubleTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -278,7 +346,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   }) {
     final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.selectionNotifier.value = newSelection;
+      widget.editor.execute([
+        ChangeSelectionRequest(
+          newSelection,
+          SelectionChangeType.expandSelection,
+          SelectionReason.userInteraction,
+        ),
+      ]);
       return true;
     } else {
       return false;
@@ -290,16 +364,22 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
       return false;
     }
 
-    widget.selectionNotifier.value = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+    widget.editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection(
+          base: DocumentPosition(
+            nodeId: position.nodeId,
+            nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+          ),
+          extent: DocumentPosition(
+            nodeId: position.nodeId,
+            nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+          ),
+        ),
+        SelectionChangeType.place,
+        SelectionReason.userInteraction,
       ),
-      extent: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
-      ),
-    );
+    ]);
 
     return true;
   }
@@ -315,6 +395,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null && widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onTripleTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -347,7 +436,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   }) {
     final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.selectionNotifier.value = newSelection;
+      widget.editor.execute([
+        ChangeSelectionRequest(
+          newSelection,
+          SelectionChangeType.expandSelection,
+          SelectionReason.userInteraction,
+        ),
+      ]);
       return true;
     } else {
       return false;
@@ -361,9 +456,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
 
   void _selectPosition(DocumentPosition position) {
     editorGesturesLog.fine("Setting document selection to $position");
-    widget.selectionNotifier.value = DocumentSelection.collapsed(
-      position: position,
-    );
+    widget.editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: position,
+        ),
+        SelectionChangeType.place,
+        SelectionReason.userInteraction,
+      ),
+    ]);
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -568,17 +669,26 @@ Updating drag selection:
       extentPosition = extentWordSelection.extent;
     }
 
-    widget.selectionNotifier.value = DocumentSelection(
-      // If desired, expand the selection instead of replacing it.
-      base: expandSelection ? _currentSelection?.base ?? basePosition : basePosition,
-      extent: extentPosition,
-    );
+    widget.editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection(
+          // If desired, expand the selection instead of replacing it.
+          base: expandSelection ? _currentSelection?.base ?? basePosition : basePosition,
+          extent: extentPosition,
+        ),
+        SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+
     editorGesturesLog.fine("Selected region: $_currentSelection");
   }
 
   void _clearSelection() {
     editorGesturesLog.fine("Clearing document selection");
-    widget.selectionNotifier.value = null;
+    widget.editor.execute([
+      const ClearSelectionRequest(),
+    ]);
   }
 
   void _moveToNearestSelectableComponent(
@@ -587,9 +697,10 @@ Updating drag selection:
     bool expandSelection = false,
   }) {
     moveSelectionToNearestSelectableNode(
+      editor: widget.editor,
       document: widget.document,
       documentLayoutResolver: widget.getDocumentLayout,
-      selection: widget.selectionNotifier,
+      currentSelection: widget.selectionNotifier.value,
       startingNode: widget.document.getNodeById(nodeId)!,
       expand: expandSelection,
     );
@@ -599,11 +710,36 @@ Updating drag selection:
     }
   }
 
+  void _onMouseMove(PointerHoverEvent event) {
+    _cancelScrollMomentum();
+    _updateMouseCursor(event.position);
+    _lastHoverOffset = event.position;
+  }
+
+  void _updateMouseCursorAtLatestOffset() {
+    if (_lastHoverOffset == null) {
+      return;
+    }
+    _updateMouseCursor(_lastHoverOffset!);
+  }
+
+  void _updateMouseCursor(Offset globalPosition) {
+    final docOffset = _getDocOffsetFromGlobalOffset(globalPosition);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    if (docPosition == null) {
+      _mouseCursor.value = SystemMouseCursors.text;
+      return;
+    }
+
+    final cursorForContent = widget.contentTapHandler?.mouseCursorForContentHover(docPosition);
+    _mouseCursor.value = cursorForContent ?? SystemMouseCursors.text;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Listener(
       onPointerSignal: _scrollOnMouseWheel,
-      onPointerHover: (event) => _cancelScrollMomentum(),
+      onPointerHover: _onMouseMove,
       onPointerDown: (event) => _cancelScrollMomentum(),
       onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: _buildCursorStyle(
@@ -619,8 +755,15 @@ Updating drag selection:
   Widget _buildCursorStyle({
     required Widget child,
   }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.text,
+    return ValueListenableBuilder(
+      valueListenable: _mouseCursor,
+      builder: (context, value, child) {
+        return MouseRegion(
+          cursor: _mouseCursor.value,
+          onExit: (_) => _lastHoverOffset = null,
+          child: child,
+        );
+      },
       child: child,
     );
   }
@@ -628,6 +771,7 @@ Updating drag selection:
   Widget _buildGestureInput({
     required Widget child,
   }) {
+    final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
       gestures: <Type, GestureRecognizerFactory>{
@@ -639,7 +783,8 @@ Updating drag selection:
               ..onDoubleTapDown = _onDoubleTapDown
               ..onDoubleTap = _onDoubleTap
               ..onTripleTapDown = _onTripleTapDown
-              ..onTripleTap = _onTripleTap;
+              ..onTripleTap = _onTripleTap
+              ..gestureSettings = gestureSettings;
           },
         ),
         PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
@@ -649,7 +794,8 @@ Updating drag selection:
               ..onStart = _onPanStart
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
-              ..onCancel = _onPanCancel;
+              ..onCancel = _onPanCancel
+              ..gestureSettings = gestureSettings;
           },
         ),
       },

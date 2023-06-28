@@ -152,6 +152,10 @@ class AttributedTextEditingController with ChangeNotifier {
     required AttributedText text,
     required TextSelection selection,
   }) {
+    if (text == _text && selection == _selection) {
+      return;
+    }
+
     _switchText(text);
     _selection = selection;
 
@@ -511,10 +515,12 @@ class AttributedTextEditingController with ChangeNotifier {
       return;
     }
 
+    final previousCharacterOffset = getCharacterStartBounds(_text.text, selection.extentOffset);
+
     delete(
-      from: selection.extentOffset - 1,
+      from: previousCharacterOffset,
       to: selection.extentOffset,
-      newSelection: TextSelection.collapsed(offset: selection.extentOffset - 1),
+      newSelection: TextSelection.collapsed(offset: previousCharacterOffset),
       newComposingRegion: newComposingRegion,
     );
   }
@@ -533,9 +539,11 @@ class AttributedTextEditingController with ChangeNotifier {
       return;
     }
 
+    final nextCharacterOffset = getCharacterEndBounds(_text.text, selection.extentOffset);
+
     delete(
       from: selection.extentOffset,
-      to: selection.extentOffset + 1,
+      to: nextCharacterOffset,
       newSelection: TextSelection.collapsed(offset: selection.extentOffset),
       newComposingRegion: newComposingRegion,
     );
@@ -583,7 +591,7 @@ class AttributedTextEditingController with ChangeNotifier {
       text: updatedText,
       selection: updatedSelection,
     );
-    
+
     _updateComposingAttributions();
     // TODO: do we need to implement composing region update behavior like selections?
     composingRegion = newComposingRegion ?? TextRange.empty;
@@ -625,6 +633,13 @@ class AttributedTextEditingController with ChangeNotifier {
     TextSelection? selection,
     TextRange? composingRegion,
   }) {
+    if ((text == null || text == _text) &&
+        (selection == null || selection == _selection) &&
+        (composingRegion == null || composingRegion == _composingRegion)) {
+      // The updated values are the same as existing values. Do nothing.
+      return;
+    }
+
     if (text != null) {
       _switchText(text);
     }
@@ -893,11 +908,11 @@ class AttributedTextEditingController with ChangeNotifier {
       deleteEndIndex = getCharacterEndBounds(text.text, deleteStartIndex);
     }
 
-    text = text.removeRegion(
-      startOffset: deleteStartIndex,
-      endOffset: deleteEndIndex,
+    delete(
+      from: deleteStartIndex,
+      to: deleteEndIndex,
+      newSelection: TextSelection.collapsed(offset: deleteStartIndex),
     );
-    selection = TextSelection.collapsed(offset: deleteStartIndex);
   }
 
   void deleteTextOnLineBeforeCaret({
@@ -922,11 +937,11 @@ class AttributedTextEditingController with ChangeNotifier {
     final deleteStartIndex = selection.start;
     final deleteEndIndex = selection.end;
 
-    text = text.removeRegion(
-      startOffset: deleteStartIndex,
-      endOffset: deleteEndIndex,
+    delete(
+      from: deleteStartIndex,
+      to: deleteEndIndex,
+      newSelection: TextSelection.collapsed(offset: deleteStartIndex),
     );
-    selection = TextSelection.collapsed(offset: deleteStartIndex);
   }
 
   void insertNewline() {

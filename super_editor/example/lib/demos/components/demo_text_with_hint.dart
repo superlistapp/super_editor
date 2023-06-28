@@ -15,18 +15,20 @@ import 'package:super_editor/super_editor.dart';
 /// Each of the above steps are demonstrated in this example.
 class TextWithHintDemo extends StatefulWidget {
   @override
-  _TextWithHintDemoState createState() => _TextWithHintDemoState();
+  State<TextWithHintDemo> createState() => _TextWithHintDemoState();
 }
 
 class _TextWithHintDemoState extends State<TextWithHintDemo> {
   late MutableDocument _doc;
-  late DocumentEditor _docEditor;
+  late MutableDocumentComposer _composer;
+  late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createDocument();
-    _docEditor = DocumentEditor(document: _doc);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -41,22 +43,22 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
     return MutableDocument(
       nodes: [
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(text: ''),
           metadata: {'blockType': header1Attribution},
         ),
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(text: ''),
           metadata: {'blockType': header2Attribution},
         ),
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(text: ''),
           metadata: {'blockType': header3Attribution},
         ),
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(
             text:
                 'Nam hendrerit vitae elit ut placerat. Maecenas nec congue neque. Fusce eget tortor pulvinar, cursus neque vitae, sagittis lectus. Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.',
@@ -70,6 +72,8 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
+      document: _doc,
+      composer: _composer,
       stylesheet: Stylesheet(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
         rules: defaultStylesheet.rules,

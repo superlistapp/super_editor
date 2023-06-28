@@ -1,22 +1,25 @@
 import 'package:attributed_text/attributed_text.dart';
 
-/// Header 1 style attribution.
+/// Header 1 style block attribution.
 const header1Attribution = NamedAttribution('header1');
 
-/// Header 2 style attribution.
+/// Header 2 style block attribution.
 const header2Attribution = NamedAttribution('header2');
 
-/// Header 3 style attribution.
+/// Header 3 style block attribution.
 const header3Attribution = NamedAttribution('header3');
 
-/// Header 4 style attribution.
+/// Header 4 style block attribution.
 const header4Attribution = NamedAttribution('header4');
 
-/// Header 5 style attribution.
+/// Header 5 style block attribution.
 const header5Attribution = NamedAttribution('header5');
 
-/// Header 6 style attribution.
+/// Header 6 style block attribution.
 const header6Attribution = NamedAttribution('header6');
+
+/// Plain paragraph block attribution.
+const paragraphAttribution = NamedAttribution('paragraph');
 
 /// Blockquote attribution
 const blockquoteAttribution = NamedAttribution('blockquote');

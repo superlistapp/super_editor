@@ -7,7 +7,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 /// of a [RawKeyboardListener] or similar.
 class BarebonesIosTextInputClientDemo extends StatefulWidget {
   @override
-  _BarebonesIosTextInputClientDemoState createState() => _BarebonesIosTextInputClientDemoState();
+  State<BarebonesIosTextInputClientDemo> createState() => _BarebonesIosTextInputClientDemoState();
 }
 
 class _BarebonesIosTextInputClientDemoState extends State<BarebonesIosTextInputClientDemo> {

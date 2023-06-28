@@ -11,18 +11,20 @@ import 'package:super_editor/super_editor.dart';
 /// This demo can also be used to quickly hack experiments and tests.
 class EmptyDocumentDemo extends StatefulWidget {
   @override
-  _EmptyDocumentDemoState createState() => _EmptyDocumentDemoState();
+  State<EmptyDocumentDemo> createState() => _EmptyDocumentDemoState();
 }
 
 class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
-  late Document _doc;
-  late DocumentEditor _docEditor;
+  late MutableDocument _doc;
+  late MutableDocumentComposer _composer;
+  late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createDocument1();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -35,14 +37,16 @@ class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
     return SafeArea(
       child: SuperEditor(
         editor: _docEditor,
+        document: _doc,
+        composer: _composer,
         gestureMode: DocumentGestureMode.mouse,
-        inputSource: DocumentInputSource.keyboard,
+        inputSource: TextInputSource.keyboard,
       ),
     );
   }
 }
 
-Document _createDocument1() {
+MutableDocument _createDocument1() {
   return MutableDocument(
     nodes: [
       ParagraphNode(id: "1", text: AttributedText(text: "")),

@@ -6,18 +6,20 @@ import 'package:super_editor/super_editor.dart';
 /// The user can select around the horizontal rule, but cannot select it, specifically.
 class UnselectableHrDemo extends StatefulWidget {
   @override
-  _UnselectableHrDemoState createState() => _UnselectableHrDemoState();
+  State<UnselectableHrDemo> createState() => _UnselectableHrDemoState();
 }
 
 class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
   late MutableDocument _doc;
-  late DocumentEditor _docEditor;
+  late MutableDocumentComposer _composer;
+  late Editor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createDocument();
-    _docEditor = DocumentEditor(document: _doc);
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
 
   @override
@@ -30,15 +32,15 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
     return MutableDocument(
       nodes: [
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(
             text:
                 "Below is a horizontal rule (HR). Normally in a SuperEditor, the user can tap to select an HR. In this case, you can't select the HR. You can only select around it. Try and find out:",
           ),
         ),
-        HorizontalRuleNode(id: DocumentEditor.createNodeId()),
+        HorizontalRuleNode(id: Editor.createNodeId()),
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(
             text:
                 "Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.",
@@ -52,6 +54,8 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
+      document: _doc,
+      composer: _composer,
       stylesheet: defaultStylesheet.copyWith(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
       ),

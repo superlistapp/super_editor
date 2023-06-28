@@ -17,9 +17,10 @@ void main() {
             )
           ],
         );
-        final editor = DocumentEditor(document: document);
+        final composer = MutableDocumentComposer();
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
-        final command = ToggleTextAttributionsCommand(
+        final request = ToggleTextAttributionsRequest(
           documentSelection: const DocumentSelection(
             base: DocumentPosition(
               nodeId: 'paragraph',
@@ -38,7 +39,7 @@ void main() {
           attributions: {boldAttribution},
         );
 
-        editor.executeCommand(command);
+        editor.execute([request]);
 
         final boldedText = (document.nodes.first as ParagraphNode).text;
         expect(boldedText.getAllAttributionsAt(0), <dynamic>{});
@@ -55,7 +56,7 @@ void main() {
         // Press just the meta key.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.meta,
               physicalKey: PhysicalKeyboardKey.metaLeft,
@@ -71,7 +72,7 @@ void main() {
         // Press "a" + meta key
         result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
               physicalKey: PhysicalKeyboardKey.keyA,
@@ -91,7 +92,7 @@ void main() {
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
               physicalKey: PhysicalKeyboardKey.keyA,
@@ -107,7 +108,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -115,21 +116,27 @@ void main() {
         );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = const DocumentSelection(
-          base: DocumentPosition(
-            nodeId: 'paragraph',
-            nodePosition: TextNodePosition(offset: 0),
+        editContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: 'paragraph',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+              extent: DocumentPosition(
+                nodeId: 'paragraph',
+                nodePosition: TextNodePosition(offset: 1),
+              ),
+            ),
+            SelectionChangeType.place,
+            SelectionReason.userInteraction,
           ),
-          extent: DocumentPosition(
-            nodeId: 'paragraph',
-            nodePosition: TextNodePosition(offset: 1),
-          ),
-        );
+        ]);
 
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
               physicalKey: PhysicalKeyboardKey.keyA,
@@ -145,22 +152,28 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a non-text node to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           HorizontalRuleNode(id: 'horizontal_rule'),
         );
 
         // Select the horizontal rule node.
-        editContext.composer.selection = const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: 'horizontal_rule',
-            nodePosition: UpstreamDownstreamNodePosition.downstream(),
+        editContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: 'horizontal_rule',
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+            ),
+            SelectionChangeType.place,
+            SelectionReason.userInteraction,
           ),
-        );
+        ]);
 
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
               physicalKey: PhysicalKeyboardKey.keyA,
@@ -176,7 +189,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -184,17 +197,23 @@ void main() {
         );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: 'paragraph',
-            nodePosition: TextNodePosition(offset: 0),
+        editContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: 'paragraph',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+            SelectionChangeType.place,
+            SelectionReason.userInteraction,
           ),
-        );
+        ]);
 
         // Press the "alt" key
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             character: null,
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.alt,
@@ -210,7 +229,7 @@ void main() {
         // Press the "enter" key
         result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             character: '', // Empirically, pressing enter sends '' as the character instead of null
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.enter,
@@ -227,7 +246,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -235,17 +254,23 @@ void main() {
         );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: 'paragraph',
-            nodePosition: TextNodePosition(offset: 0),
+        editContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: 'paragraph',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+            SelectionChangeType.place,
+            SelectionReason.userInteraction,
           ),
-        );
+        ]);
 
         // Press the "a" key
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             character: 'a',
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
@@ -257,7 +282,7 @@ void main() {
         // The handler should insert a character
         expect(result, ExecutionInstruction.haltExecution);
         expect(
-          (editContext.editor.document.nodes.first as TextNode).text.text,
+          (editContext.document.nodes.first as TextNode).text.text,
           'aThis is some text',
         );
       });
@@ -266,7 +291,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -274,17 +299,23 @@ void main() {
         );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: 'paragraph',
-            nodePosition: TextNodePosition(offset: 0),
+        editContext.editor.execute([
+          const ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: 'paragraph',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+            SelectionChangeType.place,
+            SelectionReason.userInteraction,
           ),
-        );
+        ]);
 
         // Type a non-English character
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             character: 'ß',
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
@@ -296,7 +327,7 @@ void main() {
         // The handler should insert a character
         expect(result, ExecutionInstruction.haltExecution);
         expect(
-          (editContext.editor.document.nodes.first as TextNode).text.text,
+          (editContext.document.nodes.first as TextNode).text.text,
           'ßThis is some text',
         );
       });
@@ -375,17 +406,19 @@ void main() {
   });
 }
 
-EditContext _createEditContext() {
+SuperEditorContext _createEditContext() {
   final document = MutableDocument();
-  final documentEditor = DocumentEditor(document: document);
+  final composer = MutableDocumentComposer();
+  final documentEditor = createDefaultDocumentEditor(document: document, composer: composer);
   final fakeLayout = FakeDocumentLayout();
-  final composer = DocumentComposer();
-  return EditContext(
+  return SuperEditorContext(
     editor: documentEditor,
+    document: document,
     getDocumentLayout: () => fakeLayout,
     composer: composer,
     commonOps: CommonEditorOperations(
       editor: documentEditor,
+      document: document,
       composer: composer,
       documentLayoutResolver: () => fakeLayout,
     ),

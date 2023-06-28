@@ -37,7 +37,7 @@ void main() {
           .useStylesheet(_stylesheet)
           .pump();
 
-      final doc = testContext.editContext.editor.document;
+      final doc = testContext.editContext.document;
 
       final firstParagraphId = doc.nodes[0].id;
       final secondParagraphId = doc.nodes[1].id;
@@ -46,14 +46,86 @@ void main() {
       expect(SuperEditorInspector.findParagraphStyle(firstParagraphId)!.color, Colors.red);
 
       // Remove the second paragraph.
-      testContext.editContext.editor.executeCommand(
-        DeleteNodeCommand(nodeId: secondParagraphId),
-      );
+      testContext.editContext.editor.execute([
+        DeleteNodeRequest(nodeId: secondParagraphId),
+      ]);
       await tester.pump();
 
       // The first paragraph is now the only paragraph in the document.
       // Therefore, the rule for "last paragraph" should be applied.
       expect(SuperEditorInspector.findParagraphStyle(firstParagraphId)!.color, Colors.blue);
+    });
+
+    testWidgetsOnArbitraryDesktop('retains visual text style when combining a list item with a paragraph',
+        (tester) async {
+      await tester //
+          .createDocument()
+          .fromMarkdown("""
+* 1
+* 2
+
+A paragraph
+          """)
+          .useStylesheet(Stylesheet(
+            inlineTextStyler: inlineTextStyler,
+            rules: [
+              StyleRule(
+                const BlockSelector("listItem"),
+                (doc, docNode) {
+                  return {
+                    "textStyle": const TextStyle(
+                      color: Colors.blue,
+                      fontSize: 16,
+                    ),
+                  };
+                },
+              ),
+              StyleRule(
+                const BlockSelector("paragraph"),
+                (doc, docNode) {
+                  return {
+                    "textStyle": const TextStyle(
+                      color: Colors.red,
+                      fontSize: 16,
+                    ),
+                  };
+                },
+              ),
+            ],
+          ))
+          .pump();
+
+      // Ensure the correct style was applied to the list item.
+      expect(
+        SuperEditorInspector.findParagraphStyle(SuperEditorInspector.getNodeAt(1).id)!.color,
+        Colors.blue,
+      );
+
+      // Ensure the correct style was applied to the paragraph.
+      expect(
+        SuperEditorInspector.findParagraphStyle(SuperEditorInspector.getNodeAt(2).id)!.color,
+        Colors.red,
+      );
+
+      // Place the caret at the end of the second list item.
+      final secondListItem = SuperEditorInspector.getNodeAt<ListItemNode>(1);
+      await tester.placeCaretInParagraph(secondListItem.id, 1);
+
+      // Press backspace to delete the list item text. The content will be empty.
+      await tester.pressBackspace();
+
+      // Place the caret at the beginning of the paragraph.
+      final paragraph = SuperEditorInspector.getNodeAt<ParagraphNode>(2);
+      await tester.placeCaretInParagraph(paragraph.id, 0);
+
+      // Press backspace to combine the list item and the paragraph.
+      await tester.pressBackspace();
+
+      // Ensure the list item retained the correct style.
+      expect(
+        SuperEditorInspector.findParagraphStyle(SuperEditorInspector.getNodeAt(1).id)!.color,
+        Colors.blue,
+      );
     });
 
     testWidgetsOnArbitraryDesktop('rebuilds only changed nodes', (tester) async {
@@ -68,7 +140,12 @@ void main() {
 
       final presenter = tester.state<SuperEditorState>(find.byType(SuperEditor)).presenter;
       presenter.addChangeListener(SingleColumnLayoutPresenterChangeListener(
-        onViewModelChange: ({required addedComponents, required changedComponents, required removedComponents}) {
+        onViewModelChange: ({
+          required addedComponents,
+          required movedComponents,
+          required changedComponents,
+          required removedComponents,
+        }) {
           if (componentChangedCount != 0) {
             // The listener is called two times. The first one for the text change, which is the one
             // we care about, and the second one for the selection change.
@@ -84,6 +161,65 @@ void main() {
 
       // Ensure only the changed component was marked as dirty.
       expect(componentChangedCount, 1);
+    });
+
+    testWidgetsOnArbitraryDesktop('rebuilds moved nodes', (tester) async {
+      int componentAddedCount = 0;
+      int componentMoveCount = 0;
+      int componentChangedCount = 0;
+      int componentRemovedCount = 0;
+
+      final testContext = await tester
+          .createDocument() //
+          .withLongTextContent()
+          .pump();
+
+      final presenter = tester.state<SuperEditorState>(find.byType(SuperEditor)).presenter;
+      presenter.addChangeListener(SingleColumnLayoutPresenterChangeListener(
+        onViewModelChange: ({
+          required addedComponents,
+          required movedComponents,
+          required changedComponents,
+          required removedComponents,
+        }) {
+          if (componentChangedCount != 0) {
+            throw Exception("Expected only one view model change, but there was more than one.");
+          }
+
+          componentAddedCount = addedComponents.length;
+          componentMoveCount = movedComponents.length;
+          componentChangedCount = changedComponents.length;
+          componentRemovedCount = removedComponents.length;
+        },
+      ));
+
+      // Move the 2nd node to the end of the document. This should impact nodes 2, 3, and 4,
+      // but not node 1.
+      testContext.editContext.editor.execute([
+        const MoveNodeRequest(nodeId: "2", newIndex: 3),
+      ]);
+      await tester.pumpAndSettle();
+
+      // Ensure that the relevant nodes were moved, but nothing was added or removed.
+      expect(componentAddedCount, 0);
+      expect(componentRemovedCount, 0);
+      expect(componentChangedCount, 0);
+      expect(componentMoveCount, 3);
+
+      // Ensure the visual layout was updated, by inspecting the y-offset of the
+      // visual components.
+      expect(
+        SuperEditorInspector.findComponentOffset("1", Alignment.bottomLeft).dy,
+        lessThanOrEqualTo(SuperEditorInspector.findComponentOffset("3", Alignment.topLeft).dy),
+      );
+      expect(
+        SuperEditorInspector.findComponentOffset("3", Alignment.bottomLeft).dy,
+        lessThanOrEqualTo(SuperEditorInspector.findComponentOffset("4", Alignment.topLeft).dy),
+      );
+      expect(
+        SuperEditorInspector.findComponentOffset("4", Alignment.bottomLeft).dy,
+        lessThanOrEqualTo(SuperEditorInspector.findComponentOffset("2", Alignment.topLeft).dy),
+      );
     });
   });
 }

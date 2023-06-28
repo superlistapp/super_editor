@@ -4,10 +4,12 @@ import 'package:logging/logging.dart' as logging;
 
 class LogNames {
   static const editor = 'editor';
+  static const editorPolicies = 'editor.policies';
   static const editorScrolling = 'editor.scrolling';
   static const editorGestures = 'editor.gestures';
   static const editorKeys = 'editor.keys';
   static const editorIme = 'editor.ime';
+  static const editorImeConnection = 'editor.ime.connection';
   static const editorLayout = 'editor.layout';
   static const editorStyle = 'editor.style';
   static const editorDocument = 'editor.document';
@@ -32,14 +34,18 @@ class LogNames {
   static const iosTextField = 'textfield.ios';
 
   static const infrastructure = 'infrastructure';
+  static const scheduler = 'infrastructure.scheduler';
+  static const contentLayers = 'infrastructure.content_layers';
   static const attributions = 'infrastructure.attributions';
 }
 
 final editorLog = logging.Logger(LogNames.editor);
+final editorPoliciesLog = logging.Logger(LogNames.editorPolicies);
 final editorScrollingLog = logging.Logger(LogNames.editorScrolling);
 final editorGesturesLog = logging.Logger(LogNames.editorGestures);
 final editorKeyLog = logging.Logger(LogNames.editorKeys);
 final editorImeLog = logging.Logger(LogNames.editorIme);
+final editorImeConnectionLog = logging.Logger(LogNames.editorImeConnection);
 final editorLayoutLog = logging.Logger(LogNames.editorLayout);
 final editorStyleLog = logging.Logger(LogNames.editorStyle);
 final editorDocLog = logging.Logger(LogNames.editorDocument);
@@ -63,6 +69,8 @@ final iosTextFieldLog = logging.Logger(LogNames.iosTextField);
 
 final docGesturesLog = logging.Logger(LogNames.documentGestures);
 final infrastructureLog = logging.Logger(LogNames.infrastructure);
+final schedulerLog = logging.Logger(LogNames.scheduler);
+final contentLayersLog = logging.Logger(LogNames.contentLayers);
 final attributionsLog = logging.Logger(LogNames.attributions);
 
 final _activeLoggers = <logging.Logger>{};

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
@@ -10,9 +11,9 @@ import 'super_textfield_robot.dart';
 
 void main() {
   group('SuperTextField', () {
-    group('on mobile', () {
+    group('with IME input source', () {
       group('inserts character', () {
-        testWidgetsOnMobile('in empty text', (tester) async {
+        testWidgetsOnAllPlatforms('in empty text', (tester) async {
           await _pumpEmptySuperTextField(tester);
           await tester.placeCaretInSuperTextField(0);
 
@@ -22,7 +23,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
-        testWidgetsOnMobile('in middle of text', (tester) async {
+        testWidgetsOnAllPlatforms('in middle of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -37,7 +38,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
-        testWidgetsOnMobile('at end of text', (tester) async {
+        testWidgetsOnAllPlatforms('at end of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -52,7 +53,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
-        testWidgetsOnMobile('and replaces selected text', (tester) async {
+        testWidgetsOnAllPlatforms('and replaces selected text', (tester) async {
           // TODO: We create the controller outside the pump so that we can explicitly set its selection
           //  because we don't support gesture selection on mobile, yet.
           final controller = AttributedTextEditingController(
@@ -71,58 +72,142 @@ void main() {
           expect(SuperTextFieldInspector.findText().text, "-->f<--");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
+
+        testWidgetsOnAllPlatforms('and sends composing region to the platform', (tester) async {
+          await _pumpEmptySuperTextField(tester);
+          await tester.placeCaretInSuperTextField(0);
+
+          int composingBase = -1;
+          int composingExtent = -1;
+
+          // Intercept messages sent to the platform.
+          tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
+            final methodCall = const JSONMethodCodec().decodeMethodCall(message);
+            if (methodCall.method == 'TextInput.setEditingState') {
+              composingBase = methodCall.arguments["composingBase"];
+              composingExtent = methodCall.arguments["composingExtent"];
+            }
+            return null;
+          });
+
+          // Simulate the user begining the input of the compound character 'ã'.
+          //
+          // To input this character, the user first presses the '~' key, and then the 'a' key.
+          // The IME first sends us an insertion delta of '~' with a composing region set,
+          // followed by a replacement delta, which replaces '~' with 'ã'.
+          //
+          // For this to work, we need to send the correct composing region to the IME.
+          // Otherwise, we get two insertion deltas and the final text will be '~a'.
+          await tester.ime.sendDeltas(const [
+            TextEditingDeltaInsertion(
+              oldText: "",
+              textInserted: "~",
+              insertionOffset: 0,
+              selection: TextSelection.collapsed(offset: 1),
+              composing: TextRange(start: 0, end: 0),
+            )
+          ], getter: imeClientGetter);
+
+          // Ensure we honored the composing region we got from the IME.
+          expect(composingBase, 0);
+          expect(composingExtent, 0);
+        });
       });
 
-      // TODO: implement newline tests when SuperTextField supports configuration of the action button
-      //   group('inserts line', () {
-      //     testWidgetsOnDesktop('when ENTER is pressed in middle of text', (tester) async {
-      //       await _pumpSuperTextField(
-      //         tester,
-      //         AttributedTextEditingController(
-      //           text: AttributedText(text: 'this is some text'),
-      //         ),
-      //       );
-      //       await tester.placeCaretInSuperTextField(8);
-      //
-      //       await tester.pressEnter();
-      //
-      //       expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
-      //       expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
-      //     });
-      //
-      //     testWidgetsOnDesktop('when ENTER is pressed at beginning of text', (tester) async {
-      //       await _pumpSuperTextField(
-      //         tester,
-      //         AttributedTextEditingController(
-      //           text: AttributedText(text: 'this is some text'),
-      //         ),
-      //       );
-      //       await tester.placeCaretInSuperTextField(0);
-      //
-      //       await tester.pressEnter();
-      //
-      //       expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
-      //       expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
-      //     });
-      //
-      //     testWidgetsOnDesktop('when ENTER is pressed at end of text', (tester) async {
-      //       await _pumpSuperTextField(
-      //         tester,
-      //         AttributedTextEditingController(
-      //           text: AttributedText(text: 'this is some text'),
-      //         ),
-      //       );
-      //       await tester.placeCaretInSuperTextField(17);
-      //
-      //       await tester.pressEnter();
-      //
-      //       expect(SuperTextFieldInspector.findText().text, "this is some text\n");
-      //       expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
-      //     });
-      //   });
-      //
+      group('inserts line', () {
+        testWidgetsOnDesktop('when ENTER is pressed in middle of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(8);
+
+          await tester.pressEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
+        });
+
+        testWidgetsOnDesktop('when ENTER is pressed at beginning of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(0);
+
+          await tester.pressEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
+        });
+
+        testWidgetsOnDesktop('when ENTER is pressed at end of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(17);
+
+          await tester.pressEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
+        });
+
+        testWidgetsOnDesktop('when NUMPAD ENTER is pressed in middle of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(8);
+
+          await tester.pressNumpadEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
+        });
+
+        testWidgetsOnDesktop('when NUMPAD ENTER is pressed at beginning of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(0);
+
+          await tester.pressNumpadEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
+        });
+
+        testWidgetsOnDesktop('when NUMPAD ENTER is pressed at end of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(17);
+
+          await tester.pressNumpadEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
+        });
+      });
+
       group('delete text', () {
-        testWidgetsOnMobile('BACKSPACE does nothing when text is empty', (tester) async {
+        testWidgetsOnAllPlatforms('BACKSPACE does nothing when text is empty', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -137,7 +222,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
         });
 
-        testWidgetsOnMobile('BACKSPACE deletes the previous character', (tester) async {
+        testWidgetsOnAllPlatforms('BACKSPACE deletes the previous character', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -152,7 +237,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
-        testWidgetsOnMobile('BACKSPACE deletes selection when selection is expanded', (tester) async {
+        testWidgetsOnAllPlatforms('BACKSPACE deletes selection when selection is expanded', (tester) async {
           // TODO: We create the controller outside the pump so that we can explicitly set its selection
           //  because we don't support gesture selection on mobile, yet.
           final controller = AttributedTextEditingController(
@@ -172,6 +257,52 @@ void main() {
           expect(SuperTextFieldInspector.findText().text, "is long enough to be multiline in the available space");
         });
       });
+    });
+
+    testWidgetsOnMobile('configures the software keyboard action button', (tester) async {
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: const SuperTextField(
+            textInputAction: TextInputAction.next,
+          ),
+        ),
+      );
+
+      // Holds the keyboard input action sent to the platform.
+      String? inputAction;
+
+      // Intercept messages sent to the platform.
+      tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
+        final methodCall = const JSONMethodCodec().decodeMethodCall(message);
+        if (methodCall.method == 'TextInput.setClient') {
+          final params = methodCall.arguments[1] as Map;
+          inputAction = params['inputAction'];
+        }
+        return null;
+      });
+
+      // Tap the text field to show the software keyboard.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Ensure the given TextInputAction was applied.
+      expect(inputAction, 'TextInputAction.next');
+    });
+
+    testWidgetsOnAllPlatforms('disconnects from IME when disposed', (tester) async {
+      final controller = ImeAttributedTextEditingController();
+      await _pumpSuperTextField(tester, controller);
+
+      // Place the caret to open an IME connection.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Ensure the IME connection is open.
+      expect(controller.isAttachedToIme, isTrue);
+
+      // Pump a different tree to cause the text field to dispose.
+      await tester.pumpWidget(const MaterialApp());
+
+      // Ensure the IME connection is closed.
+      expect(controller.isAttachedToIme, isFalse);
     });
   });
 
@@ -258,6 +389,7 @@ Future<void> _pumpSuperTextField(
           width: 320,
           child: SuperTextField(
             textController: controller,
+            inputSource: TextInputSource.ime,
             minLines: minLines,
             maxLines: maxLines,
             lineHeight: 18,
@@ -297,6 +429,19 @@ Future<void> _pumpScaffoldForBuggyKeyboards(
             textController: controller,
           ),
         ),
+      ),
+    ),
+  );
+}
+
+Widget _buildScaffold({
+  required Widget child,
+}) {
+  return MaterialApp(
+    home: Scaffold(
+      body: SizedBox(
+        width: 300,
+        child: child,
       ),
     ),
   );

@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import 'super_textfield_inspector.dart';
+
 /// Extensions on [WidgetTester] for interacting with a [SuperTextField] the way
 /// a user would.
 extension SuperTextFieldRobot on WidgetTester {
@@ -15,7 +17,8 @@ extension SuperTextFieldRobot on WidgetTester {
   /// {@endtemplate}
   Future<void> placeCaretInSuperTextField(int offset,
       [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
-    final fieldFinder = _findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
+    final fieldFinder =
+        SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
     final match = fieldFinder.evaluate().single.widget;
     bool found = false;
 
@@ -54,7 +57,8 @@ extension SuperTextFieldRobot on WidgetTester {
   Future<void> doubleTapAtSuperTextField(int offset,
       [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
     // TODO: De-duplicate this behavior with placeCaretInSuperTextField
-    final fieldFinder = _findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
+    final fieldFinder =
+        SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
     final match = fieldFinder.evaluate().single.widget;
 
     if (match is SuperDesktopTextField) {
@@ -77,11 +81,37 @@ extension SuperTextFieldRobot on WidgetTester {
     }
 
     if (match is SuperAndroidTextField) {
-      throw Exception("Entering text on an Android SuperTextField is not yet supported");
+      bool didTap = await _tapAtTextPositionOnAndroid(state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+      await pump(kDoubleTapMinTime);
+
+      didTap = await _tapAtTextPositionOnAndroid(state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+
+      await pumpAndSettle();
+
+      return;
     }
 
     if (match is SuperIOSTextField) {
-      throw Exception("Entering text on an iOS SuperTextField is not yet supported");
+      bool didTap = await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+      await pump(kDoubleTapMinTime);
+
+      didTap = await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+
+      await pumpAndSettle();
+
+      return;
     }
 
     throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
@@ -144,7 +174,8 @@ extension SuperTextFieldRobot on WidgetTester {
   }
 
   Future<void> selectSuperTextFieldText(int start, int end, [Finder? superTextFieldFinder]) async {
-    final fieldFinder = _findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
+    final fieldFinder =
+        SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
     final match = fieldFinder.evaluate().single.widget;
 
     if (match is SuperDesktopTextField) {
@@ -207,46 +238,12 @@ extension SuperTextFieldRobot on WidgetTester {
     final globalStartDragOffset = adjustedStartOffset + textFieldBox.localToGlobal(Offset.zero);
     final globalEndDragOffset = adjustedEndOffset + textFieldBox.localToGlobal(Offset.zero);
 
-    await dragFrom(globalStartDragOffset, globalEndDragOffset - globalStartDragOffset);
+    await dragFrom(
+      globalStartDragOffset,
+      globalEndDragOffset - globalStartDragOffset,
+      kind: PointerDeviceKind.mouse,
+    );
 
     return true;
-  }
-
-  Finder _findInnerPlatformTextField(Finder rootFieldFinder) {
-    final rootMatches = rootFieldFinder.evaluate();
-    if (rootMatches.isEmpty) {
-      throw Exception("Couldn't find a super text field variant with the given finder: $rootFieldFinder");
-    }
-    if (rootMatches.length > 1) {
-      throw Exception("Found more than 1 super text field match with finder: $rootFieldFinder");
-    }
-
-    final rootMatch = rootMatches.single.widget;
-    if (rootMatch is! SuperTextField) {
-      // The match isn't a generic SuperTextField. Assume that it's a platform
-      // specific super text field, which is what we're looking for. Return it.
-      return rootFieldFinder;
-    }
-
-    final desktopFieldCandidates =
-        find.descendant(of: rootFieldFinder, matching: find.byType(SuperDesktopTextField)).evaluate();
-    if (desktopFieldCandidates.isNotEmpty) {
-      return find.descendant(of: rootFieldFinder, matching: find.byType(SuperDesktopTextField));
-    }
-
-    final androidFieldCandidates =
-        find.descendant(of: rootFieldFinder, matching: find.byType(SuperAndroidTextField)).evaluate();
-    if (androidFieldCandidates.isNotEmpty) {
-      return find.descendant(of: rootFieldFinder, matching: find.byType(SuperAndroidTextField));
-    }
-
-    final iosFieldCandidates =
-        find.descendant(of: rootFieldFinder, matching: find.byType(SuperIOSTextField)).evaluate();
-    if (iosFieldCandidates.isNotEmpty) {
-      return find.descendant(of: rootFieldFinder, matching: find.byType(SuperIOSTextField));
-    }
-
-    throw Exception(
-        "Couldn't find the platform-specific super text field within the root SuperTextField. Root finder: $rootFieldFinder");
   }
 }

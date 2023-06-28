@@ -9,6 +9,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
 import 'reader_context.dart';
@@ -35,6 +36,7 @@ class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
     Key? key,
     this.focusNode,
     required this.readerContext,
+    this.contentTapHandler,
     required this.autoScroller,
     this.showDebugPaint = false,
     required this.child,
@@ -43,7 +45,11 @@ class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
   final FocusNode? focusNode;
 
   /// Service locator for document dependencies.
-  final ReaderContext readerContext;
+  final SuperReaderContext readerContext;
+
+  /// Optional handler that responds to taps on content, e.g., opening
+  /// a link when the user taps on text with a link attribution.
+  final ContentTapDelegate? contentTapHandler;
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
@@ -74,12 +80,18 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   /// Holds which kind of device started a pan gesture, e.g., a mouse or a trackpad.
   PointerDeviceKind? _panGestureDevice;
 
+  final _mouseCursor = ValueNotifier<MouseCursor>(SystemMouseCursors.text);
+  Offset? _lastHoverOffset;
+
   @override
   void initState() {
     super.initState();
     _focusNode = widget.focusNode ?? FocusNode();
     widget.readerContext.selection.addListener(_onSelectionChange);
-    widget.autoScroller.addListener(_updateDragSelection);
+    widget.autoScroller
+      ..addListener(_updateDragSelection)
+      ..addListener(_updateMouseCursorAtLatestOffset);
+    widget.contentTapHandler?.addListener(_updateMouseCursorAtLatestOffset);
   }
 
   @override
@@ -93,18 +105,29 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       widget.readerContext.selection.addListener(_onSelectionChange);
     }
     if (widget.autoScroller != oldWidget.autoScroller) {
-      oldWidget.autoScroller.removeListener(_updateDragSelection);
-      widget.autoScroller.addListener(_updateDragSelection);
+      oldWidget.autoScroller
+        ..removeListener(_updateDragSelection)
+        ..removeListener(_updateMouseCursorAtLatestOffset);
+      widget.autoScroller
+        ..addListener(_updateDragSelection)
+        ..addListener(_updateMouseCursorAtLatestOffset);
+    }
+    if (widget.contentTapHandler != oldWidget.contentTapHandler) {
+      oldWidget.contentTapHandler?.removeListener(_updateMouseCursorAtLatestOffset);
+      widget.contentTapHandler?.addListener(_updateMouseCursorAtLatestOffset);
     }
   }
 
   @override
   void dispose() {
+    widget.contentTapHandler?.removeListener(_updateMouseCursorAtLatestOffset);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
     widget.readerContext.selection.removeListener(_onSelectionChange);
-    widget.autoScroller.removeListener(_updateDragSelection);
+    widget.autoScroller
+      ..removeListener(_updateDragSelection)
+      ..removeListener(_updateMouseCursorAtLatestOffset);
     super.dispose();
   }
 
@@ -160,6 +183,31 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
         globalTopLeft.dx, globalTopLeft.dy, selectionExtentRectInDoc.width, selectionExtentRectInDoc.height);
   }
 
+  void _onMouseMove(PointerHoverEvent event) {
+    _cancelScrollMomentum();
+    _updateMouseCursor(event.position);
+    _lastHoverOffset = event.position;
+  }
+
+  void _updateMouseCursorAtLatestOffset() {
+    if (_lastHoverOffset == null) {
+      return;
+    }
+    _updateMouseCursor(_lastHoverOffset!);
+  }
+
+  void _updateMouseCursor(Offset globalPosition) {
+    final docOffset = _getDocOffsetFromGlobalOffset(globalPosition);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    if (docPosition == null) {
+      _mouseCursor.value = SystemMouseCursors.text;
+      return;
+    }
+
+    final cursorForContent = widget.contentTapHandler?.mouseCursorForContentHover(docPosition);
+    _mouseCursor.value = cursorForContent ?? SystemMouseCursors.text;
+  }
+
   void _onTapUp(TapUpDetails details) {
     readerGesturesLog.info("Tap up on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
@@ -173,6 +221,15 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       readerGesturesLog.fine("No document content at ${details.globalPosition}.");
       widget.readerContext.selection.value = null;
       return;
+    }
+
+    if (widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
     }
 
     final expandSelection = _isShiftPressed && widget.readerContext.selection.value != null;
@@ -217,6 +274,15 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       return;
     }
 
+    if (docPosition != null && widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onDoubleTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
+
     _selectionType = SelectionType.word;
     widget.readerContext.selection.value = null;
 
@@ -252,6 +318,15 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null && widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onTripleTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -351,6 +426,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     if (_panGestureDevice == PointerDeviceKind.trackpad) {
       // The user ended a pan gesture with two fingers on a trackpad.
       // We already scrolled the document.
+      widget.autoScroller.goBallistic(-details.velocity.pixelsPerSecond.dy);
       return;
     }
     _onDragEnd();
@@ -385,6 +461,13 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   void _scrollVertically(double delta) {
     widget.autoScroller.jumpBy(delta);
     _updateDragSelection();
+  }
+
+  /// Beginning with Flutter 3.3.3, we are responsible for starting and
+  /// stopping scroll momentum. This method cancels any scroll momentum
+  /// in our scroll controller.
+  void _cancelScrollMomentum() {
+    widget.autoScroller.goIdle();
   }
 
   void _updateDragSelection() {
@@ -422,7 +505,10 @@ Updating drag selection:
   @override
   Widget build(BuildContext context) {
     return Listener(
+      onPointerHover: _onMouseMove,
       onPointerSignal: _scrollOnMouseWheel,
+      onPointerDown: (event) => _cancelScrollMomentum(),
+      onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: _buildCursorStyle(
         child: _buildGestureInput(
           child: _buildDocumentContainer(
@@ -436,8 +522,15 @@ Updating drag selection:
   Widget _buildCursorStyle({
     required Widget child,
   }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.text,
+    return ValueListenableBuilder(
+      valueListenable: _mouseCursor,
+      builder: (context, value, child) {
+        return MouseRegion(
+          cursor: _mouseCursor.value,
+          onExit: (_) => _lastHoverOffset = null,
+          child: child,
+        );
+      },
       child: child,
     );
   }
@@ -445,6 +538,7 @@ Updating drag selection:
   Widget _buildGestureInput({
     required Widget child,
   }) {
+    final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
       gestures: <Type, GestureRecognizerFactory>{
@@ -456,7 +550,8 @@ Updating drag selection:
               ..onDoubleTapDown = _onDoubleTapDown
               ..onDoubleTap = _onDoubleTap
               ..onTripleTapDown = _onTripleTapDown
-              ..onTripleTap = _onTripleTap;
+              ..onTripleTap = _onTripleTap
+              ..gestureSettings = gestureSettings;
           },
         ),
         PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
@@ -466,7 +561,8 @@ Updating drag selection:
               ..onStart = _onPanStart
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
-              ..onCancel = _onPanCancel;
+              ..onCancel = _onPanCancel
+              ..gestureSettings = gestureSettings;
           },
         ),
       },

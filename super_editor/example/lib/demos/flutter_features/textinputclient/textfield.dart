@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class FlutterTextFieldDemo extends StatefulWidget {
   @override
-  _FlutterTextFieldDemoState createState() => _FlutterTextFieldDemoState();
+  State<FlutterTextFieldDemo> createState() => _FlutterTextFieldDemoState();
 }
 
 class _FlutterTextFieldDemoState extends State<FlutterTextFieldDemo> {

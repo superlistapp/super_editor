@@ -1,8 +1,10 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../_logging.dart';
 
@@ -32,10 +34,14 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     AttributedTextEditingController? controller,
     bool disposeClientController = true,
     void Function(RawFloatingCursorPoint)? onIOSFloatingCursorChange,
+    Brightness keyboardAppearance = Brightness.light,
+    TextInputConnectionFactory? inputConnectionFactory,
   })  : _realController = controller ?? AttributedTextEditingController(),
         _disposeClientController = disposeClientController,
-        _onIOSFloatingCursorChange = onIOSFloatingCursorChange {
-    _realController.addListener(_onTextChange);
+        _inputConnectionFactory = inputConnectionFactory,
+        _onIOSFloatingCursorChange = onIOSFloatingCursorChange,
+        _keyboardAppearance = keyboardAppearance {
+    _realController.addListener(_onInnerControllerChange);
   }
 
   @override
@@ -47,12 +53,21 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     super.dispose();
   }
 
+  /// The appearance of the software keyboard.
+  ///
+  /// Only used for iOS devices.
+  Brightness get keyboardAppearance => _keyboardAppearance;
+  Brightness _keyboardAppearance;
+
   final AttributedTextEditingController _realController;
 
   @Deprecated("this property is exposed temporarily as super_editor evaluates what to do with controllers")
   AttributedTextEditingController get innerController => _realController;
 
   final bool _disposeClientController;
+
+  // Only for testing purposes.
+  final TextInputConnectionFactory? _inputConnectionFactory;
 
   void Function(RawFloatingCursorPoint)? _onIOSFloatingCursorChange;
 
@@ -89,18 +104,17 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       return;
     }
 
-    _inputConnection = TextInput.attach(
-        this,
-        TextInputConfiguration(
-          autocorrect: autocorrect,
-          enableDeltaModel: true,
-          enableSuggestions: enableSuggestions,
-          inputAction: textInputAction,
-          inputType: textInputType,
-        ));
-    _inputConnection!
-      ..show()
-      ..setEditingState(currentTextEditingValue!);
+    final imeConfig = TextInputConfiguration(
+      autocorrect: autocorrect,
+      enableDeltaModel: true,
+      enableSuggestions: enableSuggestions,
+      inputAction: textInputAction,
+      inputType: textInputType,
+      keyboardAppearance: keyboardAppearance,
+    );
+    _inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
+    _inputConnection!.show();
+    _sendEditingValueToPlatform();
     _log.fine('Is attached to input client? ${_inputConnection!.attached}');
   }
 
@@ -109,7 +123,12 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     bool enableSuggestions = true,
     TextInputAction textInputAction = TextInputAction.done,
     TextInputType textInputType = TextInputType.text,
+    Brightness keyboardAppearance = Brightness.light,
   }) {
+    // Change the keyboard appearance even if we are detached from the IME.
+    // In the next time we attach to the IME, the keyboard appearance is used.
+    _keyboardAppearance = keyboardAppearance;
+
     if (!isAttachedToIme) {
       // We're not attached to the IME, so there is nothing to update.
       return;
@@ -119,18 +138,17 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _inputConnection?.close();
 
     // Open a new connection with the new configuration.
-    _inputConnection = TextInput.attach(
-        this,
-        TextInputConfiguration(
-          autocorrect: autocorrect,
-          enableDeltaModel: true,
-          enableSuggestions: enableSuggestions,
-          inputAction: textInputAction,
-          inputType: textInputType,
-        ));
-    _inputConnection!
-      ..show()
-      ..setEditingState(currentTextEditingValue!);
+    final imeConfig = TextInputConfiguration(
+      autocorrect: autocorrect,
+      enableDeltaModel: true,
+      enableSuggestions: enableSuggestions,
+      inputAction: textInputAction,
+      inputType: textInputType,
+      keyboardAppearance: keyboardAppearance,
+    );
+    _inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
+    _inputConnection!.show();
+    _sendEditingValueToPlatform();
   }
 
   void detachFromIme() {
@@ -167,30 +185,56 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   // to the platform as changes. This flag differentiates between the two situations.
   bool _sendTextChangesToPlatform = true;
 
-  void _onTextChange() {
+  /// Whether we should handle [TextEditingDeltaNonTextUpdate]s.
+  bool _allowNonTextDeltas = true;
+
+  void _onInnerControllerChange() {
     if (_sendTextChangesToPlatform) {
       _sendEditingValueToPlatform();
     }
 
-    // Forward the change notification to our listeners (because we wrap
-    // _realController as a proxy).
+    // This method was called in response to our inner controller sending a
+    // change notification. Forward that change notification to our listeners,
+    // because we wrap _realController as a proxy.
     notifyListeners();
   }
 
   TextEditingValue? _latestPlatformTextEditingValue;
 
   void _onReceivedTextEditingValueFromPlatform(TextEditingValue newValue) {
-    _latestPlatformTextEditingValue = newValue;
+    if (newValue == _latestPlatformTextEditingValue) {
+      // The value didn't change. Don't let us get into an infinite loop
+      // with the IME where it keeps sending us the same value over and over.
+      return;
+    }
 
     // We have to send the value back to the platform to acknowledge receipt.
     _sendEditingValueToPlatform();
   }
 
   void _sendEditingValueToPlatform() {
-    if (isAttachedToIme) {
-      _log.fine('Sending TextEditingValue to platform: $currentTextEditingValue');
-      _inputConnection!.setEditingState(currentTextEditingValue!);
+    if (!isAttachedToIme) {
+      return;
     }
+
+    // In some platforms, like macOS, whenever we call setEditingState(), the engine send us back a
+    // non-text delta to sync its state with our state.
+    //
+    // We have no way to know if the delta means that the selection/composing region changed,
+    // or if it means that the engine is syncing its state.
+    //
+    // If we always handle the non-text deltas, we might end up in an endless loop of deltas.
+    // To avoid this, we don't handle any non-text deltas until the next frame, after we call setEditingState.
+    //
+    // Remove this as soon as https://github.com/flutter/flutter/issues/118759 is resolved.
+    _allowNonTextDeltas = false;
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _allowNonTextDeltas = true;
+    });
+
+    _log.fine('Sending TextEditingValue to platform: $currentTextEditingValue');
+    _latestPlatformTextEditingValue = currentTextEditingValue;
+    _inputConnection!.setEditingState(currentTextEditingValue!);
   }
 
   void Function(TextInputAction)? _onPerformActionPressed;
@@ -225,17 +269,30 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       return;
     }
 
+    // After we call setEditingState(), we ignore non-text deltas until the end of the current frame.
+    //
+    // This is because, in some platforms, we get a TextEditingDeltaNonTextUpdate after this call.
+    // The engine sends this delta to synchronize the editing value.
+    //
+    // Handling this synchronization delta may cause endless loops.
+    final allowedDeltas =
+        _allowNonTextDeltas ? deltas : deltas.where((e) => e is! TextEditingDeltaNonTextUpdate).toList();
+    if (allowedDeltas.isEmpty) {
+      return;
+    }
+
     // Prevent us from sending these changes back to the platform as we alter
     // the _realController. Turn this flag back to `true` after the changes.
     _sendTextChangesToPlatform = false;
 
-    for (final delta in deltas) {
+    for (final delta in allowedDeltas) {
       if (delta is TextEditingDeltaInsertion) {
         _log.fine('Processing insertion: $delta');
         if (selection.isCollapsed && delta.insertionOffset == selection.extentOffset) {
           // This action appears to be user input at the caret.
           insertAtCaret(
             text: delta.textInserted,
+            newComposingRegion: delta.composing,
           );
         } else {
           // We're not sure what this action represents. Either the current selection
@@ -247,6 +304,8 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
               text: delta.textInserted,
             ),
             insertIndex: delta.insertionOffset,
+            newSelection: delta.selection,
+            newComposingRegion: delta.composing,
           );
         }
       } else if (delta is TextEditingDeltaDeletion) {
@@ -521,4 +580,70 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   void clear() {
     _realController.clear();
   }
+
+  @override
+  void deleteCharacter(TextAffinity direction) {
+    _realController.deleteCharacter(direction);
+  }
+
+  @override
+  void copySelectedTextToClipboard() {
+    _realController.copySelectedTextToClipboard();
+  }
+
+  @override
+  void deleteSelectedText() {
+    _realController.deleteSelectedText();
+  }
+
+  @override
+  void deleteTextOnLineBeforeCaret({required ProseTextLayout textLayout}) {
+    _realController.deleteTextOnLineBeforeCaret(textLayout: textLayout);
+  }
+
+  @override
+  void insertCharacter(String character) {
+    _realController.insertCharacter(character);
+  }
+
+  @override
+  void moveCaretHorizontally({
+    required ProseTextLayout textLayout,
+    required bool expandSelection,
+    required bool moveLeft,
+    required MovementModifier? movementModifier,
+  }) {
+    _realController.moveCaretHorizontally(
+      textLayout: textLayout,
+      expandSelection: expandSelection,
+      moveLeft: moveLeft,
+      movementModifier: movementModifier,
+    );
+  }
+
+  @override
+  void moveCaretVertically({
+    required ProseTextLayout textLayout,
+    required bool expandSelection,
+    required bool moveUp,
+  }) {
+    _realController.moveCaretVertically(
+      textLayout: textLayout,
+      expandSelection: expandSelection,
+      moveUp: moveUp,
+    );
+  }
+
+  @override
+  Future<void> pasteClipboard() {
+    return _realController.pasteClipboard();
+  }
+
+  @override
+  void selectAll() {
+    _realController.selectAll();
+  }
 }
+
+typedef TextInputConnectionFactory = TextInputConnection Function(
+    TextInputClient client, TextInputConfiguration configuration);

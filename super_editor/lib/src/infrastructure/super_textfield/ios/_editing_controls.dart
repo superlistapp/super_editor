@@ -3,10 +3,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
+
+import '../metrics.dart';
 
 final _log = iosTextFieldLog;
 
@@ -305,7 +308,6 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
       return const SizedBox();
     }
 
-    const toolbarGap = 24.0;
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
 
@@ -314,8 +316,9 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
           _textPositionToViewportOffset(widget.editingController.textController.selection.extent);
       final lineHeight = _textLayout.getLineHeightAtPosition(widget.editingController.textController.selection.extent);
 
-      toolbarTopAnchor = extentOffsetInViewport - const Offset(0, toolbarGap);
-      toolbarBottomAnchor = extentOffsetInViewport + Offset(0, lineHeight) + const Offset(0, toolbarGap);
+      toolbarTopAnchor = extentOffsetInViewport - const Offset(0, gapBetweenToolbarAndContent);
+      toolbarBottomAnchor =
+          extentOffsetInViewport + Offset(0, lineHeight) + const Offset(0, gapBetweenToolbarAndContent);
     } else {
       final selectionBoxes = _textLayout.getBoxesForSelection(widget.editingController.textController.selection);
       Rect selectionBounds = selectionBoxes.first.toRect();
@@ -324,38 +327,44 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
       }
       final selectionTopInText = selectionBounds.topCenter;
       final selectionTopInViewport = _textOffsetToViewportOffset(selectionTopInText);
-      toolbarTopAnchor = selectionTopInViewport - const Offset(0, toolbarGap);
+      toolbarTopAnchor = selectionTopInViewport - const Offset(0, gapBetweenToolbarAndContent);
 
       final selectionBottomInText = selectionBounds.bottomCenter;
       final selectionBottomInViewport = _textOffsetToViewportOffset(selectionBottomInText);
-      toolbarBottomAnchor = selectionBottomInViewport + const Offset(0, toolbarGap);
+      toolbarBottomAnchor = selectionBottomInViewport + const Offset(0, gapBetweenToolbarAndContent);
     }
 
     // The selection might start above the visible area in a scrollable
     // text field. In that case, we don't want the toolbar to sit more
-    // than [toolbarGap] above the text field.
+    // than [gapBetweenToolbarAndContent] above the text field.
     toolbarTopAnchor = Offset(
       toolbarTopAnchor.dx,
       max(
         toolbarTopAnchor.dy,
-        -toolbarGap,
+        -gapBetweenToolbarAndContent,
       ),
     );
 
     // The selection might end below the visible area in a scrollable
     // text field. In that case, we don't want the toolbar to sit more
-    // than [toolbarGap] below the text field.
+    // than [gapBetweenToolbarAndContent] below the text field.
     final viewportHeight = (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).size.height;
     toolbarTopAnchor = Offset(
       toolbarTopAnchor.dx,
       min(
         toolbarTopAnchor.dy,
-        viewportHeight + toolbarGap,
+        viewportHeight + gapBetweenToolbarAndContent,
       ),
     );
 
-    final textFieldGlobalOffset =
-        (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
+    final textFieldRenderBox = (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox);
+
+    final textFieldGlobalOffset = textFieldRenderBox.localToGlobal(Offset.zero);
+
+    widget.editingController.overlayController.positionToolbar(
+      topAnchor: textFieldRenderBox.localToGlobal(toolbarTopAnchor),
+      bottomAnchor: textFieldRenderBox.localToGlobal(toolbarBottomAnchor),
+    );
 
     // TODO: figure out why this approach works. Why isn't the text field's
     //       RenderBox offset stale when the keyboard opens or closes? Shouldn't
@@ -547,10 +556,18 @@ class IOSEditingOverlayController with ChangeNotifier {
   IOSEditingOverlayController({
     required this.textController,
     required LayerLink magnifierFocalPoint,
-  }) : _magnifierFocalPoint = magnifierFocalPoint;
+    required this.overlayController,
+  }) : _magnifierFocalPoint = magnifierFocalPoint {
+    overlayController.addListener(_overlayControllerChanged);
+  }
 
-  bool _isToolbarVisible = false;
-  bool get isToolbarVisible => _isToolbarVisible;
+  @override
+  void dispose() {
+    overlayController.removeListener(_overlayControllerChanged);
+    super.dispose();
+  }
+
+  bool get isToolbarVisible => overlayController.shouldDisplayToolbar;
 
   /// The [AttributedTextEditingController] controlling the text
   /// and selection within the text field with which this
@@ -563,44 +580,32 @@ class IOSEditingOverlayController with ChangeNotifier {
   /// this [textController].
   final AttributedTextEditingController textController;
 
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController overlayController;
+
   void toggleToolbar() {
-    if (isToolbarVisible) {
-      hideToolbar();
-    } else {
-      showToolbar();
-    }
+    overlayController.toggleToolbar();
   }
 
   void showToolbar() {
-    hideMagnifier();
-
-    _isToolbarVisible = true;
-
-    notifyListeners();
+    overlayController.showToolbar();
   }
 
   void hideToolbar() {
-    _isToolbarVisible = false;
-    notifyListeners();
+    overlayController.hideToolbar();
   }
 
   final LayerLink _magnifierFocalPoint;
   LayerLink get magnifierFocalPoint => _magnifierFocalPoint;
 
-  bool _isMagnifierVisible = false;
-  bool get isMagnifierVisible => _isMagnifierVisible;
+  bool get isMagnifierVisible => overlayController.shouldDisplayMagnifier;
 
   void showMagnifier(Offset globalOffset) {
-    hideToolbar();
-
-    _isMagnifierVisible = true;
-
-    notifyListeners();
+    overlayController.showMagnifier();
   }
 
   void hideMagnifier() {
-    _isMagnifierVisible = false;
-    notifyListeners();
+    overlayController.hideMagnifier();
   }
 
   bool _areSelectionHandlesVisible = false;
@@ -613,6 +618,10 @@ class IOSEditingOverlayController with ChangeNotifier {
 
   void hideSelectionHandles() {
     _areSelectionHandlesVisible = false;
+    notifyListeners();
+  }
+
+  void _overlayControllerChanged() {
     notifyListeners();
   }
 }
