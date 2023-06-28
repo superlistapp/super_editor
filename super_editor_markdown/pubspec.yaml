@@ -29,7 +29,7 @@ dev_dependencies:
   flutter_lints: ^2.0.1
   flutter_test:
     sdk: flutter
-  golden_toolkit: ^0.11.0
+  golden_toolkit: ^0.13.0
 
 flutter:
 # no Flutter configuration
