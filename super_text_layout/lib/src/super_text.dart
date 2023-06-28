@@ -67,7 +67,7 @@ class SuperText extends StatefulWidget {
 }
 
 @visibleForTesting
-class SuperTextState extends State<SuperText> with ProseTextBlock {
+class SuperTextState extends State<SuperText> implements ProseTextBlock {
   final _textLayoutKey = GlobalKey();
   @override
   ProseTextLayout get textLayout => RenderSuperTextLayout.textLayoutFrom(_textLayoutKey)!;
