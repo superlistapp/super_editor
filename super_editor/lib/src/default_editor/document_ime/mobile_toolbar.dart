@@ -1,5 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/material.dart' hide ListenableBuilder;
+import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -9,7 +9,6 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 
 import '../attributions.dart';
 
