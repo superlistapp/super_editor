@@ -230,7 +230,7 @@ class TextDeltasDocumentEditor {
       editor.execute([
         ChangeSelectionRequest(
           docSelection,
-          SelectionChangeType.placeCaret,
+          docSelection.isCollapsed ? SelectionChangeType.placeCaret : SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
       ]);

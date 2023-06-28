@@ -732,6 +732,43 @@ void main() {
         );
       });
 
+      testWidgetsOnAllPlatforms("deletes second tag and leaves first tag alone", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(text: ""),
+              ),
+            ],
+          ),
+        );
+
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose two tokens within text
+        await tester.typeImeText("one @john two @sally three");
+
+        // Place the caret at "one @john two @sally| three"
+        await tester.placeCaretInParagraph("1", 20);
+
+        // Delete the 2nd token.
+        await tester.pressBackspace();
+
+        // Ensure the 2nd token was deleted, and the 1st token remains.
+        expect(SuperEditorInspector.findTextInParagraph("1").text, "one @john two  three");
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 14),
+            ),
+          ),
+        );
+      });
+
       testWidgetsOnAllPlatforms("deletes multiple tags when partially selected in the same node", (tester) async {
         final context = await _pumpTestEditor(
           tester,

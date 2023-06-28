@@ -396,7 +396,7 @@ class TagUserReaction implements EditReaction {
         final attribution = tag.attribution as UserTagAttribution;
         final containsTrigger = textNode.text.text[tag.start] == "@";
 
-        if (attribution.userId != tagText || !containsTrigger) {
+        if (tagText != "@${attribution.userId}" || !containsTrigger) {
           // The tag was partially deleted it. Delete the whole thing.
           final deleteFrom = tag.start;
           final deleteTo = tag.end + 1; // +1 because SpanRange is inclusive and text position is exclusive
