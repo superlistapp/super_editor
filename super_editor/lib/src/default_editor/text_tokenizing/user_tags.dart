@@ -88,205 +88,6 @@ class TagUserReaction implements EditReaction {
     _commitCompletedTags(editContext, requestDispatcher, changeList);
   }
 
-  /// Find any composing tag that's no longer being composed, and commit it.
-  void _commitCompletedTags(
-    EditContext editContext,
-    RequestDispatcher requestDispatcher,
-    List<EditEvent> changeList,
-  ) {
-    editorUserTagsLog.fine("Looking for completed tags to commit.");
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final composingTagNodeCandidates = <String>{};
-    for (final edit in changeList) {
-      if (edit is DocumentEdit && (edit.change is TextInsertionEvent || edit.change is TextDeletedEvent)) {
-        composingTagNodeCandidates.add((edit.change as NodeChangeEvent).nodeId);
-      } else if (edit is SelectionChangeEvent) {
-        final oldSelection = edit.oldSelection;
-        if (oldSelection == null) {
-          continue;
-        }
-
-        if (oldSelection.base.nodePosition is TextNodePosition) {
-          // The old selection might belong to a node that was removed. Make sure
-          // the old node exists. If it does, add the node ID as a candidate.
-          final nodeId = oldSelection.base.nodeId;
-          if (document.getNodeById(nodeId) != null) {
-            composingTagNodeCandidates.add(nodeId);
-          }
-        }
-        if (oldSelection.extent.nodePosition is TextNodePosition) {
-          // The old selection might belong to a node that was removed. Make sure
-          // the old node exists. If it does, add the node ID as a candidate.
-          final nodeId = oldSelection.extent.nodeId;
-          if (document.getNodeById(nodeId) != null) {
-            composingTagNodeCandidates.add(nodeId);
-          }
-        }
-      } else if (edit is DocumentEdit && edit.change is NodeRemovedEvent) {
-        // Make sure we don't try to track a node where text was edited, if that
-        // node was later removed.
-        final change = (edit).change as NodeRemovedEvent;
-        composingTagNodeCandidates.remove(change.nodeId);
-      }
-    }
-    if (composingTagNodeCandidates.isEmpty) {
-      return;
-    }
-
-    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
-    final selection = composer.selection;
-    for (final textNodeId in composingTagNodeCandidates) {
-      editorUserTagsLog.fine("Checking node $textNodeId for composing tags to commit");
-      final textNode = document.getNodeById(textNodeId) as TextNode;
-      final composingTags = _findAllComposingTagsInTextNode(textNode);
-      editorUserTagsLog.fine("Composing tags in node: $composingTags");
-
-      for (final composingTag in composingTags) {
-        if (selection == null || selection.extent.nodeId != textNodeId || selection.base.nodeId != textNodeId) {
-          editorUserTagsLog
-              .info("Committing tag because selection is null, or selection moved to different node: '$composingTag'");
-          _commitTag(requestDispatcher, textNode, composingTag);
-          continue;
-        }
-
-        final extentPosition = selection.extent.nodePosition as TextNodePosition;
-        if (selection.isCollapsed &&
-            (extentPosition.offset <= composingTag.startOffset || extentPosition.offset > composingTag.endOffset)) {
-          editorUserTagsLog
-              .info("Committing tag because the caret is out of range: '$composingTag', extent: $extentPosition");
-          _commitTag(requestDispatcher, textNode, composingTag);
-          continue;
-        }
-
-        editorUserTagsLog.fine("Allowing tag '$composingTag' to continue composing without committing it.");
-      }
-    }
-  }
-
-  Set<TagToken> _findAllComposingTagsInTextNode(TextNode textNode) {
-    return textNode.text
-        // Find all the composing tag attributions.
-        .getAttributionSpansInRange(
-          attributionFilter: (attribution) => attribution == userTagComposingAttribution,
-          range: SpanRange(start: 0, end: textNode.text.text.length - 1),
-        )
-        // Convert the attributions into _Token's
-        .map(
-          (attributionSpan) => TagToken(
-            textNode.text.text.substring(attributionSpan.start, attributionSpan.end + 1),
-            attributionSpan.start,
-            attributionSpan.end + 1,
-          ),
-        )
-        .toSet();
-  }
-
-  void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, TagToken tag) {
-    // TODO: batch all these requests into one transaction
-    final tagSelection = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: textNode.id,
-        nodePosition: TextNodePosition(offset: tag.startOffset),
-      ),
-      extent: DocumentPosition(
-        nodeId: textNode.id,
-        nodePosition: TextNodePosition(offset: tag.endOffset),
-      ),
-    );
-
-    // Remove composing tag attribution.
-    requestDispatcher.execute([
-      RemoveTextAttributionsRequest(
-        documentSelection: tagSelection,
-        attributions: {userTagComposingAttribution},
-      )
-    ]);
-
-    // Add stable tag attribution.
-    requestDispatcher.execute([
-      AddTextAttributionsRequest(
-        documentSelection: tagSelection,
-        attributions: {
-          UserTagAttribution(textNode.text.text.substring(
-            tag.startOffset + 1, // +1 to remove the "@" from the value
-            tag.endOffset,
-          ))
-        },
-      )
-    ]);
-  }
-
-  /// Find any text near the caret that fits the pattern of a user tag and convert it into a
-  /// composing tag.
-  void _findAndCreateNewTags(
-    EditContext editContext,
-    RequestDispatcher requestDispatcher,
-    List<EditEvent> changeList,
-  ) {
-    editorUserTagsLog.fine("Looking for a tag around the caret.");
-    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
-    if (composer.selection == null || !composer.selection!.isCollapsed) {
-      // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
-      return;
-    }
-    final selectionPosition = composer.selection!.extent;
-    final caretPosition = selectionPosition.nodePosition;
-    if (caretPosition is! TextNodePosition) {
-      // Tagging only happens in the middle of text. The selected content isn't text. Return.
-      return;
-    }
-
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final selectedNode = document.getNodeById(selectionPosition.nodeId);
-    if (selectedNode is! TextNode) {
-      // Tagging only happens in the middle of text. The selected content isn't text. Return.
-      return;
-    }
-
-    // TODO: we handle adding a tag attribution, but what about identifying the situation
-    //       where we need to remove one?
-    final tokenAroundCaret = TagTokenizer.findUntaggedTokenAroundCaret(
-      triggerSymbol: "@",
-      text: selectedNode.text,
-      caretPosition: caretPosition,
-      tagFilter: (tokenAttributions) =>
-          !tokenAttributions.contains(userTagComposingAttribution) &&
-          !tokenAttributions.any((attribution) => attribution is UserTagAttribution),
-    );
-    if (tokenAroundCaret == null) {
-      // There's no tag around the caret.
-      editorUserTagsLog.fine("There's no tag around the caret, fizzling");
-      return;
-    }
-    if (!tokenAroundCaret.token.value.startsWith("@")) {
-      // Tags must start with an "@" but the preceding word doesn't. Return.
-      editorUserTagsLog.fine("Token doesn't start with @, fizzling");
-      return;
-    }
-
-    // TODO: check candidates for partial match
-
-    editorImeLog.fine("Found a user token around caret: ${tokenAroundCaret.token.value}");
-
-    requestDispatcher.execute([
-      AddTextAttributionsRequest(
-        documentSelection: DocumentSelection(
-          base: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.startOffset),
-          ),
-          extent: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.endOffset),
-          ),
-        ),
-        attributions: {
-          userTagComposingAttribution,
-        },
-      ),
-    ]);
-  }
-
   /// Find any text that was previously attributed as a composing tag, which no longer meets
   /// the pattern for a user tag, and remove the tag attribution.
   void _removeInvalidTags(
@@ -472,6 +273,201 @@ class TagUserReaction implements EditReaction {
     requestDispatcher.execute([
       ...removeTagRequests,
       ...deleteTagRequests,
+    ]);
+  }
+
+  /// Find any text near the caret that fits the pattern of a user tag and convert it into a
+  /// composing tag.
+  void _findAndCreateNewTags(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
+    editorUserTagsLog.fine("Looking for a tag around the caret.");
+    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
+    if (composer.selection == null || !composer.selection!.isCollapsed) {
+      // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
+      return;
+    }
+    final selectionPosition = composer.selection!.extent;
+    final caretPosition = selectionPosition.nodePosition;
+    if (caretPosition is! TextNodePosition) {
+      // Tagging only happens in the middle of text. The selected content isn't text. Return.
+      return;
+    }
+
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final selectedNode = document.getNodeById(selectionPosition.nodeId);
+    if (selectedNode is! TextNode) {
+      // Tagging only happens in the middle of text. The selected content isn't text. Return.
+      return;
+    }
+
+    final tokenAroundCaret = TagTokenizer.findUntaggedTokenAroundCaret(
+      triggerSymbol: "@",
+      text: selectedNode.text,
+      caretPosition: caretPosition,
+      tagFilter: (tokenAttributions) =>
+          !tokenAttributions.contains(userTagComposingAttribution) &&
+          !tokenAttributions.any((attribution) => attribution is UserTagAttribution),
+    );
+    if (tokenAroundCaret == null) {
+      // There's no tag around the caret.
+      editorUserTagsLog.fine("There's no tag around the caret, fizzling");
+      return;
+    }
+    if (!tokenAroundCaret.token.value.startsWith("@")) {
+      // Tags must start with an "@" but the preceding word doesn't. Return.
+      editorUserTagsLog.fine("Token doesn't start with @, fizzling");
+      return;
+    }
+
+    editorImeLog.fine("Found a user token around caret: ${tokenAroundCaret.token.value}");
+
+    requestDispatcher.execute([
+      AddTextAttributionsRequest(
+        documentSelection: DocumentSelection(
+          base: DocumentPosition(
+            nodeId: selectedNode.id,
+            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.startOffset),
+          ),
+          extent: DocumentPosition(
+            nodeId: selectedNode.id,
+            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.endOffset),
+          ),
+        ),
+        attributions: {
+          userTagComposingAttribution,
+        },
+      ),
+    ]);
+  }
+
+  /// Find any composing tag that's no longer being composed, and commit it.
+  void _commitCompletedTags(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
+    editorUserTagsLog.fine("Looking for completed tags to commit.");
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final composingTagNodeCandidates = <String>{};
+    for (final edit in changeList) {
+      if (edit is DocumentEdit && (edit.change is TextInsertionEvent || edit.change is TextDeletedEvent)) {
+        composingTagNodeCandidates.add((edit.change as NodeChangeEvent).nodeId);
+      } else if (edit is SelectionChangeEvent) {
+        final oldSelection = edit.oldSelection;
+        if (oldSelection == null) {
+          continue;
+        }
+
+        if (oldSelection.base.nodePosition is TextNodePosition) {
+          // The old selection might belong to a node that was removed. Make sure
+          // the old node exists. If it does, add the node ID as a candidate.
+          final nodeId = oldSelection.base.nodeId;
+          if (document.getNodeById(nodeId) != null) {
+            composingTagNodeCandidates.add(nodeId);
+          }
+        }
+        if (oldSelection.extent.nodePosition is TextNodePosition) {
+          // The old selection might belong to a node that was removed. Make sure
+          // the old node exists. If it does, add the node ID as a candidate.
+          final nodeId = oldSelection.extent.nodeId;
+          if (document.getNodeById(nodeId) != null) {
+            composingTagNodeCandidates.add(nodeId);
+          }
+        }
+      } else if (edit is DocumentEdit && edit.change is NodeRemovedEvent) {
+        // Make sure we don't try to track a node where text was edited, if that
+        // node was later removed.
+        final change = (edit).change as NodeRemovedEvent;
+        composingTagNodeCandidates.remove(change.nodeId);
+      }
+    }
+    if (composingTagNodeCandidates.isEmpty) {
+      return;
+    }
+
+    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
+    final selection = composer.selection;
+    for (final textNodeId in composingTagNodeCandidates) {
+      editorUserTagsLog.fine("Checking node $textNodeId for composing tags to commit");
+      final textNode = document.getNodeById(textNodeId) as TextNode;
+      final composingTags = _findAllComposingTagsInTextNode(textNode);
+      editorUserTagsLog.fine("Composing tags in node: $composingTags");
+
+      for (final composingTag in composingTags) {
+        if (selection == null || selection.extent.nodeId != textNodeId || selection.base.nodeId != textNodeId) {
+          editorUserTagsLog
+              .info("Committing tag because selection is null, or selection moved to different node: '$composingTag'");
+          _commitTag(requestDispatcher, textNode, composingTag);
+          continue;
+        }
+
+        final extentPosition = selection.extent.nodePosition as TextNodePosition;
+        if (selection.isCollapsed &&
+            (extentPosition.offset <= composingTag.startOffset || extentPosition.offset > composingTag.endOffset)) {
+          editorUserTagsLog
+              .info("Committing tag because the caret is out of range: '$composingTag', extent: $extentPosition");
+          _commitTag(requestDispatcher, textNode, composingTag);
+          continue;
+        }
+
+        editorUserTagsLog.fine("Allowing tag '$composingTag' to continue composing without committing it.");
+      }
+    }
+  }
+
+  Set<TagToken> _findAllComposingTagsInTextNode(TextNode textNode) {
+    return textNode.text
+        // Find all the composing tag attributions.
+        .getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+          range: SpanRange(start: 0, end: textNode.text.text.length - 1),
+        )
+        // Convert the attributions into TagToken's
+        .map(
+          (attributionSpan) => TagToken(
+            textNode.text.text.substring(attributionSpan.start, attributionSpan.end + 1),
+            attributionSpan.start,
+            attributionSpan.end + 1,
+          ),
+        )
+        .toSet();
+  }
+
+  void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, TagToken tag) {
+    // TODO: batch all these requests into one transaction
+    final tagSelection = DocumentSelection(
+      base: DocumentPosition(
+        nodeId: textNode.id,
+        nodePosition: TextNodePosition(offset: tag.startOffset),
+      ),
+      extent: DocumentPosition(
+        nodeId: textNode.id,
+        nodePosition: TextNodePosition(offset: tag.endOffset),
+      ),
+    );
+
+    // Remove composing tag attribution.
+    requestDispatcher.execute([
+      RemoveTextAttributionsRequest(
+        documentSelection: tagSelection,
+        attributions: {userTagComposingAttribution},
+      )
+    ]);
+
+    // Add stable tag attribution.
+    requestDispatcher.execute([
+      AddTextAttributionsRequest(
+        documentSelection: tagSelection,
+        attributions: {
+          UserTagAttribution(textNode.text.text.substring(
+            tag.startOffset + 1, // +1 to remove the "@" from the value
+            tag.endOffset,
+          ))
+        },
+      )
     ]);
   }
 }
@@ -850,50 +846,6 @@ class KeepCaretOutOfTagReaction implements EditReaction {
       ),
     ]);
   }
-}
-
-class UserTagDelegate implements TagDelegate {
-  @override
-  String get symbol => "@";
-
-  @override
-  Attribution createComposingTag(String symbol, String token) {
-    return userTagComposingAttribution;
-  }
-
-  @override
-  Attribution? commitTag(String symbol, String token) {
-    return UserTagAttribution(token);
-  }
-}
-
-abstract class TagDelegate {
-  /// The symbol that initiates a new tag, e.g., "@" for users, "#" for hash tags.
-  String get symbol;
-
-  /// Creates and returns an [Attribution] that should be applied to the given
-  /// [token], which was initiated with the given [symbol].
-  ///
-  /// This method is called for every text entry change to a given token.
-  ///
-  /// For example:
-  ///
-  ///     @|
-  ///     @m|
-  ///     @ma|
-  ///     @mat|
-  ///     @matt|
-  ///     @mat|
-  ///     @ma|
-  ///
-  Attribution createComposingTag(String symbol, String token);
-
-  /// Creates and returns an [Attribution] that should be applied to a completed
-  /// tag with the given [token], which was initiated with the given [symbol]..
-  ///
-  /// Returns `null` if the given [token] shouldn't be represented as a tag, such
-  /// as a user tag for a user that doesn't exist.
-  Attribution? commitTag(String symbol, String token);
 }
 
 /// An attribution for a user tag that's currently being composed.
