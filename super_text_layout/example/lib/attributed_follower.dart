@@ -1,5 +1,8 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:overlord/follow_the_leader.dart';
+import 'package:overlord/overlord.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 class AttributedFollowerDemo extends StatefulWidget {
@@ -32,15 +35,44 @@ class _AttributedFollowerDemoState extends State<AttributedFollowerDemo> {
       const SpanMarker(attribution: token, offset: 56, markerType: SpanMarkerType.end),
     ]),
   );
+  late final TextSpan _richText;
   Set<TextRange> _tokenRanges = {};
 
-  final _layerLink = LayerLink();
+  final _leaderLink = LeaderLink();
+
+  int _spanToFollow = 0;
 
   @override
   void initState() {
     super.initState();
 
+    _createRichText();
     _calculateTokenRanges();
+  }
+
+  void _createRichText() {
+    _richText = TextSpan(children: [], style: _textStyle);
+    int textOffset = 0;
+
+    final spans = _attributedText.getAttributionSpansInRange(
+      attributionFilter: (a) => a == token,
+      range: SpanRange(start: 0, end: _attributedText.text.length),
+    );
+
+    for (final span in spans) {
+      if (span.start > textOffset) {
+        _richText.children!.add(
+          TextSpan(text: _attributedText.text.substring(textOffset, span.start)),
+        );
+        textOffset = span.start;
+      }
+
+      _richText.children!.add(TextSpan(
+        text: _attributedText.text.substring(span.start, span.end + 1),
+        style: const TextStyle(color: Colors.blue),
+      ));
+      textOffset = span.end + 1;
+    }
   }
 
   void _calculateTokenRanges() {
@@ -55,16 +87,23 @@ class _AttributedFollowerDemoState extends State<AttributedFollowerDemo> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        _buildText(),
-        CompositedTransformFollower(
-          link: _layerLink,
-          targetAnchor: Alignment.bottomCenter,
-          followerAnchor: Alignment.topCenter,
-          showWhenUnlinked: false,
-          child: Container(
-            width: 200,
-            height: 50,
-            color: Colors.blue,
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildText(),
+            _buildSpanSelectionControls(),
+          ],
+        ),
+        Follower.withAligner(
+          link: _leaderLink,
+          aligner: CupertinoPopoverToolbarAligner(),
+          child: CupertinoPopoverToolbar(
+            focalPoint: LeaderMenuFocalPoint(link: _leaderLink),
+            children: [
+              CupertinoPopoverToolbarMenuItem(label: "Copy"),
+              CupertinoPopoverToolbarMenuItem(label: "Cut"),
+              CupertinoPopoverToolbarMenuItem(label: "Paste"),
+            ],
           ),
         ),
       ],
@@ -73,18 +112,43 @@ class _AttributedFollowerDemoState extends State<AttributedFollowerDemo> {
 
   Widget _buildText() {
     return SuperText(
-      richText: TextSpan(
-        text: _attributedText.text,
-        style: _textStyle,
-      ),
-      layerBeneathBuilder: boundingBoxesLayer(_tokenRanges),
+      richText: _richText,
+      layerBeneathBuilder: boundingBoxesLayer(_tokenRanges, (i) => i == _spanToFollow ? _leaderLink : null),
+    );
+  }
+
+  Widget _buildSpanSelectionControls() {
+    return Row(
+      children: [
+        const Spacer(),
+        IconButton(
+          icon: const Icon(Icons.chevron_left),
+          onPressed: _spanToFollow > 0
+              ? () {
+                  setState(() {
+                    _spanToFollow -= 1;
+                  });
+                }
+              : null,
+        ),
+        IconButton(
+          icon: const Icon(Icons.chevron_right),
+          onPressed: _spanToFollow < _tokenRanges.length - 1
+              ? () {
+                  setState(() {
+                    _spanToFollow += 1;
+                  });
+                }
+              : null,
+        ),
+      ],
     );
   }
 }
 
 /// Returns a [SuperTextLayerBuilder] that builds invisible bounding box widgets around
 /// each of the given [ranges].
-SuperTextLayerBuilder boundingBoxesLayer(Set<TextRange> ranges) {
+SuperTextLayerBuilder boundingBoxesLayer(Set<TextRange> ranges, BoundingBoxLinker linker) {
   return (context, textLayout) {
     final tokenRectsByAttribution = ranges
         .map((range) => textLayout.getBoxesForSelection(
@@ -97,14 +161,29 @@ SuperTextLayerBuilder boundingBoxesLayer(Set<TextRange> ranges) {
         ...rects,
     ];
 
+    final rectWidgets = <Widget>[];
+    for (int i = 0; i < tokenRects.length; i += 1) {
+      final link = linker(i);
+      rectWidgets.add(
+        link != null
+            ? Leader(
+                link: link,
+                child: const SizedBox(),
+              )
+            : const SizedBox(),
+      );
+    }
+
     return Stack(
       children: [
-        for (final rect in tokenRects)
+        for (int i = 0; i < rectWidgets.length; i += 1)
           Positioned.fromRect(
-            rect: rect,
-            child: Container(color: Colors.red),
+            rect: tokenRects[i],
+            child: rectWidgets[i],
           ),
       ],
     );
   };
 }
+
+typedef BoundingBoxLinker = LeaderLink? Function(int spanIndex);

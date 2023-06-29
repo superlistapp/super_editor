@@ -16,6 +16,8 @@ dependencies:
     path: ../
 
   attributed_text: any
+  follow_the_leader: ^0.0.4+2
+  overlord: ^0.0.3+2
 
 dependency_overrides:
   attributed_text:
