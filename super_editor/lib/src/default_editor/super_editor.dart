@@ -609,8 +609,12 @@ class SuperEditorState extends State<SuperEditor> {
             showDebugPaint: widget.debugPaint.layout,
           ),
           overlays: [
-            for (final overlayBuilder in widget.documentOverlayBuilders) //
-              overlayBuilder.build(context, editContext),
+            // Only build overlays if the document layout is available for queries.
+            // FIXME: the addition of this if-statement prevents the caret from appearing on initial placement
+            //        We probably need to schedule a followup frame whenever we find the key is null.
+            if (_docLayoutKey.currentState != null)
+              for (final overlayBuilder in widget.documentOverlayBuilders) //
+                overlayBuilder.build(context, editContext),
           ],
         );
       case DocumentGestureMode.android:
