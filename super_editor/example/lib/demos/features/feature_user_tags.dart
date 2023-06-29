@@ -93,13 +93,8 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
           leaderAnchor: Alignment.bottomCenter,
           followerAnchor: Alignment.topCenter,
           showWhenUnlinked: false,
-          child: CupertinoPopoverToolbar(
-            focalPoint: LeaderMenuFocalPoint(link: _composingLink),
-            children: [
-              CupertinoPopoverToolbarMenuItem(label: "Copy"),
-              CupertinoPopoverToolbarMenuItem(label: "Cut"),
-              CupertinoPopoverToolbarMenuItem(label: "Paste"),
-            ],
+          child: UserSelectionPopover(
+            document: _document,
           ),
         ),
       ],
@@ -327,3 +322,106 @@ class _AttributionBoundsState extends State<_AttributionBounds> {
 typedef AttributionBoundsSelector = bool Function(Attribution attribution);
 
 final _composingLink = LeaderLink();
+
+class UserSelectionPopover extends StatefulWidget {
+  const UserSelectionPopover({
+    Key? key,
+    required this.document,
+  }) : super(key: key);
+
+  final Document document;
+
+  @override
+  State<UserSelectionPopover> createState() => _UserSelectionPopoverState();
+}
+
+class _UserSelectionPopoverState extends State<UserSelectionPopover> {
+  final _userCandidates = <String>[
+    "miguel",
+    "matt",
+    "john",
+    "sally",
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.document.addListener(_onDocumentChange);
+  }
+
+  void _onDocumentChange(DocumentChangeLog changeLog) {
+    // TODO:
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoPopoverMenu(
+      focalPoint: LeaderMenuFocalPoint(link: _composingLink),
+      child: _userCandidates.isNotEmpty ? _buildUserList() : _buildEmptyDisplay(),
+    );
+  }
+
+  Widget _buildUserList() {
+    return SizedBox(
+      width: 200,
+      height: 125,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 8),
+            for (int i = 0; i < _userCandidates.length; i += 1) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.account_circle,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _userCandidates[i],
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (i < _userCandidates.length - 1) //
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Divider(
+                    color: Colors.white.withOpacity(0.2),
+                  ),
+                ),
+            ],
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyDisplay() {
+    return SizedBox(
+      width: 200,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Text(
+          "NO USERS",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.black.withOpacity(0.5),
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+}
