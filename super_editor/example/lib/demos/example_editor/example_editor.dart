@@ -530,28 +530,31 @@ class _TokenBoundsOverlay implements DocumentLayerBuilder {
   @override
   Widget build(BuildContext context, SuperEditorContext editContext) {
     print("Building token bounds overlay");
-    return _TokenBounds(
+    return _AttributionBounds(
       layout: editContext.documentLayout,
       document: editContext.document,
+      selector: (a) => a == boldAttribution,
     );
   }
 }
 
-class _TokenBounds extends StatefulWidget {
-  const _TokenBounds({
+class _AttributionBounds extends StatefulWidget {
+  const _AttributionBounds({
     Key? key,
     required this.layout,
     required this.document,
+    required this.selector,
   }) : super(key: key);
 
   final DocumentLayout layout;
   final Document document;
+  final AttributionBoundsSelector selector;
 
   @override
-  State<_TokenBounds> createState() => _TokenBoundsState();
+  State<_AttributionBounds> createState() => _AttributionBoundsState();
 }
 
-class _TokenBoundsState extends State<_TokenBounds> {
+class _AttributionBoundsState extends State<_AttributionBounds> {
   final _bounds = <Rect>{};
 
   @override
@@ -587,7 +590,7 @@ class _TokenBoundsState extends State<_TokenBounds> {
       }
 
       final spans = node.text.getAttributionSpansInRange(
-        attributionFilter: (a) => a == boldAttribution,
+        attributionFilter: widget.selector,
         range: SpanRange(start: 0, end: node.text.text.length - 1),
       );
 
@@ -623,3 +626,5 @@ class _TokenBoundsState extends State<_TokenBounds> {
     );
   }
 }
+
+typedef AttributionBoundsSelector = bool Function(Attribution attribution);
