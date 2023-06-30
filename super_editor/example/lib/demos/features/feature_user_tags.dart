@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:example/demos/features/feature_demo_scaffold.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
+import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:overlord/follow_the_leader.dart';
 import 'package:overlord/overlord.dart';
@@ -16,6 +19,8 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
   late final MutableDocument _document;
   late final MutableDocumentComposer _composer;
   late final Editor _editor;
+
+  late final FocusNode _editorFocusNode;
 
   final _users = <String>[];
 
@@ -41,6 +46,19 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
         FunctionalEditListener(_onEdit),
       ],
     );
+
+    _editorFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _editorFocusNode.dispose();
+
+    _composer.dispose();
+    _editor.dispose();
+    _document.dispose();
+
+    super.dispose();
   }
 
   void _onEdit(List<EditEvent> changeList) {
@@ -95,6 +113,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
           showWhenUnlinked: false,
           child: UserSelectionPopover(
             document: _document,
+            editorFocusNode: _editorFocusNode,
           ),
         ),
       ],
@@ -106,6 +125,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
       editor: _editor,
       document: _document,
       composer: _composer,
+      focusNode: _editorFocusNode,
       stylesheet: defaultStylesheet.copyWith(
         inlineTextStyler: (attributions, existingStyle) {
           TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
@@ -327,9 +347,11 @@ class UserSelectionPopover extends StatefulWidget {
   const UserSelectionPopover({
     Key? key,
     required this.document,
+    required this.editorFocusNode,
   }) : super(key: key);
 
   final Document document;
+  final FocusNode editorFocusNode;
 
   @override
   State<UserSelectionPopover> createState() => _UserSelectionPopoverState();
@@ -341,24 +363,198 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     "matt",
     "john",
     "sally",
+    "bob",
+    "jane",
+    "kelly",
   ];
+  final _matchingUsers = <String>[];
+
+  late final FocusNode _focusNode;
+
+  final _listKey = GlobalKey<ScrollableState>();
+  late final ScrollController _scrollController;
+  int _selectedValueIndex = -1;
 
   @override
   void initState() {
     super.initState();
 
+    _focusNode = FocusNode();
+    _scrollController = ScrollController();
+
     widget.document.addListener(_onDocumentChange);
   }
 
+  @override
+  void didUpdateWidget(UserSelectionPopover oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.document != oldWidget.document) {
+      oldWidget.document.removeListener(_onDocumentChange);
+      widget.document.addListener(_onDocumentChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.document.removeListener(_onDocumentChange);
+
+    _scrollController.dispose();
+    _focusNode.dispose();
+
+    super.dispose();
+  }
+
   void _onDocumentChange(DocumentChangeLog changeLog) {
+    final composingTag = _findComposingTagAfterDocumentChange(changeLog);
+    print("Composing tag: $composingTag");
+
+    if (composingTag == null) {
+      // The user isn't composing a tag. Therefore, this popover shouldn't
+      // have focus.
+      setState(() {
+        _focusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
+        _matchingUsers.clear();
+      });
+      return;
+    }
+
+    // The user is composing a tag. Ensure that we have focus.
+    if (!_focusNode.hasPrimaryFocus) {
+      _focusNode.requestFocus();
+    }
+
+    // Filter the user list based on the composing token.
+    setState(() {
+      _matchingUsers
+        ..clear()
+        ..addAll(_userCandidates.where((user) => user.toLowerCase().contains(composingTag.toLowerCase())));
+
+      _selectedValueIndex = min(_selectedValueIndex, _matchingUsers.length - 1);
+    });
+  }
+
+  String? _findComposingTagInDocument() {
+    return _findComposingTag(widget.document.nodes.map((node) => node.id).toSet());
+  }
+
+  String? _findComposingTagAfterDocumentChange(DocumentChangeLog changeLog) {
+    // Find all nodes that changed.
+    final impactedNodes = <String>{};
+    for (final change in changeLog.changes) {
+      if (change is! NodeDocumentChange) {
+        continue;
+      }
+
+      impactedNodes.add(change.nodeId);
+    }
+
+    return _findComposingTag(impactedNodes);
+  }
+
+  String? _findComposingTag(Set<String> nodesToSearch) {
+    // Check all nodes for the existence of a composing tag.
+    for (final impactedNodeId in nodesToSearch) {
+      final node = widget.document.getNodeById(impactedNodeId);
+      if (node is! TextNode) {
+        continue;
+      }
+
+      final composingSpans = node.text.getAttributionSpansInRange(
+        attributionFilter: (a) => a == userTagComposingAttribution,
+        range: SpanRange(start: 0, end: node.text.text.length),
+      );
+
+      if (composingSpans.isNotEmpty) {
+        // We found a composing tag. We assume there's only one. Return the content.
+        final span = composingSpans.first;
+        // +1 on start to remove "@", +1 on end because substring is exclusive.
+        return node.text.text.substring(span.start + 1, span.end + 1);
+      }
+    }
+
+    return null;
+  }
+
+  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    final reservedKeys = {
+      LogicalKeyboardKey.arrowUp,
+      LogicalKeyboardKey.arrowDown,
+      LogicalKeyboardKey.escape,
+      LogicalKeyboardKey.enter,
+      LogicalKeyboardKey.numpadEnter,
+    };
+
+    final key = event.logicalKey;
+    if (!reservedKeys.contains(key)) {
+      return KeyEventResult.ignored;
+    }
+
+    if (event is KeyDownEvent) {
+      // Only handle up events, so we don't run our behavior twice
+      // for the same key press.
+      return KeyEventResult.handled;
+    }
+
+    bool didChange = false;
+    switch (key) {
+      // TODO: navigate popover with arrow keys
+      case LogicalKeyboardKey.arrowUp:
+        if (_selectedValueIndex > 0) {
+          _selectedValueIndex -= 1;
+          // TODO: auto-scroll to new position
+          didChange = true;
+        }
+      case LogicalKeyboardKey.arrowDown:
+        if (_selectedValueIndex < _matchingUsers.length - 1) {
+          _selectedValueIndex += 1;
+          // TODO: auto-scroll to new position
+          didChange = true;
+        }
+      case LogicalKeyboardKey.enter:
+      case LogicalKeyboardKey.numpadEnter:
+        _chooseUser();
+      case LogicalKeyboardKey.escape:
+        _cancelComposing();
+    }
+
+    if (didChange) {
+      setState(() {
+        // We changed something in our presentation. Rebuild.
+      });
+    }
+
+    return KeyEventResult.handled;
+  }
+
+  void _chooseUser() {
+    // TODO:
+  }
+
+  void _cancelComposing() {
     // TODO:
   }
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPopoverMenu(
-      focalPoint: LeaderMenuFocalPoint(link: _composingLink),
-      child: _userCandidates.isNotEmpty ? _buildUserList() : _buildEmptyDisplay(),
+    return Focus(
+      focusNode: _focusNode,
+      parentNode: widget.editorFocusNode,
+      onKeyEvent: _onKeyEvent,
+      child: ListenableBuilder(
+        listenable: _focusNode,
+        builder: (context, child) {
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(color: _focusNode.hasFocus ? Colors.blue : Colors.transparent),
+            ),
+            child: CupertinoPopoverMenu(
+              focalPoint: LeaderMenuFocalPoint(link: _composingLink),
+              child: _matchingUsers.isNotEmpty ? _buildUserList() : _buildEmptyDisplay(),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -367,36 +563,42 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
       width: 200,
       height: 125,
       child: SingleChildScrollView(
+        key: _listKey,
+        controller: _scrollController,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 8),
-            for (int i = 0; i < _userCandidates.length; i += 1) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.account_circle,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _userCandidates[i],
-                      style: TextStyle(
+            for (int i = 0; i < _matchingUsers.length; i += 1) ...[
+              ColoredBox(
+                color: i == _selectedValueIndex ? Colors.white.withOpacity(0.05) : Colors.transparent,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.account_circle,
                         color: Colors.white,
+                        size: 14,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Text(
+                        _matchingUsers[i],
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              if (i < _userCandidates.length - 1) //
+              if (i < _matchingUsers.length - 1) //
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Divider(
                     color: Colors.white.withOpacity(0.2),
+                    height: 1,
                   ),
                 ),
             ],
