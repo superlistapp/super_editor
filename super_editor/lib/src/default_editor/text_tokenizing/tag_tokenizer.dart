@@ -28,6 +28,7 @@ class TagTokenizer {
     Set<String> excludeCharacters = const {},
   }) {
     final text = paragraphText.text;
+    print("Finding token around position. Text instance: ${text.hashCode}");
     int tokenStartOffset = position.offset;
     int tokenEndOffset = position.offset;
 
@@ -48,9 +49,7 @@ class TagTokenizer {
 
     final tokenRange = SpanRange(start: tokenStartOffset, end: tokenEndOffset - 1);
     final tokenAttributions = paragraphText.getAllAttributionsThroughout(tokenRange);
-    print("Token around caret: '${text.substring(tokenStartOffset, tokenEndOffset)}'");
     if (!isTokenCandidate(tokenAttributions)) {
-      print(" ^ not a token candidate");
       return null;
     }
 

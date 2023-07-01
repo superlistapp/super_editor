@@ -104,6 +104,7 @@ class TestDocumentConfigurator {
   final WidgetTester _widgetTester;
   final MutableDocument? _document;
   final TestDocumentContext? _existingContext;
+  final _addedRequestHandlers = <EditRequestHandler>[];
   final _addedReactions = <EditReaction>[];
   DocumentGestureMode? _gestureMode;
   TextInputSource? _inputSource;
@@ -112,6 +113,8 @@ class TestDocumentConfigurator {
   SuperEditorImePolicies? _imePolicies;
   SuperEditorImeConfiguration? _imeConfiguration;
   DeltaTextInputClientDecorator? _imeOverrides;
+  final _prependedKeyboardActions = <DocumentKeyboardAction>[];
+  final _appendedKeyboardActions = <DocumentKeyboardAction>[];
   ThemeData? _appTheme;
   Stylesheet? _stylesheet;
   final _addedComponents = <ComponentBuilder>[];
@@ -125,6 +128,11 @@ class TestDocumentConfigurator {
   WidgetBuilder? _androidToolbarBuilder;
   WidgetBuilder? _iOSToolbarBuilder;
   Key? _key;
+
+  TestDocumentConfigurator withAddedRequestHandlers(List<EditRequestHandler> addedRequestHandlers) {
+    _addedRequestHandlers.addAll(addedRequestHandlers);
+    return this;
+  }
 
   TestDocumentConfigurator withAddedReactions(List<EditReaction> addedReactions) {
     _addedReactions.addAll(addedReactions);
@@ -193,6 +201,15 @@ class TestDocumentConfigurator {
   /// determined by the given [imeOverrides].
   TestDocumentConfigurator withImeOverrides(DeltaTextInputClientDecorator imeOverrides) {
     _imeOverrides = imeOverrides;
+    return this;
+  }
+
+  TestDocumentConfigurator withAddedKeyboardActions({
+    List<DocumentKeyboardAction> prepend = const [],
+    List<DocumentKeyboardAction> append = const [],
+  }) {
+    _prependedKeyboardActions.addAll(prepend);
+    _appendedKeyboardActions.addAll(append);
     return this;
   }
 
@@ -341,7 +358,9 @@ class TestDocumentConfigurator {
     final focusNode = _focusNode ?? FocusNode();
     final composer = MutableDocumentComposer(initialSelection: _selection);
     final editor = createDefaultDocumentEditor(document: _document!, composer: composer)
+      ..requestHandlers.insertAll(0, _addedRequestHandlers)
       ..reactionPipeline.insertAll(0, _addedReactions);
+
     // TODO:
     // ignore: prefer_function_declarations_over_variables
     final layoutResolver = () => layoutKey.currentState as DocumentLayout;
@@ -411,6 +430,11 @@ class TestDocumentConfigurator {
       imePolicies: _imePolicies ?? const SuperEditorImePolicies(),
       imeConfiguration: _imeConfiguration ?? const SuperEditorImeConfiguration(),
       imeOverrides: _imeOverrides,
+      keyboardActions: [
+        ..._prependedKeyboardActions,
+        ...defaultKeyboardActions,
+        ..._appendedKeyboardActions,
+      ],
       gestureMode: _gestureMode,
       androidToolbarBuilder: _androidToolbarBuilder,
       iOSToolbarBuilder: _iOSToolbarBuilder,

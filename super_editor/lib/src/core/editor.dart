@@ -48,10 +48,10 @@ class Editor implements RequestDispatcher {
   ///  - [listeners], which contains an initial set of [EditListener]s.
   Editor({
     required Map<String, Editable> editables,
-    required List<EditRequestHandler> requestHandlers,
+    List<EditRequestHandler>? requestHandlers,
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
-  })  : _requestHandlers = requestHandlers,
+  })  : requestHandlers = requestHandlers ?? [],
         reactionPipeline = reactionPipeline ?? [],
         _changeListeners = listeners ?? [] {
     _context = EditContext(editables);
@@ -65,7 +65,7 @@ class Editor implements RequestDispatcher {
   }
 
   /// Chain of Responsibility that maps a given [EditRequest] to an [EditCommand].
-  final List<EditRequestHandler> _requestHandlers;
+  final List<EditRequestHandler> requestHandlers;
 
   /// Service Locator that provides all resources that are relevant for document editing.
   late final EditContext _context;
@@ -176,7 +176,7 @@ class Editor implements RequestDispatcher {
 
   EditCommand _findCommandForRequest(EditRequest request) {
     EditCommand? command;
-    for (final handler in _requestHandlers) {
+    for (final handler in requestHandlers) {
       command = handler(request);
       if (command != null) {
         return command;

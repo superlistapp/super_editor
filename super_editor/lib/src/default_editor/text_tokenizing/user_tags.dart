@@ -1,18 +1,19 @@
-import 'dart:ui';
-
 import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/document_hardware_keyboard/document_input_keyboard.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
+import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/default_editor/text_tokenizing/tag_tokenizer.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-
-import '../../core/document.dart';
-import '../../core/document_composer.dart';
-import '../../core/document_selection.dart';
-import '../../core/editor.dart';
-import '../text.dart';
-import 'tag_tokenizer.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 // USER TAGGING FEATURE:
 // A user can be tagged when typing a pattern that begins with "@".
@@ -68,6 +69,18 @@ import 'tag_tokenizer.dart';
 //
 // Code deletes the attribution
 
+/// A [SuperEditor] plugin that adds the ability to tag users, e.g., "@dash".
+///
+/// User tagging includes three modes:
+///  * Composing: a user tag is being assembled, i.e., typed.
+///  * Committed: a user tag is done being assembled - it's now uneditable.
+///  * Cancelled: a user tag was being composed, but the composition was cancelled.
+///
+/// ## Composing Tags
+///
+/// ## Committed Tags
+///
+/// ## Cancelled Tags
 class UserTagPlugin {
   UserTagPlugin() {
     _tagUserReaction = TagUserReaction(
@@ -75,23 +88,57 @@ class UserTagPlugin {
     );
   }
 
+  /// Returns the active [ComposingUserTag], if the user is currently composing a user tag,
+  /// or `null` if no user tag is currently being composed.
   ValueListenable<ComposingUserTag?> get composingUserTag => _composingUserTag;
   final _composingUserTag = ValueNotifier<ComposingUserTag?>(null);
 
   void _onComposingUserTagFound(ComposingUserTag? tag) {
-    print("_onComposingUserTagFound: ${tag?.token}");
     _composingUserTag.value = tag;
   }
 
-  List<EditRequestHandler> get requestHandlers => [
-        (request) => request is FillInComposingUserTagRequest
-            ? FillInComposingUserTagCommand(request.userTag, trigger: request.trigger)
-            : null,
-      ];
+  /// [EditRequestHandler]s for user tag composition.
+  ///
+  /// Add these to an [Editor].
+  List<EditRequestHandler> get requestHandlers => _requestHandlers;
+  final _requestHandlers = <EditRequestHandler>[
+    (request) => request is FillInComposingUserTagRequest
+        ? FillInComposingUserTagCommand(request.userTag, trigger: request.trigger)
+        : null,
+    (request) => request is CancelComposingUserTagRequest //
+        ? CancelComposingUserTagCommand(trigger: request.trigger)
+        : null,
+  ];
 
+  /// [EditReaction]s for user tag composition.
+  ///
+  /// Add these to an [Editor].
   List<EditReaction> get reactions => [_tagUserReaction, _moveSelectionAroundUserTagReaction];
   late final TagUserReaction _tagUserReaction;
   final _moveSelectionAroundUserTagReaction = const AdjustSelectionAroundTagReaction();
+
+  /// [SuperEditor] keyboard actions for user tag composition.
+  ///
+  /// Pass these to a [SuperEditor] widget.
+  List<DocumentKeyboardAction> get keyboardActions => [_cancelOnEscape];
+  ExecutionInstruction _cancelOnEscape({
+    required SuperEditorContext editContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent is RawKeyDownEvent) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.escape) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    editContext.editor.execute([
+      const CancelComposingUserTagRequest(),
+    ]);
+
+    return ExecutionInstruction.haltExecution;
+  }
 }
 
 /// An [EditRequest] that replaces a composing user tag with the given [userTag]
@@ -147,35 +194,194 @@ class FillInComposingUserTagCommand implements EditCommand {
       return;
     }
 
-    if (selection.isCollapsed) {
-      final caret = selection.extent.nodePosition;
-      if (caret is! TextNodePosition) {
-        // The caret isn't sitting in a user tag. Fizzle.
-        editorUserTagsLog.warning("Tried to fill in a composing user tag, but the user's caret isn't in a text node.");
-        return;
-      }
+    // Look for a composing tag at the extent, or the base.
+    final base = selection.base;
+    final extent = selection.extent;
+    TagTokenAroundCaret? composingToken;
+    TextNode? textNode;
 
-      final textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
-
-      final composingToken = TagTokenizer.findAttributedTokenAroundPosition(
+    if (base.nodePosition is TextNodePosition) {
+      textNode = document.getNodeById(selection.base.nodeId) as TextNode;
+      composingToken = TagTokenizer.findAttributedTokenAroundPosition(
         trigger,
         textNode.text,
-        caret,
+        base.nodePosition as TextNodePosition,
         (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
       );
-      if (composingToken == null) {
-        // There's no composing token near the caret. Fizzle.
-        editorUserTagsLog
-            .warning("Tried to fill in a composing user tag, but there's no composing token near the caret.");
-        return;
-      }
-
-      // TODO:
-      print("TODO: Replace the token text");
-    } else {
-      // TODO:
-      print("TODO: Handle expanded selection");
     }
+    if (composingToken == null && extent.nodePosition is TextNodePosition) {
+      textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
+      composingToken = TagTokenizer.findAttributedTokenAroundPosition(
+        trigger,
+        textNode.text,
+        base.nodePosition as TextNodePosition,
+        (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
+      );
+    }
+
+    if (composingToken == null) {
+      // There's no composing tag near either side of the user's selection. Fizzle.
+      editorUserTagsLog.warning(
+          "Tried to fill in a composing user tag, but there's no composing user tag near the user's selection.");
+      return;
+    }
+
+    final userTagBasePosition = DocumentPosition(
+      nodeId: textNode!.id,
+      nodePosition: TextNodePosition(offset: composingToken.token.startOffset),
+    );
+    final userTagAttribution = UserTagAttribution(userTag);
+
+    // Delete the composing user tag text.
+    executor.executeCommand(
+      DeleteSelectionCommand(
+        documentSelection: DocumentSelection(
+          base: userTagBasePosition,
+          extent: DocumentPosition(
+            nodeId: textNode.id,
+            nodePosition: TextNodePosition(offset: composingToken.token.endOffset),
+          ),
+        ),
+      ),
+    );
+    // Insert a committed user tag.
+    executor.executeCommand(
+      InsertAttributedTextCommand(
+        documentPosition: userTagBasePosition,
+        textToInsert: AttributedText(
+          text: "$trigger$userTag ",
+          spans: AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: userTagAttribution, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: userTagAttribution, offset: userTag.length, markerType: SpanMarkerType.end),
+            ],
+          ),
+        ),
+      ),
+    );
+    // Place the caret at the end of the inserted text.
+    executor.executeCommand(
+      ChangeSelectionCommand(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: textNode.id,
+            // +1 for trigger symbol, +1 for space after the token
+            nodePosition: TextNodePosition(offset: composingToken.token.startOffset + userTag.length + 2),
+          ),
+        ),
+        SelectionChangeType.placeCaret,
+        SelectionReason.contentChange,
+      ),
+    );
+  }
+}
+
+/// An [EditRequest] that cancels an on-going user tag composition near the user's selection.
+///
+/// When a user is in the process of composing a user tag, that tag is given an attribution
+/// to identify it. After this request is processed, that attribution will be removed from
+/// the text, which will also remove any related UI, such as a suggested user popover.
+///
+/// This request doesn't change the user's selection.
+class CancelComposingUserTagRequest implements EditRequest {
+  const CancelComposingUserTagRequest({
+    this.trigger = "@",
+  });
+
+  final String trigger;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CancelComposingUserTagRequest && runtimeType == other.runtimeType && trigger == other.trigger;
+
+  @override
+  int get hashCode => trigger.hashCode;
+}
+
+class CancelComposingUserTagCommand implements EditCommand {
+  const CancelComposingUserTagCommand({
+    this.trigger = "@",
+  });
+
+  final String trigger;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+
+    final selection = composer.selection;
+    if (selection == null) {
+      // There shouldn't be a composing user tag without a selection. Either way,
+      // we can't find the desired composing user tag without a selection position
+      // to guide us. Fizzle.
+      editorUserTagsLog.warning("Tried to cancel a composing user tag, but there's no user selection.");
+      return;
+    }
+
+    // Look for a composing tag at the extent, or the base.
+    final base = selection.base;
+    final extent = selection.extent;
+    TagTokenAroundCaret? composingToken;
+    TextNode? textNode;
+
+    if (base.nodePosition is TextNodePosition) {
+      textNode = document.getNodeById(selection.base.nodeId) as TextNode;
+      composingToken = TagTokenizer.findAttributedTokenAroundPosition(
+        trigger,
+        textNode.text,
+        base.nodePosition as TextNodePosition,
+        (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
+      );
+    }
+    if (composingToken == null && extent.nodePosition is TextNodePosition) {
+      textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
+      composingToken = TagTokenizer.findAttributedTokenAroundPosition(
+        trigger,
+        textNode.text,
+        base.nodePosition as TextNodePosition,
+        (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
+      );
+    }
+
+    if (composingToken == null) {
+      // There's no composing tag near either side of the user's selection. Fizzle.
+      editorUserTagsLog.warning(
+          "Tried to cancel a composing user tag, but there's no composing user tag near the user's selection.");
+      return;
+    }
+
+    final userTagBasePosition = DocumentPosition(
+      nodeId: textNode!.id,
+      nodePosition: TextNodePosition(offset: composingToken.token.startOffset),
+    );
+
+    // Remove the composing attribution.
+    executor.executeCommand(
+      RemoveTextAttributionsCommand(
+        documentSelection: DocumentSelection(
+          base: userTagBasePosition,
+          extent: DocumentPosition(
+            nodeId: textNode.id,
+            nodePosition: TextNodePosition(offset: composingToken.token.endOffset),
+          ),
+        ),
+        attributions: {userTagComposingAttribution},
+      ),
+    );
+    executor.executeCommand(
+      AddTextAttributionsCommand(
+        documentSelection: DocumentSelection(
+          base: userTagBasePosition,
+          extent: DocumentPosition(
+            nodeId: textNode.id,
+            nodePosition: TextNodePosition(offset: composingToken.token.endOffset),
+          ),
+        ),
+        attributions: {userTagCancelledAttribution},
+      ),
+    );
   }
 }
 
@@ -406,17 +612,16 @@ class TagUserReaction implements EditReaction {
     List<EditEvent> changeList,
   ) {
     editorUserTagsLog.fine("Looking for a tag around the caret.");
+    print("Looking for a tag around the caret.");
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     if (composer.selection == null || !composer.selection!.isCollapsed) {
       // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
-      onUpdateComposingUserTag?.call(null);
       return;
     }
     final selectionPosition = composer.selection!.extent;
     final caretPosition = selectionPosition.nodePosition;
     if (caretPosition is! TextNodePosition) {
       // Tagging only happens in the middle of text. The selected content isn't text. Return.
-      onUpdateComposingUserTag?.call(null);
       return;
     }
 
@@ -424,7 +629,6 @@ class TagUserReaction implements EditReaction {
     final selectedNode = document.getNodeById(selectionPosition.nodeId);
     if (selectedNode is! TextNode) {
       // Tagging only happens in the middle of text. The selected content isn't text. Return.
-      onUpdateComposingUserTag?.call(null);
       return;
     }
 
@@ -438,7 +642,7 @@ class TagUserReaction implements EditReaction {
       caretPosition: caretPosition,
       tagFilter: (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
     );
-    if (existingComposingTag != null) {
+    if (existingComposingTag != null && caretPosition.offset > existingComposingTag.token.startOffset) {
       onUpdateComposingUserTag?.call(
         ComposingUserTag(
           DocumentRange(
@@ -460,13 +664,16 @@ class TagUserReaction implements EditReaction {
     }
 
     final tokenAroundCaret = TagTokenizer.findUntaggedTokenAroundCaret(
-      triggerSymbol: _trigger,
-      text: selectedNode.text,
-      caretPosition: caretPosition,
-      tagFilter: (tokenAttributions) =>
-          !tokenAttributions.contains(userTagComposingAttribution) &&
-          !tokenAttributions.any((attribution) => attribution is UserTagAttribution),
-    );
+        triggerSymbol: _trigger,
+        text: selectedNode.text,
+        caretPosition: caretPosition,
+        tagFilter: (tokenAttributions) {
+          print("Considering token attributions: $tokenAttributions");
+          return !tokenAttributions.contains(userTagComposingAttribution) &&
+              !tokenAttributions.contains(userTagCancelledAttribution) &&
+              !tokenAttributions.any((attribution) => attribution is UserTagAttribution);
+        });
+
     if (tokenAroundCaret == null) {
       // There's no tag around the caret.
       editorUserTagsLog.fine("There's no tag around the caret, fizzling");
@@ -481,6 +688,7 @@ class TagUserReaction implements EditReaction {
     }
 
     editorImeLog.fine("Found a user token around caret: ${tokenAroundCaret.token.value}");
+    print("Found a user token around caret: ${tokenAroundCaret.token.value}");
 
     onUpdateComposingUserTag?.call(
       ComposingUserTag(
@@ -1052,6 +1260,12 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
 
 /// An attribution for a user tag that's currently being composed.
 const userTagComposingAttribution = NamedAttribution("user-tag-composing");
+
+/// An attribution for a user tag that was being composed and then was cancelled.
+///
+/// This attribution is used to prevent automatically converting a cancelled composition
+/// back to a composing tag.
+const userTagCancelledAttribution = NamedAttribution("user-tag-cancelled");
 
 /// An attribution for a stable user tag, i.e., a user tag that's done being composed and
 /// shouldn't be partially selectable or editable.

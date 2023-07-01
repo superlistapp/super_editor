@@ -381,6 +381,8 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
   late final ScrollController _scrollController;
   int _selectedValueIndex = -1;
 
+  bool _isLoadingMatches = false;
+
   @override
   void initState() {
     super.initState();
@@ -411,7 +413,7 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     super.dispose();
   }
 
-  void _onComposingTokenChange() {
+  Future<void> _onComposingTokenChange() async {
     final composingTag = widget.userTagPlugin.composingUserTag.value?.token;
     if (composingTag == null) {
       // The user isn't composing a tag. Therefore, this popover shouldn't
@@ -428,8 +430,25 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
       _focusNode.requestFocus();
     }
 
+    // Simulate a load time
+    setState(() {
+      _isLoadingMatches = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (!mounted) {
+      return;
+    }
+    if (composingTag != widget.userTagPlugin.composingUserTag.value?.token) {
+      // The user changed the token. Our search results are invalid. Fizzle.
+      return;
+    }
+
     // Filter the user list based on the composing token.
     setState(() {
+      _isLoadingMatches = false;
+
       _matchingUsers
         ..clear()
         ..addAll(_userCandidates.where((user) => user.toLowerCase().contains(composingTag.toLowerCase())));
@@ -442,7 +461,6 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     final reservedKeys = {
       LogicalKeyboardKey.arrowUp,
       LogicalKeyboardKey.arrowDown,
-      LogicalKeyboardKey.escape,
       LogicalKeyboardKey.enter,
       LogicalKeyboardKey.numpadEnter,
     };
@@ -476,8 +494,6 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
       case LogicalKeyboardKey.enter:
       case LogicalKeyboardKey.numpadEnter:
         _chooseUser();
-      case LogicalKeyboardKey.escape:
-        _cancelComposing();
     }
 
     if (didChange) {
@@ -500,10 +516,6 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     ]);
   }
 
-  void _cancelComposing() {
-    // TODO:
-  }
-
   @override
   Widget build(BuildContext context) {
     return Focus(
@@ -519,7 +531,11 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
             ),
             child: CupertinoPopoverMenu(
               focalPoint: LeaderMenuFocalPoint(link: _composingLink),
-              child: _matchingUsers.isNotEmpty ? _buildUserList() : _buildEmptyDisplay(),
+              child: SizedBox(
+                width: 200,
+                height: 125,
+                child: _buildContent(),
+              ),
             ),
           );
         },
@@ -527,53 +543,62 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     );
   }
 
+  Widget _buildContent() {
+    if (_isLoadingMatches) {
+      return Center(
+        child: SizedBox.square(
+          dimension: 18,
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return _matchingUsers.isNotEmpty ? _buildUserList() : _buildEmptyDisplay();
+  }
+
   Widget _buildUserList() {
-    return SizedBox(
-      width: 200,
-      height: 125,
-      child: SingleChildScrollView(
-        key: _listKey,
-        controller: _scrollController,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 8),
-            for (int i = 0; i < _matchingUsers.length; i += 1) ...[
-              ColoredBox(
-                color: i == _selectedValueIndex ? Colors.white.withOpacity(0.05) : Colors.transparent,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.account_circle,
+    return SingleChildScrollView(
+      key: _listKey,
+      controller: _scrollController,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 8),
+          for (int i = 0; i < _matchingUsers.length; i += 1) ...[
+            ColoredBox(
+              color: i == _selectedValueIndex ? Colors.white.withOpacity(0.05) : Colors.transparent,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.account_circle,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _matchingUsers[i],
+                      style: TextStyle(
                         color: Colors.white,
-                        size: 14,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _matchingUsers[i],
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              if (i < _matchingUsers.length - 1) //
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Divider(
-                    color: Colors.white.withOpacity(0.2),
-                    height: 1,
-                  ),
+            ),
+            if (i < _matchingUsers.length - 1) //
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Divider(
+                  color: Colors.white.withOpacity(0.2),
+                  height: 1,
                 ),
-            ],
-            const SizedBox(height: 8),
+              ),
           ],
-        ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }

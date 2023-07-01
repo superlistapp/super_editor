@@ -219,6 +219,72 @@ void main() {
       });
     });
 
+    testWidgetsOnAllPlatforms("cancels composing when the user presses ESC", (tester) async {
+      await _pumpTestEditor(
+        tester,
+        MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: "1",
+              text: AttributedText(text: "before "),
+            ),
+          ],
+        ),
+      );
+
+      // Place the caret at "before |"
+      await tester.placeCaretInParagraph("1", 7);
+
+      // Start composing a token.
+      await tester.typeImeText("@");
+
+      // Ensure that we're composing.
+      var text = SuperEditorInspector.findTextInParagraph("1");
+      expect(
+        text.getAttributedRange({userTagComposingAttribution}, 7),
+        const SpanRange(start: 7, end: 7),
+      );
+
+      // Cancel composing.
+      await tester.pressEscape();
+      print("Composing was cancelled");
+
+      // Ensure that the composing was cancelled.
+      text = SuperEditorInspector.findTextInParagraph("1");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+          range: const SpanRange(start: 0, end: 7),
+        ),
+        isEmpty,
+      );
+      expect(
+        text.getAttributedRange({userTagCancelledAttribution}, 7),
+        const SpanRange(start: 7, end: 7),
+      );
+
+      print("After cancellation, the markers are:");
+      print(text.spans.markers);
+
+      // Start typing again.
+      await tester.typeImeText("j");
+
+      text = SuperEditorInspector.findTextInParagraph("1");
+      print("After typing more, the markers are:");
+      print(text.spans.markers);
+
+      // Ensure that we didn't start composing again.
+      text = SuperEditorInspector.findTextInParagraph("1");
+      expect(text.text, "before @j");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+          range: const SpanRange(start: 0, end: 8),
+        ),
+        isEmpty,
+      );
+    });
+
     group("commits >", () {
       testWidgetsOnAllPlatforms("at the beginning of a paragraph", (tester) async {
         await _pumpTestEditor(
@@ -879,14 +945,23 @@ void main() {
 }
 
 Future<TestDocumentContext> _pumpTestEditor(WidgetTester tester, MutableDocument document) async {
+  final userTagPlugin = UserTagPlugin();
+
   return await tester //
       .createDocument()
       .withCustomContent(document)
-      .withAddedReactions(
+      .withAddedRequestHandlers(
     [
-      const AdjustSelectionAroundTagReaction(),
-      TagUserReaction(),
+      ...userTagPlugin.requestHandlers,
+    ],
+  ).withAddedReactions(
+    [
+      ...userTagPlugin.reactions,
       HashTagReaction(),
+    ],
+  ).withAddedKeyboardActions(
+    prepend: [
+      ...userTagPlugin.keyboardActions,
     ],
   ).pump();
 }

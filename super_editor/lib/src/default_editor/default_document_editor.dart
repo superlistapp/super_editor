@@ -27,7 +27,7 @@ Editor createDefaultDocumentEditor({
   return editor;
 }
 
-final defaultRequestHandlers = [
+final defaultRequestHandlers = <EditRequestHandler>[
   (request) => request is ChangeSelectionRequest
       ? ChangeSelectionCommand(
           request.newSelection,
