@@ -884,7 +884,7 @@ Future<TestDocumentContext> _pumpTestEditor(WidgetTester tester, MutableDocument
       .withCustomContent(document)
       .withAddedReactions(
     [
-      const KeepCaretOutOfTagReaction(),
+      const AdjustSelectionAroundTagReaction(),
       TagUserReaction(),
       HashTagReaction(),
     ],

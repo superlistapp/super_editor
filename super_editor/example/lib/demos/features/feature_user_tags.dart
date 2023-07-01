@@ -19,6 +19,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
   late final MutableDocument _document;
   late final MutableDocumentComposer _composer;
   late final Editor _editor;
+  late final UserTagPlugin _userTagPlugin;
 
   late final FocusNode _editorFocusNode;
 
@@ -28,6 +29,8 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
   void initState() {
     super.initState();
 
+    _userTagPlugin = UserTagPlugin();
+
     _document = MutableDocument(nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))]);
     _composer = MutableDocumentComposer();
     _editor = Editor(
@@ -36,11 +39,11 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
         Editor.composerKey: _composer,
       },
       requestHandlers: [
+        ..._userTagPlugin.requestHandlers,
         ...defaultRequestHandlers,
       ],
       reactionPipeline: [
-        KeepCaretOutOfTagReaction(),
-        TagUserReaction(),
+        ..._userTagPlugin.reactions,
       ],
       listeners: [
         FunctionalEditListener(_onEdit),
@@ -112,7 +115,8 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
           followerAnchor: Alignment.topCenter,
           showWhenUnlinked: false,
           child: UserSelectionPopover(
-            document: _document,
+            editor: _editor,
+            userTagPlugin: _userTagPlugin,
             editorFocusNode: _editorFocusNode,
           ),
         ),
@@ -346,11 +350,13 @@ final _composingLink = LeaderLink();
 class UserSelectionPopover extends StatefulWidget {
   const UserSelectionPopover({
     Key? key,
-    required this.document,
+    required this.editor,
+    required this.userTagPlugin,
     required this.editorFocusNode,
   }) : super(key: key);
 
-  final Document document;
+  final Editor editor;
+  final UserTagPlugin userTagPlugin;
   final FocusNode editorFocusNode;
 
   @override
@@ -382,22 +388,22 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     _focusNode = FocusNode();
     _scrollController = ScrollController();
 
-    widget.document.addListener(_onDocumentChange);
+    widget.userTagPlugin.composingUserTag.addListener(_onComposingTokenChange);
   }
 
   @override
   void didUpdateWidget(UserSelectionPopover oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.document != oldWidget.document) {
-      oldWidget.document.removeListener(_onDocumentChange);
-      widget.document.addListener(_onDocumentChange);
+    if (widget.userTagPlugin != oldWidget.userTagPlugin) {
+      oldWidget.userTagPlugin.composingUserTag.removeListener(_onComposingTokenChange);
+      widget.userTagPlugin.composingUserTag.addListener(_onComposingTokenChange);
     }
   }
 
   @override
   void dispose() {
-    widget.document.removeListener(_onDocumentChange);
+    widget.userTagPlugin.composingUserTag.removeListener(_onComposingTokenChange);
 
     _scrollController.dispose();
     _focusNode.dispose();
@@ -405,10 +411,8 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     super.dispose();
   }
 
-  void _onDocumentChange(DocumentChangeLog changeLog) {
-    final composingTag = _findComposingTagAfterDocumentChange(changeLog);
-    print("Composing tag: $composingTag");
-
+  void _onComposingTokenChange() {
+    final composingTag = widget.userTagPlugin.composingUserTag.value?.token;
     if (composingTag == null) {
       // The user isn't composing a tag. Therefore, this popover shouldn't
       // have focus.
@@ -432,48 +436,6 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
 
       _selectedValueIndex = min(_selectedValueIndex, _matchingUsers.length - 1);
     });
-  }
-
-  String? _findComposingTagInDocument() {
-    return _findComposingTag(widget.document.nodes.map((node) => node.id).toSet());
-  }
-
-  String? _findComposingTagAfterDocumentChange(DocumentChangeLog changeLog) {
-    // Find all nodes that changed.
-    final impactedNodes = <String>{};
-    for (final change in changeLog.changes) {
-      if (change is! NodeDocumentChange) {
-        continue;
-      }
-
-      impactedNodes.add(change.nodeId);
-    }
-
-    return _findComposingTag(impactedNodes);
-  }
-
-  String? _findComposingTag(Set<String> nodesToSearch) {
-    // Check all nodes for the existence of a composing tag.
-    for (final impactedNodeId in nodesToSearch) {
-      final node = widget.document.getNodeById(impactedNodeId);
-      if (node is! TextNode) {
-        continue;
-      }
-
-      final composingSpans = node.text.getAttributionSpansInRange(
-        attributionFilter: (a) => a == userTagComposingAttribution,
-        range: SpanRange(start: 0, end: node.text.text.length),
-      );
-
-      if (composingSpans.isNotEmpty) {
-        // We found a composing tag. We assume there's only one. Return the content.
-        final span = composingSpans.first;
-        // +1 on start to remove "@", +1 on end because substring is exclusive.
-        return node.text.text.substring(span.start + 1, span.end + 1);
-      }
-    }
-
-    return null;
   }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
@@ -528,7 +490,14 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
   }
 
   void _chooseUser() {
-    // TODO:
+    if (_selectedValueIndex < 0 || _selectedValueIndex >= _matchingUsers.length) {
+      // The current selection doesn't correspond to a user in the matches list. Fizzle.
+      return;
+    }
+
+    widget.editor.execute([
+      FillInComposingUserTagRequest(_matchingUsers[_selectedValueIndex]),
+    ]);
   }
 
   void _cancelComposing() {

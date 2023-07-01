@@ -185,7 +185,7 @@ final defaultRequestHandlers = [
 
 final defaultEditorReactions = [
   //---- Start Tagging ---
-  const KeepCaretOutOfTagReaction(),
+  const AdjustSelectionAroundTagReaction(),
   UpdateComposerTextStylesReaction(),
   //---- End Tagging ---
 

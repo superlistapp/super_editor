@@ -48,7 +48,9 @@ class TagTokenizer {
 
     final tokenRange = SpanRange(start: tokenStartOffset, end: tokenEndOffset - 1);
     final tokenAttributions = paragraphText.getAllAttributionsThroughout(tokenRange);
+    print("Token around caret: '${text.substring(tokenStartOffset, tokenEndOffset)}'");
     if (!isTokenCandidate(tokenAttributions)) {
+      print(" ^ not a token candidate");
       return null;
     }
 

@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
@@ -66,11 +68,128 @@ import 'tag_tokenizer.dart';
 //
 // Code deletes the attribution
 
-// TODO: Make "@" and "#" symbols configurable
+class UserTagPlugin {
+  UserTagPlugin() {
+    _tagUserReaction = TagUserReaction(
+      onUpdateComposingUserTag: _onComposingUserTagFound,
+    );
+  }
+
+  ValueListenable<ComposingUserTag?> get composingUserTag => _composingUserTag;
+  final _composingUserTag = ValueNotifier<ComposingUserTag?>(null);
+
+  void _onComposingUserTagFound(ComposingUserTag? tag) {
+    print("_onComposingUserTagFound: ${tag?.token}");
+    _composingUserTag.value = tag;
+  }
+
+  List<EditRequestHandler> get requestHandlers => [
+        (request) => request is FillInComposingUserTagRequest
+            ? FillInComposingUserTagCommand(request.userTag, trigger: request.trigger)
+            : null,
+      ];
+
+  List<EditReaction> get reactions => [_tagUserReaction, _moveSelectionAroundUserTagReaction];
+  late final TagUserReaction _tagUserReaction;
+  final _moveSelectionAroundUserTagReaction = const AdjustSelectionAroundTagReaction();
+}
+
+/// An [EditRequest] that replaces a composing user tag with the given [userTag]
+/// and commits it.
+///
+/// For example, the user types "@da|", and then selects "dash" from a list of
+/// matching users. This request replaces "@da|" with "@dash |" and converts the tag
+/// from a composing user tag to a committed user tag.
+///
+/// For this request to have an effect, the user's selection must sit somewhere within
+/// the composing user tag.
+class FillInComposingUserTagRequest implements EditRequest {
+  const FillInComposingUserTagRequest(
+    this.userTag, {
+    this.trigger = "@",
+  });
+
+  final String userTag;
+  final String trigger;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FillInComposingUserTagRequest &&
+          runtimeType == other.runtimeType &&
+          userTag == other.userTag &&
+          trigger == other.trigger;
+
+  @override
+  int get hashCode => userTag.hashCode ^ trigger.hashCode;
+}
+
+class FillInComposingUserTagCommand implements EditCommand {
+  const FillInComposingUserTagCommand(
+    this.userTag, {
+    this.trigger = "@",
+  });
+
+  final String userTag;
+  final String trigger;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+
+    final selection = composer.selection;
+    if (selection == null) {
+      // There shouldn't be a composing user tag without a selection. Either way,
+      // we can't find the desired composing user tag without a selection position
+      // to guide us. Fizzle.
+      editorUserTagsLog.warning("Tried to fill in a composing user tag, but there's no user selection.");
+      return;
+    }
+
+    if (selection.isCollapsed) {
+      final caret = selection.extent.nodePosition;
+      if (caret is! TextNodePosition) {
+        // The caret isn't sitting in a user tag. Fizzle.
+        editorUserTagsLog.warning("Tried to fill in a composing user tag, but the user's caret isn't in a text node.");
+        return;
+      }
+
+      final textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
+
+      final composingToken = TagTokenizer.findAttributedTokenAroundPosition(
+        trigger,
+        textNode.text,
+        caret,
+        (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
+      );
+      if (composingToken == null) {
+        // There's no composing token near the caret. Fizzle.
+        editorUserTagsLog
+            .warning("Tried to fill in a composing user tag, but there's no composing token near the caret.");
+        return;
+      }
+
+      // TODO:
+      print("TODO: Replace the token text");
+    } else {
+      // TODO:
+      print("TODO: Handle expanded selection");
+    }
+  }
+}
 
 /// An [EditReaction] that creates, updates, and removes composing user tags, and commits those
 /// composing tags to stable user tags.
 class TagUserReaction implements EditReaction {
+  const TagUserReaction({
+    String trigger = "@",
+    this.onUpdateComposingUserTag,
+  }) : _trigger = trigger;
+
+  final String _trigger;
+  final OnUpdateComposingUserTag? onUpdateComposingUserTag;
+
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     editorUserTagsLog.info("Reacting to possible user tagging");
@@ -143,8 +262,11 @@ class TagUserReaction implements EditReaction {
       for (final tag in allComposingTags) {
         final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
 
-        if (!tagText.startsWith("@")) {
+        if (!tagText.startsWith(_trigger)) {
           editorUserTagsLog.info("Removing tag with value: '$tagText'");
+
+          onUpdateComposingUserTag?.call(null);
+
           removeTagRequests.add(
             RemoveTextAttributionsRequest(
               documentSelection: DocumentSelection(
@@ -195,9 +317,9 @@ class TagUserReaction implements EditReaction {
       for (final tag in allUserTags) {
         final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
         final attribution = tag.attribution as UserTagAttribution;
-        final containsTrigger = textNode.text.text[tag.start] == "@";
+        final containsTrigger = textNode.text.text[tag.start] == _trigger;
 
-        if (tagText != "@${attribution.userId}" || !containsTrigger) {
+        if (tagText != "$_trigger${attribution.userId}" || !containsTrigger) {
           // The tag was partially deleted it. Delete the whole thing.
           final deleteFrom = tag.start;
           final deleteTo = tag.end + 1; // +1 because SpanRange is inclusive and text position is exclusive
@@ -287,12 +409,14 @@ class TagUserReaction implements EditReaction {
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     if (composer.selection == null || !composer.selection!.isCollapsed) {
       // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
+      onUpdateComposingUserTag?.call(null);
       return;
     }
     final selectionPosition = composer.selection!.extent;
     final caretPosition = selectionPosition.nodePosition;
     if (caretPosition is! TextNodePosition) {
       // Tagging only happens in the middle of text. The selected content isn't text. Return.
+      onUpdateComposingUserTag?.call(null);
       return;
     }
 
@@ -300,11 +424,43 @@ class TagUserReaction implements EditReaction {
     final selectedNode = document.getNodeById(selectionPosition.nodeId);
     if (selectedNode is! TextNode) {
       // Tagging only happens in the middle of text. The selected content isn't text. Return.
+      onUpdateComposingUserTag?.call(null);
+      return;
+    }
+
+    // TODO: De-dup the following two uses of "findUntaggedTokenAroundCaret". I added the
+    //       existingComposingTag version so we could report an existing composing tag. The
+    //       other call only looks for non-tagged text, which makes it seem as if our existing
+    //       composing tag doesn't exist.
+    final existingComposingTag = TagTokenizer.findUntaggedTokenAroundCaret(
+      triggerSymbol: _trigger,
+      text: selectedNode.text,
+      caretPosition: caretPosition,
+      tagFilter: (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
+    );
+    if (existingComposingTag != null) {
+      onUpdateComposingUserTag?.call(
+        ComposingUserTag(
+          DocumentRange(
+            start: DocumentPosition(
+              nodeId: selectedNode.id,
+              // +1 to remove trigger symbol
+              nodePosition: TextNodePosition(offset: existingComposingTag.token.startOffset + 1),
+            ),
+            end: DocumentPosition(
+              nodeId: selectedNode.id,
+              nodePosition: TextNodePosition(offset: existingComposingTag.token.endOffset),
+            ),
+          ),
+          // Remove the trigger symbol from the value.
+          existingComposingTag.token.value.substring(1),
+        ),
+      );
       return;
     }
 
     final tokenAroundCaret = TagTokenizer.findUntaggedTokenAroundCaret(
-      triggerSymbol: "@",
+      triggerSymbol: _trigger,
       text: selectedNode.text,
       caretPosition: caretPosition,
       tagFilter: (tokenAttributions) =>
@@ -314,15 +470,35 @@ class TagUserReaction implements EditReaction {
     if (tokenAroundCaret == null) {
       // There's no tag around the caret.
       editorUserTagsLog.fine("There's no tag around the caret, fizzling");
+      onUpdateComposingUserTag?.call(null);
       return;
     }
-    if (!tokenAroundCaret.token.value.startsWith("@")) {
+    if (!tokenAroundCaret.token.value.startsWith(_trigger)) {
       // Tags must start with an "@" but the preceding word doesn't. Return.
-      editorUserTagsLog.fine("Token doesn't start with @, fizzling");
+      editorUserTagsLog.fine("Token doesn't start with '$_trigger', fizzling");
+      onUpdateComposingUserTag?.call(null);
       return;
     }
 
     editorImeLog.fine("Found a user token around caret: ${tokenAroundCaret.token.value}");
+
+    onUpdateComposingUserTag?.call(
+      ComposingUserTag(
+        DocumentRange(
+          start: DocumentPosition(
+            nodeId: selectedNode.id,
+            // +1 to remove trigger symbol
+            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.startOffset + 1),
+          ),
+          end: DocumentPosition(
+            nodeId: selectedNode.id,
+            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.endOffset),
+          ),
+        ),
+        // Remove the trigger symbol from the value.
+        tokenAroundCaret.token.value.substring(1),
+      ),
+    );
 
     requestDispatcher.execute([
       AddTextAttributionsRequest(
@@ -437,6 +613,8 @@ class TagUserReaction implements EditReaction {
   }
 
   void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, TagToken tag) {
+    onUpdateComposingUserTag?.call(null);
+
     // TODO: batch all these requests into one transaction
     final tagSelection = DocumentSelection(
       base: DocumentPosition(
@@ -472,9 +650,33 @@ class TagUserReaction implements EditReaction {
   }
 }
 
+typedef OnUpdateComposingUserTag = void Function(ComposingUserTag? composingUserTag);
+
+class ComposingUserTag {
+  const ComposingUserTag(this.contentBounds, this.token);
+
+  final DocumentRange contentBounds;
+  final String token;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ComposingUserTag &&
+          runtimeType == other.runtimeType &&
+          contentBounds == other.contentBounds &&
+          token == other.token;
+
+  @override
+  int get hashCode => contentBounds.hashCode ^ token.hashCode;
+}
+
 /// An [EditReaction] that prevents partial selection of a stable user tag.
-class KeepCaretOutOfTagReaction implements EditReaction {
-  const KeepCaretOutOfTagReaction();
+class AdjustSelectionAroundTagReaction implements EditReaction {
+  const AdjustSelectionAroundTagReaction({
+    String trigger = "@",
+  }) : _trigger = trigger;
+
+  final String _trigger;
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
@@ -654,7 +856,7 @@ class KeepCaretOutOfTagReaction implements EditReaction {
     // TODO: This reaction only matters when we have committed user tags. Use a standard attribution
     //       query instead of running a text character search to obtain wordAroundCaret.
     final wordAroundCaret = TagTokenizer.findAttributedTokenAroundPosition(
-      "@",
+      _trigger,
       paragraphText,
       position,
       (tokenAttributions) => tokenAttributions.any(attributionSelector),
