@@ -111,12 +111,12 @@ class HashTagReaction implements EditReaction {
       editorHashTagsLog.fine("There's no tag around the caret, fizzling");
       return;
     }
-    if (!hashTagAroundCaret.token.value.startsWith(_triggerSymbol)) {
+    if (!hashTagAroundCaret.tagIndex.tag.tag.startsWith(_triggerSymbol)) {
       // Tags must start with a "#" (or other trigger symbol) but the preceding word doesn't. Return.
       editorHashTagsLog.fine("Token doesn't start with $_triggerSymbol, fizzling");
       return;
     }
-    if (hashTagAroundCaret.token.value.length <= 1) {
+    if (hashTagAroundCaret.tagIndex.tag.tag.length <= 1) {
       // The token only contains a "#". We require at least one valid character after
       // the "#" to consider it a hash tag.
       editorHashTagsLog.fine("Token has no content after $_triggerSymbol, fizzling");
@@ -124,7 +124,7 @@ class HashTagReaction implements EditReaction {
     }
 
     editorHashTagsLog.fine(
-        "Found a hash tag around caret: '${hashTagAroundCaret.token.value}' - surrounding it with an attribution: ${hashTagAroundCaret.token.startOffset} -> ${hashTagAroundCaret.token.endOffset}");
+        "Found a hash tag around caret: '${hashTagAroundCaret.tagIndex.tag}' - surrounding it with an attribution: ${hashTagAroundCaret.tagIndex.startOffset} -> ${hashTagAroundCaret.tagIndex.endOffset}");
 
     requestDispatcher.execute([
       // Remove the old hash tag attribution(s).
@@ -132,16 +132,16 @@ class HashTagReaction implements EditReaction {
         documentSelection: DocumentSelection(
           base: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.token.startOffset),
+            nodePosition: TextNodePosition(offset: hashTagAroundCaret.tagIndex.startOffset),
           ),
           extent: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.token.endOffset),
+            nodePosition: TextNodePosition(offset: hashTagAroundCaret.tagIndex.endOffset),
           ),
         ),
         attributions: {
           ...selectedNode.text
-              .getAllAttributionsAt(hashTagAroundCaret.token.startOffset)
+              .getAllAttributionsAt(hashTagAroundCaret.tagIndex.startOffset)
               .whereType<HashTagAttribution>(),
         },
       ),
@@ -150,11 +150,11 @@ class HashTagReaction implements EditReaction {
         documentSelection: DocumentSelection(
           base: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.token.startOffset),
+            nodePosition: TextNodePosition(offset: hashTagAroundCaret.tagIndex.startOffset),
           ),
           extent: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.token.endOffset),
+            nodePosition: TextNodePosition(offset: hashTagAroundCaret.tagIndex.endOffset),
           ),
         ),
         attributions: {

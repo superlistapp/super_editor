@@ -265,8 +265,6 @@ void main() {
       // Start typing again.
       await tester.typeImeText("j");
 
-      text = SuperEditorInspector.findTextInParagraph("1");
-
       // Ensure that we didn't start composing again.
       text = SuperEditorInspector.findTextInParagraph("1");
       expect(text.text, "before @j");
@@ -274,6 +272,31 @@ void main() {
         text.getAttributionSpansInRange(
           attributionFilter: (attribution) => attribution == userTagComposingAttribution,
           range: const SpanRange(start: 0, end: 8),
+        ),
+        isEmpty,
+      );
+      expect(
+        text.getAttributedRange({userTagCancelledAttribution}, 7),
+        const SpanRange(start: 7, end: 8),
+      );
+
+      // Add a space, cause the token to end.
+      await tester.typeImeText(" ");
+
+      // Ensure that the cancelled token wasn't committed, and didn't start composing again.
+      text = SuperEditorInspector.findTextInParagraph("1");
+      expect(text.text, "before @j ");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+          range: const SpanRange(start: 0, end: 9),
+        ),
+        isEmpty,
+      );
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution is UserTagAttribution,
+          range: const SpanRange(start: 0, end: 9),
         ),
         isEmpty,
       );

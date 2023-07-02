@@ -77,10 +77,28 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 ///  * Cancelled: a user tag was being composed, but the composition was cancelled.
 ///
 /// ## Composing Tags
+/// The user initiates tag composition by typing the trigger symbol, e.g., "@". A
+/// [userTagComposingAttribution] is applied to the trigger symbol. As the user types,
+/// the attribution expands with the new text content, surrounding the entire tag.
+///
+/// Eventually, the composing tag will either be committed, or cancelled. Those modes
+/// are discussed below.
 ///
 /// ## Committed Tags
+/// Once a user tag is finished being composed, it's committed. A tag can be committed
+/// explicitly, or a tag is automatically committed once the user's selection moves outside
+/// the tag.
+///
+/// A committed tag is non-editable. The user's selection is prevented from entering the
+/// tag. If the user's selection is collapsed, the caret will be placed on one side of the
+/// tag, or the other. If the user's selection is expanded, then the user will either select
+/// the entire tag, or none of the tag.
 ///
 /// ## Cancelled Tags
+/// When the user presses ESCAPE while composing a tag, the composing [userTagComposingAttribution]
+/// is replaced with a [userTagCancelledAttribution]. This ends the current composing behavior,
+/// and also prevents composing from starting again, whenever the user happens to place the caret
+/// in the given text.
 class UserTagPlugin {
   UserTagPlugin() {
     _tagUserReaction = TagUserReaction(
@@ -197,7 +215,7 @@ class FillInComposingUserTagCommand implements EditCommand {
     // Look for a composing tag at the extent, or the base.
     final base = selection.base;
     final extent = selection.extent;
-    TagTokenAroundCaret? composingToken;
+    TagAroundCaret? composingToken;
     TextNode? textNode;
 
     if (base.nodePosition is TextNodePosition) {
@@ -230,7 +248,7 @@ class FillInComposingUserTagCommand implements EditCommand {
 
     final userTagBasePosition = DocumentPosition(
       nodeId: textNode!.id,
-      nodePosition: TextNodePosition(offset: composingToken.token.startOffset),
+      nodePosition: TextNodePosition(offset: composingToken.tagIndex.startOffset),
     );
     final userTagAttribution = UserTagAttribution(userTag);
 
@@ -241,7 +259,7 @@ class FillInComposingUserTagCommand implements EditCommand {
           base: userTagBasePosition,
           extent: DocumentPosition(
             nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: composingToken.token.endOffset),
+            nodePosition: TextNodePosition(offset: composingToken.tagIndex.endOffset),
           ),
         ),
       ),
@@ -268,7 +286,7 @@ class FillInComposingUserTagCommand implements EditCommand {
           position: DocumentPosition(
             nodeId: textNode.id,
             // +1 for trigger symbol, +1 for space after the token
-            nodePosition: TextNodePosition(offset: composingToken.token.startOffset + userTag.length + 2),
+            nodePosition: TextNodePosition(offset: composingToken.tagIndex.startOffset + userTag.length + 2),
           ),
         ),
         SelectionChangeType.placeCaret,
@@ -325,7 +343,7 @@ class CancelComposingUserTagCommand implements EditCommand {
     // Look for a composing tag at the extent, or the base.
     final base = selection.base;
     final extent = selection.extent;
-    TagTokenAroundCaret? composingToken;
+    TagAroundCaret? composingToken;
     TextNode? textNode;
 
     if (base.nodePosition is TextNodePosition) {
@@ -358,7 +376,7 @@ class CancelComposingUserTagCommand implements EditCommand {
 
     final userTagBasePosition = DocumentPosition(
       nodeId: textNode!.id,
-      nodePosition: TextNodePosition(offset: composingToken.token.startOffset),
+      nodePosition: TextNodePosition(offset: composingToken.tagIndex.startOffset),
     );
 
     // Remove the composing attribution.
@@ -368,7 +386,7 @@ class CancelComposingUserTagCommand implements EditCommand {
           base: userTagBasePosition,
           extent: DocumentPosition(
             nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: composingToken.token.endOffset),
+            nodePosition: TextNodePosition(offset: composingToken.tagIndex.endOffset),
           ),
         ),
         attributions: {userTagComposingAttribution},
@@ -380,7 +398,7 @@ class CancelComposingUserTagCommand implements EditCommand {
           base: userTagBasePosition,
           extent: DocumentPosition(
             nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: composingToken.token.endOffset),
+            nodePosition: TextNodePosition(offset: composingToken.tagIndex.endOffset),
           ),
         ),
         attributions: {userTagCancelledAttribution},
@@ -402,7 +420,6 @@ class TagUserReaction implements EditReaction {
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    print("Start user tag reaction");
     editorUserTagsLog.info("Reacting to possible user tagging");
     editorUserTagsLog.info("Incoming change list:");
     editorUserTagsLog.info(changeList.map((event) => event.runtimeType).toList());
@@ -418,8 +435,6 @@ class TagUserReaction implements EditReaction {
     // Run tag commits after updating tags, above, so that we don't commit an in-progress
     // tag when a new character is added to the end of the tag.
     _commitCompletedComposingTag(editContext, requestDispatcher, changeList);
-
-    print("End user tag reaction");
   }
 
   /// Finds a composing or cancelled tag near the caret and adjusts the attribution
@@ -435,28 +450,29 @@ class TagUserReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+
     final composingToken = _findComposingTagAtCaret(editContext);
     if (composingToken != null) {
-      print("Found a composing token near the caret: '${composingToken.token.value}'");
       // TODO: Is token completely surrounded by composing tag? If not, surround it.
 
-      final document = editContext.find<MutableDocument>(Editor.documentKey);
-      final textNode = document.getNodeById(composingToken.token.start.nodeId) as TextNode;
-      final hasComposingThroughout = textNode.text
-          .getAllAttributionsThroughout(
-              SpanRange(start: composingToken.token.startOffset, end: composingToken.token.value.length - 1))
-          .contains(userTagComposingAttribution);
+      final tagRange = SpanRange(start: composingToken.tagIndex.startOffset, end: composingToken.tagIndex.endOffset);
+      final hasComposingThroughout =
+          composingToken.tagIndex.computeLeadingSpanForAttribution(document, userTagComposingAttribution) == tagRange;
+      // final hasComposingThroughout = composingToken.token.value.hasAttributionsThroughout(
+      //   attributions: {userTagComposingAttribution},
+      //   range: SpanRange(start: 0, end: composingToken.token.value.text.length - 1),
+      // );
       if (hasComposingThroughout) {
         return;
       }
 
       // The token is only partially attributed. Expand the attribution around the token.
-      print("Expanding composing tag to cover: '${composingToken.token.value}'");
       requestDispatcher.execute([
         AddTextAttributionsRequest(
           documentSelection: DocumentSelection(
-            base: composingToken.token.start,
-            extent: composingToken.token.end,
+            base: composingToken.tagIndex.start,
+            extent: composingToken.tagIndex.end,
           ),
           attributions: {userTagComposingAttribution},
         ),
@@ -467,8 +483,27 @@ class TagUserReaction implements EditReaction {
 
     final cancelledToken = _findCancelledTagAtCaret(editContext);
     if (cancelledToken != null) {
-      // print("Found a cancelled token near the caret");
+      // print("Found a cancelled token near the caret: $cancelledToken");
       // TODO: Is token completely surrounded by cancelled tag? If not, surround it.
+
+      final tagRange = SpanRange(start: cancelledToken.tagIndex.startOffset, end: cancelledToken.tagIndex.endOffset);
+      final hasCancelThroughout =
+          cancelledToken.tagIndex.computeLeadingSpanForAttribution(document, userTagCancelledAttribution) == tagRange;
+      if (hasCancelThroughout) {
+        return;
+      }
+
+      // The token is only partially attributed. Expand the attribution around the token.
+      requestDispatcher.execute([
+        AddTextAttributionsRequest(
+          documentSelection: DocumentSelection(
+            base: cancelledToken.tagIndex.start,
+            extent: cancelledToken.tagIndex.end,
+          ),
+          attributions: {userTagCancelledAttribution},
+        ),
+      ]);
+
       return;
     }
   }
@@ -710,22 +745,21 @@ class TagUserReaction implements EditReaction {
         return tokenAttributions.contains(userTagComposingAttribution);
       },
     );
-    if (existingComposingTag != null && caretPosition.offset > existingComposingTag.token.startOffset) {
+    if (existingComposingTag != null && caretPosition.offset > existingComposingTag.tagIndex.startOffset) {
       onUpdateComposingUserTag?.call(
         ComposingUserTag(
           DocumentRange(
             start: DocumentPosition(
               nodeId: selectedNode.id,
               // +1 to remove trigger symbol
-              nodePosition: TextNodePosition(offset: existingComposingTag.token.startOffset + 1),
+              nodePosition: TextNodePosition(offset: existingComposingTag.tagIndex.startOffset + 1),
             ),
             end: DocumentPosition(
               nodeId: selectedNode.id,
-              nodePosition: TextNodePosition(offset: existingComposingTag.token.endOffset),
+              nodePosition: TextNodePosition(offset: existingComposingTag.tagIndex.endOffset),
             ),
           ),
-          // Remove the trigger symbol from the value.
-          existingComposingTag.token.value.substring(1),
+          existingComposingTag.tagIndex.tag.token,
         ),
       );
       return;
@@ -748,15 +782,8 @@ class TagUserReaction implements EditReaction {
       onUpdateComposingUserTag?.call(null);
       return;
     }
-    if (!tokenAroundCaret.token.value.startsWith(_trigger)) {
-      // Tags must start with an "@" but the preceding word doesn't. Return.
-      editorUserTagsLog.fine("Token doesn't start with '$_trigger', fizzling");
-      onUpdateComposingUserTag?.call(null);
-      return;
-    }
 
-    editorImeLog.fine("Found a user token around caret: ${tokenAroundCaret.token.value}");
-    print("Found a user token around caret: ${tokenAroundCaret.token.value}");
+    editorImeLog.fine("Found a user token around caret: ${tokenAroundCaret.tagIndex.tag}");
 
     onUpdateComposingUserTag?.call(
       ComposingUserTag(
@@ -764,15 +791,14 @@ class TagUserReaction implements EditReaction {
           start: DocumentPosition(
             nodeId: selectedNode.id,
             // +1 to remove trigger symbol
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.startOffset + 1),
+            nodePosition: TextNodePosition(offset: tokenAroundCaret.tagIndex.startOffset + 1),
           ),
           end: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.endOffset),
+            nodePosition: TextNodePosition(offset: tokenAroundCaret.tagIndex.endOffset),
           ),
         ),
-        // Remove the trigger symbol from the value.
-        tokenAroundCaret.token.value.substring(1),
+        tokenAroundCaret.tagIndex.tag.token,
       ),
     );
 
@@ -781,11 +807,11 @@ class TagUserReaction implements EditReaction {
         documentSelection: DocumentSelection(
           base: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.startOffset),
+            nodePosition: TextNodePosition(offset: tokenAroundCaret.tagIndex.startOffset),
           ),
           extent: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.token.endOffset),
+            nodePosition: TextNodePosition(offset: tokenAroundCaret.tagIndex.endOffset),
           ),
         ),
         attributions: {
@@ -845,12 +871,13 @@ class TagUserReaction implements EditReaction {
     for (final textNodeId in composingTagNodeCandidates) {
       editorUserTagsLog.fine("Checking node $textNodeId for composing tags to commit");
       final textNode = document.getNodeById(textNodeId) as TextNode;
-      final composingTags = _findAllComposingTagsInTextNode(textNode);
+      final allTags = TagTokenizer.findAllTagsInTextNode(textNode, _trigger);
+      final composingTags =
+          allTags.where((tag) => tag.computeLeadingSpanForAttribution(document, userTagComposingAttribution).isValid);
       editorUserTagsLog.fine("Composing tags in node: $composingTags");
 
       for (final composingTag in composingTags) {
         if (selection == null || selection.extent.nodeId != textNodeId || selection.base.nodeId != textNodeId) {
-          print("Committing tag because selection is null, or selection moved to different node: '$composingTag'");
           editorUserTagsLog
               .info("Committing tag because selection is null, or selection moved to different node: '$composingTag'");
           _commitTag(requestDispatcher, textNode, composingTag);
@@ -859,8 +886,7 @@ class TagUserReaction implements EditReaction {
 
         final extentPosition = selection.extent.nodePosition as TextNodePosition;
         if (selection.isCollapsed &&
-            (extentPosition.offset <= composingTag.startOffset || extentPosition.offset > composingTag.endOffset + 1)) {
-          print("Committing tag because the caret is out of range: '$composingTag', extent: $extentPosition");
+            (extentPosition.offset <= composingTag.startOffset || extentPosition.offset > composingTag.endOffset)) {
           editorUserTagsLog
               .info("Committing tag because the caret is out of range: '$composingTag', extent: $extentPosition");
           _commitTag(requestDispatcher, textNode, composingTag);
@@ -872,32 +898,7 @@ class TagUserReaction implements EditReaction {
     }
   }
 
-  Set<TagToken> _findAllComposingTagsInTextNode(TextNode textNode) {
-    return textNode.text
-        // Find all the composing tag attributions.
-        .getAttributionSpansInRange(
-          attributionFilter: (attribution) => attribution == userTagComposingAttribution,
-          range: SpanRange(start: 0, end: textNode.text.text.length - 1),
-        )
-        // Convert the attributions into TagToken's
-        .map(
-          (attributionSpan) => TagToken(
-            textNode.text.text.substring(attributionSpan.start, attributionSpan.end + 1),
-            DocumentPosition(
-              nodeId: textNode.id,
-              nodePosition: TextNodePosition(offset: attributionSpan.start),
-            ),
-            DocumentPosition(
-              nodeId: textNode.id,
-              nodePosition: TextNodePosition(offset: attributionSpan.end + 1),
-            ),
-          ),
-        )
-        .toSet();
-  }
-
-  void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, TagToken tag) {
-    print("Committing tag: ${tag.value}");
+  void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, TagIndex tag) {
     onUpdateComposingUserTag?.call(null);
 
     // TODO: batch all these requests into one transaction
@@ -912,38 +913,37 @@ class TagUserReaction implements EditReaction {
       ),
     );
 
-    // Remove composing tag attribution.
-    requestDispatcher.execute([
-      RemoveTextAttributionsRequest(
-        documentSelection: tagSelection,
-        attributions: {userTagComposingAttribution},
-      )
-    ]);
-
-    // Add stable tag attribution.
-    requestDispatcher.execute([
-      AddTextAttributionsRequest(
-        documentSelection: tagSelection,
-        attributions: {
-          UserTagAttribution(textNode.text.text.substring(
-            tag.startOffset + 1, // +1 to remove the "@" from the value
-            tag.endOffset,
-          ))
-        },
-      )
-    ]);
+    requestDispatcher
+      // Remove composing tag attribution.
+      ..execute([
+        RemoveTextAttributionsRequest(
+          documentSelection: tagSelection,
+          attributions: {userTagComposingAttribution},
+        )
+      ])
+      // Add stable tag attribution.
+      ..execute([
+        AddTextAttributionsRequest(
+          documentSelection: tagSelection,
+          attributions: {
+            UserTagAttribution(textNode.text.text.substring(
+              tag.startOffset + 1, // +1 to remove the "@" from the value
+              tag.endOffset,
+            ))
+          },
+        )
+      ]);
   }
 
-  TagTokenAroundCaret? _findComposingTagAtCaret(EditContext editContext) {
+  TagAroundCaret? _findComposingTagAtCaret(EditContext editContext) {
     return _findTagAtCaret(editContext, (attributions) => attributions.contains(userTagComposingAttribution));
   }
 
-  TagTokenAroundCaret? _findCancelledTagAtCaret(EditContext editContext) {
+  TagAroundCaret? _findCancelledTagAtCaret(EditContext editContext) {
     return _findTagAtCaret(editContext, (attributions) => attributions.contains(userTagCancelledAttribution));
   }
 
-  TagTokenAroundCaret? _findTagAtCaret(
-      EditContext editContext, bool Function(Set<Attribution> attributions) tagSelector) {
+  TagAroundCaret? _findTagAtCaret(EditContext editContext, bool Function(Set<Attribution> attributions) tagSelector) {
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     if (composer.selection == null || !composer.selection!.isCollapsed) {
       // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
@@ -1176,7 +1176,7 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
     }
   }
 
-  TagTokenAroundCaret? _findTagAroundPosition(
+  TagAroundCaret? _findTagAroundPosition(
     String nodeId,
     AttributedText paragraphText,
     TextNodePosition position,
@@ -1195,7 +1195,7 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
       return null;
     }
     if (wordAroundCaret.caretOffsetInToken == 0 ||
-        wordAroundCaret.caretOffsetInToken == wordAroundCaret.token.value.length) {
+        wordAroundCaret.caretOffsetInToken == wordAroundCaret.tagIndex.tag.tag.length) {
       // The token is either on the starting edge, e.g., "|@tag", or at the ending edge,
       // e.g., "@tag|". We don't care about those scenarios when looking for the caret
       // inside of the token.
@@ -1204,8 +1204,8 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
 
     final tokenAttributions = paragraphText.getAllAttributionsThroughout(
       SpanRange(
-        start: wordAroundCaret.token.startOffset,
-        end: wordAroundCaret.token.endOffset - 1,
+        start: wordAroundCaret.tagIndex.startOffset,
+        end: wordAroundCaret.tagIndex.endOffset - 1,
       ),
     );
     if (tokenAttributions.any((attribution) => attribution is UserTagAttribution)) {
@@ -1220,20 +1220,20 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     SelectionChangeEvent selectionChangeEvent,
     String textNodeId,
-    TagTokenAroundCaret tagAroundCaret,
+    TagAroundCaret tagAroundCaret,
   ) {
     DocumentSelection? newSelection;
     editorUserTagsLog.info("oldCaret is null. Pushing caret to end of tag.");
     // The caret was placed directly in the token without a previous selection. This might
     // be a user tap, or programmatic placement. Move the caret to the nearest edge of the
     // token.
-    if ((tagAroundCaret.caretOffset - tagAroundCaret.token.startOffset).abs() <
-        (tagAroundCaret.caretOffset - tagAroundCaret.token.endOffset).abs()) {
+    if ((tagAroundCaret.caretOffset - tagAroundCaret.tagIndex.startOffset).abs() <
+        (tagAroundCaret.caretOffset - tagAroundCaret.tagIndex.endOffset).abs()) {
       // Move the caret to the start of the tag.
       newSelection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: textNodeId,
-          nodePosition: TextNodePosition(offset: tagAroundCaret.token.startOffset),
+          nodePosition: TextNodePosition(offset: tagAroundCaret.tagIndex.startOffset),
         ),
       );
     } else {
@@ -1241,7 +1241,7 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
       newSelection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: textNodeId,
-          nodePosition: TextNodePosition(offset: tagAroundCaret.token.endOffset),
+          nodePosition: TextNodePosition(offset: tagAroundCaret.tagIndex.endOffset),
         ),
       );
     }
@@ -1260,7 +1260,7 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     SelectionChangeEvent selectionChangeEvent,
     String textNodeId,
-    TagTokenAroundCaret tagAroundCaret, {
+    TagAroundCaret tagAroundCaret, {
     bool expand = false,
   }) {
     editorUserTagsLog.info("Pushing caret to other side of token - tag around caret: $tagAroundCaret");
@@ -1275,11 +1275,11 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
     switch (pushDirection) {
       case TextAffinity.upstream:
         // Move to starting edge.
-        textOffset = tagAroundCaret.token.startOffset;
+        textOffset = tagAroundCaret.tagIndex.startOffset;
         break;
       case TextAffinity.downstream:
         // Move to ending edge.
-        textOffset = tagAroundCaret.token.endOffset;
+        textOffset = tagAroundCaret.tagIndex.endOffset;
         break;
     }
 
@@ -1338,8 +1338,8 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
       newBasePosition = DocumentPosition(
         nodeId: selection.base.nodeId,
         nodePosition: selectionAffinity == TextAffinity.downstream //
-            ? TextNodePosition(offset: tagAroundBase.token.startOffset)
-            : TextNodePosition(offset: tagAroundBase.token.endOffset),
+            ? TextNodePosition(offset: tagAroundBase.tagIndex.startOffset)
+            : TextNodePosition(offset: tagAroundBase.tagIndex.endOffset),
       );
     }
 
@@ -1357,8 +1357,8 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
       newExtentPosition = DocumentPosition(
         nodeId: selection.extent.nodeId,
         nodePosition: selectionAffinity == TextAffinity.downstream //
-            ? TextNodePosition(offset: tagAroundExtent.token.endOffset)
-            : TextNodePosition(offset: tagAroundExtent.token.startOffset),
+            ? TextNodePosition(offset: tagAroundExtent.tagIndex.endOffset)
+            : TextNodePosition(offset: tagAroundExtent.tagIndex.startOffset),
       );
     }
 
