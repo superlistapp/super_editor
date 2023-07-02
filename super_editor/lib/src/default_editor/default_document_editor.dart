@@ -185,7 +185,7 @@ final defaultRequestHandlers = <EditRequestHandler>[
 
 final defaultEditorReactions = [
   //---- Start Tagging ---
-  const AdjustSelectionAroundTagReaction(),
+  // const AdjustSelectionAroundTagReaction(),
   UpdateComposerTextStylesReaction(),
   //---- End Tagging ---
 

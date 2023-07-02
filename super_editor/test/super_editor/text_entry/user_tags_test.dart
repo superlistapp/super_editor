@@ -247,7 +247,6 @@ void main() {
 
       // Cancel composing.
       await tester.pressEscape();
-      print("Composing was cancelled");
 
       // Ensure that the composing was cancelled.
       text = SuperEditorInspector.findTextInParagraph("1");
@@ -263,15 +262,10 @@ void main() {
         const SpanRange(start: 7, end: 7),
       );
 
-      print("After cancellation, the markers are:");
-      print(text.spans.markers);
-
       // Start typing again.
       await tester.typeImeText("j");
 
       text = SuperEditorInspector.findTextInParagraph("1");
-      print("After typing more, the markers are:");
-      print(text.spans.markers);
 
       // Ensure that we didn't start composing again.
       text = SuperEditorInspector.findTextInParagraph("1");
@@ -282,6 +276,10 @@ void main() {
           range: const SpanRange(start: 0, end: 8),
         ),
         isEmpty,
+      );
+      expect(
+        text.getAttributedRange({userTagCancelledAttribution}, 7),
+        const SpanRange(start: 7, end: 8),
       );
     });
 
@@ -957,7 +955,8 @@ Future<TestDocumentContext> _pumpTestEditor(WidgetTester tester, MutableDocument
   ).withAddedReactions(
     [
       ...userTagPlugin.reactions,
-      HashTagReaction(),
+      // ^ already registered in default editor construction (I think)
+      // HashTagReaction(),
     ],
   ).withAddedKeyboardActions(
     prepend: [

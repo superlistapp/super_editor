@@ -141,6 +141,7 @@ class Editor implements RequestDispatcher {
 
     for (final request in requests) {
       // Execute the given request.
+      print("Executing request: $request");
       final command = _findCommandForRequest(request);
       final commandChanges = _executeCommand(command);
       _activeChangeList!.addAll(commandChanges);

@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 
 class TagTokenizer {
@@ -6,6 +7,7 @@ class TagTokenizer {
   /// if the surrounding word is already tagged, or the caret isn't currently sitting in a word.
   static TagTokenAroundCaret? findUntaggedTokenAroundCaret({
     required String triggerSymbol,
+    required String nodeId,
     required AttributedText text,
     required TextNodePosition caretPosition,
     required bool Function(Set<Attribution>) tagFilter,
@@ -13,6 +15,7 @@ class TagTokenizer {
   }) {
     return findAttributedTokenAroundPosition(
       triggerSymbol,
+      nodeId,
       text,
       caretPosition,
       tagFilter,
@@ -22,13 +25,13 @@ class TagTokenizer {
 
   static TagTokenAroundCaret? findAttributedTokenAroundPosition(
     String triggerSymbol,
+    String nodeId,
     AttributedText paragraphText,
     TextNodePosition position,
     bool Function(Set<Attribution> tokenAttributions) isTokenCandidate, {
     Set<String> excludeCharacters = const {},
   }) {
     final text = paragraphText.text;
-    print("Finding token around position. Text instance: ${text.hashCode}");
     int tokenStartOffset = position.offset;
     int tokenEndOffset = position.offset;
 
@@ -48,8 +51,9 @@ class TagTokenizer {
     }
 
     final tokenRange = SpanRange(start: tokenStartOffset, end: tokenEndOffset - 1);
-    final tokenAttributions = paragraphText.getAllAttributionsThroughout(tokenRange);
-    if (!isTokenCandidate(tokenAttributions)) {
+    final tokenAttributions =
+        paragraphText.getAttributionSpansInRange(attributionFilter: (a) => true, range: tokenRange);
+    if (!isTokenCandidate(tokenAttributions.map((span) => span.attribution).toSet())) {
       return null;
     }
 
@@ -58,8 +62,14 @@ class TagTokenizer {
     return TagTokenAroundCaret(
       token: TagToken(
         token,
-        tokenStartOffset,
-        tokenEndOffset,
+        DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: TextNodePosition(offset: tokenStartOffset),
+        ),
+        DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: TextNodePosition(offset: tokenEndOffset),
+        ),
       ),
       caretOffset: position.offset,
     );
@@ -102,14 +112,18 @@ class TagTokenAroundCaret {
 
 /// A text [value], along with its text offsets within some [TextNode].
 class TagToken {
-  const TagToken(this.value, this.startOffset, this.endOffset);
+  const TagToken(this.value, this.start, this.end);
 
   final String value;
 
-  final int startOffset;
+  final DocumentPosition start;
+  int get startOffset => (start.nodePosition as TextNodePosition).offset;
 
-  // The final index, plus 1, to match normal String semantics, rather than matching AttributionSpan semantics.
-  final int endOffset;
+  final DocumentPosition end;
+  // +1 because document selections use an exclusive end offset, but we want `endOffset`
+  // to point to the final character in the token, because AttributedText uses an inclusive
+  // end index.
+  int get endOffset => (start.nodePosition as TextNodePosition).offset + 1;
 
   @override
   String toString() => "[Token] - '$value', $startOffset -> $endOffset";

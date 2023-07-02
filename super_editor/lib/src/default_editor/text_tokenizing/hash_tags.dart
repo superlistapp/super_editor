@@ -100,6 +100,7 @@ class HashTagReaction implements EditReaction {
 
     final hashTagAroundCaret = TagTokenizer.findUntaggedTokenAroundCaret(
       triggerSymbol: _triggerSymbol,
+      nodeId: selectedNode.id,
       text: selectedNode.text,
       caretPosition: caretPosition,
       tagFilter: (tokenAttributions) => !tokenAttributions.any((attribution) => attribution is HashTagAttribution),

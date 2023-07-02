@@ -1221,6 +1221,7 @@ class InsertTextCommand implements EditCommand {
       startOffset: textOffset,
       applyAttributions: attributions,
     );
+
     executor.logChanges([
       DocumentEdit(
         TextInsertionEvent(
