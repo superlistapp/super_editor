@@ -268,41 +268,37 @@ class TextDeltasDocumentEditor {
   ) {
     editorOpsLog.fine('Attempting to insert "$text" at position: $insertionPosition');
 
-    DocumentPosition effectiveInsertionPosition = insertionPosition;
-    NodePosition extentNodePosition = insertionPosition.nodePosition;
-    String extentNodeId = insertionPosition.nodeId;
+    DocumentNode? insertionNode = document.getNodeById(insertionPosition.nodeId);
+    if (insertionNode == null) {
+      editorOpsLog.warning('Attempted to insert text using a non-existing node');
+    }
 
-    if (extentNodePosition is UpstreamDownstreamNodePosition) {
+    if (insertionPosition.nodePosition is UpstreamDownstreamNodePosition) {
       editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
       commonOps.insertBlockLevelNewline();
 
-      // After inserting a block level new line, the selection might change to another node.
+      // After inserting a block level new line, the selection changes to another node.
       // Therefore, we need to update the insertion position.
-      extentNodeId = selection.value!.extent.nodeId;
-      final node = document.getNodeById(extentNodeId)!;
-      extentNodePosition = node.endPosition;
-      effectiveInsertionPosition = DocumentPosition(nodeId: extentNodeId, nodePosition: extentNodePosition);
+      insertionNode = document.getNodeById(selection.value!.extent.nodeId)!;
+      insertionPosition = DocumentPosition(nodeId: insertionNode.id, nodePosition: insertionNode.endPosition);
     }
 
-    final extentNode = document.getNodeById(extentNodeId)!;
-    if (extentNode is! TextNode || extentNodePosition is! TextNodePosition) {
+    if (insertionNode is! TextNode || insertionPosition.nodePosition is! TextNodePosition) {
       editorOpsLog.fine(
-          "Couldn't insert text because Super Editor doesn't know how to handle a node of type: $extentNode, with position: $extentNodePosition");
+          "Couldn't insert text because Super Editor doesn't know how to handle a node of type: $insertionNode, with position: ${insertionPosition.nodePosition}");
       return false;
     }
 
-    final textNode = document.getNodeById(extentNodeId) as TextNode;
-
     editorOpsLog.fine("Executing text insertion command.");
-    editorOpsLog.finer("Text before insertion: '${textNode.text.text}'");
+    editorOpsLog.finer("Text before insertion: '${insertionNode.text.text}'");
     editor.execute([
       InsertTextRequest(
-        documentPosition: effectiveInsertionPosition,
+        documentPosition: insertionPosition,
         textToInsert: text,
         attributions: composerPreferences.currentAttributions,
       ),
     ]);
-    editorOpsLog.finer("Text after insertion: '${textNode.text.text}'");
+    editorOpsLog.finer("Text after insertion: '${insertionNode.text.text}'");
 
     return true;
   }

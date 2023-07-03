@@ -24,28 +24,19 @@ Paragraph 2
 
       final document = testContext.editContext.document;
 
-      // Place caret at the beginning of the last node.
+      // Place the caret at the end of the horizontal rule, by first placing the caret in the paragraph after the
+      // horizontal rule, and then pressing the left arrow to move it up.
       await tester.placeCaretInParagraph(document.nodes.last.id, 0);
-
-      // Press left arrow to move the selection to the end of the horizontal rule.
       await tester.pressLeftArrow();
 
       // Type at the end of the horizontal rule
       await tester.typeImeText('new paragraph');
 
-      // Ensure a new node was created.
+      // Ensure that the new text was inserted in a new paragraph after the horizontal rule.
       expect(document.nodes.length, 4);
-
-      // The node should be inserted after the horizontal rule.
       final insertedNode = document.nodes[2];
-
-      // Ensure the inserted node is a paragraph.
       expect(insertedNode, isA<ParagraphNode>());
-
-      // Ensure the text was inserted at the new paragraph.
       expect((insertedNode as ParagraphNode).text.text, 'new paragraph');
-
-      // Ensure the caret sits at the end of the text.
       expect(
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
@@ -72,28 +63,19 @@ Paragraph 2
 
       final document = testContext.editContext.document;
 
-      // Place caret at the end of the first node.
+      // Place the caret at the beginning of the horizontal rule, by first placing the caret in the paragraph before the
+      // horizontal rule, and then pressing the right arrow to move it down.
       await tester.placeCaretInParagraph(document.nodes.first.id, 11);
-
-      // Press right arrow to move the selection to the beginning of the horizontal rule.
       await tester.pressRightArrow();
 
       // Type at the beginning of the horizontal rule
       await tester.typeImeText('new paragraph');
 
-      // Ensure a new node was created.
+      // Ensure that the new text was inserted in a new paragraph before the horizontal rule.
       expect(document.nodes.length, 4);
-
-      // The node should be inserted before the horizontal rule.
       final insertedNode = document.nodes[1];
-
-      // Ensure the inserted node is a paragraph.
       expect(insertedNode, isA<ParagraphNode>());
-
-      // Ensure the text was inserted at the new paragraph.
       expect((insertedNode as ParagraphNode).text.text, 'new paragraph');
-
-      // Ensure the caret sits at the end of the text.
       expect(
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
