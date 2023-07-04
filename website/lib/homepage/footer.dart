@@ -14,16 +14,16 @@ class Footer extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: singleColumnLayout
-          ? Column(
-              children: const [
+          ? const Column(
+              children: [
                 _LeftPart(),
                 SizedBox(height: 28),
                 _RightPart(),
               ],
             )
-          : Row(
+          : const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 _LeftPart(),
                 _RightPart(),
               ],
@@ -144,7 +144,7 @@ class _Link extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => launch(url),
+        onTap: () => launchUrl(Uri.parse(url)),
         child: IntrinsicWidth(
           child: Stack(
             clipBehavior: Clip.none,

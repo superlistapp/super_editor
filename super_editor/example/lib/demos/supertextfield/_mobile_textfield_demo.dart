@@ -16,7 +16,7 @@ class MobileSuperTextFieldDemo extends StatefulWidget {
   final Widget Function(MobileTextFieldDemoConfig) createTextField;
 
   @override
-  _MobileSuperTextFieldDemoState createState() => _MobileSuperTextFieldDemoState();
+  State<MobileSuperTextFieldDemo> createState() => _MobileSuperTextFieldDemoState();
 }
 
 class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {

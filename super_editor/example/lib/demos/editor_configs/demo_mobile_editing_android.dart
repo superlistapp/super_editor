@@ -11,7 +11,7 @@ import 'keyboard_overlay_clipper.dart';
 /// no matter which platform or form factor you use.
 class MobileEditingAndroidDemo extends StatefulWidget {
   @override
-  _MobileEditingAndroidDemoState createState() => _MobileEditingAndroidDemoState();
+  State<MobileEditingAndroidDemo> createState() => _MobileEditingAndroidDemoState();
 }
 
 class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {

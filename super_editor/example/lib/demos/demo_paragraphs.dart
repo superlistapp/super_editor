@@ -5,7 +5,7 @@ import 'package:super_editor/super_editor.dart';
 /// Example of various paragraph configurations in an editor.
 class ParagraphsDemo extends StatefulWidget {
   @override
-  _ParagraphsDemoState createState() => _ParagraphsDemoState();
+  State<ParagraphsDemo> createState() => _ParagraphsDemoState();
 }
 
 class _ParagraphsDemoState extends State<ParagraphsDemo> {

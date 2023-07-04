@@ -6,7 +6,7 @@ import 'package:super_editor/super_editor.dart';
 /// its caret.
 class LoseFocusDemo extends StatefulWidget {
   @override
-  _LoseFocusDemoState createState() => _LoseFocusDemoState();
+  State<LoseFocusDemo> createState() => _LoseFocusDemoState();
 }
 
 class _LoseFocusDemoState extends State<LoseFocusDemo> {
@@ -35,7 +35,7 @@ class _LoseFocusDemoState extends State<LoseFocusDemo> {
           _buildTextField(),
           Expanded(
             child: SuperEditorDebugVisuals(
-              config: SuperEditorDebugVisualsConfig(
+              config: const SuperEditorDebugVisualsConfig(
                 showFocus: true,
                 showImeConnection: true,
               ),

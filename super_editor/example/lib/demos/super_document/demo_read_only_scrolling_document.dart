@@ -11,7 +11,7 @@ import 'package:super_editor/super_editor.dart';
 /// the read-only document, and then an infinite number of list items.
 class ReadOnlyCustomScrollViewDemo extends StatefulWidget {
   @override
-  _ReadOnlyCustomScrollViewDemoState createState() => _ReadOnlyCustomScrollViewDemoState();
+  State<ReadOnlyCustomScrollViewDemo> createState() => _ReadOnlyCustomScrollViewDemoState();
 }
 
 class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewDemo> {

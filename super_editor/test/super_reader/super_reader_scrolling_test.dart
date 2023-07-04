@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/super_reader_test.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_reader_test.dart';
 
 import '../test_tools.dart';
 import 'reader_test_tools.dart';
@@ -84,7 +84,7 @@ void main() {
 
     testWidgetsOnDesktop("auto-scrolls down", (tester) async {
       const windowSize = Size(800, 600);
-      tester.binding.window.physicalSizeTestValue = windowSize;
+      tester.view.physicalSize = windowSize;
 
       await tester //
           .createDocument() //
@@ -129,7 +129,7 @@ void main() {
 
     testWidgetsOnDesktop("auto-scrolls up", (tester) async {
       const windowSize = Size(800, 600);
-      tester.binding.window.physicalSizeTestValue = windowSize;
+      tester.view.physicalSize = windowSize;
 
       final testDocContext = await tester //
           .createDocument() //
@@ -185,7 +185,7 @@ void main() {
 
     testWidgetsOnDesktop("auto-scrolls to caret position", (tester) async {
       const windowSize = Size(800, 600);
-      tester.binding.window.physicalSizeTestValue = windowSize;
+      tester.view.physicalSize = windowSize;
 
       final docContext = await tester //
           .createDocument() //

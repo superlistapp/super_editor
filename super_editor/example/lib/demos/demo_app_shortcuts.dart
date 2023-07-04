@@ -4,7 +4,7 @@ import 'package:super_editor/super_editor.dart';
 
 class AppShortcutsDemo extends StatefulWidget {
   @override
-  _AppShortcutsDemoState createState() => _AppShortcutsDemoState();
+  State<AppShortcutsDemo> createState() => _AppShortcutsDemoState();
 }
 
 class _AppShortcutsDemoState extends State<AppShortcutsDemo> {

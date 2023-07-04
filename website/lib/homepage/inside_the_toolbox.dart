@@ -96,10 +96,10 @@ class InsideTheToolbox extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(4),
-          ),    
+          ),
           child: SuperTextWithSelection.single(
             richText: const TextSpan(
-              text: 'This text is selectable. The caret and selection rendering is custom.',              
+              text: 'This text is selectable. The caret and selection rendering is custom.',
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 16,
@@ -110,9 +110,8 @@ class InsideTheToolbox extends StatelessWidget {
                 baseOffset: 13,
                 extentOffset: 23,
               ),
-              
             ),
-          ),          
+          ),
         ),
       ),
     );
@@ -195,22 +194,22 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
   }
 
   void _computeStyledText() {
-    final _text = AttributedText(
+    final text = AttributedText(
       text: 'This is some text styled with AttributedText',
     );
 
     for (final range in _boldRanges) {
-      _text.addAttribution(boldAttribution, range);
+      text.addAttribution(boldAttribution, range);
     }
     for (final range in _italicsRanges) {
-      _text.addAttribution(italicsAttribution, range);
+      text.addAttribution(italicsAttribution, range);
     }
     for (final range in _strikethroughRanges) {
-      _text.addAttribution(strikethroughAttribution, range);
+      text.addAttribution(strikethroughAttribution, range);
     }
 
     setState(() {
-      _richText = _text.computeTextSpan((Set<Attribution> attributions) {
+      _richText = text.computeTextSpan((Set<Attribution> attributions) {
         TextStyle newStyle = const TextStyle(
           color: Colors.white,
           fontSize: 30,
@@ -272,21 +271,23 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
   }
 
   Widget _buildCellSelector(List<SpanRange> rangesToUpdate) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final cellWidth = constraints.maxWidth / _plainText.length;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cellWidth = constraints.maxWidth / _plainText.length;
 
-      return TextRangeSelector(
-        cellCount: _plainText.length,
-        cellWidth: cellWidth,
-        cellHeight: 20,
-        onRangesChange: (newRanges) {
-          rangesToUpdate
-            ..clear()
-            ..addAll(newRanges);
-          _computeStyledText();
-        },
-      );
-    });
+        return TextRangeSelector(
+          cellCount: _plainText.length,
+          cellWidth: cellWidth,
+          cellHeight: 20,
+          onRangesChange: (newRanges) {
+            rangesToUpdate
+              ..clear()
+              ..addAll(newRanges);
+            _computeStyledText();
+          },
+        );
+      },
+    );
   }
 }
 
@@ -344,7 +345,7 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
   }
 
   int _getCellIndexFromLocalOffset(Offset localOffset) {
-    return ((localOffset.dx / widget.cellWidth).floor()).clamp(0.0, widget.cellCount - 1).toInt();
+    return (localOffset.dx / widget.cellWidth).floor().clamp(0.0, widget.cellCount - 1).toInt();
   }
 
   void _reportSelectedRanges() {

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
@@ -356,6 +357,58 @@ void main() {
         );
       }, variant: _inputSourceVariant);
     });
+
+    testWidgetsOnDesktop(
+      "Backspace deletes upstream character and keeps paragraph metadata",
+      (tester) async {
+        final testContext = await tester
+            .createDocument() //
+            .fromMarkdown('# A header')
+            .withInputSource(_inputSourceVariant.currentValue!)
+            .pump();
+
+        final node = testContext.editContext.document.nodes.first;
+
+        // Place caret at "A| header"
+        await tester.placeCaretInParagraph(node.id, 1);
+
+        // Delete "A".
+        await tester.pressBackspace();
+
+        // Ensure the first character was deleted.
+        expect((node as TextNode).text.text, ' header');
+
+        // Ensure the node is still a header.
+        expect(node.getMetadataValue("blockType"), header1Attribution);
+      },
+      variant: _inputSourceVariant,
+    );
+
+    testWidgetsOnDesktop(
+      "Backspace clears metadata at start of a paragraph",
+      (tester) async {
+        final testContext = await tester
+            .createDocument() //
+            .fromMarkdown('# A header')
+            .withInputSource(_inputSourceVariant.currentValue!)
+            .pump();
+
+        final node = testContext.editContext.document.nodes.first;
+
+        // Place caret at the start of the header.
+        await tester.placeCaretInParagraph(node.id, 0);
+
+        // Press backspace to clear the metadata.
+        await tester.pressBackspace();
+
+        // Ensure the text remains the same.
+        expect((node as TextNode).text.text, 'A header');
+
+        // Ensure the header was converted to a paragraph.
+        expect(node.getMetadataValue("blockType"), paragraphAttribution);
+      },
+      variant: _inputSourceVariant,
+    );
   });
 }
 

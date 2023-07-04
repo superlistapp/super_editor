@@ -723,9 +723,9 @@ void _testParagraphSelection(
   final docKey = GlobalKey();
 
   testGoldens(description, (tester) async {
-    tester.binding.window
-      ..physicalSizeTestValue = const Size(800, 200)
-      ..devicePixelRatioTestValue = 1.0;
+    tester.view
+      ..physicalSize = const Size(800, 200)
+      ..devicePixelRatio = 1.0;
     tester.binding.platformDispatcher.textScaleFactorTestValue = 1.0;
 
     final dragLine = ValueNotifier<_Line?>(null);
@@ -761,7 +761,7 @@ void _testParagraphSelection(
     // Compare the golden
     await screenMatchesGolden(tester, goldenName);
 
-    tester.binding.window.clearPhysicalSizeTestValue();
+    tester.view.resetPhysicalSize();
   });
 }
 

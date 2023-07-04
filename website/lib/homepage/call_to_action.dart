@@ -43,8 +43,10 @@ class _DocumentationButton extends StatelessWidget {
 
     return MaterialButton(
       color: const Color(0xFFFAE74F),
-      onPressed: () => launch(
-        'https://github.com/superlistapp/super_editor/blob/main/super_editor/README.md',
+      onPressed: () => launchUrl(
+        Uri.parse(
+          'https://github.com/superlistapp/super_editor/blob/main/super_editor/README.md',
+        ),
       ),
       padding: singleColumnLayout
           ? const EdgeInsets.symmetric(horizontal: 32, vertical: 20)

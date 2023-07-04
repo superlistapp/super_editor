@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -107,7 +106,7 @@ void main() {
       await tester.placeCaretInParagraph("1", 0);
 
       // Simulate a "Newline" action from the platform.
-      await TestDefaultBinaryMessengerBinding.instance!.defaultBinaryMessenger.handlePlatformMessage(
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
         SystemChannels.textInput.name,
         SystemChannels.textInput.codec.encodeMethodCall(
           const MethodCall(
