@@ -24,7 +24,7 @@ dependencies:
   attributed_text: ^0.2.2
   characters: ^1.2.0
   collection: ^1.15.0
-  http: ^0.13.1
+  http: ">=0.13.1 <2.0.0"
   linkify: ^4.0.0
   logging: ^1.0.1
   super_text_layout: ^0.1.6
@@ -51,7 +51,7 @@ dependencies:
 
 dev_dependencies:
   flutter_lints: ^2.0.1
-  golden_toolkit: ^0.11.0
+  golden_toolkit: ^0.13.0
   mockito: ^5.0.4
   super_editor_markdown:
     path: ../super_editor_markdown

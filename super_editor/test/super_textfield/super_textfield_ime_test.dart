@@ -73,44 +73,112 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
-        testWidgetsOnAllPlatforms('and sends composing region to the platform', (tester) async {
+        testWidgetsOnAllPlatforms('and clears composing region after text changes', (tester) async {
+          final controller = ImeAttributedTextEditingController();
+          await _pumpSuperTextField(tester, controller);
+
+          await tester.placeCaretInSuperTextField(0);
+
+          bool sentToPlatform = false;
+          int? composingBase;
+          int? composingExtent;
+
+          // Intercept the setEditingState message sent to the platform.
+          tester
+              .interceptChannel(SystemChannels.textInput.name) //
+              .interceptMethod(
+            'TextInput.setEditingState',
+            (methodCall) {
+              if (methodCall.method == 'TextInput.setEditingState') {
+                sentToPlatform = true;
+                composingBase = methodCall.arguments["composingBase"];
+                composingExtent = methodCall.arguments["composingExtent"];
+              }
+              return null;
+            },
+          );
+
+          // Type "a".
+          await tester.ime.typeText('a', getter: imeClientGetter);
+
+          // Manually set the value to "b" to send the value to the IME.
+          controller.text = AttributedText(text: 'b');
+
+          // Ensure we send the value back to the IME.
+          expect(sentToPlatform, true);
+
+          // Ensure we cleared the composing region.
+          expect(composingBase, -1);
+          expect(composingExtent, -1);
+        });
+
+        testWidgetsOnAllPlatforms('and don\'t send editing value back to IME if matches the expected value',
+            (tester) async {
           await _pumpEmptySuperTextField(tester);
           await tester.placeCaretInSuperTextField(0);
 
-          int composingBase = -1;
-          int composingExtent = -1;
+          bool sentToPlatform = false;
 
-          // Intercept messages sent to the platform.
-          tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
-            final methodCall = const JSONMethodCodec().decodeMethodCall(message);
-            if (methodCall.method == 'TextInput.setEditingState') {
-              composingBase = methodCall.arguments["composingBase"];
-              composingExtent = methodCall.arguments["composingExtent"];
-            }
-            return null;
-          });
+          // Intercept the setEditingState message sent to the platform.
+          tester
+              .interceptChannel(SystemChannels.textInput.name) //
+              .interceptMethod(
+            'TextInput.setEditingState',
+            (methodCall) {
+              if (methodCall.method == 'TextInput.setEditingState') {
+                sentToPlatform = true;
+              }
+              return null;
+            },
+          );
 
-          // Simulate the user begining the input of the compound character 'ã'.
+          // Type "a".
+          // The IME now sees "a" as the editing value.
+          await tester.ime.typeText('a', getter: imeClientGetter);
+
+          // Ensure that after the insertion our value is also "a".
+          expect(SuperTextFieldInspector.findText().text, 'a');
+
+          // Ensure we don't send the value back to the OS.
           //
-          // To input this character, the user first presses the '~' key, and then the 'a' key.
-          // The IME first sends us an insertion delta of '~' with a composing region set,
-          // followed by a replacement delta, which replaces '~' with 'ã'.
-          //
-          // For this to work, we need to send the correct composing region to the IME.
-          // Otherwise, we get two insertion deltas and the final text will be '~a'.
-          await tester.ime.sendDeltas(const [
-            TextEditingDeltaInsertion(
-              oldText: "",
-              textInserted: "~",
-              insertionOffset: 0,
-              selection: TextSelection.collapsed(offset: 1),
-              composing: TextRange(start: 0, end: 0),
-            )
-          ], getter: imeClientGetter);
+          // As both us and the IME agree on what's the current editing value, we don't need to send it back.
+          expect(sentToPlatform, false);
+        });
 
-          // Ensure we honored the composing region we got from the IME.
-          expect(composingBase, 0);
-          expect(composingExtent, 0);
+        testWidgetsOnAllPlatforms('and send editing value back to IME if it doesn\'t match the expected value',
+            (tester) async {
+          final controller = ImeAttributedTextEditingController(
+            controller: _ObscuringTextController(),
+          );
+          await _pumpSuperTextField(tester, controller);
+
+          await tester.placeCaretInSuperTextField(0);
+
+          bool sentToPlatform = false;
+
+          // Intercept the setEditingState message sent to the platform.
+          tester
+              .interceptChannel(SystemChannels.textInput.name) //
+              .interceptMethod(
+            'TextInput.setEditingState',
+            (methodCall) {
+              if (methodCall.method == 'TextInput.setEditingState') {
+                sentToPlatform = true;
+              }
+              return null;
+            },
+          );
+
+          // Type "ab". Our controller will change the text to "*b" when the second delta is processed.
+          await tester.ime.typeText("ab", getter: imeClientGetter);
+
+          // We are using a custom controller which changes every character but the last one to "*".
+          // After typing "b" the IME thinks the text is "ab". However, for us the text is "*b".
+          // As our value is different from what the IME thinks it is, we need to send our current value
+          // back to the IME.
+
+          // Ensure we sent the value back to the IME.
+          expect(sentToPlatform, true);
         });
       });
 
@@ -445,4 +513,68 @@ Widget _buildScaffold({
       ),
     ),
   );
+}
+
+/// An [AttributedTextEditingController] that uppon insertion replaces every character
+/// but the last one with a "*".
+///
+/// Used to modify the text when we receive deltas from the IME, causing us to send the editing value
+/// back to the IME.
+class _ObscuringTextController extends AttributedTextEditingController {
+  _ObscuringTextController({
+    AttributedText? text,
+  }) : super(text: text);
+
+  @override
+  void insertAtCaret({
+    required String text,
+    TextRange? newComposingRegion,
+  }) {
+    final attributedText = super.text;
+
+    final textAfterInsertion = attributedText.insertString(
+      textToInsert: text,
+      startOffset: selection.extentOffset,
+      applyAttributions: Set.from(composingAttributions),
+    );
+
+    // Replace everything but the last char with *.
+    final updatedText = (''.padLeft(textAfterInsertion.text.length - 1, '*')) +
+        textAfterInsertion.text.substring(textAfterInsertion.text.length - 1);
+
+    final updatedSelection = _moveSelectionForInsertion(
+      selection: selection,
+      insertIndex: selection.extentOffset,
+      newTextLength: text.length,
+    );
+
+    update(
+      text: AttributedText(
+        text: updatedText,
+        spans: textAfterInsertion.spans,
+      ),
+      selection: updatedSelection,
+      composingRegion: newComposingRegion,
+    );
+  }
+
+  // Copied from AttributedTextEditingController.
+  TextSelection _moveSelectionForInsertion({
+    required TextSelection selection,
+    required int insertIndex,
+    required int newTextLength,
+  }) {
+    int newBaseOffset = selection.baseOffset;
+    if ((selection.baseOffset == insertIndex && selection.isCollapsed) || (selection.baseOffset > insertIndex)) {
+      newBaseOffset = selection.baseOffset + newTextLength;
+    }
+
+    final newExtentOffset =
+        selection.extentOffset >= insertIndex ? selection.extentOffset + newTextLength : selection.extentOffset;
+
+    return TextSelection(
+      baseOffset: newBaseOffset,
+      extentOffset: newExtentOffset,
+    );
+  }
 }

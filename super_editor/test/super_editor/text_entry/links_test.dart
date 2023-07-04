@@ -54,6 +54,52 @@ void main() {
       );
     });
 
+    testWidgetsOnAllPlatforms('recognizes a URL without www and converts it to a link', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final doc = SuperEditorInspector.findDocument()!;
+
+      // Place the caret at the beginning of the empty document.
+      await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+
+      // Type a URL without the www. It shouldn't linkify until we add a space.
+      await tester.typeImeText("google.com");
+
+      // Ensure it's not linkified yet.
+      final nodeId = doc.nodes.first.id;
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "google.com");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: SpanRange(start: 0, end: text.text.length - 1),
+        ),
+        isEmpty,
+      );
+
+      // Type a space, to cause a linkify reaction.
+      await tester.typeImeText(" ");
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "google.com ");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://google.com")),
+          },
+          range: SpanRange(start: 0, end: text.text.length - 2),
+        ),
+        isTrue,
+      );
+    });
+
     testWidgetsOnAllPlatforms('inserts https scheme if it is missing', (tester) async {
       await tester //
           .createDocument()
