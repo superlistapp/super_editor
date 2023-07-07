@@ -573,6 +573,57 @@ Paragraph two
       });
     });
 
+    group('on Samsung M51 (Android 12 SP1A)', () {
+      testWidgetsOnAndroid('applies replacements followed by insertions in the same delta list', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the start of the paragraph.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Start typing the word "Anonymous" with typos.
+        await tester.typeImeText('Anonimoi');
+
+        // Simulate the user accepting a suggestion.
+        // The IME replaces the word and inserts a space after it.
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: 'Anonimoi',
+            selection: TextSelection.collapsed(
+              offset: 8,
+              affinity: TextAffinity.downstream,
+            ),
+            composing: TextRange(start: 0, end: 8),
+          ),
+          TextEditingDeltaReplacement(
+            oldText: 'Anonimoi',
+            replacementText: 'Anonymous',
+            replacedRange: TextRange(start: 0, end: 8),
+            selection: TextSelection.collapsed(offset: 9, affinity: TextAffinity.downstream),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaInsertion(
+            oldText: 'Anonymous',
+            textInserted: ' ',
+            insertionOffset: 9,
+            selection: TextSelection.collapsed(
+              offset: 10,
+              affinity: TextAffinity.downstream,
+            ),
+            composing: TextRange(start: -1, end: -1),
+          )
+        ], getter: imeClientGetter);
+
+        expect(
+          SuperEditorInspector.findTextInParagraph('1').text,
+          'Anonymous ',
+        );
+      });
+    });
+
     group('text serialization and selected content', () {
       test('within a single node is reported as a TextEditingValue', () {
         const text = "This is a paragraph of text.";
