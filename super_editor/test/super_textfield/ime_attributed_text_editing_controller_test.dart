@@ -401,6 +401,63 @@ void main() {
       expect(controller.selection, equals(const TextSelection.collapsed(offset: 8)));
     });
   });
+
+  testWidgetsOnAllPlatforms('allows reusing inner controller', (tester) async {
+    final innerController = AttributedTextEditingController(
+      text: AttributedText(
+        text: 'some text',
+      ),
+    );
+
+    final controllerA = ImeAttributedTextEditingController(
+      controller: innerController,
+      disposeClientController: false,
+    );
+
+    late ImeAttributedTextEditingController controllerB;
+
+    final rebuildNotifier = ValueNotifier<bool>(true);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 300,
+            child: ValueListenableBuilder(
+              valueListenable: rebuildNotifier,
+              builder: (context, shouldUseTextFieldA, _) {
+                return shouldUseTextFieldA //
+                    ? SuperTextField(
+                        inputSource: TextInputSource.ime,
+                        textController: controllerA,
+                      )
+                    : SuperTextField(
+                        inputSource: TextInputSource.ime,
+                        textController: controllerB,
+                      );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Rebuild the widget tree, attaching the inner controller to another IME controller
+    // and disposing the old one.
+    controllerB = ImeAttributedTextEditingController(
+      controller: innerController,
+      disposeClientController: false,
+    );
+    controllerA.dispose();
+    rebuildNotifier.value = false;
+    await tester.pump();
+
+    // Change the text of the inner controller to notify the listeners.
+    innerController.text = AttributedText(text: 'New text');
+    await tester.pump();
+
+    // Reaching this point means that disposing the old controller didn't cause a crash.
+  });
 }
 
 Future<void> _pumpSuperTextField(
