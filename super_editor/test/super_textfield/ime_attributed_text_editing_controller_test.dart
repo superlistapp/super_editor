@@ -402,7 +402,7 @@ void main() {
     });
   });
 
-  testWidgetsOnAllPlatforms('allows reusing inner controller', (tester) async {
+  testWidgetsOnAllPlatforms('allows reusing inner controller after disposal', (tester) async {
     final innerController = AttributedTextEditingController(
       text: AttributedText(
         text: 'some text',
@@ -416,7 +416,7 @@ void main() {
 
     late ImeAttributedTextEditingController controllerB;
 
-    final rebuildNotifier = ValueNotifier<bool>(true);
+    final useControllerA = ValueNotifier<bool>(true);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -424,7 +424,7 @@ void main() {
           body: SizedBox(
             width: 300,
             child: ValueListenableBuilder(
-              valueListenable: rebuildNotifier,
+              valueListenable: useControllerA,
               builder: (context, shouldUseTextFieldA, _) {
                 return shouldUseTextFieldA //
                     ? SuperTextField(
@@ -449,12 +449,10 @@ void main() {
       disposeClientController: false,
     );
     controllerA.dispose();
-    rebuildNotifier.value = false;
-    await tester.pump();
+    useControllerA.value = false;
 
     // Change the text of the inner controller to notify the listeners.
     innerController.text = AttributedText(text: 'New text');
-    await tester.pump();
 
     // Reaching this point means that disposing the old controller didn't cause a crash.
   });
