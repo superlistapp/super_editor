@@ -402,57 +402,34 @@ void main() {
     });
   });
 
-  testWidgetsOnAllPlatforms('allows reusing inner controller after disposal', (tester) async {
+  testWidgets('isn\'t notified by inner controller after disposal', (tester) async {
     final innerController = AttributedTextEditingController(
       text: AttributedText(
         text: 'some text',
       ),
     );
 
-    final controllerA = ImeAttributedTextEditingController(
+    // Create an IME controller wrapping the inner controller.
+    //
+    // The IME controller is notified whenever the inner controller changes.
+    ImeAttributedTextEditingController imeController = ImeAttributedTextEditingController(
       controller: innerController,
       disposeClientController: false,
     );
 
-    late ImeAttributedTextEditingController controllerB;
+    // Dispose the IME controller.
+    //
+    // After this point, the IME controller crashes if it's notified.
+    imeController.dispose();
 
-    final useControllerA = ValueNotifier<bool>(true);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 300,
-            child: ValueListenableBuilder(
-              valueListenable: useControllerA,
-              builder: (context, shouldUseTextFieldA, _) {
-                return shouldUseTextFieldA //
-                    ? SuperTextField(
-                        inputSource: TextInputSource.ime,
-                        textController: controllerA,
-                      )
-                    : SuperTextField(
-                        inputSource: TextInputSource.ime,
-                        textController: controllerB,
-                      );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // Rebuild the widget tree, attaching the inner controller to another IME controller
-    // and disposing the old one.
-    controllerB = ImeAttributedTextEditingController(
+    // Attach the inner controller into a new IME controller.
+    imeController = ImeAttributedTextEditingController(
       controller: innerController,
       disposeClientController: false,
     );
-    controllerA.dispose();
-    useControllerA.value = false;
 
     // Change the text of the inner controller to notify the listeners.
-    innerController.text = AttributedText(text: 'New text');
+    innerController.text = AttributedText(text: 'Another text');
 
     // Reaching this point means that disposing the old controller didn't cause a crash.
   });
