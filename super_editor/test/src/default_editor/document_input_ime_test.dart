@@ -574,7 +574,7 @@ Paragraph two
     });
 
     group('on Samsung M51 (Android 12 SP1A)', () {
-      testWidgetsOnAndroid('applies replacements followed by insertions in the same delta list', (tester) async {
+      testWidgetsOnAndroid('applies keyboard suggestions', (tester) async {
         await tester //
             .createDocument()
             .withSingleEmptyParagraph()
@@ -615,6 +615,51 @@ Paragraph two
             ),
             composing: TextRange(start: -1, end: -1),
           )
+        ], getter: imeClientGetter);
+
+        expect(
+          SuperEditorInspector.findTextInParagraph('1').text,
+          'Anonymous ',
+        );
+      });
+    });
+
+    group('on Samsung M51 (Android 12 SP1A) with GBoard', () {
+      testWidgetsOnAndroid('applies keyboard suggestions', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the start of the paragraph.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Start typing the word "Anonymous" with typos.
+        await tester.typeImeText('Anonimoi');
+
+        // Simulate the user accepting a suggestion.
+        // The IME deletes the substring "imoi" and inserts "ymous ".
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaDeletion(
+            oldText: 'Anonimoi',
+            deletedRange: TextRange(start: 4, end: 8),
+            selection: TextSelection.collapsed(
+              offset: 4,
+              affinity: TextAffinity.downstream,
+            ),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaInsertion(
+            oldText: 'Anon',
+            textInserted: 'ymous ',
+            insertionOffset: 4,
+            selection: TextSelection.collapsed(
+              offset: 10,
+              affinity: TextAffinity.downstream,
+            ),
+            composing: TextRange(start: -1, end: -1),
+          ),
         ], getter: imeClientGetter);
 
         expect(
