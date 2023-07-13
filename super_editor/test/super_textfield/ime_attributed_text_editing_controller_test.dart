@@ -401,6 +401,38 @@ void main() {
       expect(controller.selection, equals(const TextSelection.collapsed(offset: 8)));
     });
   });
+
+  testWidgets('isn\'t notified by inner controller after disposal', (tester) async {
+    final innerController = AttributedTextEditingController(
+      text: AttributedText(
+        text: 'some text',
+      ),
+    );
+
+    // Create an IME controller wrapping the inner controller.
+    //
+    // The IME controller is notified whenever the inner controller changes.
+    ImeAttributedTextEditingController imeController = ImeAttributedTextEditingController(
+      controller: innerController,
+      disposeClientController: false,
+    );
+
+    // Dispose the IME controller.
+    //
+    // After this point, the IME controller crashes if it's notified.
+    imeController.dispose();
+
+    // Attach the inner controller into a new IME controller.
+    imeController = ImeAttributedTextEditingController(
+      controller: innerController,
+      disposeClientController: false,
+    );
+
+    // Change the text of the inner controller to notify the listeners.
+    innerController.text = AttributedText(text: 'Another text');
+
+    // Reaching this point means that disposing the old controller didn't cause a crash.
+  });
 }
 
 Future<void> _pumpSuperTextField(
