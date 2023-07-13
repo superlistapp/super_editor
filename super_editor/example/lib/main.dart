@@ -12,7 +12,6 @@ import 'package:example/demos/editor_configs/demo_mobile_editing_android.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/features/feature_hash_tags.dart';
-import 'package:example/demos/features/feature_linkify.dart';
 import 'package:example/demos/features/feature_user_tags.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
