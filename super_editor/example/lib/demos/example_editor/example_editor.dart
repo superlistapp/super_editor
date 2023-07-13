@@ -43,25 +43,13 @@ class _ExampleEditorState extends State<ExampleEditor> {
   final _overlayController = MagnifierAndToolbarController() //
     ..screenPadding = const EdgeInsets.all(20.0);
 
-  late final UserTagPlugin _userTagPlugin;
-  late final HashTagPlugin _hashTagPlugin;
-
   @override
   void initState() {
     super.initState();
     _doc = createInitialDocument()..addListener(_onDocumentChange);
     _composer = MutableDocumentComposer();
     _composer.selectionNotifier.addListener(_hideOrShowToolbar);
-    _docEditor = Editor(
-      editables: {
-        Editor.documentKey: _doc,
-        Editor.composerKey: _composer,
-      },
-      requestHandlers: defaultRequestHandlers,
-      reactionPipeline: [
-        ...defaultEditorReactions,
-      ],
-    );
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       document: _doc,
@@ -70,9 +58,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
     );
     _editorFocusNode = FocusNode();
     _scrollController = ScrollController()..addListener(_hideOrShowToolbar);
-
-    _userTagPlugin = UserTagPlugin();
-    _hashTagPlugin = HashTagPlugin();
   }
 
   @override
@@ -436,29 +421,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
                   selectionColor: Colors.red.withOpacity(0.3),
                 ),
           stylesheet: defaultStylesheet.copyWith(
-            inlineTextStyler: (attributions, existingStyle) {
-              TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
-
-              if (attributions.contains(userTagComposingAttribution)) {
-                style = style.copyWith(
-                  color: Colors.blue,
-                );
-              }
-
-              if (attributions.whereType<UserTagAttribution>().isNotEmpty) {
-                style = style.copyWith(
-                  color: Colors.red,
-                );
-              }
-
-              if (attributions.whereType<HashTagAttribution>().isNotEmpty) {
-                style = style.copyWith(
-                  color: Colors.orange,
-                );
-              }
-
-              return style;
-            },
             addRulesAfter: [
               if (!isLight) ..._darkModeStyles,
               taskStyles,
@@ -500,10 +462,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
             },
           ),
           overlayController: _overlayController,
-          plugins: {
-            _userTagPlugin,
-            _hashTagPlugin,
-          },
         ),
       ),
     );
