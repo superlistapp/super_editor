@@ -29,8 +29,6 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
   void initState() {
     super.initState();
 
-    _userTagPlugin = UserTagPlugin();
-
     _document = MutableDocument(nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))]);
     _composer = MutableDocumentComposer();
     _editor = Editor(
@@ -39,16 +37,14 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
         Editor.composerKey: _composer,
       },
       requestHandlers: [
-        ..._userTagPlugin.requestHandlers,
         ...defaultRequestHandlers,
-      ],
-      reactionPipeline: [
-        ..._userTagPlugin.reactions,
       ],
       listeners: [
         FunctionalEditListener(_onEdit),
       ],
     );
+
+    _userTagPlugin = UserTagPlugin();
 
     _editorFocusNode = FocusNode();
   }
@@ -164,6 +160,9 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
           CaretStyle().copyWith(color: Colors.redAccent),
         ),
       ],
+      plugins: {
+        _userTagPlugin,
+      },
     );
   }
 

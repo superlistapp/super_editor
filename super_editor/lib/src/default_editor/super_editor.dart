@@ -113,9 +113,10 @@ class SuperEditor extends StatefulWidget {
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.documentOverlayBuilders = const [DefaultCaretOverlayBuilder()],
-    this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
     this.overlayController,
+    this.plugins = const {},
+    this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ??
@@ -266,6 +267,9 @@ class SuperEditor extends StatefulWidget {
   /// mode.
   final List<DocumentKeyboardAction> keyboardActions;
 
+  /// Plugins that add sets of behaviors to the editing experience.
+  final Set<SuperEditorPlugin> plugins;
+
   /// Paints some extra visual ornamentation to help with
   /// debugging.
   final DebugPaintConfig debugPaint;
@@ -331,6 +335,9 @@ class SuperEditorState extends State<SuperEditor> {
     }
 
     if (widget.editor != oldWidget.editor) {
+      for (final plugin in oldWidget.plugins) {
+        plugin.detach(oldWidget.editor);
+      }
       _createEditContext();
       _createLayoutPresenter();
     } else if (widget.selectionStyles != oldWidget.selectionStyles) {
@@ -370,6 +377,10 @@ class SuperEditorState extends State<SuperEditor> {
         documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
     );
+
+    for (final plugin in widget.plugins) {
+      plugin.attach(widget.editor);
+    }
 
     // The ContentTapDelegate depends upon the EditContext. Recreate the
     // delegate, now that we've created a new EditContext.
@@ -474,7 +485,11 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           autofocus: widget.autofocus,
           editContext: editContext,
-          keyboardActions: widget.keyboardActions,
+          keyboardActions: [
+            for (final plugin in widget.plugins) //
+              ...plugin.keyboardActions,
+            ...widget.keyboardActions,
+          ],
           child: child,
         );
       case TextInputSource.ime:
@@ -487,7 +502,11 @@ class SuperEditorState extends State<SuperEditor> {
           imePolicies: widget.imePolicies,
           imeConfiguration: widget.imeConfiguration,
           imeOverrides: widget.imeOverrides,
-          hardwareKeyboardActions: widget.keyboardActions,
+          hardwareKeyboardActions: [
+            for (final plugin in widget.plugins) //
+              ...plugin.keyboardActions,
+            ...widget.keyboardActions,
+          ],
           floatingCursorController: _floatingCursorController,
           child: child,
         );
@@ -628,6 +647,43 @@ class SuperEditorState extends State<SuperEditor> {
         );
     }
   }
+}
+
+/// A [SuperEditor] plugin.
+///
+/// A [SuperEditorPlugin] can be thought of as a combination of two plugins.
+///
+/// First, there's the part that extends the behavior of an [Editor]. Those extensions
+/// are added in [attach].
+///
+/// Second, there's the part that extends the behavior of a [SuperEditor] widget, directly.
+/// Those behaviors are collected through various properties, such as [keyboardActions] and
+/// [componentBuilders].
+///
+/// An [Editor] a logical pipeline of requests, commands, and reactions. It has no direct
+/// connection to a user interface. A [SuperEditor] widget is a complete editor user interface.
+/// When a plugin is given to a [SuperEditor] widget, the [SuperEditor] widget [attach]s the
+/// plugin to its [Editor], and then the [SuperEditor] widget pulls out UI related behaviors
+/// from the plugin for things like keyboard handlers and component builders.
+///
+/// [Editor] extensions are applied differently than the [SuperEditor] UI extensions, because
+/// an [Editor] is mutable, meaning it can be altered. But a [SuperEditor] widget, like all other
+/// widgets, is immutable, and must be rebuilt when properties change. As a result, each plugin
+/// is instructed to alter an [Editor] as desired, but [SuperEditor] UI extensions are queried
+/// from the plugin, so that the [SuperEditor] widget can pass those extensions as properties
+/// during a widget build.
+abstract class SuperEditorPlugin {
+  /// Adds desired behaviors to the given [editor].
+  void attach(Editor editor) {}
+
+  /// Removes behaviors from the given [editor], which were added in [attach].
+  void detach(Editor editor) {}
+
+  /// Additional [DocumentKeyboardAction]s that will be added to a given [SuperEditor] widget.
+  List<DocumentKeyboardAction> get keyboardActions => [];
+
+  /// Additional [ComponentBuilder]s that will be added to a given [SuperEditor] widget.
+  List<ComponentBuilder> get componentBuilders => [];
 }
 
 /// A collection of policies that dictate how a [SuperEditor]'s selection will change

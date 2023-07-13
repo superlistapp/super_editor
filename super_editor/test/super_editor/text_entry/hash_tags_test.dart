@@ -456,9 +456,6 @@ Future<TestDocumentContext> _pumpTestEditor(WidgetTester tester, MutableDocument
   return await tester //
       .createDocument()
       .withCustomContent(document)
-      .withAddedReactions(
-    [
-      HashTagReaction(),
-    ],
-  ).pump();
+      .withPlugin(HashTagPlugin())
+      .pump();
 }

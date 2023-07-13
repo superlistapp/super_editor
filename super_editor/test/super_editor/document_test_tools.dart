@@ -129,6 +129,8 @@ class TestDocumentConfigurator {
   WidgetBuilder? _iOSToolbarBuilder;
   Key? _key;
 
+  final _plugins = <SuperEditorPlugin>{};
+
   TestDocumentConfigurator withAddedRequestHandlers(List<EditRequestHandler> addedRequestHandlers) {
     _addedRequestHandlers.addAll(addedRequestHandlers);
     return this;
@@ -299,6 +301,12 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Applies the given [plugin] to the pumped [SuperEditor].
+  TestDocumentConfigurator withPlugin(SuperEditorPlugin plugin) {
+    _plugins.add(plugin);
+    return this;
+  }
+
   /// Pumps a [SuperEditor] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
   /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
@@ -445,6 +453,7 @@ class TestDocumentConfigurator {
       ],
       autofocus: _autoFocus,
       scrollController: _scrollController,
+      plugins: _plugins,
     );
   }
 }

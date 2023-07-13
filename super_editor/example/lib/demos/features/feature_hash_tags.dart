@@ -14,6 +14,8 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
   late final MutableDocumentComposer _composer;
   late final Editor _editor;
 
+  late final HashTagPlugin _hashTagPlugin;
+
   final _tags = <String>[];
 
   @override
@@ -30,13 +32,12 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
       requestHandlers: [
         ...defaultRequestHandlers,
       ],
-      reactionPipeline: [
-        HashTagReaction(),
-      ],
       listeners: [
         FunctionalEditListener(_onEdit),
       ],
     );
+
+    _hashTagPlugin = HashTagPlugin();
   }
 
   void _onEdit(List<EditEvent> changeList) {
@@ -109,6 +110,9 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
           CaretStyle().copyWith(color: Colors.redAccent),
         ),
       ],
+      plugins: {
+        _hashTagPlugin,
+      },
     );
   }
 

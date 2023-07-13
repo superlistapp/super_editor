@@ -10,6 +10,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/document_hardware_keyboard/document_input_keyboard.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
+import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tokenizing/tag_tokenizer.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -99,11 +100,14 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 /// is replaced with a [userTagCancelledAttribution]. This ends the current composing behavior,
 /// and also prevents composing from starting again, whenever the user happens to place the caret
 /// in the given text.
-class UserTagPlugin {
+class UserTagPlugin extends SuperEditorPlugin {
   UserTagPlugin() {
-    _tagUserReaction = TagUserReaction(
-      onUpdateComposingUserTag: _onComposingUserTagFound,
-    );
+    _reactions = [
+      TagUserReaction(
+        onUpdateComposingUserTag: _onComposingUserTagFound,
+      ),
+      const AdjustSelectionAroundTagReaction(),
+    ];
   }
 
   /// Returns the active [ComposingUserTag], if the user is currently composing a user tag,
@@ -115,10 +119,20 @@ class UserTagPlugin {
     _composingUserTag.value = tag;
   }
 
-  /// [EditRequestHandler]s for user tag composition.
-  ///
-  /// Add these to an [Editor].
-  List<EditRequestHandler> get requestHandlers => _requestHandlers;
+  @override
+  void attach(Editor editor) {
+    editor
+      ..requestHandlers.insertAll(0, _requestHandlers)
+      ..reactionPipeline.insertAll(0, _reactions);
+  }
+
+  @override
+  void detach(Editor editor) {
+    editor
+      ..requestHandlers.removeWhere((item) => _requestHandlers.contains(item))
+      ..reactionPipeline.removeWhere((item) => _reactions.contains(item));
+  }
+
   final _requestHandlers = <EditRequestHandler>[
     (request) => request is FillInComposingUserTagRequest
         ? FillInComposingUserTagCommand(request.userTag, trigger: request.trigger)
@@ -128,16 +142,9 @@ class UserTagPlugin {
         : null,
   ];
 
-  /// [EditReaction]s for user tag composition.
-  ///
-  /// Add these to an [Editor].
-  List<EditReaction> get reactions => [_tagUserReaction, _moveSelectionAroundUserTagReaction];
-  late final TagUserReaction _tagUserReaction;
-  final _moveSelectionAroundUserTagReaction = const AdjustSelectionAroundTagReaction();
+  late final List<EditReaction> _reactions;
 
-  /// [SuperEditor] keyboard actions for user tag composition.
-  ///
-  /// Pass these to a [SuperEditor] widget.
+  @override
   List<DocumentKeyboardAction> get keyboardActions => [_cancelOnEscape];
   ExecutionInstruction _cancelOnEscape({
     required SuperEditorContext editContext,

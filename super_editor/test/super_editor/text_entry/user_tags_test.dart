@@ -971,19 +971,6 @@ Future<TestDocumentContext> _pumpTestEditor(WidgetTester tester, MutableDocument
   return await tester //
       .createDocument()
       .withCustomContent(document)
-      .withAddedRequestHandlers(
-    [
-      ...userTagPlugin.requestHandlers,
-    ],
-  ).withAddedReactions(
-    [
-      ...userTagPlugin.reactions,
-      // ^ already registered in default editor construction (I think)
-      // HashTagReaction(),
-    ],
-  ).withAddedKeyboardActions(
-    prepend: [
-      ...userTagPlugin.keyboardActions,
-    ],
-  ).pump();
+      .withPlugin(userTagPlugin)
+      .pump();
 }

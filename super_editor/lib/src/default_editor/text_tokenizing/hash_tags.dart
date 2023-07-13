@@ -3,9 +3,50 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tokenizing/tag_tokenizer.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+
+class HashTagPlugin extends SuperEditorPlugin {
+  HashTagPlugin({
+    String triggerSymbol = "#",
+    Set<String> excludeCharacters = const {"."},
+  })  : assert(triggerSymbol.length == 1,
+            "The trigger symbol must be exactly one character long. Tried to use symbol: '$triggerSymbol'"),
+        _triggerSymbol = triggerSymbol,
+        _excludedCharacters = excludeCharacters {
+    _hashTagReaction = HashTagReaction(
+      triggerSymbol: _triggerSymbol,
+      excludeCharacters: _excludedCharacters,
+    );
+  }
+
+  /// The character that causes a hash tag to begin, defaults to "#".
+  final String _triggerSymbol;
+
+  /// Characters that cause a hash tag to end.
+  ///
+  /// By default, a hash tag will stop when it hits a ".", because a hash
+  /// tag might appear at the end of a sentence, and the period shouldn't
+  /// be included.
+  ///
+  /// Spaces are always enforced as terminating characters. A space does
+  /// not need to be included in this set.
+  final Set<String> _excludedCharacters;
+
+  late EditReaction _hashTagReaction;
+
+  @override
+  void attach(Editor editor) {
+    editor.reactionPipeline.insert(0, _hashTagReaction);
+  }
+
+  @override
+  void detach(Editor editor) {
+    editor.reactionPipeline.remove(_hashTagReaction);
+  }
+}
 
 /// An [EditReaction] that creates, updates, and removes hash tags.
 ///
@@ -62,11 +103,82 @@ class HashTagReaction implements EditReaction {
     editorHashTagsLog.info(
         "Caret position: ${editContext.find<MutableDocumentComposer>(Editor.composerKey).selection?.extent.nodePosition}");
 
+    _adjustTagAttributionsAroundAlteredTags(editContext, requestDispatcher, changeList);
+
     _findAndCreateNewTags(editContext, requestDispatcher, changeList);
 
     _splitBackToBackTags(editContext, requestDispatcher, changeList);
 
     _removeInvalidTags(editContext, requestDispatcher, changeList);
+  }
+
+  /// Finds a hash tag near the caret and adjusts the attribution bounds so that the
+  /// tag content remains attributed.
+  ///
+  /// Examples:
+  ///
+  ///  - |#das|h      ->  |#dash|
+  ///  - |#dash and|  ->  |#dash| and
+  ///
+  void _adjustTagAttributionsAroundAlteredTags(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+
+    final hashTag = _findTagAtCaret(editContext, (attributions) => attributions.contains(const HashTagAttribution()));
+    if (hashTag != null) {
+      final tagRange = SpanRange(start: hashTag.tagIndex.startOffset, end: hashTag.tagIndex.endOffset);
+      final hasTagAttributionThroughout =
+          hashTag.tagIndex.computeLeadingSpanForAttribution(document, const HashTagAttribution()) == tagRange;
+      if (hasTagAttributionThroughout) {
+        // The tag is already fully attributed. No need to do anything.
+        return;
+      }
+
+      // The token is only partially attributed. Expand the attribution around the token.
+      requestDispatcher.execute([
+        AddTextAttributionsRequest(
+          documentSelection: DocumentSelection(
+            base: hashTag.tagIndex.start,
+            extent: hashTag.tagIndex.end,
+          ),
+          attributions: {const HashTagAttribution()},
+        ),
+      ]);
+
+      return;
+    }
+  }
+
+  TagAroundCaret? _findTagAtCaret(EditContext editContext, bool Function(Set<Attribution> attributions) tagSelector) {
+    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
+    if (composer.selection == null || !composer.selection!.isCollapsed) {
+      // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
+      return null;
+    }
+    final selectionPosition = composer.selection!.extent;
+    final caretPosition = selectionPosition.nodePosition;
+    if (caretPosition is! TextNodePosition) {
+      // Tagging only happens in the middle of text. The selected content isn't text. Return.
+      return null;
+    }
+
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final selectedNode = document.getNodeById(selectionPosition.nodeId);
+    if (selectedNode is! TextNode) {
+      // Tagging only happens in the middle of text. The selected content isn't text. Return.
+      return null;
+    }
+
+    return TagTokenizer.findUntaggedTokenAroundCaret(
+      triggerSymbol: _triggerSymbol,
+      nodeId: selectedNode.id,
+      text: selectedNode.text,
+      caretPosition: caretPosition,
+      tagFilter: tagSelector,
+    );
   }
 
   /// Find any text near the caret that fits the pattern of a hash tag, and surround
