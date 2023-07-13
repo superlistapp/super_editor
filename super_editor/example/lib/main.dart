@@ -286,13 +286,6 @@ final _menu = <_MenuGroup>[
           return const UserTagsFeatureDemo();
         },
       ),
-      _MenuItem(
-        icon: Icons.link,
-        title: 'Linkify',
-        pageBuilder: (context) {
-          return const LinkifyFeatureDemo();
-        },
-      ),
     ],
   ),
   _MenuGroup(
