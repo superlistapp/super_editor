@@ -2,8 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../test_tools.dart';
 import 'super_textfield_inspector.dart';
 import 'super_textfield_robot.dart';
 
@@ -62,6 +64,42 @@ void main() {
         await tester.typeKeyboardText("a");
 
         expect(find.text("a", findRichText: true), findsNothing);
+      });
+
+      testWidgetsOnAllPlatforms('types after clearing text', (tester) async {
+        final controller = AttributedTextEditingController(
+          text: AttributedText(text: 'Text before'),
+        );
+
+        await _pumpScaffold(
+          tester,
+          SuperTextField(
+            textController: controller,
+          ),
+        );
+
+        // Place caret at the end of the text field.
+        await tester.placeCaretInSuperTextField(11);
+
+        // Clear the text and changes the selection to the beginning of the text.
+        controller.updateTextAndSelection(
+          text: AttributedText(),
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+        await tester.pump();
+
+        // Type some text.
+        await tester.typeImeText('Text after');
+
+        // Ensure text and selection were updated.
+        expect(
+          SuperTextFieldInspector.findText().text,
+          'Text after',
+        );
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 10),
+        );
       });
     });
   });
