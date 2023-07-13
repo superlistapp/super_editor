@@ -46,6 +46,8 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   @override
   void dispose() {
+    _realController.removeListener(_onInnerControllerChange);
+
     if (_disposeClientController) {
       _realController.dispose();
     }
