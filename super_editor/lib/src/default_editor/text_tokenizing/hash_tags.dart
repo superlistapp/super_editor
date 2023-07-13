@@ -178,6 +178,7 @@ class HashTagReaction implements EditReaction {
       text: selectedNode.text,
       caretPosition: caretPosition,
       tagFilter: tagSelector,
+      excludeCharacters: _terminatingCharacters,
     );
   }
 
