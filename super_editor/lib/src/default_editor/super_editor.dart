@@ -620,20 +620,23 @@ class SuperEditorState extends State<SuperEditor> {
     switch (gestureMode) {
       case DocumentGestureMode.mouse:
         return ContentLayers(
-          content: (onBuildScheduled) => SingleColumnDocumentLayout(
-            key: _docLayoutKey,
-            presenter: _docLayoutPresenter!,
-            componentBuilders: widget.componentBuilders,
-            onBuildScheduled: onBuildScheduled,
-            showDebugPaint: widget.debugPaint.layout,
-          ),
+          content: (onBuildScheduled) {
+            return SingleColumnDocumentLayout(
+              key: _docLayoutKey,
+              presenter: _docLayoutPresenter!,
+              componentBuilders: widget.componentBuilders,
+              onBuildScheduled: onBuildScheduled,
+              showDebugPaint: widget.debugPaint.layout,
+            );
+          },
           overlays: [
-            // Only build overlays if the document layout is available for queries.
-            // FIXME: the addition of this if-statement prevents the caret from appearing on initial placement
-            //        We probably need to schedule a followup frame whenever we find the key is null.
-            if (_docLayoutKey.currentState != null)
-              for (final overlayBuilder in widget.documentOverlayBuilders) //
-                overlayBuilder.build(context, editContext),
+            for (final overlayBuilder in widget.documentOverlayBuilders) //
+              Builder(
+                // We place each overlay in a Builder so that the _docLayoutKey binds
+                // to the SingleColumnDocumentLayout before running `build()` on each
+                // overlay.
+                builder: (context) => overlayBuilder.build(context, editContext),
+              )
           ],
         );
       case DocumentGestureMode.android:

@@ -245,7 +245,6 @@ class _TokenBoundsOverlay implements DocumentLayerBuilder {
 
   @override
   Widget build(BuildContext context, SuperEditorContext editContext) {
-    print("Building token bounds overlay");
     return _AttributionBounds(
       layout: editContext.documentLayout,
       document: editContext.document,
