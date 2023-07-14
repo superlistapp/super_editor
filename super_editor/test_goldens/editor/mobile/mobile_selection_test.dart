@@ -772,6 +772,7 @@ Widget _buildScaffold({
   return _DragLinePaint(
     line: dragLine,
     child: MaterialApp(
+      theme: ThemeData(primaryColor: Colors.blue),
       home: Scaffold(
         body: Center(
           child: IntrinsicHeight(
