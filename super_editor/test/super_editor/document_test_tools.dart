@@ -369,7 +369,6 @@ class TestDocumentConfigurator {
       ..requestHandlers.insertAll(0, _addedRequestHandlers)
       ..reactionPipeline.insertAll(0, _addedReactions);
 
-    // TODO:
     // ignore: prefer_function_declarations_over_variables
     final layoutResolver = () => layoutKey.currentState as DocumentLayout;
     final commonOps = CommonEditorOperations(
