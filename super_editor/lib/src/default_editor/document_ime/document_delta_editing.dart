@@ -189,6 +189,16 @@ class TextDeltasDocumentEditor {
 
     // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
+
+    // Update the IME to document serialization based on the replacement changes.
+    // It's possible that the replacement text have a different length from the replaced text.
+    // Therefore, we need to update our mapping from the IME positions to document positions.
+    _serializedDoc = DocumentImeSerializer(
+      document,
+      selection.value!,
+      composingRegion.value,
+      _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
+    )..imeText = _previousImeValue.text;
   }
 
   void _applyDeletion(TextEditingDeltaDeletion delta) {
