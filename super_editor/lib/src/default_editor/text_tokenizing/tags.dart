@@ -4,8 +4,11 @@ import 'package:collection/collection.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 
+/// A set of tools for finding tags within document text.
 class TagFinder {
-  static TagAroundCaret? findTagAroundPosition({
+  /// Finds a tag that touches the given [expansionPosition] and returns that tag,
+  /// indexed within the document, along with the [expansionPosition].
+  static TagAroundPosition? findTagAroundPosition({
     required TagRule tagRule,
     required String nodeId,
     required AttributedText text,
@@ -21,14 +24,13 @@ class TagFinder {
       " ",
     };
 
-    // TODO: use characters package to move forward and backward
     while (tokenStartOffset > 0 && !terminatingCharacters.contains(rawText[tokenStartOffset - 1])) {
-      tokenStartOffset -= 1;
+      tokenStartOffset = getCharacterStartBounds(rawText, tokenStartOffset);
     }
     while (tokenEndOffset < rawText.length &&
         !terminatingCharacters.contains(rawText[tokenEndOffset]) &&
         (rawText[tokenEndOffset] != tagRule.trigger || tokenEndOffset == tokenStartOffset)) {
-      tokenEndOffset += 1;
+      tokenEndOffset = getCharacterEndBounds(rawText, tokenEndOffset);
     }
 
     final tokenRange = SpanRange(start: tokenStartOffset, end: tokenEndOffset);
@@ -46,14 +48,13 @@ class TagFinder {
       return null;
     }
 
-    // FIXME: this return is a mismatch to the name of the method - the method expands around a position, but it isn't necessarily the caret
-    final tagAroundPosition = TagAroundCaret(
-      tagIndex: IndexedTag(
+    final tagAroundPosition = TagAroundPosition(
+      indexedTag: IndexedTag(
         Tag(tagRule.trigger, tagText.substring(1)),
         nodeId,
         tokenStartOffset,
       ),
-      caretOffset: expansionPosition.offset,
+      searchOffset: expansionPosition.offset,
     );
 
     return tagAroundPosition;
@@ -79,39 +80,38 @@ class TagFinder {
   const TagFinder._();
 }
 
-/// A [IndexedTag], along with the current caret offset, which is expected to fall
-/// somewhere within the bounds of the [IndexedTag].
+/// An [IndexedTag], along with a text position about which the tag was found.
 ///
 /// This data structure is useful for inspecting active typing into a token.
-class TagAroundCaret {
-  const TagAroundCaret({
-    required this.tagIndex,
-    required this.caretOffset,
+class TagAroundPosition {
+  const TagAroundPosition({
+    required this.indexedTag,
+    required this.searchOffset,
   });
 
   /// The [IndexedTag] that surrounds the caret.
-  final IndexedTag tagIndex;
+  final IndexedTag indexedTag;
 
-  /// The text offset of the caret, from the start of the [TextNode] that
-  /// contains the [tagIndex].
-  final int caretOffset;
+  /// The text offset of the tag search position, from the start of the [TextNode] that
+  /// contains the [indexedTag].
+  final int searchOffset;
 
-  /// The text offset of the caret from the start of the [tagIndex].
-  int get caretOffsetInToken => caretOffset - tagIndex.startOffset;
+  /// The text offset of the tag search position from the start of the [indexedTag].
+  int get searchOffsetInToken => searchOffset - indexedTag.startOffset;
 
   @override
-  String toString() => "[TagAroundCaret] - tagIndex: '$tagIndex', caret offset in tag: $caretOffsetInToken";
+  String toString() => "[TagAroundPosition] - indexedTag: '$indexedTag', search offset in tag: $searchOffsetInToken";
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TagAroundCaret &&
+      other is TagAroundPosition &&
           runtimeType == other.runtimeType &&
-          tagIndex == other.tagIndex &&
-          caretOffset == other.caretOffset;
+          indexedTag == other.indexedTag &&
+          searchOffset == other.searchOffset;
 
   @override
-  int get hashCode => tagIndex.hashCode ^ caretOffset.hashCode;
+  int get hashCode => indexedTag.hashCode ^ searchOffset.hashCode;
 }
 
 /// A rule for matching a text token to a tag.

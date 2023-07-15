@@ -1,5 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -7,18 +7,36 @@ import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tokenizing/tags.dart';
-import 'package:super_editor/src/default_editor/text_tokenizing/user_tags.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
-// TODO: take the attribution as a configuration instead of a hard-coded one
-
-// TODO: the real difference isn't between hash tags or user tags, it's between how they're composed and edited
-//
-//       A HashTagPlugin and UserTagPlugin is probably fine. But the individual features around finding tags,
-//       composing tags, cancelling tags, should be individually re-usable capabilities so that other tag
-//       concepts can be created, too.
-
+/// A [SuperEditorPlugin] that finds and attributes hash tags in a document.
+///
+/// A hash tag is a text token that begins with a trigger character, such as "#", and
+/// is followed by one or more non-space characters.
+///
+/// A [HashTagPlugin] finds and attributes hash tags as the user types them into an [Editor].
+/// Clients that wish to react to changes to hash tags can use the [hashTagIndex] to query
+/// existing hash tags.
+///
+/// To add hash tag behaviors to a [SuperEditor] widget, provide a [HashTagPlugin] in
+/// the `plugins` property.
+///
+///   SuperEditor(
+///     //...
+///     plugins: {
+///       hashTagPlugin,
+///     },
+///   );
+///
+/// To add hash tag behaviors directly to an [Editor], without involving a [SuperEditor]
+/// widget, call [attach] with the given [Editor]. When that [Editor] is no longer needed,
+/// call [detach] to clean up all plugin references.
+///
+///   hashTagPlugin.attach(editor);
+///
+///
 class HashTagPlugin extends SuperEditorPlugin {
+  /// The key used to access the [HashTagIndex] in an attached [Editor].
   static const hashTagIndexKey = "hashTagIndex";
 
   HashTagPlugin({
@@ -31,11 +49,13 @@ class HashTagPlugin extends SuperEditorPlugin {
     );
   }
 
+  /// The rule for what this plugin considers to be a hash tag.
   final TagRule _tagRule;
 
   /// Index of all hash tags in the document.
   final HashTagIndex hashTagIndex;
 
+  /// An [EditReaction] that finds and attributes all hash tags.
   late EditReaction _hashTagReaction;
 
   @override
@@ -76,7 +96,16 @@ class HashTagPlugin extends SuperEditorPlugin {
   }
 }
 
+/// Default [TagRule] for hash tags.
 const hashTagRule = TagRule(trigger: "#", excludedCharacters: {"."});
+
+extension HashTagIndexEditable on EditContext {
+  /// Returns the [HashTagIndex] that the [HashTagPlugin] added to the attached [Editor].
+  ///
+  /// This accessor is provided as a convenience so that clients don't need to call `find()`
+  /// on the [EditContext].
+  HashTagIndex get hashTagIndex => find<HashTagIndex>(HashTagPlugin.hashTagIndexKey);
+}
 
 /// Collects references to all hash tags in a document for easy querying.
 class HashTagIndex with ChangeNotifier implements Editable {
@@ -200,9 +229,9 @@ class HashTagReaction implements EditReaction {
 
     final hashTag = _findTagAtCaret(editContext, (attributions) => attributions.contains(const HashTagAttribution()));
     if (hashTag != null) {
-      final tagRange = SpanRange(start: hashTag.tagIndex.startOffset, end: hashTag.tagIndex.endOffset);
+      final tagRange = SpanRange(start: hashTag.indexedTag.startOffset, end: hashTag.indexedTag.endOffset);
       final hasTagAttributionThroughout =
-          hashTag.tagIndex.computeLeadingSpanForAttribution(document, const HashTagAttribution()) == tagRange;
+          hashTag.indexedTag.computeLeadingSpanForAttribution(document, const HashTagAttribution()) == tagRange;
       if (hasTagAttributionThroughout) {
         // The tag is already fully attributed. No need to do anything.
         return;
@@ -212,8 +241,8 @@ class HashTagReaction implements EditReaction {
       requestDispatcher.execute([
         AddTextAttributionsRequest(
           documentSelection: DocumentSelection(
-            base: hashTag.tagIndex.start,
-            extent: hashTag.tagIndex.end,
+            base: hashTag.indexedTag.start,
+            extent: hashTag.indexedTag.end,
           ),
           attributions: {const HashTagAttribution()},
         ),
@@ -223,7 +252,8 @@ class HashTagReaction implements EditReaction {
     }
   }
 
-  TagAroundCaret? _findTagAtCaret(EditContext editContext, bool Function(Set<Attribution> attributions) tagSelector) {
+  TagAroundPosition? _findTagAtCaret(
+      EditContext editContext, bool Function(Set<Attribution> attributions) tagSelector) {
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     if (composer.selection == null || !composer.selection!.isCollapsed) {
       // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
@@ -294,12 +324,12 @@ class HashTagReaction implements EditReaction {
       editorHashTagsLog.fine("There's no tag around the caret, fizzling");
       return;
     }
-    if (!hashTagAroundCaret.tagIndex.tag.raw.startsWith(_tagRule.trigger)) {
+    if (!hashTagAroundCaret.indexedTag.tag.raw.startsWith(_tagRule.trigger)) {
       // Tags must start with a "#" (or other trigger symbol) but the preceding word doesn't. Return.
       editorHashTagsLog.fine("Token doesn't start with ${_tagRule.trigger}, fizzling");
       return;
     }
-    if (hashTagAroundCaret.tagIndex.tag.raw.length <= 1) {
+    if (hashTagAroundCaret.indexedTag.tag.raw.length <= 1) {
       // The token only contains a "#". We require at least one valid character after
       // the "#" to consider it a hash tag.
       editorHashTagsLog.fine("Token has no content after ${_tagRule.trigger}, fizzling");
@@ -307,7 +337,7 @@ class HashTagReaction implements EditReaction {
     }
 
     editorHashTagsLog.fine(
-        "Found a hash tag around caret: '${hashTagAroundCaret.tagIndex.tag}' - surrounding it with an attribution: ${hashTagAroundCaret.tagIndex.startOffset} -> ${hashTagAroundCaret.tagIndex.endOffset}");
+        "Found a hash tag around caret: '${hashTagAroundCaret.indexedTag.tag}' - surrounding it with an attribution: ${hashTagAroundCaret.indexedTag.startOffset} -> ${hashTagAroundCaret.indexedTag.endOffset}");
 
     requestDispatcher.execute([
       // Remove the old hash tag attribution(s).
@@ -315,16 +345,16 @@ class HashTagReaction implements EditReaction {
         documentSelection: DocumentSelection(
           base: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.tagIndex.startOffset),
+            nodePosition: TextNodePosition(offset: hashTagAroundCaret.indexedTag.startOffset),
           ),
           extent: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.tagIndex.endOffset),
+            nodePosition: TextNodePosition(offset: hashTagAroundCaret.indexedTag.endOffset),
           ),
         ),
         attributions: {
           ...selectedNode.text
-              .getAllAttributionsAt(hashTagAroundCaret.tagIndex.startOffset)
+              .getAllAttributionsAt(hashTagAroundCaret.indexedTag.startOffset)
               .whereType<HashTagAttribution>(),
         },
       ),
@@ -333,11 +363,11 @@ class HashTagReaction implements EditReaction {
         documentSelection: DocumentSelection(
           base: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.tagIndex.startOffset),
+            nodePosition: TextNodePosition(offset: hashTagAroundCaret.indexedTag.startOffset),
           ),
           extent: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.tagIndex.endOffset),
+            nodePosition: TextNodePosition(offset: hashTagAroundCaret.indexedTag.endOffset),
           ),
         ),
         attributions: {
