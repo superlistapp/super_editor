@@ -54,9 +54,8 @@ class Editor implements RequestDispatcher {
   })  : requestHandlers = requestHandlers ?? [],
         reactionPipeline = reactionPipeline ?? [],
         _changeListeners = listeners ?? [] {
-    _context = EditContext(editables);
-
-    _commandExecutor = _DocumentEditorCommandExecutor(_context);
+    context = EditContext(editables);
+    _commandExecutor = _DocumentEditorCommandExecutor(context);
   }
 
   void dispose() {
@@ -68,7 +67,7 @@ class Editor implements RequestDispatcher {
   final List<EditRequestHandler> requestHandlers;
 
   /// Service Locator that provides all resources that are relevant for document editing.
-  late final EditContext _context;
+  late final EditContext context;
 
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
@@ -131,7 +130,7 @@ class Editor implements RequestDispatcher {
 
     if (_activeCommandCount == 0) {
       // This is the start of a new transaction.
-      for (final editable in _context._resources.values) {
+      for (final editable in context._resources.values) {
         editable.onTransactionStart();
       }
     }
@@ -161,7 +160,7 @@ class Editor implements RequestDispatcher {
         _notifyListeners();
 
         // This is the end of a transaction.
-        for (final editable in _context._resources.values) {
+        for (final editable in context._resources.values) {
           editable.onTransactionEnd(_activeChangeList!);
         }
       } else {
@@ -212,7 +211,7 @@ class Editor implements RequestDispatcher {
     for (final reaction in reactionPipeline) {
       // Note: we pass the active change list because reactions will cause more
       // changes to be added to that list.
-      reaction.react(_context, this, _activeChangeList!);
+      reaction.react(context, this, _activeChangeList!);
     }
   }
 
@@ -334,6 +333,12 @@ class EditContext {
 
     return _resources[id] as T;
   }
+
+  /// Makes the given [editable] available as a resource under the given [id].
+  void put(String id, Editable editable) => _resources[id] = editable;
+
+  /// Removes any resource in this context with the given [id].
+  void remove(String id) => _resources.remove(id);
 }
 
 /// Executes [EditCommand]s in the order in which they're queued.

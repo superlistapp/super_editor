@@ -12,7 +12,7 @@ import 'package:super_editor/src/default_editor/document_hardware_keyboard/docum
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/default_editor/text_tokenizing/tag_tokenizer.dart';
+import 'package:super_editor/src/default_editor/text_tokenizing/tags.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
@@ -166,6 +166,8 @@ class UserTagPlugin extends SuperEditorPlugin {
   }
 }
 
+const userTagRule = TagRule(trigger: "@", excludedCharacters: {"."});
+
 /// An [EditRequest] that replaces a composing user tag with the given [userTag]
 /// and commits it.
 ///
@@ -227,22 +229,22 @@ class FillInComposingUserTagCommand implements EditCommand {
 
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
-      composingToken = TagTokenizer.findAttributedTokenAroundPosition(
-        trigger,
-        textNode.id,
-        textNode.text,
-        base.nodePosition as TextNodePosition,
-        (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
+      composingToken = TagFinder.findTagAroundPosition(
+        tagRule: userTagRule,
+        nodeId: textNode.id,
+        text: textNode.text,
+        expansionPosition: base.nodePosition as TextNodePosition,
+        isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
       );
     }
     if (composingToken == null && extent.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
-      composingToken = TagTokenizer.findAttributedTokenAroundPosition(
-        trigger,
-        textNode.id,
-        textNode.text,
-        base.nodePosition as TextNodePosition,
-        (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
+      composingToken = TagFinder.findTagAroundPosition(
+        tagRule: userTagRule,
+        nodeId: textNode.id,
+        text: textNode.text,
+        expansionPosition: base.nodePosition as TextNodePosition,
+        isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
       );
     }
 
@@ -355,22 +357,22 @@ class CancelComposingUserTagCommand implements EditCommand {
 
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
-      composingToken = TagTokenizer.findAttributedTokenAroundPosition(
-        trigger,
-        textNode.id,
-        textNode.text,
-        base.nodePosition as TextNodePosition,
-        (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
+      composingToken = TagFinder.findTagAroundPosition(
+        tagRule: userTagRule,
+        nodeId: textNode.id,
+        text: textNode.text,
+        expansionPosition: base.nodePosition as TextNodePosition,
+        isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
       );
     }
     if (composingToken == null && extent.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
-      composingToken = TagTokenizer.findAttributedTokenAroundPosition(
-        trigger,
-        textNode.id,
-        textNode.text,
-        base.nodePosition as TextNodePosition,
-        (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
+      composingToken = TagFinder.findTagAroundPosition(
+        tagRule: userTagRule,
+        nodeId: textNode.id,
+        text: textNode.text,
+        expansionPosition: base.nodePosition as TextNodePosition,
+        isTokenCandidate: (tokenAttributions) => tokenAttributions.contains(userTagComposingAttribution),
       );
     }
 
@@ -743,12 +745,12 @@ class TagUserReaction implements EditReaction {
     //       existingComposingTag version so we could report an existing composing tag. The
     //       other call only looks for non-tagged text, which makes it seem as if our existing
     //       composing tag doesn't exist.
-    final existingComposingTag = TagTokenizer.findUntaggedTokenAroundCaret(
-      triggerSymbol: _trigger,
+    final existingComposingTag = TagFinder.findTagAroundPosition(
+      tagRule: userTagRule,
       nodeId: selectedNode.id,
       text: selectedNode.text,
-      caretPosition: caretPosition,
-      tagFilter: (tokenAttributions) {
+      expansionPosition: caretPosition,
+      isTokenCandidate: (tokenAttributions) {
         return tokenAttributions.contains(userTagComposingAttribution);
       },
     );
@@ -772,12 +774,12 @@ class TagUserReaction implements EditReaction {
       return;
     }
 
-    final tokenAroundCaret = TagTokenizer.findUntaggedTokenAroundCaret(
-        triggerSymbol: _trigger,
+    final tokenAroundCaret = TagFinder.findTagAroundPosition(
+        tagRule: userTagRule,
         nodeId: selectedNode.id,
         text: selectedNode.text,
-        caretPosition: caretPosition,
-        tagFilter: (tokenAttributions) {
+        expansionPosition: caretPosition,
+        isTokenCandidate: (tokenAttributions) {
           return !tokenAttributions.contains(userTagComposingAttribution) &&
               !tokenAttributions.contains(userTagCancelledAttribution) &&
               !tokenAttributions.any((attribution) => attribution is UserTagAttribution);
@@ -878,7 +880,7 @@ class TagUserReaction implements EditReaction {
     for (final textNodeId in composingTagNodeCandidates) {
       editorUserTagsLog.fine("Checking node $textNodeId for composing tags to commit");
       final textNode = document.getNodeById(textNodeId) as TextNode;
-      final allTags = TagTokenizer.findAllTagsInTextNode(textNode, _trigger);
+      final allTags = TagFinder.findAllTagsInTextNode(textNode, userTagRule);
       final composingTags =
           allTags.where((tag) => tag.computeLeadingSpanForAttribution(document, userTagComposingAttribution).isValid);
       editorUserTagsLog.fine("Composing tags in node: $composingTags");
@@ -905,7 +907,7 @@ class TagUserReaction implements EditReaction {
     }
   }
 
-  void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, TagIndex tag) {
+  void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, IndexedTag tag) {
     onUpdateComposingUserTag?.call(null);
 
     // TODO: batch all these requests into one transaction
@@ -970,12 +972,12 @@ class TagUserReaction implements EditReaction {
       return null;
     }
 
-    return TagTokenizer.findUntaggedTokenAroundCaret(
-      triggerSymbol: _trigger,
+    return TagFinder.findTagAroundPosition(
+      tagRule: userTagRule,
       nodeId: selectedNode.id,
       text: selectedNode.text,
-      caretPosition: caretPosition,
-      tagFilter: tagSelector,
+      expansionPosition: caretPosition,
+      isTokenCandidate: tagSelector,
     );
   }
 }
@@ -1191,18 +1193,18 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
   ) {
     // TODO: This reaction only matters when we have committed user tags. Use a standard attribution
     //       query instead of running a text character search to obtain wordAroundCaret.
-    final wordAroundCaret = TagTokenizer.findAttributedTokenAroundPosition(
-      _trigger,
-      nodeId,
-      paragraphText,
-      position,
-      (tokenAttributions) => tokenAttributions.any(attributionSelector),
+    final wordAroundCaret = TagFinder.findTagAroundPosition(
+      tagRule: userTagRule,
+      nodeId: nodeId,
+      text: paragraphText,
+      expansionPosition: position,
+      isTokenCandidate: (tokenAttributions) => tokenAttributions.any(attributionSelector),
     );
     if (wordAroundCaret == null) {
       return null;
     }
     if (wordAroundCaret.caretOffsetInToken == 0 ||
-        wordAroundCaret.caretOffsetInToken == wordAroundCaret.tagIndex.tag.tag.length) {
+        wordAroundCaret.caretOffsetInToken == wordAroundCaret.tagIndex.tag.raw.length) {
       // The token is either on the starting edge, e.g., "|@tag", or at the ending edge,
       // e.g., "@tag|". We don't care about those scenarios when looking for the caret
       // inside of the token.

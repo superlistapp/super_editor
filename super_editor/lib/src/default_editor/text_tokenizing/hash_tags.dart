@@ -1,50 +1,132 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/default_editor/text_tokenizing/tag_tokenizer.dart';
+import 'package:super_editor/src/default_editor/text_tokenizing/tags.dart';
+import 'package:super_editor/src/default_editor/text_tokenizing/user_tags.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
+// TODO: take the attribution as a configuration instead of a hard-coded one
+
+// TODO: the real difference isn't between hash tags or user tags, it's between how they're composed and edited
+//
+//       A HashTagPlugin and UserTagPlugin is probably fine. But the individual features around finding tags,
+//       composing tags, cancelling tags, should be individually re-usable capabilities so that other tag
+//       concepts can be created, too.
+
 class HashTagPlugin extends SuperEditorPlugin {
+  static const hashTagIndexKey = "hashTagIndex";
+
   HashTagPlugin({
-    String triggerSymbol = "#",
-    Set<String> excludeCharacters = const {"."},
-  })  : assert(triggerSymbol.length == 1,
-            "The trigger symbol must be exactly one character long. Tried to use symbol: '$triggerSymbol'"),
-        _triggerSymbol = triggerSymbol,
-        _excludedCharacters = excludeCharacters {
+    TagRule tagRule = hashTagRule,
+  })  : _tagRule = tagRule,
+        hashTagIndex = HashTagIndex() {
     _hashTagReaction = HashTagReaction(
-      triggerSymbol: _triggerSymbol,
-      excludeCharacters: _excludedCharacters,
+      tagRule: _tagRule,
+      hashTagIndex: hashTagIndex,
     );
   }
 
-  /// The character that causes a hash tag to begin, defaults to "#".
-  final String _triggerSymbol;
+  final TagRule _tagRule;
 
-  /// Characters that cause a hash tag to end.
-  ///
-  /// By default, a hash tag will stop when it hits a ".", because a hash
-  /// tag might appear at the end of a sentence, and the period shouldn't
-  /// be included.
-  ///
-  /// Spaces are always enforced as terminating characters. A space does
-  /// not need to be included in this set.
-  final Set<String> _excludedCharacters;
+  /// Index of all hash tags in the document.
+  final HashTagIndex hashTagIndex;
 
   late EditReaction _hashTagReaction;
 
   @override
   void attach(Editor editor) {
-    editor.reactionPipeline.insert(0, _hashTagReaction);
+    editor
+      ..context.put(hashTagIndexKey, hashTagIndex)
+      ..reactionPipeline.insert(0, _hashTagReaction);
+
+    _initializeHashTagIndex(editor);
+  }
+
+  void _initializeHashTagIndex(Editor editor) {
+    final document = editor.context.find<MutableDocument>(Editor.documentKey);
+
+    for (final node in document.nodes) {
+      if (node is! TextNode) {
+        continue;
+      }
+
+      final tagSpans = node.text.getAttributionSpansInRange(
+        attributionFilter: (a) => a is HashTagAttribution,
+        range: SpanRange(start: 0, end: node.text.text.length - 1),
+      );
+
+      final tags = <String>{};
+      for (final tagSpan in tagSpans) {
+        tags.add(node.text.text.substring(tagSpan.start, tagSpan.end + 1));
+      }
+      hashTagIndex._setTagsInNode(node.id, tags);
+    }
   }
 
   @override
   void detach(Editor editor) {
-    editor.reactionPipeline.remove(_hashTagReaction);
+    editor
+      ..context.remove(hashTagIndexKey)
+      ..reactionPipeline.remove(_hashTagReaction);
+  }
+}
+
+const hashTagRule = TagRule(trigger: "#", excludedCharacters: {"."});
+
+/// Collects references to all hash tags in a document for easy querying.
+class HashTagIndex with ChangeNotifier implements Editable {
+  final _tags = <String, Set<String>>{};
+
+  Set<String> getTagsInTextNode(String nodeId) => _tags[nodeId] ?? {};
+
+  Set<String> getAllTags() {
+    final tags = <String>{};
+    for (final value in _tags.values) {
+      tags.addAll(value);
+    }
+    return tags;
+  }
+
+  void _setTagsInNode(String nodeId, Set<String> tags) {
+    _tags[nodeId] ??= <String>{};
+    _tags[nodeId]!.addAll(tags);
+    _onChange();
+  }
+
+  void _clearNode(String nodeId) {
+    _tags[nodeId]?.clear();
+    _onChange();
+  }
+
+  bool _isInATransaction = false;
+  bool _didChange = false;
+
+  @override
+  void onTransactionStart() {
+    _isInATransaction = true;
+    _didChange = false;
+  }
+
+  void _onChange() {
+    if (!_isInATransaction) {
+      return;
+    }
+
+    _didChange = true;
+  }
+
+  @override
+  void onTransactionEnd(List<EditEvent> edits) {
+    _isInATransaction = false;
+    if (_didChange) {
+      _didChange = false;
+      notifyListeners();
+    }
   }
 }
 
@@ -69,25 +151,14 @@ class HashTagPlugin extends SuperEditorPlugin {
 ///
 class HashTagReaction implements EditReaction {
   HashTagReaction({
-    String triggerSymbol = "#",
-    Set<String> excludeCharacters = const {"."},
-  })  : assert(triggerSymbol.length == 1,
-            "The trigger symbol must be exactly one character long. Tried to use symbol: '$triggerSymbol'"),
-        _triggerSymbol = triggerSymbol,
-        _terminatingCharacters = excludeCharacters;
+    TagRule tagRule = hashTagRule,
+    required HashTagIndex hashTagIndex,
+  })  : _tagRule = tagRule,
+        _hashTagIndex = hashTagIndex;
 
-  /// The character that causes a hash tag to begin, defaults to "#".
-  final String _triggerSymbol;
+  final TagRule _tagRule;
 
-  /// Characters that cause a hash tag to end.
-  ///
-  /// By default, a hash tag will stop when it hits a ".", because a hash
-  /// tag might appear at the end of a sentence, and the period shouldn't
-  /// be included.
-  ///
-  /// Spaces are always enforced as terminating characters. A space does
-  /// not need to be included in this set.
-  final Set<String> _terminatingCharacters;
+  final HashTagIndex _hashTagIndex;
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
@@ -172,13 +243,12 @@ class HashTagReaction implements EditReaction {
       return null;
     }
 
-    return TagTokenizer.findUntaggedTokenAroundCaret(
-      triggerSymbol: _triggerSymbol,
+    return TagFinder.findTagAroundPosition(
+      tagRule: _tagRule,
       nodeId: selectedNode.id,
       text: selectedNode.text,
-      caretPosition: caretPosition,
-      tagFilter: tagSelector,
-      excludeCharacters: _terminatingCharacters,
+      expansionPosition: caretPosition,
+      isTokenCandidate: tagSelector,
     );
   }
 
@@ -211,28 +281,28 @@ class HashTagReaction implements EditReaction {
       return;
     }
 
-    final hashTagAroundCaret = TagTokenizer.findUntaggedTokenAroundCaret(
-      triggerSymbol: _triggerSymbol,
+    final hashTagAroundCaret = TagFinder.findTagAroundPosition(
+      tagRule: _tagRule,
       nodeId: selectedNode.id,
       text: selectedNode.text,
-      caretPosition: caretPosition,
-      tagFilter: (tokenAttributions) => !tokenAttributions.any((attribution) => attribution is HashTagAttribution),
-      excludeCharacters: _terminatingCharacters,
+      expansionPosition: caretPosition,
+      isTokenCandidate: (tokenAttributions) =>
+          !tokenAttributions.any((attribution) => attribution is HashTagAttribution),
     );
     if (hashTagAroundCaret == null) {
       // There's no tag around the caret.
       editorHashTagsLog.fine("There's no tag around the caret, fizzling");
       return;
     }
-    if (!hashTagAroundCaret.tagIndex.tag.tag.startsWith(_triggerSymbol)) {
+    if (!hashTagAroundCaret.tagIndex.tag.raw.startsWith(_tagRule.trigger)) {
       // Tags must start with a "#" (or other trigger symbol) but the preceding word doesn't. Return.
-      editorHashTagsLog.fine("Token doesn't start with $_triggerSymbol, fizzling");
+      editorHashTagsLog.fine("Token doesn't start with ${_tagRule.trigger}, fizzling");
       return;
     }
-    if (hashTagAroundCaret.tagIndex.tag.tag.length <= 1) {
+    if (hashTagAroundCaret.tagIndex.tag.raw.length <= 1) {
       // The token only contains a "#". We require at least one valid character after
       // the "#" to consider it a hash tag.
-      editorHashTagsLog.fine("Token has no content after $_triggerSymbol, fizzling");
+      editorHashTagsLog.fine("Token has no content after ${_tagRule.trigger}, fizzling");
       return;
     }
 
@@ -325,7 +395,7 @@ class HashTagReaction implements EditReaction {
       final tagContent = node.text.text.substring(hashTag.start, hashTag.end + 1);
       editorHashTagsLog.finer("Inspecting $tagContent at ${hashTag.start} -> ${hashTag.end}");
 
-      if (tagContent.lastIndexOf(_triggerSymbol) == 0) {
+      if (tagContent.lastIndexOf(_tagRule.trigger) == 0) {
         // There's only one # in this tag, and it's at the beginning. No need
         // to split the tag.
         editorHashTagsLog.finer("No need to split this tag. Moving to next one.");
@@ -342,9 +412,9 @@ class HashTagReaction implements EditReaction {
           "Removing multi-tag span: ${hashTag.start} -> ${hashTag.end}, '${node.text.text.substring(hashTag.start, hashTag.end + 1)}'");
 
       // Add a new attribution for each individual hash tag.
-      int triggerSymbolIndex = tagContent.indexOf(_triggerSymbol);
+      int triggerSymbolIndex = tagContent.indexOf(_tagRule.trigger);
       while (triggerSymbolIndex >= 0) {
-        final nextTriggerSymbolIndex = tagContent.indexOf(_triggerSymbol, triggerSymbolIndex + 1);
+        final nextTriggerSymbolIndex = tagContent.indexOf(_tagRule.trigger, triggerSymbolIndex + 1);
         final tagEnd = nextTriggerSymbolIndex > 0 ? nextTriggerSymbolIndex - 1 : tagContent.length - 1;
 
         if (tagEnd - triggerSymbolIndex > 0) {
@@ -444,7 +514,7 @@ class HashTagReaction implements EditReaction {
 
       for (final tag in allTags) {
         final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
-        if (!tagText.startsWith(_triggerSymbol) || tagText == _triggerSymbol) {
+        if (!tagText.startsWith(_tagRule.trigger) || tagText == _tagRule.trigger) {
           editorHashTagsLog.info("Removing tag with value: '$tagText'");
           removeTagRequests.add(
             RemoveTextAttributionsRequest(
@@ -465,14 +535,14 @@ class HashTagReaction implements EditReaction {
       }
     }
 
-    // Run all the tag attribution removal requests that we queue'd up.
+    // Run all the tag attribution removal requests that we queued up.
     for (final request in removeTagRequests) {
       requestDispatcher.execute([request]);
     }
   }
 }
 
-/// An attribution for a hash tag..
+/// An attribution for a hash tag.
 class HashTagAttribution extends NamedAttribution {
   const HashTagAttribution() : super("hashtag");
 
