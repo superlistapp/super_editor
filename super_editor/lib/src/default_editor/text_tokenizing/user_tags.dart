@@ -16,60 +16,6 @@ import 'package:super_editor/src/default_editor/text_tokenizing/tags.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
-// USER TAGGING FEATURE:
-// A user can be tagged when typing a pattern that begins with "@".
-//
-// The feature works as follows.
-//
-//
-// TRIGGERS - how to start tagging
-//
-// "some stuff |" -> "some stuff @|"
-//
-// "some | stuff" -> "some @| stuff"
-//
-//
-// NO TRIGGER - things that don't start tagging
-//
-// "some stuff|" -> "some stuff@|"
-//
-// "some st|uff" -> "some st@|uff"
-//
-//
-// VISUAL INDICATORS
-//
-// While user is typing token:
-//  * is blue as long as token has match candidate, e.g. "M" has "Matt" and "Mike"
-//  * is regular text color if no match candidates, e.g., "Mar" doesn't match "Matt" or "Mike"
-//
-// Blue when user finishes typing the token and it fully matches a candidate
-//
-// Red when a tag is "committed", i.e., the caret moves anywhere else.
-//
-//
-// REMOVE TAG - when a composing tag loses its tag attribution
-//
-// "@|matt" -> "matt"
-//
-// "@matt|" -> "@mat|"
-//
-// "@ma|tt" -> "@mtt"
-//
-//
-// COMPOSING to SUBMITTED/CANCELLED - when a tag goes from composing to stable
-//
-// "@ma|" -> "@mat|" - still composing
-//
-// "@mt|" -> "@m|t" -> "@ma|t" - still composing
-//
-// "@matt|" -> "@matt |" - submitted
-//
-// "@|matt" -> "|@matt" - submitted
-//
-// "@ma|tt" -> "@matt" (selection moved or nullified) - submitted
-//
-// Code deletes the attribution
-
 /// A [SuperEditor] plugin that adds the ability to tag users, e.g., "@dash".
 ///
 /// User tagging includes three modes:
@@ -84,6 +30,12 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 ///
 /// Eventually, the composing tag will either be committed, or cancelled. Those modes
 /// are discussed below.
+///
+///     "@ma|"    ->  "@mat|"     - still composing
+///     "@mt|"    ->  "@m|t"   -> "@ma|t" - still composing
+///     "@matt|"  ->  "@matt |"   - committed
+///     "@|matt"  ->  "|@matt"    - committed
+///     "@ma|tt"  ->  "@matt"     - committed
 ///
 /// ## Committed Tags
 /// Once a user tag is finished being composed, it's committed. A tag can be committed
@@ -101,27 +53,25 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 /// and also prevents composing from starting again, whenever the user happens to place the caret
 /// in the given text.
 class UserTagPlugin extends SuperEditorPlugin {
-  UserTagPlugin() {
+  /// The key used to access the [UserTagIndex] in an attached [Editor].
+  static const userTagIndexKey = "userTagIndex";
+
+  UserTagPlugin() : userTagIndex = UserTagIndex() {
     _reactions = [
       TagUserReaction(
-        onUpdateComposingUserTag: _onComposingUserTagFound,
+        onUpdateComposingUserTag: userTagIndex._onComposingUserTagFound,
       ),
       const AdjustSelectionAroundTagReaction(),
     ];
   }
 
-  /// Returns the active [ComposingUserTag], if the user is currently composing a user tag,
-  /// or `null` if no user tag is currently being composed.
-  ValueListenable<ComposingUserTag?> get composingUserTag => _composingUserTag;
-  final _composingUserTag = ValueNotifier<ComposingUserTag?>(null);
-
-  void _onComposingUserTagFound(ComposingUserTag? tag) {
-    _composingUserTag.value = tag;
-  }
+  /// Index of all user tags in the document, which changes as the user adds and removes tags.
+  final UserTagIndex userTagIndex;
 
   @override
   void attach(Editor editor) {
     editor
+      ..context.put(UserTagPlugin.userTagIndexKey, userTagIndex)
       ..requestHandlers.insertAll(0, _requestHandlers)
       ..reactionPipeline.insertAll(0, _reactions);
   }
@@ -129,6 +79,7 @@ class UserTagPlugin extends SuperEditorPlugin {
   @override
   void detach(Editor editor) {
     editor
+      ..context.remove(UserTagPlugin.userTagIndexKey)
       ..requestHandlers.removeWhere((item) => _requestHandlers.contains(item))
       ..reactionPipeline.removeWhere((item) => _reactions.contains(item));
   }
@@ -166,6 +117,7 @@ class UserTagPlugin extends SuperEditorPlugin {
   }
 }
 
+/// Default [TagRule] for user tags.
 const userTagRule = TagRule(trigger: "@", excludedCharacters: {"."});
 
 /// An [EditRequest] that replaces a composing user tag with the given [userTag]
@@ -416,6 +368,14 @@ class CancelComposingUserTagCommand implements EditCommand {
   }
 }
 
+extension UserTagIndexEditable on EditContext {
+  /// Returns the [UserTagIndex] that the [UserTagPlugin] added to the attached [Editor].
+  ///
+  /// This accessor is provided as a convenience so that clients don't need to call `find()`
+  /// on the [EditContext].
+  UserTagIndex get userTagIndex => find<UserTagIndex>(UserTagPlugin.userTagIndexKey);
+}
+
 /// An [EditReaction] that creates, updates, and removes composing user tags, and commits those
 /// composing tags to stable user tags.
 class TagUserReaction implements EditReaction {
@@ -444,6 +404,8 @@ class TagUserReaction implements EditReaction {
     // Run tag commits after updating tags, above, so that we don't commit an in-progress
     // tag when a new character is added to the end of the tag.
     _commitCompletedComposingTag(editContext, requestDispatcher, changeList);
+
+    _updateTagIndex(editContext, changeList);
   }
 
   /// Finds a composing or cancelled tag near the caret and adjusts the attribution
@@ -522,8 +484,6 @@ class TagUserReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
-    // TODO: Check for cancelled tags that no longer have triggers. Remove the cancelled attribution.
-
     editorUserTagsLog.info("Removing invalid tags.");
     final document = editContext.find<MutableDocument>(Editor.documentKey);
     final nodesToInspect = <String>{};
@@ -904,7 +864,6 @@ class TagUserReaction implements EditReaction {
   void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, IndexedTag tag) {
     onUpdateComposingUserTag?.call(null);
 
-    // TODO: batch all these requests into one transaction
     final tagSelection = DocumentSelection(
       base: DocumentPosition(
         nodeId: textNode.id,
@@ -975,9 +934,156 @@ class TagUserReaction implements EditReaction {
       isTokenCandidate: tagSelector,
     );
   }
+
+  void _updateTagIndex(EditContext editContext, List<EditEvent> changeList) {
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final index = editContext.userTagIndex;
+    for (final event in changeList) {
+      if (event is! DocumentEdit) {
+        continue;
+      }
+
+      final change = event.change;
+      if (change is! NodeDocumentChange) {
+        return;
+      }
+      if (document.getNodeById(change.nodeId) is! TextNode) {
+        return;
+      }
+
+      if (change is NodeRemovedEvent) {
+        index._clearCommittedTagsInNode(change.nodeId);
+        index._clearCancelledTagsInNode(change.nodeId);
+      } else if (change is NodeInsertedEvent) {
+        index._setCommittedTagsInNode(
+          change.nodeId,
+          _findAllTagsInNode(document, change.nodeId, (attribution) => attribution is UserTagAttribution),
+        );
+        index._setCancelledTagsInNode(
+          change.nodeId,
+          _findAllTagsInNode(document, change.nodeId, (attribution) => attribution == userTagCancelledAttribution),
+        );
+      } else if (change is NodeChangeEvent) {
+        index._clearCommittedTagsInNode(change.nodeId);
+        index._setCommittedTagsInNode(
+          change.nodeId,
+          _findAllTagsInNode(document, change.nodeId, (attribution) => attribution is UserTagAttribution),
+        );
+
+        index._clearCancelledTagsInNode(change.nodeId);
+        index._setCancelledTagsInNode(
+          change.nodeId,
+          _findAllTagsInNode(document, change.nodeId, (attribution) => attribution == userTagCancelledAttribution),
+        );
+      }
+    }
+  }
+
+  Set<IndexedTag> _findAllTagsInNode(Document document, String nodeId, AttributionFilter attributionFilter) {
+    final textNode = document.getNodeById(nodeId) as TextNode;
+    final allTags = textNode.text
+        .getAttributionSpansInRange(
+          attributionFilter: attributionFilter,
+          range: SpanRange(start: 0, end: textNode.text.text.length - 1),
+        )
+        .map(
+          (span) => IndexedTag(
+            Tag.fromRaw(textNode.text.text.substring(span.start, span.end + 1)),
+            textNode.id,
+            span.start,
+          ),
+        )
+        .toSet();
+
+    return allTags;
+  }
 }
 
 typedef OnUpdateComposingUserTag = void Function(ComposingUserTag? composingUserTag);
+
+/// Collects references to all user tags in a document for easy querying.
+class UserTagIndex with ChangeNotifier implements Editable {
+  /// Returns the active [ComposingUserTag], if the user is currently composing a user tag,
+  /// or `null` if no user tag is currently being composed.
+  ValueListenable<ComposingUserTag?> get composingUserTag => _composingUserTag;
+  final _composingUserTag = ValueNotifier<ComposingUserTag?>(null);
+
+  void _onComposingUserTagFound(ComposingUserTag? tag) {
+    _composingUserTag.value = tag;
+  }
+
+  final _committedTags = <String, Set<IndexedTag>>{};
+
+  Set<IndexedTag> getCommittedTagsInTextNode(String nodeId) => _committedTags[nodeId] ?? {};
+
+  Set<IndexedTag> getAllCommittedTags() {
+    final tags = <IndexedTag>{};
+    for (final value in _committedTags.values) {
+      tags.addAll(value);
+    }
+    return tags;
+  }
+
+  void _setCommittedTagsInNode(String nodeId, Set<IndexedTag> tags) {
+    _committedTags[nodeId] ??= <IndexedTag>{};
+    _committedTags[nodeId]!.addAll(tags);
+    _onChange();
+  }
+
+  void _clearCommittedTagsInNode(String nodeId) {
+    _committedTags[nodeId]?.clear();
+    _onChange();
+  }
+
+  final _cancelledTags = <String, Set<IndexedTag>>{};
+
+  Set<IndexedTag> getCancelledTagsInTextNode(String nodeId) => _cancelledTags[nodeId] ?? {};
+
+  Set<IndexedTag> getAllCancelledTags() {
+    final tags = <IndexedTag>{};
+    for (final value in _cancelledTags.values) {
+      tags.addAll(value);
+    }
+    return tags;
+  }
+
+  void _setCancelledTagsInNode(String nodeId, Set<IndexedTag> tags) {
+    _cancelledTags[nodeId] ??= <IndexedTag>{};
+    _cancelledTags[nodeId]!.addAll(tags);
+    _onChange();
+  }
+
+  void _clearCancelledTagsInNode(String nodeId) {
+    _cancelledTags[nodeId]?.clear();
+    _onChange();
+  }
+
+  bool _isInATransaction = false;
+  bool _didChange = false;
+
+  @override
+  void onTransactionStart() {
+    _isInATransaction = true;
+    _didChange = false;
+  }
+
+  void _onChange() {
+    if (!_isInATransaction) {
+      return;
+    }
+
+    _didChange = true;
+  }
+
+  @override
+  void onTransactionEnd(List<EditEvent> edits) {
+    _isInATransaction = false;
+    if (_didChange) {
+      _didChange = false;
+      notifyListeners();
+    }
+  }
+}
 
 class ComposingUserTag {
   const ComposingUserTag(this.contentBounds, this.token);
@@ -999,11 +1105,7 @@ class ComposingUserTag {
 
 /// An [EditReaction] that prevents partial selection of a stable user tag.
 class AdjustSelectionAroundTagReaction implements EditReaction {
-  const AdjustSelectionAroundTagReaction({
-    String trigger = "@",
-  }) : _trigger = trigger;
-
-  final String _trigger;
+  const AdjustSelectionAroundTagReaction();
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
@@ -1186,20 +1288,18 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
     TextNodePosition position,
     bool Function(Attribution) attributionSelector,
   ) {
-    // TODO: This reaction only matters when we have committed user tags. Use a standard attribution
-    //       query instead of running a text character search to obtain wordAroundCaret.
-    final wordAroundCaret = TagFinder.findTagAroundPosition(
+    final tagAroundCaret = TagFinder.findTagAroundPosition(
       tagRule: userTagRule,
       nodeId: nodeId,
       text: paragraphText,
       expansionPosition: position,
       isTokenCandidate: (tokenAttributions) => tokenAttributions.any(attributionSelector),
     );
-    if (wordAroundCaret == null) {
+    if (tagAroundCaret == null) {
       return null;
     }
-    if (wordAroundCaret.searchOffsetInToken == 0 ||
-        wordAroundCaret.searchOffsetInToken == wordAroundCaret.indexedTag.tag.raw.length) {
+    if (tagAroundCaret.searchOffsetInToken == 0 ||
+        tagAroundCaret.searchOffsetInToken == tagAroundCaret.indexedTag.tag.raw.length) {
       // The token is either on the starting edge, e.g., "|@tag", or at the ending edge,
       // e.g., "@tag|". We don't care about those scenarios when looking for the caret
       // inside of the token.
@@ -1208,13 +1308,13 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
 
     final tokenAttributions = paragraphText.getAllAttributionsThroughout(
       SpanRange(
-        start: wordAroundCaret.indexedTag.startOffset,
-        end: wordAroundCaret.indexedTag.endOffset - 1,
+        start: tagAroundCaret.indexedTag.startOffset,
+        end: tagAroundCaret.indexedTag.endOffset - 1,
       ),
     );
     if (tokenAttributions.any((attribution) => attribution is UserTagAttribution)) {
       // This token is a user tag. Return it.
-      return wordAroundCaret;
+      return tagAroundCaret;
     }
 
     return null;

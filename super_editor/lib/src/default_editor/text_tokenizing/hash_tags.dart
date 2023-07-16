@@ -45,7 +45,6 @@ class HashTagPlugin extends SuperEditorPlugin {
         hashTagIndex = HashTagIndex() {
     _hashTagReaction = HashTagReaction(
       tagRule: _tagRule,
-      hashTagIndex: hashTagIndex,
     );
   }
 
@@ -80,9 +79,13 @@ class HashTagPlugin extends SuperEditorPlugin {
         range: SpanRange(start: 0, end: node.text.text.length - 1),
       );
 
-      final tags = <String>{};
+      final tags = <IndexedTag>{};
       for (final tagSpan in tagSpans) {
-        tags.add(node.text.text.substring(tagSpan.start, tagSpan.end + 1));
+        IndexedTag(
+          Tag.fromRaw(node.text.text.substring(tagSpan.start, tagSpan.end + 1)),
+          node.id,
+          tagSpan.start,
+        );
       }
       hashTagIndex._setTagsInNode(node.id, tags);
     }
@@ -109,20 +112,20 @@ extension HashTagIndexEditable on EditContext {
 
 /// Collects references to all hash tags in a document for easy querying.
 class HashTagIndex with ChangeNotifier implements Editable {
-  final _tags = <String, Set<String>>{};
+  final _tags = <String, Set<IndexedTag>>{};
 
-  Set<String> getTagsInTextNode(String nodeId) => _tags[nodeId] ?? {};
+  Set<IndexedTag> getTagsInTextNode(String nodeId) => _tags[nodeId] ?? {};
 
-  Set<String> getAllTags() {
-    final tags = <String>{};
+  Set<IndexedTag> getAllTags() {
+    final tags = <IndexedTag>{};
     for (final value in _tags.values) {
       tags.addAll(value);
     }
     return tags;
   }
 
-  void _setTagsInNode(String nodeId, Set<String> tags) {
-    _tags[nodeId] ??= <String>{};
+  void _setTagsInNode(String nodeId, Set<IndexedTag> tags) {
+    _tags[nodeId] ??= <IndexedTag>{};
     _tags[nodeId]!.addAll(tags);
     _onChange();
   }
@@ -181,13 +184,9 @@ class HashTagIndex with ChangeNotifier implements Editable {
 class HashTagReaction implements EditReaction {
   HashTagReaction({
     TagRule tagRule = hashTagRule,
-    required HashTagIndex hashTagIndex,
-  })  : _tagRule = tagRule,
-        _hashTagIndex = hashTagIndex;
+  }) : _tagRule = tagRule;
 
   final TagRule _tagRule;
-
-  final HashTagIndex _hashTagIndex;
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
@@ -210,6 +209,8 @@ class HashTagReaction implements EditReaction {
     _splitBackToBackTags(editContext, requestDispatcher, changeList);
 
     _removeInvalidTags(editContext, requestDispatcher, changeList);
+
+    _updateTagIndex(editContext, changeList);
   }
 
   /// Finds a hash tag near the caret and adjusts the attribution bounds so that the
@@ -569,6 +570,58 @@ class HashTagReaction implements EditReaction {
     for (final request in removeTagRequests) {
       requestDispatcher.execute([request]);
     }
+  }
+
+  void _updateTagIndex(EditContext editContext, List<EditEvent> changeList) {
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final index = editContext.hashTagIndex;
+    for (final event in changeList) {
+      if (event is! DocumentEdit) {
+        continue;
+      }
+
+      final change = event.change;
+      if (change is! NodeDocumentChange) {
+        return;
+      }
+      if (document.getNodeById(change.nodeId) is! TextNode) {
+        return;
+      }
+
+      if (change is NodeRemovedEvent) {
+        index._clearNode(change.nodeId);
+      } else if (change is NodeInsertedEvent) {
+        index._setTagsInNode(
+          change.nodeId,
+          _findAllTagsInNode(document, change.nodeId),
+        );
+      } else if (change is NodeChangeEvent) {
+        index._clearNode(change.nodeId);
+        index._setTagsInNode(
+          change.nodeId,
+          _findAllTagsInNode(document, change.nodeId),
+        );
+      }
+    }
+  }
+
+  Set<IndexedTag> _findAllTagsInNode(Document document, String nodeId) {
+    final textNode = document.getNodeById(nodeId) as TextNode;
+    final allTags = textNode.text
+        .getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution is HashTagAttribution,
+          range: SpanRange(start: 0, end: textNode.text.text.length - 1),
+        )
+        .map(
+          (span) => IndexedTag(
+            Tag.fromRaw(textNode.text.text.substring(span.start, span.end + 1)),
+            textNode.id,
+            span.start,
+          ),
+        )
+        .toSet();
+
+    return allTags;
   }
 }
 

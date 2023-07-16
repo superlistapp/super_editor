@@ -16,7 +16,7 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
 
   late final HashTagPlugin _hashTagPlugin;
 
-  final _tags = <String>[];
+  final _tags = <IndexedTag>[];
 
   @override
   void initState() {
@@ -32,40 +32,23 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
       requestHandlers: [
         ...defaultRequestHandlers,
       ],
-      listeners: [
-        FunctionalEditListener(_onEdit),
-      ],
     );
 
-    _hashTagPlugin = HashTagPlugin();
+    _hashTagPlugin = HashTagPlugin() //
+      ..hashTagIndex.addListener(_updateHashTagList);
   }
 
-  void _onEdit(List<EditEvent> changeList) {
-    if (changeList.whereType<DocumentEdit>().isEmpty) {
-      return;
-    }
-
-    _updateHashTagList();
+  @override
+  void dispose() {
+    _hashTagPlugin.hashTagIndex.removeListener(_updateHashTagList);
+    super.dispose();
   }
 
   void _updateHashTagList() {
     setState(() {
-      _tags.clear();
-
-      for (final node in _document.nodes) {
-        if (node is! TextNode) {
-          continue;
-        }
-
-        final tagSpans = node.text.getAttributionSpansInRange(
-          attributionFilter: (a) => a is HashTagAttribution,
-          range: SpanRange(start: 0, end: node.text.text.length - 1),
-        );
-
-        for (final tagSpan in tagSpans) {
-          _tags.add(node.text.text.substring(tagSpan.start, tagSpan.end + 1));
-        }
-      }
+      _tags
+        ..clear()
+        ..addAll(_hashTagPlugin.hashTagIndex.getAllTags());
     });
   }
 
@@ -134,7 +117,7 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
                   alignment: WrapAlignment.center,
                   children: [
                     for (final tag in _tags) //
-                      Chip(label: Text(tag)),
+                      Chip(label: Text(tag.tag.raw)),
                   ],
                 ),
               )

@@ -392,7 +392,7 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     _focusNode = FocusNode();
     _scrollController = ScrollController();
 
-    widget.userTagPlugin.composingUserTag.addListener(_onComposingTokenChange);
+    widget.userTagPlugin.userTagIndex.composingUserTag.addListener(_onComposingTokenChange);
   }
 
   @override
@@ -400,14 +400,14 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.userTagPlugin != oldWidget.userTagPlugin) {
-      oldWidget.userTagPlugin.composingUserTag.removeListener(_onComposingTokenChange);
-      widget.userTagPlugin.composingUserTag.addListener(_onComposingTokenChange);
+      oldWidget.userTagPlugin.userTagIndex.composingUserTag.removeListener(_onComposingTokenChange);
+      widget.userTagPlugin.userTagIndex.composingUserTag.addListener(_onComposingTokenChange);
     }
   }
 
   @override
   void dispose() {
-    widget.userTagPlugin.composingUserTag.removeListener(_onComposingTokenChange);
+    widget.userTagPlugin.userTagIndex.composingUserTag.removeListener(_onComposingTokenChange);
 
     _scrollController.dispose();
     _focusNode.dispose();
@@ -416,7 +416,7 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
   }
 
   Future<void> _onComposingTokenChange() async {
-    final composingTag = widget.userTagPlugin.composingUserTag.value?.token;
+    final composingTag = widget.userTagPlugin.userTagIndex.composingUserTag.value?.token;
     if (composingTag == null) {
       // The user isn't composing a tag. Therefore, this popover shouldn't
       // have focus.
@@ -442,7 +442,7 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     if (!mounted) {
       return;
     }
-    if (composingTag != widget.userTagPlugin.composingUserTag.value?.token) {
+    if (composingTag != widget.userTagPlugin.userTagIndex.composingUserTag.value?.token) {
       // The user changed the token. Our search results are invalid. Fizzle.
       return;
     }

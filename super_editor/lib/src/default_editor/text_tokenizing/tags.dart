@@ -68,7 +68,7 @@ class TagFinder {
         .where((wordRange) => rule.isTag(wordRange.textInside(plainText)))
         .map((tokenRange) {
           return IndexedTag(
-            Tag.fromTag(tokenRange.textInside(plainText)),
+            Tag.fromRaw(tokenRange.textInside(plainText)),
             textNode.id,
             tokenRange.start,
           );
@@ -257,7 +257,7 @@ class IndexedTag {
 
 /// A text tag, e.g., "@dash", "#flutter".
 class Tag {
-  factory Tag.fromTag(String tag) => Tag(tag[0], tag.substring(1));
+  factory Tag.fromRaw(String tag) => Tag(tag[0], tag.substring(1));
 
   const Tag(this.trigger, this.token);
 
