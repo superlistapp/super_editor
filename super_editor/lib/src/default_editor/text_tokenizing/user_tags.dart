@@ -517,8 +517,6 @@ class TagUserReaction implements EditReaction {
 
     // Inspect every TextNode where a text deletion impacted a tag.
     final removeTagRequests = <EditRequest>{};
-    // FIXME: this won't actually work for multiple deletions in the same text node because
-    //        one deletion will screw up the indices of the next deletion.
     final deleteTagRequests = <EditRequest>{};
     for (final nodeId in nodesToInspect) {
       final textNode = document.getNodeById(nodeId) as TextNode;
@@ -695,10 +693,6 @@ class TagUserReaction implements EditReaction {
       return;
     }
 
-    // TODO: De-dup the following two uses of "findTagAroundPosition". I added the
-    //       existingComposingTag version so we could report an existing composing tag. The
-    //       other call only looks for non-tagged text, which makes it seem as if our existing
-    //       composing tag doesn't exist.
     final existingComposingTag = TagFinder.findTagAroundPosition(
       tagRule: userTagRule,
       nodeId: selectedNode.id,
@@ -728,7 +722,7 @@ class TagUserReaction implements EditReaction {
       return;
     }
 
-    final tokenAroundCaret = TagFinder.findTagAroundPosition(
+    final nonAttributedTagAroundCaret = TagFinder.findTagAroundPosition(
         tagRule: userTagRule,
         nodeId: selectedNode.id,
         text: selectedNode.text,
@@ -739,29 +733,30 @@ class TagUserReaction implements EditReaction {
               !tokenAttributions.any((attribution) => attribution is UserTagAttribution);
         });
 
-    if (tokenAroundCaret == null) {
+    if (nonAttributedTagAroundCaret == null) {
       // There's no tag around the caret.
       editorUserTagsLog.fine("There's no tag around the caret, fizzling");
       onUpdateComposingUserTag?.call(null);
       return;
     }
 
-    editorImeLog.fine("Found a user token around caret: ${tokenAroundCaret.indexedTag.tag}");
-
+    // We found a non-attributed user tag near the caret. Give it a composing
+    // attribution and report it as the composing tag.
+    editorImeLog.fine("Found a user token around caret: ${nonAttributedTagAroundCaret.indexedTag.tag}");
     onUpdateComposingUserTag?.call(
       ComposingUserTag(
         DocumentRange(
           start: DocumentPosition(
             nodeId: selectedNode.id,
             // +1 to remove trigger symbol
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.indexedTag.startOffset + 1),
+            nodePosition: TextNodePosition(offset: nonAttributedTagAroundCaret.indexedTag.startOffset + 1),
           ),
           end: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.indexedTag.endOffset),
+            nodePosition: TextNodePosition(offset: nonAttributedTagAroundCaret.indexedTag.endOffset),
           ),
         ),
-        tokenAroundCaret.indexedTag.tag.token,
+        nonAttributedTagAroundCaret.indexedTag.tag.token,
       ),
     );
 
@@ -770,11 +765,11 @@ class TagUserReaction implements EditReaction {
         documentSelection: DocumentSelection(
           base: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.indexedTag.startOffset),
+            nodePosition: TextNodePosition(offset: nonAttributedTagAroundCaret.indexedTag.startOffset),
           ),
           extent: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tokenAroundCaret.indexedTag.endOffset),
+            nodePosition: TextNodePosition(offset: nonAttributedTagAroundCaret.indexedTag.endOffset),
           ),
         ),
         attributions: {
