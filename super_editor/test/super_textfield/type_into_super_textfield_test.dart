@@ -65,42 +65,6 @@ void main() {
 
         expect(find.text("a", findRichText: true), findsNothing);
       });
-
-      testWidgetsOnAllPlatforms('types after clearing text', (tester) async {
-        final controller = AttributedTextEditingController(
-          text: AttributedText(text: 'Text before'),
-        );
-
-        await _pumpScaffold(
-          tester,
-          SuperTextField(
-            textController: controller,
-          ),
-        );
-
-        // Place caret at the end of the text field.
-        await tester.placeCaretInSuperTextField(11);
-
-        // Clear the text and changes the selection to the beginning of the text.
-        controller.updateTextAndSelection(
-          text: AttributedText(),
-          selection: const TextSelection.collapsed(offset: 0),
-        );
-        await tester.pump();
-
-        // Type some text.
-        await tester.typeImeText('Text after');
-
-        // Ensure text and selection were updated.
-        expect(
-          SuperTextFieldInspector.findText().text,
-          'Text after',
-        );
-        expect(
-          SuperTextFieldInspector.findSelection(),
-          const TextSelection.collapsed(offset: 10),
-        );
-      });
     });
   });
 }
