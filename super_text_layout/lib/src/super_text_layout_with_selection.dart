@@ -22,7 +22,7 @@ class SuperTextWithSelection extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
-    this.textScaleFactor,
+    this.textScaler,
     UserSelection? userSelection,
   })  : userSelections = userSelection != null ? [userSelection] : const [],
         super(key: key);
@@ -33,7 +33,7 @@ class SuperTextWithSelection extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
-    this.textScaleFactor,
+    this.textScaler,
     this.userSelections = const [],
   }) : super(key: key);
 
@@ -54,13 +54,11 @@ class SuperTextWithSelection extends StatefulWidget {
   /// A user selection includes a caret and a selection highlight.
   final List<UserSelection> userSelections;
 
-  /// The number of font pixels for each logical pixel.
+  /// The [TextScaler] to use for scaling text.
+
   ///
-  /// For example, if the text scale factor is 1.5, text will be 50% larger than
-  /// the specified font size.
-  ///
-  /// Defaults to the value obtained from `MediaQuery.textScaleFactorOf`.
-  final double? textScaleFactor;
+  /// Defaults to the value obtained from `MediaQuery.textScalerOf`.
+  final TextScaler? textScaler;
 
   @override
   State<SuperTextWithSelection> createState() => _SuperTextWithSelectionState();
@@ -108,7 +106,7 @@ class _SuperTextWithSelectionState extends ProseTextState<SuperTextWithSelection
       textLayoutKey: _textLayoutKey,
       richText: widget.richText,
       textAlign: widget.textAlign,
-      textScaleFactor: widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
+      textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
       userSelections: _userSelections,
     );
   }
@@ -120,14 +118,14 @@ class _RebuildOptimizedSuperTextWithSelection extends StatefulWidget {
     this.textLayoutKey,
     required this.richText,
     this.textAlign = TextAlign.left,
-    this.textScaleFactor = 1.0,
+    this.textScaler = TextScaler.noScaling,
     required this.userSelections,
   }) : super(key: key);
 
   final Key? textLayoutKey;
   final InlineSpan richText;
   final TextAlign textAlign;
-  final double textScaleFactor;
+  final TextScaler textScaler;
 
   final ValueNotifier<List<UserSelection>> userSelections;
 
@@ -165,8 +163,8 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
       _cachedSubtree = null;
     }
 
-    if (widget.textScaleFactor != oldWidget.textScaleFactor) {
-      buildsLog.fine("Text scaleFactor changed. Invalidating the cached SuperText widget.");
+    if (widget.textScaler != oldWidget.textScaler) {
+      buildsLog.fine("Text scaler changed. Invalidating the cached SuperText widget.");
 
       // The text scaleFactor changed, which means the text layout changed. Invalidate
       // the cache so that the full SuperText widget subtree is rebuilt.
@@ -198,7 +196,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
       key: widget.textLayoutKey,
       richText: widget.richText,
       textAlign: widget.textAlign,
-      textScaleFactor: widget.textScaleFactor,
+      textScaler: widget.textScaler,
       layerBeneathBuilder: _buildLayerBeneath,
       layerAboveBuilder: _buildLayerAbove,
     );

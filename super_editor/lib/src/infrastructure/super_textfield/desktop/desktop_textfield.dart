@@ -210,7 +210,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   FocusNode get focusNode => _focusNode;
 
-  double get _textScaleFactor => MediaQuery.textScaleFactorOf(context);
+  TextScaler get _textScaler => MediaQuery.textScalerOf(context);
 
   void requestFocus() {
     _focusNode.requestFocus();
@@ -297,7 +297,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       return lineHeight;
     }
     final defaultStyle = widget.textStyleBuilder({});
-    return _estimatedLineHeight.calculate(defaultStyle, _textScaleFactor);
+    return _estimatedLineHeight.calculate(defaultStyle, _textScaler);
   }
 
   @override
@@ -394,7 +394,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
         key: _textKey,
         richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
         textAlign: widget.textAlign,
-        textScaleFactor: _textScaleFactor,
+        textScaler: _textScaler,
         userSelection: UserSelection(
           highlightStyle: widget.selectionHighlightStyle,
           caretStyle: widget.caretStyle,
@@ -1883,25 +1883,25 @@ class _EstimatedLineHeight {
   TextStyle? _lastComputedStyle;
 
   /// Text scale factor used to compute [_lastLineHeight].
-  double? _lastTextScaleFactor;
+  TextScaler? _lastTextScaler;
 
   /// Computes the estimated line height for the given [style].
   ///
   /// The height is computed by laying out a [Paragraph] with an arbitrary
   /// character and inspecting it's height.
   ///
-  /// The result is cached for the last [style] and [textScaleFactor] used, so it's not computed
+  /// The result is cached for the last [style] and [textScaler] used, so it's not computed
   /// at each call.
-  double calculate(TextStyle style, double textScaleFactor) {
+  double calculate(TextStyle style, TextScaler textScaler) {
     if (_lastComputedStyle == style &&
         _lastLineHeight != null &&
-        _lastTextScaleFactor == textScaleFactor &&
-        _lastTextScaleFactor != null) {
+        _lastTextScaler == textScaler &&
+        _lastTextScaler != null) {
       return _lastLineHeight!;
     }
 
     final builder = ui.ParagraphBuilder(style.getParagraphStyle())
-      ..pushStyle(style.getTextStyle(textScaleFactor: textScaleFactor))
+      ..pushStyle(style.getTextStyle(textScaler: textScaler))
       ..addText('A');
 
     final paragraph = builder.build();
@@ -1909,7 +1909,7 @@ class _EstimatedLineHeight {
 
     _lastLineHeight = paragraph.height;
     _lastComputedStyle = style;
-    _lastTextScaleFactor = textScaleFactor;
+    _lastTextScaler = textScaler;
     return _lastLineHeight!;
   }
 }

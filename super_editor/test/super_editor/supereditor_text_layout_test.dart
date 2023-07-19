@@ -8,7 +8,10 @@ import 'document_test_tools.dart';
 void main() {
   group('SuperEditor', () {
     testWidgetsOnAllPlatforms('respects the OS text scaling preference', (tester) async {
-      // Pump an editor with a custom textScaleFactor.
+      // Pump an editor with a custom textScaler.
+
+      const scaler = TextScaler.linear(1.5);
+
       await tester
           .createDocument()
           .withSingleParagraph()
@@ -16,7 +19,7 @@ void main() {
             (superEditor) => MaterialApp(
               home: Scaffold(
                 body: MediaQuery(
-                  data: const MediaQueryData(textScaleFactor: 1.5),
+                  data: const MediaQueryData(textScaler: scaler),
                   child: superEditor,
                 ),
               ),
@@ -25,7 +28,7 @@ void main() {
           .pump();
 
       // Ensure the configure textScaleFactor was applied.
-      expect(SuperTextInspector.findTextScaleFactor(), 1.5);
+      expect(SuperTextInspector.findTextScaler(), scaler);
     });
   });
 }

@@ -27,7 +27,7 @@ class SuperText extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
-    this.textScaleFactor,
+    this.textScaler,
     this.layerBeneathBuilder,
     this.layerAboveBuilder,
     this.debugTrackTextBuilds = false,
@@ -54,13 +54,10 @@ class SuperText extends StatefulWidget {
   /// is not rebuilt unnecessarily, due to text decorations.
   final bool debugTrackTextBuilds;
 
-  /// The number of font pixels for each logical pixel.
+  /// The [TextScaler] to use for scaling text.
   ///
-  /// For example, if the text scale factor is 1.5, text will be 50% larger than
-  /// the specified font size.
-  ///
-  /// Defaults to the value obtained from `MediaQuery.textScaleFactorOf`.
-  final double? textScaleFactor;
+  /// Defaults to the value obtained from `MediaQuery.textScalerOf`.
+  final TextScaler? textScaler;
 
   @override
   State<SuperText> createState() => SuperTextState();
@@ -93,7 +90,7 @@ class SuperTextState extends State<SuperText> with ProseTextBlock {
       text: LayoutAwareRichText(
         text: widget.richText,
         textAlign: widget.textAlign,
-        textScaleFactor: widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
+        textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
         onMarkNeedsLayout: _invalidateParagraph,
       ),
       background: LayoutBuilder(
@@ -298,13 +295,13 @@ class LayoutAwareRichText extends RichText {
     Key? key,
     required InlineSpan text,
     TextAlign textAlign = TextAlign.left,
-    double textScaleFactor = 1.0,
+    TextScaler textScaler = TextScaler.noScaling,
     required this.onMarkNeedsLayout,
   }) : super(
           key: key,
           text: text,
           textAlign: textAlign,
-          textScaleFactor: textScaleFactor,
+          textScaler: textScaler,
         );
 
   /// Callback invoked when the underlying [RenderParagraph] invalidates
@@ -320,7 +317,7 @@ class LayoutAwareRichText extends RichText {
       textDirection: textDirection ?? Directionality.of(context),
       softWrap: softWrap,
       overflow: overflow,
-      textScaleFactor: textScaleFactor,
+      textScaler: textScaler,
       maxLines: maxLines,
       strutStyle: strutStyle,
       textWidthBasis: textWidthBasis,
@@ -339,7 +336,7 @@ class LayoutAwareRichText extends RichText {
       ..textDirection = textDirection ?? Directionality.of(context)
       ..softWrap = softWrap
       ..overflow = overflow
-      ..textScaleFactor = textScaleFactor
+      ..textScaler = textScaler
       ..maxLines = maxLines
       ..strutStyle = strutStyle
       ..textWidthBasis = textWidthBasis
@@ -359,7 +356,7 @@ class RenderLayoutAwareParagraph extends RenderParagraph {
     required TextDirection textDirection,
     bool softWrap = true,
     TextOverflow overflow = TextOverflow.clip,
-    double textScaleFactor = 1.0,
+    TextScaler textScaler = TextScaler.noScaling,
     int? maxLines,
     Locale? locale,
     StrutStyle? strutStyle,
@@ -374,7 +371,7 @@ class RenderLayoutAwareParagraph extends RenderParagraph {
           textDirection: textDirection,
           softWrap: softWrap,
           overflow: overflow,
-          textScaleFactor: textScaleFactor,
+          textScaler: textScaler,
           maxLines: maxLines,
           locale: locale,
           strutStyle: strutStyle,

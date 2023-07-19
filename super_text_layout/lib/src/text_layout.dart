@@ -197,13 +197,13 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
   final RenderLayoutAwareParagraph _renderParagraph;
   late final int _textLength;
 
-  double get textScaleFactor => _renderParagraph.textScaleFactor;
+  TextScaler get textScaler => _renderParagraph.textScaler;
 
   @override
   double get estimatedLineHeight {
     final fontSize = _richText.style?.fontSize;
     final lineHeight = _richText.style?.height;
-    return (fontSize ?? 16) * (lineHeight ?? 1.0) * textScaleFactor;
+    return textScaler.scale((fontSize ?? 16) * (lineHeight ?? 1.0));
   }
 
   @override
@@ -249,7 +249,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     // to measure, but we may be able to use related metrics.
     if (_textLength == 0) {
       final estimatedLineHeight =
-          _renderParagraph.getFullHeightForCaret(position) ?? (_richText.style?.fontSize ?? 0.0) * textScaleFactor;
+          textScaler.scale(_renderParagraph.getFullHeightForCaret(position) ?? (_richText.style?.fontSize ?? 0.0));
       return estimatedLineHeight * lineHeightMultiplier;
     }
 
