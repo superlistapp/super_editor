@@ -968,6 +968,11 @@ class TextScrollController with ChangeNotifier {
       return;
     }
 
+    if (_textController.text.text.isEmpty) {
+      // There is no text to make visible.
+      return;
+    }
+
     final baseCharacterRect = _delegate!.getCharacterRectAtPosition(_textController.selection.base);
     _ensureRectIsVisible(baseCharacterRect);
   }
@@ -984,6 +989,11 @@ class TextScrollController with ChangeNotifier {
 
     if (_textController.selection.extentOffset < 0) {
       // There is no extent selection to make visible.
+      return;
+    }
+
+    if (_textController.text.text.isEmpty) {
+      // There is no text to make visible.
       return;
     }
 
