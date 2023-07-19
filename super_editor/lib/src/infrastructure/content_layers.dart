@@ -132,19 +132,39 @@ class ContentLayersElement extends RenderObjectElement {
     //        need to be rebuilt. Create a way for layers to opt-in to this behavior.
 
     owner!.buildScope(this, () {
-      _deactivateLayers();
+      // _deactivateLayers();
 
       final List<Element> underlays = List<Element>.filled(widget.underlays.length, _NullElement.instance);
       for (int i = 0; i < underlays.length; i += 1) {
-        final Element newChild = inflateWidget(widget.underlays[i], _UnderlaySlot(i));
-        underlays[i] = newChild;
+        late final Element child;
+        if (i > _underlays.length - 1) {
+          child = inflateWidget(widget.underlays[i], _UnderlaySlot(i));
+        } else {
+          child = super.updateChild(_underlays[i], widget.underlays[i], _UnderlaySlot(i))!;
+
+          // We've re-used an existing Element, but that Element probably didn't run a rebuild.
+          // We want our layers to rebuild whenever the content changes so that they can base
+          // their Widget subtree on the content layout. Force a rebuild.
+          child.rebuild(force: true);
+        }
+        underlays[i] = child;
       }
       _underlays = underlays;
 
       final List<Element> overlays = List<Element>.filled(widget.overlays.length, _NullElement.instance);
       for (int i = 0; i < overlays.length; i += 1) {
-        final Element newChild = inflateWidget(widget.overlays[i], _OverlaySlot(i));
-        overlays[i] = newChild;
+        late final Element child;
+        if (i > _overlays.length - 1) {
+          child = inflateWidget(widget.overlays[i], _OverlaySlot(i));
+        } else {
+          child = super.updateChild(_overlays[i], widget.overlays[i], _OverlaySlot(i))!;
+
+          // We've re-used an existing Element, but that Element probably didn't run a rebuild.
+          // We want our layers to rebuild whenever the content changes so that they can base
+          // their Widget subtree on the content layout. Force a rebuild.
+          child.rebuild(force: true);
+        }
+        overlays[i] = child;
       }
       _overlays = overlays;
     });

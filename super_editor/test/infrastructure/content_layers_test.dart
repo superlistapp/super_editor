@@ -279,6 +279,8 @@ void main() {
         ),
       );
       expect(buildTracker.value, 1);
+      expect(contentLayoutCount.value, 1);
+      expect(layerLayoutCount.value, 1);
 
       // Tell the content widget to rebuild itself.
       rebuildSignal.value += 1;
@@ -289,6 +291,64 @@ void main() {
       expect(buildTracker.value, 2);
       expect(contentLayoutCount.value, 2);
       expect(layerLayoutCount.value, 2);
+    });
+
+    testWidgets("re-uses layer Elements instead of always re-inflating layer Widgets", (tester) async {
+      final rebuildSignal = ValueNotifier<int>(0);
+      final buildTracker = ValueNotifier<int>(0);
+      final contentLayoutCount = ValueNotifier<int>(0);
+      final underlayElementTracker = ValueNotifier<Element?>(null);
+      Element? underlayElement;
+      final overlayElementTracker = ValueNotifier<Element?>(null);
+      Element? overlayElement;
+
+      await _pumpScaffold(
+        tester,
+        child: ContentLayers(
+          content: (_) => _RebuildableWidget(
+            rebuildSignal: rebuildSignal,
+            buildTracker: buildTracker,
+            // We don't pass in the onBuildScheduled callback here because we're simulating
+            // an entire subtree that a client might provide as content.
+            child: _LayoutTrackingWidget(
+              onLayout: () {
+                contentLayoutCount.value += 1;
+              },
+              child: const SizedBox.expand(),
+            ),
+          ),
+          underlays: [
+            _RebuildableWidget(
+              elementTracker: underlayElementTracker,
+              child: const SizedBox.expand(),
+            ),
+          ],
+          overlays: [
+            _RebuildableWidget(
+              elementTracker: overlayElementTracker,
+              child: const SizedBox.expand(),
+            ),
+          ],
+        ),
+      );
+      expect(buildTracker.value, 1);
+
+      underlayElement = underlayElementTracker.value;
+      expect(underlayElement, isNotNull);
+
+      overlayElement = overlayElementTracker.value;
+      expect(overlayElement, isNotNull);
+
+      // Tell the content widget to rebuild itself.
+      rebuildSignal.value += 1;
+      await tester.pump();
+
+      // We expect build and layout to run twice. First, during the initial pump. Second,
+      // after we tell the content to rebuild.
+      expect(buildTracker.value, 2);
+      expect(contentLayoutCount.value, 2);
+      expect(underlayElementTracker.value, underlayElement);
+      expect(overlayElementTracker.value, overlayElement);
     });
 
     testWidgets("lets layers access inherited widgets", (tester) async {
@@ -390,14 +450,16 @@ class _NoRebuildWidgetState extends State<_NoRebuildWidget> {
 class _RebuildableWidget extends StatefulWidget {
   const _RebuildableWidget({
     Key? key,
-    required this.rebuildSignal,
+    this.rebuildSignal,
     this.buildTracker,
+    this.elementTracker,
     this.onBuildScheduled,
     required this.child,
   }) : super(key: key);
 
-  final Listenable rebuildSignal;
+  final Listenable? rebuildSignal;
   final ValueNotifier<int>? buildTracker;
+  final ValueNotifier<Element?>? elementTracker;
   final VoidCallback? onBuildScheduled;
   final Widget child;
 
@@ -409,7 +471,7 @@ class _RebuildableWidgetState extends State<_RebuildableWidget> {
   @override
   void initState() {
     super.initState();
-    widget.rebuildSignal.addListener(_onRebuildSignal);
+    widget.rebuildSignal?.addListener(_onRebuildSignal);
   }
 
   @override
@@ -417,14 +479,14 @@ class _RebuildableWidgetState extends State<_RebuildableWidget> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.rebuildSignal != oldWidget.rebuildSignal) {
-      oldWidget.rebuildSignal.removeListener(_onRebuildSignal);
-      widget.rebuildSignal.addListener(_onRebuildSignal);
+      oldWidget.rebuildSignal?.removeListener(_onRebuildSignal);
+      widget.rebuildSignal?.addListener(_onRebuildSignal);
     }
   }
 
   @override
   void dispose() {
-    widget.rebuildSignal.removeListener(_onRebuildSignal);
+    widget.rebuildSignal?.removeListener(_onRebuildSignal);
     super.dispose();
   }
 
@@ -455,6 +517,7 @@ class _RebuildableWidgetState extends State<_RebuildableWidget> {
   @override
   Widget build(BuildContext context) {
     widget.buildTracker?.value += 1;
+    widget.elementTracker?.value = context as Element;
     return widget.child;
   }
 }
