@@ -708,7 +708,7 @@ class SuperEditorState extends State<SuperEditor> {
           ),
           overlays: [
             for (final overlayBuilder in widget.documentOverlayBuilders) //
-              overlayBuilder.build(context, editContext),
+              (context) => overlayBuilder.build(context, editContext),
           ],
         );
       case DocumentGestureMode.android:
