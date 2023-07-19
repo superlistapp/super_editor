@@ -271,6 +271,7 @@ class TextDeltasDocumentEditor {
     DocumentNode? insertionNode = document.getNodeById(insertionPosition.nodeId);
     if (insertionNode == null) {
       editorOpsLog.warning('Attempted to insert text using a non-existing node');
+      return false;
     }
 
     if (insertionPosition.nodePosition is UpstreamDownstreamNodePosition) {
