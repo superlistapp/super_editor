@@ -129,7 +129,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       // We use a post-frame callback to let the text be laid out first.
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
-          _updateOffsetForCollapsedHandleAndRebuild();
+          _updateOffsetForCollapsedHandle();
         }
       });
     }
@@ -148,7 +148,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
         // We use a post-frame callback to let the text be laid out first.
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           if (mounted) {
-            _updateOffsetForCollapsedHandleAndRebuild();
+            _updateOffsetForCollapsedHandle();
           }
         });
       }
@@ -404,25 +404,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     if (offset == null) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
-          _updateOffsetForCollapsedHandleAndRebuild();
-        }
-      });
-      return;
-    }
-
-    _collapsedHandleOffset = offset;
-  }
-
-  /// Update the offset for the collapsed handle and call `setState`.
-  ///
-  /// Re-schedules the update if we can't compute compute the offset at the current frame.
-  void _updateOffsetForCollapsedHandleAndRebuild() {
-    final offset = _computeOffsetForCollapsedHandle();
-
-    if (offset == null) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          _updateOffsetForCollapsedHandleAndRebuild();
+          _updateOffsetForCollapsedHandle();
         }
       });
       return;
