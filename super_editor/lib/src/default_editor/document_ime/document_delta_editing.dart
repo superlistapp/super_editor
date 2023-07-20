@@ -280,23 +280,30 @@ class TextDeltasDocumentEditor {
   ) {
     editorOpsLog.fine('Attempting to insert "$text" at position: $insertionPosition');
 
-    final extentNodePosition = insertionPosition.nodePosition;
-    if (extentNodePosition is UpstreamDownstreamNodePosition) {
-      editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
-      commonOps.insertBlockLevelNewline();
-    }
-
-    final extentNode = document.getNodeById(insertionPosition.nodeId)!;
-    if (extentNode is! TextNode || extentNodePosition is! TextNodePosition) {
-      editorOpsLog.fine(
-          "Couldn't insert text because Super Editor doesn't know how to handle a node of type: $extentNode, with position: $extentNodePosition");
+    DocumentNode? insertionNode = document.getNodeById(insertionPosition.nodeId);
+    if (insertionNode == null) {
+      editorOpsLog.warning('Attempted to insert text using a non-existing node');
       return false;
     }
 
-    final textNode = document.getNodeById(insertionPosition.nodeId) as TextNode;
+    if (insertionPosition.nodePosition is UpstreamDownstreamNodePosition) {
+      editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
+      commonOps.insertBlockLevelNewline();
+
+      // After inserting a block level new line, the selection changes to another node.
+      // Therefore, we need to update the insertion position.
+      insertionNode = document.getNodeById(selection.value!.extent.nodeId)!;
+      insertionPosition = DocumentPosition(nodeId: insertionNode.id, nodePosition: insertionNode.endPosition);
+    }
+
+    if (insertionNode is! TextNode || insertionPosition.nodePosition is! TextNodePosition) {
+      editorOpsLog.fine(
+          "Couldn't insert text because Super Editor doesn't know how to handle a node of type: $insertionNode, with position: ${insertionPosition.nodePosition}");
+      return false;
+    }
 
     editorOpsLog.fine("Executing text insertion command.");
-    editorOpsLog.finer("Text before insertion: '${textNode.text.text}'");
+    editorOpsLog.finer("Text before insertion: '${insertionNode.text.text}'");
     editor.execute([
       InsertTextRequest(
         documentPosition: insertionPosition,
@@ -304,7 +311,7 @@ class TextDeltasDocumentEditor {
         attributions: composerPreferences.currentAttributions,
       ),
     ]);
-    editorOpsLog.finer("Text after insertion: '${textNode.text.text}'");
+    editorOpsLog.finer("Text after insertion: '${insertionNode.text.text}'");
 
     return true;
   }
