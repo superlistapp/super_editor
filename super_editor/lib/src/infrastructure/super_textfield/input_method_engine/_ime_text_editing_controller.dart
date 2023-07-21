@@ -199,9 +199,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   TextEditingValue? _latestTextEditingValueSentToPlatform;
   bool _sendTextChangesToPlatform = true;
 
-  /// Whether we should handle [TextEditingDeltaNonTextUpdate]s.
-  bool _allowNonTextDeltas = true;
-
   void _onInnerControllerChange() {
     if (_sendTextChangesToPlatform) {
       _sendEditingValueToPlatform();
@@ -234,21 +231,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     if (!isAttachedToIme) {
       return;
     }
-
-    // In some platforms, like macOS, whenever we call setEditingState(), the engine send us back a
-    // non-text delta to sync its state with our state.
-    //
-    // We have no way to know if the delta means that the selection/composing region changed,
-    // or if it means that the engine is syncing its state.
-    //
-    // If we always handle the non-text deltas, we might end up in an endless loop of deltas.
-    // To avoid this, we don't handle any non-text deltas until the next frame, after we call setEditingState.
-    //
-    // Remove this as soon as https://github.com/flutter/flutter/issues/118759 is resolved.
-    _allowNonTextDeltas = false;
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _allowNonTextDeltas = true;
-    });
 
     _log.fine('Sending TextEditingValue to platform: $currentTextEditingValue');
     _latestTextEditingValueSentToPlatform = currentTextEditingValue;
@@ -294,23 +276,11 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       _osCurrentTextEditingValue = delta.apply(_osCurrentTextEditingValue);
     }
 
-    // After we call setEditingState(), we ignore non-text deltas until the end of the current frame.
-    //
-    // This is because, in some platforms, we get a TextEditingDeltaNonTextUpdate after this call.
-    // The engine sends this delta to synchronize the editing value.
-    //
-    // Handling this synchronization delta may cause endless loops.
-    final allowedDeltas =
-        _allowNonTextDeltas ? deltas : deltas.where((e) => e is! TextEditingDeltaNonTextUpdate).toList();
-    if (allowedDeltas.isEmpty) {
-      return;
-    }
-
     // Prevent us from sending these changes back to the platform as we alter
     // the _realController. Turn this flag back to `true` after the changes.
     _sendTextChangesToPlatform = false;
 
-    for (final delta in allowedDeltas) {
+    for (final delta in deltas) {
       if (delta is TextEditingDeltaInsertion) {
         _log.fine('Processing insertion: $delta');
         if (selection.isCollapsed && delta.insertionOffset == selection.extentOffset) {
