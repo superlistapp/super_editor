@@ -111,18 +111,18 @@ void main() {
             child: const SizedBox(),
           ),
           underlays: [
-            _RebuildableWidget(
-              rebuildSignal: underlayRebuildSignal,
-              buildTracker: underlayBuildTracker,
-              child: const SizedBox(),
-            ),
+            (context) => _RebuildableWidget(
+                  rebuildSignal: underlayRebuildSignal,
+                  buildTracker: underlayBuildTracker,
+                  child: const SizedBox(),
+                ),
           ],
           overlays: [
-            _RebuildableWidget(
-              rebuildSignal: overlayRebuildSignal,
-              buildTracker: overlayBuildTracker,
-              child: const SizedBox(),
-            ),
+            (context) => _RebuildableWidget(
+                  rebuildSignal: overlayRebuildSignal,
+                  buildTracker: overlayBuildTracker,
+                  child: const SizedBox(),
+                ),
           ],
         ),
       );
@@ -157,22 +157,18 @@ void main() {
             child: const SizedBox.expand(),
           ),
           underlays: [
-            Builder(
-              builder: (context) {
-                expect(didContentLayout.value, isTrue);
-                didUnderlayLayout = true;
-                return const SizedBox();
-              },
-            ),
+            (context) {
+              expect(didContentLayout.value, isTrue);
+              didUnderlayLayout = true;
+              return const SizedBox();
+            },
           ],
           overlays: [
-            Builder(
-              builder: (context) {
-                expect(didContentLayout.value, isTrue);
-                expect(didUnderlayLayout, isTrue);
-                return const SizedBox();
-              },
-            ),
+            (context) {
+              expect(didContentLayout.value, isTrue);
+              expect(didUnderlayLayout, isTrue);
+              return const SizedBox();
+            },
           ],
         ),
       );
@@ -201,21 +197,17 @@ void main() {
             ),
           ),
           underlays: [
-            Builder(
-              builder: (context) {
-                expect(contentLayoutCount.value, layerLayoutCount.value + 1);
-                return const SizedBox();
-              },
-            ),
+            (context) {
+              expect(contentLayoutCount.value, layerLayoutCount.value + 1);
+              return const SizedBox();
+            },
           ],
           overlays: [
-            Builder(
-              builder: (context) {
-                expect(contentLayoutCount.value, layerLayoutCount.value + 1);
-                layerLayoutCount.value += 1;
-                return const SizedBox();
-              },
-            ),
+            (context) {
+              expect(contentLayoutCount.value, layerLayoutCount.value + 1);
+              layerLayoutCount.value += 1;
+              return const SizedBox();
+            },
           ],
         ),
       );
@@ -260,21 +252,17 @@ void main() {
             ),
           ),
           underlays: [
-            Builder(
-              builder: (context) {
-                expect(contentLayoutCount.value, layerLayoutCount.value + 1);
-                return const SizedBox();
-              },
-            ),
+            (context) {
+              expect(contentLayoutCount.value, layerLayoutCount.value + 1);
+              return const SizedBox();
+            },
           ],
           overlays: [
-            Builder(
-              builder: (context) {
-                expect(contentLayoutCount.value, layerLayoutCount.value + 1);
-                layerLayoutCount.value += 1;
-                return const SizedBox();
-              },
-            ),
+            (context) {
+              expect(contentLayoutCount.value, layerLayoutCount.value + 1);
+              layerLayoutCount.value += 1;
+              return const SizedBox();
+            },
           ],
         ),
       );
@@ -318,16 +306,16 @@ void main() {
             ),
           ),
           underlays: [
-            _RebuildableWidget(
-              elementTracker: underlayElementTracker,
-              child: const SizedBox.expand(),
-            ),
+            (context) => _RebuildableWidget(
+                  elementTracker: underlayElementTracker,
+                  child: const SizedBox.expand(),
+                ),
           ],
           overlays: [
-            _RebuildableWidget(
-              elementTracker: overlayElementTracker,
-              child: const SizedBox.expand(),
-            ),
+            (context) => _RebuildableWidget(
+                  elementTracker: overlayElementTracker,
+                  child: const SizedBox.expand(),
+                ),
           ],
         ),
       );
@@ -357,22 +345,18 @@ void main() {
         child: ContentLayers(
           content: (_) => const SizedBox.expand(),
           underlays: [
-            Builder(
-              builder: (context) {
-                final directionality = Directionality.of(context);
-                expect(directionality, isNotNull);
-                return const SizedBox();
-              },
-            ),
+            (context) {
+              final directionality = Directionality.of(context);
+              expect(directionality, isNotNull);
+              return const SizedBox();
+            },
           ],
           overlays: [
-            Builder(
-              builder: (context) {
-                final directionality = Directionality.of(context);
-                expect(directionality, isNotNull);
-                return const SizedBox();
-              },
-            ),
+            (context) {
+              final directionality = Directionality.of(context);
+              expect(directionality, isNotNull);
+              return const SizedBox();
+            },
           ],
         ),
       );
@@ -408,13 +392,13 @@ const _windowSize = Size(600, 1000);
 /// Returns a [LayoutBuilder] that expects its constraints to be the same as the window,
 /// used for quickly verifying the constraints given to underlays and overlays in
 /// ContentLayers widgets in this test suite.
-Widget _buildSizeValidatingLayer() {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      _expectLayerConstraintsThatMatchContent(constraints);
-      return const SizedBox();
-    },
-  );
+WidgetBuilder _buildSizeValidatingLayer() {
+  return (context) => LayoutBuilder(
+        builder: (context, constraints) {
+          _expectLayerConstraintsThatMatchContent(constraints);
+          return const SizedBox();
+        },
+      );
 }
 
 void _expectLayerConstraintsThatMatchContent(BoxConstraints constraints) {

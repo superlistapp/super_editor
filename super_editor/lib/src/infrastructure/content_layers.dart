@@ -31,7 +31,7 @@ class ContentLayers extends RenderObjectWidget {
   ///
   /// These layers are placed at the same (x,y) as [content], and they're forced to layout
   /// at the exact same size as [content].
-  final List<Widget> underlays;
+  final List<WidgetBuilder> underlays;
 
   /// The primary content displayed in this widget, which determines the size and location
   /// of all [underlays] and [overlays].
@@ -41,7 +41,7 @@ class ContentLayers extends RenderObjectWidget {
   ///
   /// These layers are placed at the same (x,y) as [content], and they're forced to layout
   /// at the exact same size as [content].
-  final List<Widget> overlays;
+  final List<WidgetBuilder> overlays;
 
   @override
   RenderObjectElement createElement() {
@@ -138,14 +138,9 @@ class ContentLayersElement extends RenderObjectElement {
       for (int i = 0; i < underlays.length; i += 1) {
         late final Element child;
         if (i > _underlays.length - 1) {
-          child = inflateWidget(widget.underlays[i], _UnderlaySlot(i));
+          child = inflateWidget(widget.underlays[i](this), _UnderlaySlot(i));
         } else {
-          child = super.updateChild(_underlays[i], widget.underlays[i], _UnderlaySlot(i))!;
-
-          // We've re-used an existing Element, but that Element probably didn't run a rebuild.
-          // We want our layers to rebuild whenever the content changes so that they can base
-          // their Widget subtree on the content layout. Force a rebuild.
-          child.rebuild(force: true);
+          child = super.updateChild(_underlays[i], widget.underlays[i](this), _UnderlaySlot(i))!;
         }
         underlays[i] = child;
       }
@@ -155,14 +150,9 @@ class ContentLayersElement extends RenderObjectElement {
       for (int i = 0; i < overlays.length; i += 1) {
         late final Element child;
         if (i > _overlays.length - 1) {
-          child = inflateWidget(widget.overlays[i], _OverlaySlot(i));
+          child = inflateWidget(widget.overlays[i](this), _OverlaySlot(i));
         } else {
-          child = super.updateChild(_overlays[i], widget.overlays[i], _OverlaySlot(i))!;
-
-          // We've re-used an existing Element, but that Element probably didn't run a rebuild.
-          // We want our layers to rebuild whenever the content changes so that they can base
-          // their Widget subtree on the content layout. Force a rebuild.
-          child.rebuild(force: true);
+          child = super.updateChild(_overlays[i], widget.overlays[i](this), _OverlaySlot(i))!;
         }
         overlays[i] = child;
       }
@@ -200,8 +190,6 @@ class ContentLayersElement extends RenderObjectElement {
 
     assert(widget == newWidget);
     assert(!debugChildrenHaveDuplicateKeys(widget, [newContent]));
-    assert(!debugChildrenHaveDuplicateKeys(widget, widget.underlays));
-    assert(!debugChildrenHaveDuplicateKeys(widget, widget.overlays));
 
     _content = updateChild(_content, newContent, _contentSlot);
   }
