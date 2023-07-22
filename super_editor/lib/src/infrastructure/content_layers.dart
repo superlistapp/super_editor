@@ -31,6 +31,14 @@ class ContentLayers extends RenderObjectWidget {
   ///
   /// These layers are placed at the same (x,y) as [content], and they're forced to layout
   /// at the exact same size as [content].
+  ///
+  /// {@template layers_as_builders}
+  /// Layers are structured as [WidgetBuilder]s so that they can be re-built whenever
+  /// the content layout changes, without interference from Flutter's standard build system.
+  /// Ideally, layers would be pure [Widget]s, but this is a consequence of how Flutter's
+  /// [BuildOwner] works. For more details, see https://github.com/flutter/flutter/issues/123305
+  /// and https://github.com/superlistapp/super_editor/pull/1239
+  /// {@endtemplate}
   final List<WidgetBuilder> underlays;
 
   /// The primary content displayed in this widget, which determines the size and location
@@ -41,6 +49,8 @@ class ContentLayers extends RenderObjectWidget {
   ///
   /// These layers are placed at the same (x,y) as [content], and they're forced to layout
   /// at the exact same size as [content].
+  ///
+  /// {@macro layers_as_builders}
   final List<WidgetBuilder> overlays;
 
   @override
