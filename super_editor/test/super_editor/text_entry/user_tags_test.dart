@@ -57,7 +57,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms("does not continue after a space", (tester) async {
+      testWidgetsOnAllPlatforms("by default does not continue after a space", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -86,6 +86,46 @@ void main() {
             range: const SpanRange(start: 0, end: 18),
           ),
           isEmpty,
+        );
+      });
+
+      testWidgetsOnAllPlatforms("can be configured to continue after a space", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(text: "before "),
+              ),
+            ],
+          ),
+          const TagRule(trigger: "@"),
+        );
+
+        // Place the caret at "before |"
+        await tester.placeCaretInParagraph("1", 7);
+
+        // Compose a user token.
+        await tester.typeImeText("@john");
+
+        // Ensure that we started a composing token before adding a space.
+        var text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "before @john");
+        expect(
+          text.getAttributedRange({userTagComposingAttribution}, 7),
+          const SpanRange(start: 7, end: 11),
+        );
+
+        await tester.typeImeText(" after");
+
+        // Ensure that there's no more composing attribution because the token
+        // should have been committed.
+        text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "before @john after");
+        expect(
+          text.getAttributedRange({userTagComposingAttribution}, 7),
+          const SpanRange(start: 7, end: 17),
         );
       });
 
@@ -965,8 +1005,12 @@ void main() {
   });
 }
 
-Future<TestDocumentContext> _pumpTestEditor(WidgetTester tester, MutableDocument document) async {
-  final userTagPlugin = UserTagPlugin();
+Future<TestDocumentContext> _pumpTestEditor(
+  WidgetTester tester,
+  MutableDocument document, [
+  TagRule userTagRule = defaultUserTagRule,
+]) async {
+  final userTagPlugin = UserTagPlugin(userTagRule: userTagRule);
 
   return await tester //
       .createDocument()

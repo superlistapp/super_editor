@@ -1,8 +1,10 @@
+import 'dart:math';
+
 import 'package:attributed_text/attributed_text.dart';
 import 'package:characters/characters.dart';
-import 'package:collection/collection.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/infrastructure/strings.dart';
 
 /// A set of tools for finding tags within document text.
 class TagFinder {
@@ -16,22 +18,52 @@ class TagFinder {
     required bool Function(Set<Attribution> tokenAttributions) isTokenCandidate,
   }) {
     final rawText = text.text;
-    int tokenStartOffset = expansionPosition.offset;
-    int tokenEndOffset = expansionPosition.offset;
-
-    final terminatingCharacters = {
-      ...tagRule.excludedCharacters,
-      " ",
-    };
-
-    while (tokenStartOffset > 0 && !terminatingCharacters.contains(rawText[tokenStartOffset - 1])) {
-      tokenStartOffset = getCharacterStartBounds(rawText, tokenStartOffset);
+    if (rawText.isEmpty) {
+      return null;
     }
-    while (tokenEndOffset < rawText.length &&
-        !terminatingCharacters.contains(rawText[tokenEndOffset]) &&
-        (rawText[tokenEndOffset] != tagRule.trigger || tokenEndOffset == tokenStartOffset)) {
-      tokenEndOffset = getCharacterEndBounds(rawText, tokenEndOffset);
+
+    int tokenStartOffset = min(expansionPosition.offset - 1, rawText.length - 1);
+    if (tagRule.excludedCharacters.contains(rawText[tokenStartOffset])) {
+      // The character where we're supposed to begin our expansion is a
+      // character that's not allowed in a tag. Therefore, no tag exists
+      // around the search offset.
+      return null;
     }
+
+    int tokenEndOffset = min(expansionPosition.offset - 1, rawText.length - 1);
+
+    if (rawText[tokenStartOffset] != tagRule.trigger) {
+      while (tokenStartOffset > 0) {
+        final upstreamCharacterIndex = rawText.moveOffsetUpstreamByCharacter(tokenStartOffset)!;
+        final upstreamCharacter = rawText[upstreamCharacterIndex];
+        if (tagRule.excludedCharacters.contains(upstreamCharacter)) {
+          // The upstream character isn't allowed to appear in a tag. Break before moving
+          // the starting character index any further upstream.
+          break;
+        }
+
+        // Move the starting character index upstream.
+        tokenStartOffset = upstreamCharacterIndex;
+
+        if (upstreamCharacter == tagRule.trigger) {
+          // The character we just added to the token bounds is the trigger.
+          // We don't want to move the start any further upstream.
+          break;
+        }
+      }
+    }
+
+    while (tokenEndOffset < rawText.length - 1) {
+      final downstreamCharacterIndex = rawText.moveOffsetDownstreamByCharacter(tokenEndOffset)!;
+      final downstreamCharacter = rawText[downstreamCharacterIndex];
+      if (downstreamCharacter != tagRule.trigger && tagRule.excludedCharacters.contains(downstreamCharacter)) {
+        break;
+      }
+
+      tokenEndOffset = downstreamCharacterIndex;
+    }
+    // Make end off exclusive.
+    tokenEndOffset += 1;
 
     final tokenRange = SpanRange(start: tokenStartOffset, end: tokenEndOffset);
     if (tokenRange.end - tokenRange.start <= 0) {
@@ -63,18 +95,56 @@ class TagFinder {
   /// Finds and returns all tags in the given [textNode], which meet the given [rule].
   static Set<IndexedTag> findAllTagsInTextNode(TextNode textNode, TagRule rule) {
     final plainText = textNode.text.text;
-    return plainText //
-        .calculateAllWordBoundaries()
-        .where((wordRange) => rule.isTag(wordRange.textInside(plainText)))
-        .map((tokenRange) {
-          return IndexedTag(
-            Tag.fromRaw(tokenRange.textInside(plainText)),
+    final tags = <IndexedTag>{};
+
+    int characterIndex = 0;
+    int? tagStartIndex;
+    late StringBuffer tagBuffer;
+    for (final character in plainText.characters) {
+      if (character == rule.trigger) {
+        if (tagStartIndex != null) {
+          // We found a trigger, but we're still accumulating a tag from an earlier
+          // trigger. End the tag we were accumulating.
+          tags.add(IndexedTag(
+            Tag.fromRaw(tagBuffer.toString()),
             textNode.id,
-            tokenRange.start,
-          );
-        })
-        .whereNotNull()
-        .toSet();
+            tagStartIndex,
+          ));
+        }
+
+        // Start accumulating a new tag, because we hit a trigger character.
+        tagStartIndex = characterIndex;
+        tagBuffer = StringBuffer();
+      }
+
+      if (tagStartIndex != null && rule.excludedCharacters.contains(character)) {
+        // We're accumulating a tag and we hit a character that isn't allowed to
+        // appear in a tag. End the tag we were accumulating.
+        tags.add(IndexedTag(
+          Tag.fromRaw(tagBuffer.toString()),
+          textNode.id,
+          tagStartIndex,
+        ));
+
+        tagStartIndex = null;
+      } else if (tagStartIndex != null) {
+        // We're accumulating a tag. Add this character to the tag.
+        tagBuffer.write(character);
+      }
+
+      characterIndex += 1;
+    }
+
+    if (tagStartIndex != null) {
+      // We were assembling a tag and it went to the end of the text. End the tag.
+      tags.add(IndexedTag(
+        Tag.fromRaw(tagBuffer.toString()),
+        textNode.id,
+        tagStartIndex,
+      ));
+    }
+
+    return tags;
   }
 
   const TagFinder._();
@@ -139,9 +209,6 @@ class TagRule {
   ///
   bool isTag(String candidate) {
     if (!candidate.startsWith(trigger)) {
-      return false;
-    }
-    if (candidate.contains(" ")) {
       return false;
     }
 

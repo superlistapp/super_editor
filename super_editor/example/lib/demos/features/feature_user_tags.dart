@@ -514,7 +514,7 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     }
 
     widget.editor.execute([
-      FillInComposingUserTagRequest(_matchingUsers[_selectedValueIndex]),
+      FillInComposingUserTagRequest(_matchingUsers[_selectedValueIndex], defaultUserTagRule),
     ]);
   }
 

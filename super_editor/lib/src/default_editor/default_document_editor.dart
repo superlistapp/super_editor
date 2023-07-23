@@ -19,14 +19,14 @@ Editor createDefaultDocumentEditor({
       Editor.documentKey: document,
       Editor.composerKey: composer,
     },
-    requestHandlers: defaultRequestHandlers,
-    reactionPipeline: defaultEditorReactions,
+    requestHandlers: List.from(defaultRequestHandlers),
+    reactionPipeline: List.from(defaultEditorReactions),
   );
 
   return editor;
 }
 
-final defaultRequestHandlers = <EditRequestHandler>[
+final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (request) => request is ChangeSelectionRequest
       ? ChangeSelectionCommand(
           request.newSelection,
@@ -180,9 +180,9 @@ final defaultRequestHandlers = <EditRequestHandler>[
           composer: request.composer,
         )
       : null,
-];
+]);
 
-final defaultEditorReactions = [
+final defaultEditorReactions = List.unmodifiable([
   UpdateComposerTextStylesReaction(),
   const LinkifyReaction(),
 
@@ -194,4 +194,4 @@ final defaultEditorReactions = [
   const HorizontalRuleConversionReaction(),
   const ImageUrlConversionReaction(),
   //---- End Content Conversions ---
-];
+]);

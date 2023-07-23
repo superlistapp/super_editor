@@ -56,14 +56,29 @@ class UserTagPlugin extends SuperEditorPlugin {
   /// The key used to access the [UserTagIndex] in an attached [Editor].
   static const userTagIndexKey = "userTagIndex";
 
-  UserTagPlugin() : userTagIndex = UserTagIndex() {
+  UserTagPlugin({
+    TagRule userTagRule = defaultUserTagRule,
+  })  : _userTagRule = userTagRule,
+        userTagIndex = UserTagIndex() {
+    _requestHandlers = <EditRequestHandler>[
+      (request) => request is FillInComposingUserTagRequest
+          ? FillInComposingUserTagCommand(request.userTag, request.userTagRule)
+          : null,
+      (request) => request is CancelComposingUserTagRequest //
+          ? CancelComposingUserTagCommand(request.userTagRule)
+          : null,
+    ];
+
     _reactions = [
       TagUserReaction(
+        userTagRule: userTagRule,
         onUpdateComposingUserTag: userTagIndex._onComposingUserTagFound,
       ),
-      const AdjustSelectionAroundTagReaction(),
+      AdjustSelectionAroundTagReaction(userTagRule),
     ];
   }
+
+  final TagRule _userTagRule;
 
   /// Index of all user tags in the document, which changes as the user adds and removes tags.
   final UserTagIndex userTagIndex;
@@ -84,14 +99,7 @@ class UserTagPlugin extends SuperEditorPlugin {
       ..reactionPipeline.removeWhere((item) => _reactions.contains(item));
   }
 
-  final _requestHandlers = <EditRequestHandler>[
-    (request) => request is FillInComposingUserTagRequest
-        ? FillInComposingUserTagCommand(request.userTag, trigger: request.trigger)
-        : null,
-    (request) => request is CancelComposingUserTagRequest //
-        ? CancelComposingUserTagCommand(trigger: request.trigger)
-        : null,
-  ];
+  late final List<EditRequestHandler> _requestHandlers;
 
   late final List<EditReaction> _reactions;
 
@@ -110,7 +118,7 @@ class UserTagPlugin extends SuperEditorPlugin {
     }
 
     editContext.editor.execute([
-      const CancelComposingUserTagRequest(),
+      CancelComposingUserTagRequest(_userTagRule),
     ]);
 
     return ExecutionInstruction.haltExecution;
@@ -118,7 +126,7 @@ class UserTagPlugin extends SuperEditorPlugin {
 }
 
 /// Default [TagRule] for user tags.
-const userTagRule = TagRule(trigger: "@", excludedCharacters: {"."});
+const defaultUserTagRule = TagRule(trigger: "@", excludedCharacters: {" ", "."});
 
 /// An [EditRequest] that replaces a composing user tag with the given [userTag]
 /// and commits it.
@@ -131,12 +139,12 @@ const userTagRule = TagRule(trigger: "@", excludedCharacters: {"."});
 /// the composing user tag.
 class FillInComposingUserTagRequest implements EditRequest {
   const FillInComposingUserTagRequest(
-    this.userTag, {
-    this.trigger = "@",
-  });
+    this.userTag,
+    this.userTagRule,
+  );
 
   final String userTag;
-  final String trigger;
+  final TagRule userTagRule;
 
   @override
   bool operator ==(Object other) =>
@@ -144,20 +152,20 @@ class FillInComposingUserTagRequest implements EditRequest {
       other is FillInComposingUserTagRequest &&
           runtimeType == other.runtimeType &&
           userTag == other.userTag &&
-          trigger == other.trigger;
+          userTagRule == other.userTagRule;
 
   @override
-  int get hashCode => userTag.hashCode ^ trigger.hashCode;
+  int get hashCode => userTag.hashCode ^ userTagRule.hashCode;
 }
 
 class FillInComposingUserTagCommand implements EditCommand {
   const FillInComposingUserTagCommand(
-    this.userTag, {
-    this.trigger = "@",
-  });
+    this._userTag,
+    this._userTagRule,
+  );
 
-  final String userTag;
-  final String trigger;
+  final String _userTag;
+  final TagRule _userTagRule;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -182,7 +190,7 @@ class FillInComposingUserTagCommand implements EditCommand {
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
       composingToken = TagFinder.findTagAroundPosition(
-        tagRule: userTagRule,
+        tagRule: _userTagRule,
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
@@ -192,7 +200,7 @@ class FillInComposingUserTagCommand implements EditCommand {
     if (composingToken == null && extent.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
       composingToken = TagFinder.findTagAroundPosition(
-        tagRule: userTagRule,
+        tagRule: _userTagRule,
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
@@ -211,7 +219,7 @@ class FillInComposingUserTagCommand implements EditCommand {
       nodeId: textNode!.id,
       nodePosition: TextNodePosition(offset: composingToken.indexedTag.startOffset),
     );
-    final userTagAttribution = UserTagAttribution(userTag);
+    final userTagAttribution = UserTagAttribution(_userTag);
 
     // Delete the composing user tag text.
     executor.executeCommand(
@@ -230,11 +238,11 @@ class FillInComposingUserTagCommand implements EditCommand {
       InsertAttributedTextCommand(
         documentPosition: userTagBasePosition,
         textToInsert: AttributedText(
-          text: "$trigger$userTag ",
+          text: "${_userTagRule.trigger}$_userTag ",
           spans: AttributedSpans(
             attributions: [
               SpanMarker(attribution: userTagAttribution, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: userTagAttribution, offset: userTag.length, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: userTagAttribution, offset: _userTag.length, markerType: SpanMarkerType.end),
             ],
           ),
         ),
@@ -247,7 +255,7 @@ class FillInComposingUserTagCommand implements EditCommand {
           position: DocumentPosition(
             nodeId: textNode.id,
             // +1 for trigger symbol, +1 for space after the token
-            nodePosition: TextNodePosition(offset: composingToken.indexedTag.startOffset + userTag.length + 2),
+            nodePosition: TextNodePosition(offset: composingToken.indexedTag.startOffset + _userTag.length + 2),
           ),
         ),
         SelectionChangeType.placeCaret,
@@ -265,27 +273,23 @@ class FillInComposingUserTagCommand implements EditCommand {
 ///
 /// This request doesn't change the user's selection.
 class CancelComposingUserTagRequest implements EditRequest {
-  const CancelComposingUserTagRequest({
-    this.trigger = "@",
-  });
+  const CancelComposingUserTagRequest(this.userTagRule);
 
-  final String trigger;
+  final TagRule userTagRule;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is CancelComposingUserTagRequest && runtimeType == other.runtimeType && trigger == other.trigger;
+      other is CancelComposingUserTagRequest && runtimeType == other.runtimeType && userTagRule == other.userTagRule;
 
   @override
-  int get hashCode => trigger.hashCode;
+  int get hashCode => userTagRule.hashCode;
 }
 
 class CancelComposingUserTagCommand implements EditCommand {
-  const CancelComposingUserTagCommand({
-    this.trigger = "@",
-  });
+  const CancelComposingUserTagCommand(this._userTagRule);
 
-  final String trigger;
+  final TagRule _userTagRule;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -310,7 +314,7 @@ class CancelComposingUserTagCommand implements EditCommand {
     if (base.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.base.nodeId) as TextNode;
       composingToken = TagFinder.findTagAroundPosition(
-        tagRule: userTagRule,
+        tagRule: _userTagRule,
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
@@ -320,7 +324,7 @@ class CancelComposingUserTagCommand implements EditCommand {
     if (composingToken == null && extent.nodePosition is TextNodePosition) {
       textNode = document.getNodeById(selection.extent.nodeId) as TextNode;
       composingToken = TagFinder.findTagAroundPosition(
-        tagRule: userTagRule,
+        tagRule: _userTagRule,
         nodeId: textNode.id,
         text: textNode.text,
         expansionPosition: base.nodePosition as TextNodePosition,
@@ -380,11 +384,12 @@ extension UserTagIndexEditable on EditContext {
 /// composing tags to stable user tags.
 class TagUserReaction implements EditReaction {
   const TagUserReaction({
-    String trigger = "@",
+    required TagRule userTagRule,
     this.onUpdateComposingUserTag,
-  }) : _trigger = trigger;
+  }) : _userTagRule = userTagRule;
 
-  final String _trigger;
+  final TagRule _userTagRule;
+
   final OnUpdateComposingUserTag? onUpdateComposingUserTag;
 
   @override
@@ -530,7 +535,7 @@ class TagUserReaction implements EditReaction {
       for (final tag in allComposingTags) {
         final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
 
-        if (!tagText.startsWith(_trigger)) {
+        if (!tagText.startsWith(_userTagRule.trigger)) {
           editorUserTagsLog.info("Removing tag with value: '$tagText'");
 
           onUpdateComposingUserTag?.call(null);
@@ -585,9 +590,9 @@ class TagUserReaction implements EditReaction {
       for (final tag in allUserTags) {
         final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
         final attribution = tag.attribution as UserTagAttribution;
-        final containsTrigger = textNode.text.text[tag.start] == _trigger;
+        final containsTrigger = textNode.text.text[tag.start] == _userTagRule.trigger;
 
-        if (tagText != "$_trigger${attribution.userId}" || !containsTrigger) {
+        if (tagText != "${_userTagRule.trigger}${attribution.userId}" || !containsTrigger) {
           // The tag was partially deleted it. Delete the whole thing.
           final deleteFrom = tag.start;
           final deleteTo = tag.end + 1; // +1 because SpanRange is inclusive and text position is exclusive
@@ -694,7 +699,7 @@ class TagUserReaction implements EditReaction {
     }
 
     final existingComposingTag = TagFinder.findTagAroundPosition(
-      tagRule: userTagRule,
+      tagRule: _userTagRule,
       nodeId: selectedNode.id,
       text: selectedNode.text,
       expansionPosition: caretPosition,
@@ -723,7 +728,7 @@ class TagUserReaction implements EditReaction {
     }
 
     final nonAttributedTagAroundCaret = TagFinder.findTagAroundPosition(
-        tagRule: userTagRule,
+        tagRule: _userTagRule,
         nodeId: selectedNode.id,
         text: selectedNode.text,
         expansionPosition: caretPosition,
@@ -829,7 +834,7 @@ class TagUserReaction implements EditReaction {
     for (final textNodeId in composingTagNodeCandidates) {
       editorUserTagsLog.fine("Checking node $textNodeId for composing tags to commit");
       final textNode = document.getNodeById(textNodeId) as TextNode;
-      final allTags = TagFinder.findAllTagsInTextNode(textNode, userTagRule);
+      final allTags = TagFinder.findAllTagsInTextNode(textNode, _userTagRule);
       final composingTags =
           allTags.where((tag) => tag.computeLeadingSpanForAttribution(document, userTagComposingAttribution).isValid);
       editorUserTagsLog.fine("Composing tags in node: $composingTags");
@@ -901,7 +906,9 @@ class TagUserReaction implements EditReaction {
   }
 
   TagAroundPosition? _findTagAtCaret(
-      EditContext editContext, bool Function(Set<Attribution> attributions) tagSelector) {
+    EditContext editContext,
+    bool Function(Set<Attribution> attributions) tagSelector,
+  ) {
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     if (composer.selection == null || !composer.selection!.isCollapsed) {
       // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
@@ -922,7 +929,7 @@ class TagUserReaction implements EditReaction {
     }
 
     return TagFinder.findTagAroundPosition(
-      tagRule: userTagRule,
+      tagRule: _userTagRule,
       nodeId: selectedNode.id,
       text: selectedNode.text,
       expansionPosition: caretPosition,
@@ -1100,7 +1107,9 @@ class ComposingUserTag {
 
 /// An [EditReaction] that prevents partial selection of a stable user tag.
 class AdjustSelectionAroundTagReaction implements EditReaction {
-  const AdjustSelectionAroundTagReaction();
+  const AdjustSelectionAroundTagReaction(this._userTagRule);
+
+  final TagRule _userTagRule;
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
@@ -1284,7 +1293,7 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
     bool Function(Attribution) attributionSelector,
   ) {
     final tagAroundCaret = TagFinder.findTagAroundPosition(
-      tagRule: userTagRule,
+      tagRule: _userTagRule,
       nodeId: nodeId,
       text: paragraphText,
       expansionPosition: position,

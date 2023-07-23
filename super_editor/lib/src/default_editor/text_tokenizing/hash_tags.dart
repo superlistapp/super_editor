@@ -100,7 +100,7 @@ class HashTagPlugin extends SuperEditorPlugin {
 }
 
 /// Default [TagRule] for hash tags.
-const hashTagRule = TagRule(trigger: "#", excludedCharacters: {"."});
+const hashTagRule = TagRule(trigger: "#", excludedCharacters: {" ", "."});
 
 extension HashTagIndexEditable on EditContext {
   /// Returns the [HashTagIndex] that the [HashTagPlugin] added to the attached [Editor].

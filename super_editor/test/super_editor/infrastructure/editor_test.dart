@@ -170,7 +170,7 @@ void main() {
             Editor.documentKey: document,
             Editor.composerKey: composer,
           },
-          requestHandlers: defaultRequestHandlers,
+          requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               reactionCount += 1;
@@ -212,7 +212,7 @@ void main() {
             Editor.documentKey: document,
             Editor.composerKey: composer,
           },
-          requestHandlers: defaultRequestHandlers,
+          requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               TextInsertionEvent? insertEEvent;
@@ -302,7 +302,7 @@ void main() {
             Editor.documentKey: document,
             Editor.composerKey: composer,
           },
-          requestHandlers: defaultRequestHandlers,
+          requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
             // Reaction 1 causes a change
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
@@ -390,7 +390,7 @@ void main() {
             Editor.documentKey: document,
             Editor.composerKey: composer,
           },
-          requestHandlers: defaultRequestHandlers,
+          requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               reactionRunCount += 1;
@@ -659,7 +659,7 @@ StandardEditorPieces _createStandardEditor({
       Editor.documentKey: document,
       Editor.composerKey: composer,
     },
-    requestHandlers: defaultRequestHandlers,
+    requestHandlers: List.from(defaultRequestHandlers),
     reactionPipeline: [
       ...additionalReactions,
       const LinkifyReaction(),
