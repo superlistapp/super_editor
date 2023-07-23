@@ -414,6 +414,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
             DefaultCaretOverlayBuilder(
               const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
             ),
+            _TokenBoundsOverlay(),
           ],
           selectionStyle: isLight
               ? defaultSelectionStyle
@@ -524,3 +525,106 @@ final _darkModeStyles = [
     },
   ),
 ];
+
+class _TokenBoundsOverlay implements DocumentLayerBuilder {
+  @override
+  Widget build(BuildContext context, SuperEditorContext editContext) {
+    print("Building token bounds overlay");
+    return _AttributionBounds(
+      layout: editContext.documentLayout,
+      document: editContext.document,
+      selector: (a) => a == boldAttribution,
+    );
+  }
+}
+
+class _AttributionBounds extends StatefulWidget {
+  const _AttributionBounds({
+    Key? key,
+    required this.layout,
+    required this.document,
+    required this.selector,
+  }) : super(key: key);
+
+  final DocumentLayout layout;
+  final Document document;
+  final AttributionBoundsSelector selector;
+
+  @override
+  State<_AttributionBounds> createState() => _AttributionBoundsState();
+}
+
+class _AttributionBoundsState extends State<_AttributionBounds> {
+  final _bounds = <Rect>{};
+
+  @override
+  void initState() {
+    super.initState();
+
+    _findBounds();
+    widget.document.addListener(_onDocumentChange);
+  }
+
+  @override
+  void dispose() {
+    widget.document.removeListener(_onDocumentChange);
+    super.dispose();
+  }
+
+  void _onDocumentChange(changeLog) {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _findBounds();
+    });
+  }
+
+  void _findBounds() {
+    _bounds.clear();
+
+    for (final node in widget.document.nodes) {
+      if (node is! TextNode) {
+        continue;
+      }
+
+      final spans = node.text.getAttributionSpansInRange(
+        attributionFilter: widget.selector,
+        range: SpanRange(start: 0, end: node.text.text.length - 1),
+      );
+
+      final documentRanges = spans.map(
+        (span) => DocumentRange(
+          start: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: span.start)),
+          end: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: span.end + 1)),
+        ),
+      );
+
+      _bounds.addAll(documentRanges.map(
+        (range) => widget.layout.getRectForSelection(range.start, range.end) ?? Rect.zero,
+      ));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          for (final bound in _bounds) //
+            Positioned.fromRect(
+              rect: bound,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.blue),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+typedef AttributionBoundsSelector = bool Function(Attribution attribution);

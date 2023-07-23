@@ -1,3 +1,4 @@
+import 'package:example/attributed_follower.dart';
 import 'package:example/typing_robot.dart';
 import 'package:flutter/material.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -48,38 +49,43 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader("Welcome to super_text_layout"),
-                // SuperTextWithSelection examples
-                _buildSubHeader("SuperTextWithSelection Widget"),
-                _buildDescription(
-                    "SuperTextWithSelection is a product-level widget that renders text with traditional user selections. If you want to build a custom text decoration experience, see SuperText."),
-                _buildSuperTextWithSelectionStaticSingle(),
-                _buildSuperTextWithSelectionRobot(),
-                _buildSuperTextWithSelectionStaticMulti(),
-                const SizedBox(height: 48),
-                // SuperText examples
-                _buildSubHeader("SuperText Widget"),
-                _buildDescription(
-                    "SuperText is a platform, upon which you can build various text experiences. A SuperText widget allows you to build an arbitrary UI beneath the text, and above the text."),
-                _buildCharacterRainbow(),
-                _buildSingleCaret(),
-                _buildSingleSelectionHighlight(),
-                _buildSingleSelectionHighlightRainbow(),
-                _buildMultiUserSelections(),
-                _buildEmptySelection(),
-                const SizedBox(height: 48),
-              ],
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader("Welcome to super_text_layout"),
+                    // SuperTextWithSelection examples
+                    _buildSubHeader("SuperTextWithSelection Widget"),
+                    _buildDescription(
+                        "SuperTextWithSelection is a product-level widget that renders text with traditional user selections. If you want to build a custom text decoration experience, see SuperText."),
+                    const AttributedFollowerDemo(),
+                    _buildSuperTextWithSelectionStaticSingle(),
+                    _buildSuperTextWithSelectionRobot(),
+                    _buildSuperTextWithSelectionStaticMulti(),
+                    const SizedBox(height: 48),
+                    // SuperText examples
+                    _buildSubHeader("SuperText Widget"),
+                    _buildDescription(
+                        "SuperText is a platform, upon which you can build various text experiences. A SuperText widget allows you to build an arbitrary UI beneath the text, and above the text."),
+                    _buildCharacterRainbow(),
+                    _buildSingleCaret(),
+                    _buildSingleSelectionHighlight(),
+                    _buildSingleSelectionHighlightRainbow(),
+                    _buildMultiUserSelections(),
+                    _buildEmptySelection(),
+                    const SizedBox(height: 48),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

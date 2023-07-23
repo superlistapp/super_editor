@@ -129,7 +129,7 @@ abstract class ProseTextBlock {
 /// declarations to declare their [State] type without needing access to every
 /// different widget's [State] class, so long as any such widget's [State] class
 /// extends this class.
-abstract class ProseTextState<T extends StatefulWidget> extends State<T> with ProseTextBlock {}
+abstract class ProseTextState<T extends StatefulWidget> extends State<T> implements ProseTextBlock {}
 
 /// A [TextLayout] that includes queries that pertain specifically to
 /// prose-style text, i.e., regular human-to-human text - not code,
