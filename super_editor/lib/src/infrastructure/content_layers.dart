@@ -137,13 +137,8 @@ class ContentLayersElement extends RenderObjectElement {
 
   void buildLayers() {
     contentLayersLog.finer("ContentLayersElement - (re)building layers");
-    // FIXME: To get the layers to rebuild, we have to deactivate the existing layer Element and re-inflate
-    //        the layer's widget. This probably creates a lot of extra work for layers that don't
-    //        need to be rebuilt. Create a way for layers to opt-in to this behavior.
 
     owner!.buildScope(this, () {
-      // _deactivateLayers();
-
       final List<Element> underlays = List<Element>.filled(widget.underlays.length, _NullElement.instance);
       for (int i = 0; i < underlays.length; i += 1) {
         late final Element child;
