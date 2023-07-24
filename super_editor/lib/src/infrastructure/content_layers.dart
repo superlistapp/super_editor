@@ -31,7 +31,15 @@ class ContentLayers extends RenderObjectWidget {
   ///
   /// These layers are placed at the same (x,y) as [content], and they're forced to layout
   /// at the exact same size as [content].
-  final List<Widget> underlays;
+  ///
+  /// {@template layers_as_builders}
+  /// Layers are structured as [WidgetBuilder]s so that they can be re-built whenever
+  /// the content layout changes, without interference from Flutter's standard build system.
+  /// Ideally, layers would be pure [Widget]s, but this is a consequence of how Flutter's
+  /// [BuildOwner] works. For more details, see https://github.com/flutter/flutter/issues/123305
+  /// and https://github.com/superlistapp/super_editor/pull/1239
+  /// {@endtemplate}
+  final List<WidgetBuilder> underlays;
 
   /// The primary content displayed in this widget, which determines the size and location
   /// of all [underlays] and [overlays].
@@ -41,7 +49,9 @@ class ContentLayers extends RenderObjectWidget {
   ///
   /// These layers are placed at the same (x,y) as [content], and they're forced to layout
   /// at the exact same size as [content].
-  final List<Widget> overlays;
+  ///
+  /// {@macro layers_as_builders}
+  final List<WidgetBuilder> overlays;
 
   @override
   RenderObjectElement createElement() {
@@ -127,24 +137,29 @@ class ContentLayersElement extends RenderObjectElement {
 
   void buildLayers() {
     contentLayersLog.finer("ContentLayersElement - (re)building layers");
-    // FIXME: To get the layers to rebuild, we have to deactivate the existing layer Element and re-inflate
-    //        the layer's widget. This probably creates a lot of extra work for layers that don't
-    //        need to be rebuilt. Create a way for layers to opt-in to this behavior.
 
     owner!.buildScope(this, () {
-      _deactivateLayers();
-
       final List<Element> underlays = List<Element>.filled(widget.underlays.length, _NullElement.instance);
       for (int i = 0; i < underlays.length; i += 1) {
-        final Element newChild = inflateWidget(widget.underlays[i], _UnderlaySlot(i));
-        underlays[i] = newChild;
+        late final Element child;
+        if (i > _underlays.length - 1) {
+          child = inflateWidget(widget.underlays[i](this), _UnderlaySlot(i));
+        } else {
+          child = super.updateChild(_underlays[i], widget.underlays[i](this), _UnderlaySlot(i))!;
+        }
+        underlays[i] = child;
       }
       _underlays = underlays;
 
       final List<Element> overlays = List<Element>.filled(widget.overlays.length, _NullElement.instance);
       for (int i = 0; i < overlays.length; i += 1) {
-        final Element newChild = inflateWidget(widget.overlays[i], _OverlaySlot(i));
-        overlays[i] = newChild;
+        late final Element child;
+        if (i > _overlays.length - 1) {
+          child = inflateWidget(widget.overlays[i](this), _OverlaySlot(i));
+        } else {
+          child = super.updateChild(_overlays[i], widget.overlays[i](this), _OverlaySlot(i))!;
+        }
+        overlays[i] = child;
       }
       _overlays = overlays;
     });
@@ -180,8 +195,6 @@ class ContentLayersElement extends RenderObjectElement {
 
     assert(widget == newWidget);
     assert(!debugChildrenHaveDuplicateKeys(widget, [newContent]));
-    assert(!debugChildrenHaveDuplicateKeys(widget, widget.underlays));
-    assert(!debugChildrenHaveDuplicateKeys(widget, widget.overlays));
 
     _content = updateChild(_content, newContent, _contentSlot);
   }
