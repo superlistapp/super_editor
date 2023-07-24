@@ -1,3 +1,6 @@
+## [0.1.7] - July, 2023
+ * Added `isBlinking` property to `BlinkController`.
+
 ## [0.1.6] - May, 2023
  * Explicitly upgraded to Dart 3 support.
  * Bumped `attributed_text` dependency to `0.2.2`.
