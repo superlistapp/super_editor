@@ -575,6 +575,16 @@ class TextDeltasDocumentEditor {
               text: AttributedText(text: ''),
             ),
           ),
+          ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: newNodeId,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+            SelectionChangeType.insertContent,
+            SelectionReason.userInteraction,
+          ),
         ]);
       } else {
         // The caret sits on the upstream edge of block-level content. Insert

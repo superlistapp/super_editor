@@ -164,7 +164,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
           nodePosition: selectedNode.beginningPosition,
         ),
       );
-    } else if (paragraphPosition == beginningOfParagraph) {
+    } else if (paragraphPosition.offset == beginningOfParagraph.offset) {
       // Insert block item after the paragraph.
       document.insertNodeAt(document.getNodeIndexById(selectedNode.id), newNode);
       executor.logChanges([
@@ -179,19 +179,26 @@ class InsertNodeAtCaretCommand extends EditCommand {
           nodePosition: selectedNode.beginningPosition,
         ),
       );
-    } else if (paragraphPosition == endOfParagraph) {
-      // Insert block item after the paragraph.
-      document.insertNodeAfter(existingNode: selectedNode, newNode: newNode);
+    } else if (paragraphPosition.offset == endOfParagraph.offset) {
+      final emptyParagraph = ParagraphNode(id: Editor.createNodeId(), text: AttributedText());
+
+      // Insert block item after the paragraph and insert a new empty paragraph.
+      document
+        ..insertNodeAfter(existingNode: selectedNode, newNode: newNode)
+        ..insertNodeAfter(existingNode: newNode, newNode: emptyParagraph);
       executor.logChanges([
         DocumentEdit(
           NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
-        )
+        ),
+        DocumentEdit(
+          NodeInsertedEvent(emptyParagraph.id, document.getNodeIndexById(emptyParagraph.id)),
+        ),
       ]);
 
       newSelection = DocumentSelection.collapsed(
         position: DocumentPosition(
-          nodeId: selectedNodeId,
-          nodePosition: newNode.endPosition,
+          nodeId: emptyParagraph.id,
+          nodePosition: emptyParagraph.endPosition,
         ),
       );
     } else {
