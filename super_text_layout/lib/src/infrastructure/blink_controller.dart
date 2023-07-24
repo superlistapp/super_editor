@@ -30,6 +30,10 @@ class BlinkController with ChangeNotifier {
   final Duration _flashPeriod;
   Duration _lastBlinkTime = Duration.zero;
 
+  /// Returns `true` if this controller is currently animating a blinking
+  /// signal, or `false` if it's not.
+  bool get isBlinking => _ticker.isTicking;
+
   bool _isBlinkingEnabled = true;
   set isBlinkingEnabled(bool newValue) {
     if (newValue == _isBlinkingEnabled) {

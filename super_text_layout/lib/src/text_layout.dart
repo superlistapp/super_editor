@@ -109,7 +109,7 @@ abstract class TextLayout {
 /// to query details about the text layout. Rather than re-declare every
 /// [ProseTextLayout] method and forward the calls, a [ProseTextBlock]
 /// provides access to the inner [ProseTextLayout], directly.
-abstract class ProseTextBlock {
+abstract mixin class ProseTextBlock {
   /// Returns the [ProseTextLayout] that sits within this text block.
   ProseTextLayout get textLayout;
 }
