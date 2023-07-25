@@ -249,8 +249,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     // to measure, but we may be able to use related metrics.
     if (_textLength == 0) {
       final fontSize = _richText.style?.fontSize ?? 0.0;
-      final estimatedLineHeight =
-          _renderParagraph.getFullHeightForCaret(position) ?? fontSize * textScaler.scale(fontSize);
+      final estimatedLineHeight = _renderParagraph.getFullHeightForCaret(position) ?? textScaler.scale(fontSize);
       return estimatedLineHeight * lineHeightMultiplier;
     }
 
