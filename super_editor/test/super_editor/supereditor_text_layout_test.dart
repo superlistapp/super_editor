@@ -16,7 +16,7 @@ void main() {
             (superEditor) => MaterialApp(
               home: Scaffold(
                 body: MediaQuery(
-                  data: const MediaQueryData(textScaleFactor: 1.5),
+                  data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
                   child: superEditor,
                 ),
               ),
@@ -25,7 +25,7 @@ void main() {
           .pump();
 
       // Ensure the configure textScaleFactor was applied.
-      expect(SuperTextInspector.findTextScaleFactor(), 1.5);
+      expect(SuperTextInspector.findTextScaler().scale(1.0), 1.5);
     });
   });
 }
