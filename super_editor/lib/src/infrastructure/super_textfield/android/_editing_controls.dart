@@ -110,6 +110,12 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
   // line of text.
   Offset? _touchHandleOffsetFromLineOfText;
 
+  bool get _shouldShowCollapsedHandle =>
+      widget.editingController.textController.selection.isCollapsed && !_isDraggingBase && !_isDraggingExtent;
+
+  /// Holds the offset in text layout space where the collapsed drag handle is displayed.
+  Offset? _collapsedHandleOffset;
+
   @override
   void initState() {
     super.initState();
@@ -117,6 +123,16 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     WidgetsBinding.instance.addObserver(this);
 
     widget.editingController.textController.addListener(_rebuildOnNextFrame);
+
+    if (_shouldShowCollapsedHandle) {
+      // The textfield already has a collapsed selection. We need to update the drag handle offset.
+      // We use a post-frame callback to let the text be laid out first.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (mounted) {
+          _updateOffsetForCollapsedHandle();
+        }
+      });
+    }
   }
 
   @override
@@ -126,6 +142,16 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     if (widget.editingController != oldWidget.editingController) {
       oldWidget.editingController.textController.removeListener(_rebuildOnNextFrame);
       widget.editingController.textController.addListener(_rebuildOnNextFrame);
+
+      if (_shouldShowCollapsedHandle) {
+        // The textfield already has a collapsed selection. We need to update the drag handle offset.
+        // We use a post-frame callback to let the text be laid out first.
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          if (mounted) {
+            _updateOffsetForCollapsedHandle();
+          }
+        });
+      }
     }
   }
 
@@ -160,7 +186,9 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     // e.g., text that gets wider because it was bolded.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
-        setState(() {});
+        setState(() {
+          _updateOffsetForCollapsedHandle();
+        });
       }
     });
   }
@@ -367,6 +395,58 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     return (context.findRenderObject() as RenderBox).globalToLocal(_getGlobalOffsetOfMiddleOfLine(position));
   }
 
+  /// Update the offset for the collapsed handle.
+  ///
+  /// Re-schedules the update if we can't compute compute the offset at the current frame.
+  void _updateOffsetForCollapsedHandle() {
+    final offset = _computeOffsetForCollapsedHandle();
+
+    if (offset == null) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (mounted) {
+          _updateOffsetForCollapsedHandle();
+        }
+      });
+      return;
+    }
+
+    setState(() {
+      _collapsedHandleOffset = offset;
+    });
+  }
+
+  /// Computes the offset for the collapsed handle in text layout space.
+  ///
+  /// Returns `null` if the offset can't be computed at the current frame.
+  Offset? _computeOffsetForCollapsedHandle() {
+    final extentTextPosition = widget.editingController.textController.selection.extent;
+    _log.finer('Collapsed handle text position: $extentTextPosition');
+    final extentHandleOffsetInText = _textPositionToTextOffset(extentTextPosition);
+    _log.finer('Collapsed handle text offset: $extentHandleOffsetInText');
+
+    if (extentHandleOffsetInText == const Offset(0, 0) && extentTextPosition.offset != 0) {
+      // The caret offset is (0, 0), but the caret text position isn't at the
+      // beginning of the text. This means that there's a layout timing
+      // issue and we should reschedule this calculation for the next frame.
+      return null;
+    }
+
+    double extentLineHeight =
+        _textLayout.getCharacterBox(extentTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
+    if (widget.editingController.textController.text.text.isEmpty) {
+      extentLineHeight = _textLayout.getLineHeightAtPosition(extentTextPosition);
+    }
+
+    if (extentLineHeight == 0) {
+      _log.finer('Not building collapsed handle because the text layout reported a zero line-height');
+      // A line height of zero indicates that the text isn't laid out yet.
+      // We need to wait until the next frame.
+      return null;
+    }
+
+    return extentHandleOffsetInText + Offset(0, extentLineHeight);
+  }
+
   @override
   Widget build(BuildContext context) {
     final textFieldRenderObject = context.findRenderObject();
@@ -507,7 +587,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       return [];
     }
 
-    if (widget.editingController.textController.selection.isCollapsed && !_isDraggingBase && !_isDraggingExtent) {
+    if (_shouldShowCollapsedHandle) {
       return [
         _buildCollapsedHandle(),
       ];
@@ -517,35 +597,19 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
   }
 
   Widget _buildCollapsedHandle() {
-    final extentTextPosition = widget.editingController.textController.selection.extent;
-    _log.finer('Collapsed handle text position: $extentTextPosition');
-    final extentHandleOffsetInText = _textPositionToTextOffset(extentTextPosition);
-    _log.finer('Collapsed handle text offset: $extentHandleOffsetInText');
-    double extentLineHeight =
-        _textLayout.getCharacterBox(extentTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
-    if (widget.editingController.textController.text.text.isEmpty) {
-      extentLineHeight = _textLayout.getLineHeightAtPosition(extentTextPosition);
-    }
+    // We use a cached offset instead of computing it during build because doing so could cause timing issues.
+    // For example, when adding text at the end of the text field, we might be built while the new text hasn't
+    // been laid out yet. If this happens, we get the caret offset for an empty text.
+    // When the text field is center-aligned, this causes the drag handle to flash at the center of the text.
 
-    if (extentHandleOffsetInText == const Offset(0, 0) && extentTextPosition.offset != 0) {
-      // The caret offset is (0, 0), but the caret text position isn't at the
-      // beginning of the text. This means that there's a layout timing
-      // issue and we should reschedule this calculation for the next frame.
-      _scheduleRebuildBecauseTextIsNotLaidOutYet();
-      return const SizedBox();
-    }
-
-    if (extentLineHeight == 0) {
-      _log.finer('Not building collapsed handle because the text layout reported a zero line-height');
-      // A line height of zero indicates that the text isn't laid out yet.
-      // Schedule a rebuild to give the text a frame to layout.
-      _scheduleRebuildBecauseTextIsNotLaidOutYet();
+    if (_collapsedHandleOffset == null) {
+      // We don't have the handle offset yet. We should be rebuilt when offset computation is done.
       return const SizedBox();
     }
 
     return _buildHandle(
       handleKey: _collapsedHandleKey,
-      followerOffset: extentHandleOffsetInText + Offset(0, extentLineHeight),
+      followerOffset: _collapsedHandleOffset!,
       handleType: HandleType.collapsed,
       showHandle: true,
       debugColor: Colors.blue,
