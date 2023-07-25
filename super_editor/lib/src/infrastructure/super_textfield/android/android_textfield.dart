@@ -532,7 +532,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         key: _textContentKey,
         richText: textSpan,
         textAlign: widget.textAlign,
-        textScaleFactor: MediaQuery.textScaleFactorOf(context),
+        textScaler: MediaQuery.textScalerOf(context),
         userSelection: UserSelection(
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,

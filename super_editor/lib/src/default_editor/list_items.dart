@@ -285,8 +285,8 @@ class UnorderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
     final indentSpace = indentCalculator(textStyle, indent);
-    final textScaleFactor = MediaQuery.textScaleFactorOf(context);
-    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.25) * textScaleFactor;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.25));
     const manualVerticalAdjustment = 3.0;
 
     return Row(
@@ -309,7 +309,7 @@ class UnorderedListItemComponent extends StatelessWidget {
             text: text,
             textStyleBuilder: styleBuilder,
             textSelection: textSelection,
-            textScaleFactor: textScaleFactor,
+            textScaler: textScaler,
             selectionColor: selectionColor,
             highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
@@ -376,8 +376,8 @@ class OrderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
     final indentSpace = indentCalculator(textStyle, indent);
-    final textScaleFactor = MediaQuery.textScaleFactorOf(context);
-    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.0) * textScaleFactor;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.0));
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,7 +399,7 @@ class OrderedListItemComponent extends StatelessWidget {
             text: text,
             textStyleBuilder: styleBuilder,
             textSelection: textSelection,
-            textScaleFactor: textScaleFactor,
+            textScaler: textScaler,
             selectionColor: selectionColor,
             highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
