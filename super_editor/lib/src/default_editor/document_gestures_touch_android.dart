@@ -1123,10 +1123,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           () => PanGestureRecognizer(),
           (PanGestureRecognizer recognizer) {
             recognizer
-              // ..onStart = _onPanStart
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
-              // ..onCancel = _onPanCancel
               ..gestureSettings = gestureSettings;
           },
         ),
@@ -1472,10 +1470,9 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
           child: Container(
             color: widget.showDebugPaint ? Colors.green : Colors.transparent,
             child: AnimatedOpacity(
-              opacity: 1.0,
-              // opacity: handleType == HandleType.collapsed && widget.editingController.isCollapsedHandleAutoHidden
-              //     ? 0.0
-              //     : 1.0,
+              opacity: handleType == HandleType.collapsed && widget.editingController.isCollapsedHandleAutoHidden
+                  ? 0.0
+                  : 1.0,
               duration: const Duration(milliseconds: 150),
               child: AndroidSelectionHandle(
                 handleType: handleType,

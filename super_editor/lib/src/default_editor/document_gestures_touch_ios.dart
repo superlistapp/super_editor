@@ -471,8 +471,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   Offset _interactorOffsetToDocOffset(Offset interactorOffset) {
     final globalOffset = (context.findRenderObject() as RenderBox).localToGlobal(interactorOffset);
     return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
-
-    // return _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
   }
 
   /// Converts the given [documentOffset] to an `Offset` in the interactor's
@@ -480,8 +478,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   Offset _docOffsetToInteractorOffset(Offset documentOffset) {
     final globalOffset = _docLayout.getGlobalOffsetFromDocumentOffset(documentOffset);
     return (context.findRenderObject() as RenderBox).globalToLocal(globalOffset);
-
-    // return _docLayout.getAncestorOffsetFromDocumentOffset(documentOffset, context.findRenderObject()!);
   }
 
   /// Maps the given [interactorOffset] within the interactor's coordinate space

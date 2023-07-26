@@ -594,7 +594,7 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
-  /// Builds the widget tree scrolls the document. This subtree might
+  /// Builds the widget tree that scrolls the document. This subtree might
   /// introduce its own Scrollable, or it might defer to an ancestor
   /// scrollable. This subtree also hooks up auto-scrolling capabilities.
   Widget _buildDocumentScrollable({
