@@ -277,6 +277,26 @@ void main() {
       });
     });
 
+    group("selection", () {
+      testWidgets("keeps caret downstream when right arrow is pressed while a block is selected", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
+        final composer = MutableDocumentComposer(
+          initialSelection: const DocumentSelection(
+            base: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
+            extent: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
+          ),
+        );
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump();
+
+        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selection!.extent.nodeId, "2");
+        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
+      });
+    });
+
     group("deletion", () {
       testWidgets("backspace moves caret to node above when caret is on upstream edge", (tester) async {
         final document = paragraphThenHrThenParagraphDoc();
