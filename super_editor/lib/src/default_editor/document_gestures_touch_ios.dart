@@ -19,7 +19,6 @@ import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
 import '../infrastructure/super_textfield/metrics.dart';
-import 'document_gestures_touch.dart';
 import 'selection_upstream_downstream.dart';
 
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
@@ -470,13 +469,19 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   /// Converts the given [interactorOffset] from the [DocumentInteractor]'s coordinate
   /// space to the [DocumentLayout]'s coordinate space.
   Offset _interactorOffsetToDocOffset(Offset interactorOffset) {
-    return _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
+    final globalOffset = (context.findRenderObject() as RenderBox).localToGlobal(interactorOffset);
+    return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
+
+    // return _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
   }
 
   /// Converts the given [documentOffset] to an `Offset` in the interactor's
   /// coordinate space.
   Offset _docOffsetToInteractorOffset(Offset documentOffset) {
-    return _docLayout.getAncestorOffsetFromDocumentOffset(documentOffset, context.findRenderObject()!);
+    final globalOffset = _docLayout.getGlobalOffsetFromDocumentOffset(documentOffset);
+    return (context.findRenderObject() as RenderBox).globalToLocal(globalOffset);
+
+    // return _docLayout.getAncestorOffsetFromDocumentOffset(documentOffset, context.findRenderObject()!);
   }
 
   /// Maps the given [interactorOffset] within the interactor's coordinate space
@@ -818,7 +823,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // on trying to drag the handle from various locations near the handle.
     final caretRect = Rect.fromLTWH(baseRect.left - 24, baseRect.top - 24, 48, baseRect.height + 48);
 
-    final docOffset = _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
+    final docOffset = _interactorOffsetToDocOffset(interactorOffset);
     return caretRect.contains(docOffset);
   }
 
@@ -833,7 +838,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // on trying to drag the handle from various locations near the handle.
     final caretRect = Rect.fromLTWH(extentRect.left - 24, extentRect.top, 48, extentRect.height + 32);
 
-    final docOffset = _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
+    final docOffset = _interactorOffsetToDocOffset(interactorOffset);
     return caretRect.contains(docOffset);
   }
 
@@ -1282,10 +1287,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     return _buildGestureInput(
-      child: ScrollableDocument(
-        scrollController: _scrollController,
-        disableDragScrolling: true,
-        documentLayerLink: _documentLayerLink,
+      child: CompositedTransformTarget(
+        link: _documentLayerLink,
         child: widget.child,
       ),
     );

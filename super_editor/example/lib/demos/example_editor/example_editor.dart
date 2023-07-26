@@ -412,7 +412,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           documentLayoutKey: _docLayoutKey,
           documentOverlayBuilders: [
             DefaultCaretOverlayBuilder(
-              const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
+              caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
             ),
           ],
           selectionStyle: isLight

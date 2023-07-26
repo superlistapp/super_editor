@@ -25,7 +25,6 @@ import 'package:super_text_layout/super_text_layout.dart';
 import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
 import '../infrastructure/super_textfield/metrics.dart';
-import 'document_gestures_touch.dart';
 import 'selection_upstream_downstream.dart';
 
 /// Document gesture interactor that's designed for Android touch input, e.g.,
@@ -117,7 +116,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // drag handles, magnifier, and toolbar.
   OverlayEntry? _controlsOverlayEntry;
   late AndroidDocumentGestureEditingController _editingController;
-  final _documentLayoutLink = LayerLink();
+  final _documentLayerLink = LayerLink();
   final _magnifierFocalPointLink = LayerLink();
 
   late DragHandleAutoScroller _handleAutoScrolling;
@@ -168,7 +167,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
 
     _editingController = AndroidDocumentGestureEditingController(
-      documentLayoutLink: _documentLayoutLink,
+      documentLayoutLink: _documentLayerLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
       overlayController: _overlayController,
     );
@@ -1096,7 +1095,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   Widget build(BuildContext context) {
     return _buildGestureInput(
       child: CompositedTransformTarget(
-        link: _documentLayoutLink,
+        link: _documentLayerLink,
         child: widget.child,
       ),
     );
