@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -466,10 +467,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   RenderBox get viewportBox =>
       (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
-  /// Converts the given [offset] from the [DocumentInteractor]'s coordinate
-  /// space to the [DocumentLayout]'s coordinate space.
-  Offset _getDocOffset(Offset offset) {
-    return _docLayout.getDocumentOffsetFromAncestorOffset(offset, context.findRenderObject()!);
+  Offset _getDocOffsetFromGlobalOffset(Offset globalOffset) {
+    return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
   }
 
   /// Maps the given [interactorOffset] within the interactor's coordinate space
@@ -500,6 +499,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // scrolling has already stopped. So we log whether we're scrolling "on tap down"
     // and then check this flag in "on tap up".
     _wasScrollingOnTapDown = _isScrolling;
+
+    final position = scrollPosition;
+    if (position is ScrollPositionWithSingleContext) {
+      position.goIdle();
+    }
   }
 
   void _onTapUp(TapUpDetails details) {
@@ -511,7 +515,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     editorGesturesLog.info("Tap down on document");
-    final docOffset = _getDocOffset(details.localPosition);
+    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -568,7 +572,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _onDoubleTapDown(TapDownDetails details) {
     editorGesturesLog.info("Double tap down on document");
-    final docOffset = _getDocOffset(details.localPosition);
+    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -651,7 +655,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _onTripleTapDown(TapDownDetails details) {
     editorGesturesLog.info("Triple tap down on document");
-    final docOffset = _getDocOffset(details.localPosition);
+    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -689,6 +693,18 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     widget.focusNode.requestFocus();
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    _scrollController.position.jumpTo(_scrollController.position.pixels - details.delta.dy);
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    final pos = scrollPosition;
+    if (pos is ScrollPositionWithSingleContext) {
+      pos.goBallistic(-details.velocity.pixelsPerSecond.dy);
+      pos.context.setIgnorePointer(false);
+    }
   }
 
   void _showEditingControlsOverlay() {
@@ -729,9 +745,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     _globalStartDragOffset = globalOffset;
-    final interactorBox = context.findRenderObject() as RenderBox;
-    final handleOffsetInInteractor = interactorBox.globalToLocal(globalOffset);
-    _dragStartInDoc = _getDocOffset(handleOffsetInInteractor);
+    _dragStartInDoc = _getDocOffsetFromGlobalOffset(globalOffset);
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
@@ -848,7 +862,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // caching the value during the pan update) because the position
     // in the document is impacted by auto-scrolling behavior.
     // final scrollDeltaWhileDragging = _dragStartScrollOffset! - scrollPosition.pixels;
-    final dragEndInDoc = _getDocOffset(_dragEndInInteractor! /* - Offset(0, scrollDeltaWhileDragging)*/);
+    final dragEndInDoc = _getDocOffsetFromGlobalOffset(_globalDragOffset!);
 
     final dragPosition = _docLayout.getDocumentPositionNearestToOffset(dragEndInDoc);
     editorGesturesLog.info("Selecting new position during drag: $dragPosition");
@@ -1081,9 +1095,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   @override
   Widget build(BuildContext context) {
     return _buildGestureInput(
-      child: ScrollableDocument(
-        scrollController: _scrollController,
-        documentLayerLink: _documentLayoutLink,
+      child: CompositedTransformTarget(
+        link: _documentLayoutLink,
         child: widget.child,
       ),
     );
@@ -1104,6 +1117,17 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
               ..onTapUp = _onTapUp
               ..onDoubleTapDown = _onDoubleTapDown
               ..onTripleTapDown = _onTripleTapDown
+              ..gestureSettings = gestureSettings;
+          },
+        ),
+        PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+          () => PanGestureRecognizer(),
+          (PanGestureRecognizer recognizer) {
+            recognizer
+              // ..onStart = _onPanStart
+              ..onUpdate = _onPanUpdate
+              ..onEnd = _onPanEnd
+              // ..onCancel = _onPanCancel
               ..gestureSettings = gestureSettings;
           },
         ),
@@ -1449,9 +1473,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
           child: Container(
             color: widget.showDebugPaint ? Colors.green : Colors.transparent,
             child: AnimatedOpacity(
-              opacity: handleType == HandleType.collapsed && widget.editingController.isCollapsedHandleAutoHidden
-                  ? 0.0
-                  : 1.0,
+              opacity: 1.0,
+              // opacity: handleType == HandleType.collapsed && widget.editingController.isCollapsedHandleAutoHidden
+              //     ? 0.0
+              //     : 1.0,
               duration: const Duration(milliseconds: 150),
               child: AndroidSelectionHandle(
                 handleType: handleType,

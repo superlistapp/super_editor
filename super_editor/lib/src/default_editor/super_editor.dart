@@ -602,22 +602,7 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.mouse:
         return _buildDesktopGestureSystem(documentLayout);
       case DocumentGestureMode.android:
-        return AndroidDocumentTouchInteractor(
-          focusNode: _focusNode,
-          editor: editContext.editor,
-          document: editContext.document,
-          getDocumentLayout: () => editContext.documentLayout,
-          selection: editContext.composer.selectionNotifier,
-          contentTapHandler: _contentTapDelegate,
-          scrollController: widget.scrollController,
-          documentKey: _docLayoutKey,
-          handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
-          createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          overlayController: widget.overlayController,
-          showDebugPaint: widget.debugPaint.gestures,
-          child: documentLayout,
-        );
+        return _buildAndroidGestureSystem(documentLayout);
       case DocumentGestureMode.iOS:
         return IOSDocumentTouchInteractor(
           focusNode: _focusNode,
@@ -695,6 +680,68 @@ class SuperEditorState extends State<SuperEditor> {
     );
   }
 
+  Widget _buildAndroidGestureSystem(Widget documentLayout) {
+    return LayoutBuilder(
+      builder: (context, viewportConstraints) {
+        return DocumentScrollable(
+          autoScroller: _autoScrollController,
+          scrollController: widget.scrollController,
+          scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
+          showDebugPaint: widget.debugPaint.scrolling,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              // When SuperEditor installs its own Viewport, we want the gesture
+              // detection to span throughout the Viewport. Because the gesture
+              // system sits around the DocumentLayout, within the Viewport, we
+              // have to explicitly tell the gesture area to be at least as tall
+              // as the viewport (in case the document content is shorter than
+              // the viewport).
+              minWidth: viewportConstraints.maxWidth < double.infinity ? viewportConstraints.maxWidth : 0,
+              minHeight: viewportConstraints.maxHeight < double.infinity ? viewportConstraints.maxHeight : 0,
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // A layer that sits beneath the document and handles gestures.
+                // It's beneath the document so that components that include
+                // interactive UI, like a Checkbox, can intercept their own
+                // touch events.
+                //
+                // This layer is placed outside of `ContentLayers` because this
+                // layer needs to be wider than the document, to fill all available
+                // space.
+                Positioned.fill(
+                  child: AndroidDocumentTouchInteractor(
+                    focusNode: _focusNode,
+                    editor: editContext.editor,
+                    document: editContext.document,
+                    getDocumentLayout: () => editContext.documentLayout,
+                    selection: editContext.composer.selectionNotifier,
+                    contentTapHandler: _contentTapDelegate,
+                    scrollController: widget.scrollController,
+                    documentKey: _docLayoutKey,
+                    handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
+                    popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
+                    createOverlayControlsClipper: widget.createOverlayControlsClipper,
+                    overlayController: widget.overlayController,
+                    showDebugPaint: widget.debugPaint.gestures,
+                    child: Container(
+                      color: Colors.red.withOpacity(0.3),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: documentLayout,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildDocumentLayout() {
     switch (gestureMode) {
       case DocumentGestureMode.mouse:
@@ -712,6 +759,19 @@ class SuperEditorState extends State<SuperEditor> {
           ],
         );
       case DocumentGestureMode.android:
+        return ContentLayers(
+          content: (onBuildScheduled) => SingleColumnDocumentLayout(
+            key: _docLayoutKey,
+            presenter: _docLayoutPresenter!,
+            componentBuilders: widget.componentBuilders,
+            onBuildScheduled: onBuildScheduled,
+            showDebugPaint: widget.debugPaint.layout,
+          ),
+          overlays: [
+            for (final overlayBuilder in widget.documentOverlayBuilders) //
+              (context) => overlayBuilder.build(context, editContext),
+          ],
+        );
       case DocumentGestureMode.iOS:
         // TODO: bring overlay builders to mobile, then get rid of this switch statement
         return SingleColumnDocumentLayout(
