@@ -46,9 +46,9 @@ abstract class BlockNode extends DocumentNode {
     }
 
     if (position1.affinity == TextAffinity.downstream || position2.affinity == TextAffinity.downstream) {
-      return const UpstreamDownstreamNodePosition.upstream();
-    } else {
       return const UpstreamDownstreamNodePosition.downstream();
+    } else {
+      return const UpstreamDownstreamNodePosition.upstream();
     }
   }
 
