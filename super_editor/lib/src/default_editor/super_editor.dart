@@ -655,10 +655,7 @@ class SuperEditorState extends State<SuperEditor> {
         Positioned.fill(
           child: gestureWidget,
         ),
-        Align(
-          alignment: Alignment.topCenter,
-          child: child,
-        ),
+        child,
       ],
     );
   }
@@ -718,18 +715,21 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   Widget _buildDocumentLayout() {
-    return ContentLayers(
-      content: (onBuildScheduled) => SingleColumnDocumentLayout(
-        key: _docLayoutKey,
-        presenter: _docLayoutPresenter!,
-        componentBuilders: widget.componentBuilders,
-        onBuildScheduled: onBuildScheduled,
-        showDebugPaint: widget.debugPaint.layout,
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ContentLayers(
+        content: (onBuildScheduled) => SingleColumnDocumentLayout(
+          key: _docLayoutKey,
+          presenter: _docLayoutPresenter!,
+          componentBuilders: widget.componentBuilders,
+          onBuildScheduled: onBuildScheduled,
+          showDebugPaint: widget.debugPaint.layout,
+        ),
+        overlays: [
+          for (final overlayBuilder in widget.documentOverlayBuilders) //
+            (context) => overlayBuilder.build(context, editContext),
+        ],
       ),
-      overlays: [
-        for (final overlayBuilder in widget.documentOverlayBuilders) //
-          (context) => overlayBuilder.build(context, editContext),
-      ],
     );
   }
 }
