@@ -2,6 +2,7 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/rendering.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
@@ -597,32 +598,44 @@ class SuperEditorState extends State<SuperEditor> {
   /// Builds the widget tree that scrolls the document. This subtree might
   /// introduce its own Scrollable, or it might defer to an ancestor
   /// scrollable. This subtree also hooks up auto-scrolling capabilities.
+  final _contentConstraints = ValueNotifier<BoxConstraints>(const BoxConstraints());
   Widget _buildDocumentScrollable({
     required Widget child,
   }) {
-    return LayoutBuilder(
-      builder: (context, viewportConstraints) {
-        return DocumentScrollable(
-          autoScroller: _autoScrollController,
-          scrollController: widget.scrollController,
-          scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
-          showDebugPaint: widget.debugPaint.scrolling,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              // When SuperEditor installs its own Viewport, we want the gesture
-              // detection to span throughout the Viewport. Because the gesture
-              // system sits around the DocumentLayout, within the Viewport, we
-              // have to explicitly tell the gesture area to be at least as tall
-              // as the viewport (in case the document content is shorter than
-              // the viewport).
-              minWidth: viewportConstraints.maxWidth < double.infinity ? viewportConstraints.maxWidth : 0,
-              minHeight: viewportConstraints.maxHeight < double.infinity ? viewportConstraints.maxHeight : 0,
-            ),
-            child: child,
-          ),
-        );
-      },
+    return _SuperEditorBounds(
+      contentConstraints: _contentConstraints,
+      child: DocumentScrollable(
+        autoScroller: _autoScrollController,
+        scrollController: widget.scrollController,
+        scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
+        showDebugPaint: widget.debugPaint.scrolling,
+        child: child,
+      ),
     );
+
+    // return LayoutBuilder(
+    //   builder: (context, viewportConstraints) {
+    //     return DocumentScrollable(
+    //       autoScroller: _autoScrollController,
+    //       scrollController: widget.scrollController,
+    //       scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
+    //       showDebugPaint: widget.debugPaint.scrolling,
+    //       child: ConstrainedBox(
+    //         constraints: BoxConstraints(
+    //           // When SuperEditor installs its own Viewport, we want the gesture
+    //           // detection to span throughout the Viewport. Because the gesture
+    //           // system sits around the DocumentLayout, within the Viewport, we
+    //           // have to explicitly tell the gesture area to be at least as tall
+    //           // as the viewport (in case the document content is shorter than
+    //           // the viewport).
+    //           minWidth: viewportConstraints.maxWidth < double.infinity ? viewportConstraints.maxWidth : 0,
+    //           minHeight: viewportConstraints.maxHeight < double.infinity ? viewportConstraints.maxHeight : 0,
+    //         ),
+    //         child: child,
+    //       ),
+    //     );
+    //   },
+    // );
   }
 
   /// Builds the widget tree that handles user gesture interaction
@@ -641,22 +654,25 @@ class SuperEditorState extends State<SuperEditor> {
         gestureWidget = _buildIOSGestureSystem();
     }
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // A layer that sits beneath the document and handles gestures.
-        // It's beneath the document so that components that include
-        // interactive UI, like a Checkbox, can intercept their own
-        // touch events.
-        //
-        // This layer is placed outside of `ContentLayers` because this
-        // layer needs to be wider than the document, to fill all available
-        // space.
-        Positioned.fill(
-          child: gestureWidget,
-        ),
-        child,
-      ],
+    return _SuperEditorDocumentBounds(
+      contentConstraints: _contentConstraints,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // A layer that sits beneath the document and handles gestures.
+          // It's beneath the document so that components that include
+          // interactive UI, like a Checkbox, can intercept their own
+          // touch events.
+          //
+          // This layer is placed outside of `ContentLayers` because this
+          // layer needs to be wider than the document, to fill all available
+          // space.
+          Positioned.fill(
+            child: gestureWidget,
+          ),
+          child,
+        ],
+      ),
     );
   }
 
@@ -731,6 +747,88 @@ class SuperEditorState extends State<SuperEditor> {
         ],
       ),
     );
+  }
+}
+
+class _SuperEditorBounds extends SingleChildRenderObjectWidget {
+  const _SuperEditorBounds({
+    required this.contentConstraints,
+    required super.child,
+  });
+
+  final ValueNotifier<BoxConstraints> contentConstraints;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) {
+    return _RenderSuperEditorBounds()..contentConstraints = contentConstraints;
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderSuperEditorBounds renderObject) {
+    renderObject.contentConstraints = contentConstraints;
+  }
+}
+
+class _RenderSuperEditorBounds extends RenderProxyBox {
+  late ValueNotifier<BoxConstraints> contentConstraints;
+
+  @override
+  void performLayout() {
+    // print("Laying out SuperEditorBounds");
+    // We must assign the desired constraints before running layout on our child,
+    // because this value will impact the child's desired size. This impact is
+    // indirect. The widget that uses these content constraints is probably a
+    // deep descendant of our `child`.
+    contentConstraints.value = BoxConstraints(
+      minWidth: constraints.maxWidth < double.infinity ? constraints.maxWidth : 0,
+      minHeight: constraints.maxHeight < double.infinity ? constraints.maxHeight : 0,
+    );
+    // print("SuperEditorBounds content constraints: ${contentConstraints.value}");
+    // print("Direct child: $child");
+    // print("");
+
+    child!.layout(constraints, parentUsesSize: true);
+    size = child!.size;
+    // print("SuperEditorBounds size: $size");
+  }
+}
+
+class _SuperEditorDocumentBounds extends SingleChildRenderObjectWidget {
+  const _SuperEditorDocumentBounds({
+    required this.contentConstraints,
+    required super.child,
+  });
+
+  final ValueNotifier<BoxConstraints> contentConstraints;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) {
+    return _RenderSuperEditorContentBounds()..contentConstraints = contentConstraints;
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderSuperEditorContentBounds renderObject) {
+    renderObject.contentConstraints = contentConstraints;
+  }
+}
+
+class _RenderSuperEditorContentBounds extends RenderProxyBox {
+  late ValueNotifier<BoxConstraints> contentConstraints;
+
+  @override
+  void performLayout() {
+    // print("Laying out SuperEditorContentBounds");
+    // print("Content constraints: ${contentConstraints.value}");
+    final childConstraints = contentConstraints.value.enforce(constraints);
+    // print("Actual constraints: $childConstraints");
+
+    child!.layout(childConstraints, parentUsesSize: true);
+    size = child!.size;
+    // print("Content size: $size");
+    // print("Content intrinsic height: ${child!.getMaxIntrinsicHeight(size.width)}");
+    // print("Content RenderObject: $child");
+    // print("Content bounds intrinsic height: ${getMaxIntrinsicHeight(size.width)}");
+    // print("");
   }
 }
 

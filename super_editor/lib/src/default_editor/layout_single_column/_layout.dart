@@ -441,6 +441,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final componentBox = component.context.findRenderObject() as RenderBox;
     final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
     final componentBounds = contentOffset & componentBox.size;
+    editorLayoutLog.finest("Component bounds: $componentBounds, versus region of interest: $region");
 
     if (region.overlaps(componentBounds)) {
       // Report the overlap in our local coordinate space.
