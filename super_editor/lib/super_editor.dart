@@ -48,7 +48,7 @@ export 'src/default_editor/unknown_component.dart';
 // also made available for public use.
 export 'src/document_operations/selection_operations.dart';
 
-export 'src/infrastructure/_listenable_builder.dart';
+export 'src/infrastructure/multi_listenable_builder.dart';
 export 'src/infrastructure/_logging.dart';
 export 'src/infrastructure/attributed_text_styles.dart';
 export 'src/infrastructure/composable_text.dart';
