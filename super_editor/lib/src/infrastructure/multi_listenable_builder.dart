@@ -66,24 +66,3 @@ class _MultiListenableBuilderState extends State<MultiListenableBuilder> {
     return widget.builder(context);
   }
 }
-
-/// Widget that rebuilds its `builder` every time the given
-/// `listenable` changes.
-class ListenableBuilder extends StatelessWidget {
-  const ListenableBuilder({
-    Key? key,
-    required this.listenable,
-    required this.builder,
-  }) : super(key: key);
-
-  final Listenable listenable;
-  final WidgetBuilder builder;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: listenable,
-      builder: (context, _) => builder(context),
-    );
-  }
-}

@@ -1,11 +1,10 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' hide ListenableBuilder;
+import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
@@ -254,7 +253,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   Widget build(BuildContext context) {
     return ListenableBuilder(
         listenable: widget.editingController,
-        builder: (context) {
+        builder: (context, _) {
           return Padding(
             // Remove the keyboard from the space that we occupy so that
             // clipping calculations apply to the expected visual borders,

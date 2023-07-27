@@ -1,6 +1,6 @@
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' hide ListenableBuilder;
+import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '_example_document.dart';
@@ -313,7 +313,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: _brightness,
-      builder: (context) {
+      builder: (context, _) {
         return Theme(
           data: ThemeData(brightness: _brightness.value),
           child: Builder(
@@ -435,7 +435,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
           androidToolbarBuilder: (_) => ListenableBuilder(
             listenable: _brightness,
-            builder: (context) {
+            builder: (context, _) {
               return Theme(
                 data: ThemeData(brightness: _brightness.value),
                 child: AndroidTextEditingFloatingToolbar(
@@ -449,7 +449,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           ),
           iOSToolbarBuilder: (_) => ListenableBuilder(
             listenable: _brightness,
-            builder: (context) {
+            builder: (context, _) {
               return Theme(
                 data: ThemeData(brightness: _brightness.value),
                 child: IOSTextEditingFloatingToolbar(
