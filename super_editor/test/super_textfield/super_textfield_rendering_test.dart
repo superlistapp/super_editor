@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' hide ListenableBuilder;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -46,7 +46,7 @@ Future<void> _pumpSwitchableTestApp(
       home: Scaffold(
         body: ListenableBuilder(
           listenable: showTextField,
-          builder: (context) {
+          builder: (context, _) {
             return showTextField.value
                 ? SuperTextField(
                     textController: controller,
