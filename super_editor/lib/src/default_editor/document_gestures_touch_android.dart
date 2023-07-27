@@ -36,6 +36,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.editor,
     required this.document,
     required this.documentKey,
+    required this.documentLayoutLink,
     required this.getDocumentLayout,
     required this.selection,
     this.contentTapHandler,
@@ -54,6 +55,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final Editor editor;
   final Document document;
   final GlobalKey documentKey;
+  final LayerLink documentLayoutLink;
   final DocumentLayout Function() getDocumentLayout;
   final ValueListenable<DocumentSelection?> selection;
 
@@ -116,7 +118,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // drag handles, magnifier, and toolbar.
   OverlayEntry? _controlsOverlayEntry;
   late AndroidDocumentGestureEditingController _editingController;
-  final _documentLayerLink = LayerLink();
   final _magnifierFocalPointLink = LayerLink();
 
   late DragHandleAutoScroller _handleAutoScrolling;
@@ -167,7 +168,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
 
     _editingController = AndroidDocumentGestureEditingController(
-      documentLayoutLink: _documentLayerLink,
+      documentLayoutLink: widget.documentLayoutLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
       overlayController: _overlayController,
     );
@@ -1094,10 +1095,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   @override
   Widget build(BuildContext context) {
     return _buildGestureInput(
-      child: CompositedTransformTarget(
-        link: _documentLayerLink,
-        child: widget.child,
-      ),
+      child: widget.child,
     );
   }
 

@@ -281,6 +281,7 @@ class SuperEditorState extends State<SuperEditor> {
   // GlobalKey used to access the [DocumentLayoutState] to figure
   // out where in the document the user taps or drags.
   late GlobalKey _docLayoutKey;
+  final _documentLayoutLink = LayerLink();
   SingleColumnLayoutPresenter? _docLayoutPresenter;
   late SingleColumnStylesheetStyler _docStylesheetStyler;
   late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
@@ -701,6 +702,7 @@ class SuperEditorState extends State<SuperEditor> {
       contentTapHandler: _contentTapDelegate,
       scrollController: widget.scrollController,
       documentKey: _docLayoutKey,
+      documentLayoutLink: _documentLayoutLink,
       handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
       popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
       createOverlayControlsClipper: widget.createOverlayControlsClipper,
@@ -720,6 +722,7 @@ class SuperEditorState extends State<SuperEditor> {
       contentTapHandler: _contentTapDelegate,
       scrollController: widget.scrollController,
       documentKey: _docLayoutKey,
+      documentLayoutLink: _documentLayoutLink,
       handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
       popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
       floatingCursorController: _floatingCursorController,
@@ -734,12 +737,15 @@ class SuperEditorState extends State<SuperEditor> {
     return Align(
       alignment: Alignment.topCenter,
       child: ContentLayers(
-        content: (onBuildScheduled) => SingleColumnDocumentLayout(
-          key: _docLayoutKey,
-          presenter: _docLayoutPresenter!,
-          componentBuilders: widget.componentBuilders,
-          onBuildScheduled: onBuildScheduled,
-          showDebugPaint: widget.debugPaint.layout,
+        content: (onBuildScheduled) => CompositedTransformTarget(
+          link: _documentLayoutLink,
+          child: SingleColumnDocumentLayout(
+            key: _docLayoutKey,
+            presenter: _docLayoutPresenter!,
+            componentBuilders: widget.componentBuilders,
+            onBuildScheduled: onBuildScheduled,
+            showDebugPaint: widget.debugPaint.layout,
+          ),
         ),
         overlays: [
           for (final overlayBuilder in widget.documentOverlayBuilders) //
