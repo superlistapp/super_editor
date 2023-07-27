@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
+import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
-
+import '../../super_editor/document_test_tools.dart';
 import '../../super_editor/test_documents.dart';
 
 /// Upstream/downstream selection refers components that only support
@@ -276,23 +278,58 @@ void main() {
         expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
 
-      testWidgets("right arrow moves caret to downstream edge of the non-collapsed selection on a block node",
-          (tester) async {
-        final document = paragraphThenHrThenParagraphDoc();
-        final composer = MutableDocumentComposer(
-          initialSelection: const DocumentSelection(
-            base: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
-            extent: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
+      testWidgets("right arrow moves caret to downstream edge of the selection made on a block node", (tester) async {
+        await tester
+            .createDocument()
+            .withCustomContent(paragraphThenHrThenParagraphDoc())
+            .withEditorSize(const Size(300, 300))
+            .pump();
+
+        final document = SuperEditorInspector.findDocument()!;
+        final hrNode = document.getNodeById("2") as HorizontalRuleNode;
+
+        await tester.tapAtDocumentPosition(DocumentPosition(
+          nodeId: hrNode.id,
+          nodePosition: hrNode.beginningPosition,
+        ));
+        await tester.pumpAndSettle();
+
+        final testerGesture = await tester.startDocumentDragFromPosition(
+          from: DocumentPosition(
+            nodeId: hrNode.id,
+            nodePosition: hrNode.beginningPosition,
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
+
+        // Move by sufficient distance to select the hr.
+        await testerGesture.moveBy(const Offset(300, 0));
+        await tester.pump();
+
+        await tester.endDocumentDragGesture(testerGesture);
+        await tester.pump();
+
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection(
+            base: DocumentPosition(
+              nodeId: hrNode.id,
+              nodePosition: hrNode.beginningPosition,
+            ),
+            extent: DocumentPosition(
+              nodeId: hrNode.id,
+              nodePosition: hrNode.endPosition,
+            ),
+          ),
+        );
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
+        final selection = SuperEditorInspector.findDocumentSelection();
+
+        expect(selection!.isCollapsed, true);
+        expect(selection.extent.nodeId, hrNode.id);
+        expect(selection.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
       });
     });
 
