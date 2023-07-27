@@ -275,10 +275,9 @@ void main() {
         expect(composer.selection!.extent.nodeId, "2");
         expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
-    });
 
-    group("selection", () {
-      testWidgets("keeps caret downstream when right arrow is pressed while a block is selected", (tester) async {
+      testWidgets("right arrow moves caret to downstream edge of the non-collapsed selection on a block node",
+          (tester) async {
         final document = paragraphThenHrThenParagraphDoc();
         final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection(
