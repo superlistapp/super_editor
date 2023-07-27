@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
+import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 
 // TODO: Write golden tests for scrolling minimap
 //       (Matt - April, 2022) - I tried writing the tests but couldn't get the
