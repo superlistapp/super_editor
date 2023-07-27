@@ -3,10 +3,12 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -424,6 +426,132 @@ class SplitParagraphCommand implements EditCommand {
         SplitParagraphIntention.end(),
       ]);
     }
+  }
+}
+
+class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
+  DeleteUpstreamAtBeginningOfParagraphCommand(this.node);
+
+  final DocumentNode node;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+    final documentLayoutEditable = context.find<DocumentLayoutEditable>(Editor.layoutKey);
+
+    final deletionPosition = DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition);
+
+    if (deletionPosition.nodePosition is TextNodePosition) {
+      final nodeBefore = document.getNodeBefore(node);
+      if (nodeBefore == null) {
+        return;
+      }
+
+      if (nodeBefore is TextNode) {
+        // The caret is at the beginning of one TextNode and is preceded by
+        // another TextNode. Merge the two TextNodes.
+        mergeTextNodeWithUpstreamTextNode(executor, document, composer);
+        return;
+      }
+
+      final componentBefore = documentLayoutEditable.documentLayout.getComponentByNodeId(nodeBefore.id)!;
+      if (!componentBefore.isVisualSelectionSupported()) {
+        // The node/component above is not selectable. Delete it.
+        executor.executeCommand(
+          DeleteNodeCommand(nodeId: nodeBefore.id),
+        );
+        return;
+      }
+
+      moveSelectionToEndOfPrecedingNode(executor, document, composer);
+
+      if ((node as TextNode).text.text.isEmpty) {
+        // The caret is at the beginning of an empty TextNode and the preceding
+        // node is not a TextNode. Delete the current TextNode and move the
+        // selection up to the preceding node if exist.
+        executor.executeCommand(
+          DeleteNodeCommand(nodeId: node.id),
+        );
+      }
+    }
+  }
+
+  bool mergeTextNodeWithUpstreamTextNode(
+    CommandExecutor executor,
+    MutableDocument document,
+    MutableDocumentComposer composer,
+  ) {
+    final node = document.getNodeById(composer.selection!.extent.nodeId);
+    if (node == null) {
+      return false;
+    }
+
+    final nodeAbove = document.getNodeBefore(node);
+    if (nodeAbove == null) {
+      return false;
+    }
+    if (nodeAbove is! TextNode) {
+      return false;
+    }
+
+    final aboveParagraphLength = nodeAbove.text.text.length;
+
+    // Send edit command.
+    executor
+      ..executeCommand(
+        CombineParagraphsCommand(
+          firstNodeId: nodeAbove.id,
+          secondNodeId: node.id,
+        ),
+      )
+      ..executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: nodeAbove.id,
+              nodePosition: TextNodePosition(offset: aboveParagraphLength),
+            ),
+          ),
+          SelectionChangeType.deleteContent,
+          SelectionReason.userInteraction,
+        ),
+      );
+
+    return true;
+  }
+
+  void moveSelectionToEndOfPrecedingNode(
+    CommandExecutor executor,
+    MutableDocument document,
+    MutableDocumentComposer composer,
+  ) {
+    if (composer.selection == null) {
+      return;
+    }
+
+    final node = document.getNodeById(composer.selection!.extent.nodeId);
+    if (node == null) {
+      return;
+    }
+
+    final nodeBefore = document.getNodeBefore(node);
+    if (nodeBefore == null) {
+      return;
+    }
+
+    executor.executeCommand(
+      ChangeSelectionCommand(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: nodeBefore.id,
+            nodePosition: nodeBefore.endPosition,
+          ),
+        ),
+        SelectionChangeType.collapseSelection,
+        SelectionReason.userInteraction,
+      ),
+    );
   }
 }
 
