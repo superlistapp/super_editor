@@ -11,6 +11,7 @@ import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_android.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
+import 'package:example/demos/features/feature_action_tags.dart';
 import 'package:example/demos/features/feature_hash_tags.dart';
 import 'package:example/demos/features/feature_user_tags.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
@@ -284,6 +285,13 @@ final _menu = <_MenuGroup>[
         title: 'User Tags',
         pageBuilder: (context) {
           return const UserTagsFeatureDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.task,
+        title: 'Action Tags',
+        pageBuilder: (context) {
+          return const ActionTagsFeatureDemo();
         },
       ),
     ],
