@@ -7,9 +7,11 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
@@ -278,23 +280,30 @@ class TextDeltasDocumentEditor {
   ) {
     editorOpsLog.fine('Attempting to insert "$text" at position: $insertionPosition');
 
-    final extentNodePosition = insertionPosition.nodePosition;
-    if (extentNodePosition is UpstreamDownstreamNodePosition) {
-      editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
-      commonOps.insertBlockLevelNewline();
-    }
-
-    final extentNode = document.getNodeById(insertionPosition.nodeId)!;
-    if (extentNode is! TextNode || extentNodePosition is! TextNodePosition) {
-      editorOpsLog.fine(
-          "Couldn't insert text because Super Editor doesn't know how to handle a node of type: $extentNode, with position: $extentNodePosition");
+    DocumentNode? insertionNode = document.getNodeById(insertionPosition.nodeId);
+    if (insertionNode == null) {
+      editorOpsLog.warning('Attempted to insert text using a non-existing node');
       return false;
     }
 
-    final textNode = document.getNodeById(insertionPosition.nodeId) as TextNode;
+    if (insertionPosition.nodePosition is UpstreamDownstreamNodePosition) {
+      editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
+      commonOps.insertBlockLevelNewline();
+
+      // After inserting a block level new line, the selection changes to another node.
+      // Therefore, we need to update the insertion position.
+      insertionNode = document.getNodeById(selection.value!.extent.nodeId)!;
+      insertionPosition = DocumentPosition(nodeId: insertionNode.id, nodePosition: insertionNode.endPosition);
+    }
+
+    if (insertionNode is! TextNode || insertionPosition.nodePosition is! TextNodePosition) {
+      editorOpsLog.fine(
+          "Couldn't insert text because Super Editor doesn't know how to handle a node of type: $insertionNode, with position: ${insertionPosition.nodePosition}");
+      return false;
+    }
 
     editorOpsLog.fine("Executing text insertion command.");
-    editorOpsLog.finer("Text before insertion: '${textNode.text.text}'");
+    editorOpsLog.finer("Text before insertion: '${insertionNode.text.text}'");
     editor.execute([
       InsertTextRequest(
         documentPosition: insertionPosition,
@@ -302,7 +311,7 @@ class TextDeltasDocumentEditor {
         attributions: composerPreferences.currentAttributions,
       ),
     ]);
-    editorOpsLog.finer("Text after insertion: '${textNode.text.text}'");
+    editorOpsLog.finer("Text after insertion: '${insertionNode.text.text}'");
 
     return true;
   }
@@ -488,7 +497,40 @@ class TextDeltasDocumentEditor {
 
     final newNodeId = Editor.createNodeId();
 
-    if (extentNode is ParagraphNode) {
+    if (extentNode is ListItemNode) {
+      if (extentNode.text.text.isEmpty) {
+        // The list item is empty. Convert it to a paragraph.
+        editorOpsLog.finer(
+            "The current node is an empty list item. Converting it to a paragraph instead of inserting block-level newline.");
+        editor.execute([
+          ConvertTextNodeToParagraphRequest(nodeId: extentNode.id),
+        ]);
+        return;
+      }
+
+      // Split the list item into two.
+      editorOpsLog.finer("Splitting list item in two.");
+      editor.execute([
+        SplitListItemRequest(
+          nodeId: extentNode.id,
+          splitPosition: caretPosition.nodePosition as TextNodePosition,
+          newNodeId: newNodeId,
+        ),
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      ]);
+      final newListItemNode = document.getNodeById(newNodeId)!;
+
+      _updateImeRangeMappingAfterNodeSplit(originNode: extentNode, newNode: newListItemNode);
+    } else if (extentNode is ParagraphNode) {
       // Split the paragraph into two. This includes headers, blockquotes, and
       // any other block-level paragraph.
       final currentExtentPosition = caretPosition.nodePosition as TextNodePosition;
@@ -518,30 +560,7 @@ class TextDeltasDocumentEditor {
         ),
       ]);
 
-      final newImeValue = _nextImeValue!;
-      final imeNewlineIndex = newImeValue.text.indexOf("\n");
-      final topImeToDocTextRange = TextRange(start: 0, end: imeNewlineIndex);
-      final bottomImeToDocTextRange = TextRange(start: imeNewlineIndex + 1, end: newImeValue.text.length);
-
-      // Update mapping from Document nodes to IME ranges.
-      _serializedDoc.docTextNodesToImeRanges[extentNode.id] = topImeToDocTextRange;
-      _serializedDoc.docTextNodesToImeRanges[newTextNode.id] = bottomImeToDocTextRange;
-
-      // Remove old mapping from IME TextRange to Document node.
-      late final MapEntry<TextRange, String> oldImeToDoc;
-      for (final entry in _serializedDoc.imeRangesToDocTextNodes.entries) {
-        if (entry.value != extentNode.id) {
-          continue;
-        }
-
-        oldImeToDoc = entry;
-        break;
-      }
-      _serializedDoc.imeRangesToDocTextNodes.remove(oldImeToDoc.key);
-
-      // Update and add mapping from IME TextRanges to Document nodes.
-      _serializedDoc.imeRangesToDocTextNodes[topImeToDocTextRange] = extentNode.id;
-      _serializedDoc.imeRangesToDocTextNodes[bottomImeToDocTextRange] = newTextNode.id;
+      _updateImeRangeMappingAfterNodeSplit(originNode: extentNode, newNode: newTextNode);
     } else if (caretPosition.nodePosition is UpstreamDownstreamNodePosition) {
       final extentPosition = caretPosition.nodePosition as UpstreamDownstreamNodePosition;
       if (extentPosition.affinity == TextAffinity.downstream) {
@@ -571,6 +590,29 @@ class TextDeltasDocumentEditor {
           ),
         ]);
       }
+    } else if (extentNode is TaskNode) {
+      final splitOffset = (caretPosition.nodePosition as TextNodePosition).offset;
+
+      editor.execute([
+        SplitExistingTaskRequest(
+          existingNodeId: extentNode.id,
+          splitOffset: splitOffset,
+          newNodeId: newNodeId,
+        ),
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: newNodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      ]);
+      final newTaskNode = document.getNodeById(newNodeId)!;
+
+      _updateImeRangeMappingAfterNodeSplit(originNode: extentNode, newNode: newTaskNode);
     } else {
       // We don't know how to handle this type of node position. Do nothing.
       editorOpsLog.fine("Can't insert new block-level inline because we don't recognize the selected content type.");
@@ -583,5 +625,36 @@ class TextDeltasDocumentEditor {
       commonOps.deleteSelection();
     }
     commonOps.insertBlockLevelNewline();
+  }
+
+  /// Updates mappings from Document nodes to IME ranges and IME ranges to Document nodes.
+  void _updateImeRangeMappingAfterNodeSplit({
+    required DocumentNode originNode,
+    required DocumentNode newNode,
+  }) {
+    final newImeValue = _nextImeValue!;
+    final imeNewlineIndex = newImeValue.text.indexOf("\n");
+    final topImeToDocTextRange = TextRange(start: 0, end: imeNewlineIndex);
+    final bottomImeToDocTextRange = TextRange(start: imeNewlineIndex + 1, end: newImeValue.text.length);
+
+    // Update mapping from Document nodes to IME ranges.
+    _serializedDoc.docTextNodesToImeRanges[originNode.id] = topImeToDocTextRange;
+    _serializedDoc.docTextNodesToImeRanges[newNode.id] = bottomImeToDocTextRange;
+
+    // Remove old mapping from IME TextRange to Document node.
+    late final MapEntry<TextRange, String> oldImeToDoc;
+    for (final entry in _serializedDoc.imeRangesToDocTextNodes.entries) {
+      if (entry.value != originNode.id) {
+        continue;
+      }
+
+      oldImeToDoc = entry;
+      break;
+    }
+    _serializedDoc.imeRangesToDocTextNodes.remove(oldImeToDoc.key);
+
+    // Update and add mapping from IME TextRanges to Document nodes.
+    _serializedDoc.imeRangesToDocTextNodes[topImeToDocTextRange] = originNode.id;
+    _serializedDoc.imeRangesToDocTextNodes[bottomImeToDocTextRange] = newNode.id;
   }
 }

@@ -423,7 +423,7 @@ class TextComponent extends StatefulWidget {
     required this.text,
     this.textAlign,
     this.textDirection,
-    this.textScaleFactor,
+    this.textScaler,
     required this.textStyleBuilder,
     this.metadata = const {},
     this.textSelection,
@@ -442,13 +442,10 @@ class TextComponent extends StatefulWidget {
   final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
-  /// The number of font pixels for each logical pixel.
+  /// The text scaling policy.
   ///
-  /// For example, if the text scale factor is 1.5, text will be 50% larger than
-  /// the specified font size.
-  ///
-  /// Defaults to the value obtained from `MediaQuery.textScaleFactorOf`.
-  final double? textScaleFactor;
+  /// Defaults to `MediaQuery.textScalerOf()`.
+  final TextScaler? textScaler;
 
   @override
   TextComponentState createState() => TextComponentState();
@@ -796,7 +793,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
         richText: widget.text.computeTextSpan(_textStyleWithBlockType),
         textAlign: widget.textAlign ?? TextAlign.left,
         textDirection: widget.textDirection ?? TextDirection.ltr,
-        textScaleFactor: widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
+        textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
         userSelection: UserSelection(
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,

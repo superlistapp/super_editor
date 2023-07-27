@@ -256,7 +256,7 @@ Future<void> _buildTextScaleScaffold(
             ),
             Expanded(
               child: MediaQuery(
-                data: const MediaQueryData(textScaleFactor: 2.0),
+                data: const MediaQueryData(textScaler: TextScaler.linear(2.0)),
                 child: scaledEditor,
               ),
             ),

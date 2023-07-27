@@ -631,12 +631,7 @@ class SuperEditorState extends State<SuperEditor> {
           },
           overlays: [
             for (final overlayBuilder in widget.documentOverlayBuilders) //
-              Builder(
-                // We place each overlay in a Builder so that the _docLayoutKey binds
-                // to the SingleColumnDocumentLayout before running `build()` on each
-                // overlay.
-                builder: (context) => overlayBuilder.build(context, editContext),
-              )
+              (context) => overlayBuilder.build(context, editContext),
           ],
         );
       case DocumentGestureMode.android:

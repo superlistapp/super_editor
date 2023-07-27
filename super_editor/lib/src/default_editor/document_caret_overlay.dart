@@ -34,8 +34,11 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   @override
   void initState() {
     super.initState();
-    _blinkController = BlinkController(tickerProvider: this)..startBlinking();
+    _blinkController = BlinkController(tickerProvider: this);
+
     widget.composer.selectionNotifier.addListener(_onSelectionChange);
+
+    _startOrStopBlinking();
   }
 
   @override
@@ -45,13 +48,17 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     if (widget.composer != oldWidget.composer) {
       oldWidget.composer.selectionNotifier.removeListener(_onSelectionChange);
       widget.composer.selectionNotifier.addListener(_onSelectionChange);
+
+      _startOrStopBlinking();
     }
   }
 
   @override
   void dispose() {
     widget.composer.selectionNotifier.removeListener(_onSelectionChange);
+
     _blinkController.dispose();
+
     super.dispose();
   }
 
@@ -64,6 +71,20 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
         // The caret is positioned in the build() call.
       });
     }
+  }
+
+  void _startOrStopBlinking() {
+    if (widget.composer.selection == null && !_blinkController.isBlinking) {
+      return;
+    }
+
+    if (widget.composer.selection != null && _blinkController.isBlinking) {
+      return;
+    }
+
+    widget.composer.selection != null //
+        ? _blinkController.startBlinking()
+        : _blinkController.stopBlinking();
   }
 
   void _updateCaretFlash() {

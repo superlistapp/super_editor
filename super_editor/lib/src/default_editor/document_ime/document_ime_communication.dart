@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -61,9 +60,6 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
 
   // TODO: get floating cursor out of here. Use a multi-client IME decorator to split responsibilities
   late FloatingCursorController? _floatingCursorController;
-
-  /// Whether we should handle [TextEditingDeltaNonTextUpdate]s.
-  bool _allowNonTextDeltas = true;
 
   void _onContentChange() {
     if (!attached) {
@@ -188,31 +184,16 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       editorImeLog.fine("$delta");
     }
 
-    // After we call setEditingState(), we ignore non-text deltas until the end of the current frame.
-    //
-    // This is because, in some platforms, we get a TextEditingDeltaNonTextUpdate after this call.
-    // The engine sends this delta to synchronize the editing value.
-    //
-    // Handling this synchronization delta may cause endless loops.
-    final allowedDeltas = _allowNonTextDeltas
-        ? textEditingDeltas
-        : textEditingDeltas.where((e) => e is! TextEditingDeltaNonTextUpdate).toList();
-    if (allowedDeltas.isEmpty) {
-      editorImeLog
-          .fine("Ignoring this delta because it's a non-text update that came in right after we setEditingState()");
-      return;
-    }
-
     final imeValueBeforeChange = currentTextEditingValue;
     editorImeLog.fine("IME value before applying deltas: $imeValueBeforeChange");
 
     _isApplyingDeltas = true;
     editorImeLog.fine("===================================================");
     // Update our local knowledge of what the platform thinks the IME value is right now.
-    _updatePlatformImeValueWithDeltas(allowedDeltas);
+    _updatePlatformImeValueWithDeltas(textEditingDeltas);
 
     // Apply the deltas to our document, selection, and composing region.
-    textDeltasDocumentEditor.applyDeltas(allowedDeltas);
+    textDeltasDocumentEditor.applyDeltas(textEditingDeltas);
     editorImeLog.fine("===================================================");
     _isApplyingDeltas = false;
 
@@ -240,21 +221,6 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       editorImeLog.fine("[DocumentImeInputClient] - There's no document selection. Not sending anything to IME.");
       return;
     }
-
-    // In some platforms, like macOS, whenever we call setEditingState(), the engine send us back a
-    // non-text delta to sync its state with our state.
-    //
-    // We have no way to know if the delta means that the selection/composing region changed,
-    // or if it means that the engine is syncing its state.
-    //
-    // If we always handle the non-text deltas, we might end up in an endless loop of deltas.
-    // To avoid this, we don't handle any non-text deltas until the next frame, after we call setEditingState.
-    //
-    // Remove this as soon as https://github.com/flutter/flutter/issues/118759 is resolved.
-    _allowNonTextDeltas = false;
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _allowNonTextDeltas = true;
-    });
 
     _isSendingToIme = true;
     editorImeLog.fine("[DocumentImeInputClient] - Serializing and sending document and selection to IME");

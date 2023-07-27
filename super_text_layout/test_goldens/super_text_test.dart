@@ -21,13 +21,13 @@ void main() {
                 Expanded(
                   child: SuperText(
                     richText: _threeLineSpan,
-                    textScaleFactor: 1.0,
+                    textScaler: TextScaler.noScaling,
                   ),
                 ),
                 Expanded(
                   child: SuperText(
                     richText: _threeLineSpan,
-                    textScaleFactor: 2.0,
+                    textScaler: TextScaler.linear(2.0),
                   ),
                 ),
               ],

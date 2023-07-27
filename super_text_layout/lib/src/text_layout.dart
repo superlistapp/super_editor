@@ -109,7 +109,7 @@ abstract class TextLayout {
 /// to query details about the text layout. Rather than re-declare every
 /// [ProseTextLayout] method and forward the calls, a [ProseTextBlock]
 /// provides access to the inner [ProseTextLayout], directly.
-abstract class ProseTextBlock {
+abstract mixin class ProseTextBlock {
   /// Returns the [ProseTextLayout] that sits within this text block.
   ProseTextLayout get textLayout;
 }
@@ -197,13 +197,13 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
   final RenderLayoutAwareParagraph _renderParagraph;
   late final int _textLength;
 
-  double get textScaleFactor => _renderParagraph.textScaleFactor;
+  TextScaler get textScaler => _renderParagraph.textScaler;
 
   @override
   double get estimatedLineHeight {
-    final fontSize = _richText.style?.fontSize;
-    final lineHeight = _richText.style?.height;
-    return (fontSize ?? 16) * (lineHeight ?? 1.0) * textScaleFactor;
+    final fontSize = _richText.style?.fontSize ?? 16;
+    final lineHeight = _richText.style?.height ?? 1.0;
+    return textScaler.scale(fontSize * lineHeight);
   }
 
   @override
@@ -248,8 +248,8 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     // If no text is currently displayed, we can't use a character box
     // to measure, but we may be able to use related metrics.
     if (_textLength == 0) {
-      final estimatedLineHeight =
-          _renderParagraph.getFullHeightForCaret(position) ?? (_richText.style?.fontSize ?? 0.0) * textScaleFactor;
+      final fontSize = _richText.style?.fontSize ?? 0.0;
+      final estimatedLineHeight = _renderParagraph.getFullHeightForCaret(position) ?? textScaler.scale(fontSize);
       return estimatedLineHeight * lineHeightMultiplier;
     }
 
