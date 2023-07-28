@@ -183,16 +183,16 @@ void main() {
       await tester.ime.sendDeltas(
         const [
           TextEditingDeltaNonTextUpdate(
-            oldText: '',
-            selection: TextSelection.collapsed(offset: 0),
+            oldText: '. ',
+            selection: TextSelection.collapsed(offset: 2),
             composing: TextRange(start: -1, end: -1),
           ),
           TextEditingDeltaInsertion(
-            oldText: '',
+            oldText: '. ',
             textInserted: 'Goi',
-            insertionOffset: 0,
-            selection: TextSelection.collapsed(offset: 3),
-            composing: TextRange(start: 0, end: 3),
+            insertionOffset: 2,
+            selection: TextSelection.collapsed(offset: 5),
+            composing: TextRange(start: 2, end: 5),
           )
         ],
         getter: imeClientGetter,
@@ -443,11 +443,11 @@ void main() {
         await tester.ime.sendDeltas(
           const [
             TextEditingDeltaInsertion(
-              oldText: '',
+              oldText: '. ',
               textInserted: 'Before the line break new line',
-              insertionOffset: 0,
-              selection: TextSelection.collapsed(offset: 30),
-              composing: TextRange(start: 0, end: 30),
+              insertionOffset: 2,
+              selection: TextSelection.collapsed(offset: 32),
+              composing: TextRange(start: 2, end: 32),
             )
           ],
           getter: imeClientGetter,
