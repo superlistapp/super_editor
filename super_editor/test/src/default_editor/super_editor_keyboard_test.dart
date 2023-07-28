@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../super_editor/test_documents.dart';
+import 'test_documents.dart';
 
 void main() {
   group('SuperEditor', () {
@@ -12,15 +13,15 @@ void main() {
         // Initial screen dimensions for test document
         const screenSizeForTest = Size(640.0, 120.0);
 
-        void _setInitialWindowSize(WidgetTester tester) {
-          tester.binding.window
-            ..physicalSizeTestValue = screenSizeForTest
+        void setInitialWindowSize(WidgetTester tester) {
+          tester.view
+            ..physicalSize = screenSizeForTest
             ..platformDispatcher.textScaleFactorTestValue = 1.0
-            ..devicePixelRatioTestValue = 1.0;
+            ..devicePixelRatio = 1.0;
         }
 
         testWidgets('PAGE DOWN does not scroll past bottom of the viewport', (tester) async {
-          _setInitialWindowSize(tester);
+          setInitialWindowSize(tester);
 
           await tester.pumpWidget(_buildDocumentMultipleParagraphs());
 
@@ -40,7 +41,7 @@ void main() {
         });
 
         testWidgets('PAGE DOWN scrolls down by the viewport height', (tester) async {
-          _setInitialWindowSize(tester);
+          setInitialWindowSize(tester);
 
           await tester.pumpWidget(_buildDocumentMultipleParagraphs());
 
@@ -53,11 +54,11 @@ void main() {
 
           // Ensure that the scroll position is set to the expected position
           // after the key press action.
-          expect(scrollState.widget.controller!.offset, equals(tester.binding.window.physicalSize.height));
+          expect(scrollState.widget.controller!.offset, equals(tester.view.physicalSize.height));
         });
 
         testWidgets('PAGE UP does not scroll past top of the viewport', (tester) async {
-          _setInitialWindowSize(tester);
+          setInitialWindowSize(tester);
 
           await tester.pumpWidget(_buildDocumentMultipleParagraphs());
 
@@ -74,7 +75,7 @@ void main() {
         });
 
         testWidgets('PAGE UP scrolls up by the viewport height', (tester) async {
-          _setInitialWindowSize(tester);
+          setInitialWindowSize(tester);
 
           await tester.pumpWidget(_buildDocumentMultipleParagraphs());
 
@@ -91,11 +92,11 @@ void main() {
           // Ensure that the scroll position is set to the expected position
           // after the key press action.
           expect(scrollState.widget.controller!.offset,
-              equals(scrollState.position.maxScrollExtent - tester.binding.window.physicalSize.height));
+              equals(scrollState.position.maxScrollExtent - tester.view.physicalSize.height));
         });
 
         testWidgets('HOME does not scroll past top of the viewport', (tester) async {
-          _setInitialWindowSize(tester);
+          setInitialWindowSize(tester);
 
           await tester.pumpWidget(_buildDocumentMultipleParagraphs());
 
@@ -112,7 +113,7 @@ void main() {
         });
 
         testWidgets('HOME scrolls to top of viewport', (tester) async {
-          _setInitialWindowSize(tester);
+          setInitialWindowSize(tester);
 
           await tester.pumpWidget(_buildDocumentMultipleParagraphs());
 
@@ -132,7 +133,7 @@ void main() {
         });
 
         testWidgets('END does not scroll past bottom of the viewport', (tester) async {
-          _setInitialWindowSize(tester);
+          setInitialWindowSize(tester);
 
           await tester.pumpWidget(_buildDocumentMultipleParagraphs());
 
@@ -152,7 +153,7 @@ void main() {
         });
 
         testWidgets('END scrolls to bottom of viewport', (tester) async {
-          _setInitialWindowSize(tester);
+          setInitialWindowSize(tester);
 
           await tester.pumpWidget(_buildDocumentMultipleParagraphs());
 
@@ -172,23 +173,29 @@ void main() {
   });
 }
 
-Widget _buildDocumentMultipleParagraphs() => MaterialApp(
-      home: Scaffold(
-        body: SuperEditor(
-          scrollController: ScrollController(),
-          editor: DocumentEditor(document: multipleParagraphDoc()),
-          inputSource: DocumentInputSource.ime,
-          focusNode: FocusNode(),
-          composer: DocumentComposer(
-            initialSelection: const DocumentSelection.collapsed(
-              position: DocumentPosition(
-                nodeId: '1',
-                nodePosition: TextNodePosition(offset: 0),
-              ),
-            ),
-          ),
-          keyboardActions: defaultImeKeyboardActions,
-          autofocus: true,
-        ),
+Widget _buildDocumentMultipleParagraphs() {
+  final doc = multipleParagraphDoc();
+  final composer = MutableDocumentComposer(
+    initialSelection: const DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: '1',
+        nodePosition: TextNodePosition(offset: 0),
       ),
-    );
+    ),
+  );
+  final docEditor = createDefaultDocumentEditor(document: doc, composer: composer);
+  return MaterialApp(
+    home: Scaffold(
+      body: SuperEditor(
+        scrollController: ScrollController(),
+        document: doc,
+        editor: docEditor,
+        inputSource: TextInputSource.ime,
+        focusNode: FocusNode(),
+        composer: composer,
+        keyboardActions: defaultImeKeyboardActions,
+        autofocus: true,
+      ),
+    ),
+  );
+}
