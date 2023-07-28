@@ -436,44 +436,60 @@ class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
+    if (node is! ParagraphNode) {
+      return;
+    }
+
+    final deletionPosition = DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition);
+    if (deletionPosition.nodePosition is! TextNodePosition) {
+      return;
+    }
+
     final document = context.find<MutableDocument>(Editor.documentKey);
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final documentLayoutEditable = context.find<DocumentLayoutEditable>(Editor.layoutKey);
 
-    final deletionPosition = DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition);
+    final paragraphNode = node as ParagraphNode;
+    if (paragraphNode.metadata["blockType"] != paragraphAttribution) {
+      executor.executeCommand(
+        ChangeParagraphBlockTypeCommand(
+          nodeId: node.id,
+          blockType: paragraphAttribution,
+        ),
+      );
+      return;
+    }
 
-    if (deletionPosition.nodePosition is TextNodePosition) {
-      final nodeBefore = document.getNodeBefore(node);
-      if (nodeBefore == null) {
-        return;
-      }
+    final nodeBefore = document.getNodeBefore(node);
+    if (nodeBefore == null) {
+      return;
+    }
 
-      if (nodeBefore is TextNode) {
-        // The caret is at the beginning of one TextNode and is preceded by
-        // another TextNode. Merge the two TextNodes.
-        mergeTextNodeWithUpstreamTextNode(executor, document, composer);
-        return;
-      }
+    if (nodeBefore is TextNode) {
+      // The caret is at the beginning of one TextNode and is preceded by
+      // another TextNode. Merge the two TextNodes.
+      mergeTextNodeWithUpstreamTextNode(executor, document, composer);
+      return;
+    }
 
-      final componentBefore = documentLayoutEditable.documentLayout.getComponentByNodeId(nodeBefore.id)!;
-      if (!componentBefore.isVisualSelectionSupported()) {
-        // The node/component above is not selectable. Delete it.
-        executor.executeCommand(
-          DeleteNodeCommand(nodeId: nodeBefore.id),
-        );
-        return;
-      }
+    final componentBefore = documentLayoutEditable.documentLayout.getComponentByNodeId(nodeBefore.id)!;
+    if (!componentBefore.isVisualSelectionSupported()) {
+      // The node/component above is not selectable. Delete it.
+      executor.executeCommand(
+        DeleteNodeCommand(nodeId: nodeBefore.id),
+      );
+      return;
+    }
 
-      moveSelectionToEndOfPrecedingNode(executor, document, composer);
+    moveSelectionToEndOfPrecedingNode(executor, document, composer);
 
-      if ((node as TextNode).text.text.isEmpty) {
-        // The caret is at the beginning of an empty TextNode and the preceding
-        // node is not a TextNode. Delete the current TextNode and move the
-        // selection up to the preceding node if exist.
-        executor.executeCommand(
-          DeleteNodeCommand(nodeId: node.id),
-        );
-      }
+    if ((node as TextNode).text.text.isEmpty) {
+      // The caret is at the beginning of an empty TextNode and the preceding
+      // node is not a TextNode. Delete the current TextNode and move the
+      // selection up to the preceding node if exist.
+      executor.executeCommand(
+        DeleteNodeCommand(nodeId: node.id),
+      );
     }
   }
 
