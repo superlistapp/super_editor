@@ -49,6 +49,11 @@ class TextDeltasDocumentEditor {
   void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
     editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
 
+    editorImeDeltasLog.fine("Incoming deltas:");
+    for (final delta in textEditingDeltas) {
+      editorImeDeltasLog.fine(delta);
+    }
+
     // Apply deltas to the document.
     editorImeLog.fine("Serializing document to perform IME operations");
     _serializedDoc = DocumentImeSerializer(
@@ -357,19 +362,17 @@ class TextDeltasDocumentEditor {
       final selectedNodeIndex = document.getNodeIndexById(
         selection.value!.extent.nodeId,
       );
-      if (selectedNodeIndex > 0) {
-        // The user is trying to delete upstream at the start of a node.
-        // This action requires intervention because the IME doesn't know
-        // that there's more content before this node. Instruct the editor
-        // to run a delete action upstream, which will take the desired
-        // "backspace" behavior at the start of this node.
-        editor.execute([
-          DeleteUpstreamAtBeginningOfNodeRequest(
-            document.getNodeAt(selectedNodeIndex)!,
-          ),
-        ]);
-        return;
-      }
+      // The user is trying to delete upstream at the start of a node.
+      // This action requires intervention because the IME doesn't know
+      // that there's more content before this node. Instruct the editor
+      // to run a delete action upstream, which will take the desired
+      // "backspace" behavior at the start of this node.
+      editor.execute([
+        DeleteUpstreamAtBeginningOfNodeRequest(
+          document.getNodeAt(selectedNodeIndex)!,
+        ),
+      ]);
+      return;
     }
 
     editorImeLog.fine("Running selection deletion operation");

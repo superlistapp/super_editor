@@ -114,15 +114,12 @@ class DocumentImeSerializer {
     }
 
     // We want to prepend an arbitrary placeholder character whenever the
-    // user's selection is collapsed at the beginning of a node, and there's
-    // another node above the selected node. Without the arbitrary character,
-    // the IME would assume that there's no content before the current node and
-    // therefore it wouldn't report the backspace button.
+    // user's selection is collapsed at the beginning of a node. Without the
+    // arbitrary character, the IME would assume that there's no content
+    // before the current node and therefore it wouldn't report the backspace
+    // button.
     final selectedNode = _doc.getNode(selection.extent)!;
-    final selectedNodeIndex = _doc.getNodeIndexById(selectedNode.id);
-    return selectedNodeIndex > 0 &&
-        selection.isCollapsed &&
-        selection.extent.nodePosition == selectedNode.beginningPosition;
+    return selection.isCollapsed && selection.extent.nodePosition == selectedNode.beginningPosition;
   }
 
   bool get didPrependPlaceholder => _prependedPlaceholder.isNotEmpty;
