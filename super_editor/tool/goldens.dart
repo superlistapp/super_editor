@@ -2,6 +2,8 @@ import 'dart:io';
 
 // ignore: depend_on_referenced_packages
 import 'package:args/command_runner.dart';
+// ignore: depend_on_referenced_packages
+import 'package:path/path.dart' as path;
 
 Future<void> main(List<String> arguments) async {
   final runner = CommandRunner("goldens", "A tool to run and update golden tests using docker")
@@ -61,29 +63,26 @@ class GoldenTestCommand extends Command {
 
     // Other arguments passed at the end of the command.
     // For example, the test directory.
-    final rest = args.rest;
+    final rest = [...args.rest];
 
-    final testDirectory = rest.isEmpty //
-        ? 'test_goldens'
-        : '';
+    late String testDirectory;
+    if (rest.isNotEmpty) {
+      testDirectory = rest.removeAt(0);
+    } else {
+      testDirectory = 'test_goldens';
+    }
+
+    final mapppings = _findTestFailureDirMappings(testDirectory);
 
     // Runs the container.
     //
     // --rm: Removes the container when it exists.
-    //
-    // -v: Mounts the repo root dir of the host machine into /build directory on the container.
-    // We need to mount the root to be able to depend on the other packages using the local path.
-    //
-    // --workdir: Sets the working directory to /build/super_editor in the container.
     await _runProcess(
       exe: 'docker',
       arguments: [
         'run',
         '--rm',
-        '-v',
-        '${Directory.current.path}/../:/build',
-        '--workdir',
-        '/build/super_editor',
+        ...mapppings,
         'supereditor_golden_tester',
         'flutter',
         'test',
@@ -142,11 +141,16 @@ class UpdateGoldensCommand extends Command {
 
     // Other arguments passed at the end of the command.
     // For example, the test directory.
-    final rest = args.rest;
+    final rest = [...args.rest];
 
-    final testDirectory = rest.isEmpty //
-        ? 'test_goldens'
-        : '';
+    late String testDirectory;
+    if (rest.isNotEmpty) {
+      testDirectory = rest.removeAt(0);
+    } else {
+      testDirectory = 'test_goldens';
+    }
+
+    //final mapppings = _findTestFailureDirMappings(testDirectory);
 
     // Runs the container.
     //
@@ -161,10 +165,13 @@ class UpdateGoldensCommand extends Command {
       arguments: [
         'run',
         '--rm',
+        //...mapppings,
         '-v',
-        '${Directory.current.path}/../:/build',
-        '--workdir',
-        '/build/super_editor',
+        '${Directory.current.path}/$testDirectory:/super_editor/super_editor/$testDirectory',
+        // '-v',
+        // '${Directory.current.path}/../:/build',
+        // '--workdir',
+        // '/build/super_editor',
         'supereditor_golden_tester',
         'flutter',
         'test',
@@ -186,6 +193,7 @@ Future<void> _buildDockerImage() async {
 
   await _runProcess(
     exe: 'docker',
+    workingDirectory: '../',
     arguments: [
       'build',
       '-f',
@@ -209,21 +217,43 @@ Future<void> _runProcess({
   required String description,
   String? workingDirectory,
 }) async {
-  final result = await Process.run(
+  final process = await Process.start(
     exe,
     arguments,
     workingDirectory: workingDirectory,
   );
 
-  if (result.stdout != null) {
-    stdout.write(result.stdout);
-  }
+  stdout.addStream(process.stdout);
+  stderr.addStream(process.stderr);
 
-  if (result.stderr != null) {
-    stdout.write(result.stderr);
-  }
+  final exitCode = await process.exitCode;
 
-  if (result.exitCode != 0) {
+  if (exitCode != 0) {
     throw Exception('$description failed');
   }
+}
+
+List<String> _findTestFailureDirMappings(String rootTestDir) {
+  final mapppings = <String>[
+    '-v',
+    '${Directory.current.path}/$rootTestDir/failures:/super_editor/super_editor/$rootTestDir/failures/'
+  ];
+
+  final dirs = _findAllTestDirs(rootTestDir);
+  for (final dir in dirs) {
+    mapppings.add('-v');
+    mapppings.add('${Directory.current.path}/$dir/failures:/super_editor/super_editor/$dir/failures');
+  }
+  return mapppings;
+}
+
+List<String> _findAllTestDirs(String rootTestDir) {
+  final dir = Directory(rootTestDir);
+  return dir
+      .listSync(recursive: true) //
+      .whereType<Directory>()
+      // Ensure we use linux path separator.
+      .map((e) => e.path.replaceAll(path.separator, '/'))
+      .where((e) => !e.endsWith('goldens') && !e.endsWith('failures'))
+      .toList();
 }

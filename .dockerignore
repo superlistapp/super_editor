@@ -1,0 +1,4 @@
+**/failures/
+*/example/
+*/build/
+*/.dart_tool/
