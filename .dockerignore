@@ -1,4 +1,9 @@
-**/failures/
 */example/
 */build/
 */.dart_tool/
+
+# We dont need git history inside the image.
+.git
+
+# Ignore the golden failure directories because they will be mapped.
+**/failures/

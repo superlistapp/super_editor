@@ -16,8 +16,8 @@ RUN git clone https://github.com/flutter/flutter.git ${FLUTTER_HOME}
 
 RUN flutter doctor
 
+# Copy the whole repo.
+# We need this because we use local dependencies.
 COPY ./ /super_editor
 
-WORKDIR /super_editor/super_editor
-RUN flutter pub get
 

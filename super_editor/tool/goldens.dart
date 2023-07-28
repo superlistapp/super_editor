@@ -67,22 +67,28 @@ class GoldenTestCommand extends Command {
 
     late String testDirectory;
     if (rest.isNotEmpty) {
+      // An argument was passed after the command options. For example, tool/goldens test my_test_dir.
+      // Use the first argument after the command options as the test directory and remove it from the rest.
       testDirectory = rest.removeAt(0);
     } else {
       testDirectory = 'test_goldens';
     }
 
-    final mapppings = _findTestFailureDirMappings(testDirectory);
+    final volumeMappings = _findTestFailureDirMappings(testDirectory);
 
     // Runs the container.
     //
-    // --rm: Removes the container when it exists.
+    // --rm: Removes the container when it exits.
+    //
+    // --workdir: Sets the working directory to /super_editor/super_editor in the container.
     await _runProcess(
       exe: 'docker',
       arguments: [
         'run',
         '--rm',
-        ...mapppings,
+        ...volumeMappings,
+        '--workdir',
+        '/super_editor/super_editor',
         'supereditor_golden_tester',
         'flutter',
         'test',
@@ -92,6 +98,38 @@ class GoldenTestCommand extends Command {
       ],
       description: 'Golden tests',
     );
+  }
+
+  /// Returns a list with all volume mappings for the test failure directories.
+  ///
+  /// This mappings are used so when a failure happens, the failure images are save in the host OS.
+  List<String> _findTestFailureDirMappings(String rootTestDir) {
+    final mapppings = <String>[];
+
+    final dirs = _findAllTestDirs(rootTestDir);
+    for (final dir in dirs) {
+      mapppings.add('-v');
+      mapppings.add('${Directory.current.path}/$dir/failures:/super_editor/super_editor/$dir/failures');
+    }
+
+    mapppings.add('-v');
+    mapppings.add('${Directory.current.path}/$rootTestDir/failures:/super_editor/super_editor/$rootTestDir/failures/');
+
+    return mapppings;
+  }
+
+  /// Returns all sub-directories inside a root test directory.
+  ///
+  /// Ignores "goldens" and "failures" direcories.
+  List<String> _findAllTestDirs(String rootTestDir) {
+    final dir = Directory(rootTestDir);
+    return dir
+        .listSync(recursive: true) //
+        .whereType<Directory>()
+        // Ensure we use linux path separator.
+        .map((e) => e.path.replaceAll(path.separator, '/'))
+        .where((e) => !e.endsWith('goldens') && !e.endsWith('failures'))
+        .toList();
   }
 }
 
@@ -145,33 +183,30 @@ class UpdateGoldensCommand extends Command {
 
     late String testDirectory;
     if (rest.isNotEmpty) {
+      // An argument was passed after the command options. For example, tool/goldens test my_test_dir.
+      // Use the first argument after the command options as the test directory and remove it from the rest.
       testDirectory = rest.removeAt(0);
     } else {
       testDirectory = 'test_goldens';
     }
 
-    //final mapppings = _findTestFailureDirMappings(testDirectory);
-
     // Runs the container.
     //
-    // --rm: Removes the container when it exists.
+    // --rm: Removes the container when it exits.
     //
-    // -v: Mounts the repo root dir of the host machine into /build directory on the container.
-    // We need to mount the root to be able to depend on the other packages using the local path.
+    // -v: Mounts the directory containing the tests of the host machine into the container.
+    // This is used to write the new golden files directly on the host OS.
     //
-    // --workdir: Sets the working directory to /build/super_editor in the container.
+    // --workdir: Sets the working directory to /super_editor/super_editor in the container.
     await _runProcess(
       exe: 'docker',
       arguments: [
         'run',
         '--rm',
-        //...mapppings,
         '-v',
         '${Directory.current.path}/$testDirectory:/super_editor/super_editor/$testDirectory',
-        // '-v',
-        // '${Directory.current.path}/../:/build',
-        // '--workdir',
-        // '/build/super_editor',
+        '--workdir',
+        '/super_editor/super_editor',
         'supereditor_golden_tester',
         'flutter',
         'test',
@@ -193,7 +228,6 @@ Future<void> _buildDockerImage() async {
 
   await _runProcess(
     exe: 'docker',
-    workingDirectory: '../',
     arguments: [
       'build',
       '-f',
@@ -202,6 +236,9 @@ Future<void> _buildDockerImage() async {
       'supereditor_golden_tester',
       '.',
     ],
+    // We need to use the repository root as the working directory to be able to copy all of the files
+    // in this repository, not just the super_editor sub-directory.
+    workingDirectory: '../',
     description: 'Image build',
   );
 }
@@ -231,29 +268,4 @@ Future<void> _runProcess({
   if (exitCode != 0) {
     throw Exception('$description failed');
   }
-}
-
-List<String> _findTestFailureDirMappings(String rootTestDir) {
-  final mapppings = <String>[
-    '-v',
-    '${Directory.current.path}/$rootTestDir/failures:/super_editor/super_editor/$rootTestDir/failures/'
-  ];
-
-  final dirs = _findAllTestDirs(rootTestDir);
-  for (final dir in dirs) {
-    mapppings.add('-v');
-    mapppings.add('${Directory.current.path}/$dir/failures:/super_editor/super_editor/$dir/failures');
-  }
-  return mapppings;
-}
-
-List<String> _findAllTestDirs(String rootTestDir) {
-  final dir = Directory(rootTestDir);
-  return dir
-      .listSync(recursive: true) //
-      .whereType<Directory>()
-      // Ensure we use linux path separator.
-      .map((e) => e.path.replaceAll(path.separator, '/'))
-      .where((e) => !e.endsWith('goldens') && !e.endsWith('failures'))
-      .toList();
 }

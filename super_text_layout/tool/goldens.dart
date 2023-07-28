@@ -2,6 +2,8 @@ import 'dart:io';
 
 // ignore: depend_on_referenced_packages
 import 'package:args/command_runner.dart';
+// ignore: depend_on_referenced_packages
+import 'package:path/path.dart' as path;
 
 Future<void> main(List<String> arguments) async {
   final runner = CommandRunner("goldens", "A tool to run and update golden tests using docker")
@@ -61,29 +63,32 @@ class GoldenTestCommand extends Command {
 
     // Other arguments passed at the end of the command.
     // For example, the test directory.
-    final rest = args.rest;
+    final rest = [...args.rest];
 
-    final testDirectory = rest.isEmpty //
-        ? 'test_goldens'
-        : '';
+    late String testDirectory;
+    if (rest.isNotEmpty) {
+      // An argument was passed after the command options. For example, tool/goldens test my_test_dir.
+      // Use the first argument after the command options as the test directory and remove it from the rest.
+      testDirectory = rest.removeAt(0);
+    } else {
+      testDirectory = 'test_goldens';
+    }
+
+    final volumeMappings = _findTestFailureDirMappings(testDirectory);
 
     // Runs the container.
     //
-    // --rm: Removes the container when it exists.
+    // --rm: Removes the container when it exits.
     //
-    // -v: Mounts the repo root dir of the host machine into /build directory on the container.
-    // We need to mount the root to be able to depend on the other packages using the local path.
-    //
-    // --workdir: Sets the working directory to /build/super_text_layout in the container.
+    // --workdir: Sets the working directory to /super_editor/super_text_layout in the container.
     await _runProcess(
       exe: 'docker',
       arguments: [
         'run',
         '--rm',
-        '-v',
-        '${Directory.current.path}/../:/build',
+        ...volumeMappings,
         '--workdir',
-        '/build/super_text_layout',
+        '/super_editor/super_text_layout',
         'supereditor_golden_tester',
         'flutter',
         'test',
@@ -93,6 +98,39 @@ class GoldenTestCommand extends Command {
       ],
       description: 'Golden tests',
     );
+  }
+
+  /// Returns a list with all volume mappings for the test failure directories.
+  ///
+  /// This mappings are used so when a failure happens, the failure images are save in the host OS.
+  List<String> _findTestFailureDirMappings(String rootTestDir) {
+    final mapppings = <String>[];
+
+    final dirs = _findAllTestDirs(rootTestDir);
+    for (final dir in dirs) {
+      mapppings.add('-v');
+      mapppings.add('${Directory.current.path}/$dir/failures:/super_editor/super_text_layout/$dir/failures');
+    }
+
+    mapppings.add('-v');
+    mapppings
+        .add('${Directory.current.path}/$rootTestDir/failures:/super_editor/super_text_layout/$rootTestDir/failures/');
+
+    return mapppings;
+  }
+
+  /// Returns all sub-directories inside a root test directory.
+  ///
+  /// Ignores "goldens" and "failures" direcories.
+  List<String> _findAllTestDirs(String rootTestDir) {
+    final dir = Directory(rootTestDir);
+    return dir
+        .listSync(recursive: true) //
+        .whereType<Directory>()
+        // Ensure we use linux path separator.
+        .map((e) => e.path.replaceAll(path.separator, '/'))
+        .where((e) => !e.endsWith('goldens') && !e.endsWith('failures'))
+        .toList();
   }
 }
 
@@ -142,29 +180,34 @@ class UpdateGoldensCommand extends Command {
 
     // Other arguments passed at the end of the command.
     // For example, the test directory.
-    final rest = args.rest;
+    final rest = [...args.rest];
 
-    final testDirectory = rest.isEmpty //
-        ? 'test_goldens'
-        : '';
+    late String testDirectory;
+    if (rest.isNotEmpty) {
+      // An argument was passed after the command options. For example, tool/goldens test my_test_dir.
+      // Use the first argument after the command options as the test directory and remove it from the rest.
+      testDirectory = rest.removeAt(0);
+    } else {
+      testDirectory = 'test_goldens';
+    }
 
     // Runs the container.
     //
-    // --rm: Removes the container when it exists.
+    // --rm: Removes the container when it exits.
     //
-    // -v: Mounts the repo root dir of the host machine into /build directory on the container.
-    // We need to mount the root to be able to depend on the other packages using the local path.
+    // -v: Mounts the directory containing the tests of the host machine into the container.
+    // This is used to write the new golden files directly on the host OS.
     //
-    // --workdir: Sets the working directory to /build/super_text_layout in the container.
+    // --workdir: Sets the working directory to /super_editor/super_text_layout in the container.
     await _runProcess(
       exe: 'docker',
       arguments: [
         'run',
         '--rm',
         '-v',
-        '${Directory.current.path}/../:/build',
+        '${Directory.current.path}/$testDirectory:/super_editor/super_text_layout/$testDirectory',
         '--workdir',
-        '/build/super_text_layout',
+        '/super_editor/super_text_layout',
         'supereditor_golden_tester',
         'flutter',
         'test',
@@ -194,6 +237,9 @@ Future<void> _buildDockerImage() async {
       'supereditor_golden_tester',
       '.',
     ],
+    // We need to use the repository root as the working directory to be able to copy all of the files
+    // in this repository, not just the super_text_layout sub-directory.
+    workingDirectory: '../',
     description: 'Image build',
   );
 }
@@ -209,21 +255,18 @@ Future<void> _runProcess({
   required String description,
   String? workingDirectory,
 }) async {
-  final result = await Process.run(
+  final process = await Process.start(
     exe,
     arguments,
     workingDirectory: workingDirectory,
   );
 
-  if (result.stdout != null) {
-    stdout.write(result.stdout);
-  }
+  stdout.addStream(process.stdout);
+  stderr.addStream(process.stderr);
 
-  if (result.stderr != null) {
-    stdout.write(result.stderr);
-  }
+  final exitCode = await process.exitCode;
 
-  if (result.exitCode != 0) {
+  if (exitCode != 0) {
     throw Exception('$description failed');
   }
 }
