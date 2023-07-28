@@ -1,4 +1,6 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -205,6 +207,118 @@ void main() {
 
         expect(paragraph.metadata['blockType'], blockquoteAttribution);
         expect(paragraph.text.text.isEmpty, isTrue);
+      });
+    });
+
+    group("converts to paragraph when backspace is pressed >", () {
+      testWidgetsOnAllPlatforms("headers", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("# My Header")
+            .withInputSource(TextInputSource.ime)
+            .pump();
+        final headerNode = context.editContext.document.nodes.first;
+
+        await tester.placeCaretInParagraph(headerNode.id, 0);
+
+        // Ensure that we're starting with a header.
+        headerNode.metadata["blockType"] = header1Attribution;
+
+        // Simulate a backspace deletion delta.
+        await tester.ime.sendDeltas(
+          [
+            const TextEditingDeltaNonTextUpdate(
+              oldText: ". My Header",
+              selection: TextSelection(baseOffset: 1, extentOffset: 2),
+              composing: TextRange.empty,
+            ),
+            const TextEditingDeltaDeletion(
+              oldText: ". My Header",
+              selection: TextSelection.collapsed(offset: 1),
+              deletedRange: TextRange(start: 1, end: 2),
+              composing: TextRange.empty,
+            ),
+          ],
+          getter: imeClientGetter,
+        );
+
+        // Ensure that the header became a paragraph.
+        expect(headerNode.metadata["blockType"], paragraphAttribution);
+        expect(SuperEditorInspector.findTextInParagraph(headerNode.id).text, "My Header");
+      });
+
+      testWidgetsOnAllPlatforms("blockquotes", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("> My Blockquote")
+            .withInputSource(TextInputSource.ime)
+            .pump();
+        final blockquoteNode = context.editContext.document.nodes.first;
+
+        await tester.placeCaretInParagraph(blockquoteNode.id, 0);
+
+        // Ensure that we're starting with a blockquote.
+        expect(blockquoteNode.metadata["blockType"], blockquoteAttribution);
+
+        // Simulate a backspace deletion delta.
+        await tester.ime.sendDeltas(
+          [
+            const TextEditingDeltaNonTextUpdate(
+              oldText: ". My Blockquote",
+              selection: TextSelection(baseOffset: 1, extentOffset: 2),
+              composing: TextRange.empty,
+            ),
+            const TextEditingDeltaDeletion(
+              oldText: ". My Blockquote",
+              selection: TextSelection.collapsed(offset: 1),
+              deletedRange: TextRange(start: 1, end: 2),
+              composing: TextRange.empty,
+            ),
+          ],
+          getter: imeClientGetter,
+        );
+
+        // Ensure that the header became a paragraph.
+        expect(blockquoteNode.metadata["blockType"], paragraphAttribution);
+        expect(SuperEditorInspector.findTextInParagraph(blockquoteNode.id).text, "My Blockquote");
+      });
+
+      testWidgetsOnAllPlatforms("ordered list items", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("1. My list item")
+            .withInputSource(TextInputSource.ime)
+            .pump();
+        final listItemNode = context.editContext.document.nodes.first;
+
+        await tester.placeCaretInParagraph(listItemNode.id, 0);
+
+        // Ensure that we're starting with list item.
+        expect(listItemNode, isA<ListItemNode>());
+
+        // Simulate a backspace deletion delta.
+        await tester.ime.sendDeltas(
+          [
+            const TextEditingDeltaNonTextUpdate(
+              oldText: ". My list item",
+              selection: TextSelection(baseOffset: 1, extentOffset: 2),
+              composing: TextRange.empty,
+            ),
+            const TextEditingDeltaDeletion(
+              oldText: ". My list item",
+              selection: TextSelection.collapsed(offset: 1),
+              deletedRange: TextRange(start: 1, end: 2),
+              composing: TextRange.empty,
+            ),
+          ],
+          getter: imeClientGetter,
+        );
+
+        // Ensure that the list item became a paragraph.
+        final newNode = context.editContext.document.nodes.first;
+        expect(newNode, isA<ParagraphNode>());
+        expect(newNode.metadata["blockType"], paragraphAttribution);
+        expect(SuperEditorInspector.findTextInParagraph(listItemNode.id).text, "My list item");
       });
     });
   });
