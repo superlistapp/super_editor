@@ -285,19 +285,17 @@ void main() {
             .withEditorSize(const Size(300, 300))
             .pump();
 
-        final document = SuperEditorInspector.findDocument()!;
-        final hrNode = document.getNodeById("2") as HorizontalRuleNode;
-
-        await tester.tapAtDocumentPosition(DocumentPosition(
-          nodeId: hrNode.id,
-          nodePosition: hrNode.beginningPosition,
+        await tester.tapAtDocumentPosition(const DocumentPosition(
+          nodeId: "2",
+          nodePosition: UpstreamDownstreamNodePosition.upstream(),
         ));
+        // Wait till the tap event is complete and the latest selection is available.
         await tester.pumpAndSettle();
 
         final testerGesture = await tester.startDocumentDragFromPosition(
-          from: DocumentPosition(
-            nodeId: hrNode.id,
-            nodePosition: hrNode.beginningPosition,
+          from: const DocumentPosition(
+            nodeId: "2",
+            nodePosition: UpstreamDownstreamNodePosition.upstream(),
           ),
         );
 
@@ -310,14 +308,14 @@ void main() {
 
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection(
+          const DocumentSelection(
             base: DocumentPosition(
-              nodeId: hrNode.id,
-              nodePosition: hrNode.beginningPosition,
+              nodeId: "2",
+              nodePosition: UpstreamDownstreamNodePosition.upstream(),
             ),
             extent: DocumentPosition(
-              nodeId: hrNode.id,
-              nodePosition: hrNode.endPosition,
+              nodeId: "2",
+              nodePosition: UpstreamDownstreamNodePosition.downstream(),
             ),
           ),
         );
@@ -328,7 +326,7 @@ void main() {
         final selection = SuperEditorInspector.findDocumentSelection();
 
         expect(selection!.isCollapsed, true);
-        expect(selection.extent.nodeId, hrNode.id);
+        expect(selection.extent.nodeId, "2");
         expect(selection.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
       });
     });
