@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
+import '../../../test/test_tools.dart';
+
 void testComponentGolden(String description, Widget componentBuilder, String fileName) {
-  testGoldens(description, (tester) async {
+  testGoldensOnAndroid(description, (tester) async {
     tester.view
       ..physicalSize = const Size(600, 400)
       ..devicePixelRatio = 1.0;

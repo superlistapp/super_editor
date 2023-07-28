@@ -7,7 +7,7 @@ import 'test_tools.dart';
 void main() {
   group("SuperText", () {
     group("builds layers", () {
-      testGoldens("that can paint line boxes", (tester) async {
+      testGoldensOnAndroid("that can paint line boxes", (tester) async {
         await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, textLayout) {
           final lineCount = textLayout.getLineCount();
           final lineRects = <Rect>[];
@@ -42,7 +42,7 @@ void main() {
         await screenMatchesGolden(tester, "SuperText_layers_line-boxes");
       });
 
-      testGoldens("that can paint character boxes", (tester) async {
+      testGoldensOnAndroid("that can paint character boxes", (tester) async {
         await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, textLayout) {
           final characterRects = <Rect>[];
           final characterColors = <Color>[];
@@ -70,7 +70,7 @@ void main() {
         await screenMatchesGolden(tester, "SuperText_layers_character-boxes");
       });
 
-      testGoldens("that can paint character box outlines", (tester) async {
+      testGoldensOnAndroid("that can paint character box outlines", (tester) async {
         await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, textLayout) {
           final characterRects = <Rect>[];
 
@@ -98,7 +98,7 @@ void main() {
         await screenMatchesGolden(tester, "SuperText_layers_character-box-outlines");
       });
 
-      testGoldens("that can paint carets", (tester) async {
+      testGoldensOnAndroid("that can paint carets", (tester) async {
         await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, textLayout) {
           const textPosition = TextPosition(offset: 115);
           final caretOffset = textLayout.getOffsetForCaret(textPosition);

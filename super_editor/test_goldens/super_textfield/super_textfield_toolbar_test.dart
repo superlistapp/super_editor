@@ -4,10 +4,11 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../test/super_textfield/super_textfield_robot.dart';
+import '../../test/test_tools.dart';
 
 void main() {
   group('SuperTextField', () {
-    testGoldens('displays toolbar pointing down', (tester) async {
+    testGoldensOnAndroid('displays toolbar pointing down', (tester) async {
       // Pumps a widget tree with a SuperTextField at the bottom of the screen.
       await _pumpSuperTextfieldToolbarTestApp(
         tester,
@@ -26,7 +27,7 @@ void main() {
       await screenMatchesGolden(tester, 'super_textfield_ios_toolbar_pointing_down');
     });
 
-    testGoldens('displays toolbar pointing up', (tester) async {
+    testGoldensOnAndroid('displays toolbar pointing up', (tester) async {
       // Pumps a widget tree with a SuperTextField at the top of the screen.
       await _pumpSuperTextfieldToolbarTestApp(
         tester,

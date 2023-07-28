@@ -12,7 +12,7 @@ void main() {
   group('SuperTextField', () {
     group('single line', () {
       group('displays different alignments', () {
-        testGoldens('(on Android)', (tester) async {
+        testGoldensOnAndroid('(on Android)', (tester) async {
           await _pumpScaffold(
             tester,
             children: [
@@ -40,7 +40,7 @@ void main() {
           await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_android');
         }, skip: Platform.isMacOS);
 
-        testGoldens('(on iOS)', (tester) async {
+        testGoldensOnAndroid('(on iOS)', (tester) async {
           await _pumpScaffold(
             tester,
             children: [
@@ -68,7 +68,7 @@ void main() {
           await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_ios');
         }, skip: Platform.isMacOS);
 
-        testGoldens('(on Desktop)', (tester) async {
+        testGoldensOnAndroid('(on Desktop)', (tester) async {
           await _pumpScaffold(
             tester,
             children: [
@@ -101,7 +101,7 @@ void main() {
     group('multi line', () {
       const multilineText = 'First Line\nSecond Line\nThird Line\nFourth Line';
       group('displays different alignments', () {
-        testGoldens('(on Android)', (tester) async {
+        testGoldensOnAndroid('(on Android)', (tester) async {
           await _pumpScaffold(
             tester,
             children: [
@@ -129,7 +129,7 @@ void main() {
           await screenMatchesGolden(tester, 'super_textfield_alignments_multiline_android');
         }, skip: Platform.isMacOS);
 
-        testGoldens('(on iOS)', (tester) async {
+        testGoldensOnAndroid('(on iOS)', (tester) async {
           await _pumpScaffold(
             tester,
             children: [
@@ -157,7 +157,7 @@ void main() {
           await screenMatchesGolden(tester, 'super_textfield_alignments_multiline_ios');
         }, skip: Platform.isMacOS);
 
-        testGoldens('(on Desktop)', (tester) async {
+        testGoldensOnAndroid('(on Desktop)', (tester) async {
           await _pumpScaffold(
             tester,
             children: [
