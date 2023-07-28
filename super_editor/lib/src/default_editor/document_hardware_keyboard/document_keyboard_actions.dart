@@ -97,20 +97,7 @@ ExecutionInstruction scrollOnEndKeyPress({
   final scrollController = editContext.scrollController!;
 
   // The user pressed the END key, scroll to the bottom of the document.
-  if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
-    scrollController.jumpTo(scrollController.position.maxScrollExtent);
-    // The user pressed the HOME key, scroll to the top of the document.
-  } else if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
-    scrollController.jumpTo(scrollController.position.minScrollExtent);
-    // The user pressed the PAGEDOWN key, scroll down for one viewport length of the document.
-  } else if (keyEvent.logicalKey == LogicalKeyboardKey.pageDown) {
-    scrollController.jumpTo(min(
-        scrollController.offset + scrollController.position.extentInside, scrollController.position.maxScrollExtent));
-    // The user pressed the PAGEUP key, scroll up for one viewport length of the document.
-  } else if (keyEvent.logicalKey == LogicalKeyboardKey.pageUp) {
-    scrollController.jumpTo(max(
-        scrollController.offset - scrollController.position.extentInside, scrollController.position.minScrollExtent));
-  }
+  scrollController.jumpTo(scrollController.position.maxScrollExtent);
 
   return ExecutionInstruction.haltExecution;
 }
