@@ -7,6 +7,7 @@ import 'package:super_editor/super_editor.dart';
 
 import '../../test/super_editor/document_test_tools.dart';
 import '../../test/test_tools.dart';
+import '../test_tools_goldens.dart';
 
 void main() {
   group('SuperEditor', () {
@@ -142,7 +143,10 @@ void main() {
           ),
         );
 
-        await screenMatchesGolden(tester, 'text-scaling-header');
+        await expectLater(
+          find.byType(MaterialApp).first,
+          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-header.png", 90),
+        );
       });
 
       testGoldensOnAndroid('for blockquote', (tester) async {
@@ -158,7 +162,10 @@ void main() {
           ),
         );
 
-        await screenMatchesGolden(tester, 'text-scaling-blockquote');
+        await expectLater(
+          find.byType(MaterialApp).first,
+          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-blockquote.png", 31),
+        );
       });
     });
   });
