@@ -976,6 +976,214 @@ void main() {
           ),
         );
       });
+      group("page scrolling", () {
+        testWidgets('PAGE DOWN does not scroll past bottom of the viewport', (tester) async {
+          await _pumpPageScrollTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Set the ScrollPosition to the bottom of the scrollable area
+          scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure that the scroll position is set to the expected position
+          // after the key press action.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
+        });
+
+        testWidgets('PAGE DOWN scrolls down by the viewport height', (tester) async {
+          await _pumpPageScrollTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure that the scroll position is set to the expected position
+          // after the key press action.
+          expect(
+            scrollState.widget.controller!.offset,
+            equals(scrollState.widget.controller!.position.viewportDimension),
+          );
+        });
+
+        testWidgets('PAGE UP does not scroll past top of the viewport', (tester) async {
+          await _pumpPageScrollTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure that the scroll position is set to the expected position
+          // after the key press action.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
+        });
+
+        testWidgets('PAGE UP scrolls up by the viewport height', (tester) async {
+          await _pumpPageScrollTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Set the ScrollPosition to the bottom of the scrollable area
+          scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure that the scroll position is set to the expected position
+          // after the key press action.
+          expect(
+            scrollState.widget.controller!.offset,
+            equals(scrollState.position.maxScrollExtent - scrollState.widget.controller!.position.viewportDimension),
+          );
+        });
+
+        testWidgets('HOME does not scroll past top of the viewport', (tester) async {
+          await _pumpPageScrollTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.home);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure that the scroll position is set to the expected position
+          // after the key press action.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
+        });
+
+        testWidgets('HOME scrolls to top of viewport', (tester) async {
+          await _pumpPageScrollTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Set the ScrollPosition to the bottom of the scrollable area
+          scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.home);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure that the scroll position is set to the expected position
+          // after the key press action.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
+        });
+
+        testWidgets('END does not scroll past bottom of the viewport', (tester) async {
+          await _pumpPageScrollTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Set the ScrollPosition to the bottom of the scrollable area
+          scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.end);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure that the scroll position is set to the expected position
+          // after the key press action.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
+        });
+
+        testWidgets('END scrolls to bottom of viewport', (tester) async {
+          await tester
+              .createDocument()
+              .withLongDoc()
+              .withInputSource(TextInputSource.ime)
+              .withScrollController(ScrollController())
+              .pump();
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.end);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure that the scroll position is set to the expected position
+          // after the key press action.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
+        });
+      });
     },
   );
 }
@@ -1070,4 +1278,13 @@ MutableDocument _singleParagraphWithLinkDoc() {
       )
     ],
   );
+}
+
+Future<TestDocumentContext> _pumpPageScrollTestSetup(WidgetTester tester) async {
+  return await tester
+      .createDocument()
+      .withLongDoc()
+      .withInputSource(TextInputSource.ime)
+      .withScrollController(ScrollController())
+      .pump();
 }
