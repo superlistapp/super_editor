@@ -87,6 +87,9 @@ class PixelDiffGoldenComparator extends LocalFileComparator {
         _maxPixelMismatchCount = pixelCount,
         super(Uri.parse(testBaseDirectory));
 
+  @override
+  Uri get basedir => Uri.parse(_testBaseDirectory);
+
   /// The file system path to the directory that holds the currently executing
   /// Dart test file.
   final String _testBaseDirectory;

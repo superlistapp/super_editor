@@ -145,7 +145,7 @@ void main() {
 
         await expectLater(
           find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-header.png", 90),
+          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-header.png", 0),
         );
       });
 
@@ -164,7 +164,7 @@ void main() {
 
         await expectLater(
           find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-blockquote.png", 31),
+          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-blockquote.png", 0),
         );
       });
     });
