@@ -20,4 +20,6 @@ RUN flutter doctor
 # We need this because we use local dependencies.
 COPY ./ /super_editor
 
+# Print the Ubuntu version. Useful when there are failing tests.
+RUN cat /etc/lsb-release
 

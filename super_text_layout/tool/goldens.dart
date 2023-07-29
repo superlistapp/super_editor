@@ -65,16 +65,29 @@ class GoldenTestCommand extends Command {
     // For example, the test directory.
     final rest = [...args.rest];
 
-    late String testDirectory;
+    late String testDirOrTestFileName;
+    late String testBaseDirectory;
+
     if (rest.isNotEmpty) {
       // An argument was passed after the command options. For example, tool/goldens test my_test_dir.
       // Use the first argument after the command options as the test directory and remove it from the rest.
-      testDirectory = rest.removeAt(0);
+      testDirOrTestFileName = rest.removeAt(0);
+
+      if (testDirOrTestFileName.endsWith('.dart')) {
+        // A test file was given.
+        // Extract the directory name so we can list the sub-directories.
+        testBaseDirectory = path.dirname(testDirOrTestFileName);
+      } else {
+        testBaseDirectory = testDirOrTestFileName;
+      }
     } else {
-      testDirectory = 'test_goldens';
+      testDirOrTestFileName = 'test_goldens';
+      testBaseDirectory = testDirOrTestFileName;
     }
 
-    final volumeMappings = _findTestFailureDirMappings(testDirectory);
+    final dirs = _findAllTestDirs(testBaseDirectory);
+
+    final volumeMappings = _generateFailureDirMappings(dirs);
 
     // Runs the container.
     //
@@ -92,45 +105,50 @@ class GoldenTestCommand extends Command {
         'supereditor_golden_tester',
         'flutter',
         'test',
-        testDirectory,
+        testDirOrTestFileName,
         ...rest,
         ...cmdArguments,
       ],
       description: 'Golden tests',
     );
+
+    // Mapping the failure directories causes them to be created automatically, even without any failing test.
+    // Remove all the empty failure directories.
+    for (final dirName in dirs) {
+      final dir = Directory('$dirName/failures');
+      if (dir.existsSync() && dir.listSync().isEmpty) {
+        dir.deleteSync();
+      }
+    }
   }
 
-  /// Returns a list with all volume mappings for the test failure directories.
+  //// Returns a list with all volume mappings for the test failure directories.
   ///
   /// This mappings are used so when a failure happens, the failure images are save in the host OS.
-  List<String> _findTestFailureDirMappings(String rootTestDir) {
+  List<String> _generateFailureDirMappings(List<String> testDirs) {
     final mapppings = <String>[];
 
-    final dirs = _findAllTestDirs(rootTestDir);
-    for (final dir in dirs) {
+    for (final dir in testDirs) {
       mapppings.add('-v');
-      mapppings.add('${Directory.current.path}/$dir/failures:/super_editor/super_text_layout/$dir/failures');
+      mapppings.add('${Directory.current.path}/$dir/failures:/super_editor/super_editor/$dir/failures');
     }
-
-    mapppings.add('-v');
-    mapppings
-        .add('${Directory.current.path}/$rootTestDir/failures:/super_editor/super_text_layout/$rootTestDir/failures/');
 
     return mapppings;
   }
 
   /// Returns all sub-directories inside a root test directory.
   ///
-  /// Ignores "goldens" and "failures" direcories.
+  /// Ignores "goldens" and "failures" directories.
   List<String> _findAllTestDirs(String rootTestDir) {
     final dir = Directory(rootTestDir);
-    return dir
+    final subDirs = dir
         .listSync(recursive: true) //
         .whereType<Directory>()
         // Ensure we use linux path separator.
         .map((e) => e.path.replaceAll(path.separator, '/'))
         .where((e) => !e.endsWith('goldens') && !e.endsWith('failures'))
         .toList();
+    return [rootTestDir, ...subDirs];
   }
 }
 
@@ -182,13 +200,24 @@ class UpdateGoldensCommand extends Command {
     // For example, the test directory.
     final rest = [...args.rest];
 
-    late String testDirectory;
+    late String testDirOrTestFileName;
+    late String testBaseDirectory;
+
     if (rest.isNotEmpty) {
       // An argument was passed after the command options. For example, tool/goldens test my_test_dir.
       // Use the first argument after the command options as the test directory and remove it from the rest.
-      testDirectory = rest.removeAt(0);
+      testDirOrTestFileName = rest.removeAt(0);
+
+      if (testDirOrTestFileName.endsWith('.dart')) {
+        // A test file was given.
+        // Extract the directory name so we can list the sub-directories.
+        testBaseDirectory = path.dirname(testDirOrTestFileName);
+      } else {
+        testBaseDirectory = testDirOrTestFileName;
+      }
     } else {
-      testDirectory = 'test_goldens';
+      testDirOrTestFileName = 'test_goldens';
+      testBaseDirectory = testDirOrTestFileName;
     }
 
     // Runs the container.
@@ -205,14 +234,14 @@ class UpdateGoldensCommand extends Command {
         'run',
         '--rm',
         '-v',
-        '${Directory.current.path}/$testDirectory:/super_editor/super_text_layout/$testDirectory',
+        '${Directory.current.path}/$testBaseDirectory:/super_editor/super_text_layout/$testBaseDirectory',
         '--workdir',
         '/super_editor/super_text_layout',
         'supereditor_golden_tester',
         'flutter',
         'test',
         '--update-goldens',
-        testDirectory,
+        testDirOrTestFileName,
         ...rest,
         ...cmdArguments,
       ],
