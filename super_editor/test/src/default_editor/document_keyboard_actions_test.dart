@@ -1127,7 +1127,10 @@ void main() {
 
           // Ensure that the scroll position is set to the expected position
           // after the key press action.
-          expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
+          expect(
+            scrollState.widget.controller!.offset,
+            equals(scrollState.position.minScrollExtent),
+          );
         });
 
         testWidgets('END does not scroll past bottom of the viewport', (tester) async {
