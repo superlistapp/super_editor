@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -27,11 +26,16 @@ ExecutionInstruction scrollOnPageUpKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
+  if (keyEvent is RawKeyUpEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   final scrollController = editContext.scrollController!;
 
   // Scroll up for one viewport length of the document.
   scrollController.jumpTo(
-      max(scrollController.offset - scrollController.position.extentInside, scrollController.position.minScrollExtent));
+    max(scrollController.offset - scrollController.position.extentInside, scrollController.position.minScrollExtent),
+  );
 
   return ExecutionInstruction.haltExecution;
 }
@@ -50,12 +54,17 @@ ExecutionInstruction scrollOnPageDownKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
+  if (keyEvent is RawKeyUpEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   final scrollController = editContext.scrollController!;
 
   // The user pressed the PageDown key, scroll down for one viewport length of the
   // document.
   scrollController.jumpTo(
-      min(scrollController.offset + scrollController.position.extentInside, scrollController.position.maxScrollExtent));
+    min(scrollController.offset + scrollController.position.extentInside, scrollController.position.maxScrollExtent),
+  );
 
   return ExecutionInstruction.haltExecution;
 }
