@@ -96,7 +96,51 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms('when the selection sits at the end of a paragraph', (tester) async {
+      testWidgetsOnAllPlatforms('when a downstream selection sits at the end of a paragraph', (tester) async {
+        // Pump a widget with an arbitrary size for the images.
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("First paragraph")
+            .withAddedComponents(
+          [const FakeImageComponentBuilder(size: Size(100, 100))],
+        ).pump();
+
+        // Place caret at the end of the paragraph.
+        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 15);
+
+        // Insert the image at the current selection.
+        context.editContext.commonOps.insertImage('http://image.fake');
+        await tester.pumpAndSettle();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure that two nodes were inserted.
+        expect(doc.nodes.length, 3);
+
+        // Ensure that the first node remains unchanged.
+        expect(doc.nodes[0], isA<ParagraphNode>());
+        expect((doc.nodes[0] as ParagraphNode).text.text, 'First paragraph');
+
+        // Ensure that the image was added.
+        expect(doc.nodes[1], isA<ImageNode>());
+
+        // Ensure that an empty node was added after the image.
+        expect(doc.nodes[2], isA<ParagraphNode>());
+        expect((doc.nodes[2] as ParagraphNode).text.text, '');
+
+        // Ensure the selection was placed at the beginning of the last paragraph.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: doc.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms('when an upstream selection sits at the end of a paragraph', (tester) async {
         // Pump a widget with an arbitrary size for the images.
         final context = await tester //
             .createDocument()
@@ -264,7 +308,48 @@ Second paragraph"""). //
         );
       });
 
-      testWidgetsOnAllPlatforms('when the selection sits at the end of a paragraph', (tester) async {
+      testWidgetsOnAllPlatforms('when a downstream selection sits at the end of a paragraph', (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("First paragraph")
+            .pump();
+
+        // Place caret at the end of the paragraph.
+        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 15);
+
+        // Insert the horizontal rule at the current selection.
+        context.editContext.commonOps.insertHorizontalRule();
+        await tester.pumpAndSettle();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure that two nodes were inserted.
+        expect(doc.nodes.length, 3);
+
+        // Ensure that the first node remains unchanged.
+        expect(doc.nodes[0], isA<ParagraphNode>());
+        expect((doc.nodes[0] as ParagraphNode).text.text, 'First paragraph');
+
+        // Ensure that the horizontal rule was added.
+        expect(doc.nodes[1], isA<HorizontalRuleNode>());
+
+        // Ensure that an empty node was added at the end.
+        expect(doc.nodes[2], isA<ParagraphNode>());
+        expect((doc.nodes[2] as ParagraphNode).text.text, '');
+
+        // Ensure the selection was placed at the beginning of the last paragraph.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: doc.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms('when an upstream selection sits at the end of a paragraph', (tester) async {
         final context = await tester //
             .createDocument()
             .fromMarkdown("""First paragraph
@@ -349,7 +434,7 @@ Second paragraph"""). //
     });
 
     group('inserts a paragraph', () {
-      testWidgetsOnDesktop('on ENTER at the end of an image', (tester) async {
+      testWidgetsOnDesktop('when the user presses ENTER at the end of an image', (tester) async {
         final testContext = await tester
             .createDocument()
             .withCustomContent(
@@ -407,7 +492,9 @@ Second paragraph"""). //
         );
       });
 
-      testWidgetsOnAndroid('upon new line insertion at the end of an image (on Android)', (tester) async {
+      testWidgetsOnAndroid(
+          'when the user presses the newline button on the software keyboard at the end of an image (on Android)',
+          (tester) async {
         final testContext = await tester
             .createDocument()
             .withCustomContent(
@@ -464,7 +551,9 @@ Second paragraph"""). //
         );
       });
 
-      testWidgetsOnMobile('upon new line input action at the end of an image', (tester) async {
+      testWidgetsOnIos(
+          'when the user presses the newline button on the software keyboard at the end of an image (on iOS)',
+          (tester) async {
         final testContext = await tester
             .createDocument()
             .withCustomContent(
