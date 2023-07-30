@@ -6,7 +6,6 @@ import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../test/super_editor/document_test_tools.dart';
-import '../../test/test_tools.dart';
 import '../test_tools_goldens.dart';
 
 void main() {

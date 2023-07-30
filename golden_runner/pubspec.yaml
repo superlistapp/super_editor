@@ -1,0 +1,23 @@
+name: golden_runner
+description: Commands to test and update goldens in a Docker container
+version: 0.0.1
+homepage:
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  golden_toolkit: ^0.13.0
+  args: ^2.3.1
+  meta: ^1.8.0
+  path: ^1.8.3
+
+dev_dependencies:
+  flutter_lints: ^2.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:

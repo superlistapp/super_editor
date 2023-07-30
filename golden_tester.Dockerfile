@@ -21,4 +21,4 @@ RUN flutter doctor
 
 # Copy the whole repo.
 # We need this because we use local dependencies.
-COPY ./ /super_editor
+COPY ./ /golden_tester
