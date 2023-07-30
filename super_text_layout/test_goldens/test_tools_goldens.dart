@@ -1,10 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:meta/meta.dart';
-import 'package:path/path.dart' as path;
 
 /// A golden test that configures itself as a Android platform before executing the
 /// given [test], and nullifies the Android configuration when the test is done.

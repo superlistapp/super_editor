@@ -1,8 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
-import 'package:meta/meta.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 // Everything in this file is duplicated between /test and /test_goldens because
