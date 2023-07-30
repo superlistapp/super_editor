@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
 import 'test_tools.dart';
+import 'test_tools_goldens.dart';
 
 void main() {
   group("SuperText", () {

@@ -4,6 +4,7 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'test_tools.dart';
+import 'test_tools_goldens.dart';
 
 void main() {
   group("Text selection layer", () {

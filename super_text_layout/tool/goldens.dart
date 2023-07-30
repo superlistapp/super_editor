@@ -69,11 +69,14 @@ class GoldenTestCommand extends Command {
     late String testBaseDirectory;
 
     if (rest.isNotEmpty) {
-      // An argument was passed after the command options. For example, tool/goldens test my_test_dir.
-      // Use the first argument after the command options as the test directory and remove it from the rest.
+      // An argument was passed after the command options.
+      // For example, in "flutter pub run tool/goldens test my_test_dir", "my_test_dir" is the first argument
+      // after the command.
+      // Use the first argument after the command options as the test directory or test file name
+      // and remove it from the rest.
       testDirOrTestFileName = rest.removeAt(0);
 
-      if (testDirOrTestFileName.endsWith('.dart')) {
+      if (path.extension(testDirOrTestFileName).isNotEmpty) {
         // A test file was given.
         // Extract the directory name so we can list the sub-directories.
         testBaseDirectory = path.dirname(testDirOrTestFileName);
@@ -87,7 +90,7 @@ class GoldenTestCommand extends Command {
 
     final dirs = _findAllTestDirs(testBaseDirectory);
 
-    final volumeMappings = _generateFailureDirMappings(dirs);
+    final volumeMappings = _generateFailureDirectoriesMappings(dirs);
 
     // Runs the container.
     //
@@ -95,7 +98,7 @@ class GoldenTestCommand extends Command {
     //
     // --workdir: Sets the working directory to /super_editor/super_text_layout in the container.
     await _runProcess(
-      exe: 'docker',
+      executable: 'docker',
       arguments: [
         'run',
         '--rm',
@@ -122,23 +125,27 @@ class GoldenTestCommand extends Command {
     }
   }
 
-  //// Returns a list with all volume mappings for the test failure directories.
+  /// Returns a list of docker command line arguments to configure the volume mappings for the test failure directories.
+  ///
+  /// [testDirectories] must be a list of relative paths to the working directory.
   ///
   /// This mappings are used so when a failure happens, the failure images are save in the host OS.
-  List<String> _generateFailureDirMappings(List<String> testDirs) {
-    final mapppings = <String>[];
+  List<String> _generateFailureDirectoriesMappings(List<String> testDirectories) {
+    final mappings = <String>[];
 
-    for (final dir in testDirs) {
-      mapppings.add('-v');
-      mapppings.add('${Directory.current.path}/$dir/failures:/super_editor/super_editor/$dir/failures');
+    for (final dir in testDirectories) {
+      mappings.add('-v');
+      mappings.add('${Directory.current.path}/$dir/failures:/super_editor/super_editor/$dir/failures');
     }
 
-    return mapppings;
+    return mappings;
   }
 
-  /// Returns all sub-directories inside a root test directory.
+  /// Returns a list of sub-directories inside a root test directory as relative paths to the working directory.
   ///
-  /// Ignores "goldens" and "failures" directories.
+  /// For example, "test_goldens/editor", "test_goldens/components".
+  ///
+  /// Ignores "goldens" and "failures" directories because they contain the golden images and failure images.
   List<String> _findAllTestDirs(String rootTestDir) {
     final dir = Directory(rootTestDir);
     final subDirs = dir
@@ -146,6 +153,8 @@ class GoldenTestCommand extends Command {
         .whereType<Directory>()
         // Ensure we use linux path separator.
         .map((e) => e.path.replaceAll(path.separator, '/'))
+        // Ignore "goldens" because they contain the golden images.
+        // Ignore "failures" because they contain the failure images.
         .where((e) => !e.endsWith('goldens') && !e.endsWith('failures'))
         .toList();
     return [rootTestDir, ...subDirs];
@@ -204,15 +213,21 @@ class UpdateGoldensCommand extends Command {
     late String testBaseDirectory;
 
     if (rest.isNotEmpty) {
-      // An argument was passed after the command options. For example, tool/goldens test my_test_dir.
-      // Use the first argument after the command options as the test directory and remove it from the rest.
+      // An argument was passed after the command options.
+      // For example, in "flutter pub run tool/goldens test my_test_dir", "my_test_dir" is the first argument
+      // after the command.
+      // Use the first argument after the command options as the test directory or test file name
+      //  and remove it from the rest.
       testDirOrTestFileName = rest.removeAt(0);
 
-      if (testDirOrTestFileName.endsWith('.dart')) {
+      if (path.extension(testDirOrTestFileName).isNotEmpty) {
         // A test file was given.
         // Extract the directory name so we can list the sub-directories.
         testBaseDirectory = path.dirname(testDirOrTestFileName);
       } else {
+        // A test directory was given.
+        // Don't try to extract the directory name because it can return an empty string if it's the root directory.
+        // For example, passing "test_goldens" to dirname would return "".
         testBaseDirectory = testDirOrTestFileName;
       }
     } else {
@@ -229,7 +244,7 @@ class UpdateGoldensCommand extends Command {
     //
     // --workdir: Sets the working directory to /super_editor/super_text_layout in the container.
     await _runProcess(
-      exe: 'docker',
+      executable: 'docker',
       arguments: [
         'run',
         '--rm',
@@ -257,7 +272,7 @@ Future<void> _buildDockerImage() async {
   stdout.write('building image');
 
   await _runProcess(
-    exe: 'docker',
+    executable: 'docker',
     arguments: [
       'build',
       '-f',
@@ -273,19 +288,25 @@ Future<void> _buildDockerImage() async {
   );
 }
 
-/// Runs [exe] with the given [arguments].
+/// Runs [executable] with the given [arguments].
+///
+/// [executable] could be an absolute path or it could be resolved from the PATH.
+///
+/// The [arguments] must contain any modifiers, like `-`, `--` or `/`.
+///
+/// Use [workingDirectory] to set the working directory for the process.
 ///
 /// The child process stdout and stderr are written to the current process stdout.
 ///
-/// Throws and exception if the process exists with a non-zero exit code.
+/// Throws and exception using [description] in the message if the process exists with a non-zero exit code.
 Future<void> _runProcess({
-  required String exe,
+  required String executable,
   required List<String> arguments,
   required String description,
   String? workingDirectory,
 }) async {
   final process = await Process.start(
-    exe,
+    executable,
     arguments,
     workingDirectory: workingDirectory,
   );

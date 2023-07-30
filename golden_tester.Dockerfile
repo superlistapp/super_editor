@@ -9,6 +9,9 @@ RUN apt update
 
 RUN apt install -y git curl unzip
 
+# Print the Ubuntu version. Useful when there are failing tests.
+RUN cat /etc/lsb-release
+
 # Invalidate the cache when flutter pushes a new commit.
 ADD https://api.github.com/repos/flutter/flutter/git/refs/heads/master ./flutter-latest-master
 
@@ -19,7 +22,3 @@ RUN flutter doctor
 # Copy the whole repo.
 # We need this because we use local dependencies.
 COPY ./ /super_editor
-
-# Print the Ubuntu version. Useful when there are failing tests.
-RUN cat /etc/lsb-release
-
