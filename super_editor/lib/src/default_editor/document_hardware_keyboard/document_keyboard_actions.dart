@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -22,19 +23,21 @@ ExecutionInstruction scrollOnPageUpKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (editContext.scrollController == null || keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId) {
+  if (keyEvent is! RawKeyDownEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (keyEvent is RawKeyUpEvent) {
+  if (editContext.scrollController == null || keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId) {
     return ExecutionInstruction.continueExecution;
   }
 
   final scrollController = editContext.scrollController!;
 
   // Scroll up for one viewport length of the document.
-  scrollController.jumpTo(
+  scrollController.animateTo(
     max(scrollController.offset - scrollController.position.extentInside, scrollController.position.minScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
   );
 
   return ExecutionInstruction.haltExecution;
@@ -50,11 +53,11 @@ ExecutionInstruction scrollOnPageDownKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (editContext.scrollController == null || keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId) {
+  if (keyEvent is! RawKeyDownEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (keyEvent is RawKeyUpEvent) {
+  if (editContext.scrollController == null || keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -62,8 +65,10 @@ ExecutionInstruction scrollOnPageDownKeyPress({
 
   // The user pressed the PageDown key, scroll down for one viewport length of the
   // document.
-  scrollController.jumpTo(
+  scrollController.animateTo(
     min(scrollController.offset + scrollController.position.extentInside, scrollController.position.maxScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
   );
 
   return ExecutionInstruction.haltExecution;
@@ -78,6 +83,10 @@ ExecutionInstruction scrollOnHomeKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (editContext.scrollController == null || keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId) {
     return ExecutionInstruction.continueExecution;
   }
@@ -85,7 +94,11 @@ ExecutionInstruction scrollOnHomeKeyPress({
   final scrollController = editContext.scrollController!;
 
   // The user pressed the HOME key, scroll to the top of the document.
-  scrollController.jumpTo(scrollController.position.minScrollExtent);
+  scrollController.animateTo(
+    scrollController.position.minScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
 
   return ExecutionInstruction.haltExecution;
 }
@@ -99,6 +112,10 @@ ExecutionInstruction scrollOnEndKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (editContext.scrollController == null || keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId) {
     return ExecutionInstruction.continueExecution;
   }
@@ -106,7 +123,11 @@ ExecutionInstruction scrollOnEndKeyPress({
   final scrollController = editContext.scrollController!;
 
   // The user pressed the END key, scroll to the bottom of the document.
-  scrollController.jumpTo(scrollController.position.maxScrollExtent);
+  scrollController.animateTo(
+    scrollController.position.maxScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
 
   return ExecutionInstruction.haltExecution;
 }
