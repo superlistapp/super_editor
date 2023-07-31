@@ -976,8 +976,9 @@ void main() {
           ),
         );
       });
+
       group("page scrolling", () {
-        testWidgets('PAGE DOWN does not scroll past bottom of the viewport', (tester) async {
+        testWidgetsOnAllPlatforms('PAGE DOWN does not scroll past bottom of the viewport', (tester) async {
           await _pumpPageScrollTestSetup(tester);
 
           await tester.tapAtDocumentPosition(
@@ -1003,7 +1004,7 @@ void main() {
           expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
         });
 
-        testWidgets('PAGE DOWN scrolls down by the viewport height', (tester) async {
+        testWidgetsOnAllPlatforms('PAGE DOWN scrolls down by the viewport height', (tester) async {
           await _pumpPageScrollTestSetup(tester);
 
           await tester.tapAtDocumentPosition(
@@ -1029,7 +1030,7 @@ void main() {
           );
         });
 
-        testWidgets('PAGE UP does not scroll past top of the viewport', (tester) async {
+        testWidgetsOnAllPlatforms('PAGE UP does not scroll past top of the viewport', (tester) async {
           await _pumpPageScrollTestSetup(tester);
 
           await tester.tapAtDocumentPosition(
@@ -1052,7 +1053,7 @@ void main() {
           expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
         });
 
-        testWidgets('PAGE UP scrolls up by the viewport height', (tester) async {
+        testWidgetsOnAllPlatforms('PAGE UP scrolls up by the viewport height', (tester) async {
           await _pumpPageScrollTestSetup(tester);
 
           await tester.tapAtDocumentPosition(
@@ -1081,7 +1082,7 @@ void main() {
           );
         });
 
-        testWidgets('HOME does not scroll past top of the viewport', (tester) async {
+        testWidgetsOnAllPlatforms('HOME does not scroll past top of the viewport', (tester) async {
           await _pumpPageScrollTestSetup(tester);
 
           await tester.tapAtDocumentPosition(
@@ -1104,7 +1105,7 @@ void main() {
           expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
         });
 
-        testWidgets('HOME scrolls to top of viewport', (tester) async {
+        testWidgetsOnAllPlatforms('HOME scrolls to top of viewport', (tester) async {
           await _pumpPageScrollTestSetup(tester);
 
           await tester.tapAtDocumentPosition(
@@ -1133,7 +1134,7 @@ void main() {
           );
         });
 
-        testWidgets('END does not scroll past bottom of the viewport', (tester) async {
+        testWidgetsOnAllPlatforms('END does not scroll past bottom of the viewport', (tester) async {
           await _pumpPageScrollTestSetup(tester);
 
           await tester.tapAtDocumentPosition(
@@ -1159,7 +1160,7 @@ void main() {
           expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
         });
 
-        testWidgets('END scrolls to bottom of viewport', (tester) async {
+        testWidgetsOnAllPlatforms('END scrolls to bottom of viewport', (tester) async {
           await tester
               .createDocument()
               .withLongDoc()
