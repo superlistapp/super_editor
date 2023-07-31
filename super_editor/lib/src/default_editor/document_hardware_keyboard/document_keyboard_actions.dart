@@ -249,6 +249,27 @@ ExecutionInstruction deleteUpstreamContentWithBackspace({
   return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
+ExecutionInstruction deleteUpstreamContentWithBackspaceOnNonWeb({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (kIsWeb) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final didDelete = editContext.commonOps.deleteUpstream();
+
+  return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
 ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,

@@ -920,7 +920,7 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   deleteToStartOfLineWithCmdBackspaceOnMac,
   deleteWordUpstreamWithAltBackspaceOnMac,
   deleteWordUpstreamWithControlBackspaceOnWindowsAndLinux,
-  deleteUpstreamContentWithBackspace,
+  deleteUpstreamContentWithBackspaceOnNonWeb,
   deleteToEndOfLineWithCmdDeleteOnMac,
   deleteWordDownstreamWithAltDeleteOnMac,
   deleteWordDownstreamWithControlDeleteOnWindowsAndLinux,
