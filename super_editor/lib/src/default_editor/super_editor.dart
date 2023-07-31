@@ -845,7 +845,6 @@ final defaultComponentBuilders = <ComponentBuilder>[
 /// Keyboard actions for the standard [SuperEditor].
 final defaultKeyboardActions = <DocumentKeyboardAction>[
   toggleInteractionModeWhenCmdOrCtrlPressed,
-  doNothingWhenFnKeyPressed,
   doNothingWhenThereIsNoSelection,
   scrollOnPageUpKeyPress,
   scrollOnPageDownKeyPress,
@@ -877,6 +876,7 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   deleteWordDownstreamWithAltDeleteOnMac,
   deleteWordDownstreamWithControlDeleteOnWindowsAndLinux,
   deleteDownstreamContentWithDelete,
+  doNothingWhenFnKeyPressed,
   anyCharacterOrDestructiveKeyToDeleteSelection,
   anyCharacterToInsertInParagraph,
   anyCharacterToInsertInTextContent,
@@ -889,7 +889,6 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
 /// and partial input from non-content keys, like arrow keys.
 final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   toggleInteractionModeWhenCmdOrCtrlPressed,
-  doNothingWhenFnKeyPressed,
   doNothingWhenThereIsNoSelection,
   scrollOnPageUpKeyPress,
   scrollOnPageDownKeyPress,
@@ -919,6 +918,7 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   deleteWordDownstreamWithAltDeleteOnMac,
   deleteWordDownstreamWithControlDeleteOnWindowsAndLinux,
   deleteDownstreamContentWithDelete,
+  doNothingWhenFnKeyPressed,
 ];
 
 /// Stylesheet applied to all [SuperEditor]s by default.
