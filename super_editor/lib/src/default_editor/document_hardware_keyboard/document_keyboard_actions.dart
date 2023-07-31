@@ -33,6 +33,10 @@ ExecutionInstruction scrollOnPageUpKeyPress({
 
   final scrollController = editContext.scrollController!;
 
+  if (!scrollController.hasClients) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   // Scroll up for one viewport length of the document.
   scrollController.animateTo(
     max(scrollController.offset - scrollController.position.extentInside, scrollController.position.minScrollExtent),
@@ -62,6 +66,10 @@ ExecutionInstruction scrollOnPageDownKeyPress({
   }
 
   final scrollController = editContext.scrollController!;
+
+  if (!scrollController.hasClients) {
+    return ExecutionInstruction.continueExecution;
+  }
 
   // The user pressed the PageDown key, scroll down for one viewport length of the
   // document.
@@ -93,6 +101,10 @@ ExecutionInstruction scrollOnHomeKeyPress({
 
   final scrollController = editContext.scrollController!;
 
+  if (!scrollController.hasClients) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   // The user pressed the HOME key, scroll to the top of the document.
   scrollController.animateTo(
     scrollController.position.minScrollExtent,
@@ -121,6 +133,14 @@ ExecutionInstruction scrollOnEndKeyPress({
   }
 
   final scrollController = editContext.scrollController!;
+
+  if (!scrollController.hasClients) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (!scrollController.position.maxScrollExtent.isFinite) {
+    return ExecutionInstruction.continueExecution;
+  }
 
   // The user pressed the END key, scroll to the bottom of the document.
   scrollController.animateTo(
