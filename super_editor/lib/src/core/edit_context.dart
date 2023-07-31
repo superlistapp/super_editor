@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'document_composer.dart';
 import 'document_layout.dart';
 import 'editor.dart';
@@ -11,8 +12,8 @@ import 'editor.dart';
 /// [DocumentComposer], and [DocumentLayout].
 /// In addition, [commonOps] are available for directly applying common, complex
 /// changes to the document using the artifacts.
-/// A [scrollController] is available to allow changes to the scroll position in
-/// the viewport.
+///
+/// [scrollController] can be passed to control the [Scrollable] within the [SuperEditor].
 class SuperEditorContext {
   /// Creates an edit context that makes up a collection of core artifacts for
   /// editing a document.
@@ -48,7 +49,14 @@ class SuperEditorContext {
   /// the document.
   final CommonEditorOperations commonOps;
 
-  /// The scroll position state of the viewport, used to apply position changes to
-  /// the display.
+  /// [ScrollController] that's attached to [SuperEditor]`s viewport.
+  /// Used to control the [Scrollable] within the [SuperEditor].
+  ///
+  /// Note: If [SuperEditor] is within another [Scrollable] widget, it controlls
+  /// the ancestor [Scrollable] instead of creating one itself. In that
+  /// case,[scrollController] won't be assigned to any [Scrollable] within [SuperEditor]
+  /// as it won't create one. Any operations performed through [scrollController] will
+  /// be ignored unless the passed [scrollController] is attached to the ancestor
+  /// [Scrollable].
   final ScrollController? scrollController;
 }
