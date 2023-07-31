@@ -50,13 +50,12 @@ class SuperEditorContext {
   final CommonEditorOperations commonOps;
 
   /// [ScrollController] that's attached to [SuperEditor]`s viewport.
-  /// Used to control the [Scrollable] within the [SuperEditor].
+  /// Can be used to control the [Scrollable] within the [SuperEditor].
   ///
   /// Note: If [SuperEditor] is within another [Scrollable] widget, it controlls
   /// the ancestor [Scrollable] instead of creating one itself. In that
-  /// case,[scrollController] won't be assigned to any [Scrollable] within [SuperEditor]
-  /// as it won't create one. Any operations performed through [scrollController] will
-  /// be ignored unless the passed [scrollController] is attached to the ancestor
-  /// [Scrollable].
+  /// case, any actions performed through the [scrollController] will be ignored
+  /// unless the passed [scrollController] is the one that's assgined to the
+  /// ancestor [Scrollable].
   final ScrollController? scrollController;
 }
