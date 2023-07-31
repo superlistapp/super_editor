@@ -125,10 +125,11 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     );
     final inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
     inputConnection.show();
+
+    _inputConnectionNotifier.value = inputConnection;
     _sendEditingValueToPlatform();
 
     _osCurrentTextEditingValue = _latestTextEditingValueSentToPlatform!;
-    _inputConnectionNotifier.value = inputConnection;
     _log.fine('Is attached to input client? ${inputConnection.attached}');
   }
 
