@@ -1175,7 +1175,7 @@ void main() {
           expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
         });
       });
-      
+
       group("page scrolling in presense of an external scrollable", () {
         testWidgetsOnAllPlatforms('PAGE DOWN does not scroll past bottom of the viewport', (tester) async {
           await _pumpPageScrollSliverTestSetup(tester);
