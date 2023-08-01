@@ -152,6 +152,30 @@ ExecutionInstruction doNothingWhenFnKeyPressed({
   return ExecutionInstruction.haltExecution;
 }
 
+/// Halt execution of the current key event if the [SuperEditorContext.scrollController]
+/// is null and the key pressed is one of the page up, page down, home or end key.
+///
+/// Without this action in place pressing the above mentioned keys in absense of
+/// [SuperEditorContext.scrollController] would display an unknown '?' character in
+/// the document.
+ExecutionInstruction doNothingWhenPageUpOrPageDownOrHomeOrEndKeyPressed({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (editContext.scrollController != null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  return ExecutionInstruction.haltExecution;
+}
+
 ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
