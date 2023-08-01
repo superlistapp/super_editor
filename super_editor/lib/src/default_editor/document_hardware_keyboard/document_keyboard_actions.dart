@@ -13,12 +13,10 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
-/// Scroll to appropriate position in viewport when the PAGE UP key is pressed.
+/// PAGE UP: Scrolls the viewport up by viewport height minus any overscroll distance.
 ///
-/// PAGE UP: moves the scroll position in the viewport up by an amount equal to
-/// the height of the viewport.  This key press will move to scroll position
-/// `minScrollExtent` if the current scroll position is less the current viewport
-/// height.
+/// If there is not a viewport worth of distance to scroll up, the viewport scrolls up as
+/// far as possible.
 ExecutionInstruction scrollOnPageUpKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -37,7 +35,6 @@ ExecutionInstruction scrollOnPageUpKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  // Scroll up for one viewport length of the document.
   scrollController.animateTo(
     max(scrollController.offset - scrollController.position.extentInside, scrollController.position.minScrollExtent),
     duration: const Duration(milliseconds: 150),
@@ -47,12 +44,10 @@ ExecutionInstruction scrollOnPageUpKeyPress({
   return ExecutionInstruction.haltExecution;
 }
 
-/// Scroll to appropriate position in viewport when the PAGE DOWN key is pressed.
+/// PAGE DOWN: Scrolls the viewport down by viewport height minus any overscroll distance.
 ///
-/// PAGE DOWN: moves the scroll position in the viewport down by an amount equal
-/// to the height of the viewport.  This key press will move to scroll position
-/// to `maxScrollExtent` (bottom of the document) if its execution would take the
-/// scroll position past the bottom of the document.
+/// If there is not a viewport worth of distance to scroll down, the viewport scrolls down as
+/// far as possible.
 ExecutionInstruction scrollOnPageDownKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -71,8 +66,6 @@ ExecutionInstruction scrollOnPageDownKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  // The user pressed the PageDown key, scroll down for one viewport length of the
-  // document.
   scrollController.animateTo(
     min(scrollController.offset + scrollController.position.extentInside, scrollController.position.maxScrollExtent),
     duration: const Duration(milliseconds: 150),
@@ -82,11 +75,7 @@ ExecutionInstruction scrollOnPageDownKeyPress({
   return ExecutionInstruction.haltExecution;
 }
 
-/// Scroll to appropriate position in viewport when the HOME key is pressed.
-///
-/// HOME: moves the scroll position in the viewport to the `minScrollExtent`
-/// of the viewport `scrollController`.  The `minScrollExtent` is the bottom
-/// of the document.
+/// HOME: Scrolls the viewport up as far as possible.
 ExecutionInstruction scrollOnHomeKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -105,7 +94,6 @@ ExecutionInstruction scrollOnHomeKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  // The user pressed the HOME key, scroll to the top of the document.
   scrollController.animateTo(
     scrollController.position.minScrollExtent,
     duration: const Duration(milliseconds: 150),
@@ -115,11 +103,7 @@ ExecutionInstruction scrollOnHomeKeyPress({
   return ExecutionInstruction.haltExecution;
 }
 
-/// Scroll to appropriate position in viewport when the END key is pressed.
-///
-/// END: Moves the scroll position in the viewport to the `maxScrollExtent`
-/// of the viewport `scrollController`.  The `maxScrollExtent` is the
-/// bottom of the document.
+/// END: Scrolls the viewport down as far as possible.
 ExecutionInstruction scrollOnEndKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -142,7 +126,6 @@ ExecutionInstruction scrollOnEndKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  // The user pressed the END key, scroll to the bottom of the document.
   scrollController.animateTo(
     scrollController.position.maxScrollExtent,
     duration: const Duration(milliseconds: 150),
@@ -152,8 +135,11 @@ ExecutionInstruction scrollOnEndKeyPress({
   return ExecutionInstruction.haltExecution;
 }
 
+/// Halt execution of the current key event if the key pressed is one of
+/// the function keys (F1, F2, F3, etc.).
+///
 /// Without this action in place pressing a function key would display
-/// an unknown '?' character in the document
+/// an unknown '?' character in the document.
 ExecutionInstruction doNothingWhenFnKeyPressed({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,

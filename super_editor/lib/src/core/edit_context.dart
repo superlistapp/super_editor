@@ -13,7 +13,8 @@ import 'editor.dart';
 /// In addition, [commonOps] are available for directly applying common, complex
 /// changes to the document using the artifacts.
 ///
-/// [scrollController] can be passed to control the [Scrollable] within the [SuperEditor].
+/// A [scrollController] can be passed to allow changes to the scroll position in
+/// the viewport.
 class SuperEditorContext {
   /// Creates an edit context that makes up a collection of core artifacts for
   /// editing a document.
@@ -52,7 +53,7 @@ class SuperEditorContext {
   /// [ScrollController] that's attached to [SuperEditor]`s viewport.
   /// Can be used to control the [Scrollable] within the [SuperEditor].
   ///
-  /// Note: If [SuperEditor] is within another [Scrollable] widget, it controlls
+  /// If [SuperEditor] is within another [Scrollable] widget, it controlls
   /// the ancestor [Scrollable] instead of creating one itself. In that
   /// case, any actions performed through the [scrollController] will be ignored
   /// unless the passed [scrollController] is the one that's assgined to the
