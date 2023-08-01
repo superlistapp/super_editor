@@ -991,7 +991,7 @@ void main() {
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          // Set the ScrollPosition to the bottom of the scrollable area
+          // Scroll to the bottom of the viewport.
           scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
 
           await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
@@ -999,8 +999,7 @@ void main() {
           // Let the scrolling system auto-scroll, as desired.
           await tester.pumpAndSettle();
 
-          // Ensure that the scroll position is set to the expected position
-          // after the key press action.
+          // Ensure we didn't scrolled past the bottom of the viewport.
           expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
         });
 
@@ -1022,8 +1021,7 @@ void main() {
           // Let the scrolling system auto-scroll, as desired.
           await tester.pumpAndSettle();
 
-          // Ensure that the scroll position is set to the expected position
-          // after the key press action.
+          // Ensure we scrolled down by the viewport height.
           expect(
             scrollState.widget.controller!.offset,
             equals(scrollState.widget.controller!.position.viewportDimension),
@@ -1048,8 +1046,7 @@ void main() {
           // Let the scrolling system auto-scroll, as desired.
           await tester.pumpAndSettle();
 
-          // Ensure that the scroll position is set to the expected position
-          // after the key press action.
+          // Ensure we didn't scrolled past the top of the viewport.
           expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
         });
 
@@ -1066,7 +1063,7 @@ void main() {
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          // Set the ScrollPosition to the bottom of the scrollable area
+          // Scroll to the bottom of the viewport.
           scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
 
           await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
@@ -1074,8 +1071,7 @@ void main() {
           // Let the scrolling system auto-scroll, as desired.
           await tester.pumpAndSettle();
 
-          // Ensure that the scroll position is set to the expected position
-          // after the key press action.
+          // Ensure we scrolled up by the viewport height.
           expect(
             scrollState.widget.controller!.offset,
             equals(scrollState.position.maxScrollExtent - scrollState.widget.controller!.position.viewportDimension),
@@ -1100,8 +1096,7 @@ void main() {
           // Let the scrolling system auto-scroll, as desired.
           await tester.pumpAndSettle();
 
-          // Ensure that the scroll position is set to the expected position
-          // after the key press action.
+          // Ensure we didn't scrolled past the top of the viewport.
           expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
         });
 
@@ -1118,7 +1113,7 @@ void main() {
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          // Set the ScrollPosition to the bottom of the scrollable area
+          // Scroll to the bottom of the viewport.
           scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
 
           await tester.sendKeyEvent(LogicalKeyboardKey.home);
@@ -1126,8 +1121,7 @@ void main() {
           // Let the scrolling system auto-scroll, as desired.
           await tester.pumpAndSettle();
 
-          // Ensure that the scroll position is set to the expected position
-          // after the key press action.
+          // Ensure we scrolled to the top of the viewport.
           expect(
             scrollState.widget.controller!.offset,
             equals(scrollState.position.minScrollExtent),
@@ -1147,7 +1141,7 @@ void main() {
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          // Set the ScrollPosition to the bottom of the scrollable area
+          // Scroll to the bottom of the viewport.
           scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
 
           await tester.sendKeyEvent(LogicalKeyboardKey.end);
@@ -1155,18 +1149,12 @@ void main() {
           // Let the scrolling system auto-scroll, as desired.
           await tester.pumpAndSettle();
 
-          // Ensure that the scroll position is set to the expected position
-          // after the key press action.
+          // Ensure we didn't scrolled past the bottom of the viewport.
           expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
         });
 
         testWidgetsOnAllPlatforms('END scrolls to bottom of viewport', (tester) async {
-          await tester
-              .createDocument()
-              .withLongDoc()
-              .withInputSource(TextInputSource.ime)
-              .withScrollController(ScrollController())
-              .pump();
+          await _pumpPageScrollTestSetup(tester);
 
           await tester.tapAtDocumentPosition(
             const DocumentPosition(
@@ -1183,8 +1171,206 @@ void main() {
           // Let the scrolling system auto-scroll, as desired.
           await tester.pumpAndSettle();
 
-          // Ensure that the scroll position is set to the expected position
-          // after the key press action.
+          // Ensure we scrolled to the bottom of the viewport.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
+        });
+      });
+      
+      group("page scrolling in presense of an external scrollable", () {
+        testWidgetsOnAllPlatforms('PAGE DOWN does not scroll past bottom of the viewport', (tester) async {
+          await _pumpPageScrollSliverTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Scroll to the bottom of the viewport.
+          scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure we didn't scrolled past the bottom of the viewport.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
+        });
+
+        testWidgetsOnAllPlatforms('PAGE DOWN scrolls down by the viewport height', (tester) async {
+          await _pumpPageScrollSliverTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure we scrolled down by the viewport height.
+          expect(
+            scrollState.widget.controller!.offset,
+            equals(scrollState.widget.controller!.position.viewportDimension),
+          );
+        });
+
+        testWidgetsOnAllPlatforms('PAGE UP does not scroll past top of the viewport', (tester) async {
+          await _pumpPageScrollSliverTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure we didn't scrolled past the top of the viewport.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
+        });
+
+        testWidgetsOnAllPlatforms('PAGE UP scrolls up by the viewport height', (tester) async {
+          await _pumpPageScrollSliverTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Scroll to the bottom of the viewport.
+          scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure we scrolled up by the viewport height.
+          expect(
+            scrollState.widget.controller!.offset,
+            equals(scrollState.position.maxScrollExtent - scrollState.widget.controller!.position.viewportDimension),
+          );
+        });
+
+        testWidgetsOnAllPlatforms('HOME does not scroll past top of the viewport', (tester) async {
+          await _pumpPageScrollSliverTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.home);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure we didn't scrolled past the top of the viewport.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
+        });
+
+        testWidgetsOnAllPlatforms('HOME scrolls to top of viewport', (tester) async {
+          await _pumpPageScrollSliverTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Scroll to the bottom of the viewport.
+          scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.home);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure we scrolled to the top of the viewport.
+          expect(
+            scrollState.widget.controller!.offset,
+            equals(scrollState.position.minScrollExtent),
+          );
+        });
+
+        testWidgetsOnAllPlatforms('END does not scroll past bottom of the viewport', (tester) async {
+          await _pumpPageScrollSliverTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Scroll to the bottom of the viewport.
+          scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.end);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure we didn't scrolled past the bottom of the viewport.
+          expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
+        });
+
+        testWidgetsOnAllPlatforms('END scrolls to bottom of viewport', (tester) async {
+          await _pumpPageScrollSliverTestSetup(tester);
+
+          await tester.tapAtDocumentPosition(
+            const DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          );
+          await tester.pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.end);
+
+          // Let the scrolling system auto-scroll, as desired.
+          await tester.pumpAndSettle();
+
+          // Ensure we scrolled to the bottom of the viewport.
           expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
         });
       });
@@ -1291,4 +1477,59 @@ Future<TestDocumentContext> _pumpPageScrollTestSetup(WidgetTester tester) async 
       .withInputSource(TextInputSource.ime)
       .withScrollController(ScrollController())
       .pump();
+}
+
+/// Pumps a [SuperEditor] within a parent [Scrollable], including additional
+/// content above the [SuperEditor] and additional content on top of [Scrollable].
+///
+/// By including content above the [SuperEditor], it doesn't have the same origin as the parent [Scrollable].
+///
+/// By including content on top of [Scrollable], it doesn't have the origin at [Offset.zero].
+///
+/// This setup is intended for testing page scrolling actions behaviour in presense of an
+/// ancestor [Scrollable].
+Future<void> _pumpPageScrollSliverTestSetup(WidgetTester tester) async {
+  final doc = longDoc();
+  final composer = MutableDocumentComposer();
+  final docEditor = createDefaultDocumentEditor(document: doc, composer: composer);
+  final scrollController = ScrollController();
+
+  return tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.only(top: 300),
+          child: CustomScrollView(
+            controller: scrollController,
+            slivers: [
+              const SliverAppBar(
+                title: Text(
+                  'Rich Text Editor Sliver Example',
+                ),
+                expandedHeight: 200.0,
+              ),
+              SliverToBoxAdapter(
+                child: SuperEditor(
+                  editor: docEditor,
+                  document: doc,
+                  composer: composer,
+                  scrollController: scrollController,
+                  inputSource: TextInputSource.ime,
+                ),
+              ),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                    return ListTile(title: Text('$index'));
+                  },
+                  childCount: 100,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      debugShowCheckedModeBanner: false,
+    ),
+  );
 }
