@@ -319,35 +319,35 @@ class DeleteUpstreamAtBeginningOfBlockNodeCommand implements EditCommand {
         ReplaceNodeWithEmptyParagraphWithCaretCommand(nodeId: deletionPosition.nodeId),
       );
       return;
-    } else {
-      // The caret is sitting on the upstream edge of block-level content and
-      // the user is trying to delete upstream.
-      //  * If the node above is an empty paragraph, delete it.
-      //  * If the node above is non-selectable, delete it.
-      //  * Otherwise, move the caret up to the node above.
-      final nodeBefore = document.getNodeBefore(node);
-      if (nodeBefore == null) {
-        return;
-      }
-
-      if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
-        executor.executeCommand(
-          DeleteNodeCommand(nodeId: nodeBefore.id),
-        );
-        return;
-      }
-
-      final componentBefore = documentLayoutEditable.documentLayout.getComponentByNodeId(nodeBefore.id)!;
-      if (!componentBefore.isVisualSelectionSupported()) {
-        // The node/component above is not selectable. Delete it.
-        executor.executeCommand(
-          DeleteNodeCommand(nodeId: nodeBefore.id),
-        );
-        return;
-      }
-
-      moveSelectionToEndOfPrecedingNode(executor, document, composer);
     }
+
+    // The caret is sitting on the upstream edge of block-level content and
+    // the user is trying to delete upstream.
+    //  * If the node above is an empty paragraph, delete it.
+    //  * If the node above is non-selectable, delete it.
+    //  * Otherwise, move the caret up to the node above.
+    final nodeBefore = document.getNodeBefore(node);
+    if (nodeBefore == null) {
+      return;
+    }
+
+    if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
+      executor.executeCommand(
+        DeleteNodeCommand(nodeId: nodeBefore.id),
+      );
+      return;
+    }
+
+    final componentBefore = documentLayoutEditable.documentLayout.getComponentByNodeId(nodeBefore.id)!;
+    if (!componentBefore.isVisualSelectionSupported()) {
+      // The node/component above is not selectable. Delete it.
+      executor.executeCommand(
+        DeleteNodeCommand(nodeId: nodeBefore.id),
+      );
+      return;
+    }
+
+    moveSelectionToEndOfPrecedingNode(executor, document, composer);
   }
 
   void moveSelectionToEndOfPrecedingNode(

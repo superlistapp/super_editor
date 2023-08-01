@@ -222,7 +222,7 @@ void main() {
         await tester.placeCaretInParagraph(headerNode.id, 0);
 
         // Ensure that we're starting with a header.
-        headerNode.metadata["blockType"] = header1Attribution;
+        expect(headerNode.metadata["blockType"], header1Attribution);
 
         // Simulate a backspace deletion delta.
         await tester.ime.sendDeltas(
@@ -278,7 +278,7 @@ void main() {
           getter: imeClientGetter,
         );
 
-        // Ensure that the header became a paragraph.
+        // Ensure that the blockquote became a paragraph.
         expect(blockquoteNode.metadata["blockType"], paragraphAttribution);
         expect(SuperEditorInspector.findTextInParagraph(blockquoteNode.id).text, "My Blockquote");
       });
