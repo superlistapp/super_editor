@@ -285,26 +285,13 @@ void main() {
             .withEditorSize(const Size(300, 300))
             .pump();
 
-        await tester.tapAtDocumentPosition(const DocumentPosition(
-          nodeId: "2",
-          nodePosition: UpstreamDownstreamNodePosition.upstream(),
-        ));
-        // Wait till the tap event is complete and the latest selection is available.
-        await tester.pumpAndSettle();
-
-        final testerGesture = await tester.startDocumentDragFromPosition(
-          from: const DocumentPosition(
+        for (var i = 0; i < 2; i++) {
+          await tester.tapAtDocumentPosition(const DocumentPosition(
             nodeId: "2",
             nodePosition: UpstreamDownstreamNodePosition.upstream(),
-          ),
-        );
-
-        // Move by sufficient distance to select the hr.
-        await testerGesture.moveBy(const Offset(300, 0));
-        await tester.pump();
-
-        await tester.endDocumentDragGesture(testerGesture);
-        await tester.pump();
+          ));
+          await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
+        }
 
         expect(
           SuperEditorInspector.findDocumentSelection(),
