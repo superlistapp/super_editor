@@ -1,26 +1,35 @@
-This package contains commands to run golden tests and update golden files.
+This package contains a tool to run golden tests and update golden files in a docker container.
 
-The [args package](https://pub.dev/packages/args) must be used to run the commands.
+The command should be run from the root of the package being tested.
 
-To use the commands contained in this package, add a dart file inside the `tool` directory at the root of your flutter project.
+## Run golden tests:
 
-Example:
+```
+# run all tests
+flutter pub run ../golden_runner/tool/goldens test
 
-```dart
-import 'dart:io';
+# run a single test
+flutter pub run ../golden_runner/tool/goldens test --plain-name "something"
 
-import 'package:args/command_runner.dart';
-import 'package:golden_runner/golden_runner.dart';
+# run all tests in a directory
+flutter pub run ../golden_runner/tool/goldens test test_goldens/my_dir
 
-Future<void> main(List<String> arguments) async {
-  final runner = CommandRunner("goldens", "A tool to run and update golden tests using docker")
-    ..addCommand(GoldenTestCommand(packageDirectory: 'super_editor'))
-    ..addCommand(UpdateGoldensCommand(packageDirectory: 'super_editor'));
+# run a single test in a directory
+flutter pub run ../golden_runner/tool/goldens test --plain-name "something" test_goldens/my_dir
+```
 
-  try {
-    await runner.run(arguments);
-  } on UsageException catch (e) {
-    stdout.write(e);
-  }
-}
+## Update golden files:
+
+```
+# update all goldens
+flutter pub run ../golden_runner/tool/goldens update
+
+# update all goldens in a directory
+flutter pub run ../golden_runner/tool/goldens update test_goldens/my_dir
+
+# update a single golden
+flutter pub run ../golden_runner/tool/goldens update --plain-name "something"
+
+# update a single golden in a directory
+flutter pub run ../golden_runner/tool/goldens update --plain-name "something" test_goldens/my_dir
 ```

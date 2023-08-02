@@ -17,16 +17,12 @@ import 'package:path/path.dart' as path;
 ///
 /// This is intended to be added as an [CommandRunner] command.
 class GoldenTestCommand extends Command {
-  GoldenTestCommand({
-    required this.packageDirectory,
-  }) {
+  GoldenTestCommand() {
     argParser.addOption(
       'plain-name',
       help: 'A plain-text substring of the names of tests to run',
     );
   }
-
-  final String packageDirectory;
 
   @override
   String get name => 'test';
@@ -37,6 +33,11 @@ class GoldenTestCommand extends Command {
   @override
   Future<void> run() async {
     final args = argResults!;
+
+    // The tool must run from the root of the package being tested.
+    // For example, /super_editor/super_text_layout.
+    // We take the last part of the directory as the package directory.
+    final packageDirectory = path.split(Directory.current.path).last;
 
     // Builds the image used to run the container.
     // We can build the image even if it already exists.
@@ -87,7 +88,7 @@ class GoldenTestCommand extends Command {
 
     final dirs = _findAllTestDirectories(testBaseDirectory);
 
-    final volumeMappings = _generateFailureDirectoriesMappings(dirs);
+    final volumeMappings = _generateFailureDirectoriesMappings(packageDirectory, dirs);
 
     // Runs the container.
     //
@@ -127,7 +128,7 @@ class GoldenTestCommand extends Command {
   /// [testDirectories] must be a list of relative paths to the working directory.
   ///
   /// This mappings are used so when a failure happens, the failure images are save in the host OS.
-  List<String> _generateFailureDirectoriesMappings(List<String> testDirectories) {
+  List<String> _generateFailureDirectoriesMappings(String packageDirectory, List<String> testDirectories) {
     final mappings = <String>[];
 
     for (final dir in testDirectories) {
@@ -172,14 +173,12 @@ class GoldenTestCommand extends Command {
 ///
 /// This is intended to be added as an [CommandRunner] command.
 class UpdateGoldensCommand extends Command {
-  UpdateGoldensCommand({required this.packageDirectory}) {
+  UpdateGoldensCommand() {
     argParser.addOption(
       'plain-name',
       help: 'A plain-text substring of the names of tests to run',
     );
   }
-
-  final String packageDirectory;
 
   @override
   String get description => 'Updates golden files';
@@ -190,6 +189,11 @@ class UpdateGoldensCommand extends Command {
   @override
   Future<void> run() async {
     final args = argResults!;
+
+    // The tool must run from the root of the package being tested.
+    // For example, /super_editor/super_text_layout.
+    // We take the last part of the directory as the package directory.
+    final packageDirectory = path.split(Directory.current.path).last;
 
     // Builds the image used to run the container.
     // We can build the image even if it already exists.
