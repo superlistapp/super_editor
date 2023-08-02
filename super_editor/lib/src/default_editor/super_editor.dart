@@ -360,9 +360,12 @@ class SuperEditorState extends State<SuperEditor> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _ancestorScrollController = _findAncestorScrollController(context);
-    _createEditContext();
-    _createLayoutPresenter();
+    final ancestorScrollController = _findAncestorScrollController(context);
+    if (ancestorScrollController != _ancestorScrollController) {
+      _ancestorScrollController = ancestorScrollController;
+      _createEditContext();
+      _createLayoutPresenter();
+    }
   }
 
   @override
@@ -399,7 +402,7 @@ class SuperEditorState extends State<SuperEditor> {
 
   void _createEditContext() {
     editContext = SuperEditorContext(
-      scrollController: widget.scrollController ?? _ancestorScrollController,
+      scrollController: _ancestorScrollController ?? widget.scrollController,
       editor: widget.editor,
       document: widget.document,
       composer: _composer,

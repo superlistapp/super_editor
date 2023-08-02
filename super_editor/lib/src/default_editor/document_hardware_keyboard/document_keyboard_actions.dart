@@ -119,11 +119,13 @@ ExecutionInstruction scrollOnEndKeyPress({
   final scrollController = editContext.scrollController!;
 
   if (!scrollController.hasClients) {
-    return ExecutionInstruction.continueExecution;
+    // No scroll clients present, but we technically handled the task.
+    return ExecutionInstruction.haltExecution;
   }
 
   if (!scrollController.position.maxScrollExtent.isFinite) {
-    return ExecutionInstruction.continueExecution;
+    // Can't scroll to infinity, but we technically handled the task.
+    return ExecutionInstruction.haltExecution;
   }
 
   scrollController.animateTo(
@@ -162,10 +164,6 @@ ExecutionInstruction doNothingWhenPageUpOrPageDownOrHomeOrEndKeyPressed({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (editContext.scrollController != null) {
-    return ExecutionInstruction.continueExecution;
-  }
-
   if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId &&
       keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId &&
       keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId &&
