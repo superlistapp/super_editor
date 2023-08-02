@@ -1,35 +1,39 @@
 # Running tests
 
-In order to run the golden tests, docker must be installed.
+In order to run the golden tests, docker must be installed. Activate the golden_runner with:
+
+```console
+dart pub global activate --source path ../golden_runner
+```
 
 ## Run golden tests:
 
 ```
 # run all tests
-flutter pub run ../golden_runner/tool/goldens test
+goldens test
 
 # run a single test
-flutter pub run ../golden_runner/tool/goldens test --plain-name "something"
+goldens test --plain-name "something"
 
 # run all tests in a directory
-flutter pub run ../golden_runner/tool/goldens test test my_dir
+goldens test test my_dir
 
 # run a single test in a directory
-flutter pub run ../golden_runner/tool/goldens test --plain-name "something" my_dir
+goldens test --plain-name "something" my_dir
 ```
 
 ## Update golden files:
 
 ```
 # update all goldens
-flutter pub run ../golden_runner/tool/goldens update
+goldens update
 
 # update all goldens in a directory
-flutter pub run ../golden_runner/tool/goldens update my_dir
+goldens update my_dir
 
 # update a single golden
-flutter pub run ../golden_runner/tool/goldens update --plain-name "something"
+goldens update --plain-name "something"
 
 # update a single golden in a directory
-flutter pub run ../golden_runner/tool/goldens update --plain-name "something" my_dir
+goldens update --plain-name "something" my_dir
 ```

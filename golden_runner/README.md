@@ -2,6 +2,12 @@ This package contains a tool to run golden tests and update golden files in a do
 
 The command should be run from the root of the package being tested.
 
+## Activate the package:
+
+```console
+dart pub global activate --source path ./golden_runner
+```
+
 ## Run golden tests:
 
 ```
