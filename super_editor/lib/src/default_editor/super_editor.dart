@@ -304,6 +304,9 @@ class SuperEditorState extends State<SuperEditor> {
   @visibleForTesting
   SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
 
+  /// [ScrollController] assigned to the ancestor [Scrollable] if one is present.
+  ScrollController? _ancestorScrollController;
+
   @override
   void initState() {
     super.initState();
@@ -354,6 +357,15 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _ancestorScrollController = _findAncestorScrollController(context);
+    _createEditContext();
+    _createLayoutPresenter();
+  }
+
+  @override
   void dispose() {
     _contentTapDelegate?.dispose();
 
@@ -368,9 +380,26 @@ class SuperEditorState extends State<SuperEditor> {
     super.dispose();
   }
 
+  /// Finds the [ScrollController] assigned to the ancestor [Scrollable] if one is present.
+  ScrollController? _findAncestorScrollController(BuildContext context) {
+    final ancestorScrollable = Scrollable.maybeOf(context);
+    if (ancestorScrollable == null) {
+      return null;
+    }
+
+    final direction = ancestorScrollable.axisDirection;
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
+    if (direction == AxisDirection.left || direction == AxisDirection.right) {
+      return null;
+    }
+
+    return ancestorScrollable.widget.controller;
+  }
+
   void _createEditContext() {
     editContext = SuperEditorContext(
-      scrollController: widget.scrollController,
+      scrollController: widget.scrollController ?? _ancestorScrollController,
       editor: widget.editor,
       document: widget.document,
       composer: _composer,
