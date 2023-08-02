@@ -278,7 +278,8 @@ void main() {
         expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
 
-      testWidgets("right arrow moves caret to downstream edge of the selection made on a block node", (tester) async {
+      testWidgets("right arrow collapses the expanded selection around block node to a caret on the downstream edge",
+          (tester) async {
         await tester
             .createDocument()
             .withCustomContent(paragraphThenHrThenParagraphDoc())
