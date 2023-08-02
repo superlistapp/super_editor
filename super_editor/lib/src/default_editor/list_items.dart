@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
@@ -27,7 +28,7 @@ class ListItemNode extends TextNode {
           text: text,
           metadata: metadata,
         ) {
-    putMetadataValue("blockType", const NamedAttribution("listItem"));
+    putMetadataValue("blockType", listItemAttribution);
   }
 
   ListItemNode.unordered({
@@ -42,7 +43,7 @@ class ListItemNode extends TextNode {
           text: text,
           metadata: metadata,
         ) {
-    putMetadataValue("blockType", const NamedAttribution("listItem"));
+    putMetadataValue("blockType", listItemAttribution);
   }
 
   ListItemNode({
@@ -59,7 +60,7 @@ class ListItemNode extends TextNode {
           metadata: metadata ?? {},
         ) {
     if (!hasMetadataValue("blockType")) {
-      putMetadataValue("blockType", const NamedAttribution("listItem"));
+      putMetadataValue("blockType", listItemAttribution);
     }
   }
 
@@ -91,6 +92,8 @@ class ListItemNode extends TextNode {
   @override
   int get hashCode => super.hashCode ^ type.hashCode ^ _indent.hashCode;
 }
+
+const listItemAttribution = NamedAttribution("listItem");
 
 enum ListItemType {
   ordered,
@@ -533,11 +536,15 @@ class ConvertListItemToParagraphCommand implements EditCommand {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
+    final newMetadata = Map<String, dynamic>.from(paragraphMetadata ?? {});
+    if (newMetadata["blockType"] == listItemAttribution) {
+      newMetadata["blockType"] = paragraphAttribution;
+    }
 
     final newParagraphNode = ParagraphNode(
       id: listItem.id,
       text: listItem.text,
-      metadata: paragraphMetadata ?? {},
+      metadata: newMetadata,
     );
     document.replaceNode(oldNode: listItem, newNode: newParagraphNode);
 

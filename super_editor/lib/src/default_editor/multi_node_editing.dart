@@ -749,6 +749,24 @@ class DeleteSelectionCommand implements EditCommand {
   }
 }
 
+/// Request to handle a collapsed selection upstream deletion at the
+/// beginning of a [node].
+///
+/// When this request is submitted, the caret should be at the beginning of
+/// the given [node].
+///
+/// This request is likely to be handled differently based on the type of
+/// [node] where this upstream deletion takes place. For example, a paragraph
+/// might combine with the paragraph above it. A list item might convert
+/// to a regular paragraph.
+class DeleteUpstreamAtBeginningOfNodeRequest implements EditRequest {
+  DeleteUpstreamAtBeginningOfNodeRequest(this.node);
+
+  /// The [DocumentNode] where an upstream deletion should take
+  /// place at the beginning end of the node.
+  final DocumentNode node;
+}
+
 class DeleteNodeRequest implements EditRequest {
   DeleteNodeRequest({
     required this.nodeId,
