@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -90,10 +91,13 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _onIOSFloatingCursorChange = callback;
   }
 
-  TextInputConnection? _inputConnection;
+  /// Notifies whenever the current [TextInputConnection] changes.
+  ValueListenable<TextInputConnection?> get inputConnectionNotifier => _inputConnectionNotifier;
+  final ValueNotifier<TextInputConnection?> _inputConnectionNotifier = ValueNotifier<TextInputConnection?>(null);
+
   bool _isKeyboardDisplayDesired = false;
 
-  bool get isAttachedToIme => _inputConnection != null && _inputConnection!.attached;
+  bool get isAttachedToIme => _inputConnectionNotifier.value != null && _inputConnectionNotifier.value!.attached;
 
   /// Holds the current editing value in the IME.
   ///
@@ -119,12 +123,14 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       inputType: textInputType,
       keyboardAppearance: keyboardAppearance,
     );
-    _inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
-    _inputConnection!.show();
+    final inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
+    inputConnection.show();
+
+    _inputConnectionNotifier.value = inputConnection;
     _sendEditingValueToPlatform();
 
     _osCurrentTextEditingValue = _latestTextEditingValueSentToPlatform!;
-    _log.fine('Is attached to input client? ${_inputConnection!.attached}');
+    _log.fine('Is attached to input client? ${inputConnection.attached}');
   }
 
   void updateTextInputConfiguration({
@@ -144,7 +150,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     }
 
     // Close the current connection.
-    _inputConnection?.close();
+    _inputConnectionNotifier.value?.close();
 
     // Open a new connection with the new configuration.
     final imeConfig = TextInputConfiguration(
@@ -155,8 +161,10 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       inputType: textInputType,
       keyboardAppearance: keyboardAppearance,
     );
-    _inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
-    _inputConnection!.show();
+    final inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
+    inputConnection.show();
+
+    _inputConnectionNotifier.value = inputConnection;
     _sendEditingValueToPlatform();
 
     _osCurrentTextEditingValue = _latestTextEditingValueSentToPlatform!;
@@ -164,28 +172,33 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   void detachFromIme() {
     _log.fine('Closing input connection');
-    _inputConnection?.close();
+    _inputConnectionNotifier.value?.close();
 
     _osCurrentTextEditingValue = const TextEditingValue();
+    _inputConnectionNotifier.value = null;
   }
 
   void showKeyboard() {
     _isKeyboardDisplayDesired = true;
-    _inputConnection?.show();
+    if (!(_inputConnectionNotifier.value?.attached ?? false)) {
+      // We aren't connected to the IME. Therefore, we can't show the keyboard.
+      return;
+    }
+    _inputConnectionNotifier.value?.show();
   }
 
   void toggleKeyboard() {
     _isKeyboardDisplayDesired = !_isKeyboardDisplayDesired;
     if (_isKeyboardDisplayDesired) {
-      _inputConnection?.show();
+      _inputConnectionNotifier.value?.show();
     } else {
-      _inputConnection?.close();
+      _inputConnectionNotifier.value?.close();
     }
   }
 
   void hideKeyboard() {
     _isKeyboardDisplayDesired = false;
-    _inputConnection?.close();
+    _inputConnectionNotifier.value?.close();
   }
 
   //------ Start TextInputClient ----
@@ -234,7 +247,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
     _log.fine('Sending TextEditingValue to platform: $currentTextEditingValue');
     _latestTextEditingValueSentToPlatform = currentTextEditingValue;
-    _inputConnection!.setEditingState(currentTextEditingValue!);
+    _inputConnectionNotifier.value!.setEditingState(currentTextEditingValue!);
   }
 
   void Function(TextInputAction)? _onPerformActionPressed;
@@ -364,7 +377,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   @override
   void connectionClosed() {
     _log.info('TextInputClient: connectionClosed()');
-    _inputConnection = null;
+    _inputConnectionNotifier.value = null;
     _latestTextEditingValueSentToPlatform = null;
   }
 
