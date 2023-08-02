@@ -40,7 +40,6 @@ class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
         document: _doc,
         composer: _composer,
         gestureMode: DocumentGestureMode.mouse,
-        inputSource: TextInputSource.keyboard,
       ),
     );
   }

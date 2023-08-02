@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import '../core/document_layout.dart';
@@ -288,6 +293,92 @@ class SelectableBox extends StatelessWidget {
           position: DecorationPosition.foreground,
           child: child,
         ),
+      ),
+    );
+  }
+}
+
+class DeleteUpstreamAtBeginningOfBlockNodeCommand implements EditCommand {
+  DeleteUpstreamAtBeginningOfBlockNodeCommand(this.node);
+
+  final DocumentNode node;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+    final documentLayoutEditable = context.find<DocumentLayoutEditable>(Editor.layoutKey);
+
+    final deletionPosition = DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition);
+
+    final nodePosition = deletionPosition.nodePosition as UpstreamDownstreamNodePosition;
+    if (nodePosition.affinity == TextAffinity.downstream) {
+      // The caret is sitting on the downstream edge of block-level content. Delete the
+      // whole block by replacing it with an empty paragraph.
+      executor.executeCommand(
+        ReplaceNodeWithEmptyParagraphWithCaretCommand(nodeId: deletionPosition.nodeId),
+      );
+      return;
+    }
+
+    // The caret is sitting on the upstream edge of block-level content and
+    // the user is trying to delete upstream.
+    //  * If the node above is an empty paragraph, delete it.
+    //  * If the node above is non-selectable, delete it.
+    //  * Otherwise, move the caret up to the node above.
+    final nodeBefore = document.getNodeBefore(node);
+    if (nodeBefore == null) {
+      return;
+    }
+
+    if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
+      executor.executeCommand(
+        DeleteNodeCommand(nodeId: nodeBefore.id),
+      );
+      return;
+    }
+
+    final componentBefore = documentLayoutEditable.documentLayout.getComponentByNodeId(nodeBefore.id)!;
+    if (!componentBefore.isVisualSelectionSupported()) {
+      // The node/component above is not selectable. Delete it.
+      executor.executeCommand(
+        DeleteNodeCommand(nodeId: nodeBefore.id),
+      );
+      return;
+    }
+
+    moveSelectionToEndOfPrecedingNode(executor, document, composer);
+  }
+
+  void moveSelectionToEndOfPrecedingNode(
+    CommandExecutor executor,
+    MutableDocument document,
+    MutableDocumentComposer composer,
+  ) {
+    if (composer.selection == null) {
+      return;
+    }
+
+    final node = document.getNodeById(composer.selection!.extent.nodeId);
+    if (node == null) {
+      return;
+    }
+
+    final nodeBefore = document.getNodeBefore(node);
+    if (nodeBefore == null) {
+      return;
+    }
+
+    executor.executeCommand(
+      ChangeSelectionCommand(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: nodeBefore.id,
+            nodePosition: nodeBefore.endPosition,
+          ),
+        ),
+        SelectionChangeType.collapseSelection,
+        SelectionReason.userInteraction,
       ),
     );
   }

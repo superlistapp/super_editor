@@ -34,6 +34,10 @@ class Editor implements RequestDispatcher {
   /// [DocumentComposer] is available in the [EditContext].
   static const composerKey = "composer";
 
+  /// Service locator key to obtain a [DocumentLayoutEditable] from [find], if
+  /// a [DocumentLayoutEditable] is available in the [EditContext].
+  static const layoutKey = "layout";
+
   /// Generates a new ID for a [DocumentNode].
   ///
   /// Each generated node ID is universally unique.
@@ -54,9 +58,9 @@ class Editor implements RequestDispatcher {
   })  : _requestHandlers = requestHandlers,
         _reactionPipeline = reactionPipeline ?? [],
         _changeListeners = listeners ?? [] {
-    _context = EditContext(editables);
+    context = EditContext(editables);
 
-    _commandExecutor = _DocumentEditorCommandExecutor(_context);
+    _commandExecutor = _DocumentEditorCommandExecutor(context);
   }
 
   void dispose() {
@@ -68,7 +72,7 @@ class Editor implements RequestDispatcher {
   final List<EditRequestHandler> _requestHandlers;
 
   /// Service Locator that provides all resources that are relevant for document editing.
-  late final EditContext _context;
+  late final EditContext context;
 
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
@@ -131,7 +135,7 @@ class Editor implements RequestDispatcher {
 
     if (_activeCommandCount == 0) {
       // This is the start of a new transaction.
-      for (final editable in _context._resources.values) {
+      for (final editable in context._resources.values) {
         editable.onTransactionStart();
       }
     }
@@ -160,7 +164,7 @@ class Editor implements RequestDispatcher {
       _notifyListeners(_activeChangeList!);
 
       // This is the end of a transaction.
-      for (final editable in _context._resources.values) {
+      for (final editable in context._resources.values) {
         editable.onTransactionEnd(_activeChangeList!);
       }
 
@@ -206,7 +210,7 @@ class Editor implements RequestDispatcher {
 
   void _reactToChanges(List<EditEvent> changeList) {
     for (final reaction in _reactionPipeline) {
-      reaction.react(_context, this, changeList);
+      reaction.react(context, this, changeList);
     }
   }
 
@@ -325,6 +329,10 @@ class EditContext {
 
     return _resources[id] as T;
   }
+
+  void put(String id, Editable resource) => _resources[id] = resource;
+
+  void remove(String id) => _resources.remove(id);
 }
 
 /// Executes [EditCommand]s in the order in which they're queued.
