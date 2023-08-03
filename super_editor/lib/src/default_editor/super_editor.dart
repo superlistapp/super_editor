@@ -319,6 +319,11 @@ class SuperEditorState extends State<SuperEditor> {
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
+    widget.editor.context.put(
+      Editor.layoutKey,
+      DocumentLayoutEditable(() => _docLayoutKey.currentState as DocumentLayout),
+    );
+
     _createEditContext();
     _createLayoutPresenter();
   }
@@ -342,6 +347,13 @@ class SuperEditorState extends State<SuperEditor> {
     }
 
     if (widget.editor != oldWidget.editor) {
+      oldWidget.editor.context.remove(Editor.layoutKey);
+
+      widget.editor.context.put(
+        Editor.layoutKey,
+        DocumentLayoutEditable(() => _docLayoutKey.currentState as DocumentLayout),
+      );
+
       _createEditContext();
       _createLayoutPresenter();
     } else if (widget.selectionStyles != oldWidget.selectionStyles) {
@@ -360,6 +372,8 @@ class SuperEditorState extends State<SuperEditor> {
     _contentTapDelegate?.dispose();
 
     _composer.selectionNotifier.removeListener(_updateComposerPreferencesAtSelection);
+
+    widget.editor.context.remove(Editor.layoutKey);
 
     _focusNode.removeListener(_onFocusChange);
     if (widget.focusNode == null) {

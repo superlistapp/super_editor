@@ -3,10 +3,11 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../../test/super_editor/document_test_tools.dart';
+import '../../test_tools_goldens.dart';
 
 void main() {
   group('SuperEditor', () {
-    testGoldens('displays paragraphs with different alignments', (tester) async {
+    testGoldensOnAndroid('displays paragraphs with different alignments', (tester) async {
       await tester.createDocument().withCustomContent(_createParagraphTestDoc()).pump();
 
       await screenMatchesGolden(tester, 'paragraph_alignments');
