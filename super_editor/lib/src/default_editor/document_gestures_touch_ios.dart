@@ -42,7 +42,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
     this.overlayController,
-    required this.child,
+    this.child,
   }) : super(key: key);
 
   final FocusNode focusNode;
@@ -90,7 +90,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
 
   final bool showDebugPaint;
 
-  final Widget child;
+  final Widget? child;
 
   @override
   State createState() => _IOSDocumentTouchInteractorState();
@@ -1284,7 +1284,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     return _buildGestureInput(
-      child: widget.child,
+      child: widget.child ?? const SizedBox(),
     );
   }
 

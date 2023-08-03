@@ -46,7 +46,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
     this.overlayController,
-    required this.child,
+    this.child,
   }) : super(key: key);
 
   final FocusNode focusNode;
@@ -90,7 +90,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
 
   final bool showDebugPaint;
 
-  final Widget child;
+  final Widget? child;
 
   @override
   State createState() => _AndroidDocumentTouchInteractorState();
@@ -1094,7 +1094,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   @override
   Widget build(BuildContext context) {
     return _buildGestureInput(
-      child: widget.child,
+      child: widget.child ?? const SizedBox(),
     );
   }
 

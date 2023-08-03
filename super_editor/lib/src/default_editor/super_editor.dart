@@ -679,7 +679,6 @@ class SuperEditorState extends State<SuperEditor> {
       contentTapHandler: _contentTapDelegate,
       autoScroller: _autoScrollController,
       showDebugPaint: widget.debugPaint.gestures,
-      child: const SizedBox(),
     );
   }
 
@@ -699,7 +698,6 @@ class SuperEditorState extends State<SuperEditor> {
       createOverlayControlsClipper: widget.createOverlayControlsClipper,
       overlayController: widget.overlayController,
       showDebugPaint: widget.debugPaint.gestures,
-      child: const SizedBox(),
     );
   }
 
@@ -720,7 +718,6 @@ class SuperEditorState extends State<SuperEditor> {
       createOverlayControlsClipper: widget.createOverlayControlsClipper,
       overlayController: widget.overlayController,
       showDebugPaint: widget.debugPaint.gestures,
-      child: const SizedBox(),
     );
   }
 
