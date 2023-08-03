@@ -613,11 +613,10 @@ class SuperEditorState extends State<SuperEditor> {
   /// Builds the widget tree that scrolls the document. This subtree might
   /// introduce its own Scrollable, or it might defer to an ancestor
   /// scrollable. This subtree also hooks up auto-scrolling capabilities.
-  final _contentConstraints = ValueNotifier<BoxConstraints>(const BoxConstraints());
   Widget _buildDocumentScrollable({
     required Widget child,
   }) {
-    return _SuperEditorBounds(
+    return _SuperEditorViewportBounds(
       contentConstraints: _contentConstraints,
       child: DocumentScrollable(
         autoScroller: _autoScrollController,
@@ -627,31 +626,9 @@ class SuperEditorState extends State<SuperEditor> {
         child: child,
       ),
     );
-
-    // return LayoutBuilder(
-    //   builder: (context, viewportConstraints) {
-    //     return DocumentScrollable(
-    //       autoScroller: _autoScrollController,
-    //       scrollController: widget.scrollController,
-    //       scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
-    //       showDebugPaint: widget.debugPaint.scrolling,
-    //       child: ConstrainedBox(
-    //         constraints: BoxConstraints(
-    //           // When SuperEditor installs its own Viewport, we want the gesture
-    //           // detection to span throughout the Viewport. Because the gesture
-    //           // system sits around the DocumentLayout, within the Viewport, we
-    //           // have to explicitly tell the gesture area to be at least as tall
-    //           // as the viewport (in case the document content is shorter than
-    //           // the viewport).
-    //           minWidth: viewportConstraints.maxWidth < double.infinity ? viewportConstraints.maxWidth : 0,
-    //           minHeight: viewportConstraints.maxHeight < double.infinity ? viewportConstraints.maxHeight : 0,
-    //         ),
-    //         child: child,
-    //       ),
-    //     );
-    //   },
-    // );
   }
+
+  final _contentConstraints = ValueNotifier<BoxConstraints>(const BoxConstraints());
 
   /// Builds the widget tree that handles user gesture interaction
   /// with the document, e.g., mouse input on desktop, or touch input
@@ -669,7 +646,7 @@ class SuperEditorState extends State<SuperEditor> {
         gestureWidget = _buildIOSGestureSystem();
     }
 
-    return _SuperEditorDocumentBounds(
+    return _SuperEditorGestureBounds(
       contentConstraints: _contentConstraints,
       child: Stack(
         clipBehavior: Clip.none,
@@ -770,17 +747,129 @@ class SuperEditorState extends State<SuperEditor> {
   }
 }
 
-class _SuperEditorBounds extends SingleChildRenderObjectWidget {
-  const _SuperEditorBounds({
+/// Selects and reports layout constraints for the [SuperEditor] gesture system, based
+/// on the available space for the full [SuperEditor] experience.
+///
+/// ## The Problem
+/// [SuperEditor] needs to use a special pair of widgets to size its gesture
+/// area due to the presence of a scrollable viewport in the middle of [SuperEditor]'s
+/// widget tree. To understand why this complexity is needed, the following
+/// points are important to understand:
+///
+///  1. [SuperEditor] places its gesture detector BEHIND the document so that
+///     individual components in the document have the first chance to handle
+///     taps, drags, etc.
+///  2. Individual components within the document layout need to be able to
+///     respond to gestures.
+///  3. The document layout sits inside of a scrollable viewport.
+///
+/// Given these invariants, the question becomes: where do we place [SuperEditor]'s
+/// gesture system, and how do we make it cover the full [SuperEditor] bounds?
+///
+/// The following are some options that we've considered, but won't work.
+///
+/// ### Place gestures around the scrollable viewport
+///
+///     _buildGestureSystem(
+///       child: IgnorePointer(
+///         child DocumentScrollable(
+///           child: DocumentLayout(),
+///         ),
+///       ),
+///     );
+///
+/// In this approach we place the gesture system behind the scrollable viewport.
+/// This approach gives us the correct size for the gesture bounds. But, for
+/// touch events to get back to the gesture system, we have to `IgnorePointer`
+/// around the scrollable, so that the scrollable doesn't steal all the gestures.
+/// Unfortunately, if we ignore gestures for the scrollable, it forces us to also
+/// ignore gestures within the document layout, which violates requirement #2.
+///
+/// ### Gesture area inside the scrollable with LayoutBuilder for size
+///
+///     LayoutBuilder(
+///       builder: (context, constraints) {
+///         final viewportSize = constraints.biggest;
+///
+///         return Stack(
+///           children: [
+///             DocumentScrollable(
+///               child: DocumentLayout(),
+///             ),
+///             _buildGestureSystem(viewportSize),
+///           ],
+///         );
+///       },
+///     );
+///
+/// In this approach, we place a `LayoutBuilder` outside of the scrollable, which then
+/// tells us the size of the viewport. We provide that size to the gesture system, which
+/// sits INSIDE the scrollable, and the gesture system makes itself exactly the same
+/// size as the viewport.
+///
+/// This approach works, but it has a downside. We can't calculate an intrinsic height
+/// for [SuperEditor], because `LayoutBuilder` throws an exception when calculating
+/// intrinsic height. We felt it was important to be able to calculate intrinsic height.
+///
+/// ## The Solution
+/// To solve this problem we introduce two widgets, which are connected by a notifier.
+///
+/// The first widget, [_SuperEditorViewportBounds], measures the available space OUTSIDE the
+/// scrollable viewport during layout, and reports it to the notifier.
+///
+/// The second widget, [_SuperEditorGestureBounds], sits INSIDE the scrollable where
+/// the vertical constraint in infinite. During layout, this widget reads the size
+/// info from the notifier and sizes itself based on those constraints, instead of
+/// using its incoming constraints.
+///
+/// As a result, the gesture area makes itself exactly the same size as the viewport
+/// that surrounds it.
+///
+/// Intended use:
+///
+///     _SuperEditorBounds(
+///       contentConstraints: gestureConstraintsNotifier,
+///       // This is the scrollable viewport.
+///       child: DocumentScrollable(
+///         child: MoreSubTree(
+///           child: Stack(
+///             children: [
+///               // This gesture system needs to be as tall as the
+///               // DocumentScrollable ancestor above, and it needs
+///               // to sit behind the document layout.
+///               _buildGestureSystem(
+///                 contentConstraints: gestureConstraintsNotifier,
+///               ),
+///               // This is the document layout, which contains the
+///               // individual components that need to have the first
+///               // change to respond to gestures.
+///               _buildDocumentLayout(),
+///             ),
+///           ),
+///         ),
+///       ),
+///     );
+///
+/// See also:
+///   * [_SuperEditorGestureBounds] - which constrains itself with the constraints
+///     selected by this widget.
+class _SuperEditorViewportBounds extends SingleChildRenderObjectWidget {
+  const _SuperEditorViewportBounds({
     required this.contentConstraints,
     required super.child,
   });
 
+  /// The layout constraints that apply outside of the scrollable viewport.
+  ///
+  /// This widget is expected to build around the scrollable viewport. This
+  /// widget then reports its layout constraints to this notifier to be used
+  /// by a descendant [_SuperEditorGestureBounds].
   final ValueNotifier<BoxConstraints> contentConstraints;
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return _RenderSuperEditorBounds()..contentConstraints = contentConstraints;
+    return _RenderSuperEditorBounds() //
+      ..contentConstraints = contentConstraints;
   }
 
   @override
@@ -794,31 +883,38 @@ class _RenderSuperEditorBounds extends RenderProxyBox {
 
   @override
   void performLayout() {
-    // print("Laying out SuperEditorBounds");
-    // We must assign the desired constraints before running layout on our child,
-    // because this value will impact the child's desired size. This impact is
+    // We must report the desired constraints before running layout on our child,
+    // because these constraints will impact the child's desired size. This impact is
     // indirect. The widget that uses these content constraints is probably a
     // deep descendant of our `child`.
     contentConstraints.value = BoxConstraints(
       minWidth: constraints.maxWidth < double.infinity ? constraints.maxWidth : 0,
       minHeight: constraints.maxHeight < double.infinity ? constraints.maxHeight : 0,
     );
-    // print("SuperEditorBounds content constraints: ${contentConstraints.value}");
-    // print("Direct child: $child");
-    // print("");
 
     child!.layout(constraints, parentUsesSize: true);
     size = child!.size;
-    // print("SuperEditorBounds size: $size");
   }
 }
 
-class _SuperEditorDocumentBounds extends SingleChildRenderObjectWidget {
-  const _SuperEditorDocumentBounds({
+/// Fills all visual [SuperEditor] space so that gestures can interact with any
+/// location in the [SuperEditor] experience.
+///
+/// [SuperEditor]'s gesture system should be placed as a descendant of this
+/// widget.
+///
+/// See [_SuperEditorViewportBounds] for an explanation about why that widget and this
+/// widget are necessary.
+class _SuperEditorGestureBounds extends SingleChildRenderObjectWidget {
+  const _SuperEditorGestureBounds({
     required this.contentConstraints,
     required super.child,
   });
 
+  /// The layout constraints that apply outside of the scrollable viewport.
+  ///
+  /// This widget attempts to apply [contentConstraints] to itself, instead
+  /// of its incoming layout constraints.
   final ValueNotifier<BoxConstraints> contentConstraints;
 
   @override
@@ -837,18 +933,10 @@ class _RenderSuperEditorContentBounds extends RenderProxyBox {
 
   @override
   void performLayout() {
-    // print("Laying out SuperEditorContentBounds");
-    // print("Content constraints: ${contentConstraints.value}");
     final childConstraints = contentConstraints.value.enforce(constraints);
-    // print("Actual constraints: $childConstraints");
 
     child!.layout(childConstraints, parentUsesSize: true);
     size = child!.size;
-    // print("Content size: $size");
-    // print("Content intrinsic height: ${child!.getMaxIntrinsicHeight(size.width)}");
-    // print("Content RenderObject: $child");
-    // print("Content bounds intrinsic height: ${getMaxIntrinsicHeight(size.width)}");
-    // print("");
   }
 }
 
