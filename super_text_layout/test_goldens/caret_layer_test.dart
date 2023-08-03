@@ -4,13 +4,14 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'test_tools.dart';
+import 'test_tools_goldens.dart';
 
 const primaryCaretStyle = CaretStyle(color: Colors.black);
 
 void main() {
   group("Caret layer", () {
     group("with a single caret", () {
-      testGoldens("paints a normal caret", (tester) async {
+      testGoldensOnAndroid("paints a normal caret", (tester) async {
         await pumpThreeLinePlainSuperText(
           tester,
           aboveBuilder: (context, TextLayout textLayout) {
@@ -30,7 +31,7 @@ void main() {
         await screenMatchesGolden(tester, "CaretLayer_single-caret_normal");
       });
 
-      testGoldens("paints caret styles", (tester) async {
+      testGoldensOnAndroid("paints caret styles", (tester) async {
         await pumpThreeLinePlainSuperText(
           tester,
           aboveBuilder: (context, TextLayout textLayout) {
@@ -56,7 +57,7 @@ void main() {
     });
 
     group("with multiple carets", () {
-      testGoldens("paints multiple carets", (tester) async {
+      testGoldensOnAndroid("paints multiple carets", (tester) async {
         await pumpThreeLinePlainSuperText(
           tester,
           aboveBuilder: (context, TextLayout textLayout) {
@@ -88,7 +89,7 @@ void main() {
         await screenMatchesGolden(tester, "CaretLayer_multi-caret");
       });
 
-      testGoldens("paints two carets at the same position", (tester) async {
+      testGoldensOnAndroid("paints two carets at the same position", (tester) async {
         await pumpThreeLinePlainSuperText(
           tester,
           aboveBuilder: (context, TextLayout textLayout) {

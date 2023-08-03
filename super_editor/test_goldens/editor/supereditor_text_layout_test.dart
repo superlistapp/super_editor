@@ -6,11 +6,12 @@ import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../test/super_editor/document_test_tools.dart';
+import '../test_tools_goldens.dart';
 
 void main() {
   group('SuperEditor', () {
     group('applies textScaleFactor', () {
-      testGoldens('for paragraph', (tester) async {
+      testGoldensOnAndroid('for paragraph', (tester) async {
         await _buildTextScaleScaffold(
           tester,
           regularEditor: _buildSuperEditorFromMarkdown(
@@ -26,7 +27,7 @@ void main() {
         await screenMatchesGolden(tester, 'text-scaling-paragraph');
       });
 
-      testGoldens('for paragraph with collapsed selection', (tester) async {
+      testGoldensOnAndroid('for paragraph with collapsed selection', (tester) async {
         final regularEditorKey = GlobalKey();
         final scaledEditorKey = GlobalKey();
 
@@ -61,7 +62,7 @@ void main() {
         await screenMatchesGolden(tester, 'text-scaling-paragraph-collapsed-selection');
       });
 
-      testGoldens('for paragraph with expanded selection', (tester) async {
+      testGoldensOnAndroid('for paragraph with expanded selection', (tester) async {
         final regularEditorKey = GlobalKey();
         final scaledEditorKey = GlobalKey();
 
@@ -96,7 +97,7 @@ void main() {
         await screenMatchesGolden(tester, 'text-scaling-paragraph-expanded-selection');
       });
 
-      testGoldens('for unordered list item', (tester) async {
+      testGoldensOnAndroid('for unordered list item', (tester) async {
         await _buildTextScaleScaffold(
           tester,
           regularEditor: _buildSuperEditorFromMarkdown(
@@ -112,7 +113,7 @@ void main() {
         await screenMatchesGolden(tester, 'text-scaling-unordered-list');
       });
 
-      testGoldens('for ordered list item', (tester) async {
+      testGoldensOnAndroid('for ordered list item', (tester) async {
         await _buildTextScaleScaffold(
           tester,
           regularEditor: _buildSuperEditorFromMarkdown(
@@ -128,7 +129,7 @@ void main() {
         await screenMatchesGolden(tester, 'text-scaling-ordered-list');
       });
 
-      testGoldens('for header', (tester) async {
+      testGoldensOnAndroid('for header', (tester) async {
         await _buildTextScaleScaffold(
           tester,
           regularEditor: _buildSuperEditorFromMarkdown(
@@ -141,10 +142,13 @@ void main() {
           ),
         );
 
-        await screenMatchesGolden(tester, 'text-scaling-header');
+        await expectLater(
+          find.byType(MaterialApp).first,
+          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-header.png", 0),
+        );
       });
 
-      testGoldens('for blockquote', (tester) async {
+      testGoldensOnAndroid('for blockquote', (tester) async {
         await _buildTextScaleScaffold(
           tester,
           regularEditor: _buildSuperEditorFromMarkdown(
@@ -157,7 +161,10 @@ void main() {
           ),
         );
 
-        await screenMatchesGolden(tester, 'text-scaling-blockquote');
+        await expectLater(
+          find.byType(MaterialApp).first,
+          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-blockquote.png", 0),
+        );
       });
     });
   });
