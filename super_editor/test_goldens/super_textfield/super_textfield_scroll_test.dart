@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../test_tools_goldens.dart';
+
 void main() {
   group('SuperTextField', () {
-    testGoldens("multi-line accounts for padding when jumping scroll position down", (tester) async {
+    testGoldensOnAndroid("multi-line accounts for padding when jumping scroll position down", (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
       );
@@ -65,7 +67,7 @@ void main() {
       await screenMatchesGolden(tester, 'super_textfield_scrolled_down');
     });
 
-    testGoldens("multi-line accounts for padding when jumping scroll position up", (tester) async {
+    testGoldensOnAndroid("multi-line accounts for padding when jumping scroll position up", (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
       );

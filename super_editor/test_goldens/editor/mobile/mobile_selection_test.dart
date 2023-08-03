@@ -6,6 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../../test/test_tools.dart';
+import '../../test_tools_goldens.dart';
+
 void main() {
   group('SuperEditor', () {
     group('mobile selection', () {
@@ -722,7 +725,7 @@ void _testParagraphSelection(
 ) {
   final docKey = GlobalKey();
 
-  testGoldens(description, (tester) async {
+  testGoldensOnAndroid(description, (tester) async {
     tester.view
       ..physicalSize = const Size(800, 200)
       ..devicePixelRatio = 1.0;

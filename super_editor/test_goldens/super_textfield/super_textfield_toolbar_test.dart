@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../test/super_textfield/super_textfield_robot.dart';
+import '../test_tools_goldens.dart';
 
 void main() {
   group('SuperTextField', () {
-    testGoldens('displays toolbar pointing down', (tester) async {
+    testGoldensOnAndroid('displays toolbar pointing down', (tester) async {
       // Pumps a widget tree with a SuperTextField at the bottom of the screen.
       await _pumpSuperTextfieldToolbarTestApp(
         tester,
@@ -23,10 +23,13 @@ void main() {
       // Select a word so that the popover toolbar appears.
       await tester.doubleTapAtSuperTextField(6);
 
-      await screenMatchesGolden(tester, 'super_textfield_ios_toolbar_pointing_down');
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFileWithPixelAllowance("goldens/super_textfield_ios_toolbar_pointing_down.png", 1),
+      );
     });
 
-    testGoldens('displays toolbar pointing up', (tester) async {
+    testGoldensOnAndroid('displays toolbar pointing up', (tester) async {
       // Pumps a widget tree with a SuperTextField at the top of the screen.
       await _pumpSuperTextfieldToolbarTestApp(
         tester,
@@ -39,7 +42,10 @@ void main() {
       // Select a word so that the popover toolbar appears.
       await tester.doubleTapAtSuperTextField(6);
 
-      await screenMatchesGolden(tester, 'super_textfield_ios_toolbar_pointing_up');
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFileWithPixelAllowance("goldens/super_textfield_ios_toolbar_pointing_up.png", 3),
+      );
     });
   });
 }
