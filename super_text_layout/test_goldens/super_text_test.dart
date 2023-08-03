@@ -3,15 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import 'test_tools_goldens.dart';
+
 void main() {
   group("SuperText", () {
     group("text layout", () {
-      testGoldens("renders a visual reference for non-visual tests", (tester) async {
+      testGoldensOnAndroid("renders a visual reference for non-visual tests", (tester) async {
         await _pumpThreeLinePlainText(tester);
         await screenMatchesGolden(tester, "SuperText-reference-render");
       });
 
-      testGoldens("applies textScaleFactor", (tester) async {
+      testGoldensOnAndroid("applies textScaleFactor", (tester) async {
         await tester.pumpWidget(
           _buildScaffold(
             // ignore: prefer_const_constructors
