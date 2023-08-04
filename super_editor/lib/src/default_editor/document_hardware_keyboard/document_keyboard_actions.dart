@@ -249,25 +249,17 @@ ExecutionInstruction deleteUpstreamContentWithBackspace({
   return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction deleteUpstreamContentWithBackspaceOnNonWeb({
+ExecutionInstruction deleteUpstreamContentWithBackspaceWithIme({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (kIsWeb) {
+    // On web, pressing backspace reports both a deletion delta and a key event.
+    // We handle the deletion delta and ignore the key event.
     return ExecutionInstruction.continueExecution;
   }
 
-  if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final didDelete = editContext.commonOps.deleteUpstream();
-
-  return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return deleteUpstreamContentWithBackspace(editContext: editContext, keyEvent: keyEvent);
 }
 
 ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
@@ -382,6 +374,19 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   }
 
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction moveUpDownLeftAndRightWithArrowKeysWithIme({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (kIsWeb) {
+    // On web, pressing arrow keys reports both non-text deltas and key events.
+    // // We handle the non-deletion delta to change the selection and ignore the key event.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  return moveUpDownLeftAndRightWithArrowKeys(editContext: editContext, keyEvent: keyEvent);
 }
 
 ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
