@@ -2,7 +2,6 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
-import 'package:flutter/rendering.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
@@ -22,7 +21,9 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_editor/src/infrastructure/viewport_size_reporting.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/document_gestures_interaction_overrides.dart';
@@ -249,7 +250,7 @@ class SuperEditor extends StatefulWidget {
 
   /// Layers that are displayed on top of the document layout, aligned
   /// with the location and size of the document layout.
-  final List<DocumentLayerBuilder> documentOverlayBuilders;
+  final List<SuperEditorLayerBuilder> documentOverlayBuilders;
 
   /// Owns the editor's current selection, the current attributions for
   /// text input, and other transitive editor configurations.
@@ -293,6 +294,7 @@ class SuperEditorState extends State<SuperEditor> {
 
   late DocumentComposer _composer;
 
+  late ScrollController _scrollController;
   late AutoScrollController _autoScrollController;
   DocumentPosition? _previousSelectionExtent;
 
@@ -302,6 +304,15 @@ class SuperEditorState extends State<SuperEditor> {
   ContentTapDelegate? _contentTapDelegate;
 
   final _floatingCursorController = FloatingCursorController();
+
+  // Layer links that connect leader widgets near the user's selection
+  // to carets, handles, and other things that want to follow the selection.
+  final _selectionLinks = SelectionLinks(
+    caretLink: LayerLink(),
+    upstreamLink: LayerLink(),
+    downstreamLink: LayerLink(),
+    expandedSelectionBoundsLink: LayerLink(),
+  );
 
   @visibleForTesting
   SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
@@ -315,6 +326,7 @@ class SuperEditorState extends State<SuperEditor> {
     _composer = widget.composer;
     _composer.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
 
+    _scrollController = widget.scrollController ?? ScrollController();
     _autoScrollController = AutoScrollController();
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
@@ -362,6 +374,10 @@ class SuperEditorState extends State<SuperEditor> {
 
     if (widget.stylesheet != oldWidget.stylesheet) {
       _docStylesheetStyler.stylesheet = widget.stylesheet;
+    }
+
+    if (widget.scrollController != oldWidget.scrollController) {
+      _scrollController = widget.scrollController ?? ScrollController();
     }
 
     _recomputeIfLayoutShouldShowCaret();
@@ -616,11 +632,11 @@ class SuperEditorState extends State<SuperEditor> {
   Widget _buildDocumentScrollable({
     required Widget child,
   }) {
-    return _SuperEditorViewportBounds(
-      contentConstraints: _contentConstraints,
+    return ViewportBoundsReporter(
+      viewportOuterConstraints: _contentConstraints,
       child: DocumentScrollable(
         autoScroller: _autoScrollController,
-        scrollController: widget.scrollController,
+        scrollController: _scrollController,
         scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
         showDebugPaint: widget.debugPaint.scrolling,
         child: child,
@@ -646,8 +662,8 @@ class SuperEditorState extends State<SuperEditor> {
         gestureWidget = _buildIOSGestureSystem();
     }
 
-    return _SuperEditorGestureBounds(
-      contentConstraints: _contentConstraints,
+    return ViewportBoundsReplicator(
+      viewportOuterConstraints: _contentConstraints,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -690,9 +706,10 @@ class SuperEditorState extends State<SuperEditor> {
       getDocumentLayout: () => editContext.documentLayout,
       selection: editContext.composer.selectionNotifier,
       contentTapHandler: _contentTapDelegate,
-      scrollController: widget.scrollController,
+      scrollController: _scrollController,
       documentKey: _docLayoutKey,
       documentLayoutLink: _documentLayoutLink,
+      selectionLinks: _selectionLinks,
       handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
       popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
       createOverlayControlsClipper: widget.createOverlayControlsClipper,
@@ -709,9 +726,10 @@ class SuperEditorState extends State<SuperEditor> {
       getDocumentLayout: () => editContext.documentLayout,
       selection: editContext.composer.selectionNotifier,
       contentTapHandler: _contentTapDelegate,
-      scrollController: widget.scrollController,
+      scrollController: _scrollController,
       documentKey: _docLayoutKey,
       documentLayoutLink: _documentLayoutLink,
+      selectionLinks: _selectionLinks,
       handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
       popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
       floatingCursorController: _floatingCursorController,
@@ -735,6 +753,14 @@ class SuperEditorState extends State<SuperEditor> {
             showDebugPaint: widget.debugPaint.layout,
           ),
         ),
+        underlays: [
+          // Layer that positions and sizes leader widgets at the bounds
+          // of the users selection so that carets, handles, toolbars, and
+          // other things can follow the selection.
+          (context) => _SelectionLeadersDocumentLayerBuilder(
+                links: _selectionLinks,
+              ).build(context, editContext),
+        ],
         overlays: [
           for (final overlayBuilder in widget.documentOverlayBuilders) //
             (context) => overlayBuilder.build(context, editContext),
@@ -744,196 +770,31 @@ class SuperEditorState extends State<SuperEditor> {
   }
 }
 
-/// Selects and reports layout constraints for the [SuperEditor] gesture system, based
-/// on the available space for the full [SuperEditor] experience.
-///
-/// ## The Problem
-/// [SuperEditor] needs to use a special pair of widgets to size its gesture
-/// area due to the presence of a scrollable viewport in the middle of [SuperEditor]'s
-/// widget tree. To understand why this complexity is needed, the following
-/// points are important to understand:
-///
-///  1. [SuperEditor] places its gesture detector BEHIND the document so that
-///     individual components in the document have the first chance to handle
-///     taps, drags, etc.
-///  2. Individual components within the document layout need to be able to
-///     respond to gestures.
-///  3. The document layout sits inside of a scrollable viewport.
-///
-/// Given these invariants, the question becomes: where do we place [SuperEditor]'s
-/// gesture system, and how do we make it cover the full [SuperEditor] bounds?
-///
-/// The following are some options that we've considered, but won't work.
-///
-/// ### Place gestures around the scrollable viewport
-///
-///     _buildGestureSystem(
-///       child: IgnorePointer(
-///         child DocumentScrollable(
-///           child: DocumentLayout(),
-///         ),
-///       ),
-///     );
-///
-/// In this approach we place the gesture system behind the scrollable viewport.
-/// This approach gives us the correct size for the gesture bounds. But, for
-/// touch events to get back to the gesture system, we have to `IgnorePointer`
-/// around the scrollable, so that the scrollable doesn't steal all the gestures.
-/// Unfortunately, if we ignore gestures for the scrollable, it forces us to also
-/// ignore gestures within the document layout, which violates requirement #2.
-///
-/// ### Gesture area inside the scrollable with LayoutBuilder for size
-///
-///     LayoutBuilder(
-///       builder: (context, constraints) {
-///         final viewportSize = constraints.biggest;
-///
-///         return Stack(
-///           children: [
-///             DocumentScrollable(
-///               child: DocumentLayout(),
-///             ),
-///             _buildGestureSystem(viewportSize),
-///           ],
-///         );
-///       },
-///     );
-///
-/// In this approach, we place a `LayoutBuilder` outside of the scrollable, which then
-/// tells us the size of the viewport. We provide that size to the gesture system, which
-/// sits INSIDE the scrollable, and the gesture system makes itself exactly the same
-/// size as the viewport.
-///
-/// This approach works, but it has a downside. We can't calculate an intrinsic height
-/// for [SuperEditor], because `LayoutBuilder` throws an exception when calculating
-/// intrinsic height. We felt it was important to be able to calculate intrinsic height.
-///
-/// ## The Solution
-/// To solve this problem we introduce two widgets, which are connected by a notifier.
-///
-/// The first widget, [_SuperEditorViewportBounds], measures the available space OUTSIDE the
-/// scrollable viewport during layout, and reports it to the notifier.
-///
-/// The second widget, [_SuperEditorGestureBounds], sits INSIDE the scrollable where
-/// the vertical constraint in infinite. During layout, this widget reads the size
-/// info from the notifier and sizes itself based on those constraints, instead of
-/// using its incoming constraints.
-///
-/// As a result, the gesture area makes itself exactly the same size as the viewport
-/// that surrounds it.
-///
-/// Intended use:
-///
-///     _SuperEditorBounds(
-///       contentConstraints: gestureConstraintsNotifier,
-///       // This is the scrollable viewport.
-///       child: DocumentScrollable(
-///         child: MoreSubTree(
-///           child: Stack(
-///             children: [
-///               // This gesture system needs to be as tall as the
-///               // DocumentScrollable ancestor above, and it needs
-///               // to sit behind the document layout.
-///               _buildGestureSystem(
-///                 contentConstraints: gestureConstraintsNotifier,
-///               ),
-///               // This is the document layout, which contains the
-///               // individual components that need to have the first
-///               // change to respond to gestures.
-///               _buildDocumentLayout(),
-///             ),
-///           ),
-///         ),
-///       ),
-///     );
-///
-/// See also:
-///   * [_SuperEditorGestureBounds] - which constrains itself with the constraints
-///     selected by this widget.
-class _SuperEditorViewportBounds extends SingleChildRenderObjectWidget {
-  const _SuperEditorViewportBounds({
-    required this.contentConstraints,
-    required super.child,
+/// A [SuperEditorLayerBuilder] that builds a [SelectionLeadersDocumentLayer], which positions
+/// leader widgets at the base and extent of the user's selection, so that other widgets
+/// can position themselves relative to the user's selection.
+class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
+  const _SelectionLeadersDocumentLayerBuilder({
+    required this.links,
+    this.showDebugLeaderBounds = false,
   });
 
-  /// The layout constraints that apply outside of the scrollable viewport.
-  ///
-  /// This widget is expected to build around the scrollable viewport. This
-  /// widget then reports its layout constraints to this notifier to be used
-  /// by a descendant [_SuperEditorGestureBounds].
-  final ValueNotifier<BoxConstraints> contentConstraints;
+  /// Collections of [LayerLink]s, which are given to leader widgets that are
+  /// positioned at the selection bounds, and around the full selection.
+  final SelectionLinks links;
+
+  /// Whether to paint colorful bounds around the leader widgets, for debugging purposes.
+  final bool showDebugLeaderBounds;
 
   @override
-  RenderObject createRenderObject(BuildContext context) {
-    return _RenderSuperEditorBounds() //
-      ..contentConstraints = contentConstraints;
-  }
-
-  @override
-  void updateRenderObject(BuildContext context, _RenderSuperEditorBounds renderObject) {
-    renderObject.contentConstraints = contentConstraints;
-  }
-}
-
-class _RenderSuperEditorBounds extends RenderProxyBox {
-  late ValueNotifier<BoxConstraints> contentConstraints;
-
-  @override
-  void performLayout() {
-    // We must report the desired constraints before running layout on our child,
-    // because these constraints will impact the child's desired size. This impact is
-    // indirect. The widget that uses these content constraints is probably a
-    // deep descendant of our `child`.
-    contentConstraints.value = BoxConstraints(
-      minWidth: constraints.maxWidth < double.infinity ? constraints.maxWidth : 0,
-      minHeight: constraints.maxHeight < double.infinity ? constraints.maxHeight : 0,
+  Widget build(BuildContext context, SuperEditorContext editContext) {
+    return SelectionLeadersDocumentLayer(
+      document: editContext.document,
+      selection: editContext.composer.selectionNotifier,
+      documentLayoutResolver: () => editContext.documentLayout,
+      links: links,
+      showDebugLeaderBounds: showDebugLeaderBounds,
     );
-
-    child!.layout(constraints, parentUsesSize: true);
-    size = child!.size;
-  }
-}
-
-/// Fills all visual [SuperEditor] space so that gestures can interact with any
-/// location in the [SuperEditor] experience.
-///
-/// [SuperEditor]'s gesture system should be placed as a descendant of this
-/// widget.
-///
-/// See [_SuperEditorViewportBounds] for an explanation about why that widget and this
-/// widget are necessary.
-class _SuperEditorGestureBounds extends SingleChildRenderObjectWidget {
-  const _SuperEditorGestureBounds({
-    required this.contentConstraints,
-    required super.child,
-  });
-
-  /// The layout constraints that apply outside of the scrollable viewport.
-  ///
-  /// This widget attempts to apply [contentConstraints] to itself, instead
-  /// of its incoming layout constraints.
-  final ValueNotifier<BoxConstraints> contentConstraints;
-
-  @override
-  RenderObject createRenderObject(BuildContext context) {
-    return _RenderSuperEditorContentBounds()..contentConstraints = contentConstraints;
-  }
-
-  @override
-  void updateRenderObject(BuildContext context, _RenderSuperEditorContentBounds renderObject) {
-    renderObject.contentConstraints = contentConstraints;
-  }
-}
-
-class _RenderSuperEditorContentBounds extends RenderProxyBox {
-  late ValueNotifier<BoxConstraints> contentConstraints;
-
-  @override
-  void performLayout() {
-    final childConstraints = contentConstraints.value.enforce(constraints);
-
-    child!.layout(childConstraints, parentUsesSize: true);
-    size = child!.size;
   }
 }
 
@@ -1000,13 +861,13 @@ class SuperEditorSelectionPolicies {
 
 /// Builds widgets that are displayed at the same position and size as
 /// the document layout within a [SuperEditor].
-abstract class DocumentLayerBuilder {
+abstract class SuperEditorLayerBuilder {
   Widget build(BuildContext context, SuperEditorContext editContext);
 }
 
-/// A [DocumentLayerBuilder] that's implemented with a given function, so
-/// that simple use-cases don't need to sub-class [DocumentLayerBuilder].
-class FunctionalDocumentLayerBuilder implements DocumentLayerBuilder {
+/// A [SuperEditorLayerBuilder] that's implemented with a given function, so
+/// that simple use-cases don't need to sub-class [SuperEditorLayerBuilder].
+class FunctionalDocumentLayerBuilder implements SuperEditorLayerBuilder {
   const FunctionalDocumentLayerBuilder(this._delegate);
 
   final Widget Function(BuildContext context, SuperEditorContext editContext) _delegate;
@@ -1015,19 +876,23 @@ class FunctionalDocumentLayerBuilder implements DocumentLayerBuilder {
   Widget build(BuildContext context, SuperEditorContext editContext) => _delegate(context, editContext);
 }
 
-/// A [DocumentLayerBuilder] that paints a caret at the primary selection extent
+/// A [SuperEditorLayerBuilder] that paints a caret at the primary selection extent
 /// in a [SuperEditor].
-class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
+class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
   const DefaultCaretOverlayBuilder({
     this.caretStyle = const CaretStyle(
       width: 2,
       color: Colors.black,
     ),
+    this.platformOverride,
     this.displayOnAllPlatforms = false,
   });
 
   /// Styles applied to the caret that's painted by this caret overlay.
   final CaretStyle caretStyle;
+
+  /// The platform to use to determine caret behavior, defaults to [defaultTargetPlatform].
+  final TargetPlatform? platformOverride;
 
   /// Whether to display a caret on all platforms, including mobile.
   ///
@@ -1039,8 +904,8 @@ class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
     // By default, don't show a caret on mobile because SuperEditor displays
     // mobile carets and handles elsewhere. This can be overridden by settings
     // `displayOnAllPlatforms` to true.
-    if (!displayOnAllPlatforms &&
-        (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
+    final platform = platformOverride ?? defaultTargetPlatform;
+    if (!displayOnAllPlatforms && (platform == TargetPlatform.android || platform == TargetPlatform.iOS)) {
       return const SizedBox();
     }
 

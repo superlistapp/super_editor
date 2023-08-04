@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -17,6 +17,7 @@ import 'package:super_editor/src/infrastructure/platforms/android/android_docume
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -38,8 +39,9 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.documentLayoutLink,
     required this.getDocumentLayout,
     required this.selection,
+    required this.selectionLinks,
+    required this.scrollController,
     this.contentTapHandler,
-    this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
     required this.popoverToolbarBuilder,
@@ -58,11 +60,13 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final DocumentLayout Function() getDocumentLayout;
   final ValueListenable<DocumentSelection?> selection;
 
+  final SelectionLinks selectionLinks;
+
   /// Optional handler that responds to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
   final ContentTapDelegate? contentTapHandler;
 
-  final ScrollController? scrollController;
+  final ScrollController scrollController;
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController? overlayController;
@@ -98,10 +102,6 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
 
 class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
-  // ScrollController used when this interactor installs its own Scrollable.
-  // The alternative case is the one in which this interactor defers to an
-  // ancestor scrollable.
-  late ScrollController _scrollController;
   bool _isScrolling = false;
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
@@ -156,18 +156,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
       _updateScrollPositionListener();
     });
-    // I added this listener directly to our ScrollController because the listener we added
-    // to the ScrollPosition wasn't triggering once the user makes an initial selection. I'm
-    // not sure why that happened. It's as if the ScrollPosition was replaced, but I don't
-    // know why the ScrollPosition would be replaced. In the meantime, adding this listener
-    // keeps the toolbar positioning logic working.
-    // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
-    _scrollController.addListener(_onScrollChange);
 
     _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
 
     _editingController = AndroidDocumentGestureEditingController(
-      documentLayoutLink: widget.documentLayoutLink,
+      selectionLinks: widget.selectionLinks,
       magnifierFocalPointLink: _magnifierFocalPointLink,
       overlayController: _overlayController,
     );
@@ -306,7 +299,13 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _configureScrollController() {
-    _scrollController = (widget.scrollController ?? ScrollController());
+    // I added this listener directly to our ScrollController because the listener we added
+    // to the ScrollPosition wasn't triggering once the user makes an initial selection. I'm
+    // not sure why that happened. It's as if the ScrollPosition was replaced, but I don't
+    // know why the ScrollPosition would be replaced. In the meantime, adding this listener
+    // keeps the toolbar positioning logic working.
+    // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
+    widget.scrollController.addListener(_onScrollChange);
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       scrollPosition.isScrollingNotifier.addListener(_onScrollActivityChange);
@@ -314,12 +313,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _teardownScrollController() {
-    if (_scrollController.hasClients) {
-      scrollPosition.isScrollingNotifier.removeListener(_onScrollActivityChange);
-    }
+    widget.scrollController.removeListener(_onScrollActivityChange);
 
-    if (widget.scrollController == null) {
-      _scrollController.dispose();
+    if (widget.scrollController.hasClients) {
+      scrollPosition.isScrollingNotifier.removeListener(_onScrollActivityChange);
     }
   }
 
@@ -453,7 +450,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and the `ScrollView`'s position
   /// is returned.
-  ScrollPosition get scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
+  ScrollPosition get scrollPosition => _ancestorScrollPosition ?? widget.scrollController.position;
 
   /// Returns the `RenderBox` for the scrolling viewport.
   ///
@@ -695,7 +692,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    _scrollController.position.jumpTo(_scrollController.position.pixels - details.delta.dy);
+    scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -1373,8 +1370,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     }
 
     return CompositedTransformFollower(
-      link: widget.editingController.documentLayoutLink,
-      offset: widget.editingController.caretTop!,
+      link: widget.editingController.selectionLinks!.caretLink!,
       child: IgnorePointer(
         child: BlinkingCaret(
           controller: _caretBlinkController,
@@ -1414,8 +1410,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   Widget _buildCollapsedHandle() {
     return _buildHandle(
       handleKey: _collapsedHandleKey,
-      handleOffset: widget.editingController.collapsedHandleOffset! + const Offset(0, 5),
-      handleFractionalTranslation: const Offset(-0.5, 0.0),
+      handleLink: widget.editingController.selectionLinks!.caretLink!,
+      leaderAnchor: Alignment.bottomCenter,
+      followerAnchor: Alignment.topCenter,
+      handleOffset: const Offset(-0.5, 5), // Chosen experimentally
       handleType: HandleType.collapsed,
       debugColor: Colors.green,
       onPanStart: _onCollapsedPanStart,
@@ -1427,8 +1425,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       // upstream-bounding (left side of a RTL line of text) handle touch target
       _buildHandle(
         handleKey: _upstreamHandleKey,
-        handleOffset: widget.editingController.upstreamHandleOffset! + const Offset(0, 2),
-        handleFractionalTranslation: const Offset(-1.0, 0.0),
+        handleLink: widget.editingController.selectionLinks!.upstreamLink!,
+        leaderAnchor: Alignment.bottomLeft,
+        followerAnchor: Alignment.topRight,
+        handleOffset: const Offset(0, 2), // Chosen experimentally
         handleType: HandleType.upstream,
         debugColor: Colors.green,
         onPanStart: _onUpstreamHandlePanStart,
@@ -1436,7 +1436,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       // downstream-bounding (right side of a RTL line of text) handle touch target
       _buildHandle(
         handleKey: _downstreamHandleKey,
-        handleOffset: widget.editingController.downstreamHandleOffset! + const Offset(0, 2),
+        handleLink: widget.editingController.selectionLinks!.downstreamLink!,
+        leaderAnchor: Alignment.bottomRight,
+        followerAnchor: Alignment.topLeft,
+        handleOffset: const Offset(-1, 2), // Chosen experimentally
         handleType: HandleType.downstream,
         debugColor: Colors.red,
         onPanStart: _onDownstreamHandlePanStart,
@@ -1446,7 +1449,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
   Widget _buildHandle({
     required Key handleKey,
-    required Offset handleOffset,
+    required LayerLink handleLink,
+    required Alignment leaderAnchor,
+    required Alignment followerAnchor,
+    Offset? handleOffset,
     Offset handleFractionalTranslation = Offset.zero,
     required HandleType handleType,
     required Color debugColor,
@@ -1454,8 +1460,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   }) {
     return CompositedTransformFollower(
       key: handleKey,
-      link: widget.editingController.documentLayoutLink,
-      offset: handleOffset,
+      link: handleLink,
+      targetAnchor: leaderAnchor,
+      followerAnchor: followerAnchor,
+      offset: handleOffset ?? Offset.zero,
       child: FractionalTranslation(
         translation: handleFractionalTranslation,
         child: GestureDetector(

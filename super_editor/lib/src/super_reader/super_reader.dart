@@ -22,8 +22,11 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
+import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/viewport_size_reporting.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
 import 'read_only_document_android_touch_interactor.dart';
@@ -182,6 +185,7 @@ class SuperReaderState extends State<SuperReader> {
   // GlobalKey used to access the [DocumentLayoutState] to figure
   // out where in the document the user taps or drags.
   late GlobalKey _docLayoutKey;
+  final _documentLayoutLink = LayerLink();
   SingleColumnLayoutPresenter? _docLayoutPresenter;
   late SingleColumnStylesheetStyler _docStylesheetStyler;
   late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
@@ -189,6 +193,7 @@ class SuperReaderState extends State<SuperReader> {
 
   ContentTapDelegate? _contentTapDelegate;
 
+  late ScrollController _scrollController;
   late AutoScrollController _autoScrollController;
 
   late SuperReaderContext _readerContext;
@@ -197,6 +202,15 @@ class SuperReaderState extends State<SuperReader> {
   FocusNode get focusNode => _focusNode;
   late FocusNode _focusNode;
 
+  // Layer links that connect leader widgets near the user's selection
+  // to carets, handles, and other things that want to follow the selection.
+  final _selectionLinks = SelectionLinks(
+    caretLink: LayerLink(),
+    upstreamLink: LayerLink(),
+    downstreamLink: LayerLink(),
+    expandedSelectionBoundsLink: LayerLink(),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -204,6 +218,7 @@ class SuperReaderState extends State<SuperReader> {
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
+    _scrollController = widget.scrollController ?? ScrollController();
     _autoScrollController = AutoScrollController();
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
@@ -220,6 +235,11 @@ class SuperReaderState extends State<SuperReader> {
     if (widget.selection != oldWidget.selection) {
       _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
     }
+
+    if (widget.scrollController != oldWidget.scrollController) {
+      _scrollController = widget.scrollController ?? ScrollController();
+    }
+
     if (widget.document != oldWidget.document ||
         widget.selection != oldWidget.selection ||
         widget.scrollController != oldWidget.scrollController) {
@@ -309,12 +329,9 @@ class SuperReaderState extends State<SuperReader> {
   @override
   Widget build(BuildContext context) {
     return _buildInputSystem(
-      child: _buildGestureSystem(
-        documentLayout: SingleColumnDocumentLayout(
-          key: _docLayoutKey,
-          presenter: _docLayoutPresenter!,
-          componentBuilders: widget.componentBuilders,
-          showDebugPaint: widget.debugPaint.layout,
+      child: _buildDocumentScrollable(
+        child: _buildGestureSystem(
+          child: _buildDocumentLayout(),
         ),
       ),
     );
@@ -335,105 +352,167 @@ class SuperReaderState extends State<SuperReader> {
     );
   }
 
+  /// Builds the widget tree that scrolls the document. This subtree might
+  /// introduce its own Scrollable, or it might defer to an ancestor
+  /// scrollable. This subtree also hooks up auto-scrolling capabilities.
+  Widget _buildDocumentScrollable({
+    required Widget child,
+  }) {
+    return ViewportBoundsReporter(
+      viewportOuterConstraints: _contentConstraints,
+      child: DocumentScrollable(
+        autoScroller: _autoScrollController,
+        scrollController: _scrollController,
+        scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
+        showDebugPaint: widget.debugPaint.scrolling,
+        child: child,
+      ),
+    );
+  }
+
+  final _contentConstraints = ValueNotifier<BoxConstraints>(const BoxConstraints());
+
   /// Builds the widget tree that handles user gesture interaction
   /// with the document, e.g., mouse input on desktop, or touch input
   /// on mobile.
   Widget _buildGestureSystem({
-    required Widget documentLayout,
+    required Widget child,
   }) {
+    late Widget gestureWidget;
     switch (_gestureMode) {
       case DocumentGestureMode.mouse:
-        return _buildDesktopGestureSystem(documentLayout);
+        gestureWidget = _buildDesktopGestureSystem();
       case DocumentGestureMode.android:
-        return ReadOnlyAndroidDocumentTouchInteractor(
-          focusNode: _focusNode,
-          document: _readerContext.document,
-          documentKey: _docLayoutKey,
-          getDocumentLayout: () => _readerContext.documentLayout,
-          selection: _readerContext.selection,
-          contentTapHandler: _contentTapDelegate,
-          scrollController: widget.scrollController,
-          handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
-          createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          showDebugPaint: widget.debugPaint.gestures,
-          overlayController: widget.overlayController,
-          child: documentLayout,
-        );
+        gestureWidget = _buildAndroidGestureSystem();
       case DocumentGestureMode.iOS:
-        return ReadOnlyIOSDocumentTouchInteractor(
-          focusNode: _focusNode,
-          document: _readerContext.document,
-          getDocumentLayout: () => _readerContext.documentLayout,
-          selection: _readerContext.selection,
-          contentTapHandler: _contentTapDelegate,
-          scrollController: widget.scrollController,
-          documentKey: _docLayoutKey,
-          handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
-          createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          showDebugPaint: widget.debugPaint.gestures,
-          overlayController: widget.overlayController,
-          child: documentLayout,
-        );
+        gestureWidget = _buildIOSGestureSystem();
     }
+
+    return ViewportBoundsReplicator(
+      viewportOuterConstraints: _contentConstraints,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // A layer that sits beneath the document and handles gestures.
+          // It's beneath the document so that components that include
+          // interactive UI, like a Checkbox, can intercept their own
+          // touch events.
+          //
+          // This layer is placed outside of `ContentLayers` because this
+          // layer needs to be wider than the document, to fill all available
+          // space.
+          Positioned.fill(
+            child: gestureWidget,
+          ),
+          child,
+        ],
+      ),
+    );
   }
 
-  Widget _buildDesktopGestureSystem(Widget documentLayout) {
-    return LayoutBuilder(builder: (context, viewportConstraints) {
-      return DocumentScrollable(
-        autoScroller: _autoScrollController,
-        scrollController: widget.scrollController,
-        scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
-        showDebugPaint: widget.debugPaint.scrolling,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            // When SuperReader installs its own Viewport, we want the gesture
-            // detection to span throughout the Viewport. Because the gesture
-            // system sits around the DocumentLayout, within the Viewport, we
-            // have to explicitly tell the gesture area to be at least as tall
-            // as the viewport (in case the document content is shorter than
-            // the viewport).
-            minWidth: viewportConstraints.maxWidth < double.infinity ? viewportConstraints.maxWidth : 0,
-            minHeight: viewportConstraints.maxHeight < double.infinity ? viewportConstraints.maxHeight : 0,
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // A layer that sits beneath the document and handles gestures.
-              // It's beneath the document so that components that include
-              // interactive UI, like a Checkbox, can intercept their own
-              // touch events.
-              Positioned.fill(
-                child: ReadOnlyDocumentMouseInteractor(
-                  focusNode: _focusNode,
-                  readerContext: _readerContext,
-                  contentTapHandler: _contentTapDelegate,
-                  autoScroller: _autoScrollController,
-                  showDebugPaint: widget.debugPaint.gestures,
-                  child: const SizedBox(),
-                ),
-              ),
-              // The document that the user is editing.
-              Align(
-                alignment: Alignment.topCenter,
-                child: Stack(
-                  children: [
-                    documentLayout,
-                    // We display overlay builders in this inner-Stack so that they
-                    // match the document size, rather than the viewport size.
-                    for (final overlayBuilder in widget.documentOverlayBuilders)
-                      Positioned.fill(
-                        child: overlayBuilder.build(context, _readerContext),
-                      ),
-                  ],
-                ),
-              ),
-            ],
+  Widget _buildDesktopGestureSystem() {
+    return ReadOnlyDocumentMouseInteractor(
+      focusNode: _focusNode,
+      readerContext: _readerContext,
+      contentTapHandler: _contentTapDelegate,
+      autoScroller: _autoScrollController,
+      showDebugPaint: widget.debugPaint.gestures,
+      child: const SizedBox(),
+    );
+  }
+
+  Widget _buildAndroidGestureSystem() {
+    return ReadOnlyAndroidDocumentTouchInteractor(
+      focusNode: _focusNode,
+      document: _readerContext.document,
+      documentKey: _docLayoutKey,
+      getDocumentLayout: () => _readerContext.documentLayout,
+      selection: _readerContext.selection,
+      selectionLinks: _selectionLinks,
+      contentTapHandler: _contentTapDelegate,
+      scrollController: _scrollController,
+      handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
+      popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
+      createOverlayControlsClipper: widget.createOverlayControlsClipper,
+      showDebugPaint: widget.debugPaint.gestures,
+      overlayController: widget.overlayController,
+    );
+  }
+
+  Widget _buildIOSGestureSystem() {
+    return ReadOnlyIOSDocumentTouchInteractor(
+      focusNode: _focusNode,
+      document: _readerContext.document,
+      getDocumentLayout: () => _readerContext.documentLayout,
+      selection: _readerContext.selection,
+      selectionLinks: _selectionLinks,
+      contentTapHandler: _contentTapDelegate,
+      scrollController: _scrollController,
+      documentKey: _docLayoutKey,
+      handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
+      popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
+      createOverlayControlsClipper: widget.createOverlayControlsClipper,
+      showDebugPaint: widget.debugPaint.gestures,
+      overlayController: widget.overlayController,
+    );
+  }
+
+  Widget _buildDocumentLayout() {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ContentLayers(
+        content: (onBuildScheduled) => CompositedTransformTarget(
+          link: _documentLayoutLink,
+          child: SingleColumnDocumentLayout(
+            key: _docLayoutKey,
+            presenter: _docLayoutPresenter!,
+            componentBuilders: widget.componentBuilders,
+            onBuildScheduled: onBuildScheduled,
+            showDebugPaint: widget.debugPaint.layout,
           ),
         ),
-      );
-    });
+        underlays: [
+          // Layer that positions and sizes leader widgets at the bounds
+          // of the users selection so that carets, handles, toolbars, and
+          // other things can follow the selection.
+          (context) => _SelectionLeadersDocumentLayerBuilder(
+                links: _selectionLinks,
+              ).build(context, _readerContext),
+        ],
+        overlays: [
+          for (final overlayBuilder in widget.documentOverlayBuilders) //
+            (context) => overlayBuilder.build(context, _readerContext),
+        ],
+      ),
+    );
+  }
+}
+
+/// A [ReadOnlyDocumentLayerBuilder] that builds a [SelectionLeadersDocumentLayer], which positions
+/// leader widgets at the base and extent of the user's selection, so that other widgets
+/// can position themselves relative to the user's selection.
+class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
+  const _SelectionLeadersDocumentLayerBuilder({
+    required this.links,
+    this.showDebugLeaderBounds = false,
+  });
+
+  /// Collections of [LayerLink]s, which are given to leader widgets that are
+  /// positioned at the selection bounds, and around the full selection.
+  final SelectionLinks links;
+
+  /// Whether to paint colorful bounds around the leader widgets, for debugging purposes.
+  final bool showDebugLeaderBounds;
+
+  @override
+  Widget build(BuildContext context, SuperReaderContext readerContext) {
+    return SelectionLeadersDocumentLayer(
+      document: readerContext.document,
+      selection: readerContext.selection,
+      documentLayoutResolver: () => readerContext.documentLayout,
+      links: links,
+      showDebugLeaderBounds: showDebugLeaderBounds,
+    );
   }
 }
 

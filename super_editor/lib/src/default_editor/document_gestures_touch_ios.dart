@@ -14,6 +14,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import '../infrastructure/document_gestures.dart';
@@ -33,8 +34,9 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     required this.documentLayoutLink,
     required this.getDocumentLayout,
     required this.selection,
+    required this.selectionLinks,
+    required this.scrollController,
     this.contentTapHandler,
-    this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
     required this.popoverToolbarBuilder,
@@ -54,11 +56,13 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   final DocumentLayout Function() getDocumentLayout;
   final ValueListenable<DocumentSelection?> selection;
 
+  final SelectionLinks selectionLinks;
+
   /// Optional handler that responds to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
   final ContentTapDelegate? contentTapHandler;
 
-  final ScrollController? scrollController;
+  final ScrollController scrollController;
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController? overlayController;
@@ -98,10 +102,6 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
 
 class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
-  // ScrollController used when this interactor installs its own Scrollable.
-  // The alternative case is the one in which this interactor defers to an
-  // ancestor scrollable.
-  late ScrollController _scrollController;
   bool _isScrolling = false;
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
@@ -172,6 +172,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     _editingController = IosDocumentGestureEditingController(
       documentLayoutLink: widget.documentLayoutLink,
+      selectionLinks: widget.selectionLinks,
       magnifierFocalPointLink: _magnifierFocalPointLink,
       overlayController: _overlayController,
     );
@@ -306,15 +307,13 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _configureScrollController() {
-    _scrollController = (widget.scrollController ?? ScrollController());
-
     // I added this listener directly to our ScrollController because the listener we added
     // to the ScrollPosition wasn't triggering once the user makes an initial selection. I'm
     // not sure why that happened. It's as if the ScrollPosition was replaced, but I don't
     // know why the ScrollPosition would be replaced. In the meantime, adding this listener
     // keeps the toolbar positioning logic working.
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
-    _scrollController.addListener(_onScrollChange);
+    widget.scrollController.addListener(_onScrollChange);
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       scrollPosition.isScrollingNotifier.addListener(_onScrollActivityChange);
@@ -322,12 +321,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _teardownScrollController() {
-    if (_scrollController.hasClients) {
+    if (widget.scrollController.hasClients) {
       scrollPosition.isScrollingNotifier.removeListener(_onScrollActivityChange);
-    }
-
-    if (widget.scrollController == null) {
-      _scrollController.dispose();
     }
   }
 
@@ -452,7 +447,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and the `ScrollView`'s position
   /// is returned.
-  ScrollPosition get scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
+  ScrollPosition get scrollPosition => _ancestorScrollPosition ?? widget.scrollController.position;
 
   /// Returns the `RenderBox` for the scrolling viewport.
   ///
@@ -1265,8 +1260,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   @override
   Widget build(BuildContext context) {
-    if (_scrollController.hasClients) {
-      if (_scrollController.positions.length > 1) {
+    if (widget.scrollController.hasClients) {
+      if (widget.scrollController.positions.length > 1) {
         // During Hot Reload, if the gesture mode was changed,
         // the widget might be built while the old gesture interactor
         // scroller is still attached to the _scrollController.
