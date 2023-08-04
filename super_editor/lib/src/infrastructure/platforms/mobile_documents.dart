@@ -128,9 +128,7 @@ class GestureEditingController with ChangeNotifier {
     super.dispose();
   }
 
-  // TODO: fix the import relationship. This file is under "infrastructure" but its importing from SuperEditor.
-  // TODO: make this non-null when everything works correctly (need to bring to SuperReader)
-  final SelectionLinks? selectionLinks;
+  final SelectionLayerLinks selectionLinks;
 
   /// A `LayerLink` whose top-left corner sits at the location where the
   /// magnifier should magnify.

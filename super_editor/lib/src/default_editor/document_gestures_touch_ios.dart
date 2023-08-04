@@ -56,7 +56,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   final DocumentLayout Function() getDocumentLayout;
   final ValueListenable<DocumentSelection?> selection;
 
-  final SelectionLinks selectionLinks;
+  final SelectionLayerLinks selectionLinks;
 
   /// Optional handler that responds to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
@@ -1278,14 +1278,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       }
     }
 
-    return _buildGestureInput(
-      child: widget.child ?? const SizedBox(),
-    );
-  }
-
-  Widget _buildGestureInput({
-    required Widget child,
-  }) {
     final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return RawGestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -1319,7 +1311,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
           },
         ),
       },
-      child: child,
+      child: widget.child,
     );
   }
 }

@@ -5,7 +5,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 
-/// A `SuperEditor` layer that positions leader widgets at the user's selection bounds.
+/// A document layer that positions leader widgets at the user's selection bounds.
 ///
 /// A collapsed selection has a single leader where the caret should appear. An expanded
 /// selection has a leader at both sides of the selection, as well as a leader that spans
@@ -36,7 +36,7 @@ class SelectionLeadersDocumentLayer extends StatefulWidget {
 
   /// Collections of [LayerLink]s, which are given to leader widgets that are
   /// positioned at the selection bounds, and around the full selection.
-  final SelectionLinks links;
+  final SelectionLayerLinks links;
 
   /// Whether to paint colorful bounds around the leader widgets, for debugging purposes.
   final bool showDebugLeaderBounds;
@@ -193,8 +193,10 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
   }
 }
 
-class SelectionLinks {
-  const SelectionLinks({
+/// A collection of [LayerLink]s that should be positioned near important
+/// visual selection locations, such as at the caret position.
+class SelectionLayerLinks {
+  const SelectionLayerLinks({
     this.caretLink,
     this.upstreamLink,
     this.downstreamLink,

@@ -204,7 +204,7 @@ class SuperReaderState extends State<SuperReader> {
 
   // Layer links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
-  final _selectionLinks = SelectionLinks(
+  final _selectionLinks = SelectionLayerLinks(
     caretLink: LayerLink(),
     upstreamLink: LayerLink(),
     downstreamLink: LayerLink(),
@@ -499,7 +499,7 @@ class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuil
 
   /// Collections of [LayerLink]s, which are given to leader widgets that are
   /// positioned at the selection bounds, and around the full selection.
-  final SelectionLinks links;
+  final SelectionLayerLinks links;
 
   /// Whether to paint colorful bounds around the leader widgets, for debugging purposes.
   final bool showDebugLeaderBounds;

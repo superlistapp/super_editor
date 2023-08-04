@@ -54,7 +54,7 @@ class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
 
   final ValueNotifier<DocumentSelection?> selection;
 
-  final SelectionLinks selectionLinks;
+  final SelectionLayerLinks selectionLinks;
 
   /// Optional handler that responds to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.

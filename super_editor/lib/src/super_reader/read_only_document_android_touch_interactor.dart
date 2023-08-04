@@ -53,7 +53,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   final DocumentLayout Function() getDocumentLayout;
   final ValueNotifier<DocumentSelection?> selection;
 
-  final SelectionLinks selectionLinks;
+  final SelectionLayerLinks selectionLinks;
 
   /// Optional handler that responds to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
@@ -139,12 +139,6 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     }
 
     _configureScrollController();
-    // _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
-    // // On the next frame, after our ScrollController is attached to the Scrollable,
-    // // add a listener for scroll changes.
-    // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-    //   _updateScrollPositionListener();
-    // });
 
     _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
 
