@@ -126,10 +126,6 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
       document: _document,
       composer: _composer,
       focusNode: _editorFocusNode,
-      keyboardActions: [
-        ..._userTagPlugin.keyboardActions,
-        ...defaultKeyboardActions,
-      ],
       stylesheet: defaultStylesheet.copyWith(
         inlineTextStyler: (attributions, existingStyle) {
           TextStyle style = defaultInlineTextStyler(attributions, existingStyle);

@@ -23,6 +23,7 @@ class TagFinder {
     }
 
     int tokenStartOffset = min(expansionPosition.offset - 1, rawText.length - 1);
+    tokenStartOffset = max(tokenStartOffset, 0);
     if (tagRule.excludedCharacters.contains(rawText[tokenStartOffset])) {
       // The character where we're supposed to begin our expansion is a
       // character that's not allowed in a tag. Therefore, no tag exists
@@ -31,6 +32,7 @@ class TagFinder {
     }
 
     int tokenEndOffset = min(expansionPosition.offset - 1, rawText.length - 1);
+    tokenEndOffset = max(tokenEndOffset, 0);
 
     if (rawText[tokenStartOffset] != tagRule.trigger) {
       while (tokenStartOffset > 0) {

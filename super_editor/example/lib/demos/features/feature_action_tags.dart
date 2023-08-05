@@ -37,6 +37,9 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
         Editor.composerKey: _composer,
       },
       requestHandlers: [
+        (request) => request is ConvertSelectedTextNodeRequest //
+            ? ConvertSelectedTextNodeCommand(request.newType)
+            : null,
         ...defaultRequestHandlers,
       ],
       listeners: [
@@ -126,23 +129,17 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
       document: _document,
       composer: _composer,
       focusNode: _editorFocusNode,
-      keyboardActions: [
-        ..._actionTagPlugin.keyboardActions,
-        ...defaultKeyboardActions,
+      componentBuilders: [
+        TaskComponentBuilder(_editor),
+        ...defaultComponentBuilders,
       ],
       stylesheet: defaultStylesheet.copyWith(
         inlineTextStyler: (attributions, existingStyle) {
           TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
 
-          if (attributions.contains(userTagComposingAttribution)) {
+          if (attributions.contains(actionTagComposingAttribution)) {
             style = style.copyWith(
               color: Colors.blue,
-            );
-          }
-
-          if (attributions.whereType<UserTagAttribution>().isNotEmpty) {
-            style = style.copyWith(
-              color: Colors.orange,
             );
           }
 
@@ -154,7 +151,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
       ),
       documentOverlayBuilders: [
         _TokenBoundsOverlay(
-          selector: (a) => a == userTagComposingAttribution,
+          selector: (a) => a == actionTagComposingAttribution,
         ),
         DefaultCaretOverlayBuilder(
           CaretStyle().copyWith(color: Colors.redAccent),
@@ -220,6 +217,7 @@ final _darkModeStyles = [
       return {
         "textStyle": const TextStyle(
           color: Color(0xFF888888),
+          fontSize: 48,
         ),
       };
     },
@@ -230,6 +228,18 @@ final _darkModeStyles = [
       return {
         "textStyle": const TextStyle(
           color: Color(0xFF888888),
+          fontSize: 42,
+        ),
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header3"),
+    (doc, docNode) {
+      return {
+        "textStyle": const TextStyle(
+          color: Color(0xFF888888),
+          fontSize: 36,
         ),
       };
     },
@@ -366,24 +376,22 @@ class ActionSelectionPopover extends StatefulWidget {
 }
 
 class _ActionSelectionPopoverState extends State<ActionSelectionPopover> {
-  final _actionCandidates = <String>[
-    "header1",
-    "header2",
-    "header3",
-    "paragraph",
-    "list-item-ordered",
-    "list-item_unordered",
-    "task",
+  static const _actionCandidates = <_TextNodeConversion>[
+    _TextNodeConversion("Header 1", TextNodeType.header1),
+    _TextNodeConversion("Header 2", TextNodeType.header2),
+    _TextNodeConversion("Header 3", TextNodeType.header3),
+    _TextNodeConversion("Ordered List Item", TextNodeType.orderedListItem),
+    _TextNodeConversion("Unordered List Item", TextNodeType.unorderedListItem),
+    _TextNodeConversion("Task", TextNodeType.task),
+    _TextNodeConversion("Paragraph ", TextNodeType.paragraph),
   ];
-  final _matchingActions = <String>[];
+  final _matchingActions = <_TextNodeConversion>[];
 
   late final FocusNode _focusNode;
 
   final _listKey = GlobalKey<ScrollableState>();
   late final ScrollController _scrollController;
   int _selectedValueIndex = -1;
-
-  bool _isLoadingMatches = false;
 
   @override
   void initState() {
@@ -432,39 +440,25 @@ class _ActionSelectionPopoverState extends State<ActionSelectionPopover> {
       _focusNode.requestFocus();
     }
 
-    // Simulate a load time
-    setState(() {
-      _isLoadingMatches = true;
-    });
-
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (!mounted) {
-      return;
-    }
-    if (composingTag != widget.actionTagPlugin.composingActionTag.value?.tag.token) {
-      // The user changed the token. Our search results are invalid. Fizzle.
-      return;
-    }
-
     // Filter the user list based on the composing token.
     setState(() {
-      _isLoadingMatches = false;
-
       _matchingActions
         ..clear()
-        ..addAll(_actionCandidates.where((user) => user.toLowerCase().contains(composingTag.toLowerCase())));
+        ..addAll(_actionCandidates
+            .where((availableAction) => availableAction.name.toLowerCase().contains(composingTag.toLowerCase())));
 
       _selectedValueIndex = min(_selectedValueIndex, _matchingActions.length - 1);
     });
   }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    print("Key event: $event");
     final reservedKeys = {
       LogicalKeyboardKey.arrowUp,
       LogicalKeyboardKey.arrowDown,
       LogicalKeyboardKey.enter,
       LogicalKeyboardKey.numpadEnter,
+      LogicalKeyboardKey.escape,
     };
 
     final key = event.logicalKey;
@@ -496,6 +490,8 @@ class _ActionSelectionPopoverState extends State<ActionSelectionPopover> {
       case LogicalKeyboardKey.enter:
       case LogicalKeyboardKey.numpadEnter:
         _chooseAction();
+      case LogicalKeyboardKey.escape:
+        _cancelTag();
     }
 
     if (didChange) {
@@ -515,6 +511,15 @@ class _ActionSelectionPopoverState extends State<ActionSelectionPopover> {
 
     widget.editor.execute([
       SubmitComposingActionTagRequest(),
+      ConvertSelectedTextNodeRequest(
+        _matchingActions[_selectedValueIndex].type,
+      ),
+    ]);
+  }
+
+  void _cancelTag() {
+    widget.editor.execute([
+      CancelComposingActionTagRequest(defaultActionTagRule),
     ]);
   }
 
@@ -546,15 +551,6 @@ class _ActionSelectionPopoverState extends State<ActionSelectionPopover> {
   }
 
   Widget _buildContent() {
-    if (_isLoadingMatches) {
-      return Center(
-        child: SizedBox.square(
-          dimension: 18,
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
     return _matchingActions.isNotEmpty ? _buildActionList() : _buildEmptyDisplay();
   }
 
@@ -581,7 +577,7 @@ class _ActionSelectionPopoverState extends State<ActionSelectionPopover> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _matchingActions[i],
+                      _matchingActions[i].name,
                       style: TextStyle(
                         color: Colors.white,
                       ),
@@ -622,4 +618,114 @@ class _ActionSelectionPopoverState extends State<ActionSelectionPopover> {
       ),
     );
   }
+}
+
+class ConvertSelectedTextNodeRequest implements EditRequest {
+  ConvertSelectedTextNodeRequest(this.newType);
+
+  final TextNodeType newType;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ConvertSelectedTextNodeRequest && runtimeType == other.runtimeType && newType == other.newType;
+
+  @override
+  int get hashCode => newType.hashCode;
+}
+
+class ConvertSelectedTextNodeCommand implements EditCommand {
+  ConvertSelectedTextNodeCommand(this.newType);
+
+  final TextNodeType newType;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+
+    if (composer.selection == null) {
+      // There's no selected node to convert.
+      return;
+    }
+
+    final extentPosition = composer.selection!.extent.nodePosition;
+    if (extentPosition is! TextNodePosition) {
+      // The selected node isn't a text node. We only convert text nodes.
+      return;
+    }
+
+    final oldNode = document.getNodeById(composer.selection!.extent.nodeId) as TextNode;
+
+    late final TextNode newNode;
+    switch (newType) {
+      case TextNodeType.header1:
+        newNode = ParagraphNode(
+          id: oldNode.id,
+          text: oldNode.text,
+          metadata: Map.from(oldNode.metadata)..["blockType"] = header1Attribution,
+        );
+      case TextNodeType.header2:
+        newNode = ParagraphNode(
+          id: oldNode.id,
+          text: oldNode.text,
+          metadata: Map.from(oldNode.metadata)..["blockType"] = header2Attribution,
+        );
+      case TextNodeType.header3:
+        newNode = ParagraphNode(
+          id: oldNode.id,
+          text: oldNode.text,
+          metadata: Map.from(oldNode.metadata)..["blockType"] = header3Attribution,
+        );
+      case TextNodeType.orderedListItem:
+        newNode = ListItemNode(
+          id: oldNode.id,
+          itemType: ListItemType.ordered,
+          text: oldNode.text,
+        );
+      case TextNodeType.unorderedListItem:
+        newNode = ListItemNode(
+          id: oldNode.id,
+          itemType: ListItemType.unordered,
+          text: oldNode.text,
+        );
+      case TextNodeType.task:
+        newNode = TaskNode(
+          id: oldNode.id,
+          text: oldNode.text,
+          isComplete: false,
+        );
+      case TextNodeType.paragraph:
+        newNode = ParagraphNode(
+          id: oldNode.id,
+          text: oldNode.text,
+          metadata: Map.from(oldNode.metadata)..["blockType"] = paragraphAttribution,
+        );
+    }
+
+    document.replaceNode(oldNode: oldNode, newNode: newNode);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(newNode.id),
+      ),
+    ]);
+  }
+}
+
+class _TextNodeConversion {
+  const _TextNodeConversion(this.name, this.type);
+
+  final String name;
+  final TextNodeType type;
+}
+
+enum TextNodeType {
+  header1,
+  header2,
+  header3,
+  orderedListItem,
+  unorderedListItem,
+  task,
+  paragraph,
 }

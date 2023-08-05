@@ -7,6 +7,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/document_hardware_keyboard/document_physical_keyboard.dart';
+import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tokenizing/tags.dart';
@@ -112,7 +113,50 @@ class SubmitComposingActionTagRequest implements EditRequest {
 class SubmitComposingActionTagCommand implements EditCommand {
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    // TODO: implement execute
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+    if (composer.selection == null) {
+      return;
+    }
+
+    final extent = composer.selection!.extent;
+    final extentPosition = extent.nodePosition;
+    if (extentPosition is! TextNodePosition) {
+      return;
+    }
+
+    final textNode = document.getNodeById(extent.nodeId) as TextNode;
+
+    final tagAroundPosition = TagFinder.findTagAroundPosition(
+      // TODO: deal with these tag rules in requests and commands, should the user really pass them?
+      tagRule: defaultActionTagRule,
+      nodeId: composer.selection!.extent.nodeId,
+      text: textNode.text,
+      expansionPosition: extentPosition,
+      isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
+    );
+
+    if (tagAroundPosition == null) {
+      return;
+    }
+
+    print("Submitting the composing tag by deleting its text: ${tagAroundPosition.indexedTag}");
+
+    executor.executeCommand(
+      DeleteSelectionCommand(
+        documentSelection: DocumentSelection(
+          base: tagAroundPosition.indexedTag.start,
+          extent: tagAroundPosition.indexedTag.end,
+        ),
+      ),
+    );
+    executor.executeCommand(
+      ChangeSelectionCommand(
+        DocumentSelection.collapsed(position: tagAroundPosition.indexedTag.start),
+        SelectionChangeType.deleteContent,
+        SelectionReason.userInteraction,
+      ),
+    );
   }
 }
 
@@ -144,6 +188,7 @@ class CancelComposingActionTagCommand implements EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
+    print("Running CancelComposingActionTagCommand");
     final document = context.find<MutableDocument>(Editor.documentKey);
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
 
@@ -196,6 +241,7 @@ class CancelComposingActionTagCommand implements EditCommand {
     );
 
     // Remove the composing attribution.
+    print("Removing composing attribution from $actionTagBasePosition to ${composingToken.indexedTag.endOffset}");
     executor.executeCommand(
       RemoveTextAttributionsCommand(
         documentSelection: DocumentSelection(
@@ -233,9 +279,54 @@ class ActionTagComposingReaction implements EditReaction {
   final TagRule _tagRule;
   final OnUpdateComposingActionTag _onUpdateComposingActionTag;
 
+  IndexedTag? _composingTag;
+
   @override
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    // TODO: implement react
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
+    final composer = editorContext.find<MutableDocumentComposer>(Editor.composerKey);
+    if (composer.selection == null) {
+      // TODO: cancel any composing tag.
+      _cancelComposingTag(requestDispatcher);
+      _onUpdateComposingActionTag(null);
+      return;
+    }
+
+    final extent = composer.selection!.extent;
+    final extentPosition = extent.nodePosition;
+    if (extentPosition is! TextNodePosition) {
+      // TODO: cancel any composing tag.
+      _cancelComposingTag(requestDispatcher);
+      _onUpdateComposingActionTag(null);
+      return;
+    }
+
+    final textNode = document.getNodeById(extent.nodeId) as TextNode;
+
+    print("Before changing annotations, text is:");
+    print("${textNode.text}");
+
+    final tagAroundPosition = TagFinder.findTagAroundPosition(
+      tagRule: _tagRule,
+      nodeId: composer.selection!.extent.nodeId,
+      text: textNode.text,
+      expansionPosition: extentPosition,
+      isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
+    );
+
+    if (tagAroundPosition == null) {
+      _cancelComposingTag(requestDispatcher);
+      _onUpdateComposingActionTag(null);
+      return;
+    }
+
+    // TODO: don't activate cancelled tokens
+    // TODO: remove cancellation attributions from tokens that don't fit our rule
+
+    print("Found indexed tag:");
+    print("$tagAroundPosition");
+    _updateComposingTag(requestDispatcher, tagAroundPosition.indexedTag);
+    _onUpdateComposingActionTag(tagAroundPosition.indexedTag);
 
     // Notion allows spaces:
     // "/ page link" matches one action in Notion, which is displayed in a popover
@@ -245,6 +336,57 @@ class ActionTagComposingReaction implements EditReaction {
 
     // Once Notion gives up, either due to 4+ characters of "No results" or moving caret
     // away from the tag, the tag never re-activates.
+  }
+
+  void _updateComposingTag(RequestDispatcher requestDispatcher, IndexedTag newTag) {
+    final oldComposingTag = _composingTag;
+    _composingTag = newTag;
+
+    print("Updating composing tag to: $_composingTag");
+    requestDispatcher.execute([
+      if (oldComposingTag != null)
+        RemoveTextAttributionsRequest(
+          documentSelection: DocumentSelection(
+            base: oldComposingTag.start,
+            extent: oldComposingTag.end,
+          ),
+          attributions: {actionTagComposingAttribution},
+        ),
+      AddTextAttributionsRequest(
+        documentSelection: DocumentSelection(
+          base: newTag.start,
+          extent: newTag.end,
+        ),
+        attributions: {actionTagComposingAttribution},
+      ),
+    ]);
+  }
+
+  void _cancelComposingTag(RequestDispatcher requestDispatcher) {
+    if (_composingTag == null) {
+      return;
+    }
+
+    print("Cancelling composing tag: $_composingTag");
+    final composingTag = _composingTag!;
+    _composingTag = null;
+
+    requestDispatcher.execute([
+      RemoveTextAttributionsRequest(
+        documentSelection: DocumentSelection(
+          base: composingTag.start,
+          extent: composingTag.end,
+        ),
+        attributions: {actionTagComposingAttribution},
+      ),
+      AddTextAttributionsRequest(
+        documentSelection: DocumentSelection(
+          base: composingTag.start,
+          extent: composingTag.end,
+        ),
+        attributions: {actionTagCancelledAttribution},
+      ),
+    ]);
   }
 }
 
