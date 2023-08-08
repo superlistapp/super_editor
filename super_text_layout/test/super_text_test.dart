@@ -1,3 +1,5 @@
+import 'dart:ui' show ParagraphBuilder;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -5,6 +7,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 import 'test_tools.dart';
 
 void main() {
+  ParagraphBuilder.setDisableRoundingHack(true);
   group("SuperText", () {
     testWidgets("renders text and layers in a single frame", (tester) async {
       bool didBuildLayerBeneath = false;
@@ -240,7 +243,7 @@ void main() {
 
           expect(
             textLayout.getPositionAtOffset(Offset(textBox.size.width / 2, firstLineEstimatedMiddle)),
-            const TextPosition(offset: 25, affinity: TextAffinity.upstream),
+            const TextPosition(offset: 24, affinity: TextAffinity.downstream),
           );
 
           expect(
@@ -363,7 +366,7 @@ void main() {
 
           expect(
             textLayout.getPositionNearestToOffset(Offset(textBox.size.width / 2, -50)),
-            const TextPosition(offset: 25, affinity: TextAffinity.upstream),
+            const TextPosition(offset: 24, affinity: TextAffinity.downstream),
           );
 
           expect(
