@@ -123,7 +123,11 @@ class SuperEditor extends StatefulWidget {
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ??
-            (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions),
+            (inputSource == TextInputSource.ime //
+                ? kIsWeb
+                    ? defaultWebImeKeyboardActions
+                    : defaultImeKeyboardActions
+                : defaultKeyboardActions),
         componentBuilders = componentBuilders != null
             ? [...componentBuilders, const UnknownComponentBuilder()]
             : [...defaultComponentBuilders, const UnknownComponentBuilder()],
@@ -865,7 +869,8 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   cutWhenCmdXIsPressed,
   collapseSelectionWhenEscIsPressed,
   selectAllWhenCmdAIsPressed,
-  moveUpDownLeftAndRightWithArrowKeys,
+  moveUpAndDownWithArrowKeys,
+  moveLeftAndRightWithArrowKeys,
   moveToLineStartWithHome,
   moveToLineEndWithEnd,
   tabToIndentListItem,
@@ -904,7 +909,8 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   copyWhenCmdCIsPressed,
   cutWhenCmdXIsPressed,
   selectAllWhenCmdAIsPressed,
-  moveUpDownLeftAndRightWithArrowKeysWithIme,
+  moveUpAndDownWithArrowKeys,
+  moveLeftAndRightWithArrowKeys,
   moveToLineStartWithHome,
   moveToLineEndWithEnd,
   enterToInsertNewTask,
@@ -920,7 +926,37 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   deleteToStartOfLineWithCmdBackspaceOnMac,
   deleteWordUpstreamWithAltBackspaceOnMac,
   deleteWordUpstreamWithControlBackspaceOnWindowsAndLinux,
-  deleteUpstreamContentWithBackspaceWithIme,
+  deleteUpstreamContentWithBackspace,
+  deleteToEndOfLineWithCmdDeleteOnMac,
+  deleteWordDownstreamWithAltDeleteOnMac,
+  deleteWordDownstreamWithControlDeleteOnWindowsAndLinux,
+  deleteDownstreamContentWithDelete,
+];
+
+/// Keyboard actions for a [SuperEditor] running with IME on web.
+///
+/// Using the IME on desktop involves partial input from the IME
+/// and partial input from non-content keys, like up and down arrow keys.
+final defaultWebImeKeyboardActions = <DocumentKeyboardAction>[
+  toggleInteractionModeWhenCmdOrCtrlPressed,
+  doNothingWhenThereIsNoSelection,
+  pasteWhenCmdVIsPressed,
+  copyWhenCmdCIsPressed,
+  cutWhenCmdXIsPressed,
+  moveUpAndDownWithArrowKeys,
+  selectAllWhenCmdAIsPressed,
+  moveToLineStartWithHome,
+  moveToLineEndWithEnd,
+  tabToIndentListItem,
+  shiftTabToUnIndentListItem,
+  backspaceToUnIndentListItem,
+  backspaceToClearParagraphBlockType,
+  cmdBToToggleBold,
+  cmdIToToggleItalics,
+  shiftEnterToInsertNewlineInBlock,
+  deleteToStartOfLineWithCmdBackspaceOnMac,
+  deleteWordUpstreamWithAltBackspaceOnMac,
+  deleteWordUpstreamWithControlBackspaceOnWindowsAndLinux,
   deleteToEndOfLineWithCmdDeleteOnMac,
   deleteWordDownstreamWithAltDeleteOnMac,
   deleteWordDownstreamWithControlDeleteOnWindowsAndLinux,

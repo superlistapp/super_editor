@@ -745,6 +745,41 @@ Paragraph two
       });
     });
 
+    group('on web', () {
+      testWidgetsOnDesktop('deletes a character with backspace', (tester) async {
+        final testContext = await tester //
+            .createDocument()
+            .fromMarkdown('This is a paragraph')
+            .withInputSource(TextInputSource.ime)
+            .withKeyboardActions(defaultWebImeKeyboardActions)
+            .pump();
+
+        final nodeId = testContext.editContext.document.nodes.first.id;
+
+        // Place the caret at the end of the paragraph.
+        await tester.placeCaretInParagraph(nodeId, 19);
+
+        // Simulate the user pressing backspace.
+        //
+        // On web, this generates both a key event and a deletion delta.
+        await tester.pressBackspace();
+        await tester.ime.sendDeltas(
+          [
+            const TextEditingDeltaDeletion(
+              oldText: 'This is a paragraph',
+              deletedRange: TextRange(start: 18, end: 19),
+              selection: TextSelection.collapsed(offset: 18),
+              composing: TextRange.empty,
+            ),
+          ],
+          getter: imeClientGetter,
+        );
+
+        // Ensure the last character was deleted.
+        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'This is a paragrap');
+      });
+    });
+
     group('text serialization and selected content', () {
       test('within a single node is reported as a TextEditingValue', () {
         const text = "This is a paragraph of text.";

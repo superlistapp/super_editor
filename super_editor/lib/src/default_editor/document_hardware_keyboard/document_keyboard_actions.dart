@@ -249,19 +249,6 @@ ExecutionInstruction deleteUpstreamContentWithBackspace({
   return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction deleteUpstreamContentWithBackspaceWithIme({
-  required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (kIsWeb) {
-    // On web, pressing backspace reports both a deletion delta and a key event.
-    // We handle the deletion delta and ignore the key event.
-    return ExecutionInstruction.continueExecution;
-  }
-
-  return deleteUpstreamContentWithBackspace(editContext: editContext, keyEvent: keyEvent);
-}
-
 ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -314,7 +301,7 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   return ExecutionInstruction.haltExecution;
 }
 
-ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
+ExecutionInstruction moveLeftAndRightWithArrowKeys({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -376,17 +363,38 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction moveUpDownLeftAndRightWithArrowKeysWithIme({
+ExecutionInstruction moveUpAndDownWithArrowKeys({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (kIsWeb) {
-    // On web, pressing arrow keys reports both non-text deltas and key events.
-    // // We handle the non-deletion delta to change the selection and ignore the key event.
+  if (keyEvent is! RawKeyDownEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
-  return moveUpDownLeftAndRightWithArrowKeys(editContext: editContext, keyEvent: keyEvent);
+  const arrowKeys = [
+    LogicalKeyboardKey.arrowUp,
+    LogicalKeyboardKey.arrowDown,
+  ];
+  if (!arrowKeys.contains(keyEvent.logicalKey)) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.linux && keyEvent.isAltPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  bool didMove = false;
+  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
+    didMove = editContext.commonOps.moveCaretUp(expand: keyEvent.isShiftPressed);
+  } else {
+    didMove = editContext.commonOps.moveCaretDown(expand: keyEvent.isShiftPressed);
+  }
+
+  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
