@@ -34,6 +34,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
     this.imePolicies = const SuperEditorImePolicies(),
     this.imeConfiguration = const SuperEditorImeConfiguration(),
     this.imeOverrides,
+    this.textInputDebugger,
     this.hardwareKeyboardActions = const [],
     this.floatingCursorController,
     required this.child,
@@ -116,6 +117,8 @@ class SuperEditorImeInteractor extends StatefulWidget {
   /// a property on this IME interactor.
   final FloatingCursorController? floatingCursorController;
 
+  final TextInputDebugger? textInputDebugger;
+
   final Widget child;
 
   @override
@@ -163,6 +166,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       textDeltasDocumentEditor: _textDeltasDocumentEditor,
       imeConnection: _imeConnection,
       floatingCursorController: widget.floatingCursorController,
+      debugger: widget.textInputDebugger,
     );
 
     _imeClient = DeltaTextInputClientDecorator();
@@ -296,6 +300,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
         editContext: widget.editContext,
         keyboardActions: widget.hardwareKeyboardActions,
         autofocus: widget.autofocus,
+        textInputDebugger: widget.textInputDebugger,
         child: DocumentSelectionOpenAndCloseImePolicy(
           focusNode: _focusNode,
           editor: widget.editContext.editor,

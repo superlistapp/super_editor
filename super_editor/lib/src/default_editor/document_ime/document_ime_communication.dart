@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -23,6 +25,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     required this.composingRegion,
     required this.textDeltasDocumentEditor,
     required this.imeConnection,
+    this.debugger,
     FloatingCursorController? floatingCursorController,
   }) {
     // Note: we don't listen to document changes because we expect that any change during IME
@@ -60,6 +63,8 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
 
   // TODO: get floating cursor out of here. Use a multi-client IME decorator to split responsibilities
   late FloatingCursorController? _floatingCursorController;
+
+  final TextInputDebugger? debugger;
 
   void _onContentChange() {
     if (!attached) {
@@ -139,6 +144,12 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       editorImeLog.fine(
           "Sending forceful update to IME because our local TextEditingValue didn't change, but the IME may have:");
       editorImeLog.fine("$newValue");
+      debugger?.add(
+        TextInputDebugEvent(
+          method: 'setEditingState',
+          data: newValue,
+        ),
+      );
       imeConnection.value?.setEditingState(newValue);
     } else {
       editorImeLog.fine("Ignoring new TextEditingValue because it's the same as the existing one: $newValue");
@@ -175,6 +186,13 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
 
   @override
   void updateEditingValueWithDeltas(List<TextEditingDelta> textEditingDeltas) {
+    debugger?.add(
+      TextInputDebugEvent(
+        method: 'updateEditingValueWithDeltas',
+        data: textEditingDeltas,
+      ),
+    );
+
     if (textEditingDeltas.isEmpty) {
       return;
     }
@@ -246,6 +264,12 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
 
   @override
   void performAction(TextInputAction action) {
+    debugger?.add(
+      TextInputDebugEvent(
+        method: 'performAction',
+        data: action,
+      ),
+    );
     editorImeLog.fine("IME says to perform action: $action");
     if (action == TextInputAction.newline) {
       textDeltasDocumentEditor.insertNewline();
@@ -280,4 +304,89 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   void connectionClosed() {
     editorImeLog.info("IME connection was closed");
   }
+}
+
+/// Collects events related to text input for debugging purposes.
+///
+/// These events might be key events, deltas received from the platform or editing
+/// state sent to the platform.
+///
+/// Call `enable` to start collecting.
+///
+/// Call `disable` to stop collecting.
+class TextInputDebugger with ChangeNotifier {
+  /// Whether or not event should be collected.
+  bool get enabled => _enabled;
+  bool _enabled = false;
+
+  /// All events collected since the debugger was enabled.
+  List<TextInputDebugEvent> get events => UnmodifiableListView(_events);
+  final List<TextInputDebugEvent> _events = [];
+
+  /// Add the [event] to the list.
+  ///
+  /// Does nothing if not [enabled].
+  int add(TextInputDebugEvent event) {
+    if (!_enabled) {
+      return -1;
+    }
+
+    _events.add(event);
+    notifyListeners();
+    return _events.length - 1;
+  }
+
+  /// Removs the event at [index] from the list.
+  ///
+  /// Does nothing if not [enabled].
+  void removeAt(int index) {
+    if (!_enabled) {
+      return;
+    }
+
+    _events.removeAt(index);
+  }
+
+  /// Remove all collected events.
+  void clear() {
+    if (!_enabled) {
+      return;
+    }
+
+    _events.clear();
+    notifyListeners();
+  }
+
+  /// Start collecting events.
+  void enable() {
+    _enabled = true;
+    notifyListeners();
+  }
+
+  /// Stop collecting events.
+  ///
+  /// After calling this method, calling [add], [removeAt] or [clear] has no effect.
+  void disable() {
+    _enabled = false;
+    notifyListeners();
+  }
+}
+
+/// An event related to text input.
+class TextInputDebugEvent {
+  TextInputDebugEvent({
+    required this.method,
+    required this.data,
+  });
+
+  /// The method that generated the event.
+  ///
+  /// For example, `updateEditingValueWithDeltas`.
+  final String method;
+
+  /// The event data.
+  ///
+  /// For example, for `updateEditingValueWithDeltas`,
+  /// [data] is the delta list received.
+  final dynamic data;
 }

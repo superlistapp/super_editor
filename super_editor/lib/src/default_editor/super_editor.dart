@@ -119,6 +119,7 @@ class SuperEditor extends StatefulWidget {
     this.overlayController,
     this.plugins = const {},
     this.debugPaint = const DebugPaintConfig(),
+    this.textInputDebugger,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ??
@@ -271,6 +272,8 @@ class SuperEditor extends StatefulWidget {
 
   /// Plugins that add sets of behaviors to the editing experience.
   final Set<SuperEditorPlugin> plugins;
+
+  final TextInputDebugger? textInputDebugger;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging.
@@ -548,6 +551,8 @@ class SuperEditorState extends State<SuperEditor> {
               ...plugin.keyboardActions,
             ...widget.keyboardActions,
           ],
+          keyboardActions: widget.keyboardActions,
+          textInputDebugger: widget.textInputDebugger,
           child: child,
         );
       case TextInputSource.ime:
@@ -567,6 +572,7 @@ class SuperEditorState extends State<SuperEditor> {
             ...widget.keyboardActions,
           ],
           floatingCursorController: _floatingCursorController,
+          textInputDebugger: widget.textInputDebugger,
           child: child,
         );
     }

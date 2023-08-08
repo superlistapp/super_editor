@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/document_ime/document_ime_communication.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
@@ -22,6 +23,7 @@ class SuperEditorHardwareKeyHandler extends StatefulWidget {
     required this.editContext,
     this.keyboardActions = const [],
     this.autofocus = false,
+    this.textInputDebugger,
     required this.child,
   }) : super(key: key);
 
@@ -42,6 +44,8 @@ class SuperEditorHardwareKeyHandler extends StatefulWidget {
 
   /// Whether or not the [SuperEditorHardwareKeyHandler] should autofocus
   final bool autofocus;
+
+  final TextInputDebugger? textInputDebugger;
 
   /// The [child] widget, which is expected to include the document UI
   /// somewhere in the sub-tree.
@@ -69,6 +73,13 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
   }
 
   KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
+    int? logIndex = widget.textInputDebugger?.add(
+      TextInputDebugEvent(
+        direction: TextInputMessageDirection.fromIme,
+        method: 'onKey',
+        data: keyEvent,
+      ),
+    );
     editorKeyLog.info("Handling key press: $keyEvent");
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
@@ -78,6 +89,10 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
         keyEvent: keyEvent,
       );
       index += 1;
+    }
+
+    if (logIndex != null && (instruction != ExecutionInstruction.haltExecution)) {
+      widget.textInputDebugger?.removeAt(logIndex);
     }
 
     switch (instruction) {
