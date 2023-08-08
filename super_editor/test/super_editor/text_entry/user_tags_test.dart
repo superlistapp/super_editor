@@ -119,8 +119,7 @@ void main() {
 
         await tester.typeImeText(" after");
 
-        // Ensure that there's no more composing attribution because the token
-        // should have been committed.
+        // Ensure that the composing attribution continues after the space.
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john after");
         expect(
@@ -257,93 +256,93 @@ void main() {
           const SpanRange(start: 7, end: 11),
         );
       });
-    });
 
-    testWidgetsOnAllPlatforms("cancels composing when the user presses ESC", (tester) async {
-      await _pumpTestEditor(
-        tester,
-        MutableDocument(
-          nodes: [
-            ParagraphNode(
-              id: "1",
-              text: AttributedText(text: "before "),
-            ),
-          ],
-        ),
-      );
+      testWidgetsOnAllPlatforms("cancels composing when the user presses ESC", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(text: "before "),
+              ),
+            ],
+          ),
+        );
 
-      // Place the caret at "before |"
-      await tester.placeCaretInParagraph("1", 7);
+        // Place the caret at "before |"
+        await tester.placeCaretInParagraph("1", 7);
 
-      // Start composing a token.
-      await tester.typeImeText("@");
+        // Start composing a token.
+        await tester.typeImeText("@");
 
-      // Ensure that we're composing.
-      var text = SuperEditorInspector.findTextInParagraph("1");
-      expect(
-        text.getAttributedRange({userTagComposingAttribution}, 7),
-        const SpanRange(start: 7, end: 7),
-      );
+        // Ensure that we're composing.
+        var text = SuperEditorInspector.findTextInParagraph("1");
+        expect(
+          text.getAttributedRange({userTagComposingAttribution}, 7),
+          const SpanRange(start: 7, end: 7),
+        );
 
-      // Cancel composing.
-      await tester.pressEscape();
+        // Cancel composing.
+        await tester.pressEscape();
 
-      // Ensure that the composing was cancelled.
-      text = SuperEditorInspector.findTextInParagraph("1");
-      expect(
-        text.getAttributionSpansInRange(
-          attributionFilter: (attribution) => attribution == userTagComposingAttribution,
-          range: const SpanRange(start: 0, end: 7),
-        ),
-        isEmpty,
-      );
-      expect(
-        text.getAttributedRange({userTagCancelledAttribution}, 7),
-        const SpanRange(start: 7, end: 7),
-      );
+        // Ensure that the composing was cancelled.
+        text = SuperEditorInspector.findTextInParagraph("1");
+        expect(
+          text.getAttributionSpansInRange(
+            attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+            range: const SpanRange(start: 0, end: 7),
+          ),
+          isEmpty,
+        );
+        expect(
+          text.getAttributedRange({userTagCancelledAttribution}, 7),
+          const SpanRange(start: 7, end: 7),
+        );
 
-      // Start typing again.
-      await tester.typeImeText("j");
+        // Start typing again.
+        await tester.typeImeText("j");
 
-      // Ensure that we didn't start composing again.
-      text = SuperEditorInspector.findTextInParagraph("1");
-      expect(text.text, "before @j");
-      expect(
-        text.getAttributionSpansInRange(
-          attributionFilter: (attribution) => attribution == userTagComposingAttribution,
-          range: const SpanRange(start: 0, end: 8),
-        ),
-        isEmpty,
-      );
-      expect(
-        text.getAttributedRange({userTagCancelledAttribution}, 7),
-        const SpanRange(start: 7, end: 8),
-      );
+        // Ensure that we didn't start composing again.
+        text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "before @j");
+        expect(
+          text.getAttributionSpansInRange(
+            attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+            range: const SpanRange(start: 0, end: 8),
+          ),
+          isEmpty,
+        );
+        expect(
+          text.getAttributedRange({userTagCancelledAttribution}, 7),
+          const SpanRange(start: 7, end: 8),
+        );
 
-      // Add a space, cause the token to end.
-      await tester.typeImeText(" ");
+        // Add a space, cause the token to end.
+        await tester.typeImeText(" ");
 
-      // Ensure that the cancelled token wasn't committed, and didn't start composing again.
-      text = SuperEditorInspector.findTextInParagraph("1");
-      expect(text.text, "before @j ");
-      expect(
-        text.getAttributionSpansInRange(
-          attributionFilter: (attribution) => attribution == userTagComposingAttribution,
-          range: const SpanRange(start: 0, end: 9),
-        ),
-        isEmpty,
-      );
-      expect(
-        text.getAttributionSpansInRange(
-          attributionFilter: (attribution) => attribution is UserTagAttribution,
-          range: const SpanRange(start: 0, end: 9),
-        ),
-        isEmpty,
-      );
-      expect(
-        text.getAttributedRange({userTagCancelledAttribution}, 7),
-        const SpanRange(start: 7, end: 8),
-      );
+        // Ensure that the cancelled token wasn't committed, and didn't start composing again.
+        text = SuperEditorInspector.findTextInParagraph("1");
+        expect(text.text, "before @j ");
+        expect(
+          text.getAttributionSpansInRange(
+            attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+            range: const SpanRange(start: 0, end: 9),
+          ),
+          isEmpty,
+        );
+        expect(
+          text.getAttributionSpansInRange(
+            attributionFilter: (attribution) => attribution is UserTagAttribution,
+            range: const SpanRange(start: 0, end: 9),
+          ),
+          isEmpty,
+        );
+        expect(
+          text.getAttributedRange({userTagCancelledAttribution}, 7),
+          const SpanRange(start: 7, end: 8),
+        );
+      });
     });
 
     group("commits >", () {

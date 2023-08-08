@@ -272,14 +272,14 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
 }
 
 /// An artifact that might be mutated during a request to a [Editor].
-abstract class Editable {
+abstract mixin class Editable {
   /// A [Editor] transaction just started, this [Editable] should avoid notifying
   /// any listeners of changes until the transaction ends.
-  void onTransactionStart();
+  void onTransactionStart() {}
 
   /// A transaction that was previously started with [onTransactionStart] has now ended, this
   /// [Editable] should notify interested parties of changes.
-  void onTransactionEnd(List<EditEvent> edits);
+  void onTransactionEnd(List<EditEvent> edits) {}
 }
 
 /// An object that processes [EditRequest]s.

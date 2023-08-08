@@ -1,11 +1,7 @@
-import 'dart:math';
-
 import 'package:example/demos/features/feature_demo_scaffold.dart';
+import 'package:example/demos/features/popover_list.dart';
 import 'package:flutter/material.dart' hide ListenableBuilder;
-import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
-import 'package:overlord/follow_the_leader.dart';
-import 'package:overlord/overlord.dart';
 import 'package:super_editor/super_editor.dart';
 
 class UserTagsFeatureDemo extends StatefulWidget {
@@ -104,18 +100,19 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
             ],
           ),
         ),
-        Follower.withOffset(
-          link: _composingLink,
-          offset: Offset(0, 16),
-          leaderAnchor: Alignment.bottomCenter,
-          followerAnchor: Alignment.topCenter,
-          showWhenUnlinked: false,
-          child: UserSelectionPopover(
-            editor: _editor,
-            userTagPlugin: _userTagPlugin,
-            editorFocusNode: _editorFocusNode,
+        if (_userTagPlugin.userTagIndex.composingUserTag.value != null)
+          Follower.withOffset(
+            link: _composingLink,
+            offset: Offset(0, 16),
+            leaderAnchor: Alignment.bottomCenter,
+            followerAnchor: Alignment.topCenter,
+            showWhenUnlinked: false,
+            child: UserSelectionPopover(
+              editor: _editor,
+              userTagPlugin: _userTagPlugin,
+              editorFocusNode: _editorFocusNode,
+            ),
           ),
-        ),
       ],
     );
   }
@@ -145,12 +142,22 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
           return style;
         },
         addRulesAfter: [
-          ..._darkModeStyles,
+          ...darkModeStyles,
         ],
       ),
       documentOverlayBuilders: [
-        _TokenBoundsOverlay(
+        AttributedTextBoundsOverlay(
           selector: (a) => a == userTagComposingAttribution,
+          builder: (context, attribution) {
+            return Leader(
+              link: _composingLink,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.blue),
+                ),
+              ),
+            );
+          },
         ),
         DefaultCaretOverlayBuilder(
           CaretStyle().copyWith(color: Colors.redAccent),
@@ -197,152 +204,6 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
   }
 }
 
-// Makes text light, for use during dark mode styling.
-final _darkModeStyles = [
-  StyleRule(
-    BlockSelector.all,
-    (doc, docNode) {
-      return {
-        "textStyle": const TextStyle(
-          color: Color(0xFFCCCCCC),
-          fontSize: 32,
-        ),
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("header1"),
-    (doc, docNode) {
-      return {
-        "textStyle": const TextStyle(
-          color: Color(0xFF888888),
-        ),
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("header2"),
-    (doc, docNode) {
-      return {
-        "textStyle": const TextStyle(
-          color: Color(0xFF888888),
-        ),
-      };
-    },
-  ),
-];
-
-class _TokenBoundsOverlay implements DocumentLayerBuilder {
-  const _TokenBoundsOverlay({
-    required this.selector,
-  });
-
-  final AttributionBoundsSelector selector;
-
-  @override
-  Widget build(BuildContext context, SuperEditorContext editContext) {
-    return _AttributionBounds(
-      layout: editContext.documentLayout,
-      document: editContext.document,
-      selector: selector,
-    );
-  }
-}
-
-class _AttributionBounds extends StatefulWidget {
-  const _AttributionBounds({
-    Key? key,
-    required this.layout,
-    required this.document,
-    required this.selector,
-  }) : super(key: key);
-
-  final DocumentLayout layout;
-  final Document document;
-  final AttributionBoundsSelector selector;
-
-  @override
-  State<_AttributionBounds> createState() => _AttributionBoundsState();
-}
-
-class _AttributionBoundsState extends State<_AttributionBounds> {
-  final _bounds = <Rect>{};
-
-  @override
-  void initState() {
-    super.initState();
-
-    _findBounds();
-    widget.document.addListener(_onDocumentChange);
-  }
-
-  @override
-  void dispose() {
-    widget.document.removeListener(_onDocumentChange);
-    super.dispose();
-  }
-
-  void _onDocumentChange(changeLog) {
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _findBounds();
-    });
-  }
-
-  void _findBounds() {
-    _bounds.clear();
-
-    for (final node in widget.document.nodes) {
-      if (node is! TextNode) {
-        continue;
-      }
-
-      final spans = node.text.getAttributionSpansInRange(
-        attributionFilter: widget.selector,
-        range: SpanRange(start: 0, end: node.text.text.length - 1),
-      );
-
-      final documentRanges = spans.map(
-        (span) => DocumentRange(
-          start: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: span.start)),
-          end: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: span.end + 1)),
-        ),
-      );
-
-      _bounds.addAll(documentRanges.map(
-        (range) => widget.layout.getRectForSelection(range.start, range.end) ?? Rect.zero,
-      ));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Stack(
-        children: [
-          for (final bound in _bounds) //
-            Positioned.fromRect(
-              rect: bound,
-              child: Leader(
-                link: _composingLink,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-typedef AttributionBoundsSelector = bool Function(Attribution attribution);
-
 final _composingLink = LeaderLink();
 
 class UserSelectionPopover extends StatefulWidget {
@@ -373,22 +234,15 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
   ];
   final _matchingUsers = <String>[];
 
-  late final FocusNode _focusNode;
-
-  final _listKey = GlobalKey<ScrollableState>();
-  late final ScrollController _scrollController;
-  int _selectedValueIndex = -1;
-
   bool _isLoadingMatches = false;
 
   @override
   void initState() {
     super.initState();
 
-    _focusNode = FocusNode();
-    _scrollController = ScrollController();
-
     widget.userTagPlugin.userTagIndex.composingUserTag.addListener(_onComposingTokenChange);
+
+    _onComposingTokenChange();
   }
 
   @override
@@ -405,9 +259,6 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
   void dispose() {
     widget.userTagPlugin.userTagIndex.composingUserTag.removeListener(_onComposingTokenChange);
 
-    _scrollController.dispose();
-    _focusNode.dispose();
-
     super.dispose();
   }
 
@@ -417,15 +268,9 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
       // The user isn't composing a tag. Therefore, this popover shouldn't
       // have focus.
       setState(() {
-        _focusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
         _matchingUsers.clear();
       });
       return;
-    }
-
-    // The user is composing a tag. Ensure that we have focus.
-    if (!_focusNode.hasPrimaryFocus) {
-      _focusNode.requestFocus();
     }
 
     // Simulate a load time
@@ -446,176 +291,41 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     // Filter the user list based on the composing token.
     setState(() {
       _isLoadingMatches = false;
-
-      _matchingUsers
-        ..clear()
-        ..addAll(_userCandidates.where((user) => user.toLowerCase().contains(composingTag.toLowerCase())));
-
-      _selectedValueIndex = min(_selectedValueIndex, _matchingUsers.length - 1);
+      _selectMatchingUsers(composingTag);
     });
   }
 
-  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
-    final reservedKeys = {
-      LogicalKeyboardKey.arrowUp,
-      LogicalKeyboardKey.arrowDown,
-      LogicalKeyboardKey.enter,
-      LogicalKeyboardKey.numpadEnter,
-    };
-
-    final key = event.logicalKey;
-    if (!reservedKeys.contains(key)) {
-      return KeyEventResult.ignored;
-    }
-
-    if (event is KeyDownEvent) {
-      // Only handle up events, so we don't run our behavior twice
-      // for the same key press.
-      return KeyEventResult.handled;
-    }
-
-    bool didChange = false;
-    switch (key) {
-      // TODO: navigate popover with arrow keys
-      case LogicalKeyboardKey.arrowUp:
-        if (_selectedValueIndex > 0) {
-          _selectedValueIndex -= 1;
-          // TODO: auto-scroll to new position
-          didChange = true;
-        }
-      case LogicalKeyboardKey.arrowDown:
-        if (_selectedValueIndex < _matchingUsers.length - 1) {
-          _selectedValueIndex += 1;
-          // TODO: auto-scroll to new position
-          didChange = true;
-        }
-      case LogicalKeyboardKey.enter:
-      case LogicalKeyboardKey.numpadEnter:
-        _chooseUser();
-    }
-
-    if (didChange) {
-      setState(() {
-        // We changed something in our presentation. Rebuild.
-      });
-    }
-
-    return KeyEventResult.handled;
+  void _selectMatchingUsers(String composingTag) {
+    _matchingUsers
+      ..clear()
+      ..addAll(_userCandidates.where((user) => user.toLowerCase().contains(composingTag.toLowerCase())));
   }
 
-  void _chooseUser() {
-    if (_selectedValueIndex < 0 || _selectedValueIndex >= _matchingUsers.length) {
-      // The current selection doesn't correspond to a user in the matches list. Fizzle.
-      return;
-    }
-
+  void _onUserSelected(Object name) {
     widget.editor.execute([
-      FillInComposingUserTagRequest(_matchingUsers[_selectedValueIndex], defaultUserTagRule),
+      FillInComposingUserTagRequest(name as String, defaultUserTagRule),
+    ]);
+  }
+
+  void _cancelTag() {
+    widget.editor.execute([
+      CancelComposingUserTagRequest(defaultUserTagRule),
     ]);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      focusNode: _focusNode,
-      parentNode: widget.editorFocusNode,
-      onKeyEvent: _onKeyEvent,
-      child: ListenableBuilder(
-        listenable: _focusNode,
-        builder: (context, child) {
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: _focusNode.hasFocus ? Colors.blue : Colors.transparent),
-            ),
-            child: CupertinoPopoverMenu(
-              focalPoint: LeaderMenuFocalPoint(link: _composingLink),
-              child: SizedBox(
-                width: 200,
-                height: 125,
-                child: _buildContent(),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    if (_isLoadingMatches) {
-      return Center(
-        child: SizedBox.square(
-          dimension: 18,
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    return _matchingUsers.isNotEmpty ? _buildUserList() : _buildEmptyDisplay();
-  }
-
-  Widget _buildUserList() {
-    return SingleChildScrollView(
-      key: _listKey,
-      controller: _scrollController,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 8),
-          for (int i = 0; i < _matchingUsers.length; i += 1) ...[
-            ColoredBox(
-              color: i == _selectedValueIndex ? Colors.white.withOpacity(0.05) : Colors.transparent,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.account_circle,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _matchingUsers[i],
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (i < _matchingUsers.length - 1) //
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Divider(
-                  color: Colors.white.withOpacity(0.2),
-                  height: 1,
-                ),
-              ),
-          ],
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyDisplay() {
-    return SizedBox(
-      width: 200,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Text(
-          "NO USERS",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.black.withOpacity(0.5),
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+    return PopoverList(
+      editorFocusNode: widget.editorFocusNode,
+      leaderLink: _composingLink,
+      listItems: _matchingUsers
+          .map(
+            (userName) => PopoverListItem(id: userName, label: userName),
+          )
+          .toList(),
+      isLoading: _isLoadingMatches,
+      onListItemSelected: _onUserSelected,
+      onCancelRequested: _cancelTag,
     );
   }
 }

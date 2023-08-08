@@ -85,7 +85,7 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
           return style;
         },
         addRulesAfter: [
-          ..._darkModeStyles,
+          ...darkModeStyles,
         ],
       ),
       documentOverlayBuilders: [
@@ -133,38 +133,3 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
     );
   }
 }
-
-// Makes text light, for use during dark mode styling.
-final _darkModeStyles = [
-  StyleRule(
-    BlockSelector.all,
-    (doc, docNode) {
-      return {
-        "textStyle": const TextStyle(
-          color: Color(0xFFCCCCCC),
-          fontSize: 32,
-        ),
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("header1"),
-    (doc, docNode) {
-      return {
-        "textStyle": const TextStyle(
-          color: Color(0xFF888888),
-        ),
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("header2"),
-    (doc, docNode) {
-      return {
-        "textStyle": const TextStyle(
-          color: Color(0xFF888888),
-        ),
-      };
-    },
-  ),
-];
