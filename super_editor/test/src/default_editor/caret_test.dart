@@ -94,7 +94,7 @@ void main() {
       const screenSizeBigger = Size(1000.0, 400.0);
       const screenSizeSmaller = Size(250.0, 400.0);
 
-      testWidgets('moves caret to next line when available width contracts', (WidgetTester tester) async {
+      testWidgetsOnDesktop('moves caret to next line when available width contracts', (WidgetTester tester) async {
         tester.view
           ..devicePixelRatio = 1.0
           ..platformDispatcher.textScaleFactorTestValue = 1.0
@@ -130,7 +130,7 @@ void main() {
         expect(finalCaretOffset, expectedFinalCaretOffset);
       });
 
-      testWidgets('moves caret to preceding line when available width expands', (WidgetTester tester) async {
+      testWidgetsOnDesktop('moves caret to preceding line when available width expands', (WidgetTester tester) async {
         tester.view
           ..devicePixelRatio = 1.0
           ..platformDispatcher.textScaleFactorTestValue = 1.0

@@ -447,6 +447,18 @@ class RenderContentLayers extends RenderBox {
   Size computeDryLayout(BoxConstraints constraints) => _content?.computeDryLayout(constraints) ?? Size.zero;
 
   @override
+  double computeMinIntrinsicWidth(double height) => _content?.computeMinIntrinsicWidth(height) ?? 0.0;
+
+  @override
+  double computeMaxIntrinsicWidth(double height) => _content?.computeMaxIntrinsicWidth(height) ?? 0.0;
+
+  @override
+  double computeMinIntrinsicHeight(double width) => _content?.computeMinIntrinsicHeight(width) ?? 0.0;
+
+  @override
+  double computeMaxIntrinsicHeight(double width) => _content?.computeMaxIntrinsicHeight(width) ?? 0.0;
+
+  @override
   void performLayout() {
     contentLayersLog.info("Laying out ContentLayers");
     if (_content == null) {
