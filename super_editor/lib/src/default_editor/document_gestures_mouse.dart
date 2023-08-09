@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -51,7 +50,7 @@ class DocumentMouseInteractor extends StatefulWidget {
     this.contentTapHandler,
     required this.autoScroller,
     this.showDebugPaint = false,
-    required this.child,
+    this.child,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -74,15 +73,13 @@ class DocumentMouseInteractor extends StatefulWidget {
   final bool showDebugPaint;
 
   /// The document to display within this [DocumentMouseInteractor].
-  final Widget child;
+  final Widget? child;
 
   @override
   State createState() => _DocumentMouseInteractorState();
 }
 
 class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with SingleTickerProviderStateMixin {
-  final _documentWrapperKey = GlobalKey();
-
   late FocusNode _focusNode;
 
   DocumentSelection? _previousSelection;
@@ -744,9 +741,7 @@ Updating drag selection:
       onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: _buildCursorStyle(
         child: _buildGestureInput(
-          child: _buildDocumentContainer(
-            document: widget.child,
-          ),
+          child: widget.child ?? const SizedBox(),
         ),
       ),
     );
@@ -801,78 +796,6 @@ Updating drag selection:
       },
       child: child,
     );
-  }
-
-  Widget _buildDocumentContainer({
-    required Widget document,
-  }) {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Stack(
-        children: [
-          SizedBox(
-            key: _documentWrapperKey,
-            child: document,
-          ),
-          if (widget.showDebugPaint) //
-            ..._buildDebugPaintInDocSpace(),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildDebugPaintInDocSpace() {
-    final dragStartInDoc = _dragStartGlobal != null
-        ? _getDocOffsetFromGlobalOffset(_dragStartGlobal!) + Offset(0, widget.autoScroller.deltaWhileAutoScrolling)
-        : null;
-    final dragEndInDoc = _dragEndGlobal != null ? _getDocOffsetFromGlobalOffset(_dragEndGlobal!) : null;
-
-    return [
-      if (dragStartInDoc != null)
-        Positioned(
-          left: dragStartInDoc.dx,
-          top: dragStartInDoc.dy,
-          child: FractionalTranslation(
-            translation: const Offset(-0.5, -0.5),
-            child: Container(
-              width: 16,
-              height: 16,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFF0088FF),
-              ),
-            ),
-          ),
-        ),
-      if (dragEndInDoc != null)
-        Positioned(
-          left: dragEndInDoc.dx,
-          top: dragEndInDoc.dy,
-          child: FractionalTranslation(
-            translation: const Offset(-0.5, -0.5),
-            child: Container(
-              width: 16,
-              height: 16,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFF0088FF),
-              ),
-            ),
-          ),
-        ),
-      if (dragStartInDoc != null && dragEndInDoc != null)
-        Positioned(
-          left: min(dragStartInDoc.dx, dragEndInDoc.dx),
-          top: min(dragStartInDoc.dy, dragEndInDoc.dy),
-          width: (dragEndInDoc.dx - dragStartInDoc.dx).abs(),
-          height: (dragEndInDoc.dy - dragStartInDoc.dy).abs(),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF0088FF), width: 3),
-            ),
-          ),
-        ),
-    ];
   }
 }
 

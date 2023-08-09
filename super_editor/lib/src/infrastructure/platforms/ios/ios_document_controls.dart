@@ -365,11 +365,11 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   }) {
     const ballDiameter = 8.0;
 
+    late LayerLink handleLink;
     late Widget handle;
-    late Offset handleOffset;
     switch (handleType) {
       case HandleType.collapsed:
-        handleOffset = widget.editingController.caretTop! + const Offset(-1, 0);
+        handleLink = widget.editingController.selectionLinks.caretLink!;
         handle = ValueListenableBuilder<bool>(
           valueListenable: _isShowingFloatingCursor,
           builder: (context, isShowingFloatingCursor, child) {
@@ -382,9 +382,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         );
         break;
       case HandleType.upstream:
-        handleOffset = widget.editingController.upstreamHandleOffset! -
-            Offset(0, widget.editingController.upstreamCaretHeight!) +
-            const Offset(-ballDiameter / 2, -3 * ballDiameter / 4);
+        handleLink = widget.editingController.selectionLinks.upstreamLink!;
         handle = IOSSelectionHandle.upstream(
           color: widget.handleColor,
           handleType: handleType,
@@ -393,9 +391,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         );
         break;
       case HandleType.downstream:
-        handleOffset = widget.editingController.downstreamHandleOffset! -
-            Offset(0, widget.editingController.downstreamCaretHeight!) +
-            const Offset(-ballDiameter / 2, -3 * ballDiameter / 4);
+        handleLink = widget.editingController.selectionLinks.downstreamLink!;
         handle = IOSSelectionHandle.upstream(
           color: widget.handleColor,
           handleType: handleType,
@@ -407,26 +403,28 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
     return _buildHandle(
       handleKey: handleKey,
-      handleOffset: handleOffset,
       handle: handle,
+      handleLink: handleLink,
       debugColor: debugColor,
     );
   }
 
   Widget _buildHandle({
     required Key handleKey,
-    required Offset handleOffset,
     required Widget handle,
+    required LayerLink handleLink,
     required Color debugColor,
   }) {
     return CompositedTransformFollower(
       key: handleKey,
-      link: widget.editingController.documentLayoutLink,
-      offset: handleOffset + const Offset(-5, 0),
+      link: handleLink,
+      targetAnchor: Alignment.center,
+      followerAnchor: Alignment.center,
+      showWhenUnlinked: false,
       child: IgnorePointer(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 5),
-          color: widget.showDebugPaint ? Colors.green : Colors.transparent,
+          color: widget.showDebugPaint ? debugColor : Colors.transparent,
           child: handle,
         ),
       ),
@@ -441,15 +439,21 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
           return const SizedBox();
         }
 
-        return _buildHandle(
-          handleKey: _floatingCursorKey,
-          handleOffset: floatingCursorOffset - Offset(0, _floatingCursorHeight / 2),
-          handle: Container(
-            width: _defaultFloatingCursorWidth,
-            height: _floatingCursorHeight,
-            color: Colors.red.withOpacity(0.75),
+        return CompositedTransformFollower(
+          key: _floatingCursorKey,
+          link: widget.editingController.documentLayoutLink,
+          offset: floatingCursorOffset - Offset(0, _floatingCursorHeight / 2) + const Offset(-5, 0),
+          child: IgnorePointer(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              color: widget.showDebugPaint ? Colors.blue : Colors.transparent,
+              child: Container(
+                width: _defaultFloatingCursorWidth,
+                height: _floatingCursorHeight,
+                color: Colors.red.withOpacity(0.75),
+              ),
+            ),
           ),
-          debugColor: Colors.blue,
         );
       },
     );
@@ -525,13 +529,10 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 class IosDocumentGestureEditingController extends GestureEditingController {
   IosDocumentGestureEditingController({
     required LayerLink documentLayoutLink,
-    required LayerLink magnifierFocalPointLink,
-    required MagnifierAndToolbarController overlayController,
-  })  : _documentLayoutLink = documentLayoutLink,
-        super(
-          magnifierFocalPointLink: magnifierFocalPointLink,
-          overlayController: overlayController,
-        );
+    required super.selectionLinks,
+    required super.magnifierFocalPointLink,
+    required super.overlayController,
+  }) : _documentLayoutLink = documentLayoutLink;
 
   /// Layer link that's aligned to the top-left corner of the document layout.
   ///
