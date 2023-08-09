@@ -7,10 +7,10 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
+import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -379,6 +379,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       keyboardActions: widget.keyboardHandlers,
       child: widget.inputSource == TextInputSource.ime
           ? SuperTextFieldImeInteractor(
+              textKey: _textKey,
               focusNode: _focusNode,
               textController: _controller,
               isMultiline: isMultiline,
@@ -930,6 +931,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
 class SuperTextFieldImeInteractor extends StatefulWidget {
   const SuperTextFieldImeInteractor({
     Key? key,
+    required this.textKey,
     required this.focusNode,
     required this.textController,
     required this.isMultiline,
@@ -945,6 +947,10 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
   /// Whether or not this text field supports multiple lines of text.
   final bool isMultiline;
 
+  /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
+  /// the [ProseTextLayout] widget that paints the text for this text field.
+  final GlobalKey<ProseTextState> textKey;
+
   /// The rest of the subtree for this text field.
   final Widget child;
 
@@ -957,6 +963,8 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   void initState() {
     super.initState();
     widget.focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
+
+    widget.textController.inputConnectionNotifier.addListener(_reportVisualInformationToIme);
 
     if (widget.focusNode.hasFocus) {
       // We got an already focused FocusNode, we need to attach to the IME.
@@ -985,6 +993,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   @override
   void dispose() {
     widget.focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
+    widget.textController.inputConnectionNotifier.removeListener(_reportVisualInformationToIme);
     super.dispose();
   }
 
@@ -1009,6 +1018,65 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
         widget.textController.selection = const TextSelection.collapsed(offset: -1);
       });
     }
+  }
+
+  /// Report our size, transform to the root node coordinates, and caret rect to the IME.
+  ///
+  /// This is needed to display the OS emoji & symbols panel at the text field selected position.
+  ///
+  /// This methods is re-scheduled to run at the end of every frame while we are attached to the IME.
+  void _reportVisualInformationToIme() {
+    if (!widget.textController.isAttachedToIme) {
+      return;
+    }
+
+    final renderBox = context.findRenderObject() as RenderBox;
+    widget.textController.inputConnectionNotifier.value!
+        .setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
+
+    final caretRect = _computeCaretRectInContentSpace();
+    if (caretRect != null) {
+      widget.textController.inputConnectionNotifier.value!.setCaretRect(caretRect);
+    }
+
+    // Without showing the keyboard, the panel is always positioned at the screen center after the first time.
+    // I'm not sure why this is needed in SuperTextField, but not in SuperEditor.
+    widget.textController.showKeyboard();
+
+    // There are some operations that might affect our transform or the caret rect but we can't react to them.
+    // For example, the text field might be resized or moved around the screen.
+    // Because of this, we update our size, transform and caret rect at every frame.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _reportVisualInformationToIme();
+    });
+  }
+
+  Rect? _computeCaretRectInContentSpace() {
+    final text = widget.textKey.currentState;
+    if (text == null) {
+      return null;
+    }
+
+    final selection = widget.textController.selection;
+    if (!selection.isValid) {
+      return null;
+    }
+
+    final renderBox = context.findRenderObject() as RenderBox;
+
+    // Compute the caret rect in the text layout space.
+    final position = TextPosition(offset: selection.baseOffset);
+    final textLayout = text.textLayout;
+    final caretOffset = textLayout.getOffsetForCaret(position);
+    final caretHeight = textLayout.getHeightForCaret(position) ?? textLayout.estimatedLineHeight;
+    final caretRect = caretOffset & Size(1, caretHeight);
+
+    // Convert the coordinates from the text layout space to the text field space.
+    final textRenderBox = text.context.findRenderObject() as RenderBox;
+    final textOffset = renderBox.globalToLocal(textRenderBox.localToGlobal(Offset.zero));
+    final caretOffsetInTextFieldSpace = caretRect.shift(textOffset);
+
+    return caretOffsetInTextFieldSpace;
   }
 
   @override

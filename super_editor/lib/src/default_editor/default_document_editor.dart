@@ -1,6 +1,7 @@
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/composer/composer_reactions.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
@@ -81,6 +82,15 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       : null,
   (request) => request is DeleteSelectionRequest //
       ? DeleteSelectionCommand(documentSelection: request.documentSelection)
+      : null,
+  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ListItemNode
+      ? ConvertListItemToParagraphCommand(nodeId: request.node.id, paragraphMetadata: request.node.metadata)
+      : null,
+  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ParagraphNode
+      ? DeleteUpstreamAtBeginningOfParagraphCommand(request.node)
+      : null,
+  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is BlockNode
+      ? DeleteUpstreamAtBeginningOfBlockNodeCommand(request.node)
       : null,
   (request) => request is DeleteNodeRequest //
       ? DeleteNodeCommand(nodeId: request.nodeId)

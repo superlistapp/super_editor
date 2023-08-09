@@ -318,6 +318,11 @@ class SuperEditorState extends State<SuperEditor> {
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
+    widget.editor.context.put(
+      Editor.layoutKey,
+      DocumentLayoutEditable(() => _docLayoutKey.currentState as DocumentLayout),
+    );
+
     _createEditContext();
     _createLayoutPresenter();
   }
@@ -338,6 +343,13 @@ class SuperEditorState extends State<SuperEditor> {
       for (final plugin in oldWidget.plugins) {
         plugin.detach(oldWidget.editor);
       }
+
+      oldWidget.editor.context.remove(Editor.layoutKey);
+      widget.editor.context.put(
+        Editor.layoutKey,
+        DocumentLayoutEditable(() => _docLayoutKey.currentState as DocumentLayout),
+      );
+
       _createEditContext();
       _createLayoutPresenter();
     } else if (widget.selectionStyles != oldWidget.selectionStyles) {
@@ -354,6 +366,8 @@ class SuperEditorState extends State<SuperEditor> {
   @override
   void dispose() {
     _contentTapDelegate?.dispose();
+
+    widget.editor.context.remove(Editor.layoutKey);
 
     _focusNode.removeListener(_onFocusChange);
     if (widget.focusNode == null) {

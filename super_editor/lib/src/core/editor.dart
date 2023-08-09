@@ -34,6 +34,10 @@ class Editor implements RequestDispatcher {
   /// [DocumentComposer] is available in the [EditContext].
   static const composerKey = "composer";
 
+  /// Service locator key to obtain a [DocumentLayoutEditable] from [find], if
+  /// a [DocumentLayoutEditable] is available in the [EditContext].
+  static const layoutKey = "layout";
+
   /// Generates a new ID for a [DocumentNode].
   ///
   /// Each generated node ID is universally unique.

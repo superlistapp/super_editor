@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/core/editor.dart';
 
 import 'document_selection.dart';
 import 'document.dart';
@@ -11,6 +12,23 @@ import 'document.dart';
 /// this is passed around, instead of a direct reference to a
 /// [DocumentLayout].
 typedef DocumentLayoutResolver = DocumentLayout Function();
+
+/// An [Editable] that provides access to a [DocumentLayout] so that
+/// [EditCommand]s can make decisions based on the layout of the
+/// document in an editor.
+class DocumentLayoutEditable implements Editable {
+  const DocumentLayoutEditable(this._documentLayoutResolver);
+
+  final DocumentLayoutResolver _documentLayoutResolver;
+
+  DocumentLayout get documentLayout => _documentLayoutResolver();
+
+  @override
+  void onTransactionEnd(List<EditEvent> edits) {}
+
+  @override
+  void onTransactionStart() {}
+}
 
 /// Abstract representation of a document layout.
 ///

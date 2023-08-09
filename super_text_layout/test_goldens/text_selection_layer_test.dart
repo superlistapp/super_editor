@@ -4,6 +4,7 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'test_tools.dart';
+import 'test_tools_goldens.dart';
 
 void main() {
   group("Text selection layer", () {
@@ -11,7 +12,7 @@ void main() {
       color: defaultSelectionColor,
     );
 
-    testGoldens("paints a full text selection", (tester) async {
+    testGoldensOnAndroid("paints a full text selection", (tester) async {
       await pumpThreeLinePlainSuperText(
         tester,
         beneathBuilder: (context, textLayout) {
@@ -29,7 +30,7 @@ void main() {
       await screenMatchesGolden(tester, "TextSelectionLayer_full-selection");
     });
 
-    testGoldens("paints a partial text selection", (tester) async {
+    testGoldensOnAndroid("paints a partial text selection", (tester) async {
       await pumpThreeLinePlainSuperText(
         tester,
         beneathBuilder: (context, textLayout) {
@@ -47,7 +48,7 @@ void main() {
       await screenMatchesGolden(tester, "TextSelectionLayer_partial-selection");
     });
 
-    testGoldens("paints an empty highlight when text is empty", (tester) async {
+    testGoldensOnAndroid("paints an empty highlight when text is empty", (tester) async {
       await pumpEmptySuperText(
         tester,
         beneathBuilder: (context, textLayout) {
@@ -61,7 +62,7 @@ void main() {
       await screenMatchesGolden(tester, "TextSelectionLayer_small-highlight-when-empty");
     });
 
-    testGoldens("paints no selection when text is empty", (tester) async {
+    testGoldensOnAndroid("paints no selection when text is empty", (tester) async {
       await pumpEmptySuperText(
         tester,
         beneathBuilder: (context, textLayout) {

@@ -49,6 +49,11 @@ class TextDeltasDocumentEditor {
   void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
     editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
 
+    editorImeDeltasLog.fine("Incoming deltas:");
+    for (final delta in textEditingDeltas) {
+      editorImeDeltasLog.fine(delta);
+    }
+
     // Apply deltas to the document.
     editorImeLog.fine("Serializing document to perform IME operations");
     _serializedDoc = DocumentImeSerializer(
@@ -357,17 +362,17 @@ class TextDeltasDocumentEditor {
       final selectedNodeIndex = document.getNodeIndexById(
         selection.value!.extent.nodeId,
       );
-      if (selectedNodeIndex > 0) {
-        // The user is trying to delete upstream at the start of a node.
-        // This action requires intervention because the IME doesn't know
-        // that there's more content before this node. Instruct the editor
-        // to run a delete action upstream, which will take the desired
-        // "backspace" behavior at the start of this node.
-        final node = document.getNodeAt(selectedNodeIndex)!;
-        _deleteUpstream(DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition));
-        editorImeLog.fine("Deleted upstream. New selection: ${selection.value}");
-        return;
-      }
+      // The user is trying to delete upstream at the start of a node.
+      // This action requires intervention because the IME doesn't know
+      // that there's more content before this node. Instruct the editor
+      // to run a delete action upstream, which will take the desired
+      // "backspace" behavior at the start of this node.
+      editor.execute([
+        DeleteUpstreamAtBeginningOfNodeRequest(
+          document.getNodeAt(selectedNodeIndex)!,
+        ),
+      ]);
+      return;
     }
 
     editorImeLog.fine("Running selection deletion operation");
@@ -379,104 +384,6 @@ class TextDeltasDocumentEditor {
       ),
     ]);
     commonOps.deleteSelection();
-  }
-
-  /// Deletes a unit of content that comes before the [DocumentComposer]'s
-  /// selection extent, or deletes all selected content if the selection
-  /// is not collapsed.
-  ///
-  /// In the case of text editing, deletes the character that appears before
-  /// the caret.
-  ///
-  /// If the caret sits at the beginning of a content block, such as the
-  /// beginning of a text node, and the upstream node is not visually selectable,
-  /// then the upstream node is deleted and the caret is kept where it is.
-  ///
-  /// Returns [true] if content was deleted, or [false] if no upstream
-  /// content exists.
-  bool _deleteUpstream(DocumentPosition deletionPosition) {
-    final node = document.getNodeById(deletionPosition.nodeId)!;
-
-    if (deletionPosition.nodePosition is UpstreamDownstreamNodePosition) {
-      final nodePosition = deletionPosition.nodePosition as UpstreamDownstreamNodePosition;
-      if (nodePosition.affinity == TextAffinity.downstream) {
-        // The caret is sitting on the downstream edge of block-level content. Delete the
-        // whole block by replacing it with an empty paragraph.
-        commonOps.replaceBlockNodeWithEmptyParagraphAndCollapsedSelection(deletionPosition.nodeId);
-
-        return true;
-      } else {
-        // The caret is sitting on the upstream edge of block-level content and
-        // the user is trying to delete upstream.
-        //  * If the node above is an empty paragraph, delete it.
-        //  * If the node above is non-selectable, delete it.
-        //  * Otherwise, move the caret up to the node above.
-        final nodeBefore = document.getNodeBefore(node);
-        if (nodeBefore == null) {
-          return false;
-        }
-
-        if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
-          editor.execute([
-            DeleteNodeRequest(nodeId: nodeBefore.id),
-          ]);
-          return true;
-        }
-
-        final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
-        if (!componentBefore.isVisualSelectionSupported()) {
-          // The node/component above is not selectable. Delete it.
-          commonOps.deleteNonSelectedNode(nodeBefore);
-          return true;
-        }
-
-        return commonOps.moveSelectionToEndOfPrecedingNode();
-      }
-    }
-
-    if (deletionPosition.nodePosition is TextNodePosition) {
-      final textPosition = deletionPosition.nodePosition as TextNodePosition;
-      if (textPosition.offset == 0) {
-        final nodeBefore = document.getNodeBefore(node);
-        if (nodeBefore == null) {
-          return false;
-        }
-
-        if (nodeBefore is TextNode) {
-          // The caret is at the beginning of one TextNode and is preceded by
-          // another TextNode. Merge the two TextNodes.
-          return commonOps.mergeTextNodeWithUpstreamTextNode();
-        }
-
-        final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
-        if (!componentBefore.isVisualSelectionSupported()) {
-          // The node/component above is not selectable. Delete it.
-          commonOps.deleteNonSelectedNode(nodeBefore);
-          return true;
-        }
-
-        if ((node as TextNode).text.text.isEmpty) {
-          // The caret is at the beginning of an empty TextNode and the preceding
-          // node is not a TextNode. Delete the current TextNode and move the
-          // selection up to the preceding node if exist.
-          if (commonOps.moveSelectionToEndOfPrecedingNode()) {
-            editor.execute([
-              DeleteNodeRequest(nodeId: node.id),
-            ]);
-          }
-          return true;
-        }
-
-        // The caret is at the beginning of a non-empty TextNode, and the
-        // preceding node is not a TextNode. Move the document selection to the
-        // preceding node.
-        return commonOps.moveSelectionToEndOfPrecedingNode();
-      } else {
-        return commonOps.deleteUpstreamCharacter();
-      }
-    }
-
-    return false;
   }
 
   void insertNewline() {

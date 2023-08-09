@@ -43,6 +43,7 @@ Future<void> main() async {
     // editorScrollingLog,
     // editorGesturesLog,
     // editorImeLog,
+    // editorImeDeltasLog,
     // editorKeyLog,
     // editorOpsLog,
     // editorLayoutLog,

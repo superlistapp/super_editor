@@ -205,6 +205,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     } else {
       _configureImeClientDecorators();
       _documentImeConnection.value = _documentImeClient;
+      _reportVisualInformationToIme();
     }
   }
 
@@ -215,6 +216,62 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     // If we were given IME overrides, point our primary IME client to that client. Otherwise,
     // point our primary IME client directly towards the _documentImeClient.
     _imeClient.client = widget.imeOverrides ?? _documentImeClient;
+  }
+
+  /// Report our size, transform to the root node coordinates, and caret rect to the IME.
+  ///
+  /// This is needed to display the OS emoji & symbols panel at the editor selected position.
+  ///
+  /// This methods is re-scheduled to run at the end of every frame while we are attached to the IME.
+  void _reportVisualInformationToIme() {
+    if (!isAttachedToIme) {
+      return;
+    }
+
+    final renderBox = context.findRenderObject() as RenderBox;
+    _imeConnection.value!.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
+
+    final caretRect = _computeCaretRectInViewportSpace();
+    if (caretRect != null) {
+      _imeConnection.value!.setCaretRect(caretRect);
+    }
+
+    // There are some operations that might affect our transform, size and the caret rect,
+    // but we can't react to them.
+    // For example, the editor might be resized or moved around the screen.
+    // Because of this, we update our size, transform and caret rect at every frame.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _reportVisualInformationToIme();
+    });
+  }
+
+  /// Compute the caret rect in the editor's content space.
+  ///
+  /// Returns `null` if we don't have a selection or if we can't get the caret rect
+  /// from the document layout.
+  Rect? _computeCaretRectInViewportSpace() {
+    final selection = widget.editContext.composer.selection;
+    if (selection == null) {
+      return null;
+    }
+
+    final docLayout = widget.editContext.documentLayout;
+    final rectInDocLayoutSpace = docLayout.getRectForPosition(selection.extent);
+
+    if (rectInDocLayoutSpace == null) {
+      return null;
+    }
+
+    final renderBox = context.findRenderObject() as RenderBox;
+
+    // The value returned from getRectForPosition is in the document's layout coordinates.
+    // As the document layout is scrollable, this rect might be outside of the viewport height.
+    // Map the offset to the editor's viewport coordinates.
+    final caretOffset = renderBox.globalToLocal(
+      docLayout.getGlobalOffsetFromDocumentOffset(rectInDocLayoutSpace.topLeft),
+    );
+
+    return caretOffset & rectInDocLayoutSpace.size;
   }
 
   @override
