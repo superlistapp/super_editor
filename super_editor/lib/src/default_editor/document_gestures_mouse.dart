@@ -373,7 +373,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
             nodePosition: const UpstreamDownstreamNodePosition.downstream(),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
     ]);
@@ -458,7 +458,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         DocumentSelection.collapsed(
           position: position,
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
     ]);

@@ -29,6 +29,7 @@ export 'src/default_editor/document_gestures_mouse.dart';
 export 'src/default_editor/document_gestures_touch.dart';
 export 'src/infrastructure/document_gestures_interaction_overrides.dart';
 export 'src/default_editor/document_ime/document_input_ime.dart';
+export 'src/default_editor/document_layers/attributed_text_bounds_overlay.dart';
 export 'src/default_editor/document_hardware_keyboard/document_input_keyboard.dart';
 export 'src/default_editor/horizontal_rule.dart';
 export 'src/default_editor/image.dart';
@@ -42,6 +43,10 @@ export 'src/default_editor/super_editor.dart';
 export 'src/default_editor/tasks.dart';
 export 'src/default_editor/text.dart';
 export 'src/default_editor/text_tools.dart';
+export 'src/default_editor/text_tokenizing/action_tags.dart';
+export 'src/default_editor/text_tokenizing/pattern_tags.dart';
+export 'src/default_editor/text_tokenizing/tags.dart';
+export 'src/default_editor/text_tokenizing/stable_tags.dart';
 export 'src/default_editor/unknown_component.dart';
 
 // Document operations used by SuperEditor and/or SuperReader,
@@ -51,6 +56,7 @@ export 'src/document_operations/selection_operations.dart';
 export 'src/infrastructure/multi_listenable_builder.dart';
 export 'src/infrastructure/_logging.dart';
 export 'src/infrastructure/attributed_text_styles.dart';
+export 'src/infrastructure/attribution_layout_bounds.dart';
 export 'src/infrastructure/composable_text.dart';
 export 'src/infrastructure/focus.dart';
 export 'src/infrastructure/ime_input_owner.dart';

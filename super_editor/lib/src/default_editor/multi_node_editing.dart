@@ -393,7 +393,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditCommand {
           nodePosition: newNode.beginningPosition,
         ),
       ),
-      SelectionChangeType.place,
+      SelectionChangeType.placeCaret,
       SelectionReason.userInteraction,
       notifyListeners: false,
     ));
@@ -514,12 +514,16 @@ class DeleteSelectionCommand implements EditCommand {
     }
 
     _log.log('DeleteSelectionCommand', ' - combining last node text with first node text');
-    startNodeAfterDeletion.text = startNodeAfterDeletion.text.copyAndAppend(endNodeAfterDeletion.text);
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(startNodeAfterDeletion.id),
-      )
+        TextInsertionEvent(
+          nodeId: startNodeAfterDeletion.id,
+          offset: startNodeAfterDeletion.text.text.length,
+          text: endNodeAfterDeletion.text,
+        ),
+      ),
     ]);
+    startNodeAfterDeletion.text = startNodeAfterDeletion.text.copyAndAppend(endNodeAfterDeletion.text);
 
     _log.log('DeleteSelectionCommand', ' - deleting last node');
     document.deleteNode(endNodeAfterDeletion);
@@ -645,6 +649,8 @@ class DeleteSelectionCommand implements EditCommand {
         ];
       } else {
         // Delete part of the text.
+        final deletedText = node.text.copyText(nodePosition.offset);
+
         node.text = node.text.removeRegion(
           startOffset: nodePosition.offset,
           endOffset: node.text.text.length,
@@ -652,7 +658,11 @@ class DeleteSelectionCommand implements EditCommand {
 
         return [
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            TextDeletedEvent(
+              node.id,
+              offset: nodePosition.offset,
+              deletedText: deletedText,
+            ),
           )
         ];
       }
@@ -691,6 +701,8 @@ class DeleteSelectionCommand implements EditCommand {
         ];
       } else {
         // Delete part of the text.
+        final deletedText = node.text.copyText(0, nodePosition.offset);
+
         node.text = node.text.removeRegion(
           startOffset: 0,
           endOffset: nodePosition.offset,
@@ -698,8 +710,12 @@ class DeleteSelectionCommand implements EditCommand {
 
         return [
           DocumentEdit(
-            NodeChangeEvent(node.id),
-          )
+            TextDeletedEvent(
+              node.id,
+              offset: 0,
+              deletedText: deletedText,
+            ),
+          ),
         ];
       }
     } else {

@@ -72,7 +72,7 @@ class CommonEditorOperations {
     editor.execute([
       ChangeSelectionRequest(
         DocumentSelection.collapsed(position: documentPosition),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
     ]);
@@ -106,7 +106,7 @@ class CommonEditorOperations {
       editor.execute([
         ChangeSelectionRequest(
           DocumentSelection.collapsed(position: position),
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -337,24 +337,24 @@ class CommonEditorOperations {
     );
 
     if (expand) {
-      // Selection should be expanded.
+      // Push the extent of an expanded selection.
       editor.execute([
         ChangeSelectionRequest(
           composer.selection!.expandTo(
             newExtent,
           ),
-          SelectionChangeType.expandSelection,
+          SelectionChangeType.pushExtent,
           SelectionReason.userInteraction,
         ),
       ]);
     } else {
-      // Selection should be replaced by new collapsed position.
+      // Push the caret upstream.
       editor.execute([
         ChangeSelectionRequest(
           DocumentSelection.collapsed(
             position: newExtent,
           ),
-          SelectionChangeType.collapseSelection,
+          SelectionChangeType.pushCaret,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -439,24 +439,24 @@ class CommonEditorOperations {
     );
 
     if (expand) {
-      // Selection should be expanded.
+      // Push the extent of an expanded selection downstream.
       editor.execute([
         ChangeSelectionRequest(
           composer.selection!.expandTo(
             newExtent,
           ),
-          SelectionChangeType.expandSelection,
+          SelectionChangeType.pushExtent,
           SelectionReason.userInteraction,
         ),
       ]);
     } else {
-      // Selection should be replaced by new collapsed position.
+      // Push the caret downstream.
       editor.execute([
         ChangeSelectionRequest(
           DocumentSelection.collapsed(
             position: newExtent,
           ),
-          SelectionChangeType.collapseSelection,
+          SelectionChangeType.pushCaret,
           SelectionReason.userInteraction,
         ),
       ]);

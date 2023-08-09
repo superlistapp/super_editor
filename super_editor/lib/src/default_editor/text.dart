@@ -826,10 +826,12 @@ class AddTextAttributionsRequest implements EditRequest {
   AddTextAttributionsRequest({
     required this.documentSelection,
     required this.attributions,
+    this.autoMerge = true,
   });
 
   final DocumentSelection documentSelection;
   final Set<Attribution> attributions;
+  final bool autoMerge;
 }
 
 // TODO: the add/remove/toggle commands are almost identical except for what they
@@ -839,10 +841,12 @@ class AddTextAttributionsCommand implements EditCommand {
   AddTextAttributionsCommand({
     required this.documentSelection,
     required this.attributions,
+    this.autoMerge = true,
   });
 
   final DocumentSelection documentSelection;
   final Set<Attribution> attributions;
+  final bool autoMerge;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -922,6 +926,7 @@ class AddTextAttributionsCommand implements EditCommand {
               newAttribution: attribution,
               start: range.start,
               end: range.end,
+              autoMerge: autoMerge,
             ),
         );
         executor.logChanges([
@@ -1216,12 +1221,13 @@ class InsertTextCommand implements EditCommand {
       startOffset: textOffset,
       applyAttributions: attributions,
     );
+
     executor.logChanges([
       DocumentEdit(
         TextInsertionEvent(
           nodeId: textNode.id,
           offset: textOffset,
-          text: textToInsert,
+          text: AttributedText(text: textToInsert),
         ),
       ),
     ]);
@@ -1253,10 +1259,10 @@ class TextInsertionEvent extends NodeChangeEvent {
   }) : super(nodeId);
 
   final int offset;
-  final String text;
+  final AttributedText text;
 
   @override
-  String toString() => "[TextInsertionEvent] - node: $nodeId, insertion offset: $offset, text: '$text'";
+  String toString() => "TextInsertionEvent ('$nodeId' - $offset -> '${text.text}')";
 
   @override
   bool operator ==(Object other) =>
@@ -1282,7 +1288,7 @@ class TextDeletedEvent extends NodeChangeEvent {
   final AttributedText deletedText;
 
   @override
-  String toString() => "[TextDeletedEvent] - node: $nodeId, offset: $offset, deleted text: '$deletedText'";
+  String toString() => "TextDeletedEvent ('$nodeId' - $offset -> '${deletedText.text}')";
 
   @override
   bool operator ==(Object other) =>

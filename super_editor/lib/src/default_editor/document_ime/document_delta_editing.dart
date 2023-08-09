@@ -237,7 +237,7 @@ class TextDeltasDocumentEditor {
       editor.execute([
         ChangeSelectionRequest(
           docSelection,
-          SelectionChangeType.place,
+          docSelection.isCollapsed ? SelectionChangeType.placeCaret : SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -255,7 +255,7 @@ class TextDeltasDocumentEditor {
     editor.execute([
       ChangeSelectionRequest(
         insertionSelection,
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
     ]);
@@ -272,7 +272,7 @@ class TextDeltasDocumentEditor {
       editor.execute([
         ChangeSelectionRequest(
           selectionBeforeInsertion,
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.contentChange,
         ),
       ]);
@@ -334,7 +334,7 @@ class TextDeltasDocumentEditor {
       editor.execute([
         ChangeSelectionRequest(
           replacementSelection,
-          SelectionChangeType.place,
+          SelectionChangeType.expandSelection,
           SelectionReason.contentChange,
         ),
       ]);
@@ -379,7 +379,7 @@ class TextDeltasDocumentEditor {
     editor.execute([
       ChangeSelectionRequest(
         docSelectionToDelete,
-        SelectionChangeType.place,
+        docSelectionToDelete.isCollapsed ? SelectionChangeType.collapseSelection : SelectionChangeType.expandSelection,
         SelectionReason.contentChange,
       ),
     ]);

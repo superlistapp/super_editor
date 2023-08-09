@@ -128,7 +128,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 1),
               ),
             ),
-            SelectionChangeType.place,
+            SelectionChangeType.expandSelection,
             SelectionReason.userInteraction,
           ),
         ]);
@@ -165,7 +165,7 @@ void main() {
                 nodePosition: UpstreamDownstreamNodePosition.downstream(),
               ),
             ),
-            SelectionChangeType.place,
+            SelectionChangeType.placeCaret,
             SelectionReason.userInteraction,
           ),
         ]);
@@ -205,7 +205,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 0),
               ),
             ),
-            SelectionChangeType.place,
+            SelectionChangeType.placeCaret,
             SelectionReason.userInteraction,
           ),
         ]);
@@ -262,7 +262,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 0),
               ),
             ),
-            SelectionChangeType.place,
+            SelectionChangeType.placeCaret,
             SelectionReason.userInteraction,
           ),
         ]);
@@ -307,7 +307,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 0),
               ),
             ),
-            SelectionChangeType.place,
+            SelectionChangeType.placeCaret,
             SelectionReason.userInteraction,
           ),
         ]);

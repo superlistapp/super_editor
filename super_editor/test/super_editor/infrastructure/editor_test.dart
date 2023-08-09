@@ -149,7 +149,12 @@ void main() {
         int reactionCount = 0;
 
         final document = MutableDocument(
-          nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))],
+          nodes: [
+            ParagraphNode(
+              id: "1",
+              text: AttributedText(text: ""),
+            )
+          ],
         );
 
         final composer = MutableDocumentComposer(
@@ -165,7 +170,7 @@ void main() {
             Editor.documentKey: document,
             Editor.composerKey: composer,
           },
-          requestHandlers: defaultRequestHandlers,
+          requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               reactionCount += 1;
@@ -207,7 +212,7 @@ void main() {
             Editor.documentKey: document,
             Editor.composerKey: composer,
           },
-          requestHandlers: defaultRequestHandlers,
+          requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               TextInsertionEvent? insertEEvent;
@@ -220,7 +225,7 @@ void main() {
                   continue;
                 }
 
-                insertEEvent = change.text.endsWith("e") ? change : null;
+                insertEEvent = change.text.text.endsWith("e") ? change : null;
               }
 
               if (insertEEvent == null) {
@@ -297,7 +302,7 @@ void main() {
             Editor.documentKey: document,
             Editor.composerKey: composer,
           },
-          requestHandlers: defaultRequestHandlers,
+          requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
             // Reaction 1 causes a change
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
@@ -311,7 +316,7 @@ void main() {
                   continue;
                 }
 
-                insertHEvent = change.text == "H" ? change : null;
+                insertHEvent = change.text.text == "H" ? change : null;
               }
 
               if (insertHEvent == null) {
@@ -342,7 +347,7 @@ void main() {
                   continue;
                 }
 
-                insertEEvent = change.text == "e" ? change : null;
+                insertEEvent = change.text.text == "e" ? change : null;
               }
 
               expect(insertEEvent, isNotNull, reason: "Reaction 2 didn't receive the change from reaction 1");
@@ -362,6 +367,74 @@ void main() {
         ]);
 
         // If execution makes it here then the test is successful.
+      });
+
+      test('reactions do not run in response to reactions', () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: "1", text: AttributedText(text: ""))],
+        );
+
+        final composer = MutableDocumentComposer(
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+
+        int reactionRunCount = 0;
+
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: List.from(defaultRequestHandlers),
+          reactionPipeline: [
+            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+              reactionRunCount += 1;
+
+              // We expect this reaction to run after we execute a command, but we don't
+              // expect this reaction to react to its own command.
+              expect(reactionRunCount, lessThan(2));
+
+              // Insert "e" after "H".
+              requestDispatcher.execute([
+                InsertTextRequest(
+                  documentPosition: const DocumentPosition(
+                    nodeId: "1",
+                    nodePosition: TextNodePosition(offset: 1),
+                  ),
+                  textToInsert: "e",
+                  attributions: {},
+                ),
+                InsertTextRequest(
+                  documentPosition: const DocumentPosition(
+                    nodeId: "1",
+                    nodePosition: TextNodePosition(offset: 2),
+                  ),
+                  textToInsert: "l",
+                  attributions: {},
+                ),
+              ]);
+            }),
+          ],
+        );
+
+        editor.execute([
+          InsertTextRequest(
+            documentPosition: const DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+            textToInsert: "H",
+            attributions: const {},
+          ),
+        ]);
+
+        // Ensure that our reaction ran once, but only once.
+        expect(reactionRunCount, 1);
       });
 
       test('inserts character at caret', () {
@@ -393,7 +466,7 @@ void main() {
                   nodePosition: TextNodePosition(offset: 1),
                 ),
               ),
-              SelectionChangeType.place,
+              SelectionChangeType.placeCaret,
               "test",
             ),
           ]);
@@ -586,7 +659,7 @@ StandardEditorPieces _createStandardEditor({
       Editor.documentKey: document,
       Editor.composerKey: composer,
     },
-    requestHandlers: defaultRequestHandlers,
+    requestHandlers: List.from(defaultRequestHandlers),
     reactionPipeline: [
       ...additionalReactions,
       const LinkifyReaction(),

@@ -283,7 +283,7 @@ class DocumentEditingRobot {
           _editor.execute([
             ChangeSelectionRequest(
               DocumentSelection.collapsed(position: position),
-              SelectionChangeType.place,
+              SelectionChangeType.placeCaret,
               SelectionReason.userInteraction,
             ),
           ]);
@@ -299,7 +299,7 @@ class DocumentEditingRobot {
           _editor.execute([
             ChangeSelectionRequest(
               selection,
-              SelectionChangeType.place,
+              SelectionChangeType.placeCaret,
               SelectionReason.userInteraction,
             ),
           ]);
