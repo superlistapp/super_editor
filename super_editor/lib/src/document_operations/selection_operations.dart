@@ -75,7 +75,7 @@ bool moveSelectionToNearestSelectableNode({
     editor.execute([
       ChangeSelectionRequest(
         DocumentSelection.collapsed(position: newExtent),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
     ]);

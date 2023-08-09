@@ -148,7 +148,7 @@ class UnorderedListItemConversionReaction extends ParagraphPrefixConversionReact
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
       ),
     ]);
@@ -190,7 +190,7 @@ class OrderedListItemConversionReaction extends ParagraphPrefixConversionReactio
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
       ),
     ]);
@@ -235,7 +235,7 @@ class BlockquoteConversionReaction extends ParagraphPrefixConversionReaction {
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
       ),
     ]);
@@ -284,7 +284,7 @@ class HorizontalRuleConversionReaction extends ParagraphPrefixConversionReaction
             nodePosition: const TextNodePosition(offset: 0),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
       ),
     ]);
@@ -490,7 +490,7 @@ class LinkifyReaction implements EditReaction {
     for (final edit in edits) {
       if (edit is DocumentEdit) {
         final change = edit.change;
-        if (change is TextInsertionEvent && change.text == " ") {
+        if (change is TextInsertionEvent && change.text.text == " ") {
           // Every space insertion might appear after a URL.
           linkifyCandidate = change;
         }
@@ -624,7 +624,7 @@ class EditInspector {
     if (textInsertionEvent is! TextInsertionEvent) {
       return false;
     }
-    if (textInsertionEvent.text != " ") {
+    if (textInsertionEvent.text.text != " ") {
       return false;
     }
 

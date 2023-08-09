@@ -13,6 +13,7 @@ void main() {
           .createDocument()
           .withSingleEmptyParagraph()
           .forDesktop()
+          .withInputSource(TextInputSource.keyboard)
           .pump();
 
       await tester.placeCaretInParagraph("1", 0);

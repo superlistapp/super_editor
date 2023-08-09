@@ -104,6 +104,8 @@ class TestDocumentConfigurator {
   final WidgetTester _widgetTester;
   final MutableDocument? _document;
   final TestDocumentContext? _existingContext;
+  final _addedRequestHandlers = <EditRequestHandler>[];
+  final _addedReactions = <EditReaction>[];
   DocumentGestureMode? _gestureMode;
   TextInputSource? _inputSource;
   SuperEditorSelectionPolicies? _selectionPolicies;
@@ -111,6 +113,8 @@ class TestDocumentConfigurator {
   SuperEditorImePolicies? _imePolicies;
   SuperEditorImeConfiguration? _imeConfiguration;
   DeltaTextInputClientDecorator? _imeOverrides;
+  final _prependedKeyboardActions = <DocumentKeyboardAction>[];
+  final _appendedKeyboardActions = <DocumentKeyboardAction>[];
   ThemeData? _appTheme;
   Stylesheet? _stylesheet;
   final _addedComponents = <ComponentBuilder>[];
@@ -125,10 +129,22 @@ class TestDocumentConfigurator {
   WidgetBuilder? _iOSToolbarBuilder;
   Key? _key;
 
+  final _plugins = <SuperEditorPlugin>{};
+
+  TestDocumentConfigurator withAddedRequestHandlers(List<EditRequestHandler> addedRequestHandlers) {
+    _addedRequestHandlers.addAll(addedRequestHandlers);
+    return this;
+  }
+
+  TestDocumentConfigurator withAddedReactions(List<EditReaction> addedReactions) {
+    _addedReactions.addAll(addedReactions);
+    return this;
+  }
+
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
   TestDocumentConfigurator forDesktop({
-    TextInputSource inputSource = TextInputSource.keyboard,
+    TextInputSource inputSource = TextInputSource.ime,
   }) {
     _inputSource = inputSource;
     _gestureMode = DocumentGestureMode.mouse;
@@ -187,6 +203,15 @@ class TestDocumentConfigurator {
   /// determined by the given [imeOverrides].
   TestDocumentConfigurator withImeOverrides(DeltaTextInputClientDecorator imeOverrides) {
     _imeOverrides = imeOverrides;
+    return this;
+  }
+
+  TestDocumentConfigurator withAddedKeyboardActions({
+    List<DocumentKeyboardAction> prepend = const [],
+    List<DocumentKeyboardAction> append = const [],
+  }) {
+    _prependedKeyboardActions.addAll(prepend);
+    _appendedKeyboardActions.addAll(append);
     return this;
   }
 
@@ -276,6 +301,12 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Applies the given [plugin] to the pumped [SuperEditor].
+  TestDocumentConfigurator withPlugin(SuperEditorPlugin plugin) {
+    _plugins.add(plugin);
+    return this;
+  }
+
   /// Pumps a [SuperEditor] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
   /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
@@ -334,7 +365,10 @@ class TestDocumentConfigurator {
     final layoutKey = GlobalKey();
     final focusNode = _focusNode ?? FocusNode();
     final composer = MutableDocumentComposer(initialSelection: _selection);
-    final editor = createDefaultDocumentEditor(document: _document!, composer: composer);
+    final editor = createDefaultDocumentEditor(document: _document!, composer: composer)
+      ..requestHandlers.insertAll(0, _addedRequestHandlers)
+      ..reactionPipeline.insertAll(0, _addedReactions);
+
     // ignore: prefer_function_declarations_over_variables
     final layoutResolver = () => layoutKey.currentState as DocumentLayout;
     final commonOps = CommonEditorOperations(
@@ -403,6 +437,11 @@ class TestDocumentConfigurator {
       imePolicies: _imePolicies ?? const SuperEditorImePolicies(),
       imeConfiguration: _imeConfiguration ?? const SuperEditorImeConfiguration(),
       imeOverrides: _imeOverrides,
+      keyboardActions: [
+        ..._prependedKeyboardActions,
+        ...defaultKeyboardActions,
+        ..._appendedKeyboardActions,
+      ],
       gestureMode: _gestureMode,
       androidToolbarBuilder: _androidToolbarBuilder,
       iOSToolbarBuilder: _iOSToolbarBuilder,
@@ -413,6 +452,7 @@ class TestDocumentConfigurator {
       ],
       autofocus: _autoFocus,
       scrollController: _scrollController,
+      plugins: _plugins,
     );
   }
 }

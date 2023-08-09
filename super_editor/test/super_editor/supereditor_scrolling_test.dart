@@ -152,7 +152,7 @@ void main() {
               nodePosition: lastParagraph.endPosition,
             ),
           ),
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -216,7 +216,7 @@ void main() {
               nodePosition: lastParagraph.endPosition,
             ),
           ),
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -260,7 +260,7 @@ void main() {
               nodePosition: TextNodePosition(offset: 0),
             ),
           ),
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.contentChange,
         ),
       ]);
@@ -296,7 +296,7 @@ void main() {
               nodePosition: TextNodePosition(offset: 0),
             ),
           ),
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
       ]);
