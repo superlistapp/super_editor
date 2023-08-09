@@ -1052,7 +1052,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final extentRect = _docLayout.getRectForPosition(selection.extent);
     late Offset handleOffset = extentRect!.bottomLeft;
 
-    _editingController.collapsedHandleOffset = handleOffset;
+    _editingController
+      ..collapsedHandleOffset = handleOffset
+      ..upstreamHandleOffset = null
+      ..upstreamCaretHeight = null
+      ..downstreamHandleOffset = null
+      ..downstreamCaretHeight = null;
   }
 
   void _positionExpandedSelectionHandles() {

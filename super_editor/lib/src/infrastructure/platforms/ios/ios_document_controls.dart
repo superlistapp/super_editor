@@ -369,7 +369,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     late Widget handle;
     switch (handleType) {
       case HandleType.collapsed:
-        handleLink = widget.editingController.selectionLinks!.caretLink!;
+        handleLink = widget.editingController.selectionLinks.caretLink!;
         handle = ValueListenableBuilder<bool>(
           valueListenable: _isShowingFloatingCursor,
           builder: (context, isShowingFloatingCursor, child) {
@@ -382,7 +382,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         );
         break;
       case HandleType.upstream:
-        handleLink = widget.editingController.selectionLinks!.upstreamLink!;
+        handleLink = widget.editingController.selectionLinks.upstreamLink!;
         handle = IOSSelectionHandle.upstream(
           color: widget.handleColor,
           handleType: handleType,
@@ -391,7 +391,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         );
         break;
       case HandleType.downstream:
-        handleLink = widget.editingController.selectionLinks!.downstreamLink!;
+        handleLink = widget.editingController.selectionLinks.downstreamLink!;
         handle = IOSSelectionHandle.upstream(
           color: widget.handleColor,
           handleType: handleType,
@@ -412,16 +412,15 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   Widget _buildHandle({
     required Key handleKey,
     required Widget handle,
-    Offset? handleOffset,
     required LayerLink handleLink,
     required Color debugColor,
   }) {
     return CompositedTransformFollower(
       key: handleKey,
       link: handleLink,
-      offset: handleOffset ?? Offset.zero,
       targetAnchor: Alignment.center,
       followerAnchor: Alignment.center,
+      showWhenUnlinked: false,
       child: IgnorePointer(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 5),

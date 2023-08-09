@@ -776,6 +776,7 @@ class SuperEditorState extends State<SuperEditor> {
 class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
   const _SelectionLeadersDocumentLayerBuilder({
     required this.links,
+    // ignore: unused_element
     this.showDebugLeaderBounds = false,
   });
 

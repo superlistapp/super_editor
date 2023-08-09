@@ -494,6 +494,7 @@ class SuperReaderState extends State<SuperReader> {
 class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
   const _SelectionLeadersDocumentLayerBuilder({
     required this.links,
+    // ignore: unused_element
     this.showDebugLeaderBounds = false,
   });
 

@@ -583,11 +583,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     if (docPosition != null) {
-      // The user tapped a non-selectable component, so we can't select a word.
-      // The editor will remain focused and selection will remain in the nearest
-      // selectable component, as set in _onTapUp.
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
       if (!tappedComponent.isVisualSelectionSupported()) {
+        // The user tapped a non-selectable component, so we can't select a word.
+        // The editor will remain focused and selection will remain in the nearest
+        // selectable component, as set in _onTapUp.
         return;
       }
 
@@ -1362,7 +1362,8 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     }
 
     return CompositedTransformFollower(
-      link: widget.editingController.selectionLinks!.caretLink!,
+      link: widget.editingController.selectionLinks.caretLink!,
+      showWhenUnlinked: false,
       child: IgnorePointer(
         child: BlinkingCaret(
           controller: _caretBlinkController,
@@ -1402,7 +1403,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   Widget _buildCollapsedHandle() {
     return _buildHandle(
       handleKey: _collapsedHandleKey,
-      handleLink: widget.editingController.selectionLinks!.caretLink!,
+      handleLink: widget.editingController.selectionLinks.caretLink!,
       leaderAnchor: Alignment.bottomCenter,
       followerAnchor: Alignment.topCenter,
       handleOffset: const Offset(-0.5, 5), // Chosen experimentally
@@ -1417,7 +1418,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       // upstream-bounding (left side of a RTL line of text) handle touch target
       _buildHandle(
         handleKey: _upstreamHandleKey,
-        handleLink: widget.editingController.selectionLinks!.upstreamLink!,
+        handleLink: widget.editingController.selectionLinks.upstreamLink!,
         leaderAnchor: Alignment.bottomLeft,
         followerAnchor: Alignment.topRight,
         handleOffset: const Offset(0, 2), // Chosen experimentally
@@ -1428,7 +1429,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       // downstream-bounding (right side of a RTL line of text) handle touch target
       _buildHandle(
         handleKey: _downstreamHandleKey,
-        handleLink: widget.editingController.selectionLinks!.downstreamLink!,
+        handleLink: widget.editingController.selectionLinks.downstreamLink!,
         leaderAnchor: Alignment.bottomRight,
         followerAnchor: Alignment.topLeft,
         handleOffset: const Offset(-1, 2), // Chosen experimentally
@@ -1456,6 +1457,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       targetAnchor: leaderAnchor,
       followerAnchor: followerAnchor,
       offset: handleOffset ?? Offset.zero,
+      showWhenUnlinked: false,
       child: FractionalTranslation(
         translation: handleFractionalTranslation,
         child: GestureDetector(
