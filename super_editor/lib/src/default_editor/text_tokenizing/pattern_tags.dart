@@ -233,28 +233,28 @@ class PatternTagReaction implements EditReaction {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
 
     final tag = _findTagAtCaret(editContext, (attributions) => attributions.contains(const PatternTagAttribution()));
-    if (tag != null) {
-      final tagRange = SpanRange(start: tag.indexedTag.startOffset, end: tag.indexedTag.endOffset);
-      final hasTagAttributionThroughout =
-          tag.indexedTag.computeLeadingSpanForAttribution(document, const PatternTagAttribution()) == tagRange;
-      if (hasTagAttributionThroughout) {
-        // The tag is already fully attributed. No need to do anything.
-        return;
-      }
-
-      // The token is only partially attributed. Expand the attribution around the token.
-      requestDispatcher.execute([
-        AddTextAttributionsRequest(
-          documentSelection: DocumentSelection(
-            base: tag.indexedTag.start,
-            extent: tag.indexedTag.end,
-          ),
-          attributions: {const PatternTagAttribution()},
-        ),
-      ]);
-
+    if (tag == null) {
       return;
     }
+
+    final tagRange = SpanRange(start: tag.indexedTag.startOffset, end: tag.indexedTag.endOffset);
+    final hasTagAttributionThroughout =
+        tag.indexedTag.computeLeadingSpanForAttribution(document, const PatternTagAttribution()) == tagRange;
+    if (hasTagAttributionThroughout) {
+      // The tag is already fully attributed. No need to do anything.
+      return;
+    }
+
+    // The token is only partially attributed. Expand the attribution around the token.
+    requestDispatcher.execute([
+      AddTextAttributionsRequest(
+        documentSelection: DocumentSelection(
+          base: tag.indexedTag.start,
+          extent: tag.indexedTag.end,
+        ),
+        attributions: {const PatternTagAttribution()},
+      ),
+    ]);
   }
 
   TagAroundPosition? _findTagAtCaret(

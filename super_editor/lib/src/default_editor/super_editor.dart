@@ -728,7 +728,7 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
 /// Those behaviors are collected through various properties, such as [keyboardActions] and
 /// [componentBuilders].
 ///
-/// An [Editor] a logical pipeline of requests, commands, and reactions. It has no direct
+/// An [Editor] is a logical pipeline of requests, commands, and reactions. It has no direct
 /// connection to a user interface. A [SuperEditor] widget is a complete editor user interface.
 /// When a plugin is given to a [SuperEditor] widget, the [SuperEditor] widget [attach]s the
 /// plugin to its [Editor], and then the [SuperEditor] widget pulls out UI related behaviors

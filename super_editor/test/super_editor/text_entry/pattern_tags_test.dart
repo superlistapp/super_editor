@@ -20,7 +20,7 @@ void main() {
         // Insert a single "#".
         await tester.typeImeText("#");
 
-        // Ensure that no hash tag was created
+        // Ensure that no hash tag was created.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "#");
         expect(
@@ -61,7 +61,7 @@ void main() {
           ),
         );
 
-        // Place the caret at "before |"
+        // Place the caret at "before |".
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose a pattern tag.
@@ -95,7 +95,7 @@ void main() {
         await tester.pressBackspace();
         await tester.pressBackspace();
 
-        // Ensure that the tag has a composing attribution.
+        // Ensure that the tag doesn't have a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "#");
         expect(
@@ -117,7 +117,7 @@ void main() {
           ),
         );
 
-        // Place the caret at "before |"
+        // Place the caret at "before |".
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose a hash tag.
@@ -155,7 +155,7 @@ void main() {
           ),
         );
 
-        // Place the caret at "before |"
+        // Place the caret at "before |".
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose a hash tag with a period after it.
@@ -198,7 +198,7 @@ void main() {
         // Compose a hash tag.
         await tester.typeImeText("#flutterdart");
 
-        // Insert a period between "flutter" and "dart"
+        // Insert a period between "flutter" and "dart".
         await tester.placeCaretInParagraph("1", 15);
         await tester.typeImeText(".");
 
@@ -295,7 +295,7 @@ void main() {
           ),
         );
 
-        // Place the caret at "before |"
+        // Place the caret at "before |".
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose and submit a hash tag.
@@ -343,13 +343,13 @@ void main() {
           ),
         );
 
-        // Place the caret at "before |"
+        // Place the caret at "before |".
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose and submit a hash tag.
         await tester.typeImeText("#flutter after");
 
-        // Place the caret at "befor|e #flutter after"
+        // Place the caret at "befor|e #flutter after".
         await tester.placeCaretInParagraph("1", 5);
 
         // Expand downstream until we push one character into the tag.
@@ -357,7 +357,7 @@ void main() {
         await tester.pressShiftRightArrow();
         await tester.pressShiftRightArrow();
 
-        // Ensure that the extent pushed into the tag.
+        // Ensure that the extent was pushed into the tag.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection(
@@ -386,13 +386,13 @@ void main() {
           ),
         );
 
-        // Place the caret at "before |"
+        // Place the caret at "before |".
         await tester.placeCaretInParagraph("1", 7);
 
         // Compose and submit a hash tag.
         await tester.typeImeText("#flutter after");
 
-        // Place the caret at "before #flutter a|fter"
+        // Place the caret at "before #flutter a|fter".
         await tester.placeCaretInParagraph("1", 14);
 
         // Expand upstream until we push one character into the tag.

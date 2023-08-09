@@ -439,7 +439,7 @@ class CommonEditorOperations {
     );
 
     if (expand) {
-      // Push the extent of an expanded selection downstream
+      // Push the extent of an expanded selection downstream.
       editor.execute([
         ChangeSelectionRequest(
           composer.selection!.expandTo(
@@ -450,7 +450,7 @@ class CommonEditorOperations {
         ),
       ]);
     } else {
-      // Push the caret downstream
+      // Push the caret downstream.
       editor.execute([
         ChangeSelectionRequest(
           DocumentSelection.collapsed(

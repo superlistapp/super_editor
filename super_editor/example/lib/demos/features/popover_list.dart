@@ -18,7 +18,6 @@ class PopoverList extends StatefulWidget {
     this.isLoading = false,
     required this.onListItemSelected,
     required this.onCancelRequested,
-    // required this.closePopoverSignal,
   });
 
   /// [FocusNode] attached to the editor, which is expected to be an ancestor
@@ -60,21 +59,13 @@ class _PopoverListState extends State<PopoverList> {
   void initState() {
     super.initState();
 
-    print("Popover list initState()");
-
     _focusNode = FocusNode();
     _scrollController = ScrollController();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      print("Popover list: after first frame, has focus? ${_focusNode.hasFocus}");
-      print("Has primary focus? ${_focusNode.hasPrimaryFocus}");
-
-      print("Requesting focus...");
+      // Wait until next frame to request focus, so that the parent relationship
+      // can be established between our focus node and the editor focus node.
       _focusNode.requestFocus();
-
-      print("After requesting focus:");
-      print("has focus? ${_focusNode.hasFocus}");
-      print("Has primary focus? ${_focusNode.hasPrimaryFocus}");
     });
   }
 
@@ -98,7 +89,6 @@ class _PopoverListState extends State<PopoverList> {
   }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
-    print("Key event: $event");
     final reservedKeys = {
       LogicalKeyboardKey.arrowUp,
       LogicalKeyboardKey.arrowDown,

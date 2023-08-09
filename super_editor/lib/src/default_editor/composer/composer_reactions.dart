@@ -17,7 +17,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 /// be automatically applied to newly typed text. This reaction identifies these
 /// situations and activates the desired styles in the [DocumentComposer].
 ///
-/// Only the given [_stylesToExtend] are automatically activated.
+/// Only the given `stylesToExtend` are automatically activated.
 ///
 /// Styles are activated when placing the caret at the beginning of a paragraph,
 /// and the first character has a style:

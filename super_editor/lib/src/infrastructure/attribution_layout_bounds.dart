@@ -121,7 +121,7 @@ class _AttributionBounds {
 }
 
 /// Filter function that decides whether the text with the given [attribution]
-/// should have a widget boundary places around it.
+/// should have a widget boundary placed around it.
 typedef AttributionBoundsSelector = bool Function(Attribution attribution);
 
 /// Builder that (optionally) returns a widget that positioned at the size

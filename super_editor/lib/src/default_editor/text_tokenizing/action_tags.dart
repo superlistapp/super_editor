@@ -109,7 +109,7 @@ class ActionTagsPlugin extends SuperEditorPlugin {
 const defaultActionTagRule = TagRule(trigger: "/", excludedCharacters: {" "});
 
 class SubmitComposingActionTagRequest implements EditRequest {
-  // TODO:
+  const SubmitComposingActionTagRequest();
 }
 
 class SubmitComposingActionTagCommand implements EditCommand {

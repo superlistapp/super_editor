@@ -17,7 +17,7 @@ void main() {
         );
         await tester.placeCaretInParagraph("1", 0);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john");
 
         // Ensure that the tag has a composing attribution.
@@ -45,7 +45,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john");
 
         // Ensure that the tag has a composing attribution.
@@ -73,7 +73,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john after");
 
         // Ensure that there's no more composing attribution because the tag
@@ -106,7 +106,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john");
 
         // Ensure that we started composing a tag before adding a space.
@@ -148,7 +148,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john");
 
         // Expand the selection to "before @joh|n|"
@@ -219,7 +219,7 @@ void main() {
         // Place the caret at "before | after"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john");
 
         // Move the caret to "before @|john".
@@ -355,7 +355,7 @@ void main() {
         // Place the caret in the empty paragraph.
         await tester.placeCaretInParagraph("1", 0);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john after");
 
         // Ensure that only the stable tag is attributed as a stable tag.
@@ -383,7 +383,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john after");
 
         // Ensure that only the stable tag is attributed as a stable tag.
@@ -415,7 +415,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john");
 
         // Move the selection somewhere else.
@@ -457,7 +457,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john");
 
         // Expand the selection to "befor|e @john|"
@@ -501,7 +501,7 @@ void main() {
         // Place the caret at "before | after"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Composer a stable tag.
+        // Compose a stable tag.
         await tester.typeImeText("@john");
 
         // Move caret to "before @|john after"
