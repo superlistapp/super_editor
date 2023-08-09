@@ -315,7 +315,7 @@ void main() {
         );
         expect(
           text.getAttributedRange({stableTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 8),
+          const SpanRange(start: 7, end: 7),
         );
 
         // Add a space, cause the tag to end.
@@ -340,7 +340,7 @@ void main() {
         );
         expect(
           text.getAttributedRange({stableTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 8),
+          const SpanRange(start: 7, end: 7),
         );
       });
     });

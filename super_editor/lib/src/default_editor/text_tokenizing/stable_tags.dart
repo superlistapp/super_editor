@@ -367,7 +367,7 @@ class CancelComposingStableTagCommand implements EditCommand {
           base: stableTagBasePosition,
           extent: DocumentPosition(
             nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: composingToken.indexedTag.endOffset),
+            nodePosition: TextNodePosition(offset: composingToken.indexedTag.startOffset + 1),
           ),
         ),
         attributions: {stableTagCancelledAttribution},
@@ -404,6 +404,9 @@ class TagUserReaction implements EditReaction {
     editorStableTagsLog.info(
         "Caret position: ${editContext.find<MutableDocumentComposer>(Editor.composerKey).selection?.extent.nodePosition}");
 
+    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    _healCancelledTags(requestDispatcher, document, changeList);
+
     _adjustTagAttributionsAroundAlteredTags(editContext, requestDispatcher, changeList);
 
     _removeInvalidTags(editContext, requestDispatcher, changeList);
@@ -417,8 +420,84 @@ class TagUserReaction implements EditReaction {
     _updateTagIndex(editContext, changeList);
   }
 
-  /// Finds a composing or cancelled stable tag near the caret and adjusts the attribution
-  /// bounds so that the tag content remains attributed.
+  /// Finds all cancelled stable tags across all changed text nodes in [changeList] and corrects
+  /// any invalid attribution bounds that may have been introduced by edits.
+  void _healCancelledTags(RequestDispatcher requestDispatcher, MutableDocument document, List<EditEvent> changeList) {
+    final healChangeRequests = <EditRequest>[];
+
+    for (final event in changeList) {
+      if (event is! DocumentEdit) {
+        continue;
+      }
+
+      final change = event.change;
+      if (change is! NodeChangeEvent) {
+        continue;
+      }
+
+      final node = document.getNodeById(change.nodeId);
+      if (node is! TextNode) {
+        continue;
+      }
+
+      // The content in a TextNode changed. Check for the existence of any
+      // out-of-sync cancelled tags and fix them.
+      healChangeRequests.addAll(
+        _healCancelledTagsInTextNode(requestDispatcher, node),
+      );
+    }
+
+    // Run all the requests to heal the various cancelled tags.
+    requestDispatcher.execute(healChangeRequests);
+  }
+
+  List<EditRequest> _healCancelledTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
+    final cancelledTagRanges = node.text.getAttributionSpansInRange(
+      attributionFilter: (a) => a == stableTagCancelledAttribution,
+      range: SpanRange(start: 0, end: node.text.text.length - 1),
+    );
+
+    final changeRequests = <EditRequest>[];
+
+    for (final range in cancelledTagRanges) {
+      final cancelledText = node.text.text.substring(range.start, range.end + 1); // +1 because substring is exclusive
+      if (cancelledText == _tagRule.trigger) {
+        // This is a legitimate cancellation attribution.
+        continue;
+      }
+
+      DocumentSelection? addedRange;
+      if (cancelledText.contains(_tagRule.trigger)) {
+        // This cancelled range includes more than just a trigger. Reduce it back
+        // down to the trigger.
+        final triggerIndex = cancelledText.indexOf(_tagRule.trigger);
+        addedRange = DocumentSelection(
+          base: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: triggerIndex)),
+          extent: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: triggerIndex)),
+        );
+      }
+
+      changeRequests.addAll([
+        RemoveTextAttributionsRequest(
+          documentSelection: DocumentSelection(
+            base: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: range.start)),
+            extent: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: range.end)),
+          ),
+          attributions: {stableTagCancelledAttribution},
+        ),
+        if (addedRange != null) //
+          AddTextAttributionsRequest(
+            documentSelection: addedRange,
+            attributions: {stableTagCancelledAttribution},
+          ),
+      ]);
+    }
+
+    return changeRequests;
+  }
+
+  /// Finds a composing stable tag near the caret and adjusts the attribution bounds so that
+  /// the tag content remains attributed.
   ///
   /// Examples:
   ///
@@ -452,31 +531,6 @@ class TagUserReaction implements EditReaction {
             extent: composingToken.indexedTag.end,
           ),
           attributions: {stableTagComposingAttribution},
-        ),
-      ]);
-
-      return;
-    }
-
-    final cancelledToken = _findCancelledTagAtCaret(editContext);
-    if (cancelledToken != null) {
-      final tagRange =
-          SpanRange(start: cancelledToken.indexedTag.startOffset, end: cancelledToken.indexedTag.endOffset);
-      final hasCancelThroughout =
-          cancelledToken.indexedTag.computeLeadingSpanForAttribution(document, stableTagCancelledAttribution) ==
-              tagRange;
-      if (hasCancelThroughout) {
-        return;
-      }
-
-      // The token is only partially attributed. Expand the attribution around the token.
-      requestDispatcher.execute([
-        AddTextAttributionsRequest(
-          documentSelection: DocumentSelection(
-            base: cancelledToken.indexedTag.start,
-            extent: cancelledToken.indexedTag.end,
-          ),
-          attributions: {stableTagCancelledAttribution},
         ),
       ]);
 
@@ -905,10 +959,6 @@ class TagUserReaction implements EditReaction {
 
   TagAroundPosition? _findComposingTagAtCaret(EditContext editContext) {
     return _findTagAtCaret(editContext, (attributions) => attributions.contains(stableTagComposingAttribution));
-  }
-
-  TagAroundPosition? _findCancelledTagAtCaret(EditContext editContext) {
-    return _findTagAtCaret(editContext, (attributions) => attributions.contains(stableTagCancelledAttribution));
   }
 
   TagAroundPosition? _findTagAtCaret(
