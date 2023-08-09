@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/_scrolling.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
+import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
 
 /// Controls the display and position of a magnifier and a floating toolbar.
 class MagnifierAndToolbarController with ChangeNotifier {
@@ -113,6 +114,7 @@ class MagnifierAndToolbarController with ChangeNotifier {
 /// using a [MagnifierAndToolbarController] as the source of truth.
 class GestureEditingController with ChangeNotifier {
   GestureEditingController({
+    required this.selectionLinks,
     required MagnifierAndToolbarController overlayController,
     required LayerLink magnifierFocalPointLink,
   })  : _magnifierFocalPointLink = magnifierFocalPointLink,
@@ -125,6 +127,8 @@ class GestureEditingController with ChangeNotifier {
     _overlayController.removeListener(_toolbarChanged);
     super.dispose();
   }
+
+  final SelectionLayerLinks selectionLinks;
 
   /// A `LayerLink` whose top-left corner sits at the location where the
   /// magnifier should magnify.
