@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 
-import '../../../test/test_tools.dart';
 import '../../test_tools_goldens.dart';
 
 void main() {
@@ -775,7 +774,6 @@ Widget _buildScaffold({
   return _DragLinePaint(
     line: dragLine,
     child: MaterialApp(
-      theme: ThemeData(primaryColor: Colors.blue),
       home: Scaffold(
         body: Center(
           child: IntrinsicHeight(

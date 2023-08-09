@@ -27,6 +27,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
     this.focusNode,
     this.autofocus = false,
     required this.editContext,
+    this.clearSelectionWhenEditorLosesFocus = true,
     this.clearSelectionWhenImeConnectionCloses = true,
     this.softwareKeyboardController,
     this.imePolicies = const SuperEditorImePolicies(),
@@ -43,6 +44,19 @@ class SuperEditorImeInteractor extends StatefulWidget {
 
   /// All resources that are needed to edit a document.
   final SuperEditorContext editContext;
+
+  /// Whether the document's selection should be removed when the editor loses
+  /// all focus (not just primary focus).
+  ///
+  /// If `true`, when focus moves to a different subtree, such as a popup text
+  /// field, or a button somewhere else on the screen, the editor will remove
+  /// its selection. When focus returns to the editor, the previous selection can
+  /// be restored, but that's controlled by other policies.
+  ///
+  /// If `false`, the editor will retain its selection, including a visual caret
+  /// and selected content, even when the editor doesn't have any focus, and can't
+  /// process any input.
+  final bool clearSelectionWhenEditorLosesFocus;
 
   /// Whether the editor's selection should be removed when the editor closes or loses
   /// its IME connection.
@@ -292,6 +306,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
           imeConfiguration: _textInputConfiguration,
           openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
           closeKeyboardOnSelectionLost: widget.imePolicies.closeKeyboardOnSelectionLost,
+          clearSelectionWhenEditorLosesFocus: widget.clearSelectionWhenEditorLosesFocus,
           clearSelectionWhenImeConnectionCloses: widget.clearSelectionWhenImeConnectionCloses,
           child: ImeFocusPolicy(
             focusNode: _focusNode,

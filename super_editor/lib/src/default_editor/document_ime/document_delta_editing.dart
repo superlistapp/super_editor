@@ -379,7 +379,7 @@ class TextDeltasDocumentEditor {
     editor.execute([
       ChangeSelectionRequest(
         docSelectionToDelete,
-        docSelectionToDelete!.isCollapsed ? SelectionChangeType.collapseSelection : SelectionChangeType.expandSelection,
+        docSelectionToDelete.isCollapsed ? SelectionChangeType.collapseSelection : SelectionChangeType.expandSelection,
         SelectionReason.contentChange,
       ),
     ]);

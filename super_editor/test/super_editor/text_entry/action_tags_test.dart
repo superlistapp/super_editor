@@ -642,7 +642,7 @@ ExecutionInstruction _submitOnEnter({
   }
 
   editContext.editor.execute([
-    SubmitComposingActionTagRequest(),
+    const SubmitComposingActionTagRequest(),
   ]);
 
   return ExecutionInstruction.haltExecution;

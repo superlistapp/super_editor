@@ -531,6 +531,7 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           autofocus: widget.autofocus,
           editContext: editContext,
+          clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
           clearSelectionWhenImeConnectionCloses: widget.selectionPolicies.clearSelectionWhenImeConnectionCloses,
           softwareKeyboardController: widget.softwareKeyboardController,
           imePolicies: widget.imePolicies,
@@ -661,29 +662,34 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   Widget _buildDocumentLayout() {
-    return ContentLayers(
-      content: (onBuildScheduled) => CompositedTransformTarget(
-        link: _documentLayoutLink,
-        child: SingleColumnDocumentLayout(
-          key: _docLayoutKey,
-          presenter: _docLayoutPresenter!,
-          componentBuilders: widget.componentBuilders,
-          onBuildScheduled: onBuildScheduled,
-          showDebugPaint: widget.debugPaint.layout,
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ContentLayers(
+        content: (onBuildScheduled) => CompositedTransformTarget(
+          link: _documentLayoutLink,
+          child: SingleColumnDocumentLayout(
+            key: _docLayoutKey,
+            presenter: _docLayoutPresenter!,
+            componentBuilders: widget.componentBuilders,
+            onBuildScheduled: onBuildScheduled,
+            showDebugPaint: widget.debugPaint.layout,
+          ),
         ),
-      ),
-      underlays: [
-        // Layer that positions and sizes leader widgets at the bounds
-        // of the users selection so that carets, handles, toolbars, and
-        // other things can follow the selection.
-        (context) => _SelectionLeadersDocumentLayerBuilder(
+        underlays: [
+          // Layer that positions and sizes leader widgets at the bounds
+          // of the users selection so that carets, handles, toolbars, and
+          // other things can follow the selection.
+          (context) {
+            return _SelectionLeadersDocumentLayerBuilder(
               links: _selectionLinks,
-            ).build(context, editContext),
-      ],
-      overlays: [
-        for (final overlayBuilder in widget.documentOverlayBuilders) //
-          (context) => overlayBuilder.build(context, editContext),
-      ],
+            ).build(context, editContext);
+          },
+        ],
+        overlays: [
+          for (final overlayBuilder in widget.documentOverlayBuilders) //
+            (context) => overlayBuilder.build(context, editContext),
+        ],
+      ),
     );
   }
 }
