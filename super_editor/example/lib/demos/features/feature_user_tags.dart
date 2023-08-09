@@ -160,7 +160,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
           },
         ),
         DefaultCaretOverlayBuilder(
-          CaretStyle().copyWith(color: Colors.redAccent),
+          caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
         ),
       ],
       plugins: {

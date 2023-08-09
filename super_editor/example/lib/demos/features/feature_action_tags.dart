@@ -162,7 +162,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
           },
         ),
         DefaultCaretOverlayBuilder(
-          CaretStyle().copyWith(color: Colors.redAccent),
+          caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
         ),
       ],
       plugins: {

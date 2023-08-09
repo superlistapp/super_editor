@@ -10,8 +10,7 @@ import '../../test_tools.dart';
 
 void main() {
   group("SuperEditor task component", () {
-    // TODO: combine with mobile test when #927 is resolved
-    testWidgetsOnDesktop("toggles on tap", (tester) async {
+    testWidgetsOnAllPlatforms("toggles on tap", (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
@@ -54,51 +53,6 @@ void main() {
       expect((document.nodes.first as TaskNode).isComplete, false);
       expect(TaskInspector.isChecked("1"), false);
     });
-
-    // TODO: combine with desktop test when #927 is resolved
-    testWidgetsOnMobile("toggles on tap", (tester) async {
-      final document = MutableDocument(
-        nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
-        ],
-      );
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: document,
-              composer: composer,
-              componentBuilders: [
-                TaskComponentBuilder(editor),
-                ...defaultComponentBuilders,
-              ],
-            ),
-          ),
-        ),
-      );
-
-      // Ensure the task isn't checked.
-      expect((document.nodes.first as TaskNode).isComplete, false);
-      expect(TaskInspector.isChecked("1"), false);
-
-      // Tap to check the box.
-      await tester.tapOnCheckbox("1");
-
-      // Ensure the task is checked.
-      expect((document.nodes.first as TaskNode).isComplete, true);
-      expect(TaskInspector.isChecked("1"), true);
-
-      // Tap to uncheck the box.
-      await tester.tapOnCheckbox("1");
-
-      // Ensure the task isn't checked.
-      expect((document.nodes.first as TaskNode).isComplete, false);
-      expect(TaskInspector.isChecked("1"), false);
-    }, skip: true);
 
     testWidgetsOnAllPlatforms("can be created from empty paragraph", (tester) async {
       final document = MutableDocument(

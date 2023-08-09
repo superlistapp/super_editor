@@ -90,7 +90,7 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
       ),
       documentOverlayBuilders: [
         DefaultCaretOverlayBuilder(
-          CaretStyle().copyWith(color: Colors.redAccent),
+          caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
         ),
       ],
       plugins: {

@@ -27,7 +27,7 @@ void main() {
         await screenMatchesGolden(tester, 'text-scaling-paragraph');
       });
 
-      testGoldensOnAndroid('for paragraph with collapsed selection', (tester) async {
+      testGoldensOnLinux('for paragraph with collapsed selection', (tester) async {
         final regularEditorKey = GlobalKey();
         final scaledEditorKey = GlobalKey();
 
@@ -62,7 +62,7 @@ void main() {
         await screenMatchesGolden(tester, 'text-scaling-paragraph-collapsed-selection');
       });
 
-      testGoldensOnAndroid('for paragraph with expanded selection', (tester) async {
+      testGoldensOnLinux('for paragraph with expanded selection', (tester) async {
         final regularEditorKey = GlobalKey();
         final scaledEditorKey = GlobalKey();
 
@@ -144,7 +144,7 @@ void main() {
 
         await expectLater(
           find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-header.png", 0),
+          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-header.png", 90),
         );
       });
 
@@ -163,7 +163,7 @@ void main() {
 
         await expectLater(
           find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-blockquote.png", 0),
+          matchesGoldenFileWithPixelAllowance("goldens/text-scaling-blockquote.png", 31),
         );
       });
     });

@@ -3,7 +3,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/attribution_layout_bounds.dart';
 
-class AttributedTextBoundsOverlay implements DocumentLayerBuilder {
+class AttributedTextBoundsOverlay implements SuperEditorLayerBuilder {
   const AttributedTextBoundsOverlay({
     required this.selector,
     required this.builder,

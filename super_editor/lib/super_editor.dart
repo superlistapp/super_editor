@@ -67,11 +67,13 @@ export 'src/infrastructure/platforms/android/android_document_controls.dart';
 export 'src/infrastructure/platforms/ios/ios_document_controls.dart';
 export 'src/infrastructure/platforms/mobile_documents.dart';
 export 'src/infrastructure/scrolling_diagnostics/scrolling_diagnostics.dart';
+export 'src/infrastructure/selection_leader_document_layer.dart';
 export 'src/infrastructure/signal_notifier.dart';
 export 'src/infrastructure/strings.dart';
 export 'src/infrastructure/super_textfield/super_textfield.dart';
 export 'src/infrastructure/touch_controls.dart';
 export 'src/infrastructure/text_input.dart';
+export 'src/infrastructure/viewport_size_reporting.dart';
 
 // Super Reader
 export 'src/super_reader/read_only_document_android_touch_interactor.dart';
