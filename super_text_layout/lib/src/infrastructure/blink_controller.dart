@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -20,19 +22,28 @@ class BlinkController with ChangeNotifier {
     _ticker = tickerProvider.createTicker(_onTick);
   }
 
+  BlinkController.withTimer({
+    Duration flashPeriod = const Duration(milliseconds: 500),
+  }) : _flashPeriod = flashPeriod;
+
   @override
   void dispose() {
-    _ticker.dispose();
+    _ticker?.dispose();
+    _timer?.cancel();
+
     super.dispose();
   }
 
-  late final Ticker _ticker;
-  final Duration _flashPeriod;
+  Ticker? _ticker;
   Duration _lastBlinkTime = Duration.zero;
+
+  Timer? _timer;
+
+  final Duration _flashPeriod;
 
   /// Returns `true` if this controller is currently animating a blinking
   /// signal, or `false` if it's not.
-  bool get isBlinking => _ticker.isTicking;
+  bool get isBlinking => _ticker != null ? _ticker!.isTicking : _timer?.isActive ?? false;
 
   bool _isBlinkingEnabled = true;
   set isBlinkingEnabled(bool newValue) {
@@ -57,16 +68,29 @@ class BlinkController with ChangeNotifier {
       return;
     }
 
-    _ticker
-      ..stop()
-      ..start();
+    if (_ticker != null) {
+      _ticker!
+        ..stop()
+        ..start();
+    } else {
+      _timer?.cancel();
+      _timer = Timer(_flashPeriod, _blink);
+    }
+
     _lastBlinkTime = Duration.zero;
     notifyListeners();
   }
 
   void stopBlinking() {
     _isVisible = true; // If we're not blinking then we need to be visible
-    _ticker.stop();
+
+    if (_ticker != null) {
+      _ticker!.stop();
+    } else {
+      _timer?.cancel();
+      _timer = null;
+    }
+
     notifyListeners();
   }
 
@@ -91,5 +115,9 @@ class BlinkController with ChangeNotifier {
   void _blink() {
     _isVisible = !_isVisible;
     notifyListeners();
+
+    if (_timer != null && _isBlinkingEnabled) {
+      _timer = Timer(_flashPeriod, _blink);
+    }
   }
 }

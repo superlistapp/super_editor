@@ -11,6 +11,7 @@ class CaretDocumentOverlay extends StatefulWidget {
     required this.composer,
     required this.documentLayoutResolver,
     required this.caretStyle,
+    this.blinkTimingMode = BlinkTimingMode.ticker,
   }) : super(key: key);
 
   /// The editor's [DocumentComposer], which reports the current selection.
@@ -23,6 +24,11 @@ class CaretDocumentOverlay extends StatefulWidget {
   /// The visual style of the caret that this overlay paints.
   final CaretStyle caretStyle;
 
+  /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
+  ///
+  /// `Timer`s are not expected to work in tests.
+  final BlinkTimingMode blinkTimingMode;
+
   @override
   State<CaretDocumentOverlay> createState() => _CaretDocumentOverlayState();
 }
@@ -34,7 +40,13 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   @override
   void initState() {
     super.initState();
-    _blinkController = BlinkController(tickerProvider: this);
+
+    switch (widget.blinkTimingMode) {
+      case BlinkTimingMode.ticker:
+        _blinkController = BlinkController(tickerProvider: this);
+      case BlinkTimingMode.timer:
+        _blinkController = BlinkController.withTimer();
+    }
 
     widget.composer.selectionNotifier.addListener(_onSelectionChange);
 
@@ -153,3 +165,17 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
 }
 
 const primaryCaretKey = ValueKey("caret_primary");
+
+/// The way a [CaretDocumentOverlay] tracks time.
+///
+/// Ideally, all time in Flutter widgets is tracked by `Ticker`s because they hook into
+/// Flutter's internal time reporting. This is critical for tests.
+///
+/// Unfortunately, at the time of this writing, running `Ticker`s forces Flutter into
+/// full FPS rendering, even when nothing needs to be rebuilt or painted. For that reason,
+/// [CaretDocumentOverlay] lets users request the use of Dart `Timer`s, which only fire
+/// when needed. `Timer`s are not expected to work in widget tests.
+enum BlinkTimingMode {
+  ticker,
+  timer,
+}
