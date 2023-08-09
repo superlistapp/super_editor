@@ -9,64 +9,65 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tokenizing/tags.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
-/// A [SuperEditorPlugin] that finds and attributes hash tags in a document.
+/// A [SuperEditorPlugin] that finds and attributes tags, based on patterns, in a document.
 ///
-/// A hash tag is a text token that begins with a trigger character, such as "#", and
-/// is followed by one or more non-space characters.
+/// A pattern tag is a text token that begins with a trigger character, such as "#", and
+/// is followed by characters that fit a given pattern. That pattern might be as simple as
+/// "any character that isn't a space".
 ///
-/// A [HashTagPlugin] finds and attributes hash tags as the user types them into an [Editor].
-/// Clients that wish to react to changes to hash tags can use the [hashTagIndex] to query
-/// existing hash tags.
+/// A [PatternTagPlugin] finds and attributes tags as the user types them into an [Editor].
+/// Clients that wish to react to changes to pattern tags can use the [tagIndex] to query
+/// existing tags.
 ///
-/// To add hash tag behaviors to a [SuperEditor] widget, provide a [HashTagPlugin] in
+/// To add pattern tag behaviors to a [SuperEditor] widget, provide a [PatternTagPlugin] in
 /// the `plugins` property.
 ///
 ///   SuperEditor(
 ///     //...
 ///     plugins: {
-///       hashTagPlugin,
+///       patternTagPlugin,
 ///     },
 ///   );
 ///
-/// To add hash tag behaviors directly to an [Editor], without involving a [SuperEditor]
+/// To add pattern tag behaviors directly to an [Editor], without involving a [SuperEditor]
 /// widget, call [attach] with the given [Editor]. When that [Editor] is no longer needed,
 /// call [detach] to clean up all plugin references.
 ///
-///   hashTagPlugin.attach(editor);
+///   patternTagPlugin.attach(editor);
 ///
 ///
-class HashTagPlugin extends SuperEditorPlugin {
-  /// The key used to access the [HashTagIndex] in an attached [Editor].
-  static const hashTagIndexKey = "hashTagIndex";
+class PatternTagPlugin extends SuperEditorPlugin {
+  /// The key used to access the [PatternTagIndex] in an attached [Editor].
+  static const patternTagIndexKey = "patternTagIndex";
 
-  HashTagPlugin({
+  PatternTagPlugin({
     TagRule tagRule = hashTagRule,
   })  : _tagRule = tagRule,
-        hashTagIndex = HashTagIndex() {
-    _hashTagReaction = HashTagReaction(
+        tagIndex = PatternTagIndex() {
+    _patternTagReaction = PatternTagReaction(
       tagRule: _tagRule,
     );
   }
 
-  /// The rule for what this plugin considers to be a hash tag.
+  /// The rule for what this plugin considers to be a tag.
   final TagRule _tagRule;
 
-  /// Index of all hash tags in the document.
-  final HashTagIndex hashTagIndex;
+  /// Index of all pattern tags in the document.
+  final PatternTagIndex tagIndex;
 
-  /// An [EditReaction] that finds and attributes all hash tags.
-  late EditReaction _hashTagReaction;
+  /// An [EditReaction] that finds and attributes all pattern tags.
+  late EditReaction _patternTagReaction;
 
   @override
   void attach(Editor editor) {
     editor
-      ..context.put(hashTagIndexKey, hashTagIndex)
-      ..reactionPipeline.insert(0, _hashTagReaction);
+      ..context.put(patternTagIndexKey, tagIndex)
+      ..reactionPipeline.insert(0, _patternTagReaction);
 
-    _initializeHashTagIndex(editor);
+    _initializePatternTagIndex(editor);
   }
 
-  void _initializeHashTagIndex(Editor editor) {
+  void _initializePatternTagIndex(Editor editor) {
     final document = editor.context.find<MutableDocument>(Editor.documentKey);
 
     for (final node in document.nodes) {
@@ -75,7 +76,7 @@ class HashTagPlugin extends SuperEditorPlugin {
       }
 
       final tagSpans = node.text.getAttributionSpansInRange(
-        attributionFilter: (a) => a is HashTagAttribution,
+        attributionFilter: (a) => a is PatternTagAttribution,
         range: SpanRange(start: 0, end: node.text.text.length - 1),
       );
 
@@ -87,31 +88,34 @@ class HashTagPlugin extends SuperEditorPlugin {
           tagSpan.start,
         );
       }
-      hashTagIndex._setTagsInNode(node.id, tags);
+      tagIndex._setTagsInNode(node.id, tags);
     }
   }
 
   @override
   void detach(Editor editor) {
     editor
-      ..context.remove(hashTagIndexKey)
-      ..reactionPipeline.remove(_hashTagReaction);
+      ..context.remove(patternTagIndexKey)
+      ..reactionPipeline.remove(_patternTagReaction);
   }
 }
 
 /// Default [TagRule] for hash tags.
+///
+/// Any rule can be used for pattern tags. This rule is provided as a convenience
+/// due to the popularity of hash tags.
 const hashTagRule = TagRule(trigger: "#", excludedCharacters: {" ", "."});
 
-extension HashTagIndexEditable on EditContext {
-  /// Returns the [HashTagIndex] that the [HashTagPlugin] added to the attached [Editor].
+extension PatternTagIndexEditable on EditContext {
+  /// Returns the [PatternTagIndex] that the [PatternTagPlugin] added to the attached [Editor].
   ///
   /// This accessor is provided as a convenience so that clients don't need to call `find()`
   /// on the [EditContext].
-  HashTagIndex get hashTagIndex => find<HashTagIndex>(HashTagPlugin.hashTagIndexKey);
+  PatternTagIndex get patternTagIndex => find<PatternTagIndex>(PatternTagPlugin.patternTagIndexKey);
 }
 
-/// Collects references to all hash tags in a document for easy querying.
-class HashTagIndex with ChangeNotifier implements Editable {
+/// Collects references to all pattern tags in a document for easy querying.
+class PatternTagIndex with ChangeNotifier implements Editable {
   final _tags = <String, Set<IndexedTag>>{};
 
   Set<IndexedTag> getTagsInTextNode(String nodeId) => _tags[nodeId] ?? {};
@@ -162,27 +166,27 @@ class HashTagIndex with ChangeNotifier implements Editable {
   }
 }
 
-/// An [EditReaction] that creates, updates, and removes hash tags.
+/// An [EditReaction] that creates, updates, and removes pattern tags.
 ///
-/// A hash tag is a token that begins with "#" (or some other trigger), and is
-/// followed by one or more characters. A hash tag is terminated by the end of
-/// a text block, a space, another "#", or any given terminating character.
+/// A pattern tag is a token that begins with a trigger, such as "#", and is
+/// followed by one or more characters. A pattern tag is terminated by a violating
+/// character given the tag rule, the end of a text block, or another trigger ("#").
 ///
-/// Examples of hash tags:
+/// Examples of pattern tags, using the hash tag rule:
 ///
 ///     #flutter
 ///     #flutter #dart    (2 tags)
 ///     #flutter#dart     (2 tags)
 ///     I love #flutter.  (the period is excluded from the hash tag)
 ///
-/// Examples of strings that aren't hash tags:
+/// Examples of strings that aren't pattern tags, using the hash tag rule:
 ///
 ///     #
 ///     #.
 ///     ##
 ///
-class HashTagReaction implements EditReaction {
-  HashTagReaction({
+class PatternTagReaction implements EditReaction {
+  PatternTagReaction({
     TagRule tagRule = hashTagRule,
   }) : _tagRule = tagRule;
 
@@ -196,10 +200,10 @@ class HashTagReaction implements EditReaction {
       return;
     }
 
-    editorHashTagsLog.info("Reacting to possible hash tagging");
-    editorHashTagsLog.info("Incoming change list:");
-    editorHashTagsLog.info(changeList.map((event) => event.runtimeType).toList());
-    editorHashTagsLog.info(
+    editorPatternTagsLog.info("Reacting to possible hash tagging");
+    editorPatternTagsLog.info("Incoming change list:");
+    editorPatternTagsLog.info(changeList.map((event) => event.runtimeType).toList());
+    editorPatternTagsLog.info(
         "Caret position: ${editContext.find<MutableDocumentComposer>(Editor.composerKey).selection?.extent.nodePosition}");
 
     _adjustTagAttributionsAroundAlteredTags(editContext, requestDispatcher, changeList);
@@ -213,7 +217,7 @@ class HashTagReaction implements EditReaction {
     _updateTagIndex(editContext, changeList);
   }
 
-  /// Finds a hash tag near the caret and adjusts the attribution bounds so that the
+  /// Finds a pattern tag near the caret and adjusts the attribution bounds so that the
   /// tag content remains attributed.
   ///
   /// Examples:
@@ -228,11 +232,11 @@ class HashTagReaction implements EditReaction {
   ) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
 
-    final hashTag = _findTagAtCaret(editContext, (attributions) => attributions.contains(const HashTagAttribution()));
-    if (hashTag != null) {
-      final tagRange = SpanRange(start: hashTag.indexedTag.startOffset, end: hashTag.indexedTag.endOffset);
+    final tag = _findTagAtCaret(editContext, (attributions) => attributions.contains(const PatternTagAttribution()));
+    if (tag != null) {
+      final tagRange = SpanRange(start: tag.indexedTag.startOffset, end: tag.indexedTag.endOffset);
       final hasTagAttributionThroughout =
-          hashTag.indexedTag.computeLeadingSpanForAttribution(document, const HashTagAttribution()) == tagRange;
+          tag.indexedTag.computeLeadingSpanForAttribution(document, const PatternTagAttribution()) == tagRange;
       if (hasTagAttributionThroughout) {
         // The tag is already fully attributed. No need to do anything.
         return;
@@ -242,10 +246,10 @@ class HashTagReaction implements EditReaction {
       requestDispatcher.execute([
         AddTextAttributionsRequest(
           documentSelection: DocumentSelection(
-            base: hashTag.indexedTag.start,
-            extent: hashTag.indexedTag.end,
+            base: tag.indexedTag.start,
+            extent: tag.indexedTag.end,
           ),
-          attributions: {const HashTagAttribution()},
+          attributions: {const PatternTagAttribution()},
         ),
       ]);
 
@@ -254,7 +258,9 @@ class HashTagReaction implements EditReaction {
   }
 
   TagAroundPosition? _findTagAtCaret(
-      EditContext editContext, bool Function(Set<Attribution> attributions) tagSelector) {
+    EditContext editContext,
+    bool Function(Set<Attribution> attributions) tagSelector,
+  ) {
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     if (composer.selection == null || !composer.selection!.isCollapsed) {
       // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
@@ -283,14 +289,14 @@ class HashTagReaction implements EditReaction {
     );
   }
 
-  /// Find any text near the caret that fits the pattern of a hash tag, and surround
+  /// Find any text near the caret that fits the tag pattern, and surround
   /// it with a hash tag attribution.
   void _findAndCreateNewTags(
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
-    editorHashTagsLog.fine("Looking for a hash tag around the caret.");
+    editorPatternTagsLog.fine("Looking for a pattern tag around the caret.");
 
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     if (composer.selection == null || !composer.selection!.isCollapsed) {
@@ -312,76 +318,76 @@ class HashTagReaction implements EditReaction {
       return;
     }
 
-    final hashTagAroundCaret = TagFinder.findTagAroundPosition(
+    final tagAroundCaret = TagFinder.findTagAroundPosition(
       tagRule: _tagRule,
       nodeId: selectedNode.id,
       text: selectedNode.text,
       expansionPosition: caretPosition,
       isTokenCandidate: (tokenAttributions) =>
-          !tokenAttributions.any((attribution) => attribution is HashTagAttribution),
+          !tokenAttributions.any((attribution) => attribution is PatternTagAttribution),
     );
-    if (hashTagAroundCaret == null) {
+    if (tagAroundCaret == null) {
       // There's no tag around the caret.
-      editorHashTagsLog.fine("There's no tag around the caret, fizzling");
+      editorPatternTagsLog.fine("There's no tag around the caret, fizzling");
       return;
     }
-    if (!hashTagAroundCaret.indexedTag.tag.raw.startsWith(_tagRule.trigger)) {
-      // Tags must start with a "#" (or other trigger symbol) but the preceding word doesn't. Return.
-      editorHashTagsLog.fine("Token doesn't start with ${_tagRule.trigger}, fizzling");
+    if (!tagAroundCaret.indexedTag.tag.raw.startsWith(_tagRule.trigger)) {
+      // Tags must start with the trigger, e.g., "#", but the preceding word doesn't. Return.
+      editorPatternTagsLog.fine("Token doesn't start with ${_tagRule.trigger}, fizzling");
       return;
     }
-    if (hashTagAroundCaret.indexedTag.tag.raw.length <= 1) {
-      // The token only contains a "#". We require at least one valid character after
-      // the "#" to consider it a hash tag.
-      editorHashTagsLog.fine("Token has no content after ${_tagRule.trigger}, fizzling");
+    if (tagAroundCaret.indexedTag.tag.raw.length <= 1) {
+      // The token only contains the trigger, e.g., "#". We require at least one valid character after
+      // the trigger to consider it a hash tag.
+      editorPatternTagsLog.fine("Token has no content after ${_tagRule.trigger}, fizzling");
       return;
     }
 
-    editorHashTagsLog.fine(
-        "Found a hash tag around caret: '${hashTagAroundCaret.indexedTag.tag}' - surrounding it with an attribution: ${hashTagAroundCaret.indexedTag.startOffset} -> ${hashTagAroundCaret.indexedTag.endOffset}");
+    editorPatternTagsLog.fine(
+        "Found a pattern tag around caret: '${tagAroundCaret.indexedTag.tag}' - surrounding it with an attribution: ${tagAroundCaret.indexedTag.startOffset} -> ${tagAroundCaret.indexedTag.endOffset}");
 
     requestDispatcher.execute([
-      // Remove the old hash tag attribution(s).
+      // Remove the old pattern tag attribution(s).
       RemoveTextAttributionsRequest(
         documentSelection: DocumentSelection(
           base: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.indexedTag.startOffset),
+            nodePosition: TextNodePosition(offset: tagAroundCaret.indexedTag.startOffset),
           ),
           extent: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.indexedTag.endOffset),
+            nodePosition: TextNodePosition(offset: tagAroundCaret.indexedTag.endOffset),
           ),
         ),
         attributions: {
           ...selectedNode.text
-              .getAllAttributionsAt(hashTagAroundCaret.indexedTag.startOffset)
-              .whereType<HashTagAttribution>(),
+              .getAllAttributionsAt(tagAroundCaret.indexedTag.startOffset)
+              .whereType<PatternTagAttribution>(),
         },
       ),
-      // Add the new/updated hash tag attribution.
+      // Add the new/updated pattern tag attribution.
       AddTextAttributionsRequest(
         documentSelection: DocumentSelection(
           base: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.indexedTag.startOffset),
+            nodePosition: TextNodePosition(offset: tagAroundCaret.indexedTag.startOffset),
           ),
           extent: DocumentPosition(
             nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: hashTagAroundCaret.indexedTag.endOffset),
+            nodePosition: TextNodePosition(offset: tagAroundCaret.indexedTag.endOffset),
           ),
         ),
         attributions: {
-          const HashTagAttribution(),
+          const PatternTagAttribution(),
         },
       ),
     ]);
   }
 
-  /// Finds any attributed hash tag that spans multiple hash tags, and breaks them up.
+  /// Finds any attributed pattern tag that spans multiple pattern tags, and breaks them up.
   ///
   /// For example, it's possible that we've gotten into a situation where two back-to-back
-  /// hash tags are currently attributed as one:
+  /// pattern tags are currently attributed as one:
   ///
   ///     [#flutter#dart]
   ///
@@ -402,7 +408,7 @@ class HashTagReaction implements EditReaction {
       return;
     }
 
-    editorHashTagsLog.info("Checking edited text nodes for back-to-back hash tags that need to be split apart");
+    editorPatternTagsLog.info("Checking edited text nodes for back-to-back pattern tags that need to be split apart");
     for (final textEdit in textEdits) {
       final node = document.getNodeById(textEdit.nodeId) as TextNode;
       _splitBackToBackTagsInTextNode(requestDispatcher, node);
@@ -410,52 +416,52 @@ class HashTagReaction implements EditReaction {
   }
 
   void _splitBackToBackTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
-    final hashTags = node.text.getAttributionSpansInRange(
-      attributionFilter: (attribution) => attribution is HashTagAttribution,
+    final patternTags = node.text.getAttributionSpansInRange(
+      attributionFilter: (attribution) => attribution is PatternTagAttribution,
       range: SpanRange(start: 0, end: node.text.text.length),
     );
-    if (hashTags.isEmpty) {
+    if (patternTags.isEmpty) {
       return;
     }
 
     final spanRemovals = <SpanRange>{};
     final spanCreations = <SpanRange>{};
 
-    editorHashTagsLog.finer("Found ${hashTags.length} hash tag attributions in text node '${node.id}'");
-    for (final hashTag in hashTags) {
-      final tagContent = node.text.text.substring(hashTag.start, hashTag.end + 1);
-      editorHashTagsLog.finer("Inspecting $tagContent at ${hashTag.start} -> ${hashTag.end}");
+    editorPatternTagsLog.finer("Found ${patternTags.length} pattern tag attributions in text node '${node.id}'");
+    for (final patternTag in patternTags) {
+      final tagContent = node.text.text.substring(patternTag.start, patternTag.end + 1);
+      editorPatternTagsLog.finer("Inspecting $tagContent at ${patternTag.start} -> ${patternTag.end}");
 
       if (tagContent.lastIndexOf(_tagRule.trigger) == 0) {
-        // There's only one # in this tag, and it's at the beginning. No need
+        // There's only one trigger ("#") in this tag, and it's at the beginning. No need
         // to split the tag.
-        editorHashTagsLog.finer("No need to split this tag. Moving to next one.");
+        editorPatternTagsLog.finer("No need to split this tag. Moving to next one.");
         continue;
       }
 
-      // This tag has multiple #'s in it. We need to split this tag into multiple
+      // This tag has multiple triggers ("#") in it. We need to split this tag into multiple
       // pieces.
-      editorHashTagsLog.finer("There are multiple hashes in this tag. Splitting.");
+      editorPatternTagsLog.finer("There are multiple triggers in this tag. Splitting.");
 
-      // Remove the existing attribution, which covers multiple hash tags.
-      spanRemovals.add(SpanRange(start: hashTag.start, end: hashTag.end));
-      editorHashTagsLog.finer(
-          "Removing multi-tag span: ${hashTag.start} -> ${hashTag.end}, '${node.text.text.substring(hashTag.start, hashTag.end + 1)}'");
+      // Remove the existing attribution, which covers multiple pattern tags.
+      spanRemovals.add(SpanRange(start: patternTag.start, end: patternTag.end));
+      editorPatternTagsLog.finer(
+          "Removing multi-tag span: ${patternTag.start} -> ${patternTag.end}, '${node.text.text.substring(patternTag.start, patternTag.end + 1)}'");
 
-      // Add a new attribution for each individual hash tag.
+      // Add a new attribution for each individual pattern tag.
       int triggerSymbolIndex = tagContent.indexOf(_tagRule.trigger);
       while (triggerSymbolIndex >= 0) {
         final nextTriggerSymbolIndex = tagContent.indexOf(_tagRule.trigger, triggerSymbolIndex + 1);
         final tagEnd = nextTriggerSymbolIndex > 0 ? nextTriggerSymbolIndex - 1 : tagContent.length - 1;
 
         if (tagEnd - triggerSymbolIndex > 0) {
-          // There's a hash, followed by at least one non-hash character. Therefore, this
-          // is a legitimate hash tag. Give it an attribution.
-          editorHashTagsLog.finer(
-              "Adding a split tag span: ${hashTag.start + triggerSymbolIndex} -> ${hashTag.start + tagEnd}, '${node.text.text.substring(hashTag.start + triggerSymbolIndex, hashTag.start + tagEnd + 1)}'");
+          // There's a trigger, followed by at least one non-trigger character. Therefore, this
+          // is a legitimate pattern tag. Give it an attribution.
+          editorPatternTagsLog.finer(
+              "Adding a split tag span: ${patternTag.start + triggerSymbolIndex} -> ${patternTag.start + tagEnd}, '${node.text.text.substring(patternTag.start + triggerSymbolIndex, patternTag.start + tagEnd + 1)}'");
           spanCreations.add(SpanRange(
-            start: hashTag.start + triggerSymbolIndex,
-            end: hashTag.start + tagEnd,
+            start: patternTag.start + triggerSymbolIndex,
+            end: patternTag.start + tagEnd,
           ));
         }
 
@@ -478,7 +484,7 @@ class HashTagReaction implements EditReaction {
               nodePosition: TextNodePosition(offset: removal.end + 1),
             ),
           ),
-          attributions: {const HashTagAttribution()},
+          attributions: {const PatternTagAttribution()},
         ),
 
       // Add the new, narrowed attribution spans.
@@ -494,20 +500,20 @@ class HashTagReaction implements EditReaction {
               nodePosition: TextNodePosition(offset: creation.end + 1),
             ),
           ),
-          attributions: {const HashTagAttribution()},
+          attributions: {const PatternTagAttribution()},
           autoMerge: false,
         ),
     ]);
   }
 
-  /// Removes hash tags that have become invalid, e.g., a hash tag that had content but
+  /// Removes pattern tags that have become invalid, e.g., a hash tag that had content but
   /// the content was deleted, and now it's just a dangling "#".
   void _removeInvalidTags(
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
-    editorHashTagsLog.fine("Removing invalid tags.");
+    editorPatternTagsLog.fine("Removing invalid tags.");
     final nodesToInspect = <String>{};
     for (final edit in changeList) {
       // We only care about deleted text, in case the deletion made an existing tag invalid.
@@ -521,7 +527,7 @@ class HashTagReaction implements EditReaction {
 
       // We only care about deleted text when the deleted text contains at least one tag.
       final tagsInDeletedText = change.deletedText.getAttributionSpansInRange(
-        attributionFilter: (attribution) => attribution is HashTagAttribution,
+        attributionFilter: (attribution) => attribution is PatternTagAttribution,
         range: SpanRange(start: 0, end: change.deletedText.text.length),
       );
       if (tagsInDeletedText.isEmpty) {
@@ -530,23 +536,23 @@ class HashTagReaction implements EditReaction {
 
       nodesToInspect.add(change.nodeId);
     }
-    editorHashTagsLog.fine("Found ${nodesToInspect.length} impacted nodes with tags that might be invalid");
+    editorPatternTagsLog.fine("Found ${nodesToInspect.length} impacted nodes with tags that might be invalid");
 
     // Inspect every TextNode where a text deletion impacted a tag. If a tag no longer contains
-    // a "#", or only contains a "#", remove the attribution.
+    // a trigger, or only contains a trigger, remove the attribution.
     final document = editContext.find<MutableDocument>(Editor.documentKey);
     final removeTagRequests = <EditRequest>{};
     for (final nodeId in nodesToInspect) {
       final textNode = document.getNodeById(nodeId) as TextNode;
       final allTags = textNode.text.getAttributionSpansInRange(
-        attributionFilter: (attribution) => attribution is HashTagAttribution,
+        attributionFilter: (attribution) => attribution is PatternTagAttribution,
         range: SpanRange(start: 0, end: textNode.text.text.length - 1),
       );
 
       for (final tag in allTags) {
         final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
         if (!tagText.startsWith(_tagRule.trigger) || tagText == _tagRule.trigger) {
-          editorHashTagsLog.info("Removing tag with value: '$tagText'");
+          editorPatternTagsLog.info("Removing tag with value: '$tagText'");
           removeTagRequests.add(
             RemoveTextAttributionsRequest(
               documentSelection: DocumentSelection(
@@ -559,7 +565,7 @@ class HashTagReaction implements EditReaction {
                   nodePosition: TextNodePosition(offset: tag.end + 1),
                 ),
               ),
-              attributions: {const HashTagAttribution()},
+              attributions: {const PatternTagAttribution()},
             ),
           );
         }
@@ -574,7 +580,7 @@ class HashTagReaction implements EditReaction {
 
   void _updateTagIndex(EditContext editContext, List<EditEvent> changeList) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final index = editContext.hashTagIndex;
+    final index = editContext.patternTagIndex;
     for (final event in changeList) {
       if (event is! DocumentEdit) {
         continue;
@@ -609,7 +615,7 @@ class HashTagReaction implements EditReaction {
     final textNode = document.getNodeById(nodeId) as TextNode;
     final allTags = textNode.text
         .getAttributionSpansInRange(
-          attributionFilter: (attribution) => attribution is HashTagAttribution,
+          attributionFilter: (attribution) => attribution is PatternTagAttribution,
           range: SpanRange(start: 0, end: textNode.text.text.length - 1),
         )
         .map(
@@ -625,15 +631,15 @@ class HashTagReaction implements EditReaction {
   }
 }
 
-/// An attribution for a hash tag.
-class HashTagAttribution extends NamedAttribution {
-  const HashTagAttribution() : super("hashtag");
+/// An attribution for a pattern tag.
+class PatternTagAttribution extends NamedAttribution {
+  const PatternTagAttribution() : super("patternTag");
 
   @override
-  bool canMergeWith(Attribution other) => other is HashTagAttribution;
+  bool canMergeWith(Attribution other) => other is PatternTagAttribution;
 
   @override
   String toString() {
-    return '[HashTagAttribution]';
+    return '[PatternTagAttribution]';
   }
 }

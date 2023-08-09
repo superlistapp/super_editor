@@ -14,7 +14,7 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
   late final MutableDocumentComposer _composer;
   late final Editor _editor;
 
-  late final HashTagPlugin _hashTagPlugin;
+  late final PatternTagPlugin _hashTagPlugin;
 
   final _tags = <IndexedTag>[];
 
@@ -34,13 +34,13 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
       ],
     );
 
-    _hashTagPlugin = HashTagPlugin() //
-      ..hashTagIndex.addListener(_updateHashTagList);
+    _hashTagPlugin = PatternTagPlugin() //
+      ..tagIndex.addListener(_updateHashTagList);
   }
 
   @override
   void dispose() {
-    _hashTagPlugin.hashTagIndex.removeListener(_updateHashTagList);
+    _hashTagPlugin.tagIndex.removeListener(_updateHashTagList);
     super.dispose();
   }
 
@@ -48,7 +48,7 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
     setState(() {
       _tags
         ..clear()
-        ..addAll(_hashTagPlugin.hashTagIndex.getAllTags());
+        ..addAll(_hashTagPlugin.tagIndex.getAllTags());
     });
   }
 
@@ -76,7 +76,7 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
         inlineTextStyler: (attributions, existingStyle) {
           TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
 
-          if (attributions.whereType<HashTagAttribution>().isNotEmpty) {
+          if (attributions.whereType<PatternTagAttribution>().isNotEmpty) {
             style = style.copyWith(
               color: Colors.orange,
             );

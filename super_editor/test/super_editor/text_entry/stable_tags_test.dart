@@ -8,7 +8,7 @@ import '../document_test_tools.dart';
 import '../test_documents.dart';
 
 void main() {
-  group("SuperEditor user tags >", () {
+  group("SuperEditor stable tags >", () {
     group("composing >", () {
       testWidgetsOnAllPlatforms("can start at the beginning of a paragraph", (tester) async {
         await _pumpTestEditor(
@@ -17,14 +17,14 @@ void main() {
         );
         await tester.placeCaretInParagraph("1", 0);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john");
 
-        // Ensure that the token has a composing attribution.
+        // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "@john");
         expect(
-          text.getAttributedRange({userTagComposingAttribution}, 0),
+          text.getAttributedRange({stableTagComposingAttribution}, 0),
           const SpanRange(start: 0, end: 4),
         );
       });
@@ -45,14 +45,14 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john");
 
-        // Ensure that the token has a composing attribution.
+        // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john after");
         expect(
-          text.getAttributedRange({userTagComposingAttribution}, 7),
+          text.getAttributedRange({stableTagComposingAttribution}, 7),
           const SpanRange(start: 7, end: 11),
         );
       });
@@ -73,16 +73,16 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john after");
 
-        // Ensure that there's no more composing attribution because the token
+        // Ensure that there's no more composing attribution because the tag
         // should have been committed.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john after");
         expect(
           text.getAttributionSpansInRange(
-            attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+            attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
             range: const SpanRange(start: 0, end: 18),
           ),
           isEmpty,
@@ -106,14 +106,14 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john");
 
-        // Ensure that we started a composing token before adding a space.
+        // Ensure that we started composing a tag before adding a space.
         var text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john");
         expect(
-          text.getAttributedRange({userTagComposingAttribution}, 7),
+          text.getAttributedRange({stableTagComposingAttribution}, 7),
           const SpanRange(start: 7, end: 11),
         );
 
@@ -123,7 +123,7 @@ void main() {
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john after");
         expect(
-          text.getAttributedRange({userTagComposingAttribution}, 7),
+          text.getAttributedRange({stableTagComposingAttribution}, 7),
           const SpanRange(start: 7, end: 17),
         );
       });
@@ -148,7 +148,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john");
 
         // Expand the selection to "before @joh|n|"
@@ -170,7 +170,7 @@ void main() {
         // Ensure we're still composing
         AttributedText text = SuperEditorInspector.findTextInParagraph("1");
         expect(
-          text.getAttributedRange({userTagComposingAttribution}, 7),
+          text.getAttributedRange({stableTagComposingAttribution}, 7),
           const SpanRange(start: 7, end: 11),
         );
 
@@ -183,7 +183,7 @@ void main() {
         // Ensure we're still composing
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(
-          text.getAttributedRange({userTagComposingAttribution}, 7),
+          text.getAttributedRange({stableTagComposingAttribution}, 7),
           const SpanRange(start: 7, end: 11),
         );
 
@@ -194,7 +194,7 @@ void main() {
         // Ensure we're still composing
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(
-          text.getAttributedRange({userTagComposingAttribution}, 7),
+          text.getAttributedRange({stableTagComposingAttribution}, 7),
           const SpanRange(start: 7, end: 11),
         );
       });
@@ -219,7 +219,7 @@ void main() {
         // Place the caret at "before | after"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john");
 
         // Move the caret to "before @|john".
@@ -252,7 +252,7 @@ void main() {
         // Ensure we're still composing
         AttributedText text = SuperEditorInspector.findTextInParagraph("1");
         expect(
-          text.getAttributedRange({userTagComposingAttribution}, 7),
+          text.getAttributedRange({stableTagComposingAttribution}, 7),
           const SpanRange(start: 7, end: 11),
         );
       });
@@ -273,13 +273,13 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Start composing a token.
+        // Start composing a stable tag.
         await tester.typeImeText("@");
 
         // Ensure that we're composing.
         var text = SuperEditorInspector.findTextInParagraph("1");
         expect(
-          text.getAttributedRange({userTagComposingAttribution}, 7),
+          text.getAttributedRange({stableTagComposingAttribution}, 7),
           const SpanRange(start: 7, end: 7),
         );
 
@@ -290,13 +290,13 @@ void main() {
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributionSpansInRange(
-            attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+            attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
             range: const SpanRange(start: 0, end: 7),
           ),
           isEmpty,
         );
         expect(
-          text.getAttributedRange({userTagCancelledAttribution}, 7),
+          text.getAttributedRange({stableTagCancelledAttribution}, 7),
           const SpanRange(start: 7, end: 7),
         );
 
@@ -308,38 +308,38 @@ void main() {
         expect(text.text, "before @j");
         expect(
           text.getAttributionSpansInRange(
-            attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+            attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
             range: const SpanRange(start: 0, end: 8),
           ),
           isEmpty,
         );
         expect(
-          text.getAttributedRange({userTagCancelledAttribution}, 7),
+          text.getAttributedRange({stableTagCancelledAttribution}, 7),
           const SpanRange(start: 7, end: 8),
         );
 
-        // Add a space, cause the token to end.
+        // Add a space, cause the tag to end.
         await tester.typeImeText(" ");
 
-        // Ensure that the cancelled token wasn't committed, and didn't start composing again.
+        // Ensure that the cancelled tag wasn't committed, and didn't start composing again.
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @j ");
         expect(
           text.getAttributionSpansInRange(
-            attributionFilter: (attribution) => attribution == userTagComposingAttribution,
+            attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
             range: const SpanRange(start: 0, end: 9),
           ),
           isEmpty,
         );
         expect(
           text.getAttributionSpansInRange(
-            attributionFilter: (attribution) => attribution is UserTagAttribution,
+            attributionFilter: (attribution) => attribution is CommittedStableTagAttribution,
             range: const SpanRange(start: 0, end: 9),
           ),
           isEmpty,
         );
         expect(
-          text.getAttributedRange({userTagCancelledAttribution}, 7),
+          text.getAttributedRange({stableTagCancelledAttribution}, 7),
           const SpanRange(start: 7, end: 8),
         );
       });
@@ -355,14 +355,14 @@ void main() {
         // Place the caret in the empty paragraph.
         await tester.placeCaretInParagraph("1", 0);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john after");
 
-        // Ensure that only the user token is attributed as a token.
+        // Ensure that only the stable tag is attributed as a stable tag.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "@john after");
         expect(
-          text.getAttributedRange({const UserTagAttribution("john")}, 0),
+          text.getAttributedRange({const CommittedStableTagAttribution("john")}, 0),
           const SpanRange(start: 0, end: 4),
         );
       });
@@ -383,14 +383,14 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john after");
 
-        // Ensure that only the user token is attributed as a token.
+        // Ensure that only the stable tag is attributed as a stable tag.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john after");
         expect(
-          text.getAttributedRange({const UserTagAttribution("john")}, 7),
+          text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
           const SpanRange(start: 7, end: 11),
         );
       });
@@ -415,7 +415,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john");
 
         // Move the selection somewhere else.
@@ -428,16 +428,16 @@ void main() {
           ),
         );
 
-        // Ensure that the token was submitted.
+        // Ensure that the tag was submitted.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john");
         expect(
-          text.getAttributedRange({const UserTagAttribution("john")}, 7),
+          text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
           const SpanRange(start: 7, end: 11),
         );
       });
 
-      testWidgetsOnAllPlatforms("when upstream selection collapses outside of token", (tester) async {
+      testWidgetsOnAllPlatforms("when upstream selection collapses outside of tag", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -457,7 +457,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john");
 
         // Expand the selection to "befor|e @john|"
@@ -472,16 +472,16 @@ void main() {
         // Collapse the selection to the upstream position.
         await tester.pressLeftArrow();
 
-        // Ensure that the token was submitted.
+        // Ensure that the stable tag was submitted.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john");
         expect(
-          text.getAttributedRange({const UserTagAttribution("john")}, 7),
+          text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
           const SpanRange(start: 7, end: 11),
         );
       });
 
-      testWidgetsOnAllPlatforms("when downstream selection collapses outside of token", (tester) async {
+      testWidgetsOnAllPlatforms("when downstream selection collapses outside of tag", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -501,7 +501,7 @@ void main() {
         // Place the caret at "before | after"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a user token.
+        // Composer a stable tag.
         await tester.typeImeText("@john");
 
         // Move caret to "before @|john after"
@@ -521,18 +521,18 @@ void main() {
         // Collapse the selection to the downstream position.
         await tester.pressRightArrow();
 
-        // Ensure that the token was submitted.
+        // Ensure that the stable tag was submitted.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before @john after");
         expect(
-          text.getAttributedRange({const UserTagAttribution("john")}, 7),
+          text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
           const SpanRange(start: 7, end: 11),
         );
       });
     });
 
     group("committed >", () {
-      testWidgetsOnAllPlatforms("prevents user tapping to place caret in token", (tester) async {
+      testWidgetsOnAllPlatforms("prevents user tapping to place caret in tag", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -548,13 +548,13 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose and submit a user token.
+        // Compose and submit a stable tag.
         await tester.typeImeText("@john after");
 
-        // Tap near the end of the token.
+        // Tap near the end of the tag.
         await tester.placeCaretInParagraph("1", 10);
 
-        // Ensure that the caret was pushed beyond the end of the token.
+        // Ensure that the caret was pushed beyond the end of the tag.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -565,10 +565,10 @@ void main() {
           ),
         );
 
-        // Tap near the beginning of the token.
+        // Tap near the beginning of the tag.
         await tester.placeCaretInParagraph("1", 8);
 
-        // Ensure that the caret was pushed beyond the beginning of the token.
+        // Ensure that the caret was pushed beyond the beginning of the tag.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -580,7 +580,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms("selects entire token when double tapped", (tester) async {
+      testWidgetsOnAllPlatforms("selects entire tag when double tapped", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -596,13 +596,13 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose and submit a user token.
+        // Compose and submit a stable tag.
         await tester.typeImeText("@john after");
 
         // Double tap on "john"
         await tester.doubleTapInParagraph("1", 10);
 
-        // Ensure that the selection surrounds the full token, including the "@"
+        // Ensure that the selection surrounds the full tag, including the "@"
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection(
@@ -634,18 +634,18 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose and submit a user token.
+        // Compose and submit a stable tag.
         await tester.typeImeText("@john after");
 
         // Place the caret at "befor|e @john after"
         await tester.placeCaretInParagraph("1", 5);
 
-        // Push the caret downstream until we push one character into the token.
+        // Push the caret downstream until we push one character into the tag.
         await tester.pressRightArrow();
         await tester.pressRightArrow();
         await tester.pressRightArrow();
 
-        // Ensure that the caret was pushed beyond the end of the token.
+        // Ensure that the caret was pushed beyond the end of the tag.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -673,18 +673,18 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose and submit a user token.
+        // Compose and submit a stable tag.
         await tester.typeImeText("@john after");
 
         // Place the caret at "before @john a|fter"
         await tester.placeCaretInParagraph("1", 14);
 
-        // Push the caret upstream until we push one character into the token.
+        // Push the caret upstream until we push one character into the tag.
         await tester.pressLeftArrow();
         await tester.pressLeftArrow();
         await tester.pressLeftArrow();
 
-        // Ensure that the caret pushed beyond the beginning of the token.
+        // Ensure that the caret pushed beyond the beginning of the tag.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -712,18 +712,18 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose and submit a user token.
+        // Compose and submit a stable tag.
         await tester.typeImeText("@john after");
 
         // Place the caret at "befor|e @john after"
         await tester.placeCaretInParagraph("1", 5);
 
-        // Expand downstream until we push one character into the token.
+        // Expand downstream until we push one character into the tag.
         await tester.pressShiftRightArrow();
         await tester.pressShiftRightArrow();
         await tester.pressShiftRightArrow();
 
-        // Ensure that the extent was pushed beyond the end of the token.
+        // Ensure that the extent was pushed beyond the end of the tag.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection(
@@ -755,18 +755,18 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose and submit a user token.
+        // Compose and submit a stable tag.
         await tester.typeImeText("@john after");
 
         // Place the caret at "before @john a|fter"
         await tester.placeCaretInParagraph("1", 14);
 
-        // Expand upstream until we push one character into the token.
+        // Expand upstream until we push one character into the tag.
         await tester.pressShiftLeftArrow();
         await tester.pressShiftLeftArrow();
         await tester.pressShiftLeftArrow();
 
-        // Ensure that the extent was pushed beyond the beginning of the token.
+        // Ensure that the extent was pushed beyond the beginning of the tag.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection(
@@ -798,7 +798,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose and submit a user token.
+        // Compose and submit a stable tag.
         await tester.typeImeText("@john after");
 
         // Place the caret at "before @john| after"
@@ -836,7 +836,7 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose and submit a user token.
+        // Compose and submit a stable tag.
         await tester.typeImeText("@john after");
 
         // Place the caret at "before |@john after"
@@ -873,16 +873,16 @@ void main() {
 
         await tester.placeCaretInParagraph("1", 0);
 
-        // Compose two tokens within text
+        // Compose two tags within text
         await tester.typeImeText("one @john two @sally three");
 
         // Place the caret at "one @john two @sally| three"
         await tester.placeCaretInParagraph("1", 20);
 
-        // Delete the 2nd token.
+        // Delete the 2nd tag.
         await tester.pressBackspace();
 
-        // Ensure the 2nd token was deleted, and the 1st token remains.
+        // Ensure the 2nd tag was deleted, and the 1st tag remains.
         expect(SuperEditorInspector.findTextInParagraph("1").text, "one @john two  three");
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -911,7 +911,7 @@ void main() {
         // Place the caret at "one |"
         await tester.placeCaretInParagraph("1", 4);
 
-        // Compose and submit two user tokens.
+        // Compose and submit two stable tags.
         await tester.typeImeText("@john two @sally three");
 
         // Expand the selection "one @jo|hn two @sa|lly three"
@@ -1007,13 +1007,13 @@ void main() {
 Future<TestDocumentContext> _pumpTestEditor(
   WidgetTester tester,
   MutableDocument document, [
-  TagRule userTagRule = defaultUserTagRule,
+  TagRule tagRule = userTagRule,
 ]) async {
-  final userTagPlugin = UserTagPlugin(userTagRule: userTagRule);
-
-  return await tester //
+  return await tester
       .createDocument()
       .withCustomContent(document)
-      .withPlugin(userTagPlugin)
+      .withPlugin(StableTagPlugin(
+        tagRule: tagRule,
+      ))
       .pump();
 }

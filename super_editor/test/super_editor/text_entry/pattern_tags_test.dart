@@ -8,7 +8,7 @@ import '../document_test_tools.dart';
 import '../test_documents.dart';
 
 void main() {
-  group("SuperEditor hash tags >", () {
+  group("SuperEditor pattern tags >", () {
     group("composing >", () {
       testWidgetsOnAllPlatforms("doesn't attribute a single #", (tester) async {
         await _pumpTestEditor(
@@ -24,7 +24,7 @@ void main() {
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "#");
         expect(
-          text.hasAttributionAt(0, attribution: const HashTagAttribution()),
+          text.hasAttributionAt(0, attribution: const PatternTagAttribution()),
           isFalse,
         );
       });
@@ -36,14 +36,14 @@ void main() {
         );
         await tester.placeCaretInParagraph("1", 0);
 
-        // Compose a user token.
+        // Compose a pattern tag.
         await tester.typeImeText("#flutter");
 
-        // Ensure that the token has a composing attribution.
+        // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "#flutter");
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 0),
+          text.getAttributedRange({const PatternTagAttribution()}, 0),
           const SpanRange(start: 0, end: 7),
         );
       });
@@ -64,14 +64,14 @@ void main() {
         // Place the caret at "before |"
         await tester.placeCaretInParagraph("1", 7);
 
-        // Compose a user token.
+        // Compose a pattern tag.
         await tester.typeImeText("#flutter");
 
-        // Ensure that the token has a composing attribution.
+        // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before #flutter after");
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 7),
+          text.getAttributedRange({const PatternTagAttribution()}, 7),
           const SpanRange(start: 7, end: 14),
         );
       });
@@ -83,7 +83,7 @@ void main() {
         );
         await tester.placeCaretInParagraph("1", 0);
 
-        // Compose a user token.
+        // Compose a pattern tag.
         await tester.typeImeText("#flutter");
 
         // Delete all the way back to the "#".
@@ -95,11 +95,11 @@ void main() {
         await tester.pressBackspace();
         await tester.pressBackspace();
 
-        // Ensure that the token has a composing attribution.
+        // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "#");
         expect(
-          text.hasAttributionAt(0, attribution: const HashTagAttribution()),
+          text.hasAttributionAt(0, attribution: const PatternTagAttribution()),
           isFalse,
         );
       });
@@ -123,18 +123,18 @@ void main() {
         // Compose a hash tag.
         await tester.typeImeText("#flutter after");
 
-        // Ensure that there's no more composing attribution because the token
+        // Ensure that there's no more composing attribution because the tag
         // should have been committed.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before #flutter after");
         expect(
           text.getAttributionSpansInRange(
-            attributionFilter: (attribution) => attribution is HashTagAttribution,
+            attributionFilter: (attribution) => attribution is PatternTagAttribution,
             range: const SpanRange(start: 0, end: 18),
           ),
           {
             const AttributionSpan(
-              attribution: HashTagAttribution(),
+              attribution: PatternTagAttribution(),
               start: 7,
               end: 14,
             ),
@@ -166,12 +166,12 @@ void main() {
         expect(text.text, "before #flutter. after");
         expect(
           text.getAttributionSpansInRange(
-            attributionFilter: (attribution) => attribution is HashTagAttribution,
+            attributionFilter: (attribution) => attribution is PatternTagAttribution,
             range: const SpanRange(start: 0, end: 19),
           ),
           {
             const AttributionSpan(
-              attribution: HashTagAttribution(),
+              attribution: PatternTagAttribution(),
               start: 7,
               end: 14,
             ),
@@ -207,12 +207,12 @@ void main() {
         expect(text.text, "before #flutter.dart");
         expect(
           text.getAttributionSpansInRange(
-            attributionFilter: (attribution) => attribution is HashTagAttribution,
+            attributionFilter: (attribution) => attribution is PatternTagAttribution,
             range: const SpanRange(start: 0, end: 19),
           ),
           {
             const AttributionSpan(
-              attribution: HashTagAttribution(),
+              attribution: PatternTagAttribution(),
               start: 7,
               end: 14,
             ),
@@ -220,7 +220,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms("can create hash tags back to back (no space)", (tester) async {
+      testWidgetsOnAllPlatforms("can create pattern tags back to back (no space)", (tester) async {
         await _pumpTestEditor(
           tester,
           singleParagraphEmptyDoc(),
@@ -233,56 +233,56 @@ void main() {
         var text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "hello #flutter#d");
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 6),
+          text.getAttributedRange({const PatternTagAttribution()}, 6),
           const SpanRange(start: 6, end: 13),
         );
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 14),
+          text.getAttributedRange({const PatternTagAttribution()}, 14),
           const SpanRange(start: 14, end: 15),
         );
 
         // Finish the second hash tag.
         await tester.typeImeText("art");
 
-        // Ensure that the token has a composing attribution.
+        // Ensure that the tag has a composing attribution.
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "hello #flutter#dart");
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 6),
+          text.getAttributedRange({const PatternTagAttribution()}, 6),
           const SpanRange(start: 6, end: 13),
         );
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 14),
+          text.getAttributedRange({const PatternTagAttribution()}, 14),
           const SpanRange(start: 14, end: 18),
         );
       });
 
-      testWidgetsOnAllPlatforms("can create hash tags back to back (with a space)", (tester) async {
+      testWidgetsOnAllPlatforms("can create pattern tags back to back (with a space)", (tester) async {
         await _pumpTestEditor(
           tester,
           singleParagraphEmptyDoc(),
         );
         await tester.placeCaretInParagraph("1", 0);
 
-        // Compose a user token.
+        // Compose a pattern tag.
         await tester.typeImeText("hello #flutter #dart");
 
-        // Ensure that the token has a composing attribution.
+        // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "hello #flutter #dart");
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 6),
+          text.getAttributedRange({const PatternTagAttribution()}, 6),
           const SpanRange(start: 6, end: 13),
         );
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 15),
+          text.getAttributedRange({const PatternTagAttribution()}, 15),
           const SpanRange(start: 15, end: 19),
         );
       });
     });
 
     group("caret placement >", () {
-      testWidgetsOnAllPlatforms("doesn't prevent user from tapping to place caret in token", (tester) async {
+      testWidgetsOnAllPlatforms("doesn't prevent user from tapping to place caret in tag", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -301,7 +301,7 @@ void main() {
         // Compose and submit a hash tag.
         await tester.typeImeText("#flutter after");
 
-        // Tap near the end of the token.
+        // Tap near the end of the tag.
         await tester.placeCaretInParagraph("1", 10);
 
         // Ensure that the caret was placed where tapped.
@@ -315,7 +315,7 @@ void main() {
           ),
         );
 
-        // Tap near the beginning of the token.
+        // Tap near the beginning of the tag.
         await tester.placeCaretInParagraph("1", 8);
 
         // Ensure that the caret was placed where tapped.
@@ -352,12 +352,12 @@ void main() {
         // Place the caret at "befor|e #flutter after"
         await tester.placeCaretInParagraph("1", 5);
 
-        // Expand downstream until we push one character into the token.
+        // Expand downstream until we push one character into the tag.
         await tester.pressShiftRightArrow();
         await tester.pressShiftRightArrow();
         await tester.pressShiftRightArrow();
 
-        // Ensure that the extent pushed into the token.
+        // Ensure that the extent pushed into the tag.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection(
@@ -373,7 +373,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms("pushes expanding upstream selection around into the tag", (tester) async {
+      testWidgetsOnAllPlatforms("pushes expanding upstream selection into the tag", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -395,12 +395,12 @@ void main() {
         // Place the caret at "before #flutter a|fter"
         await tester.placeCaretInParagraph("1", 14);
 
-        // Expand upstream until we push one character into the token.
+        // Expand upstream until we push one character into the tag.
         await tester.pressShiftLeftArrow();
         await tester.pressShiftLeftArrow();
         await tester.pressShiftLeftArrow();
 
-        // Ensure that the extent was pushed into the token.
+        // Ensure that the extent was pushed into the tag.
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection(
@@ -425,7 +425,7 @@ void main() {
         );
         await tester.placeCaretInParagraph("1", 0);
 
-        // Compose a user token.
+        // Compose a pattern tag.
         await tester.typeImeText("#abcdefghij ");
 
         // Delete part of the end.
@@ -440,11 +440,11 @@ void main() {
         await tester.placeCaretInParagraph("1", 2);
         await tester.pressBackspace();
 
-        // Ensure that the token is still marked as a hash tag.
+        // Ensure that the tag is still marked as a hash tag.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "#bcdfghi ");
         expect(
-          text.getAttributedRange({const HashTagAttribution()}, 0),
+          text.getAttributedRange({const PatternTagAttribution()}, 0),
           const SpanRange(start: 0, end: 7),
         );
       });
@@ -456,6 +456,8 @@ Future<TestDocumentContext> _pumpTestEditor(WidgetTester tester, MutableDocument
   return await tester //
       .createDocument()
       .withCustomContent(document)
-      .withPlugin(HashTagPlugin())
+      .withPlugin(PatternTagPlugin(
+        tagRule: hashTagRule,
+      ))
       .pump();
 }

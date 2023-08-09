@@ -21,7 +21,7 @@ void main() {
         // Compose an action tag.
         await tester.typeImeText("/header");
 
-        // Ensure that the token has a composing attribution.
+        // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "/header");
         expect(
@@ -49,7 +49,7 @@ void main() {
         // Compose an action tag.
         await tester.typeImeText("/header");
 
-        // Ensure that the token has a composing attribution.
+        // Ensure that the tag has a composing attribution.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before /header after");
         expect(
@@ -77,7 +77,7 @@ void main() {
         // Compose an action tag and more content after a space.
         await tester.typeImeText("/header after");
 
-        // Ensure that there's no more composing attribution because the token
+        // Ensure that there's no more composing attribution because the tag
         // should have been submitted.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before /header after");
@@ -114,7 +114,7 @@ void main() {
         // Compose an action tag.
         await tester.typeImeText("/header");
 
-        // Ensure that we started a composing token before adding a space.
+        // Ensure that we started a composing tag before adding a space.
         var text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before /header");
         expect(
@@ -330,7 +330,7 @@ void main() {
           ),
         );
 
-        // Ensure that the token was submitted.
+        // Ensure that the tag was submitted.
         final text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before /header");
         expect(
@@ -339,7 +339,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms("cancels when upstream selection collapses outside of token", (tester) async {
+      testWidgetsOnAllPlatforms("cancels when upstream selection collapses outside of tag", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -385,7 +385,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms("cancels when downstream selection collapses outside of token", (tester) async {
+      testWidgetsOnAllPlatforms("cancels when downstream selection collapses outside of tag", (tester) async {
         await _pumpTestEditor(
           tester,
           MutableDocument(
@@ -499,10 +499,10 @@ void main() {
           const SpanRange(start: 7, end: 7),
         );
 
-        // Add a space, cause the token to end.
+        // Add a space, cause the tag to end.
         await tester.typeImeText(" ");
 
-        // Ensure that the cancelled token wasn't submitted, and didn't start composing again.
+        // Ensure that the cancelled tag wasn't submitted, and didn't start composing again.
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(text.text, "before /h ");
         expect(

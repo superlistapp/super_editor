@@ -15,7 +15,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
   late final MutableDocument _document;
   late final MutableDocumentComposer _composer;
   late final Editor _editor;
-  late final UserTagPlugin _userTagPlugin;
+  late final StableTagPlugin _userTagPlugin;
 
   late final FocusNode _editorFocusNode;
 
@@ -40,7 +40,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
       ],
     );
 
-    _userTagPlugin = UserTagPlugin();
+    _userTagPlugin = StableTagPlugin();
 
     _editorFocusNode = FocusNode();
   }
@@ -74,7 +74,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
         }
 
         final userSpans = node.text.getAttributionSpansInRange(
-          attributionFilter: (a) => a is UserTagAttribution,
+          attributionFilter: (a) => a is CommittedStableTagAttribution,
           range: SpanRange(start: 0, end: node.text.text.length - 1),
         );
 
@@ -100,7 +100,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
             ],
           ),
         ),
-        if (_userTagPlugin.userTagIndex.composingUserTag.value != null)
+        if (_userTagPlugin.tagIndex.composingStableTag.value != null)
           Follower.withOffset(
             link: _composingLink,
             offset: Offset(0, 16),
@@ -127,13 +127,13 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
         inlineTextStyler: (attributions, existingStyle) {
           TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
 
-          if (attributions.contains(userTagComposingAttribution)) {
+          if (attributions.contains(stableTagComposingAttribution)) {
             style = style.copyWith(
               color: Colors.blue,
             );
           }
 
-          if (attributions.whereType<UserTagAttribution>().isNotEmpty) {
+          if (attributions.whereType<CommittedStableTagAttribution>().isNotEmpty) {
             style = style.copyWith(
               color: Colors.orange,
             );
@@ -147,7 +147,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
       ),
       documentOverlayBuilders: [
         AttributedTextBoundsOverlay(
-          selector: (a) => a == userTagComposingAttribution,
+          selector: (a) => a == stableTagComposingAttribution,
           builder: (context, attribution) {
             return Leader(
               link: _composingLink,
@@ -215,7 +215,7 @@ class UserSelectionPopover extends StatefulWidget {
   }) : super(key: key);
 
   final Editor editor;
-  final UserTagPlugin userTagPlugin;
+  final StableTagPlugin userTagPlugin;
   final FocusNode editorFocusNode;
 
   @override
@@ -240,7 +240,7 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
   void initState() {
     super.initState();
 
-    widget.userTagPlugin.userTagIndex.composingUserTag.addListener(_onComposingTokenChange);
+    widget.userTagPlugin.tagIndex.composingStableTag.addListener(_onComposingTokenChange);
 
     _onComposingTokenChange();
   }
@@ -250,20 +250,20 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.userTagPlugin != oldWidget.userTagPlugin) {
-      oldWidget.userTagPlugin.userTagIndex.composingUserTag.removeListener(_onComposingTokenChange);
-      widget.userTagPlugin.userTagIndex.composingUserTag.addListener(_onComposingTokenChange);
+      oldWidget.userTagPlugin.tagIndex.composingStableTag.removeListener(_onComposingTokenChange);
+      widget.userTagPlugin.tagIndex.composingStableTag.addListener(_onComposingTokenChange);
     }
   }
 
   @override
   void dispose() {
-    widget.userTagPlugin.userTagIndex.composingUserTag.removeListener(_onComposingTokenChange);
+    widget.userTagPlugin.tagIndex.composingStableTag.removeListener(_onComposingTokenChange);
 
     super.dispose();
   }
 
   Future<void> _onComposingTokenChange() async {
-    final composingTag = widget.userTagPlugin.userTagIndex.composingUserTag.value?.token;
+    final composingTag = widget.userTagPlugin.tagIndex.composingStableTag.value?.token;
     if (composingTag == null) {
       // The user isn't composing a tag. Therefore, this popover shouldn't
       // have focus.
@@ -283,7 +283,7 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     if (!mounted) {
       return;
     }
-    if (composingTag != widget.userTagPlugin.userTagIndex.composingUserTag.value?.token) {
+    if (composingTag != widget.userTagPlugin.tagIndex.composingStableTag.value?.token) {
       // The user changed the token. Our search results are invalid. Fizzle.
       return;
     }
@@ -303,13 +303,13 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
 
   void _onUserSelected(Object name) {
     widget.editor.execute([
-      FillInComposingUserTagRequest(name as String, defaultUserTagRule),
+      FillInComposingStableTagRequest(name as String, userTagRule),
     ]);
   }
 
   void _cancelTag() {
     widget.editor.execute([
-      CancelComposingUserTagRequest(defaultUserTagRule),
+      CancelComposingStableTagRequest(userTagRule),
     ]);
   }
 

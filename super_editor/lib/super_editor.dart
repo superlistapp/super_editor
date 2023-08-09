@@ -44,9 +44,9 @@ export 'src/default_editor/tasks.dart';
 export 'src/default_editor/text.dart';
 export 'src/default_editor/text_tools.dart';
 export 'src/default_editor/text_tokenizing/action_tags.dart';
-export 'src/default_editor/text_tokenizing/hash_tags.dart';
+export 'src/default_editor/text_tokenizing/pattern_tags.dart';
 export 'src/default_editor/text_tokenizing/tags.dart';
-export 'src/default_editor/text_tokenizing/user_tags.dart';
+export 'src/default_editor/text_tokenizing/stable_tags.dart';
 export 'src/default_editor/unknown_component.dart';
 
 // Document operations used by SuperEditor and/or SuperReader,
