@@ -126,6 +126,9 @@ class NodeInsertedEvent implements NodeDocumentChange {
   final int insertionIndex;
 
   @override
+  String toString() => "NodeInsertedEvent ($nodeId)";
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is NodeInsertedEvent &&
@@ -151,7 +154,7 @@ class NodeMovedEvent implements NodeDocumentChange {
   final int to;
 
   @override
-  String toString() => "[NodeMovedEvent] - $nodeId: $from -> $to";
+  String toString() => "NodeMovedEvent ($nodeId: $from -> $to)";
 
   @override
   bool operator ==(Object other) =>
@@ -176,6 +179,9 @@ class NodeRemovedEvent implements NodeDocumentChange {
   final DocumentNode removedNode;
 
   @override
+  String toString() => "NodeRemovedEvent ($nodeId)";
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) || other is NodeRemovedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
 
@@ -195,14 +201,14 @@ class NodeChangeEvent implements NodeDocumentChange {
   final String nodeId;
 
   @override
+  String toString() => "NodeChangeEvent ($nodeId)";
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) || other is NodeChangeEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
 
   @override
   int get hashCode => nodeId.hashCode;
-
-  @override
-  String toString() => "[NodeChangeEvent] - Node: $nodeId";
 }
 
 /// A span within a [Document] that begins at [start] and

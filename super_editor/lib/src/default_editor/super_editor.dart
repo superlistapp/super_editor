@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
@@ -116,9 +115,10 @@ class SuperEditor extends StatefulWidget {
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.documentOverlayBuilders = const [DefaultCaretOverlayBuilder()],
-    this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
     this.overlayController,
+    this.plugins = const {},
+    this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ??
@@ -269,6 +269,9 @@ class SuperEditor extends StatefulWidget {
   /// mode.
   final List<DocumentKeyboardAction> keyboardActions;
 
+  /// Plugins that add sets of behaviors to the editing experience.
+  final Set<SuperEditorPlugin> plugins;
+
   /// Paints some extra visual ornamentation to help with
   /// debugging.
   final DebugPaintConfig debugPaint;
@@ -296,7 +299,6 @@ class SuperEditorState extends State<SuperEditor> {
 
   late ScrollController _scrollController;
   late AutoScrollController _autoScrollController;
-  DocumentPosition? _previousSelectionExtent;
 
   @visibleForTesting
   late SuperEditorContext editContext;
@@ -324,7 +326,6 @@ class SuperEditorState extends State<SuperEditor> {
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
     _composer = widget.composer;
-    _composer.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
 
     _scrollController = widget.scrollController ?? ScrollController();
     _autoScrollController = AutoScrollController();
@@ -343,12 +344,6 @@ class SuperEditorState extends State<SuperEditor> {
   @override
   void didUpdateWidget(SuperEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.composer.selectionNotifier != oldWidget.composer.selectionNotifier) {
-      _composer.selectionNotifier.removeListener(_updateComposerPreferencesAtSelection);
-
-      _composer = widget.composer;
-      _composer.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
-    }
 
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
@@ -359,8 +354,11 @@ class SuperEditorState extends State<SuperEditor> {
     }
 
     if (widget.editor != oldWidget.editor) {
-      oldWidget.editor.context.remove(Editor.layoutKey);
+      for (final plugin in oldWidget.plugins) {
+        plugin.detach(oldWidget.editor);
+      }
 
+      oldWidget.editor.context.remove(Editor.layoutKey);
       widget.editor.context.put(
         Editor.layoutKey,
         DocumentLayoutEditable(() => _docLayoutKey.currentState as DocumentLayout),
@@ -387,8 +385,6 @@ class SuperEditorState extends State<SuperEditor> {
   void dispose() {
     _contentTapDelegate?.dispose();
 
-    _composer.selectionNotifier.removeListener(_updateComposerPreferencesAtSelection);
-
     widget.editor.context.remove(Editor.layoutKey);
 
     _focusNode.removeListener(_onFocusChange);
@@ -413,6 +409,10 @@ class SuperEditorState extends State<SuperEditor> {
         documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
     );
+
+    for (final plugin in widget.plugins) {
+      plugin.attach(widget.editor);
+    }
 
     // The ContentTapDelegate depends upon the EditContext. Recreate the
     // delegate, now that we've created a new EditContext.
@@ -461,82 +461,6 @@ class SuperEditorState extends State<SuperEditor> {
     _docLayoutSelectionStyler.shouldDocumentShowCaret = _focusNode.hasFocus && gestureMode == DocumentGestureMode.mouse;
   }
 
-  void _updateComposerPreferencesAtSelection() {
-    if (_composer.selection?.extent == _previousSelectionExtent) {
-      return;
-    }
-
-    final selectionExtent = _composer.selection?.extent;
-    if (selectionExtent != null &&
-        selectionExtent.nodePosition is TextNodePosition &&
-        _previousSelectionExtent != null &&
-        _previousSelectionExtent!.nodePosition is TextNodePosition) {
-      // The current and previous selections are text positions. Check for the situation where the two
-      // selections are functionally equivalent, but the affinity changed.
-      final selectedNodePosition = selectionExtent.nodePosition as TextNodePosition;
-      final previousSelectedNodePosition = _previousSelectionExtent!.nodePosition as TextNodePosition;
-
-      if (selectionExtent.nodeId == _previousSelectionExtent!.nodeId &&
-          selectedNodePosition.offset == previousSelectedNodePosition.offset) {
-        // The text selection changed, but only the affinity is different. An affinity change doesn't alter
-        // the selection from the user's perspective, so don't alter any preferences. Return.
-        return;
-      }
-    }
-
-    _previousSelectionExtent = _composer.selection?.extent;
-
-    _composer.preferences.clearStyles();
-
-    if (_composer.selection == null || !_composer.selection!.isCollapsed) {
-      return;
-    }
-
-    final node = widget.document.getNodeById(_composer.selection!.extent.nodeId);
-    if (node is! TextNode) {
-      return;
-    }
-
-    final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
-
-    if (textPosition.offset == 0 && node.text.text.isEmpty) {
-      return;
-    }
-
-    late int currentAttributionsOffset;
-    if (textPosition.offset == 0) {
-      // The inserted text is at the very beginning of the text blob. Therefore, we should apply the
-      // same attributions to the inserted text, as the text that immediately follows the inserted text.
-      currentAttributionsOffset = textPosition.offset + 1;
-    } else {
-      // The inserted text is NOT at the very beginning of the text blob. Therefore, we should apply the
-      // same attributions to the inserted text, as the text that immediately precedes the inserted text.
-      currentAttributionsOffset = textPosition.offset - 1;
-    }
-
-    Set<Attribution> allAttributions = node.text.getAllAttributionsAt(currentAttributionsOffset);
-
-    // TODO: attribution expansion policy should probably be configurable
-
-    // Add non-link attributions.
-    final newStyles = allAttributions.where((attribution) => attribution is! LinkAttribution).toSet();
-
-    // Add a link attribution only if the selection sits at the middle of the link.
-    // As we are dealing with a collapsed selection, we shouldn't have more than one link.
-    final linkAttribution = allAttributions.firstWhereOrNull((attribution) => attribution is LinkAttribution);
-    if (linkAttribution != null) {
-      final range = node.text.getAttributedRange({linkAttribution}, currentAttributionsOffset);
-
-      if (textPosition.offset > 0 &&
-          currentAttributionsOffset >= range.start &&
-          currentAttributionsOffset < range.end) {
-        newStyles.add(linkAttribution);
-      }
-    }
-
-    _composer.preferences.addStyles(newStyles);
-  }
-
   @visibleForTesting
   DocumentGestureMode get gestureMode {
     if (widget.gestureMode != null) {
@@ -557,18 +481,7 @@ class SuperEditorState extends State<SuperEditor> {
   /// If the `inputSource` is configured, it is used. Otherwise,
   /// the [TextInputSource] is chosen based on the platform.
   @visibleForTesting
-  TextInputSource get inputSource {
-    if (widget.inputSource != null) {
-      return widget.inputSource!;
-    }
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-        return TextInputSource.ime;
-      default:
-        return TextInputSource.keyboard;
-    }
-  }
+  TextInputSource get inputSource => widget.inputSource ?? TextInputSource.ime;
 
   @override
   Widget build(BuildContext context) {
@@ -606,7 +519,11 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           autofocus: widget.autofocus,
           editContext: editContext,
-          keyboardActions: widget.keyboardActions,
+          keyboardActions: [
+            for (final plugin in widget.plugins) //
+              ...plugin.keyboardActions,
+            ...widget.keyboardActions,
+          ],
           child: child,
         );
       case TextInputSource.ime:
@@ -614,12 +531,17 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           autofocus: widget.autofocus,
           editContext: editContext,
+          clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
           clearSelectionWhenImeConnectionCloses: widget.selectionPolicies.clearSelectionWhenImeConnectionCloses,
           softwareKeyboardController: widget.softwareKeyboardController,
           imePolicies: widget.imePolicies,
           imeConfiguration: widget.imeConfiguration,
           imeOverrides: widget.imeOverrides,
-          hardwareKeyboardActions: widget.keyboardActions,
+          hardwareKeyboardActions: [
+            for (final plugin in widget.plugins) //
+              ...plugin.keyboardActions,
+            ...widget.keyboardActions,
+          ],
           floatingCursorController: _floatingCursorController,
           child: child,
         );
@@ -757,9 +679,11 @@ class SuperEditorState extends State<SuperEditor> {
           // Layer that positions and sizes leader widgets at the bounds
           // of the users selection so that carets, handles, toolbars, and
           // other things can follow the selection.
-          (context) => _SelectionLeadersDocumentLayerBuilder(
-                links: _selectionLinks,
-              ).build(context, editContext),
+          (context) {
+            return _SelectionLeadersDocumentLayerBuilder(
+              links: _selectionLinks,
+            ).build(context, editContext);
+          },
         ],
         overlays: [
           for (final overlayBuilder in widget.documentOverlayBuilders) //
@@ -797,6 +721,43 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
       showDebugLeaderBounds: showDebugLeaderBounds,
     );
   }
+}
+
+/// A [SuperEditor] plugin.
+///
+/// A [SuperEditorPlugin] can be thought of as a combination of two plugins.
+///
+/// First, there's the part that extends the behavior of an [Editor]. Those extensions
+/// are added in [attach].
+///
+/// Second, there's the part that extends the behavior of a [SuperEditor] widget, directly.
+/// Those behaviors are collected through various properties, such as [keyboardActions] and
+/// [componentBuilders].
+///
+/// An [Editor] is a logical pipeline of requests, commands, and reactions. It has no direct
+/// connection to a user interface. A [SuperEditor] widget is a complete editor user interface.
+/// When a plugin is given to a [SuperEditor] widget, the [SuperEditor] widget [attach]s the
+/// plugin to its [Editor], and then the [SuperEditor] widget pulls out UI related behaviors
+/// from the plugin for things like keyboard handlers and component builders.
+///
+/// [Editor] extensions are applied differently than the [SuperEditor] UI extensions, because
+/// an [Editor] is mutable, meaning it can be altered. But a [SuperEditor] widget, like all other
+/// widgets, is immutable, and must be rebuilt when properties change. As a result, each plugin
+/// is instructed to alter an [Editor] as desired, but [SuperEditor] UI extensions are queried
+/// from the plugin, so that the [SuperEditor] widget can pass those extensions as properties
+/// during a widget build.
+abstract class SuperEditorPlugin {
+  /// Adds desired behaviors to the given [editor].
+  void attach(Editor editor) {}
+
+  /// Removes behaviors from the given [editor], which were added in [attach].
+  void detach(Editor editor) {}
+
+  /// Additional [DocumentKeyboardAction]s that will be added to a given [SuperEditor] widget.
+  List<DocumentKeyboardAction> get keyboardActions => [];
+
+  /// Additional [ComponentBuilder]s that will be added to a given [SuperEditor] widget.
+  List<ComponentBuilder> get componentBuilders => [];
 }
 
 /// A collection of policies that dictate how a [SuperEditor]'s selection will change
@@ -868,8 +829,8 @@ abstract class SuperEditorLayerBuilder {
 
 /// A [SuperEditorLayerBuilder] that's implemented with a given function, so
 /// that simple use-cases don't need to sub-class [SuperEditorLayerBuilder].
-class FunctionalDocumentLayerBuilder implements SuperEditorLayerBuilder {
-  const FunctionalDocumentLayerBuilder(this._delegate);
+class FunctionalSuperEditorLayerBuilder implements SuperEditorLayerBuilder {
+  const FunctionalSuperEditorLayerBuilder(this._delegate);
 
   final Widget Function(BuildContext context, SuperEditorContext editContext) _delegate;
 

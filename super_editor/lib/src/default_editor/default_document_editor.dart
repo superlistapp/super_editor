@@ -1,5 +1,6 @@
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/composer/composer_reactions.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
@@ -19,14 +20,14 @@ Editor createDefaultDocumentEditor({
       Editor.documentKey: document,
       Editor.composerKey: composer,
     },
-    requestHandlers: defaultRequestHandlers,
-    reactionPipeline: defaultEditorReactions,
+    requestHandlers: List.from(defaultRequestHandlers),
+    reactionPipeline: List.from(defaultEditorReactions),
   );
 
   return editor;
 }
 
-final defaultRequestHandlers = [
+final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (request) => request is ChangeSelectionRequest
       ? ChangeSelectionCommand(
           request.newSelection,
@@ -168,7 +169,11 @@ final defaultRequestHandlers = [
       ? ConvertParagraphToListItemCommand(nodeId: request.nodeId, type: request.type)
       : null,
   (request) => request is AddTextAttributionsRequest
-      ? AddTextAttributionsCommand(documentSelection: request.documentSelection, attributions: request.attributions)
+      ? AddTextAttributionsCommand(
+          documentSelection: request.documentSelection,
+          attributions: request.attributions,
+          autoMerge: request.autoMerge,
+        )
       : null,
   (request) => request is ToggleTextAttributionsRequest
       ? ToggleTextAttributionsCommand(documentSelection: request.documentSelection, attributions: request.attributions)
@@ -186,14 +191,18 @@ final defaultRequestHandlers = [
           composer: request.composer,
         )
       : null,
-];
+]);
 
-final defaultEditorReactions = [
+final defaultEditorReactions = List.unmodifiable([
+  UpdateComposerTextStylesReaction(),
   const LinkifyReaction(),
+
+  //---- Start Content Conversions ----
   HeaderConversionReaction(),
   const UnorderedListItemConversionReaction(),
   const OrderedListItemConversionReaction(),
   const BlockquoteConversionReaction(),
   const HorizontalRuleConversionReaction(),
   const ImageUrlConversionReaction(),
-];
+  //---- End Content Conversions ---
+]);

@@ -641,7 +641,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
             nodePosition: const UpstreamDownstreamNodePosition.downstream(),
           ),
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
     ]);
@@ -799,7 +799,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           DocumentSelection.collapsed(
             position: docDragPosition,
           ),
-          SelectionChangeType.place,
+          SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
       ]);
@@ -1059,7 +1059,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         DocumentSelection.collapsed(
           position: position,
         ),
-        SelectionChangeType.place,
+        SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
     ]);

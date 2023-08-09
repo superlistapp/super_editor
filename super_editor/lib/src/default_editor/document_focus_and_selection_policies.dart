@@ -136,7 +136,7 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
         widget.editor.execute([
           ChangeSelectionRequest(
             _previousSelection,
-            SelectionChangeType.place,
+            SelectionChangeType.placeCaret,
             SelectionReason.contentChange,
           ),
         ]);
@@ -166,7 +166,7 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
               DocumentSelection.collapsed(
                 position: position,
               ),
-              SelectionChangeType.place,
+              SelectionChangeType.placeCaret,
               SelectionReason.contentChange,
             ),
           ]);

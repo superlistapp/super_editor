@@ -52,24 +52,23 @@ class Editor implements RequestDispatcher {
   ///  - [listeners], which contains an initial set of [EditListener]s.
   Editor({
     required Map<String, Editable> editables,
-    required List<EditRequestHandler> requestHandlers,
+    List<EditRequestHandler>? requestHandlers,
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
-  })  : _requestHandlers = requestHandlers,
-        _reactionPipeline = reactionPipeline ?? [],
+  })  : requestHandlers = requestHandlers ?? [],
+        reactionPipeline = reactionPipeline ?? [],
         _changeListeners = listeners ?? [] {
     context = EditContext(editables);
-
     _commandExecutor = _DocumentEditorCommandExecutor(context);
   }
 
   void dispose() {
-    _reactionPipeline.clear();
+    reactionPipeline.clear();
     _changeListeners.clear();
   }
 
   /// Chain of Responsibility that maps a given [EditRequest] to an [EditCommand].
-  final List<EditRequestHandler> _requestHandlers;
+  final List<EditRequestHandler> requestHandlers;
 
   /// Service Locator that provides all resources that are relevant for document editing.
   late final EditContext context;
@@ -77,10 +76,10 @@ class Editor implements RequestDispatcher {
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
 
-  /// A pipeline of objects that receive change lists from command execution
+  /// A pipeline of objects that receive change-lists from command execution
   /// and get the first opportunity to spawn additional commands before the
   /// change list is dispatched to regular listeners.
-  final List<EditReaction> _reactionPipeline;
+  final List<EditReaction> reactionPipeline;
 
   /// Listeners that are notified of changes in the form of a change list
   /// after all pending [EditCommand]s are executed, and all members of
@@ -156,16 +155,20 @@ class Editor implements RequestDispatcher {
     // many superfluous calls, but in practice it would probably break lots of features
     // by notifying listeners too early, and running the same reactions over and over.
     if (_activeCommandCount == 1) {
-      // Run all reactions. These reactions will likely call `execute()` again, with
-      // their own requests, to make additional changes.
-      _reactToChanges(_activeChangeList!);
+      if (_activeChangeList!.isNotEmpty) {
+        // Run all reactions. These reactions will likely call `execute()` again, with
+        // their own requests, to make additional changes.
+        _reactToChanges();
 
-      // Notify all listeners that care about changes, but won't spawn additional requests.
-      _notifyListeners(_activeChangeList!);
+        // Notify all listeners that care about changes, but won't spawn additional requests.
+        _notifyListeners();
 
-      // This is the end of a transaction.
-      for (final editable in context._resources.values) {
-        editable.onTransactionEnd(_activeChangeList!);
+        // This is the end of a transaction.
+        for (final editable in context._resources.values) {
+          editable.onTransactionEnd(_activeChangeList!);
+        }
+      } else {
+        editorOpsLog.warning("We have an empty change list after processing one or more requests: $requests");
       }
 
       _activeChangeList = null;
@@ -176,7 +179,7 @@ class Editor implements RequestDispatcher {
 
   EditCommand _findCommandForRequest(EditRequest request) {
     EditCommand? command;
-    for (final handler in _requestHandlers) {
+    for (final handler in requestHandlers) {
       command = handler(request);
       if (command != null) {
         return command;
@@ -208,14 +211,19 @@ class Editor implements RequestDispatcher {
     return changeList;
   }
 
-  void _reactToChanges(List<EditEvent> changeList) {
-    for (final reaction in _reactionPipeline) {
-      reaction.react(context, this, changeList);
+  void _reactToChanges() {
+    for (final reaction in reactionPipeline) {
+      // Note: we pass the active change list because reactions will cause more
+      // changes to be added to that list.
+      reaction.react(context, this, _activeChangeList!);
     }
   }
 
-  void _notifyListeners(List<EditEvent> changeList) {
+  void _notifyListeners() {
+    final changeList = List<EditEvent>.from(_activeChangeList!, growable: false);
     for (final listener in _changeListeners) {
+      // Note: we pass a given copy of the change list, because listeners should
+      // never cause additional editor changes.
       listener.onEdit(changeList);
     }
   }
@@ -268,14 +276,14 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
 }
 
 /// An artifact that might be mutated during a request to a [Editor].
-abstract class Editable {
+abstract mixin class Editable {
   /// A [Editor] transaction just started, this [Editable] should avoid notifying
   /// any listeners of changes until the transaction ends.
-  void onTransactionStart();
+  void onTransactionStart() {}
 
   /// A transaction that was previously started with [onTransactionStart] has now ended, this
   /// [Editable] should notify interested parties of changes.
-  void onTransactionEnd(List<EditEvent> edits);
+  void onTransactionEnd(List<EditEvent> edits) {}
 }
 
 /// An object that processes [EditRequest]s.
@@ -330,8 +338,10 @@ class EditContext {
     return _resources[id] as T;
   }
 
-  void put(String id, Editable resource) => _resources[id] = resource;
+  /// Makes the given [editable] available as a resource under the given [id].
+  void put(String id, Editable editable) => _resources[id] = editable;
 
+  /// Removes any resource in this context with the given [id].
   void remove(String id) => _resources.remove(id);
 }
 
@@ -428,6 +438,9 @@ class DocumentEdit implements EditEvent {
   DocumentEdit(this.change);
 
   final DocumentChange change;
+
+  @override
+  String toString() => "DocumentEdit -> $change";
 }
 
 /// An object that's notified with a change list from one or more
