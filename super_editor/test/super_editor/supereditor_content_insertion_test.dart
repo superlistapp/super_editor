@@ -1,15 +1,11 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/default_editor/horizontal_rule.dart';
-import 'package:super_editor/src/default_editor/image.dart';
-import 'package:super_editor/src/default_editor/paragraph.dart';
-import 'package:super_editor/src/default_editor/text.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
+import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
 import 'document_test_tools.dart';
@@ -100,7 +96,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms('when the selection sits at the end of a paragraph', (tester) async {
+      testWidgetsOnAllPlatforms('when a downstream selection sits at the end of a paragraph', (tester) async {
         // Pump a widget with an arbitrary size for the images.
         final context = await tester //
             .createDocument()
@@ -138,6 +134,55 @@ void main() {
           DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: doc.nodes.last.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms('when an upstream selection sits at the end of a paragraph', (tester) async {
+        // Pump a widget with an arbitrary size for the images.
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("""First paragraph
+            
+Second paragraph"""). //
+            withAddedComponents(
+          [const FakeImageComponentBuilder(size: Size(100, 100))],
+        ).pump();
+
+        // Place caret at the end of the first paragraph by selecting the second paragraph and pressing left.
+        //
+        // This results in an upstream text affinity.
+        await tester.placeCaretInParagraph(context.editContext.document.nodes.last.id, 0);
+        await tester.pressLeftArrow();
+
+        // Insert the image at the current selection.
+        context.editContext.commonOps.insertImage('http://image.fake');
+        await tester.pumpAndSettle();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure that two nodes were inserted.
+        expect(doc.nodes.length, 4);
+
+        // Ensure that the first node remains unchanged.
+        expect(doc.nodes[0], isA<ParagraphNode>());
+        expect((doc.nodes[0] as ParagraphNode).text.text, 'First paragraph');
+
+        // Ensure that the image was added.
+        expect(doc.nodes[1], isA<ImageNode>());
+
+        // Ensure that an empty node was added after the image.
+        expect(doc.nodes[2], isA<ParagraphNode>());
+        expect((doc.nodes[2] as ParagraphNode).text.text, '');
+
+        // Ensure the selection was placed at the beginning of the newly created paragraph.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: doc.nodes[2].id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -263,7 +308,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms('when the selection sits at the end of a paragraph', (tester) async {
+      testWidgetsOnAllPlatforms('when a downstream selection sits at the end of a paragraph', (tester) async {
         final context = await tester //
             .createDocument()
             .fromMarkdown("First paragraph")
@@ -304,6 +349,52 @@ void main() {
         );
       });
 
+      testWidgetsOnAllPlatforms('when an upstream selection sits at the end of a paragraph', (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("""First paragraph
+            
+ Second paragraph""") //
+            .pump();
+
+        // Place caret at the end of the first paragraph by selecting the second paragraph and pressing left.
+        //
+        // This results in an upstream text affinity.
+        await tester.placeCaretInParagraph(context.editContext.document.nodes.last.id, 0);
+        await tester.pressLeftArrow();
+
+        // Insert the horizontal rule at the current selection.
+        context.editContext.commonOps.insertHorizontalRule();
+        await tester.pumpAndSettle();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure that two nodes were inserted.
+        expect(doc.nodes.length, 4);
+
+        // Ensure that the first node remains unchanged.
+        expect(doc.nodes[0], isA<ParagraphNode>());
+        expect((doc.nodes[0] as ParagraphNode).text.text, 'First paragraph');
+
+        // Ensure that the horizontal rule was added.
+        expect(doc.nodes[1], isA<HorizontalRuleNode>());
+
+        // Ensure that an empty node was added at the end.
+        expect(doc.nodes[2], isA<ParagraphNode>());
+        expect((doc.nodes[2] as ParagraphNode).text.text, '');
+
+        // Ensure the selection was placed at the beginning of the newly created paragraph.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: doc.nodes[2].id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
       testWidgetsOnAllPlatforms('when the selection sits at an empty paragraph', (tester) async {
         final context = await tester //
             .createDocument()
@@ -335,6 +426,185 @@ void main() {
           DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: doc.nodes[1].id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+    });
+
+    group('inserts a paragraph', () {
+      testWidgetsOnDesktop('when the user presses ENTER at the end of an image', (tester) async {
+        final testContext = await tester
+            .createDocument()
+            .withCustomContent(
+              MutableDocument(
+                nodes: [
+                  ImageNode(
+                    id: "img-node",
+                    imageUrl: 'https://this.is.a.fake.image',
+                    metadata: const SingleColumnLayoutComponentStyles(
+                      width: double.infinity,
+                    ).toMetadata(),
+                  ),
+                  ParagraphNode(
+                    id: 'text-node',
+                    text: AttributedText(text: 'Paragraph'),
+                  ),
+                ],
+              ),
+            )
+            .withAddedComponents([const FakeImageComponentBuilder(size: Size(100, 100))])
+            .withEditorSize(const Size(300, 300))
+            .pump();
+
+        // Place caret after the image by selecting the beginning of the paragraph and pressing left.
+        await tester.placeCaretInParagraph('text-node', 0);
+        await tester.pressLeftArrow();
+
+        // Ensure the selection was placed at the end of the image.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: 'img-node',
+              nodePosition: UpstreamDownstreamNodePosition.downstream(),
+            ),
+          ),
+        );
+
+        // Simulate pressing enter on a hardware keyboard.
+        await tester.pressEnter();
+
+        // Ensure an empty paragraph was inserted and the selection was placed on its beginning.
+        final doc = testContext.editContext.document;
+        expect(doc.nodes.length, 3);
+        expect(doc.nodes[1], isA<ParagraphNode>());
+        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: testContext.editContext.document.nodes[1].id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnAndroid(
+          'when the user presses the newline button on the software keyboard at the end of an image (on Android)',
+          (tester) async {
+        final testContext = await tester
+            .createDocument()
+            .withCustomContent(
+              MutableDocument(
+                nodes: [
+                  ImageNode(
+                    id: "img-node",
+                    imageUrl: 'https://this.is.a.fake.image',
+                    metadata: const SingleColumnLayoutComponentStyles(
+                      width: double.infinity,
+                    ).toMetadata(),
+                  ),
+                  ParagraphNode(
+                    id: 'text-node',
+                    text: AttributedText(text: 'Paragraph'),
+                  ),
+                ],
+              ),
+            )
+            .withAddedComponents([const FakeImageComponentBuilder(size: Size(100, 100))])
+            .withEditorSize(const Size(300, 300))
+            .pump();
+
+        // Place caret at the beginning of the paragraph.
+        await tester.placeCaretInParagraph('text-node', 0);
+        await tester.pressLeftArrow();
+
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: 'img-node',
+              nodePosition: UpstreamDownstreamNodePosition.downstream(),
+            ),
+          ),
+        );
+
+        // On Android, pressing ENTER generates a "\n" insertion.
+        await tester.typeImeText('\n');
+
+        // Ensure an empty paragraph was inserted and the selection was placed on its beginning.
+        final doc = testContext.editContext.document;
+        expect(doc.nodes.length, 3);
+        expect(doc.nodes[1], isA<ParagraphNode>());
+        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: testContext.editContext.document.nodes[1].id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnIos(
+          'when the user presses the newline button on the software keyboard at the end of an image (on iOS)',
+          (tester) async {
+        final testContext = await tester
+            .createDocument()
+            .withCustomContent(
+              MutableDocument(
+                nodes: [
+                  ImageNode(
+                    id: "img-node",
+                    imageUrl: 'https://this.is.a.fake.image',
+                    metadata: const SingleColumnLayoutComponentStyles(
+                      width: double.infinity,
+                    ).toMetadata(),
+                  ),
+                  ParagraphNode(
+                    id: 'text-node',
+                    text: AttributedText(text: 'Paragraph'),
+                  ),
+                ],
+              ),
+            )
+            .withAddedComponents([const FakeImageComponentBuilder(size: Size(100, 100))])
+            .withEditorSize(const Size(300, 300))
+            .pump();
+
+        // Place caret at the beginning of the paragraph.
+        await tester.placeCaretInParagraph('text-node', 0);
+        await tester.pressLeftArrow();
+
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: 'img-node',
+              nodePosition: UpstreamDownstreamNodePosition.downstream(),
+            ),
+          ),
+        );
+
+        // On iOS, pressing ENTER generates a newline action.
+        await tester.testTextInput.receiveAction(TextInputAction.newline);
+        await tester.pump();
+
+        // Ensure an empty paragraph was inserted and the selection was placed on its beginning.
+        final doc = testContext.editContext.document;
+        expect(doc.nodes.length, 3);
+        expect(doc.nodes[1], isA<ParagraphNode>());
+        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: testContext.editContext.document.nodes[1].id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
