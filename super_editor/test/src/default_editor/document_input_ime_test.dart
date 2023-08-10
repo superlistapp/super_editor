@@ -685,15 +685,20 @@ Paragraph two
 
         // Simulate the user typing "a a a".
         await tester.ime.sendDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. ',
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: -1, end: -1),
+          ),
           TextEditingDeltaInsertion(
-            oldText: '',
+            oldText: '. ',
             textInserted: 'a',
-            insertionOffset: 0,
+            insertionOffset: 2,
             selection: TextSelection.collapsed(
-              offset: 1,
+              offset: 3,
               affinity: TextAffinity.upstream,
             ),
-            composing: TextRange(start: 0, end: 1),
+            composing: TextRange(start: 2, end: 3),
           ),
         ], getter: imeClientGetter);
         await tester.ime.sendDeltas(const [
