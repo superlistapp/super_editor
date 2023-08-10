@@ -669,6 +669,119 @@ Paragraph two
       });
     });
 
+    group('on iPhone 11 (iOS 13.7) with chinese keyboard', () {
+      testWidgetsOnIos('applies keyboard suggestions', (tester) async {
+        // Holds the composing region that we sent to the IME.
+        TextRange? composingRegion;
+
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the start of the paragraph.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Simulate the user typing "a a a".
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. ',
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaInsertion(
+            oldText: '. ',
+            textInserted: 'a',
+            insertionOffset: 2,
+            selection: TextSelection.collapsed(
+              offset: 3,
+              affinity: TextAffinity.upstream,
+            ),
+            composing: TextRange(start: 2, end: 3),
+          ),
+        ], getter: imeClientGetter);
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaInsertion(
+            oldText: 'a',
+            textInserted: ' a',
+            insertionOffset: 1,
+            selection: TextSelection.collapsed(
+              offset: 3,
+              affinity: TextAffinity.upstream,
+            ),
+            composing: TextRange(start: 0, end: 3),
+          ),
+        ], getter: imeClientGetter);
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaInsertion(
+            oldText: 'a a',
+            textInserted: ' a',
+            insertionOffset: 3,
+            selection: TextSelection.collapsed(
+              offset: 5,
+              affinity: TextAffinity.upstream,
+            ),
+            composing: TextRange(start: 0, end: 5),
+          ),
+        ], getter: imeClientGetter);
+
+        // Simulate the user accepting the suggestion from the keyboard.
+        //
+        // The IME sends the replacement and changes the composing region in the same frame,
+        // in separate delta batches.
+        final imeClient = imeClientGetter();
+        imeClient.updateEditingValueWithDeltas(const [
+          TextEditingDeltaReplacement(
+            oldText: 'a a a',
+            replacementText: '呵呵呵',
+            replacedRange: TextRange(start: 0, end: 5),
+            selection: TextSelection.collapsed(
+              offset: 3,
+              affinity: TextAffinity.upstream,
+            ),
+            composing: TextRange(start: 0, end: 3),
+          ),
+        ]);
+
+        // Intercept the setEditingState message sent to the platform so we can check
+        // which composing region was sent.
+        tester
+            .interceptChannel(SystemChannels.textInput.name) //
+            .interceptMethod(
+          'TextInput.setEditingState',
+          (methodCall) {
+            final params = methodCall.arguments as Map;
+            composingRegion = TextRange(
+              start: params['composingBase'],
+              end: params['composingExtent'],
+            );
+            return null;
+          },
+        );
+
+        imeClient.updateEditingValueWithDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '呵呵呵',
+            selection: TextSelection.collapsed(
+              offset: 3,
+              affinity: TextAffinity.upstream,
+            ),
+            composing: TextRange.empty,
+          ),
+        ]);
+        await tester.pump();
+
+        // Between the two updateEditingValueWithDeltas calls, the IME interactor
+        // sends [0, 3) as the new composing region (the composing region of the first delta) to the IME.
+        //
+        // If the user types with that composing region, all the existing text is replaced.
+        //
+        // Ensure we cleared the composing region on the IME so the previous entered text is preserved.
+        expect(composingRegion, TextRange.empty);
+      });
+    });
+
     group('text serialization and selected content', () {
       test('within a single node is reported as a TextEditingValue', () {
         const text = "This is a paragraph of text.";
