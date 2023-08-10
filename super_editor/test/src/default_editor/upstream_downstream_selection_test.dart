@@ -286,13 +286,18 @@ void main() {
             .withEditorSize(const Size(300, 300))
             .pump();
 
-        for (var i = 0; i < 2; i++) {
-          await tester.tapAtDocumentPosition(const DocumentPosition(
-            nodeId: "2",
-            nodePosition: UpstreamDownstreamNodePosition.upstream(),
-          ));
-          await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
-        }
+        // TODO: Move this to Super Editor tooling.
+        await tester.tapAtDocumentPosition(const DocumentPosition(
+          nodeId: "2",
+          nodePosition: UpstreamDownstreamNodePosition.upstream(),
+        ));
+        await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
+
+        await tester.tapAtDocumentPosition(const DocumentPosition(
+          nodeId: "2",
+          nodePosition: UpstreamDownstreamNodePosition.upstream(),
+        ));
+        await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
 
         expect(
           SuperEditorInspector.findDocumentSelection(),
