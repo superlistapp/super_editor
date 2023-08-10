@@ -92,6 +92,9 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is BlockNode
       ? DeleteUpstreamAtBeginningOfBlockNodeCommand(request.node)
       : null,
+  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is TaskNode
+      ? DeleteUpstreamAtBeginningOfTaskCommand(request.node)
+      : null,
   (request) => request is DeleteNodeRequest //
       ? DeleteNodeCommand(nodeId: request.nodeId)
       : null,
