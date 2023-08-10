@@ -545,7 +545,6 @@ void main() {
                 ),
               );
 
-              print("Verifying results on composer (${editContext.composer.hashCode})");
               expect(result, ExecutionInstruction.haltExecution);
               expect(editContext.composer.selection, isNotNull);
               expect(
