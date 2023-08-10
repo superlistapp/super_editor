@@ -739,7 +739,8 @@ Paragraph two
           ),
         ]);
 
-        // Intercept the setEditingState message sent to the platform.
+        // Intercept the setEditingState message sent to the platform so we can check
+        // which composing region was sent.
         tester
             .interceptChannel(SystemChannels.textInput.name) //
             .interceptMethod(
@@ -754,14 +755,6 @@ Paragraph two
           },
         );
 
-        // After receiving the previous delta and before receiving the next delta,
-        // we send [0, 3) as the composing region.
-        //
-        // The whole text is part of the composing region again. If the composing region stays like this,
-        // the next character the user types will replace all of the text.
-        //
-        // To avoid this, after we receive the next delta, we must send the newly received composing region
-        // back to the IME.
         imeClient.updateEditingValueWithDeltas(const [
           TextEditingDeltaNonTextUpdate(
             oldText: '呵呵呵',
@@ -774,7 +767,12 @@ Paragraph two
         ]);
         await tester.pump();
 
-        // Ensure we cleared the composing region on the IME.
+        // Between the two updateEditingValueWithDeltas calls, the IME interactor
+        // sends [0, 3) as the new composing region (the composing region of the first delta) to the IME.
+        //
+        // If the user types with that composing region, all the existing text is replaced.
+        //
+        // Ensure we cleared the composing region on the IME so the previous entered text is preserved.
         expect(composingRegion, TextRange.empty);
       });
     });
