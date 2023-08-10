@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
+import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
-
+import '../../super_editor/document_test_tools.dart';
 import '../../super_editor/test_documents.dart';
 
 /// Upstream/downstream selection refers components that only support
@@ -274,6 +276,51 @@ void main() {
         expect(composer.selection!.isCollapsed, true);
         expect(composer.selection!.extent.nodeId, "2");
         expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
+      });
+
+      testWidgets("right arrow collapses the expanded selection around block node to a caret on the downstream edge",
+          (tester) async {
+        await tester
+            .createDocument()
+            .withCustomContent(paragraphThenHrThenParagraphDoc())
+            .withEditorSize(const Size(300, 300))
+            .pump();
+
+        // TODO: Move this to Super Editor tooling.
+        await tester.tapAtDocumentPosition(const DocumentPosition(
+          nodeId: "2",
+          nodePosition: UpstreamDownstreamNodePosition.upstream(),
+        ));
+        await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
+
+        await tester.tapAtDocumentPosition(const DocumentPosition(
+          nodeId: "2",
+          nodePosition: UpstreamDownstreamNodePosition.upstream(),
+        ));
+        await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
+
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection(
+            base: DocumentPosition(
+              nodeId: "2",
+              nodePosition: UpstreamDownstreamNodePosition.upstream(),
+            ),
+            extent: DocumentPosition(
+              nodeId: "2",
+              nodePosition: UpstreamDownstreamNodePosition.downstream(),
+            ),
+          ),
+        );
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump();
+
+        final selection = SuperEditorInspector.findDocumentSelection();
+
+        expect(selection!.isCollapsed, true);
+        expect(selection.extent.nodeId, "2");
+        expect(selection.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
       });
     });
 
