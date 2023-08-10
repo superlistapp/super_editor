@@ -75,7 +75,6 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
   KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
     int? logIndex = widget.textInputDebugger?.add(
       TextInputDebugEvent(
-        direction: TextInputMessageDirection.fromIme,
         method: 'onKey',
         data: keyEvent,
       ),

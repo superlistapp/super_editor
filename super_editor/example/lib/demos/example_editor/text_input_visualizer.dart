@@ -399,15 +399,10 @@ Widget? _buildKeyEvent(BuildContext context, TextInputDebugEvent event) {
 
 Widget _buildGenericEvent(BuildContext context, TextInputDebugEvent event) {
   return ListTile(
-    leading: event.direction == TextInputMessageDirection.fromIme //
-        ? Icon(
-            Icons.arrow_downward,
-            color: Colors.blue,
-          )
-        : Icon(
-            Icons.arrow_upward,
-            color: Colors.green,
-          ),
+    leading: Icon(
+      Icons.info,
+      color: Colors.blue,
+    ),
     title: Text(
       event.method,
       style: TextStyle(fontWeight: FontWeight.bold),
