@@ -12,6 +12,9 @@ import 'editor.dart';
 /// [DocumentComposer], and [DocumentLayout].
 /// In addition, [commonOps] are available for directly applying common, complex
 /// changes to the document using the artifacts.
+///
+/// A [scrollController] can be passed to allow changes to the scroll position in
+/// the viewport.
 class SuperEditorContext {
   /// Creates an edit context that makes up a collection of core artifacts for
   /// editing a document.

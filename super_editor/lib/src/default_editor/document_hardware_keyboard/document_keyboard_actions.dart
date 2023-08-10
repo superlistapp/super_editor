@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -10,6 +13,150 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+
+/// PAGE UP: Scrolls the viewport up by viewport height minus any overscroll distance.
+///
+/// If there is not a viewport worth of distance to scroll up, the viewport scrolls up as
+/// far as possible.
+ExecutionInstruction scrollOnPageUpKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scrollController = editContext.scroller;
+
+  scrollController.animateTo(
+    max(scrollController.scrollOffset - scrollController.viewportDimension, scrollController.minScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// PAGE DOWN: Scrolls the viewport down by viewport height minus any overscroll distance.
+///
+/// If there is not a viewport worth of distance to scroll down, the viewport scrolls down as
+/// far as possible.
+ExecutionInstruction scrollOnPageDownKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scrollController = editContext.scroller;
+
+  scrollController.animateTo(
+    min(scrollController.scrollOffset + scrollController.viewportDimension, scrollController.maxScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// HOME: Scrolls the viewport up as far as possible.
+ExecutionInstruction scrollOnHomeKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scrollController = editContext.scroller;
+
+  scrollController.animateTo(
+    scrollController.minScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// END: Scrolls the viewport down as far as possible.
+ExecutionInstruction scrollOnEndKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scrollController = editContext.scroller;
+
+  if (!scrollController.maxScrollExtent.isFinite) {
+    // Can't scroll to infinity, but we technically handled the task.
+    return ExecutionInstruction.haltExecution;
+  }
+
+  scrollController.animateTo(
+    scrollController.maxScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// Halt execution of the current key event if the key pressed is one of
+/// the function keys (F1, F2, F3, etc.).
+///
+/// Without this action in place pressing a function key would display
+/// an unknown '?' character in the document.
+ExecutionInstruction doNothingWhenFnKeyPressed({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey.keyId < LogicalKeyboardKey.f1.keyId ||
+      keyEvent.logicalKey.keyId > LogicalKeyboardKey.f12.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// Halt execution of the current key event if the [SuperEditorContext.scrollController]
+/// is null and the key pressed is one of the page up, page down, home or end key.
+///
+/// Without this action in place pressing the above mentioned keys in absense of
+/// [SuperEditorContext.scrollController] would display an unknown '?' character in
+/// the document.
+ExecutionInstruction doNothingWhenPageUpOrPageDownOrHomeOrEndKeyPressed({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  return ExecutionInstruction.haltExecution;
+}
 
 ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
   required SuperEditorContext editContext,
