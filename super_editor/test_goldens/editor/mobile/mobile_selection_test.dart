@@ -198,7 +198,6 @@ void main() {
           'drag base handle upstream',
           DocumentGestureMode.android,
           "mobile-selection_android_drag-base-upstream",
-          maxPixelMismatchCount: 1,
           (tester, composer, docKey, dragLine) async {
             final docBox = docKey.currentContext!.findRenderObject() as RenderBox;
             final docLayout = docKey.currentState as DocumentLayout;
@@ -558,6 +557,7 @@ void main() {
           'drag base handle upstream',
           DocumentGestureMode.iOS,
           "mobile-selection_ios_drag-base-upstream",
+          maxPixelMismatchCount: 1,
           (tester, composer, docKey, dragLine) async {
             final docBox = docKey.currentContext!.findRenderObject() as RenderBox;
             final docLayout = docKey.currentState as DocumentLayout;
