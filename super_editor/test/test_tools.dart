@@ -85,6 +85,46 @@ void testWidgetsOnDesktop(
   testWidgetsOnLinux("$description (on Linux)", test, skip: skip, variant: variant);
 }
 
+/// A widget test that runs a variant for every desktop platform, e.g.,
+/// Mac, Windows, Linux and for macOS Web.
+@isTestGroup
+void testWidgetsOnDesktopAndWeb(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgetsOnMac("$description (on MAC)", test, skip: skip, variant: variant);
+  testWidgetsOnWindows("$description (on Windows)", test, skip: skip, variant: variant);
+  testWidgetsOnLinux("$description (on Linux)", test, skip: skip, variant: variant);
+  testWidgetsOnWeb("$description (on Web)", test, skip: skip, variant: variant);
+}
+
+// A widget test that runs for macOS web.
+@isTestGroup
+void testWidgetsOnWeb(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgets(description, (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    debugIsWebOverride = true;
+
+    tester.view
+      ..devicePixelRatio = 1.0
+      ..platformDispatcher.textScaleFactorTestValue = 1.0;
+
+    try {
+      await test(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      debugIsWebOverride = null;
+    }
+  });
+}
+
 /// A widget test that runs a variant for every mobile platform, e.g.,
 /// Android and iOS
 @isTestGroup

@@ -10,6 +10,7 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 
 ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
   required SuperEditorContext editContext,
@@ -232,6 +233,18 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   return ExecutionInstruction.haltExecution;
 }
 
+ExecutionInstruction deleteUpstreamContentWithBackspaceWithIme({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (isWeb) {
+    // On web, pressing backspace reports both deletion deltas and key events.
+    // We handle the deletion delta to delete the content and ignore the key event.
+    return ExecutionInstruction.continueExecution;
+  }
+  return deleteUpstreamContentWithBackspace(editContext: editContext, keyEvent: keyEvent);
+}
+
 ExecutionInstruction deleteUpstreamContentWithBackspace({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -301,7 +314,7 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   return ExecutionInstruction.haltExecution;
 }
 
-ExecutionInstruction moveLeftAndRightWithArrowKeys({
+ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -363,7 +376,20 @@ ExecutionInstruction moveLeftAndRightWithArrowKeys({
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction moveUpAndDownWithArrowKeys({
+ExecutionInstruction moveUpDownLeftAndRightWithArrowKeysWithIme({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (isWeb) {
+    // On web, pressing arrow keys reports both non-text deltas and key events.
+    // We handle the non-text delta to change the selection and ignore the key event.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  return moveUpDownLeftAndRightWithArrowKeys(editContext: editContext, keyEvent: keyEvent);
+}
+
+ExecutionInstruction moveUpAndDownWithArrowKeysOnWeb({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -392,6 +418,89 @@ ExecutionInstruction moveUpAndDownWithArrowKeys({
     didMove = editContext.commonOps.moveCaretUp(expand: keyEvent.isShiftPressed);
   } else {
     didMove = editContext.commonOps.moveCaretDown(expand: keyEvent.isShiftPressed);
+  }
+
+  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction moveBetweenNodesWithLeftAndRightArrowKeysOnWeb({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (!isWeb) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  // On web, pressing left or right arrow keys generates non-text deltas.
+  // We handle those deltas to change the selection. However, if the caret sits at the beginning
+  // or end of a node, pressing these arrow keys doesn't generate any deltas.
+  // Therefore, we need to handle the key events to move the selection to the previouse/next node.
+
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  const arrowKeys = [
+    LogicalKeyboardKey.arrowLeft,
+    LogicalKeyboardKey.arrowRight,
+  ];
+  if (!arrowKeys.contains(keyEvent.logicalKey)) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.linux &&
+      keyEvent.isAltPressed &&
+      (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  bool didMove = false;
+
+  MovementModifier? movementModifier;
+  if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
+      keyEvent.isControlPressed) {
+    movementModifier = MovementModifier.word;
+  } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+    movementModifier = MovementModifier.line;
+  } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+    movementModifier = MovementModifier.word;
+  }
+
+  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
+    final currentExtent = editContext.composer.selection!.base;
+    final nodeId = currentExtent.nodeId;
+    final node = editContext.document.getNodeById(nodeId);
+    if (node == null) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    final extentComponent = editContext.documentLayout.getComponentByNodeId(nodeId);
+    if (extentComponent == null) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    NodePosition? newExtentNodePosition =
+        extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifier);
+
+    if (newExtentNodePosition != null) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    // Move the caret left/upstream.
+    didMove = editContext.commonOps.moveCaretUpstream(
+      expand: keyEvent.isShiftPressed,
+      movementModifier: movementModifier,
+    );
+  } else {
+    // Move the caret right/downstream.
+    didMove = editContext.commonOps.moveCaretDownstream(
+      expand: keyEvent.isShiftPressed,
+      movementModifier: movementModifier,
+    );
   }
 
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;

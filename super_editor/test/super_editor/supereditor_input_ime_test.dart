@@ -746,12 +746,65 @@ Paragraph two
     });
 
     group('on web', () {
-      testWidgetsOnDesktop('deletes a character with backspace', (tester) async {
+      group('moves caret', () {
+        testWidgetsOnDesktopAndWeb('to end of previous node when LEFT_ARROW is pressed at the beginning of a paragraph',
+            (tester) async {
+          await tester
+              .createDocument() //
+              .withLongDoc()
+              .withInputSource(TextInputSource.ime)
+              .pump();
+
+          // Place the caret at the beginning of the second paragraph.
+          await tester.placeCaretInParagraph('2', 0);
+
+          // Press left arrow to move to the previous node.
+          await tester.pressLeftArrow();
+
+          // Ensure the caret sits at the end of the first paragraph.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 439),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktopAndWeb(
+            'to the beginning of next node when RIGHT_ARROW is pressed at the end of a paragraph', (tester) async {
+          await tester
+              .createDocument() //
+              .withLongDoc()
+              .withInputSource(TextInputSource.ime)
+              .pump();
+
+          // Place the caret at the end of the first paragraph.
+          await tester.placeCaretInParagraph('1', 439);
+
+          // Press right arrow to move to the next node.
+          await tester.pressRightArrow();
+
+          // Ensure the caret sits at the beginning of the second paragraph.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '2',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+          );
+        });
+      });
+
+      testWidgetsOnWeb('deletes a character with backspace', (tester) async {
         final testContext = await tester //
             .createDocument()
             .fromMarkdown('This is a paragraph')
             .withInputSource(TextInputSource.ime)
-            .withKeyboardActions(defaultWebImeKeyboardActions)
             .pump();
 
         final nodeId = testContext.editContext.document.nodes.first.id;

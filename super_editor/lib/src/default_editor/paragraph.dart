@@ -14,6 +14,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 
 import 'layout_single_column/layout_single_column.dart';
 import 'text_tools.dart';
@@ -748,6 +749,19 @@ ExecutionInstruction backspaceToClearParagraphBlockType({
 
   final didClearBlockType = editContext.commonOps.convertToParagraph();
   return didClearBlockType ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction enterToInsertBlockNewlineWithIme({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (isWeb) {
+    // On web, pressing enter generates both a key event and a `TextInputAction.newline` action.
+    // We handle the newline action and ignore the key event.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  return enterToInsertBlockNewline(editContext: editContext, keyEvent: keyEvent);
 }
 
 ExecutionInstruction enterToInsertBlockNewline({
