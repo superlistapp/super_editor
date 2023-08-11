@@ -317,13 +317,34 @@ class SplitParagraphRequest implements EditRequest {
     required this.splitPosition,
     required this.newNodeId,
     required this.replicateExistingMetadata,
+    this.attributionsToExtendToNewParagraph = defaultAttributionsToExtendToNewParagraph,
   });
 
   final String nodeId;
   final TextPosition splitPosition;
   final String newNodeId;
   final bool replicateExistingMetadata;
+  // TODO: remove the attribution filter and move the decision to an EditReaction in #1296
+  final AttributionFilter attributionsToExtendToNewParagraph;
 }
+
+/// The default [Attribution]s, which will be carried over from the end of a paragraph
+/// to the beginning of a new paragraph, when splitting a paragraph at the very end.
+///
+/// In practice, this means that when a user places the caret at the end of paragraph
+/// and presses ENTER, these [Attribution]s will be applied to the beginning of the
+/// new paragraph.
+// TODO: remove the attribution filter and move the decision to an EditReaction in #1296
+bool defaultAttributionsToExtendToNewParagraph(Attribution attribution) {
+  return _defaultAttributionsToExtend.contains(attribution);
+}
+
+final _defaultAttributionsToExtend = {
+  boldAttribution,
+  italicsAttribution,
+  underlineAttribution,
+  strikethroughAttribution,
+};
 
 /// Splits the `ParagraphNode` affiliated with the given `nodeId` at the
 /// given `splitPosition`, placing all text after `splitPosition` in a
@@ -335,12 +356,15 @@ class SplitParagraphCommand implements EditCommand {
     required this.splitPosition,
     required this.newNodeId,
     required this.replicateExistingMetadata,
+    this.attributionsToExtendToNewParagraph = defaultAttributionsToExtendToNewParagraph,
   });
 
   final String nodeId;
   final TextPosition splitPosition;
   final String newNodeId;
   final bool replicateExistingMetadata;
+  // TODO: remove the attribution filter and move the decision to an EditReaction in #1296
+  final AttributionFilter attributionsToExtendToNewParagraph;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -359,6 +383,29 @@ class SplitParagraphCommand implements EditCommand {
     editorDocLog.info('Splitting paragraph:');
     editorDocLog.info(' - start text: "${startText.text}"');
     editorDocLog.info(' - end text: "${endText.text}"');
+
+    if (splitPosition.offset == text.text.length) {
+      // The paragraph was split at the very end, the user is creating a new,
+      // empty paragraph. We should only extend desired attributions from the end
+      // of one paragraph, to the beginning of a new paragraph.
+      final newParagraphAttributions = endText.getAttributionSpansInRange(
+        attributionFilter: (a) => true,
+        range: const SpanRange(start: 0, end: 0),
+      );
+      for (final attributionRange in newParagraphAttributions) {
+        if (attributionsToExtendToNewParagraph(attributionRange.attribution)) {
+          // This is an attribution that should continue into a new paragraph.
+          // Letting it stay.
+          continue;
+        }
+
+        // This attribution shouldn't extend from one paragraph to another. Remove it.
+        endText.removeAttribution(
+          attributionRange.attribution,
+          SpanRange(start: attributionRange.start, end: attributionRange.end),
+        );
+      }
+    }
 
     // Change the current nodes content to just the text before the caret.
     editorDocLog.info(' - changing the original paragraph text due to split');

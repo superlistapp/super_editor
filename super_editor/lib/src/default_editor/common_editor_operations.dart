@@ -1538,8 +1538,8 @@ class CommonEditorOperations {
   /// If the current selection is not collapsed then the current selection
   /// is first deleted, then the aforementioned operation takes place.
   ///
-  /// Returns [true] if a new node was inserted or a node was split into two.
-  /// Returns [false] if there was no selection.
+  /// Returns `true` if a new node was inserted or a node was split into two.
+  /// Returns `false` if there was no selection.
   bool insertBlockLevelNewline() {
     editorOpsLog.fine("Inserting block-level newline");
     if (composer.selection == null) {
