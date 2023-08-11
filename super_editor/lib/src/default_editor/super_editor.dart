@@ -848,6 +848,7 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
     ),
     this.platformOverride,
     this.displayOnAllPlatforms = false,
+    this.blinkTimingMode = BlinkTimingMode.ticker,
   });
 
   /// Styles applied to the caret that's painted by this caret overlay.
@@ -860,6 +861,11 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
   ///
   /// By default, the caret is only displayed on desktop.
   final bool displayOnAllPlatforms;
+
+  /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
+  ///
+  /// `Timer`s are not expected to work in tests.
+  final BlinkTimingMode blinkTimingMode;
 
   @override
   Widget build(BuildContext context, SuperEditorContext editContext) {
@@ -878,6 +884,7 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
         composer: editContext.composer,
         documentLayoutResolver: () => editContext.documentLayout,
         caretStyle: caretStyle,
+        blinkTimingMode: blinkTimingMode,
       ),
     );
   }

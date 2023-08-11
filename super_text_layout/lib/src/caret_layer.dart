@@ -8,6 +8,7 @@ class TextLayoutCaret extends StatefulWidget {
     Key? key,
     required this.textLayout,
     this.blinkController,
+    this.blinkTimingMode = BlinkTimingMode.ticker,
     this.blinkCaret = true,
     required this.style,
     required this.position,
@@ -16,6 +17,7 @@ class TextLayoutCaret extends StatefulWidget {
 
   final TextLayout textLayout;
   final BlinkController? blinkController;
+  final BlinkTimingMode blinkTimingMode;
   final bool blinkCaret;
   final CaretStyle style;
   final TextPosition? position;
@@ -32,7 +34,7 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
   @override
   void initState() {
     super.initState();
-    _blinkController = widget.blinkController ?? BlinkController(tickerProvider: this);
+    _blinkController = _createBlinkController();
     if (widget.blinkCaret) {
       _blinkController.startBlinking();
     }
@@ -54,7 +56,7 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
           oldBlinkController.dispose();
         });
       }
-      _blinkController = widget.blinkController ?? BlinkController(tickerProvider: this);
+      _blinkController = _createBlinkController();
     }
 
     if (widget.position != oldWidget.position && widget.blinkCaret) {
@@ -71,6 +73,19 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
     }
 
     super.dispose();
+  }
+
+  BlinkController _createBlinkController() {
+    if (widget.blinkController != null) {
+      return _blinkController;
+    }
+
+    switch (widget.blinkTimingMode) {
+      case BlinkTimingMode.ticker:
+        return BlinkController(tickerProvider: this);
+      case BlinkTimingMode.timer:
+        return BlinkController.withTimer();
+    }
   }
 
   @visibleForTesting

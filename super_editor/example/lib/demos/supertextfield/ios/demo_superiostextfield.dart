@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../_mobile_textfield_demo.dart';
 
@@ -48,6 +49,7 @@ class _SuperIOSTextFieldDemoState extends State<SuperIOSTextFieldDemo> {
           }).build,
       selectionColor: Colors.blue.withOpacity(0.4),
       caretStyle: const CaretStyle(color: Colors.blue),
+      blinkTimingMode: BlinkTimingMode.timer,
       handlesColor: Colors.blue,
       minLines: config.minLines,
       maxLines: config.maxLines,
