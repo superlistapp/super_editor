@@ -909,7 +909,7 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   moveBetweenNodesWithLeftAndRightArrowKeysOnWeb,
   moveToLineStartWithHome,
   moveToLineEndWithEnd,
-  enterToInsertNewTask,
+  enterToInsertNewTaskWithIme,
   enterToInsertBlockNewlineWithIme,
   tabToIndentListItem,
   shiftTabToUnIndentListItem,

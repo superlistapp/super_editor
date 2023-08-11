@@ -269,6 +269,19 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
   }
 }
 
+ExecutionInstruction enterToInsertNewTaskWithIme({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (isWeb) {
+    // On web, pressing enter generates both a key event and a `TextInputAction.newline` action.
+    // We handle the newline action and ignore the key event.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  return enterToInsertNewTask(editContext: editContext, keyEvent: keyEvent);
+}
+
 ExecutionInstruction enterToInsertNewTask({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,

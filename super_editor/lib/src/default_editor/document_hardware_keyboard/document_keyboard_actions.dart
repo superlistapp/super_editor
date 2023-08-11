@@ -397,6 +397,10 @@ ExecutionInstruction moveUpAndDownWithArrowKeysOnWeb({
     return ExecutionInstruction.continueExecution;
   }
 
+  if (!isWeb) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   const arrowKeys = [
     LogicalKeyboardKey.arrowUp,
     LogicalKeyboardKey.arrowDown,
@@ -434,7 +438,7 @@ ExecutionInstruction moveBetweenNodesWithLeftAndRightArrowKeysOnWeb({
   // On web, pressing left or right arrow keys generates non-text deltas.
   // We handle those deltas to change the selection. However, if the caret sits at the beginning
   // or end of a node, pressing these arrow keys doesn't generate any deltas.
-  // Therefore, we need to handle the key events to move the selection to the previouse/next node.
+  // Therefore, we need to handle the key events to move the selection to the previous/next node.
 
   if (keyEvent is! RawKeyDownEvent) {
     return ExecutionInstruction.continueExecution;
