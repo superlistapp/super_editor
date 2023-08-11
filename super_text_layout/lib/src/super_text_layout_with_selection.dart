@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:super_text_layout/src/infrastructure/blink_controller.dart';
 import 'package:super_text_layout/super_text_layout_logging.dart';
 
 import 'caret_layer.dart';
@@ -244,6 +245,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
                   textLayout: textLayout,
                   style: userSelection.caretStyle,
                   blinkCaret: userSelection.blinkCaret,
+                  blinkTimingMode: userSelection.blinkTimingMode,
                   position: userSelection.selection.extent,
                   caretTracker: userSelection.caretFollower,
                 ),
@@ -264,6 +266,7 @@ class UserSelection {
     this.highlightBoundsFollower,
     this.caretStyle = const CaretStyle(),
     this.blinkCaret = true,
+    this.blinkTimingMode = BlinkTimingMode.ticker,
     this.hasCaret = true,
     this.caretFollower,
   });
@@ -295,6 +298,11 @@ class UserSelection {
   /// Whether the caret should blink.
   final bool blinkCaret;
 
+  /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
+  ///
+  /// `Timer`s are not expected to work in tests.
+  final BlinkTimingMode blinkTimingMode;
+
   /// Whether this selection includes the user's caret.
   ///
   /// Typically, there is only one caret per user within an entire
@@ -315,6 +323,7 @@ class UserSelection {
     bool? highlightWhenEmpty,
     LayerLink? highlightBoundsFollower,
     CaretStyle? caretStyle,
+    BlinkTimingMode? blinkTimingMode,
     bool? blinkCaret,
     bool? hasCaret,
     LayerLink? caretFollower,
@@ -328,6 +337,7 @@ class UserSelection {
       blinkCaret: blinkCaret ?? this.blinkCaret,
       hasCaret: hasCaret ?? this.hasCaret,
       caretFollower: caretFollower ?? this.caretFollower,
+      blinkTimingMode: blinkTimingMode ?? this.blinkTimingMode,
     );
   }
 
@@ -341,6 +351,7 @@ class UserSelection {
           highlightWhenEmpty == other.highlightWhenEmpty &&
           highlightBoundsFollower == other.highlightBoundsFollower &&
           caretStyle == other.caretStyle &&
+          blinkTimingMode == other.blinkTimingMode &&
           blinkCaret == other.blinkCaret &&
           hasCaret == other.hasCaret &&
           caretFollower == other.caretFollower;
@@ -352,6 +363,7 @@ class UserSelection {
       highlightWhenEmpty.hashCode ^
       highlightBoundsFollower.hashCode ^
       caretStyle.hashCode ^
+      blinkTimingMode.hashCode ^
       blinkCaret.hashCode ^
       hasCaret.hashCode ^
       caretFollower.hashCode;

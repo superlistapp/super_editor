@@ -36,6 +36,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.maxLines = 1,
     this.lineHeight,
     required this.caretStyle,
+    this.blinkTimingMode = BlinkTimingMode.ticker,
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
@@ -68,6 +69,11 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// The visual representation of the caret.
   final CaretStyle caretStyle;
+
+  /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
+  ///
+  /// `Timer`s are not expected to work in tests.
+  final BlinkTimingMode blinkTimingMode;
 
   /// Color of the selection rectangle for selected text.
   final Color selectionColor;
@@ -539,6 +545,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           caretStyle: widget.caretStyle,
           selection: _textEditingController.selection,
           hasCaret: _focusNode.hasFocus,
+          blinkTimingMode: widget.blinkTimingMode,
         ),
       ),
     );

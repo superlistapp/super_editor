@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 const brandAttribution = NamedAttribution('brand');
 const flutterAttribution = NamedAttribution('flutter');
@@ -137,6 +138,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
                 inputSource: TextInputSource.ime,
                 focusNode: _focusNode,
                 textStyleBuilder: _textStyleBuilder,
+                blinkTimingMode: BlinkTimingMode.timer,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decorationBuilder: (context, child) {
                   return Container(
