@@ -52,6 +52,7 @@ class SuperDesktopTextField extends StatefulWidget {
       width: 1,
       borderRadius: BorderRadius.zero,
     ),
+    this.blinkTimingMode = BlinkTimingMode.ticker,
     this.padding = EdgeInsets.zero,
     this.minLines,
     this.maxLines = 1,
@@ -89,6 +90,11 @@ class SuperDesktopTextField extends StatefulWidget {
 
   /// The visual representation of the caret in this `SelectableText` widget.
   final CaretStyle caretStyle;
+
+  /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
+  ///
+  /// `Timer`s are not expected to work in tests.
+  final BlinkTimingMode blinkTimingMode;
 
   final EdgeInsetsGeometry padding;
 
@@ -401,6 +407,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
           caretStyle: widget.caretStyle,
           selection: _controller.selection,
           hasCaret: _focusNode.hasFocus,
+          blinkTimingMode: widget.blinkTimingMode,
         ),
       ),
     );
