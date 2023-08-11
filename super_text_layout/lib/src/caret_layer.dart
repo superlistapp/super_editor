@@ -80,9 +80,12 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
       return _blinkController;
     }
 
-    return widget.blinkTimingMode == BlinkTimingMode.ticker //
-        ? BlinkController(tickerProvider: this)
-        : BlinkController.withTimer();
+    switch (widget.blinkTimingMode) {
+      case BlinkTimingMode.ticker:
+        return BlinkController(tickerProvider: this);
+      case BlinkTimingMode.timer:
+        return BlinkController.withTimer();
+    }
   }
 
   @visibleForTesting
