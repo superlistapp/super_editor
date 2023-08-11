@@ -761,7 +761,8 @@ void _testParagraphSelection(
     await test(tester, composer, docKey, dragLine);
 
     // Compare the golden
-    await screenMatchesGolden(tester, goldenName);
+    await tester.pumpAndSettle();
+    await expectLater(find.byType(_DragLinePaint), matchesGoldenFileWithPixelAllowance("goldens/$goldenName.png", 0));
 
     tester.view.resetPhysicalSize();
   });
