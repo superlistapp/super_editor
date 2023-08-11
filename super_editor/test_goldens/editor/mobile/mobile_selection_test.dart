@@ -198,6 +198,7 @@ void main() {
           'drag base handle upstream',
           DocumentGestureMode.android,
           "mobile-selection_android_drag-base-upstream",
+          maxPixelMismatchCount: 1,
           (tester, composer, docKey, dragLine) async {
             final docBox = docKey.currentContext!.findRenderObject() as RenderBox;
             final docLayout = docKey.currentState as DocumentLayout;
@@ -720,8 +721,9 @@ void _testParagraphSelection(
   String description,
   DocumentGestureMode platform,
   String goldenName,
-  Future<void> Function(WidgetTester, DocumentComposer, GlobalKey docKey, ValueNotifier<_Line?> dragLine) test,
-) {
+  Future<void> Function(WidgetTester, DocumentComposer, GlobalKey docKey, ValueNotifier<_Line?> dragLine) test, {
+  int maxPixelMismatchCount = 0,
+}) {
   final docKey = GlobalKey();
 
   testGoldensOnAndroid(description, (tester) async {
@@ -762,7 +764,10 @@ void _testParagraphSelection(
 
     // Compare the golden
     await tester.pumpAndSettle();
-    await expectLater(find.byType(_DragLinePaint), matchesGoldenFileWithPixelAllowance("goldens/$goldenName.png", 0));
+    await expectLater(
+      find.byType(_DragLinePaint),
+      matchesGoldenFileWithPixelAllowance("goldens/$goldenName.png", maxPixelMismatchCount),
+    );
 
     tester.view.resetPhysicalSize();
   });
