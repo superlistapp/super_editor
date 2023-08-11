@@ -1,5 +1,6 @@
 # Golden failures
 test/**/failures/
+test_goldens/**/failures/
 
 # Miscellaneous
 *.class

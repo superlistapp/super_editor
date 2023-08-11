@@ -61,6 +61,7 @@ class SuperTextField extends StatefulWidget {
     this.hintBuilder,
     this.controlsColor,
     this.caretStyle,
+    this.blinkTimingMode = BlinkTimingMode.ticker,
     this.selectionColor,
     this.minLines,
     this.maxLines = 1,
@@ -105,6 +106,11 @@ class SuperTextField extends StatefulWidget {
   ///
   /// The color in [caretStyle] overrides the [controlsColor].
   final CaretStyle? caretStyle;
+
+  /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
+  ///
+  /// `Timer`s are not expected to work in tests.
+  final BlinkTimingMode blinkTimingMode;
 
   /// The color of selection rectangles that appear around selected text.
   final Color? selectionColor;

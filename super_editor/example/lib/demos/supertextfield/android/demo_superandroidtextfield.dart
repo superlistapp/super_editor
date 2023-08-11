@@ -2,6 +2,7 @@ import 'package:example/demos/supertextfield/_mobile_textfield_demo.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// Demo of [SuperAndroidTextField].
 class SuperAndroidTextFieldDemo extends StatefulWidget {
@@ -47,6 +48,7 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
           }).build,
       selectionColor: Colors.blue.withOpacity(0.4),
       caretStyle: const CaretStyle(color: Colors.green),
+      blinkTimingMode: BlinkTimingMode.timer,
       handlesColor: Colors.lightGreen,
       minLines: config.minLines,
       maxLines: config.maxLines,
