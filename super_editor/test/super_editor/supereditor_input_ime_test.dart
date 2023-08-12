@@ -819,9 +819,9 @@ Paragraph two
         await tester.ime.sendDeltas(
           [
             const TextEditingDeltaDeletion(
-              oldText: 'This is a paragraph',
-              deletedRange: TextRange(start: 18, end: 19),
-              selection: TextSelection.collapsed(offset: 18),
+              oldText: '. This is a paragraph',
+              deletedRange: TextRange(start: 20, end: 21),
+              selection: TextSelection.collapsed(offset: 20),
               composing: TextRange.empty,
             ),
           ],
