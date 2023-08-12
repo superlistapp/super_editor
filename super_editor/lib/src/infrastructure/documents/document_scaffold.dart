@@ -6,6 +6,11 @@ import 'package:super_editor/src/default_editor/layout_single_column/_presenter.
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/viewport_size_reporting.dart';
 
+/// A scaffold that combines pieces to create a scrolling single-column document, with
+/// gestures placed beneath the document.
+///
+/// This scaffold was created to de-duplicate significant overlap between `SuperEditor`
+/// and `SuperReader`. This class is probably not generally useful.
 class DocumentScaffold<ContextType> extends StatefulWidget {
   const DocumentScaffold({
     super.key,
@@ -21,8 +26,10 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
     this.debugPaint = const DebugPaintConfig(),
   });
 
+  /// [LayerLink] that's is attached to the document layout.
   final LayerLink documentLayoutLink;
 
+  /// [GlobalKey] that's attached to the document layout.
   final GlobalKey documentLayoutKey;
 
   /// Builder that creates a gesture interaction widget, which is displayed
@@ -34,8 +41,11 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
   /// `Scrollable`.
   final ScrollController? scrollController;
 
+  /// Controls auto-scrolling of the document's viewport.
   final AutoScrollController autoScrollController;
 
+  /// Presenter that computes styles for a single-column layout, e.g., component padding,
+  /// text styles, selection.
   final SingleColumnLayoutPresenter presenter;
 
   /// Priority list of widget factories that create instances of
