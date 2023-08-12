@@ -664,6 +664,8 @@ class AttributedTextEditingController with ChangeNotifier {
     _selection = const TextSelection.collapsed(offset: -1);
     _composingAttributions.clear();
     _composingRegion = TextRange.empty;
+
+    notifyListeners();
   }
 
   //------ START: Methods moved here from extension methods ---------
