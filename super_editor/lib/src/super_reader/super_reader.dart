@@ -12,7 +12,6 @@ import 'package:super_editor/src/default_editor/blockquote.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
-import 'package:super_editor/src/default_editor/layout_single_column/_layout.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/_presenter.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/_styler_per_component.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/_styler_shylesheet.dart';
@@ -22,11 +21,10 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
+import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
-import 'package:super_editor/src/infrastructure/viewport_size_reporting.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
 import 'read_only_document_android_touch_interactor.dart';
@@ -328,86 +326,48 @@ class SuperReaderState extends State<SuperReader> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildInputSystem(
-      child: _buildDocumentScrollable(
-        child: _buildGestureSystem(
-          child: _buildDocumentLayout(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInputSystem({
-    required Widget child,
-  }) {
-    // In a read-only document, we don't expect the software keyboard
-    // to ever be open. Therefore, we only respond to key presses, such
-    // as arrow keys.
     return ReadOnlyDocumentKeyboardInteractor(
+      // In a read-only document, we don't expect the software keyboard
+      // to ever be open. Therefore, we only respond to key presses, such
+      // as arrow keys.
       focusNode: _focusNode,
       readerContext: _readerContext,
       keyboardActions: widget.keyboardActions,
       autofocus: widget.autofocus,
-      child: child,
-    );
-  }
-
-  /// Builds the widget tree that scrolls the document. This subtree might
-  /// introduce its own Scrollable, or it might defer to an ancestor
-  /// scrollable. This subtree also hooks up auto-scrolling capabilities.
-  Widget _buildDocumentScrollable({
-    required Widget child,
-  }) {
-    return ViewportBoundsReporter(
-      viewportOuterConstraints: _contentConstraints,
-      child: DocumentScrollable(
-        autoScroller: _autoScrollController,
+      child: DocumentScaffold(
+        documentLayoutLink: _documentLayoutLink,
+        documentLayoutKey: _docLayoutKey,
+        gestureBuilder: _buildGestureInteractor,
         scrollController: _scrollController,
-        scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
-        showDebugPaint: widget.debugPaint.scrolling,
-        child: child,
+        autoScrollController: _autoScrollController,
+        presenter: _docLayoutPresenter!,
+        componentBuilders: widget.componentBuilders,
+        underlays: [
+          // Layer that positions and sizes leader widgets at the bounds
+          // of the users selection so that carets, handles, toolbars, and
+          // other things can follow the selection.
+          (context) => _SelectionLeadersDocumentLayerBuilder(
+                links: _selectionLinks,
+              ).build(context, _readerContext),
+        ],
+        overlays: [
+          for (final overlayBuilder in widget.documentOverlayBuilders) //
+            (context) => overlayBuilder.build(context, _readerContext),
+        ],
+        debugPaint: widget.debugPaint,
       ),
     );
   }
 
-  final _contentConstraints = ValueNotifier<BoxConstraints>(const BoxConstraints());
-
-  /// Builds the widget tree that handles user gesture interaction
-  /// with the document, e.g., mouse input on desktop, or touch input
-  /// on mobile.
-  Widget _buildGestureSystem({
-    required Widget child,
-  }) {
-    late Widget gestureWidget;
+  Widget _buildGestureInteractor(BuildContext context) {
     switch (_gestureMode) {
       case DocumentGestureMode.mouse:
-        gestureWidget = _buildDesktopGestureSystem();
+        return _buildDesktopGestureSystem();
       case DocumentGestureMode.android:
-        gestureWidget = _buildAndroidGestureSystem();
+        return _buildAndroidGestureSystem();
       case DocumentGestureMode.iOS:
-        gestureWidget = _buildIOSGestureSystem();
+        return _buildIOSGestureSystem();
     }
-
-    return ViewportBoundsReplicator(
-      viewportOuterConstraints: _contentConstraints,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // A layer that sits beneath the document and handles gestures.
-          // It's beneath the document so that components that include
-          // interactive UI, like a Checkbox, can intercept their own
-          // touch events.
-          //
-          // This layer is placed outside of `ContentLayers` because this
-          // layer needs to be wider than the document, to fill all available
-          // space.
-          Positioned.fill(
-            child: gestureWidget,
-          ),
-          child,
-        ],
-      ),
-    );
   }
 
   Widget _buildDesktopGestureSystem() {
@@ -454,36 +414,6 @@ class SuperReaderState extends State<SuperReader> {
       createOverlayControlsClipper: widget.createOverlayControlsClipper,
       showDebugPaint: widget.debugPaint.gestures,
       overlayController: widget.overlayController,
-    );
-  }
-
-  Widget _buildDocumentLayout() {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ContentLayers(
-        content: (onBuildScheduled) => CompositedTransformTarget(
-          link: _documentLayoutLink,
-          child: SingleColumnDocumentLayout(
-            key: _docLayoutKey,
-            presenter: _docLayoutPresenter!,
-            componentBuilders: widget.componentBuilders,
-            onBuildScheduled: onBuildScheduled,
-            showDebugPaint: widget.debugPaint.layout,
-          ),
-        ),
-        underlays: [
-          // Layer that positions and sizes leader widgets at the bounds
-          // of the users selection so that carets, handles, toolbars, and
-          // other things can follow the selection.
-          (context) => _SelectionLeadersDocumentLayerBuilder(
-                links: _selectionLinks,
-              ).build(context, _readerContext),
-        ],
-        overlays: [
-          for (final overlayBuilder in widget.documentOverlayBuilders) //
-            (context) => overlayBuilder.build(context, _readerContext),
-        ],
-      ),
     );
   }
 }
