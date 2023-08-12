@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
@@ -132,13 +133,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        setState(() {
-          // no-op
-        });
-      }
-    });
+    scheduleBuildAfterBuild();
   }
 
   ProseTextLayout get _textLayout => widget.textContentKey.currentState!.textLayout;
@@ -147,11 +142,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     // We request a rebuild at the end of this frame so that the editing
     // controls update their position to reflect changes to text styling,
     // e.g., text that gets wider because it was bolded.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        setState(() {});
-      }
-    });
+    scheduleBuildAfterBuild();
   }
 
   void _onBasePanStart(DragStartDetails details) {
@@ -273,9 +264,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   Widget build(BuildContext context) {
     final textFieldRenderObject = context.findRenderObject();
     if (textFieldRenderObject == null) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        setState(() {});
-      });
+      scheduleBuildAfterBuild();
       return const SizedBox();
     }
 
@@ -541,14 +530,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   }
 
   void _scheduleRebuildBecauseTextIsNotLaidOutYet() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        setState(() {
-          // no-op. Rebuild this widget in the hopes that the selectable
-          // text has gone through a layout pass.
-        });
-      }
-    });
+    scheduleBuildAfterBuild();
   }
 }
 
