@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/scrolling_diagnostics/_scrolling_minimap.dart';
 
 import '../infrastructure/document_gestures.dart';
@@ -69,7 +70,7 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     super.initState();
     _scrollController = widget.scrollController ?? ScrollController();
 
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    onNextFrame((_) {
       // Wait until the next frame to attach to auto-scroller because
       // our ScrollController isn't attached to the Scrollable, yet.
       widget.autoScroller.attachScrollable(

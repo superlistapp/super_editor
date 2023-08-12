@@ -12,6 +12,7 @@ import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
@@ -150,7 +151,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // If that's the case, initState is called while the Overlay is being
     // built. This could crash the app. Because of that, we show the editing
     // controls overlay in the next frame.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    onNextFrame((_) {
       if (widget.focusNode.hasFocus) {
         _showEditingControlsOverlay();
       }
@@ -188,9 +189,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // This is posted to the next frame because the first time this method
     // runs, we haven't attached to our own ScrollController yet, so
     // this.scrollPosition might be null.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _updateScrollPositionListener();
-    });
+    onNextFrame((_) => _updateScrollPositionListener());
   }
 
   @override
@@ -241,14 +240,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       //       problem exists for documents, too.
       _removeEditingOverlayControls();
 
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        // During Hot Reload, the gesture mode could be changed,
-        // so it's possible that we are no longer mounted after
-        // the post frame callback.
-        if (mounted) {
-          _showEditingControlsOverlay();
-        }
-      });
+      onNextFrame((_) => _showEditingControlsOverlay());
     }
   }
 
@@ -286,15 +278,13 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        _ensureSelectionExtentIsVisible();
-        _updateHandlesAfterSelectionOrLayoutChange();
+    onNextFrame((_) {
+      _ensureSelectionExtentIsVisible();
+      _updateHandlesAfterSelectionOrLayoutChange();
 
-        setState(() {
-          // reflow document layout
-        });
-      }
+      setState(() {
+        // reflow document layout
+      });
     });
   }
 
@@ -307,9 +297,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     widget.scrollController.addListener(_onScrollChange);
 
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      scrollPosition.isScrollingNotifier.addListener(_onScrollActivityChange);
-    });
+    onNextFrame((_) => scrollPosition.isScrollingNotifier.addListener(_onScrollActivityChange));
   }
 
   void _teardownScrollController() {
@@ -326,7 +314,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (isScrolling) {
       _isScrolling = true;
     } else {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      onNextFrame((_) {
         // Set our scrolling flag to false on the next frame, so that our tap handlers
         // have an opportunity to see that the scrollable was scrolling when the user
         // tapped down.
@@ -376,11 +364,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _onDocumentChange(_) {
     _editingController.hideToolbar();
 
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (!mounted) {
-        return;
-      }
-
+    onNextFrame((_) {
       // The user may have changed the type of node, e.g., paragraph to
       // blockquote, which impacts the caret size and position. Reposition
       // the caret on the next frame.
@@ -393,13 +377,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _onSelectionChange() {
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (!mounted) {
-        return;
-      }
-
-      _updateHandlesAfterSelectionOrLayoutChange();
-    });
+    onNextFrame((_) => _updateHandlesAfterSelectionOrLayoutChange());
   }
 
   void _updateHandlesAfterSelectionOrLayoutChange() {
