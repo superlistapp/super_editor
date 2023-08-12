@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
@@ -127,11 +128,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     if (_shouldShowCollapsedHandle) {
       // The textfield already has a collapsed selection. We need to update the drag handle offset.
       // We use a post-frame callback to let the text be laid out first.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          _updateOffsetForCollapsedHandle();
-        }
-      });
+      onNextFrame((_) => _updateOffsetForCollapsedHandle());
     }
   }
 
@@ -146,11 +143,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       if (_shouldShowCollapsedHandle) {
         // The textfield already has a collapsed selection. We need to update the drag handle offset.
         // We use a post-frame callback to let the text be laid out first.
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          if (mounted) {
-            _updateOffsetForCollapsedHandle();
-          }
-        });
+        onNextFrame((_) => _updateOffsetForCollapsedHandle());
       }
     }
   }
@@ -169,13 +162,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        setState(() {
-          // no-op
-        });
-      }
-    });
+    scheduleBuildAfterBuild();
   }
 
   ProseTextLayout get _textLayout => widget.textContentKey.currentState!.textLayout;
@@ -184,12 +171,8 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     // We request a rebuild at the end of this frame so that the editing
     // controls update their position to reflect changes to text styling,
     // e.g., text that gets wider because it was bolded.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        setState(() {
-          _updateOffsetForCollapsedHandle();
-        });
-      }
+    scheduleBuildAfterBuild(() {
+      _updateOffsetForCollapsedHandle();
     });
   }
 
@@ -402,11 +385,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     final offset = _computeOffsetForCollapsedHandle();
 
     if (offset == null) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          _updateOffsetForCollapsedHandle();
-        }
-      });
+      onNextFrame((_) => _updateOffsetForCollapsedHandle());
       return;
     }
 
@@ -451,9 +430,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
   Widget build(BuildContext context) {
     final textFieldRenderObject = context.findRenderObject();
     if (textFieldRenderObject == null) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        setState(() {});
-      });
+      scheduleBuildAfterBuild();
       return const SizedBox();
     }
 
@@ -772,14 +749,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
   }
 
   void _scheduleRebuildBecauseTextIsNotLaidOutYet() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        setState(() {
-          // no-op. Rebuild this widget in the hopes that the selectable
-          // text has gone through a layout pass.
-        });
-      }
-    });
+    scheduleBuildAfterBuild();
   }
 }
 

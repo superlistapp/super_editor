@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/debug_visualization.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 
@@ -254,9 +255,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     // but we can't react to them.
     // For example, the editor might be resized or moved around the screen.
     // Because of this, we update our size, transform and caret rect at every frame.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _reportVisualInformationToIme();
-    });
+    onNextFrame((_) => _reportVisualInformationToIme());
   }
 
   /// Compute the caret rect in the editor's content space.

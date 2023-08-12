@@ -5,6 +5,7 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/flutter_scheduler.dart';
 
 /// Widget that opens and closes an [imeConnection] based on the [focusNode] gaining
@@ -253,7 +254,7 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
       oldWidget.imeConnection.removeListener(_onConnectionChange);
       widget.imeConnection.addListener(_onConnectionChange);
 
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      onNextFrame((_) {
         // We switched IME connection references, which means we may have switched
         // from one with a connection to one without a connection, or vis-a-versa.
         // Run our connection change check.

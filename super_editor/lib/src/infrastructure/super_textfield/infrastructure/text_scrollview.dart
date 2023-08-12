@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -338,11 +339,7 @@ class _TextScrollViewState extends State<TextScrollView>
   }
 
   void _scheduleViewportHeightUpdateAndRebuild() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        _updateViewportHeightAndRebuild();
-      }
-    });
+    onNextFrame((timeStamp) => _updateViewportHeightAndRebuild());
   }
 
   /// Updates the viewport height and requests a rebuild.
