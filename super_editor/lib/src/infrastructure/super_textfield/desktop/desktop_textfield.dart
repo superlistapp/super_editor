@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
@@ -239,11 +240,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     // Use a post-frame callback to "ensure selection extent is visible"
     // so that any pending visual content changes can happen before
     // attempting to calculate the visual position of the selection extent.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        _updateViewportHeight();
-      }
-    });
+    onNextFrame((_) => _updateViewportHeight());
   }
 
   /// Returns true if the viewport height changed, false otherwise.
@@ -312,12 +309,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       // The text hasn't been laid out yet, which means our calculations
       // for text height is probably wrong. Schedule a post frame callback
       // to re-calculate the height after initial layout.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          setState(() {
-            _updateViewportHeight();
-          });
-        }
+      scheduleBuildAfterBuild(() {
+        _updateViewportHeight();
       });
     }
 
@@ -975,9 +968,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
 
     if (widget.focusNode.hasFocus) {
       // We got an already focused FocusNode, we need to attach to the IME.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _updateSelectionAndImeConnectionOnFocusChange();
-      });
+      onNextFrame((_) => _updateSelectionAndImeConnectionOnFocusChange());
     }
   }
 
@@ -990,9 +981,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
 
       if (widget.focusNode.hasFocus) {
         // We got an already focused FocusNode, we need to attach to the IME.
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          _updateSelectionAndImeConnectionOnFocusChange();
-        });
+        onNextFrame((_) => _updateSelectionAndImeConnectionOnFocusChange());
       }
     }
   }
@@ -1053,9 +1042,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     // There are some operations that might affect our transform or the caret rect but we can't react to them.
     // For example, the text field might be resized or moved around the screen.
     // Because of this, we update our size, transform and caret rect at every frame.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _reportVisualInformationToIme();
-    });
+    onNextFrame((_) => _reportVisualInformationToIme());
   }
 
   Rect? _computeCaretRectInContentSpace() {
@@ -1177,11 +1164,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     if (widget.viewportHeight != oldWidget.viewportHeight) {
       // After the current layout, ensure that the current text
       // selection is visible.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          _ensureSelectionExtentIsVisible();
-        }
-      });
+      onNextFrame((_) => _ensureSelectionExtentIsVisible());
     }
   }
 
@@ -1197,11 +1180,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     // Use a post-frame callback to "ensure selection extent is visible"
     // so that any pending visual content changes can happen before
     // attempting to calculate the visual position of the selection extent.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        _ensureSelectionExtentIsVisible();
-      }
-    });
+    onNextFrame((_) => _ensureSelectionExtentIsVisible());
   }
 
   void _ensureSelectionExtentIsVisible() {

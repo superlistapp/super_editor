@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
@@ -186,9 +187,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
     if (_focusNode.hasFocus) {
       // The given FocusNode already has focus, we need to update selection and attach to IME.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _updateSelectionAndImeConnectionOnFocusChange();
-      });
+      onNextFrame((_) => _updateSelectionAndImeConnectionOnFocusChange());
     }
   }
 
@@ -224,9 +223,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _rebuildEditingOverlayControls();
-      });
+      onNextFrame((_) => _rebuildEditingOverlayControls());
     }
   }
 
@@ -240,9 +237,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     // available upon Hot Reload. Accessing it results in an exception.
     _removeEditingOverlayControls();
 
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _showEditingControlsOverlay();
-    });
+    onNextFrame((_) => _showEditingControlsOverlay());
   }
 
   @override
@@ -284,10 +279,12 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   void didChangeMetrics() {
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted && _focusNode.hasFocus) {
-        _autoScrollToKeepTextFieldVisible();
+    onNextFrame((_) {
+      if (!_focusNode.hasFocus) {
+        return;
       }
+
+      _autoScrollToKeepTextFieldVisible();
     });
   }
 

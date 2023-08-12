@@ -10,6 +10,7 @@ import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
 import 'reader_context.dart';
@@ -148,7 +149,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       // Use a post-frame callback to "ensure selection extent is visible"
       // so that any pending visual document changes can happen before
       // attempting to calculate the visual position of the selection extent.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      onNextFrame((_) {
         readerGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
 
         final globalExtentRect = _getSelectionExtentAsGlobalRect();
