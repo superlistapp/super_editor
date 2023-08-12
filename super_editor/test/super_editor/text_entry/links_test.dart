@@ -321,7 +321,7 @@ void main() {
 
       final doc = SuperEditorInspector.findDocument()!;
 
-      // Place the caret at "www.google.com|"
+      // Place the caret at "www.google.com|".
       await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
 
       // Create a new paragraph.
@@ -362,15 +362,15 @@ void main() {
       // Ensure the Markdown correctly created a list item.
       expect(doc.nodes.first, isA<ListItemNode>());
 
-      // Place the caret at "www.google.com|"
+      // Place the caret at "www.google.com|".
       await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
 
       // Create a new list item.
       await tester.pressEnter();
 
       // We had an issue where link attributions were extended to the beginning of
-      // an empty paragraph, but were removed after the user started typing. So, first,
-      // ensure that no link markers were added to the empty paragraph.
+      // an empty list item, but were removed after the user started typing. So, first,
+      // ensure that no link markers were added to the empty list item.
       expect(doc.nodes.length, 2);
       expect(doc.nodes[1], isA<ListItemNode>());
       final newListItemId = doc.nodes[1].id;
