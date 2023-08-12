@@ -17,12 +17,11 @@ import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
-import 'package:super_editor/src/infrastructure/viewport_size_reporting.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/document_gestures_interaction_overrides.dart';
@@ -498,10 +497,29 @@ class SuperEditorState extends State<SuperEditor> {
         restorePreviousSelectionOnGainFocus: widget.selectionPolicies.restorePreviousSelectionOnGainFocus,
         clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
         child: _buildInputSystem(
-          child: _buildDocumentScrollable(
-            child: _buildGestureSystem(
-              child: _buildDocumentLayout(),
-            ),
+          child: DocumentScaffold(
+            documentLayoutLink: _documentLayoutLink,
+            documentLayoutKey: _docLayoutKey,
+            gestureBuilder: _buildGestureInteractor,
+            scrollController: _scrollController,
+            autoScrollController: _autoScrollController,
+            presenter: presenter,
+            componentBuilders: widget.componentBuilders,
+            underlays: [
+              // Layer that positions and sizes leader widgets at the bounds
+              // of the users selection so that carets, handles, toolbars, and
+              // other things can follow the selection.
+              (context) {
+                return _SelectionLeadersDocumentLayerBuilder(
+                  links: _selectionLinks,
+                ).build(context, editContext);
+              },
+            ],
+            overlays: [
+              for (final overlayBuilder in widget.documentOverlayBuilders) //
+                (context) => overlayBuilder.build(context, editContext),
+            ],
+            debugPaint: widget.debugPaint,
           ),
         ),
       ),
@@ -548,62 +566,15 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
-  /// Builds the widget tree that scrolls the document. This subtree might
-  /// introduce its own Scrollable, or it might defer to an ancestor
-  /// scrollable. This subtree also hooks up auto-scrolling capabilities.
-  Widget _buildDocumentScrollable({
-    required Widget child,
-  }) {
-    return ViewportBoundsReporter(
-      viewportOuterConstraints: _contentConstraints,
-      child: DocumentScrollable(
-        autoScroller: _autoScrollController,
-        scrollController: _scrollController,
-        scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
-        showDebugPaint: widget.debugPaint.scrolling,
-        child: child,
-      ),
-    );
-  }
-
-  final _contentConstraints = ValueNotifier<BoxConstraints>(const BoxConstraints());
-
-  /// Builds the widget tree that handles user gesture interaction
-  /// with the document, e.g., mouse input on desktop, or touch input
-  /// on mobile.
-  Widget _buildGestureSystem({
-    required Widget child,
-  }) {
-    late Widget gestureWidget;
+  Widget _buildGestureInteractor(BuildContext context) {
     switch (gestureMode) {
       case DocumentGestureMode.mouse:
-        gestureWidget = _buildDesktopGestureSystem();
+        return _buildDesktopGestureSystem();
       case DocumentGestureMode.android:
-        gestureWidget = _buildAndroidGestureSystem();
+        return _buildAndroidGestureSystem();
       case DocumentGestureMode.iOS:
-        gestureWidget = _buildIOSGestureSystem();
+        return _buildIOSGestureSystem();
     }
-
-    return ViewportBoundsReplicator(
-      viewportOuterConstraints: _contentConstraints,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // A layer that sits beneath the document and handles gestures.
-          // It's beneath the document so that components that include
-          // interactive UI, like a Checkbox, can intercept their own
-          // touch events.
-          //
-          // This layer is placed outside of `ContentLayers` because this
-          // layer needs to be wider than the document, to fill all available
-          // space.
-          Positioned.fill(
-            child: gestureWidget,
-          ),
-          child,
-        ],
-      ),
-    );
   }
 
   Widget _buildDesktopGestureSystem() {
@@ -658,38 +629,6 @@ class SuperEditorState extends State<SuperEditor> {
       createOverlayControlsClipper: widget.createOverlayControlsClipper,
       overlayController: widget.overlayController,
       showDebugPaint: widget.debugPaint.gestures,
-    );
-  }
-
-  Widget _buildDocumentLayout() {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ContentLayers(
-        content: (onBuildScheduled) => CompositedTransformTarget(
-          link: _documentLayoutLink,
-          child: SingleColumnDocumentLayout(
-            key: _docLayoutKey,
-            presenter: _docLayoutPresenter!,
-            componentBuilders: widget.componentBuilders,
-            onBuildScheduled: onBuildScheduled,
-            showDebugPaint: widget.debugPaint.layout,
-          ),
-        ),
-        underlays: [
-          // Layer that positions and sizes leader widgets at the bounds
-          // of the users selection so that carets, handles, toolbars, and
-          // other things can follow the selection.
-          (context) {
-            return _SelectionLeadersDocumentLayerBuilder(
-              links: _selectionLinks,
-            ).build(context, editContext);
-          },
-        ],
-        overlays: [
-          for (final overlayBuilder in widget.documentOverlayBuilders) //
-            (context) => overlayBuilder.build(context, editContext),
-        ],
-      ),
     );
   }
 }
