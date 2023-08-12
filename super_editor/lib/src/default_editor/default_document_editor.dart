@@ -125,6 +125,7 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           splitPosition: request.splitPosition,
           newNodeId: request.newNodeId,
           replicateExistingMetadata: request.replicateExistingMetadata,
+          attributionsToExtendToNewParagraph: request.attributionsToExtendToNewParagraph,
         )
       : null,
   (request) => request is ConvertParagraphToTaskRequest

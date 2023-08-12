@@ -311,5 +311,87 @@ void main() {
         isFalse,
       );
     });
+
+    testWidgetsOnAllPlatforms('does not extend link to new paragraph', (tester) async {
+      await tester //
+          .createDocument()
+          .fromMarkdown("[www.google.com](www.google.com)")
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final doc = SuperEditorInspector.findDocument()!;
+
+      // Place the caret at "www.google.com|".
+      await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+
+      // Create a new paragraph.
+      await tester.pressEnter();
+
+      // We had an issue where link attributions were extended to the beginning of
+      // an empty paragraph, but were removed after the user started typing. So, first,
+      // ensure that no link markers were added to the empty paragraph.
+      expect(doc.nodes.length, 2);
+      final newParagraphId = doc.nodes[1].id;
+      AttributedText newParagraphText = SuperEditorInspector.findTextInParagraph(newParagraphId);
+      expect(newParagraphText.spans.markers, isEmpty);
+
+      // Type some text.
+      await tester.typeImeText("New paragraph");
+
+      // Ensure the text we typed didn't re-introduce a link attribution.
+      newParagraphText = SuperEditorInspector.findTextInParagraph(newParagraphId);
+      expect(newParagraphText.text, "New paragraph");
+      expect(
+        newParagraphText.getAttributionSpansInRange(
+          attributionFilter: (a) => a is LinkAttribution,
+          range: SpanRange(start: 0, end: newParagraphText.text.length - 1),
+        ),
+        isEmpty,
+      );
+    });
+
+    testWidgetsOnAllPlatforms('does not extend link to new list item', (tester) async {
+      await tester //
+          .createDocument()
+          .fromMarkdown(" * [www.google.com](www.google.com)")
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final doc = SuperEditorInspector.findDocument()!;
+
+      // Ensure the Markdown correctly created a list item.
+      expect(doc.nodes.first, isA<ListItemNode>());
+
+      // Place the caret at "www.google.com|".
+      await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+
+      // Create a new list item.
+      await tester.pressEnter();
+
+      // We had an issue where link attributions were extended to the beginning of
+      // an empty list item, but were removed after the user started typing. So, first,
+      // ensure that no link markers were added to the empty list item.
+      expect(doc.nodes.length, 2);
+      expect(doc.nodes[1], isA<ListItemNode>());
+      final newListItemId = doc.nodes[1].id;
+      AttributedText newListItemText = SuperEditorInspector.findTextInParagraph(newListItemId);
+      expect(newListItemText.spans.markers, isEmpty);
+
+      // Type some text.
+      await tester.typeImeText("New list item");
+
+      // Ensure the text we typed didn't re-introduce a link attribution.
+      newListItemText = SuperEditorInspector.findTextInParagraph(newListItemId);
+      expect(newListItemText.text, "New list item");
+      expect(
+        newListItemText.getAttributionSpansInRange(
+          attributionFilter: (a) => a is LinkAttribution,
+          range: SpanRange(start: 0, end: newListItemText.text.length - 1),
+        ),
+        isEmpty,
+      );
+    });
+
+    // TODO: once it's easier to configure task components (#1295), add a test that checks link attributions when inserting a new task
   });
 }
