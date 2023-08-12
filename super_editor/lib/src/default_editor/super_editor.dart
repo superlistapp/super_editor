@@ -926,7 +926,7 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   deleteToEndOfLineWithCmdDeleteOnMac,
   deleteWordDownstreamWithAltDeleteOnMac,
   deleteWordDownstreamWithControlDeleteOnWindowsAndLinux,
-  deleteDownstreamContentWithDelete,
+  deleteDownstreamContentWithDeleteWithIme,
 ];
 
 /// Stylesheet applied to all [SuperEditor]s by default.

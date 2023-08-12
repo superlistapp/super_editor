@@ -401,9 +401,9 @@ class TestSuperEditorConfigurator {
       imeConfiguration: _config.imeConfiguration ?? const SuperEditorImeConfiguration(),
       imeOverrides: _config.imeOverrides,
       keyboardActions: [
-        ..._config.prependedKeyboardActions,
-        ...defaultKeyboardActions,
-        ..._config.appendedKeyboardActions,
+        ..._prependedKeyboardActions,
+        ...(_inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions),
+        ..._appendedKeyboardActions,
       ],
       gestureMode: _config.gestureMode,
       androidToolbarBuilder: _config.androidToolbarBuilder,
