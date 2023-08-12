@@ -803,6 +803,22 @@ void main() {
       });
     });
 
+    group("clear", () {
+      test('notifies listeners', () {
+        int listenerNotifyCount = 0;
+
+        final controller = AttributedTextEditingController(
+          text: AttributedText(text: 'my text'),
+        )..addListener(() {
+            listenerNotifyCount += 1;
+          });
+
+        controller.clear();
+
+        expect(listenerNotifyCount, 1);
+      });
+    });
+
     test('set text', () {
       final text1 = AttributedText(text: 'text1');
       final text2 = AttributedText(text: 'text2');
