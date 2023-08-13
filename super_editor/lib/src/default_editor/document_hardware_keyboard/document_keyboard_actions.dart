@@ -69,7 +69,7 @@ ExecutionInstruction scrollOnPageDownKeyPress({
 }
 
 /// CTRL/CMD + HOME: Scrolls the viewport up as far as possible.
-ExecutionInstruction scrollOnCtrlOrCmdHomeKeyPress({
+ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -99,7 +99,7 @@ ExecutionInstruction scrollOnCtrlOrCmdHomeKeyPress({
 }
 
 /// CTRL/CMD + END: Scrolls the viewport down as far as possible.
-ExecutionInstruction scrollOnCtrlOrCmdEndKeyPress({
+ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
