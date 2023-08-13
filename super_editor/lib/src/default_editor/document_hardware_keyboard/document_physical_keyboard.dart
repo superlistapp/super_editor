@@ -45,6 +45,7 @@ class SuperEditorHardwareKeyHandler extends StatefulWidget {
   /// Whether or not the [SuperEditorHardwareKeyHandler] should autofocus
   final bool autofocus;
 
+  /// Event collector for debugging purposes.
   final TextInputDebugger? textInputDebugger;
 
   /// The [child] widget, which is expected to include the document UI

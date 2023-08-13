@@ -273,6 +273,7 @@ class SuperEditor extends StatefulWidget {
   /// Plugins that add sets of behaviors to the editing experience.
   final Set<SuperEditorPlugin> plugins;
 
+  /// Event collector for debugging purposes.
   final TextInputDebugger? textInputDebugger;
 
   /// Paints some extra visual ornamentation to help with
@@ -551,7 +552,6 @@ class SuperEditorState extends State<SuperEditor> {
               ...plugin.keyboardActions,
             ...widget.keyboardActions,
           ],
-          keyboardActions: widget.keyboardActions,
           textInputDebugger: widget.textInputDebugger,
           child: child,
         );

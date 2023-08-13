@@ -117,6 +117,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
   /// a property on this IME interactor.
   final FloatingCursorController? floatingCursorController;
 
+  /// Event collector for debugging purposes.
   final TextInputDebugger? textInputDebugger;
 
   final Widget child;

@@ -64,6 +64,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   // TODO: get floating cursor out of here. Use a multi-client IME decorator to split responsibilities
   late FloatingCursorController? _floatingCursorController;
 
+  /// Event collector for debugging purposes.
   final TextInputDebugger? debugger;
 
   void _onContentChange() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -53,13 +54,7 @@ class _SuperEditorImeDebuggerState extends State<SuperEditorImeDebugger> {
   }
 
   void _scrollToTheEndOnNextFrame() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (!mounted) {
-        return;
-      }
-
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    });
+    onNextFrame((_) => _scrollController.jumpTo(_scrollController.position.maxScrollExtent));
   }
 
   @override
