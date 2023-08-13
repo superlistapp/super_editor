@@ -1,16 +1,14 @@
+import 'package:flutter/src/animation/curves.dart';
+import 'package:flutter/src/widgets/scroll_position.dart';
 import 'package:mockito/mockito.dart';
 import 'package:super_editor/super_editor.dart';
-
-/// Fake [DocumentLayout], intended for tests that interact with
-/// a logical [DocumentLayout] but do not depend upon a real
-/// widget tree with a real [DocumentLayout] implementation.
-class FakeDocumentLayout with Mock implements DocumentLayout {}
 
 SuperEditorContext createEditContext({
   required MutableDocument document,
   Editor? documentEditor,
   DocumentLayout? documentLayout,
   MutableDocumentComposer? documentComposer,
+  DocumentScroller? scroller,
   CommonEditorOperations? commonOps,
 }) {
   final composer = documentComposer ?? MutableDocumentComposer();
@@ -22,6 +20,7 @@ SuperEditorContext createEditContext({
     document: document,
     getDocumentLayout: layoutResolver,
     composer: composer,
+    scroller: scroller ?? FakeSuperEditorScroller(),
     commonOps: commonOps ??
         CommonEditorOperations(
           editor: editor,
@@ -30,6 +29,40 @@ SuperEditorContext createEditContext({
           documentLayoutResolver: layoutResolver,
         ),
   );
+}
+
+/// Fake [DocumentLayout], intended for tests that interact with
+/// a logical [DocumentLayout] but do not depend upon a real
+/// widget tree with a real [DocumentLayout] implementation.
+class FakeDocumentLayout with Mock implements DocumentLayout {}
+
+/// Fake [SuperEditorScroll], intended for tests that interact
+/// with logical resources but do not depend upon a real widget
+/// tree with a real `Scrollable`.
+class FakeSuperEditorScroller implements DocumentScroller {
+  @override
+  double get viewportDimension => throw UnimplementedError();
+
+  @override
+  double get minScrollExtent => throw UnimplementedError();
+
+  @override
+  double get maxScrollExtent => throw UnimplementedError();
+
+  @override
+  double get scrollOffset => throw UnimplementedError();
+
+  @override
+  void jumpTo(double newScrollOffset) => throw UnimplementedError();
+
+  @override
+  void animateTo(double to, {required Duration duration, Curve curve = Curves.easeInOut}) => throw UnimplementedError();
+
+  @override
+  void attach(ScrollPosition scrollPosition) => throw UnimplementedError();
+
+  @override
+  void detach() => throw UnimplementedError();
 }
 
 MutableDocument createExampleDocument() {

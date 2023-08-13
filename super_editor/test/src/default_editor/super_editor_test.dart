@@ -53,7 +53,7 @@ void main() {
     group("stylesheet", () {
       testWidgets("change causes presentation to run again", (tester) async {
         // Configure and render a document.
-        final testDocument = await tester //
+        final testDocumentContext = await tester //
             .createDocument()
             .withSingleParagraph()
             .useStylesheet(_stylesheet1)
@@ -64,7 +64,7 @@ void main() {
 
         // Configure and render a document with a different stylesheet.
         await tester //
-            .updateDocument(testDocument)
+            .updateDocument(testDocumentContext.configuration)
             .useStylesheet(_stylesheet2)
             .pump();
 

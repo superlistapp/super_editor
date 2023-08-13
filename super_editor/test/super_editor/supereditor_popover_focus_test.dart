@@ -30,7 +30,7 @@ void main() {
           nodePosition: TextNodePosition(offset: 20),
         ),
       );
-      editContext.editContext.editor.execute([
+      editContext.findEditContext().editor.execute([
         const ChangeSelectionRequest(
           documentSelection,
           SelectionChangeType.expandSelection,
@@ -72,7 +72,7 @@ void main() {
           nodePosition: TextNodePosition(offset: 20),
         ),
       );
-      editContext.editContext.editor.execute([
+      editContext.findEditContext().editor.execute([
         const ChangeSelectionRequest(
           documentSelection,
           SelectionChangeType.expandSelection,

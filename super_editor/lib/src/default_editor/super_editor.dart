@@ -18,6 +18,7 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
+import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
@@ -296,6 +297,7 @@ class SuperEditorState extends State<SuperEditor> {
 
   late DocumentComposer _composer;
 
+  late DocumentScroller _scroller;
   late ScrollController _scrollController;
   late AutoScrollController _autoScrollController;
 
@@ -396,11 +398,14 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   void _createEditContext() {
+    _scroller = DocumentScroller();
+
     editContext = SuperEditorContext(
       editor: widget.editor,
       document: widget.document,
       composer: _composer,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+      scroller: _scroller,
       commonOps: CommonEditorOperations(
         editor: widget.editor,
         document: widget.document,
@@ -503,6 +508,7 @@ class SuperEditorState extends State<SuperEditor> {
             gestureBuilder: _buildGestureInteractor,
             scrollController: _scrollController,
             autoScrollController: _autoScrollController,
+            scroller: _scroller,
             presenter: presenter,
             componentBuilders: widget.componentBuilders,
             underlays: [

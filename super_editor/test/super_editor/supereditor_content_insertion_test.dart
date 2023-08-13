@@ -23,10 +23,10 @@ void main() {
         ).pump();
 
         // Place caret at the beginning of the paragraph.
-        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 0);
 
         // Insert the image at the current selection.
-        context.editContext.commonOps.insertImage('http://image.fake');
+        context.findEditContext().commonOps.insertImage('http://image.fake');
         await tester.pumpAndSettle();
 
         final doc = SuperEditorInspector.findDocument()!;
@@ -62,10 +62,10 @@ void main() {
         ).pump();
 
         // Place caret at "Before the image| after the image".
-        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 16);
+        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 16);
 
         // Insert the image at the current selection.
-        context.editContext.commonOps.insertImage('http://image.fake');
+        context.findEditContext().commonOps.insertImage('http://image.fake');
         await tester.pump();
 
         final doc = SuperEditorInspector.findDocument()!;
@@ -106,10 +106,10 @@ void main() {
         ).pump();
 
         // Place caret at the end of the paragraph.
-        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 15);
+        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 15);
 
         // Insert the image at the current selection.
-        context.editContext.commonOps.insertImage('http://image.fake');
+        context.findEditContext().commonOps.insertImage('http://image.fake');
         await tester.pumpAndSettle();
 
         final doc = SuperEditorInspector.findDocument()!;
@@ -154,11 +154,11 @@ Second paragraph"""). //
         // Place caret at the end of the first paragraph by selecting the second paragraph and pressing left.
         //
         // This results in an upstream text affinity.
-        await tester.placeCaretInParagraph(context.editContext.document.nodes.last.id, 0);
+        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.last.id, 0);
         await tester.pressLeftArrow();
 
         // Insert the image at the current selection.
-        context.editContext.commonOps.insertImage('http://image.fake');
+        context.findEditContext().commonOps.insertImage('http://image.fake');
         await tester.pumpAndSettle();
 
         final doc = SuperEditorInspector.findDocument()!;
@@ -202,7 +202,7 @@ Second paragraph"""). //
         await tester.placeCaretInParagraph("1", 0);
 
         // Insert the image at the current selection.
-        context.editContext.commonOps.insertImage('http://image.fake');
+        context.findEditContext().commonOps.insertImage('http://image.fake');
         await tester.pumpAndSettle();
 
         final doc = SuperEditorInspector.findDocument()!;
@@ -238,10 +238,10 @@ Second paragraph"""). //
             .pump();
 
         // Place caret at the beginning of the paragraph.
-        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 0);
 
         // Insert the horizontal rule at the current selection.
-        context.editContext.commonOps.insertHorizontalRule();
+        context.findEditContext().commonOps.insertHorizontalRule();
         await tester.pumpAndSettle();
 
         final doc = SuperEditorInspector.findDocument()!;
@@ -274,10 +274,10 @@ Second paragraph"""). //
             .pump();
 
         // Place caret at "Before the hr| after the hr".
-        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 13);
+        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 13);
 
         // Insert the horizontal rule at the current selection.
-        context.editContext.commonOps.insertHorizontalRule();
+        context.findEditContext().commonOps.insertHorizontalRule();
         await tester.pumpAndSettle();
 
         final doc = SuperEditorInspector.findDocument()!;
@@ -315,10 +315,10 @@ Second paragraph"""). //
             .pump();
 
         // Place caret at the end of the paragraph.
-        await tester.placeCaretInParagraph(context.editContext.document.nodes.first.id, 15);
+        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.first.id, 15);
 
         // Insert the horizontal rule at the current selection.
-        context.editContext.commonOps.insertHorizontalRule();
+        context.findEditContext().commonOps.insertHorizontalRule();
         await tester.pumpAndSettle();
 
         final doc = SuperEditorInspector.findDocument()!;
@@ -360,11 +360,11 @@ Second paragraph"""). //
         // Place caret at the end of the first paragraph by selecting the second paragraph and pressing left.
         //
         // This results in an upstream text affinity.
-        await tester.placeCaretInParagraph(context.editContext.document.nodes.last.id, 0);
+        await tester.placeCaretInParagraph(context.findEditContext().document.nodes.last.id, 0);
         await tester.pressLeftArrow();
 
         // Insert the horizontal rule at the current selection.
-        context.editContext.commonOps.insertHorizontalRule();
+        context.findEditContext().commonOps.insertHorizontalRule();
         await tester.pumpAndSettle();
 
         final doc = SuperEditorInspector.findDocument()!;
@@ -405,7 +405,7 @@ Second paragraph"""). //
         await tester.placeCaretInParagraph("1", 0);
 
         // Insert the horizontal rule at the current selection.
-        context.editContext.commonOps.insertHorizontalRule();
+        context.findEditContext().commonOps.insertHorizontalRule();
         await tester.pumpAndSettle();
 
         final doc = SuperEditorInspector.findDocument()!;
@@ -477,7 +477,7 @@ Second paragraph"""). //
         await tester.pressEnter();
 
         // Ensure an empty paragraph was inserted and the selection was placed on its beginning.
-        final doc = testContext.editContext.document;
+        final doc = testContext.findEditContext().document;
         expect(doc.nodes.length, 3);
         expect(doc.nodes[1], isA<ParagraphNode>());
         expect((doc.nodes[1] as ParagraphNode).text.text, '');
@@ -485,7 +485,7 @@ Second paragraph"""). //
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: testContext.editContext.document.nodes[1].id,
+              nodeId: testContext.findEditContext().document.nodes[1].id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -536,7 +536,7 @@ Second paragraph"""). //
         await tester.typeImeText('\n');
 
         // Ensure an empty paragraph was inserted and the selection was placed on its beginning.
-        final doc = testContext.editContext.document;
+        final doc = testContext.findEditContext().document;
         expect(doc.nodes.length, 3);
         expect(doc.nodes[1], isA<ParagraphNode>());
         expect((doc.nodes[1] as ParagraphNode).text.text, '');
@@ -544,7 +544,7 @@ Second paragraph"""). //
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: testContext.editContext.document.nodes[1].id,
+              nodeId: testContext.findEditContext().document.nodes[1].id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -596,7 +596,7 @@ Second paragraph"""). //
         await tester.pump();
 
         // Ensure an empty paragraph was inserted and the selection was placed on its beginning.
-        final doc = testContext.editContext.document;
+        final doc = testContext.findEditContext().document;
         expect(doc.nodes.length, 3);
         expect(doc.nodes[1], isA<ParagraphNode>());
         expect((doc.nodes[1] as ParagraphNode).text.text, '');
@@ -604,7 +604,7 @@ Second paragraph"""). //
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: testContext.editContext.document.nodes[1].id,
+              nodeId: testContext.findEditContext().document.nodes[1].id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
