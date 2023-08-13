@@ -91,6 +91,13 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
     }
 
     if (logIndex != null && (instruction != ExecutionInstruction.haltExecution)) {
+      // The key event wasn't handled by the editor.
+      //
+      // We inspect all key events, but not all key events are handled by the editor.
+      // For example, typing a character triggers _onKeyPressed, but we only handle the
+      // character via text deltas from the IME.
+      //
+      // So, as the key wasn't handled we remove it from the event list to avoid spamming.
       widget.textInputDebugger?.removeAt(logIndex);
     }
 

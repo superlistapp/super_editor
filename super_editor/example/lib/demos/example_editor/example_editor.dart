@@ -347,7 +347,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
                     SizedBox(
                       width: 400,
                       child: SuperEditorImeDebugger(
-                        watcher: _textInputDebugger,
+                        debugger: _textInputDebugger,
                       ),
                     ),
                 ],
