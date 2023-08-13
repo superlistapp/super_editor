@@ -43,8 +43,8 @@ ExecutionInstruction scrollOnPageUpKeyPress({
 
 /// PAGE DOWN: Scrolls the viewport down by viewport height minus any overscroll distance.
 ///
-/// If there is not a viewport worth of distance to scroll down, the viewport scrolls down as
-/// far as possible.
+/// If there is not a viewport worth of distance to scroll down, the viewport scrolls down
+/// as far as possible.
 ExecutionInstruction scrollOnPageDownKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -69,6 +69,9 @@ ExecutionInstruction scrollOnPageDownKeyPress({
 }
 
 /// CTRL/CMD + HOME: Scrolls the viewport up as far as possible.
+///
+/// On mac, pressing `CMD + HOME` would scroll the viewport, while on all other
+/// platforms pressing `CTRL + HOME` would do it.
 ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -99,6 +102,9 @@ ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
 }
 
 /// CTRL/CMD + END: Scrolls the viewport down as far as possible.
+///
+/// On mac, pressing `CMD + END` would scroll the viewport, while on all other
+/// platforms pressing `CTRL + END` would do it.
 ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
