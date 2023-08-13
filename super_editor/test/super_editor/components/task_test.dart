@@ -463,5 +463,97 @@ void main() {
       expect(document.nodes.first, isA<ParagraphNode>());
       expect((document.nodes.first as ParagraphNode).text.text, "This is a paragraphThis is a task");
     });
+
+    testWidgetsOnAllPlatforms("combines with previous task when the user presses BACKSPACE at the beginning",
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "2", text: AttributedText(text: "This is another task"), isComplete: false),
+        ],
+      );
+
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the beginning of the second task.
+      await tester.placeCaretInParagraph("2", 0);
+
+      // Press backspace to merge the second task with the previous task.
+      await tester.pressBackspace();
+
+      // Ensure the task was merged with the previous task.
+      expect(document.nodes.length, 1);
+      expect(document.nodes.first, isA<TaskNode>());
+      expect((document.nodes.first as TaskNode).text.text, "This is a taskThis is another task");
+    });
+
+    testWidgetsOnAllPlatforms(
+        "combines with previous task when the user presses BACKSPACE with software keyboard at the beginning",
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "2", text: AttributedText(text: "This is another task"), isComplete: false),
+        ],
+      );
+
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the beginning of the second task.
+      await tester.placeCaretInParagraph("2", 0);
+
+      // Simulate the user pressing BACKSPACE on a software keyboard.
+      await tester.ime.sendDeltas([
+        const TextEditingDeltaNonTextUpdate(
+          oldText: ". This is another task",
+          selection: TextSelection.collapsed(offset: 2),
+          composing: TextRange.empty,
+        ),
+        const TextEditingDeltaDeletion(
+            oldText: ". This is another task",
+            deletedRange: TextRange(start: 1, end: 2),
+            selection: TextSelection.collapsed(offset: 1),
+            composing: TextRange.empty),
+      ], getter: imeClientGetter);
+
+      // Ensure the task was merged with the previous task.
+      expect(document.nodes.length, 1);
+      expect(document.nodes.first, isA<TaskNode>());
+      expect((document.nodes.first as TaskNode).text.text, "This is a taskThis is another task");
+    });
   });
 }
