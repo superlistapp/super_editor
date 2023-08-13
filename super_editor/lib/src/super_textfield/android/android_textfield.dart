@@ -1,40 +1,34 @@
-import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
-import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/fill_width_if_constrained.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
+import 'package:super_editor/src/infrastructure/touch_controls.dart';
+import 'package:super_editor/src/super_textfield/android/_editing_controls.dart';
+import 'package:super_editor/src/super_textfield/android/_user_interaction.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/fill_width_if_constrained.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_scrollview.dart';
+import 'package:super_editor/src/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import '../../platforms/ios/toolbar.dart';
+import '../../infrastructure/_logging.dart';
 import '../metrics.dart';
 import '../styles.dart';
-import '_floating_cursor.dart';
-import '_user_interaction.dart';
 
-export '../../platforms/ios/selection_handles.dart';
-export '../../platforms/ios/toolbar.dart';
-export '../infrastructure/magnifier.dart';
 export '_caret.dart';
-export '_user_interaction.dart';
 
-final _log = iosTextFieldLog;
+final _log = androidTextFieldLog;
 
-class SuperIOSTextField extends StatefulWidget {
-  const SuperIOSTextField({
+class SuperAndroidTextField extends StatefulWidget {
+  const SuperAndroidTextField({
     Key? key,
     this.focusNode,
     this.textController,
-    this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.textAlign = TextAlign.left,
+    this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
     this.minLines,
@@ -45,7 +39,7 @@ class SuperIOSTextField extends StatefulWidget {
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
-    this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
+    this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
   }) : super(key: key);
@@ -128,21 +122,21 @@ class SuperIOSTextField extends StatefulWidget {
   /// keyboard.
   final TextInputAction textInputAction;
 
-  /// Builder that creates the popover toolbar widget that appears when text is selected.
-  final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
-
   /// Whether to paint debug guides.
   final bool showDebugPaint;
+
+  /// Builder that creates the popover toolbar widget that appears when text is selected.
+  final Widget Function(BuildContext, AndroidEditingOverlayController, ToolbarConfig) popoverToolbarBuilder;
 
   /// Padding placed around the text content of this text field, but within the
   /// scrollable viewport.
   final EdgeInsets? padding;
 
   @override
-  State createState() => SuperIOSTextFieldState();
+  State createState() => SuperAndroidTextFieldState();
 }
 
-class SuperIOSTextFieldState extends State<SuperIOSTextField>
+class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     with TickerProviderStateMixin, WidgetsBindingObserver
     implements ProseTextBlock, ImeInputOwner {
   static const Duration _autoScrollAnimationDuration = Duration(milliseconds: 100);
@@ -151,20 +145,17 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
-  final _scrollKey = GlobalKey<IOSTextFieldTouchInteractorState>();
+  final _scrollKey = GlobalKey<AndroidTextFieldTouchInteractorState>();
   final _textContentKey = GlobalKey<ProseTextState>();
 
   late FocusNode _focusNode;
 
   late ImeAttributedTextEditingController _textEditingController;
-  late FloatingCursorController _floatingCursorController;
 
   final _magnifierLayerLink = LayerLink();
-  late IOSEditingOverlayController _editingOverlayController;
+  late AndroidEditingOverlayController _editingOverlayController;
 
   late TextScrollController _textScrollController;
-
-  late MagnifierAndToolbarController _overlayController;
 
   // OverlayEntry that displays the toolbar and magnifier, and
   // positions the invisible touch targets for base/extent
@@ -178,7 +169,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
       ..addListener(_onTextOrSelectionChange)
-      ..onIOSFloatingCursorChange = _onFloatingCursorChange
       ..onPerformActionPressed ??= _onPerformActionPressed;
 
     _textScrollController = TextScrollController(
@@ -186,16 +176,9 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       tickerProvider: this,
     )..addListener(_onTextScrollChange);
 
-    _floatingCursorController = FloatingCursorController(
-      textController: _textEditingController,
-    );
-
-    _overlayController = MagnifierAndToolbarController();
-
-    _editingOverlayController = IOSEditingOverlayController(
+    _editingOverlayController = AndroidEditingOverlayController(
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
-      overlayController: _overlayController,
     );
 
     WidgetsBinding.instance.addObserver(this);
@@ -207,41 +190,38 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   }
 
   @override
-  void didUpdateWidget(SuperIOSTextField oldWidget) {
+  void didUpdateWidget(SuperAndroidTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
-      if (widget.focusNode != null) {
-        _focusNode = widget.focusNode!;
-      } else {
-        _focusNode = FocusNode();
-      }
-      _focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
+    }
+
+    if (widget.textInputAction != oldWidget.textInputAction && _textEditingController.isAttachedToIme) {
+      _textEditingController.updateTextInputConfiguration(
+        textInputAction: widget.textInputAction,
+        textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
+      );
     }
 
     if (widget.textController != oldWidget.textController) {
-      _textEditingController
-        ..removeListener(_onTextOrSelectionChange)
-        ..onIOSFloatingCursorChange = null;
+      _textEditingController.removeListener(_onTextOrSelectionChange);
       if (_textEditingController.onPerformActionPressed == _onPerformActionPressed) {
         _textEditingController.onPerformActionPressed = null;
       }
-
       if (widget.textController != null) {
         _textEditingController = widget.textController!;
       } else {
         _textEditingController = ImeAttributedTextEditingController();
       }
-
       _textEditingController
         ..addListener(_onTextOrSelectionChange)
-        ..onIOSFloatingCursorChange = _onFloatingCursorChange
         ..onPerformActionPressed ??= _onPerformActionPressed;
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
-      onNextFrame((_) => _rebuildHandles());
+      onNextFrame((_) => _rebuildEditingOverlayControls());
     }
   }
 
@@ -255,7 +235,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     // available upon Hot Reload. Accessing it results in an exception.
     _removeEditingOverlayControls();
 
-    onNextFrame((_) => _showHandles());
+    onNextFrame((_) => _showEditingControlsOverlay());
   }
 
   @override
@@ -266,12 +246,10 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       // Dispose after the current frame so that other widgets have
       // time to remove their listeners.
       _editingOverlayController.dispose();
-      _overlayController.dispose();
     });
 
     _textEditingController
       ..removeListener(_onTextOrSelectionChange)
-      ..onIOSFloatingCursorChange = null
       ..detachFromIme();
     if (widget.textController == null) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -311,10 +289,10 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
-  bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
-
   @override
   DeltaTextInputClient get imeClient => _textEditingController;
+
+  bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
   void _updateSelectionAndImeConnectionOnFocusChange() {
     if (_focusNode.hasFocus) {
@@ -331,7 +309,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           );
 
           _autoScrollToKeepTextFieldVisible();
-          _showHandles();
+          _showEditingControlsOverlay();
         });
       }
     } else {
@@ -353,16 +331,16 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   void _onTextScrollChange() {
     if (_controlsOverlayEntry != null) {
-      _rebuildHandles();
+      _rebuildEditingOverlayControls();
     }
   }
 
-  /// Displays [IOSEditingControls] in the app's [Overlay], if not already
+  /// Displays [AndroidEditingOverlayControls] in the app's [Overlay], if not already
   /// displayed.
-  void _showHandles() {
+  void _showEditingControlsOverlay() {
     if (_controlsOverlayEntry == null) {
       _controlsOverlayEntry = OverlayEntry(builder: (overlayContext) {
-        return IOSEditingControls(
+        return AndroidEditingOverlayControls(
           editingController: _editingOverlayController,
           textScrollController: _textScrollController,
           textFieldLayerLink: _textFieldLayerLink,
@@ -370,7 +348,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           textContentLayerLink: _textContentLayerLink,
           textContentKey: _textContentKey,
           handleColor: widget.handlesColor,
-          popoverToolbarBuilder: _defaultPopoverToolbarBuilder,
+          popoverToolbarBuilder: widget.popoverToolbarBuilder,
           showDebugPaint: widget.showDebugPaint,
         );
       });
@@ -379,23 +357,19 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     }
   }
 
-  /// Rebuilds the [IOSEditingControls] in the app's [Overlay], if
+  /// Rebuilds the [AndroidEditingControls] in the app's [Overlay], if
   /// they're currently displayed.
-  void _rebuildHandles() {
+  void _rebuildEditingOverlayControls() {
     _controlsOverlayEntry?.markNeedsBuild();
   }
 
-  /// Removes [IOSEditingControls] from the app's [Overlay], if they're
+  /// Removes [AndroidEditingControls] from the app's [Overlay], if they're
   /// currently displayed.
   void _removeEditingOverlayControls() {
     if (_controlsOverlayEntry != null) {
       _controlsOverlayEntry!.remove();
       _controlsOverlayEntry = null;
     }
-  }
-
-  void _onFloatingCursorChange(RawFloatingCursorPoint point) {
-    _floatingCursorController.updateFloatingCursor(_textContentKey.currentState!.textLayout, point);
   }
 
   /// Handles actions from the IME
@@ -413,6 +387,29 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       default:
         _log.warning("User pressed unhandled action button: $action");
     }
+  }
+
+  /// Handles key presses
+  ///
+  /// Some third party keyboards report backspace as a key press
+  /// rather than a deletion delta, so we need to handle them manually
+  KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
+    _log.finer('_onKeyPressed - keyEvent: ${keyEvent.character}');
+    if (keyEvent is! RawKeyDownEvent) {
+      _log.finer('_onKeyPressed - not a "down" event. Ignoring.');
+      return KeyEventResult.ignored;
+    }
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+      return KeyEventResult.ignored;
+    }
+
+    if (_textEditingController.selection.isCollapsed) {
+      _textEditingController.deletePreviousCharacter();
+    } else {
+      _textEditingController.deleteSelection();
+    }
+
+    return KeyEventResult.handled;
   }
 
   /// Scrolls the ancestor [Scrollable], if any, so [SuperTextField]
@@ -473,11 +470,12 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     return NonReparentingFocus(
       key: _textFieldKey,
       focusNode: _focusNode,
+      onKey: _onKeyPressed,
       child: CompositedTransformTarget(
         link: _textFieldLayerLink,
-        child: IOSTextFieldTouchInteractor(
+        child: AndroidTextFieldTouchInteractor(
           focusNode: _focusNode,
-          selectableTextKey: _textContentKey,
+          textKey: _textContentKey,
           textFieldLayerLink: _textFieldLayerLink,
           textController: _textEditingController,
           editingOverlayController: _editingOverlayController,
@@ -513,15 +511,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
                     children: [
                       if (showHint) widget.hintBuilder!(context),
                       _buildSelectableText(),
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: IOSFloatingCursor(
-                          controller: _floatingCursorController,
-                        ),
-                      ),
                     ],
                   ),
                 );
@@ -536,14 +525,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   Widget _buildSelectableText() {
     final textSpan = _textEditingController.text.text.isNotEmpty
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
-        : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
-
-    CaretStyle caretStyle = widget.caretStyle;
-
-    final caretColorOverride = _floatingCursorController.isShowingFloatingCursor ? Colors.grey : null;
-    if (caretColorOverride != null) {
-      caretStyle = caretStyle.copyWith(color: caretColorOverride);
-    }
+        : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
     return FillWidthIfConstrained(
       child: SuperTextWithSelection.single(
@@ -555,7 +537,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,
           ),
-          caretStyle: caretStyle,
+          caretStyle: widget.caretStyle,
           selection: _textEditingController.selection,
           hasCaret: _focusNode.hasFocus,
           blinkTimingMode: widget.blinkTimingMode,
@@ -565,11 +547,12 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   }
 }
 
-Widget _defaultPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayController controller) {
-  return IOSTextEditingFloatingToolbar(
-    focalPoint: controller.overlayController.toolbarTopAnchor!,
+Widget _defaultAndroidToolbarBuilder(
+    BuildContext context, AndroidEditingOverlayController controller, ToolbarConfig config) {
+  return AndroidTextEditingFloatingToolbar(
     onCutPressed: () {
       final textController = controller.textController;
+
       final selection = textController.selection;
       if (selection.isCollapsed) {
         return;
@@ -601,6 +584,9 @@ Widget _defaultPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayCont
       } else {
         textController.replaceSelectionWithUnstyledText(replacementText: clipboardContent.text!);
       }
+    },
+    onSelectAllPressed: () {
+      controller.textController.selectAll();
     },
   );
 }
