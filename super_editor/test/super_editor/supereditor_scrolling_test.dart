@@ -144,7 +144,7 @@ void main() {
 
       // Place the caret at the end of the document, which causes the editor to
       // scroll to the bottom.
-      docContext.editContext.editor.execute([
+      docContext.findEditContext().editor.execute([
         ChangeSelectionRequest(
           DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -208,7 +208,7 @@ void main() {
 
       // Place the caret at the end of the document, which should cause the
       // editor to scroll to the bottom.
-      docContext.editContext.editor.execute([
+      docContext.findEditContext().editor.execute([
         ChangeSelectionRequest(
           DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -252,7 +252,7 @@ void main() {
 
       // Place the caret at the last paragraph, simulating an event that wasn't initiated by the user.
       // This paragraph is outside the viewport.
-      docContext.editContext.editor.execute([
+      docContext.findEditContext().editor.execute([
         const ChangeSelectionRequest(
           DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -288,7 +288,7 @@ void main() {
       // We pretend it was initiated by the user because that's what causes an auto-scroll.
       // But the auto-scroll should be smart enough to see that the selection hasn't changed
       // and therefore it shouldn't auto-scroll.
-      docContext.editContext.editor.execute([
+      docContext.findEditContext().editor.execute([
         const ChangeSelectionRequest(
           DocumentSelection.collapsed(
             position: DocumentPosition(

@@ -25,10 +25,10 @@ void main() {
 
       // Convert the empty paragraph into a horizontal rule.
       final toolbarOps = KeyboardEditingToolbarOperations(
-        editor: context.editContext.editor,
-        document: context.editContext.document,
-        composer: context.editContext.composer,
-        commonOps: context.editContext.commonOps,
+        editor: context.findEditContext().editor,
+        document: context.findEditContext().document,
+        composer: context.findEditContext().composer,
+        commonOps: context.findEditContext().commonOps,
       );
       toolbarOps.convertToHr();
       await tester.pump();
