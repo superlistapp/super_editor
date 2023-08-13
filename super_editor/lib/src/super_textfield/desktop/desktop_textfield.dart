@@ -40,6 +40,7 @@ class SuperDesktopTextField extends StatefulWidget {
   const SuperDesktopTextField({
     Key? key,
     this.focusNode,
+    this.tapRegionGroupId,
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.textAlign = TextAlign.left,
@@ -68,6 +69,9 @@ class SuperDesktopTextField extends StatefulWidget {
         super(key: key);
 
   final FocusNode? focusNode;
+
+  /// {@macro super_text_field_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   final AttributedTextEditingController? textController;
 
@@ -316,46 +320,51 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
     final isMultiline = widget.minLines != 1 || widget.maxLines != 1;
 
-    return _buildTextInputSystem(
-      isMultiline: isMultiline,
-      child: SuperTextFieldGestureInteractor(
-        focusNode: _focusNode,
-        textController: _controller,
-        textKey: _textKey,
-        textScrollKey: _textScrollKey,
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: _buildTextInputSystem(
         isMultiline: isMultiline,
-        onRightClick: widget.onRightClick,
-        child: MultiListenableBuilder(
-          listenables: {
-            _focusNode,
-            _controller,
-          },
-          builder: (context) {
-            final isTextEmpty = _controller.text.text.isEmpty;
-            final showHint = widget.hintBuilder != null &&
-                ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                    (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+        child: SuperTextFieldGestureInteractor(
+          focusNode: _focusNode,
+          textController: _controller,
+          textKey: _textKey,
+          textScrollKey: _textScrollKey,
+          isMultiline: isMultiline,
+          onRightClick: widget.onRightClick,
+          child: MultiListenableBuilder(
+            listenables: {
+              _focusNode,
+              _controller,
+            },
+            builder: (context) {
+              final isTextEmpty = _controller.text.text.isEmpty;
+              final showHint = widget.hintBuilder != null &&
+                  ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                      (isTextEmpty &&
+                          !_focusNode.hasFocus &&
+                          widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-            return _buildDecoration(
-              child: SuperTextFieldScrollview(
-                key: _textScrollKey,
-                textKey: _textKey,
-                textController: _controller,
-                textAlign: widget.textAlign,
-                scrollController: _scrollController,
-                viewportHeight: _viewportHeight,
-                estimatedLineHeight: _getEstimatedLineHeight(),
-                padding: widget.padding,
-                isMultiline: isMultiline,
-                child: Stack(
-                  children: [
-                    if (showHint) widget.hintBuilder!(context),
-                    _buildSelectableText(),
-                  ],
+              return _buildDecoration(
+                child: SuperTextFieldScrollview(
+                  key: _textScrollKey,
+                  textKey: _textKey,
+                  textController: _controller,
+                  textAlign: widget.textAlign,
+                  scrollController: _scrollController,
+                  viewportHeight: _viewportHeight,
+                  estimatedLineHeight: _getEstimatedLineHeight(),
+                  padding: widget.padding,
+                  isMultiline: isMultiline,
+                  child: Stack(
+                    children: [
+                      if (showHint) widget.hintBuilder!(context),
+                      _buildSelectableText(),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -885,6 +894,36 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
 }
 
 class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboardInteractor> {
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(SuperTextFieldKeyboardInteractor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.focusNode != oldWidget.focusNode) {
+      oldWidget.focusNode.removeListener(_onFocusChange);
+      widget.focusNode.addListener(_onFocusChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (widget.focusNode.hasFocus) {
+      return;
+    }
+
+    _log.fine("Clearing selection because SuperTextField lost focus");
+    widget.textController.selection = const TextSelection.collapsed(offset: -1);
+  }
+
   KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
     _log.fine('_onKeyPressed - keyEvent: ${keyEvent.logicalKey}, character: ${keyEvent.character}');
     if (keyEvent is! RawKeyDownEvent) {
