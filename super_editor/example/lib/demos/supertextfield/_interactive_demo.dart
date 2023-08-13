@@ -121,15 +121,8 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
     return TapRegion(
       groupId: _tapRegionGroupId,
       onTapOutside: (_) {
-        print("Before tap outside. Has focus? ${_focusNode!.hasFocus}. Selection: ${_textFieldController.selection}");
-
         // Remove focus from text field when the user taps anywhere else.
         _focusNode!.unfocus();
-
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          print("On next frame, text field selection: ${_textFieldController.selection}");
-          print("Has focus? ${_focusNode!.hasFocus}");
-        });
       },
       child: Center(
         child: SizedBox(
