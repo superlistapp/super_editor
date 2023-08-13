@@ -22,7 +22,7 @@ Paragraph 2
           .withInputSource(TextInputSource.ime)
           .pump();
 
-      final document = testContext.editContext.document;
+      final document = testContext.findEditContext().document;
 
       // Place the caret at the end of the horizontal rule, by first placing the caret in the paragraph after the
       // horizontal rule, and then pressing the left arrow to move it up.
@@ -61,7 +61,7 @@ Paragraph 2
           .withInputSource(TextInputSource.ime)
           .pump();
 
-      final document = testContext.editContext.document;
+      final document = testContext.findEditContext().document;
 
       // Place the caret at the beginning of the horizontal rule, by first placing the caret in the paragraph before the
       // horizontal rule, and then pressing the right arrow to move it down.

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/scrolling_diagnostics/_scrolling_minimap.dart';
 
@@ -26,14 +27,27 @@ class DocumentScrollable extends StatefulWidget {
   const DocumentScrollable({
     Key? key,
     required this.autoScroller,
+    this.scrollController,
+    this.scroller,
     this.scrollingMinimapId,
     this.showDebugPaint = false,
-    this.scrollController,
     required this.child,
   }) : super(key: key);
 
   /// Controller that adjusts the scroll offset of this [DocumentScrollable].
   final AutoScrollController autoScroller;
+
+  /// The [ScrollController] that governs this [DocumentScrollable]'s scroll
+  /// offset.
+  ///
+  /// `scrollController` is not used if this `SuperEditor` has an ancestor
+  /// `Scrollable`.
+  final ScrollController? scrollController;
+
+  /// A [DocumentScroller], to which this scrollable attaches itself, so
+  /// that external actors, such as keyboard handlers, can query and change
+  /// the scroll offset.
+  final DocumentScroller? scroller;
 
   /// ID that this widget's scrolling system registers with an ancestor
   /// [ScrollingMinimaps] to report scrolling diagnostics for debugging.
@@ -42,13 +56,6 @@ class DocumentScrollable extends StatefulWidget {
   /// Paints some extra visual ornamentation to help with
   /// debugging, when `true`.
   final bool showDebugPaint;
-
-  /// The [ScrollController] that governs this [DocumentScrollable]'s scroll
-  /// offset.
-  ///
-  /// `scrollController` is not used if this `SuperEditor` has an ancestor
-  /// `Scrollable`.
-  final ScrollController? scrollController;
 
   /// This widget's child, which should include a document.
   final Widget child;
@@ -78,6 +85,8 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
         () => _viewport,
         () => _scrollPosition,
       );
+
+      widget.scroller?.attach(_scrollPosition);
     });
   }
 
@@ -107,12 +116,17 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     }
 
     if (widget.autoScroller != oldWidget.autoScroller) {
-      widget.autoScroller.detachScrollable();
+      oldWidget.autoScroller.detachScrollable();
       widget.autoScroller.attachScrollable(
         this,
         () => _viewport,
         () => _scrollPosition,
       );
+    }
+
+    if (widget.scroller != oldWidget.scroller) {
+      oldWidget.scroller?.detach();
+      widget.scroller?.attach(_scrollPosition);
     }
   }
 
@@ -130,6 +144,9 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     }
 
     widget.autoScroller.detachScrollable();
+
+    widget.scroller?.detach();
+
     super.dispose();
   }
 

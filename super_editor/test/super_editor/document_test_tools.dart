@@ -21,74 +21,74 @@ extension DocumentTester on WidgetTester {
     return TestDocumentSelector(this);
   }
 
-  /// Pumps a new [SuperEditor] using the existing [context].
+  /// Pumps a new [SuperEditor] using an existing [configuration].
   ///
   /// Use this method to simulate a [SuperEditor] whose widget tree changes.
-  TestDocumentConfigurator updateDocument(TestDocumentContext context) {
-    return TestDocumentConfigurator._fromExistingContext(this, context);
+  TestSuperEditorConfigurator updateDocument(SuperEditorTestConfiguration configuration) {
+    return TestSuperEditorConfigurator._fromExistingConfiguration(this, configuration);
   }
 }
 
 /// Selects a [Document] configuration when composing a [SuperEditor]
 /// widget in a test.
 ///
-/// Each document selection returns a [TestDocumentConfigurator], which
+/// Each document selection returns a [TestSuperEditorConfigurator], which
 /// is used to complete the configuration, and to pump the [SuperEditor].
 class TestDocumentSelector {
   const TestDocumentSelector(this._widgetTester);
 
   final WidgetTester _widgetTester;
 
-  TestDocumentConfigurator withCustomContent(MutableDocument document) {
-    return TestDocumentConfigurator._(_widgetTester, document);
+  TestSuperEditorConfigurator withCustomContent(MutableDocument document) {
+    return TestSuperEditorConfigurator._(_widgetTester, document);
   }
 
   /// Configures the editor with a [Document] that's parsed from the
   /// given [markdown].
-  TestDocumentConfigurator fromMarkdown(String markdown) {
-    return TestDocumentConfigurator._(
+  TestSuperEditorConfigurator fromMarkdown(String markdown) {
+    return TestSuperEditorConfigurator._(
       _widgetTester,
       deserializeMarkdownToDocument(markdown),
     );
   }
 
-  TestDocumentConfigurator withSingleEmptyParagraph() {
-    return TestDocumentConfigurator._(
+  TestSuperEditorConfigurator withSingleEmptyParagraph() {
+    return TestSuperEditorConfigurator._(
       _widgetTester,
       singleParagraphEmptyDoc(),
     );
   }
 
-  TestDocumentConfigurator withSingleParagraph() {
-    return TestDocumentConfigurator._(
+  TestSuperEditorConfigurator withSingleParagraph() {
+    return TestSuperEditorConfigurator._(
       _widgetTester,
       singleParagraphDoc(),
     );
   }
 
-  TestDocumentConfigurator withSingleParagraphAndLink() {
-    return TestDocumentConfigurator._(
+  TestSuperEditorConfigurator withSingleParagraphAndLink() {
+    return TestSuperEditorConfigurator._(
       _widgetTester,
       singleParagraphWithLinkDoc(),
     );
   }
 
-  TestDocumentConfigurator withTwoEmptyParagraphs() {
-    return TestDocumentConfigurator._(
+  TestSuperEditorConfigurator withTwoEmptyParagraphs() {
+    return TestSuperEditorConfigurator._(
       _widgetTester,
       twoParagraphEmptyDoc(),
     );
   }
 
-  TestDocumentConfigurator withLongTextContent() {
-    return TestDocumentConfigurator._(
+  TestSuperEditorConfigurator withLongTextContent() {
+    return TestSuperEditorConfigurator._(
       _widgetTester,
       longTextDoc(),
     );
   }
 
-  TestDocumentConfigurator withLongDoc() {
-    return TestDocumentConfigurator._(
+  TestSuperEditorConfigurator withLongDoc() {
+    return TestSuperEditorConfigurator._(
       _widgetTester,
       longDoc(),
     );
@@ -96,214 +96,188 @@ class TestDocumentSelector {
 }
 
 /// Builder that configures and pumps a [SuperEditor] widget.
-class TestDocumentConfigurator {
-  TestDocumentConfigurator._fromExistingContext(this._widgetTester, this._existingContext) : _document = null;
+class TestSuperEditorConfigurator {
+  TestSuperEditorConfigurator._fromExistingConfiguration(this._widgetTester, this._config);
 
-  TestDocumentConfigurator._(this._widgetTester, this._document) : _existingContext = null;
+  TestSuperEditorConfigurator._(this._widgetTester, MutableDocument document)
+      : _config = SuperEditorTestConfiguration(document);
 
   final WidgetTester _widgetTester;
-  final MutableDocument? _document;
-  final TestDocumentContext? _existingContext;
-  final _addedRequestHandlers = <EditRequestHandler>[];
-  final _addedReactions = <EditReaction>[];
-  DocumentGestureMode? _gestureMode;
-  TextInputSource? _inputSource;
-  SuperEditorSelectionPolicies? _selectionPolicies;
-  SoftwareKeyboardController? _softwareKeyboardController;
-  SuperEditorImePolicies? _imePolicies;
-  SuperEditorImeConfiguration? _imeConfiguration;
-  DeltaTextInputClientDecorator? _imeOverrides;
-  final _prependedKeyboardActions = <DocumentKeyboardAction>[];
-  final _appendedKeyboardActions = <DocumentKeyboardAction>[];
-  ThemeData? _appTheme;
-  Stylesheet? _stylesheet;
-  final _addedComponents = <ComponentBuilder>[];
-  bool _autoFocus = false;
-  ui.Size? _editorSize;
-  List<ComponentBuilder>? _componentBuilders;
-  WidgetTreeBuilder? _widgetTreeBuilder;
-  ScrollController? _scrollController;
-  FocusNode? _focusNode;
-  DocumentSelection? _selection;
-  WidgetBuilder? _androidToolbarBuilder;
-  WidgetBuilder? _iOSToolbarBuilder;
-  Key? _key;
+  final SuperEditorTestConfiguration _config;
 
-  final _plugins = <SuperEditorPlugin>{};
-
-  TestDocumentConfigurator withAddedRequestHandlers(List<EditRequestHandler> addedRequestHandlers) {
-    _addedRequestHandlers.addAll(addedRequestHandlers);
+  TestSuperEditorConfigurator withAddedRequestHandlers(List<EditRequestHandler> addedRequestHandlers) {
+    _config.addedRequestHandlers.addAll(addedRequestHandlers);
     return this;
   }
 
-  TestDocumentConfigurator withAddedReactions(List<EditReaction> addedReactions) {
-    _addedReactions.addAll(addedReactions);
+  TestSuperEditorConfigurator withAddedReactions(List<EditReaction> addedReactions) {
+    _config.addedReactions.addAll(addedReactions);
     return this;
   }
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
-  TestDocumentConfigurator forDesktop({
+  TestSuperEditorConfigurator forDesktop({
     TextInputSource inputSource = TextInputSource.ime,
   }) {
-    _inputSource = inputSource;
-    _gestureMode = DocumentGestureMode.mouse;
+    _config.inputSource = inputSource;
+    _config.gestureMode = DocumentGestureMode.mouse;
     return this;
   }
 
   /// Configures the [SuperEditor] for standard Android interactions,
   /// e.g., touch gestures and IME input.
-  TestDocumentConfigurator forAndroid() {
-    _gestureMode = DocumentGestureMode.android;
-    _inputSource = TextInputSource.ime;
+  TestSuperEditorConfigurator forAndroid() {
+    _config.gestureMode = DocumentGestureMode.android;
+    _config.inputSource = TextInputSource.ime;
     return this;
   }
 
   /// Configures the [SuperEditor] for standard iOS interactions,
   /// e.g., touch gestures and IME input.
-  TestDocumentConfigurator forIOS() {
-    _gestureMode = DocumentGestureMode.iOS;
-    _inputSource = TextInputSource.ime;
+  TestSuperEditorConfigurator forIOS() {
+    _config.gestureMode = DocumentGestureMode.iOS;
+    _config.inputSource = TextInputSource.ime;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [inputSource].
-  TestDocumentConfigurator withInputSource(TextInputSource inputSource) {
-    _inputSource = inputSource;
+  TestSuperEditorConfigurator withInputSource(TextInputSource inputSource) {
+    _config.inputSource = inputSource;
     return this;
   }
 
   /// Configures the [SuperEditor] with the given selection [policies], which dictate the interactions
   /// between selection and other details, such as focus change.
-  TestDocumentConfigurator withSelectionPolicies(SuperEditorSelectionPolicies policies) {
-    _selectionPolicies = policies;
+  TestSuperEditorConfigurator withSelectionPolicies(SuperEditorSelectionPolicies policies) {
+    _config.selectionPolicies = policies;
     return this;
   }
 
   /// Configures the [SuperEditor]'s [SoftwareKeyboardController].
-  TestDocumentConfigurator withSoftwareKeyboardController(SoftwareKeyboardController controller) {
-    _softwareKeyboardController = controller;
+  TestSuperEditorConfigurator withSoftwareKeyboardController(SoftwareKeyboardController controller) {
+    _config.softwareKeyboardController = controller;
     return this;
   }
 
   /// Configures the [SuperEditor] with the given IME [policies], which dictate the interactions
   /// between focus, selection, and the platform IME, including software keyborads on mobile.
-  TestDocumentConfigurator withImePolicies(SuperEditorImePolicies policies) {
-    _imePolicies = policies;
+  TestSuperEditorConfigurator withImePolicies(SuperEditorImePolicies policies) {
+    _config.imePolicies = policies;
     return this;
   }
 
   /// Configures the way in which the user interacts with the IME, e.g., brightness, autocorrection, etc.
-  TestDocumentConfigurator withImeConfiguration(SuperEditorImeConfiguration configuration) {
-    _imeConfiguration = configuration;
+  TestSuperEditorConfigurator withImeConfiguration(SuperEditorImeConfiguration configuration) {
+    _config.imeConfiguration = configuration;
     return this;
   }
 
   /// Configures the [SuperEditor] to intercept and override desired IME signals, as
   /// determined by the given [imeOverrides].
-  TestDocumentConfigurator withImeOverrides(DeltaTextInputClientDecorator imeOverrides) {
-    _imeOverrides = imeOverrides;
+  TestSuperEditorConfigurator withImeOverrides(DeltaTextInputClientDecorator imeOverrides) {
+    _config.imeOverrides = imeOverrides;
     return this;
   }
 
-  TestDocumentConfigurator withAddedKeyboardActions({
+  TestSuperEditorConfigurator withAddedKeyboardActions({
     List<DocumentKeyboardAction> prepend = const [],
     List<DocumentKeyboardAction> append = const [],
   }) {
-    _prependedKeyboardActions.addAll(prepend);
-    _appendedKeyboardActions.addAll(append);
+    _config.prependedKeyboardActions.addAll(prepend);
+    _config.appendedKeyboardActions.addAll(append);
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [gestureMode].
-  TestDocumentConfigurator withGestureMode(DocumentGestureMode gestureMode) {
-    _gestureMode = gestureMode;
+  TestSuperEditorConfigurator withGestureMode(DocumentGestureMode gestureMode) {
+    _config.gestureMode = gestureMode;
     return this;
   }
 
   /// Configures the [SuperEditor] to constrain its maxHeight and maxWidth using the given [size].
-  TestDocumentConfigurator withEditorSize(ui.Size? size) {
-    _editorSize = size;
+  TestSuperEditorConfigurator withEditorSize(ui.Size? size) {
+    _config.editorSize = size;
     return this;
   }
 
   /// Configures the [SuperEditor] to use only the given [componentBuilders]
-  TestDocumentConfigurator withComponentBuilders(List<ComponentBuilder>? componentBuilders) {
-    _componentBuilders = componentBuilders;
+  TestSuperEditorConfigurator withComponentBuilders(List<ComponentBuilder>? componentBuilders) {
+    _config.componentBuilders = componentBuilders;
     return this;
   }
 
   /// Configures the [SuperEditor] to use a custom widget tree above [SuperEditor].
-  TestDocumentConfigurator withCustomWidgetTreeBuilder(WidgetTreeBuilder? builder) {
-    _widgetTreeBuilder = builder;
+  TestSuperEditorConfigurator withCustomWidgetTreeBuilder(WidgetTreeBuilder? builder) {
+    _config.widgetTreeBuilder = builder;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [scrollController]
-  TestDocumentConfigurator withScrollController(ScrollController? scrollController) {
-    _scrollController = scrollController;
+  TestSuperEditorConfigurator withScrollController(ScrollController? scrollController) {
+    _config.scrollController = scrollController;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [focusNode]
-  TestDocumentConfigurator withFocusNode(FocusNode? focusNode) {
-    _focusNode = focusNode;
+  TestSuperEditorConfigurator withFocusNode(FocusNode? focusNode) {
+    _config.focusNode = focusNode;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [selection] as its initial selection.
-  TestDocumentConfigurator withSelection(DocumentSelection? selection) {
-    _selection = selection;
+  TestSuperEditorConfigurator withSelection(DocumentSelection? selection) {
+    _config.selection = selection;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [builder] as its android toolbar builder.
-  TestDocumentConfigurator withAndroidToolbarBuilder(WidgetBuilder? builder) {
-    _androidToolbarBuilder = builder;
+  TestSuperEditorConfigurator withAndroidToolbarBuilder(WidgetBuilder? builder) {
+    _config.androidToolbarBuilder = builder;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [builder] as its iOS toolbar builder.
-  TestDocumentConfigurator withiOSToolbarBuilder(WidgetBuilder? builder) {
-    _iOSToolbarBuilder = builder;
+  TestSuperEditorConfigurator withiOSToolbarBuilder(WidgetBuilder? builder) {
+    _config.iOSToolbarBuilder = builder;
     return this;
   }
 
   /// Configures the [ThemeData] used for the [MaterialApp] that wraps
   /// the [SuperEditor].
-  TestDocumentConfigurator useAppTheme(ThemeData theme) {
-    _appTheme = theme;
+  TestSuperEditorConfigurator useAppTheme(ThemeData theme) {
+    _config.appTheme = theme;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [stylesheet].
-  TestDocumentConfigurator useStylesheet(Stylesheet? stylesheet) {
-    _stylesheet = stylesheet;
+  TestSuperEditorConfigurator useStylesheet(Stylesheet? stylesheet) {
+    _config.stylesheet = stylesheet;
     return this;
   }
 
   /// Adds the given component builders to the list of component builders that are
   /// used to render the document layout in the pumped [SuperEditor].
-  TestDocumentConfigurator withAddedComponents(List<ComponentBuilder> newComponents) {
-    _addedComponents.addAll(newComponents);
+  TestSuperEditorConfigurator withAddedComponents(List<ComponentBuilder> newComponents) {
+    _config.addedComponents.addAll(newComponents);
     return this;
   }
 
   /// Configures the [SuperEditor] to auto-focus when first pumped, or not.
-  TestDocumentConfigurator autoFocus(bool autoFocus) {
-    _autoFocus = autoFocus;
+  TestSuperEditorConfigurator autoFocus(bool autoFocus) {
+    _config.autoFocus = autoFocus;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [key].
-  TestDocumentConfigurator withKey(Key? key) {
-    _key = key;
+  TestSuperEditorConfigurator withKey(Key? key) {
+    _config.key = key;
     return this;
   }
 
   /// Applies the given [plugin] to the pumped [SuperEditor].
-  TestDocumentConfigurator withPlugin(SuperEditorPlugin plugin) {
-    _plugins.add(plugin);
+  TestSuperEditorConfigurator withPlugin(SuperEditorPlugin plugin) {
+    _config.plugins.add(plugin);
     return this;
   }
 
@@ -322,11 +296,8 @@ class TestDocumentConfigurator {
   }
 
   /// Builds a Super Editor experience based on chosen configurations and
-  /// returns a [TestDocumentContext] and the associated [Widget], which
-  /// presents the Super Editor UI.
-  ///
-  /// The returned [Widget] includes more than just a [SuperEditor] widget.
-  /// It includes everything needed to pump a full UI in a widget test.
+  /// returns a [ConfiguredSuperEditorWidget], which includes the associated
+  /// Super Editor [Widget].
   ///
   /// If you want to immediately pump this UI into a [WidgetTester], use
   /// [pump], which does that for you.
@@ -356,49 +327,55 @@ class TestDocumentConfigurator {
   /// A [TestDocumentContext] is useful as a return value for clients, so that
   /// those clients can access important pieces within a [SuperEditor] widget.
   TestDocumentContext _createTestDocumentContext() {
-    assert(_document != null || _existingContext != null);
+    // if (_config.document == null) {
+    //   return _existingContext!;
+    // }
 
-    if (_document == null) {
-      return _existingContext!;
-    }
+    // Only assign if non-null in case we're updating an existing configuration
+    // from a previous widget pump.
+    _config.layoutKey ??= GlobalKey();
 
-    final layoutKey = GlobalKey();
-    final focusNode = _focusNode ?? FocusNode();
-    final composer = MutableDocumentComposer(initialSelection: _selection);
-    final editor = createDefaultDocumentEditor(document: _document!, composer: composer)
-      ..requestHandlers.insertAll(0, _addedRequestHandlers)
-      ..reactionPipeline.insertAll(0, _addedReactions);
+    final layoutKey = _config.layoutKey!;
+    final focusNode = _config.focusNode ?? FocusNode();
+    final composer = MutableDocumentComposer(initialSelection: _config.selection);
+    final editor = createDefaultDocumentEditor(document: _config.document, composer: composer)
+      ..requestHandlers.insertAll(0, _config.addedRequestHandlers)
+      ..reactionPipeline.insertAll(0, _config.addedReactions);
 
-    // ignore: prefer_function_declarations_over_variables
-    final layoutResolver = () => layoutKey.currentState as DocumentLayout;
-    final commonOps = CommonEditorOperations(
-      editor: editor,
-      document: _document!,
-      documentLayoutResolver: layoutResolver,
-      composer: composer,
-    );
-    final editContext = SuperEditorContext(
-      editor: editor,
-      document: _document!,
-      getDocumentLayout: layoutResolver,
-      composer: composer,
-      commonOps: commonOps,
-    );
+    // // ignore: prefer_function_declarations_over_variables
+    // final layoutResolver = () => layoutKey.currentState as DocumentLayout;
+    // final commonOps = CommonEditorOperations(
+    //   editor: editor,
+    //   document: _document!,
+    //   documentLayoutResolver: layoutResolver,
+    //   composer: composer,
+    // );
+    // final editContext = SuperEditorContext(
+    //   editor: editor,
+    //   document: _document!,
+    //   getDocumentLayout: layoutResolver,
+    //   composer: composer,
+    //   commonOps: commonOps,
+    // );
 
     return TestDocumentContext._(
       focusNode: focusNode,
       layoutKey: layoutKey,
-      editContext: editContext,
+      document: _config.document,
+      composer: composer,
+      editor: editor,
+      // editContext: editContext,
+      configuration: _config,
     );
   }
 
   /// Builds a complete screen experience, which includes the given [superEditor].
   Widget _buildWidgetTree(Widget superEditor) {
-    if (_widgetTreeBuilder != null) {
-      return _widgetTreeBuilder!(superEditor);
+    if (_config.widgetTreeBuilder != null) {
+      return _config.widgetTreeBuilder!(superEditor);
     }
     return MaterialApp(
-      theme: _appTheme,
+      theme: _config.appTheme,
       home: Scaffold(
         body: superEditor,
       ),
@@ -409,11 +386,11 @@ class TestDocumentConfigurator {
   /// Constrains the width and height of the given [superEditor], based on configurations
   /// in this class.
   Widget _buildConstrainedContent(Widget superEditor) {
-    if (_editorSize != null) {
+    if (_config.editorSize != null) {
       return ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: _editorSize!.width,
-          maxHeight: _editorSize!.height,
+          maxWidth: _config.editorSize!.width,
+          maxHeight: _config.editorSize!.height,
         ),
         child: superEditor,
       );
@@ -425,36 +402,71 @@ class TestDocumentConfigurator {
   /// [testDocumentContext], as well as other configurations in this class.
   Widget _buildSuperEditor(TestDocumentContext testDocumentContext) {
     return SuperEditor(
-      key: _key,
-      documentLayoutKey: testDocumentContext.layoutKey,
-      editor: testDocumentContext.editContext.editor,
-      document: testDocumentContext.editContext.document,
-      composer: testDocumentContext.editContext.composer,
+      key: _config.key,
       focusNode: testDocumentContext.focusNode,
-      inputSource: _inputSource,
-      selectionPolicies: _selectionPolicies ?? const SuperEditorSelectionPolicies(),
-      softwareKeyboardController: _softwareKeyboardController,
-      imePolicies: _imePolicies ?? const SuperEditorImePolicies(),
-      imeConfiguration: _imeConfiguration ?? const SuperEditorImeConfiguration(),
-      imeOverrides: _imeOverrides,
+      editor: testDocumentContext.editor,
+      document: testDocumentContext.document,
+      composer: testDocumentContext.composer,
+      documentLayoutKey: testDocumentContext.layoutKey,
+      inputSource: _config.inputSource,
+      selectionPolicies: _config.selectionPolicies ?? const SuperEditorSelectionPolicies(),
+      softwareKeyboardController: _config.softwareKeyboardController,
+      imePolicies: _config.imePolicies ?? const SuperEditorImePolicies(),
+      imeConfiguration: _config.imeConfiguration ?? const SuperEditorImeConfiguration(),
+      imeOverrides: _config.imeOverrides,
       keyboardActions: [
-        ..._prependedKeyboardActions,
+        ..._config.prependedKeyboardActions,
         ...defaultKeyboardActions,
-        ..._appendedKeyboardActions,
+        ..._config.appendedKeyboardActions,
       ],
-      gestureMode: _gestureMode,
-      androidToolbarBuilder: _androidToolbarBuilder,
-      iOSToolbarBuilder: _iOSToolbarBuilder,
-      stylesheet: _stylesheet,
+      gestureMode: _config.gestureMode,
+      androidToolbarBuilder: _config.androidToolbarBuilder,
+      iOSToolbarBuilder: _config.iOSToolbarBuilder,
+      stylesheet: _config.stylesheet,
       componentBuilders: [
-        ..._addedComponents,
-        ...(_componentBuilders ?? defaultComponentBuilders),
+        ..._config.addedComponents,
+        ...(_config.componentBuilders ?? defaultComponentBuilders),
       ],
-      autofocus: _autoFocus,
-      scrollController: _scrollController,
-      plugins: _plugins,
+      autofocus: _config.autoFocus,
+      scrollController: _config.scrollController,
+      plugins: _config.plugins,
     );
   }
+}
+
+class SuperEditorTestConfiguration {
+  SuperEditorTestConfiguration(this.document);
+
+  ThemeData? appTheme;
+  Key? key;
+  FocusNode? focusNode;
+  bool autoFocus = false;
+  ui.Size? editorSize;
+  final MutableDocument document;
+  final addedRequestHandlers = <EditRequestHandler>[];
+  final addedReactions = <EditReaction>[];
+  GlobalKey? layoutKey;
+  List<ComponentBuilder>? componentBuilders;
+  Stylesheet? stylesheet;
+  ScrollController? scrollController;
+  DocumentGestureMode? gestureMode;
+  TextInputSource? inputSource;
+  SuperEditorSelectionPolicies? selectionPolicies;
+  SoftwareKeyboardController? softwareKeyboardController;
+  SuperEditorImePolicies? imePolicies;
+  SuperEditorImeConfiguration? imeConfiguration;
+  DeltaTextInputClientDecorator? imeOverrides;
+  final prependedKeyboardActions = <DocumentKeyboardAction>[];
+  final appendedKeyboardActions = <DocumentKeyboardAction>[];
+  final addedComponents = <ComponentBuilder>[];
+  WidgetBuilder? androidToolbarBuilder;
+  WidgetBuilder? iOSToolbarBuilder;
+
+  DocumentSelection? selection;
+
+  final plugins = <SuperEditorPlugin>{};
+
+  WidgetTreeBuilder? widgetTreeBuilder;
 }
 
 /// Must return a widget tree containing the given [superEditor]
@@ -464,12 +476,24 @@ class TestDocumentContext {
   const TestDocumentContext._({
     required this.focusNode,
     required this.layoutKey,
-    required this.editContext,
+    required this.document,
+    required this.composer,
+    required this.editor,
+    // required this.editContext,
+    required this.configuration,
   });
 
   final FocusNode focusNode;
   final GlobalKey layoutKey;
-  final SuperEditorContext editContext;
+  // TODO: remove these document, editor, composer references
+  final MutableDocument document;
+  final MutableDocumentComposer composer;
+  final Editor editor;
+  // final SuperEditorContext editContext;
+  SuperEditorContext findEditContext() =>
+      ((find.byType(SuperEditor).evaluate().first as StatefulElement).state as SuperEditorState).editContext;
+
+  final SuperEditorTestConfiguration configuration;
 }
 
 class ConfiguredSuperEditorWidget {

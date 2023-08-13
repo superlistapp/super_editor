@@ -416,6 +416,7 @@ SuperEditorContext _createEditContext() {
     document: document,
     getDocumentLayout: () => fakeLayout,
     composer: composer,
+    scroller: FakeSuperEditorScroller(),
     commonOps: CommonEditorOperations(
       editor: documentEditor,
       document: document,

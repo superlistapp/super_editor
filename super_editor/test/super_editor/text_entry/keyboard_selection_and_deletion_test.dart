@@ -31,7 +31,7 @@ void main() {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
         // Ensure that the whole word was deleted.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text.startsWith("Lorem  dolor sit amet"), isTrue);
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -60,7 +60,7 @@ void main() {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
         // Ensure that the whole word was deleted.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text.startsWith("Lorem dolor sit amet"), isTrue);
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -89,7 +89,7 @@ void main() {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
         // Ensure that the whole word was deleted.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text, startsWith("Lorem ipsum  sit amet"));
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -118,7 +118,7 @@ void main() {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
         // Ensure that the whole word was deleted.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text.startsWith("Lorem ipsum sit amet"), isTrue);
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -145,7 +145,7 @@ void main() {
         await tester.pressCtlBackspace();
 
         // Ensure that a character was deleted.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text.startsWith("Lorem ipsu dolor sit amet"), isTrue);
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -174,7 +174,7 @@ void main() {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 
         // Ensure that a character was deleted.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text.startsWith("Lorem ipsumdolor sit amet"), isTrue);
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -203,7 +203,7 @@ void main() {
         await tester.pressCtlBackspace();
 
         // Ensure that the whole word was deleted.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text.startsWith("Lorem  dolor sit amet"), isTrue);
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -230,7 +230,7 @@ void main() {
         await tester.pressCtlBackspace();
 
         // Ensure that the whole word was deleted.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text.startsWith("Lorem dolor sit amet"), isTrue);
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -259,7 +259,7 @@ void main() {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 
         // Ensure that the whole word was deleted.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text, startsWith("Lorem ipsum  sit amet"));
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -288,7 +288,7 @@ void main() {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 
         // Ensure that the whole word was deleted.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text.startsWith("Lorem ipsum sit amet"), isTrue);
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -315,7 +315,7 @@ void main() {
         await tester.pressAltBackspace();
 
         // Ensure that nothing changed.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text, startsWith("Lorem ipsu dolor sit amet"));
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -344,7 +344,7 @@ void main() {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
         // Ensure that nothing changed.
-        final paragraphNode = testContext.editContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
         expect(paragraphNode.text.text, startsWith("Lorem ipsumdolor sit amet"));
         expect(
           SuperEditorInspector.findDocumentSelection(),
@@ -367,7 +367,7 @@ void main() {
             .withInputSource(_inputSourceVariant.currentValue!)
             .pump();
 
-        final node = testContext.editContext.document.nodes.first;
+        final node = testContext.findEditContext().document.nodes.first;
 
         // Place caret at "A| header"
         await tester.placeCaretInParagraph(node.id, 1);
@@ -393,7 +393,7 @@ void main() {
             .withInputSource(_inputSourceVariant.currentValue!)
             .pump();
 
-        final node = testContext.editContext.document.nodes.first;
+        final node = testContext.findEditContext().document.nodes.first;
 
         // Place caret at the start of the header.
         await tester.placeCaretInParagraph(node.id, 0);

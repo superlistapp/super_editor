@@ -212,8 +212,8 @@ void main() {
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final doc = context.editContext.document;
-        final composer = context.editContext.composer;
+        final doc = context.findEditContext().document;
+        final composer = context.findEditContext().composer;
 
         // Place the caret at the end of the paragraph.
         await tester.placeCaretInParagraph(doc.nodes.first.id, 19);

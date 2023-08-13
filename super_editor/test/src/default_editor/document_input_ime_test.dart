@@ -916,7 +916,7 @@ Paragraph two
         final selection = SuperEditorInspector.findDocumentSelection()!;
         final base = (selection.base.nodePosition as TextNodePosition).offset;
         final extent = (selection.extent.nodePosition as TextNodePosition).offset;
-        final affinity = context.editContext.document.getAffinityForSelection(selection);
+        final affinity = context.findEditContext().document.getAffinityForSelection(selection);
 
         // Ensure we sent the same base, extent and affinity to the platform.
         expect(selectionBase, base);

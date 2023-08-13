@@ -70,7 +70,7 @@ void main() {
           .createDocument() //
           .fromMarkdown("This is paragraph one.\nThis is paragraph two.") //
           .pump();
-      final nodeId = testContext.editContext.document.nodes.first.id;
+      final nodeId = testContext.findEditContext().document.nodes.first.id;
 
       /// Triple tap on the first line in the paragraph node.
       await tester.tripleTapInParagraph(nodeId, 10);
@@ -101,7 +101,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.document.nodes.first.id;
+      final firstParagraphId = testContext.findEditContext().document.nodes.first.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -128,7 +128,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final secondParagraphId = testContext.editContext.document.nodes.last.id;
+      final secondParagraphId = testContext.findEditContext().document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -160,7 +160,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final secondParagraphId = testContext.editContext.document.nodes.last.id;
+      final secondParagraphId = testContext.findEditContext().document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -192,7 +192,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.document.nodes.first.id;
+      final firstParagraphId = testContext.findEditContext().document.nodes.first.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -219,8 +219,8 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.document.nodes.first.id;
-      final secondParagraphId = testContext.editContext.document.nodes.last.id;
+      final firstParagraphId = testContext.findEditContext().document.nodes.first.id;
+      final secondParagraphId = testContext.findEditContext().document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -250,8 +250,8 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.document.nodes.first.id;
-      final secondParagraphId = testContext.editContext.document.nodes.last.id;
+      final firstParagraphId = testContext.findEditContext().document.nodes.first.id;
+      final secondParagraphId = testContext.findEditContext().document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -847,7 +847,7 @@ Second Paragraph
       expect(SuperEditorInspector.findDocumentSelection(), isNull);
 
       // Delete the selected node.
-      context.editContext.editor.execute([
+      context.findEditContext().editor.execute([
         DeleteNodeRequest(nodeId: "1"),
       ]);
 
@@ -933,8 +933,8 @@ Second Paragraph
           .autoFocus(true)
           .pump();
 
-      final doc = context.editContext.document;
-      final composer = context.editContext.composer;
+      final doc = context.findEditContext().document;
+      final composer = context.findEditContext().composer;
 
       int selectionNotificationCount = 0;
       composer.selectionNotifier.addListener(() {
@@ -957,7 +957,7 @@ Second Paragraph
       );
 
       // Send a selection change, using the existing selection.
-      context.editContext.editor.execute([
+      context.findEditContext().editor.execute([
         ChangeSelectionRequest(
           DocumentSelection.collapsed(
             position: DocumentPosition(

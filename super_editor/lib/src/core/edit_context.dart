@@ -1,4 +1,5 @@
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 
 import 'document.dart';
 import 'document_composer.dart';
@@ -22,6 +23,7 @@ class SuperEditorContext {
     required this.document,
     required DocumentLayout Function() getDocumentLayout,
     required this.composer,
+    required this.scroller,
     required this.commonOps,
   }) : _getDocumentLayout = getDocumentLayout;
 
@@ -40,6 +42,10 @@ class SuperEditorContext {
   /// The [DocumentComposer] that maintains selection and attributions to work
   /// in conjunction with the [editor] to apply changes to the document.
   final DocumentComposer composer;
+
+  /// The [DocumentScroller] that provides status and control over [SuperEditor]
+  /// scrolling.
+  final DocumentScroller scroller;
 
   /// Common operations that can be executed to apply common, complex changes to
   /// the document.
