@@ -20,7 +20,7 @@ void main() {
       await tester.doubleTapInParagraph('1', 0);
 
       // Apply italic to the word.
-      testContext.editContext.commonOps.toggleAttributionsOnSelection({italicsAttribution});
+      testContext.findEditContext().commonOps.toggleAttributionsOnSelection({italicsAttribution});
       await tester.pump();
 
       // Ensure italic was applied.
@@ -37,7 +37,7 @@ void main() {
           .useStylesheet(_stylesheet)
           .pump();
 
-      final doc = testContext.editContext.document;
+      final doc = testContext.findEditContext().document;
 
       final firstParagraphId = doc.nodes[0].id;
       final secondParagraphId = doc.nodes[1].id;
@@ -46,7 +46,7 @@ void main() {
       expect(SuperEditorInspector.findParagraphStyle(firstParagraphId)!.color, Colors.red);
 
       // Remove the second paragraph.
-      testContext.editContext.editor.execute([
+      testContext.findEditContext().editor.execute([
         DeleteNodeRequest(nodeId: secondParagraphId),
       ]);
       await tester.pump();
@@ -195,7 +195,7 @@ A paragraph
 
       // Move the 2nd node to the end of the document. This should impact nodes 2, 3, and 4,
       // but not node 1.
-      testContext.editContext.editor.execute([
+      testContext.findEditContext().editor.execute([
         const MoveNodeRequest(nodeId: "2", newIndex: 3),
       ]);
       await tester.pumpAndSettle();

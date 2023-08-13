@@ -30,7 +30,7 @@ void main() {
         await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
 
         // Convert the list item to a paragraph.
-        testContext.editContext.commonOps.convertToParagraph(
+        testContext.findEditContext().commonOps.convertToParagraph(
           newMetadata: {
             'blockType': const NamedAttribution("paragraph"),
           },
@@ -43,10 +43,10 @@ void main() {
         expect(richText.text.style!.color, Colors.red);
 
         // Convert the paragraph back to an unordered list item.
-        testContext.editContext.commonOps.convertToListItem(
-          ListItemType.unordered,
-          (doc.nodes.first as ParagraphNode).text,
-        );
+        testContext.findEditContext().commonOps.convertToListItem(
+              ListItemType.unordered,
+              (doc.nodes.first as ParagraphNode).text,
+            );
         await tester.pumpAndSettle();
 
         // Ensure that the textStyle for a list item was applied.
@@ -74,7 +74,7 @@ void main() {
         await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
 
         // Convert the list item to a paragraph.
-        testContext.editContext.commonOps.convertToParagraph(
+        testContext.findEditContext().commonOps.convertToParagraph(
           newMetadata: {
             'blockType': const NamedAttribution("paragraph"),
           },
@@ -87,10 +87,10 @@ void main() {
         expect(richText.text.style!.color, Colors.red);
 
         // Convert the paragraph back to an ordered list item.
-        testContext.editContext.commonOps.convertToListItem(
-          ListItemType.ordered,
-          (doc.nodes.first as ParagraphNode).text,
-        );
+        testContext.findEditContext().commonOps.convertToListItem(
+              ListItemType.ordered,
+              (doc.nodes.first as ParagraphNode).text,
+            );
         await tester.pumpAndSettle();
 
         // Ensure that the textStyle for a list item was applied.
@@ -168,7 +168,7 @@ void main() {
             .fromMarkdown('* Item 1')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(document.nodes.first.id, 6);
@@ -205,7 +205,7 @@ void main() {
             .fromMarkdown('* Item 1')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(document.nodes.first.id, 6);
@@ -242,7 +242,7 @@ void main() {
             .fromMarkdown('* Item 1')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(document.nodes.first.id, 6);
@@ -279,7 +279,7 @@ void main() {
             .fromMarkdown('* List Item')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
         await tester.placeCaretInParagraph(document.nodes.first.id, 5);
@@ -313,7 +313,7 @@ void main() {
             .fromMarkdown('* List Item')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
         await tester.placeCaretInParagraph(document.nodes.first.id, 5);
@@ -347,7 +347,7 @@ void main() {
             .fromMarkdown('* List Item')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
         await tester.placeCaretInParagraph(document.nodes.first.id, 5);
@@ -441,7 +441,7 @@ void main() {
             .fromMarkdown('1. Item 1')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(document.nodes.first.id, 6);
@@ -478,7 +478,7 @@ void main() {
             .fromMarkdown('1. Item 1')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(document.nodes.first.id, 6);
@@ -515,7 +515,7 @@ void main() {
             .fromMarkdown('1. Item 1')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(document.nodes.first.id, 6);
@@ -552,7 +552,7 @@ void main() {
             .fromMarkdown('1. List Item')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
         await tester.placeCaretInParagraph(document.nodes.first.id, 5);
@@ -586,7 +586,7 @@ void main() {
             .fromMarkdown('1. List Item')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
         await tester.placeCaretInParagraph(document.nodes.first.id, 5);
@@ -620,7 +620,7 @@ void main() {
             .fromMarkdown('1. List Item')
             .pump();
 
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
         await tester.placeCaretInParagraph(document.nodes.first.id, 5);

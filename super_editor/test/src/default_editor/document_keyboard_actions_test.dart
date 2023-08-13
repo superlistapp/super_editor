@@ -545,7 +545,9 @@ void main() {
                 ),
               );
 
+              print("Verifying results on composer (${editContext.composer.hashCode})");
               expect(result, ExecutionInstruction.haltExecution);
+              expect(editContext.composer.selection, isNotNull);
               expect(
                 editContext.composer.selection!.base,
                 const DocumentPosition(
@@ -562,6 +564,7 @@ void main() {
               );
             },
           );
+
           testOnMac(
             'it selects all when CMD+A is pressed with a two-node document',
             () {

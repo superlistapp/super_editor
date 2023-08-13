@@ -23,6 +23,7 @@ import 'package:super_editor/src/default_editor/unknown_component.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
+import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
 
@@ -191,6 +192,7 @@ class SuperReaderState extends State<SuperReader> {
 
   ContentTapDelegate? _contentTapDelegate;
 
+  late DocumentScroller _scroller;
   late ScrollController _scrollController;
   late AutoScrollController _autoScrollController;
 
@@ -216,6 +218,7 @@ class SuperReaderState extends State<SuperReader> {
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
+    _scroller = DocumentScroller();
     _scrollController = widget.scrollController ?? ScrollController();
     _autoScrollController = AutoScrollController();
 
@@ -340,6 +343,7 @@ class SuperReaderState extends State<SuperReader> {
         gestureBuilder: _buildGestureInteractor,
         scrollController: _scrollController,
         autoScrollController: _autoScrollController,
+        scroller: _scroller,
         presenter: _docLayoutPresenter!,
         componentBuilders: widget.componentBuilders,
         underlays: [

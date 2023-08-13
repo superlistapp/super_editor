@@ -26,7 +26,7 @@ void main() {
           await tester.typeImeText(headerVariant.$1);
 
           // Ensure that the paragraph is now a header, and it's content is empty.
-          final document = context.editContext.document;
+          final document = context.findEditContext().document;
           final paragraph = document.nodes.first as ParagraphNode;
 
           expect(paragraph.metadata['blockType'], headerVariant.$2);
@@ -47,7 +47,7 @@ void main() {
         await tester.typeImeText("####### ");
 
         // Ensure that the paragraph hasn't changed.
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
         final paragraph = document.nodes.first as ParagraphNode;
 
         expect(paragraph.metadata['blockType'], paragraphAttribution);
@@ -67,7 +67,7 @@ void main() {
         final unorderedListItemPattern = _unorderedListVariant.currentValue!;
         await tester.typeImeText(unorderedListItemPattern);
 
-        final listItemNode = context.editContext.document.nodes.first;
+        final listItemNode = context.findEditContext().document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).type, ListItemType.unordered);
         expect(listItemNode.text.text.isEmpty, isTrue);
@@ -83,7 +83,7 @@ void main() {
 
         await tester.typeImeText("1 ");
 
-        final paragraphNode = context.editContext.document.nodes.first;
+        final paragraphNode = context.findEditContext().document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, "1 ");
       });
@@ -98,7 +98,7 @@ void main() {
 
         await tester.typeImeText(" 1 ");
 
-        final paragraphNode = context.editContext.document.nodes.first;
+        final paragraphNode = context.findEditContext().document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, " 1 ");
       });
@@ -116,7 +116,7 @@ void main() {
         final orderedListItemPattern = _orderedListVariant.currentValue!;
         await tester.typeImeText(orderedListItemPattern);
 
-        final listItemNode = context.editContext.document.nodes.first;
+        final listItemNode = context.findEditContext().document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).type, ListItemType.ordered);
         expect(listItemNode.text.text.isEmpty, isTrue);
@@ -132,7 +132,7 @@ void main() {
 
         await tester.typeImeText("1 ");
 
-        final paragraphNode = context.editContext.document.nodes.first;
+        final paragraphNode = context.findEditContext().document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, "1 ");
       });
@@ -147,7 +147,7 @@ void main() {
 
         await tester.typeImeText(" 1 ");
 
-        final paragraphNode = context.editContext.document.nodes.first;
+        final paragraphNode = context.findEditContext().document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, " 1 ");
       });
@@ -165,7 +165,7 @@ void main() {
         await tester.typeImeText("--- ");
 
         // Ensure that we now have two nodes, and the first one is an HR.
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
         expect(document.nodes.length, 2);
 
         expect(document.nodes.first, isA<HorizontalRuleNode>());
@@ -184,7 +184,7 @@ void main() {
         final nonHrInput = _nonHrVariant.currentValue!;
         await tester.typeImeText(nonHrInput);
 
-        final paragraphNode = context.editContext.document.nodes.first;
+        final paragraphNode = context.findEditContext().document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, nonHrInput);
       }, variant: _nonHrVariant);
@@ -202,7 +202,7 @@ void main() {
         await tester.typeImeText("> ");
 
         // Ensure that the paragraph is now a blockquote, and it's content is empty.
-        final document = context.editContext.document;
+        final document = context.findEditContext().document;
         final paragraph = document.nodes.first as ParagraphNode;
 
         expect(paragraph.metadata['blockType'], blockquoteAttribution);
@@ -217,7 +217,7 @@ void main() {
             .fromMarkdown("# My Header")
             .withInputSource(TextInputSource.ime)
             .pump();
-        final headerNode = context.editContext.document.nodes.first;
+        final headerNode = context.findEditContext().document.nodes.first;
 
         await tester.placeCaretInParagraph(headerNode.id, 0);
 
@@ -253,7 +253,7 @@ void main() {
             .fromMarkdown("> My Blockquote")
             .withInputSource(TextInputSource.ime)
             .pump();
-        final blockquoteNode = context.editContext.document.nodes.first;
+        final blockquoteNode = context.findEditContext().document.nodes.first;
 
         await tester.placeCaretInParagraph(blockquoteNode.id, 0);
 
@@ -289,7 +289,7 @@ void main() {
             .fromMarkdown("1. My list item")
             .withInputSource(TextInputSource.ime)
             .pump();
-        final listItemNode = context.editContext.document.nodes.first;
+        final listItemNode = context.findEditContext().document.nodes.first;
 
         await tester.placeCaretInParagraph(listItemNode.id, 0);
 
@@ -315,7 +315,7 @@ void main() {
         );
 
         // Ensure that the list item became a paragraph.
-        final newNode = context.editContext.document.nodes.first;
+        final newNode = context.findEditContext().document.nodes.first;
         expect(newNode, isA<ParagraphNode>());
         expect(newNode.metadata["blockType"], paragraphAttribution);
         expect(SuperEditorInspector.findTextInParagraph(listItemNode.id).text, "My list item");

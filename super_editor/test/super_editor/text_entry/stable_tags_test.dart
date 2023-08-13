@@ -915,7 +915,7 @@ void main() {
         await tester.typeImeText("@john two @sally three");
 
         // Expand the selection "one @jo|hn two @sa|lly three"
-        (context.editContext.composer as MutableDocumentComposer).setSelectionWithReason(
+        (context.findEditContext().composer as MutableDocumentComposer).setSelectionWithReason(
           const DocumentSelection(
             base: DocumentPosition(
               nodeId: "1",
@@ -971,7 +971,7 @@ void main() {
         await tester.typeImeText("three @sally four");
 
         // Expand the selection to "one @jo|hn two\nthree @sa|lly three"
-        (context.editContext.composer as MutableDocumentComposer).setSelectionWithReason(
+        (context.findEditContext().composer as MutableDocumentComposer).setSelectionWithReason(
           const DocumentSelection(
             base: DocumentPosition(
               nodeId: "1",
