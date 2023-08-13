@@ -9,12 +9,9 @@ import 'editor.dart';
 /// Collection of core artifacts used to edit a document.
 ///
 /// In particular, the context contains the [DocumentEditor],
-/// [DocumentComposer], and [DocumentLayout].
+/// [DocumentComposer], [DocumentScroller] and [DocumentLayout].
 /// In addition, [commonOps] are available for directly applying common, complex
 /// changes to the document using the artifacts.
-///
-/// A [scrollController] can be passed to allow changes to the scroll position in
-/// the viewport.
 class SuperEditorContext {
   /// Creates an edit context that makes up a collection of core artifacts for
   /// editing a document.
