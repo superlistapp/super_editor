@@ -68,8 +68,8 @@ ExecutionInstruction scrollOnPageDownKeyPress({
   return ExecutionInstruction.haltExecution;
 }
 
-/// HOME: Scrolls the viewport up as far as possible.
-ExecutionInstruction scrollOnHomeKeyPress({
+/// CTRL/CMD + HOME: Scrolls the viewport up as far as possible.
+ExecutionInstruction scrollOnCtrlOrCmdHomeKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -77,8 +77,14 @@ ExecutionInstruction scrollOnHomeKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId) {
-    return ExecutionInstruction.continueExecution;
+  if (defaultTargetPlatform == TargetPlatform.macOS) {
+    if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId || !keyEvent.isMetaPressed) {
+      return ExecutionInstruction.continueExecution;
+    }
+  } else {
+    if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId || !keyEvent.isControlPressed) {
+      return ExecutionInstruction.continueExecution;
+    }
   }
 
   final scrollController = editContext.scroller;
@@ -92,8 +98,8 @@ ExecutionInstruction scrollOnHomeKeyPress({
   return ExecutionInstruction.haltExecution;
 }
 
-/// END: Scrolls the viewport down as far as possible.
-ExecutionInstruction scrollOnEndKeyPress({
+/// CTRL/CMD + END: Scrolls the viewport down as far as possible.
+ExecutionInstruction scrollOnCtrlOrCmdEndKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -101,8 +107,14 @@ ExecutionInstruction scrollOnEndKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId) {
-    return ExecutionInstruction.continueExecution;
+  if (defaultTargetPlatform == TargetPlatform.macOS) {
+    if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId || !keyEvent.isMetaPressed) {
+      return ExecutionInstruction.continueExecution;
+    }
+  } else {
+    if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId || !keyEvent.isControlPressed) {
+      return ExecutionInstruction.continueExecution;
+    }
   }
 
   final scrollController = editContext.scroller;
