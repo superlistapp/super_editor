@@ -807,7 +807,7 @@ Paragraph two
             .withInputSource(TextInputSource.ime)
             .pump();
 
-        final nodeId = testContext.editContext.document.nodes.first.id;
+        final nodeId = testContext.document.nodes.first.id;
 
         // Place the caret at the end of the paragraph.
         await tester.placeCaretInParagraph(nodeId, 19);
