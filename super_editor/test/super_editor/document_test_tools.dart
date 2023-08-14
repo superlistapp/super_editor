@@ -327,10 +327,6 @@ class TestSuperEditorConfigurator {
   /// A [TestDocumentContext] is useful as a return value for clients, so that
   /// those clients can access important pieces within a [SuperEditor] widget.
   TestDocumentContext _createTestDocumentContext() {
-    // if (_config.document == null) {
-    //   return _existingContext!;
-    // }
-
     // Only assign if non-null in case we're updating an existing configuration
     // from a previous widget pump.
     _config.layoutKey ??= GlobalKey();
@@ -342,29 +338,12 @@ class TestSuperEditorConfigurator {
       ..requestHandlers.insertAll(0, _config.addedRequestHandlers)
       ..reactionPipeline.insertAll(0, _config.addedReactions);
 
-    // // ignore: prefer_function_declarations_over_variables
-    // final layoutResolver = () => layoutKey.currentState as DocumentLayout;
-    // final commonOps = CommonEditorOperations(
-    //   editor: editor,
-    //   document: _document!,
-    //   documentLayoutResolver: layoutResolver,
-    //   composer: composer,
-    // );
-    // final editContext = SuperEditorContext(
-    //   editor: editor,
-    //   document: _document!,
-    //   getDocumentLayout: layoutResolver,
-    //   composer: composer,
-    //   commonOps: commonOps,
-    // );
-
     return TestDocumentContext._(
       focusNode: focusNode,
       layoutKey: layoutKey,
       document: _config.document,
       composer: composer,
       editor: editor,
-      // editContext: editContext,
       configuration: _config,
     );
   }
@@ -479,7 +458,6 @@ class TestDocumentContext {
     required this.document,
     required this.composer,
     required this.editor,
-    // required this.editContext,
     required this.configuration,
   });
 
@@ -489,7 +467,6 @@ class TestDocumentContext {
   final MutableDocument document;
   final MutableDocumentComposer composer;
   final Editor editor;
-  // final SuperEditorContext editContext;
   SuperEditorContext findEditContext() =>
       ((find.byType(SuperEditor).evaluate().first as StatefulElement).state as SuperEditorState).editContext;
 
