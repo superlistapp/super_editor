@@ -53,6 +53,7 @@ class SuperTextField extends StatefulWidget {
   const SuperTextField({
     Key? key,
     this.focusNode,
+    this.tapRegionGroupId,
     this.configuration,
     this.textController,
     this.textAlign = TextAlign.left,
@@ -73,6 +74,12 @@ class SuperTextField extends StatefulWidget {
   }) : super(key: key);
 
   final FocusNode? focusNode;
+
+  /// {@template super_text_field_tap_region_group_id}
+  /// An optional group ID for a tap region that surrounds this text field
+  /// and also surrounds any related widgets, such as drag handles and a toolbar.
+  /// {@endtemplate}
+  final String? tapRegionGroupId;
 
   /// The platform-style configuration for this text field, or `null` to
   /// automatically configure for the current platform.
@@ -295,6 +302,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
         return SuperDesktopTextField(
           key: _platformFieldKey,
           focusNode: widget.focusNode,
+          tapRegionGroupId: widget.tapRegionGroupId,
           textController: _controller,
           textAlign: widget.textAlign,
           textStyleBuilder: widget.textStyleBuilder,
@@ -321,6 +329,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           child: SuperAndroidTextField(
             key: _platformFieldKey,
             focusNode: widget.focusNode,
+            tapRegionGroupId: widget.tapRegionGroupId,
             textController: _controller,
             textAlign: widget.textAlign,
             textStyleBuilder: widget.textStyleBuilder,
@@ -345,6 +354,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           child: SuperIOSTextField(
             key: _platformFieldKey,
             focusNode: widget.focusNode,
+            tapRegionGroupId: widget.tapRegionGroupId,
             textController: _controller,
             textAlign: widget.textAlign,
             textStyleBuilder: widget.textStyleBuilder,

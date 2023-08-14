@@ -35,6 +35,7 @@ class AndroidEditingOverlayControls extends StatefulWidget {
     required this.textContentKey,
     required this.textFieldLayerLink,
     required this.textContentLayerLink,
+    this.tapRegionGroupId,
     required this.handleColor,
     required this.popoverToolbarBuilder,
     this.showDebugPaint = false,
@@ -64,6 +65,10 @@ class AndroidEditingOverlayControls extends StatefulWidget {
   /// [GlobalKey] that references the widget that contains the text within
   /// the text field.
   final GlobalKey<ProseTextState> textContentKey;
+
+  /// A group ID that's assigned to a [TagRegion] around each widget added
+  /// by this overlay.
+  final String? tapRegionGroupId;
 
   /// The color of the selection handles.
   final Color handleColor;
@@ -542,10 +547,13 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
           opacity: widget.editingController.isToolbarVisible ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 150),
           child: Builder(builder: (context) {
-            return widget.popoverToolbarBuilder(
-              context,
-              widget.editingController,
-              ToolbarConfig(focalPoint: textFieldGlobalOffset + toolbarTopAnchor),
+            return TapRegion(
+              groupId: widget.tapRegionGroupId,
+              child: widget.popoverToolbarBuilder(
+                context,
+                widget.editingController,
+                ToolbarConfig(focalPoint: textFieldGlobalOffset + toolbarTopAnchor),
+              ),
             );
           }),
         ),
@@ -694,9 +702,12 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
                         ? 0.0
                         : 1.0,
                     duration: const Duration(milliseconds: 150),
-                    child: AndroidSelectionHandle(
-                      handleType: handleType,
-                      color: widget.handleColor,
+                    child: TapRegion(
+                      groupId: widget.tapRegionGroupId,
+                      child: AndroidSelectionHandle(
+                        handleType: handleType,
+                        color: widget.handleColor,
+                      ),
                     ),
                   )
                 : const SizedBox(),
