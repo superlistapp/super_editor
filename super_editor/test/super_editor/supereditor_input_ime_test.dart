@@ -800,7 +800,7 @@ Paragraph two
         });
       });
 
-      testWidgetsOnWeb('deletes a character with backspace', (tester) async {
+      testWidgetsOnWebDesktop('deletes a character with backspace', (tester) async {
         final testContext = await tester //
             .createDocument()
             .fromMarkdown('This is a paragraph')

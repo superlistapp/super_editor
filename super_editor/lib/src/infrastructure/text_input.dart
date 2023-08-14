@@ -6,14 +6,20 @@ enum TextInputSource {
   ime,
 }
 
-/// Overrides the value of [isWeb].
-///
-/// This is intended to be used in tests.
-bool? debugIsWebOverride;
-
 /// Whether or not we are running on web.
 ///
 /// By default this is the same as [kIsWeb].
 ///
-/// This is intended to be overriden in tests by setting [debugIsWebOverride].
+/// [debugIsWebOverride] may be used to override the natural value of [isWeb].
 bool get isWeb => debugIsWebOverride ?? kIsWeb;
+
+/// Overrides the value of [isWeb].
+///
+/// This is intended to be used in tests.
+///
+/// Set it to `null` to use the default value of [isWeb].
+///
+/// Set it to `true` to configure to run as if we are on web.
+///
+/// Set it to `false` to configure to run as if we are NOT on web.
+bool? debugIsWebOverride;

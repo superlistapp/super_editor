@@ -84,8 +84,8 @@ void testWidgetsOnDesktop(
   testWidgetsOnLinux("$description (on Linux)", test, skip: skip, variant: variant);
 }
 
-/// A widget test that runs a variant for every desktop platform, e.g.,
-/// Mac, Windows, Linux and for macOS Web.
+/// A widget test that runs a variant for every desktop platform as native and web, e.g.,
+/// Mac, Windows, Linux.
 @isTestGroup
 void testWidgetsOnDesktopAndWeb(
   String description,
@@ -96,12 +96,29 @@ void testWidgetsOnDesktopAndWeb(
   testWidgetsOnMac("$description (on MAC)", test, skip: skip, variant: variant);
   testWidgetsOnWindows("$description (on Windows)", test, skip: skip, variant: variant);
   testWidgetsOnLinux("$description (on Linux)", test, skip: skip, variant: variant);
-  testWidgetsOnWeb("$description (on Web)", test, skip: skip, variant: variant);
+
+  testWidgetsOnMacWeb("$description (on MAC Web)", test, skip: skip, variant: variant);
+  testWidgetsOnWindowsWeb("$description (on Windows Web)", test, skip: skip, variant: variant);
+  testWidgetsOnLinuxWeb("$description (on Linux Web)", test, skip: skip, variant: variant);
+}
+
+/// A widget test that runs a variant for every desktop platform on web, e.g.,
+/// Mac, Windows, Linux.
+@isTestGroup
+void testWidgetsOnWebDesktop(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgetsOnMacWeb("$description (on MAC Web)", test, skip: skip, variant: variant);
+  testWidgetsOnWindowsWeb("$description (on Windows Web)", test, skip: skip, variant: variant);
+  testWidgetsOnLinuxWeb("$description (on Linux Web)", test, skip: skip, variant: variant);
 }
 
 // A widget test that runs for macOS web.
 @isTestGroup
-void testWidgetsOnWeb(
+void testWidgetsOnMacWeb(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
@@ -109,6 +126,56 @@ void testWidgetsOnWeb(
 }) {
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    debugIsWebOverride = true;
+
+    tester.view
+      ..devicePixelRatio = 1.0
+      ..platformDispatcher.textScaleFactorTestValue = 1.0;
+
+    try {
+      await test(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      debugIsWebOverride = null;
+    }
+  });
+}
+
+// A widget test that runs for Windows web.
+@isTestGroup
+void testWidgetsOnWindowsWeb(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgets(description, (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    debugIsWebOverride = true;
+
+    tester.view
+      ..devicePixelRatio = 1.0
+      ..platformDispatcher.textScaleFactorTestValue = 1.0;
+
+    try {
+      await test(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      debugIsWebOverride = null;
+    }
+  });
+}
+
+// A widget test that runs for Linux web.
+@isTestGroup
+void testWidgetsOnLinuxWeb(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgets(description, (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
     debugIsWebOverride = true;
 
     tester.view

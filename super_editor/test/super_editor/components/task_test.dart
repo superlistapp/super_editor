@@ -138,7 +138,7 @@ void main() {
       );
     });
 
-    testWidgetsOnWeb("inserts new task on ENTER at end of existing task (on Web)", (tester) async {
+    testWidgetsOnWebDesktop("inserts new task on ENTER at end of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
