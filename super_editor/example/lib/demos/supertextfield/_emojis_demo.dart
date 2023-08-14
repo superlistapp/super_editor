@@ -1,3 +1,4 @@
+import 'package:example/demos/supertextfield/demo_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -121,6 +122,7 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
                       );
                     },
                     hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                    textStyleBuilder: demoTextStyleBuilder,
                     minLines: 1,
                     maxLines: 1,
                   ),

@@ -30,6 +30,7 @@ class SuperIOSTextField extends StatefulWidget {
   const SuperIOSTextField({
     Key? key,
     this.focusNode,
+    this.tapRegionGroupId,
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.textAlign = TextAlign.left,
@@ -50,6 +51,9 @@ class SuperIOSTextField extends StatefulWidget {
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
+
+  /// {@macro super_text_field_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   /// Controller that owns the text content and text selection for
   /// this text field.
@@ -367,6 +371,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           textFieldKey: _textFieldKey,
           textContentLayerLink: _textContentLayerLink,
           textContentKey: _textContentKey,
+          tapRegionGroupId: widget.tapRegionGroupId,
           handleColor: widget.handlesColor,
           popoverToolbarBuilder: _defaultPopoverToolbarBuilder,
           showDebugPaint: widget.showDebugPaint,
@@ -468,62 +473,65 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   @override
   Widget build(BuildContext context) {
-    return NonReparentingFocus(
-      key: _textFieldKey,
-      focusNode: _focusNode,
-      child: CompositedTransformTarget(
-        link: _textFieldLayerLink,
-        child: IOSTextFieldTouchInteractor(
-          focusNode: _focusNode,
-          selectableTextKey: _textContentKey,
-          textFieldLayerLink: _textFieldLayerLink,
-          textController: _textEditingController,
-          editingOverlayController: _editingOverlayController,
-          textScrollController: _textScrollController,
-          isMultiline: _isMultiline,
-          handleColor: widget.handlesColor,
-          showDebugPaint: widget.showDebugPaint,
-          child: TextScrollView(
-            key: _scrollKey,
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: NonReparentingFocus(
+        key: _textFieldKey,
+        focusNode: _focusNode,
+        child: CompositedTransformTarget(
+          link: _textFieldLayerLink,
+          child: IOSTextFieldTouchInteractor(
+            focusNode: _focusNode,
+            selectableTextKey: _textContentKey,
+            textFieldLayerLink: _textFieldLayerLink,
+            textController: _textEditingController,
+            editingOverlayController: _editingOverlayController,
             textScrollController: _textScrollController,
-            textKey: _textContentKey,
-            textEditingController: _textEditingController,
-            textAlign: widget.textAlign,
-            minLines: widget.minLines,
-            maxLines: widget.maxLines,
-            lineHeight: widget.lineHeight,
-            perLineAutoScrollDuration: const Duration(milliseconds: 100),
+            isMultiline: _isMultiline,
+            handleColor: widget.handlesColor,
             showDebugPaint: widget.showDebugPaint,
-            padding: widget.padding,
-            child: ListenableBuilder(
-              listenable: _textEditingController,
-              builder: (context, _) {
-                final isTextEmpty = _textEditingController.text.text.isEmpty;
-                final showHint = widget.hintBuilder != null &&
-                    ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                        (isTextEmpty &&
-                            !_focusNode.hasFocus &&
-                            widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+            child: TextScrollView(
+              key: _scrollKey,
+              textScrollController: _textScrollController,
+              textKey: _textContentKey,
+              textEditingController: _textEditingController,
+              textAlign: widget.textAlign,
+              minLines: widget.minLines,
+              maxLines: widget.maxLines,
+              lineHeight: widget.lineHeight,
+              perLineAutoScrollDuration: const Duration(milliseconds: 100),
+              showDebugPaint: widget.showDebugPaint,
+              padding: widget.padding,
+              child: ListenableBuilder(
+                listenable: _textEditingController,
+                builder: (context, _) {
+                  final isTextEmpty = _textEditingController.text.text.isEmpty;
+                  final showHint = widget.hintBuilder != null &&
+                      ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                          (isTextEmpty &&
+                              !_focusNode.hasFocus &&
+                              widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-                return CompositedTransformTarget(
-                  link: _textContentLayerLink,
-                  child: Stack(
-                    children: [
-                      if (showHint) widget.hintBuilder!(context),
-                      _buildSelectableText(),
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: IOSFloatingCursor(
-                          controller: _floatingCursorController,
+                  return CompositedTransformTarget(
+                    link: _textContentLayerLink,
+                    child: Stack(
+                      children: [
+                        if (showHint) widget.hintBuilder!(context),
+                        _buildSelectableText(),
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: IOSFloatingCursor(
+                            controller: _floatingCursorController,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),

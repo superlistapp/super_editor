@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -402,6 +403,35 @@ void main() {
         expect(controller.isAttachedToIme, true);
       });
     });
+
+    testWidgetsOnAllPlatforms("loses focus when user taps outside in a TapRegion", (tester) async {
+      // Note: the our test scaffold in this suite includes a TapRegion
+      // that removes focus from the field when tapping outside. This test
+      // depends upon that TapRegion.
+      await _pumpTestApp(tester);
+      await tester.pumpAndSettle();
+
+      // Give the text field focus.
+      await tester.tapAt(tester.getCenter(find.byType(SuperTextField)));
+      await tester.pump(kTapMinTime);
+
+      // Ensure that we start with focus.
+      expect(
+        SuperTextFieldInspector.findSelection()!.extentOffset,
+        greaterThan(-1),
+      );
+
+      // Tap outside the text field.
+      await tester.tapAt(tester.getCenter(find.byType(Scaffold)));
+      await tester.pump(kTapMinTime);
+      await tester.pumpAndSettle();
+
+      // Ensure that focus is gone.
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: -1),
+      );
+    });
   });
 }
 
@@ -411,16 +441,43 @@ Future<void> _pumpTestApp(
   EdgeInsets? padding,
   TextAlign? textAlign,
 }) async {
+  final textFieldFocusNode = FocusNode();
+  const tapRegionGroupdId = "test_super_text_field";
+
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: SuperTextField(
-          padding: padding,
-          textAlign: textAlign ?? TextAlign.left,
-          textController: controller ??
-              AttributedTextEditingController(
-                text: AttributedText(text: 'abc'),
+        body: ColoredBox(
+          color: Colors.green,
+          child: TapRegion(
+            groupId: tapRegionGroupdId,
+            onTapOutside: (_) {
+              // Unfocus on tap outside so that we're sure that all gesture tests
+              // pass when using TapRegion's for focus, because apps should be able
+              // to do that.
+              textFieldFocusNode.unfocus();
+            },
+            child: SizedBox.expand(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black),
+                  ),
+                  child: SuperTextField(
+                    focusNode: textFieldFocusNode,
+                    tapRegionGroupId: tapRegionGroupdId,
+                    padding: padding,
+                    textAlign: textAlign ?? TextAlign.left,
+                    textController: controller ??
+                        AttributedTextEditingController(
+                          text: AttributedText(text: 'abc'),
+                        ),
+                  ),
+                ),
               ),
+            ),
+          ),
         ),
       ),
     ),

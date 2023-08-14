@@ -11,14 +11,22 @@ class SuperAndroidTextFieldDemo extends StatefulWidget {
 }
 
 class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
+  final String _tapRegionGroupId = "android";
+
+  late final FocusNode _focusNode;
+
   @override
   void initState() {
     super.initState();
     initLoggers(Level.FINER, {androidTextFieldLog, imeTextFieldLog});
+
+    _focusNode = FocusNode();
   }
 
   @override
   void dispose() {
+    _focusNode.dispose();
+
     deactivateLoggers({androidTextFieldLog, imeTextFieldLog});
     super.dispose();
   }
@@ -29,6 +37,8 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
       initialText: AttributedText(
           text:
               'This is a custom textfield implementation called SuperAndroidTextField. It is super long so that we can mess with scrolling. This drags it out even further so that we can get multiline scrolling, too. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin tempor sapien est, in eleifend purus rhoncus fringilla. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nulla varius libero lorem, eget tincidunt ante porta accumsan. Morbi quis ante at nunc molestie ullamcorper.'),
+      textFieldFocusNode: _focusNode,
+      textFieldTapRegionGroupId: _tapRegionGroupId,
       createTextField: _buildTextField,
     );
   }
@@ -38,6 +48,8 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
     final lineHeight = genericTextStyle.fontSize! * (genericTextStyle.height ?? 1.0);
 
     return SuperAndroidTextField(
+      focusNode: _focusNode,
+      tapRegionGroupId: _tapRegionGroupId,
       textController: config.controller,
       textStyleBuilder: config.styleBuilder,
       hintBehavior: HintBehavior.displayHintUntilTextEntered,
