@@ -4,22 +4,20 @@ import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/fill_width_if_constrained.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
+import 'package:super_editor/src/infrastructure/touch_controls.dart';
+import 'package:super_editor/src/super_textfield/android/_editing_controls.dart';
+import 'package:super_editor/src/super_textfield/android/_user_interaction.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/fill_width_if_constrained.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/text_scrollview.dart';
+import 'package:super_editor/src/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import '../../_logging.dart';
-import '../../touch_controls.dart';
+import '../../infrastructure/_logging.dart';
 import '../metrics.dart';
 import '../styles.dart';
-import 'android_textfield.dart';
 
-export '../../platforms/android/selection_handles.dart';
-export '../../platforms/android/toolbar.dart';
 export '_caret.dart';
 
 final _log = androidTextFieldLog;
