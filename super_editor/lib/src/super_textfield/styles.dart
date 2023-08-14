@@ -1,7 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
-
-import '../../default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 
 const defaultSelectionColor = Color(0xFFACCEF7);
 const defaultDesktopCaretColor = Color(0xFF000000);
