@@ -379,7 +379,7 @@ class SplitParagraphCommand implements EditCommand {
 
     final text = node.text;
     final startText = text.copyText(0, splitPosition.offset);
-    final endText = text.copyText(splitPosition.offset);
+    final endText = splitPosition.offset < text.text.length ? text.copyText(splitPosition.offset) : AttributedText();
     editorDocLog.info('Splitting paragraph:');
     editorDocLog.info(' - start text: "${startText.text}"');
     editorDocLog.info(' - end text: "${endText.text}"');
