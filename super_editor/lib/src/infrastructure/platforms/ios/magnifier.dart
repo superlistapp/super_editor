@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/magnifier.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/outer_box_shadow.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/magnifier.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/outer_box_shadow.dart';
 
 /// An iOS magnifying glass that follows a [LayerLink].
 class IOSFollowingMagnifier extends StatelessWidget {

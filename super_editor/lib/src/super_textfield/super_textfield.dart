@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/desktop/desktop_textfield.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
+import 'package:super_editor/src/super_textfield/android/android_textfield.dart';
+import 'package:super_editor/src/super_textfield/desktop/desktop_textfield.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/attributed_text_editing_controller.dart';
+import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
+import 'package:super_editor/src/super_textfield/ios/ios_textfield.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 

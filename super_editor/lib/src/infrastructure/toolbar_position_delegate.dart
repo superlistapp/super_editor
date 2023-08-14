@@ -3,8 +3,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-
-import 'super_textfield/metrics.dart';
+import 'package:super_editor/src/super_textfield/metrics.dart';
 
 final _log = textFieldLog;
 
