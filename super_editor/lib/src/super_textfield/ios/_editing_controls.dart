@@ -33,6 +33,7 @@ class IOSEditingControls extends StatefulWidget {
     required this.textContentKey,
     required this.textFieldLayerLink,
     required this.textContentLayerLink,
+    this.tapRegionGroupId,
     required this.handleColor,
     required this.popoverToolbarBuilder,
     this.showDebugPaint = false,
@@ -62,6 +63,10 @@ class IOSEditingControls extends StatefulWidget {
   /// [GlobalKey] that references the widget that contains the field's
   /// text.
   final GlobalKey<ProseTextState> textContentKey;
+
+  /// A group ID for [TapRegion]s that surround each overlay widget, e.g.,
+  /// drag handles.
+  final String? tapRegionGroupId;
 
   /// The color of the selection handles.
   final Color handleColor;
@@ -381,9 +386,12 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
         child: AnimatedOpacity(
           opacity: widget.editingController.isToolbarVisible ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 150),
-          child: Builder(builder: (context) {
-            return widget.popoverToolbarBuilder(context, widget.editingController);
-          }),
+          child: TapRegion(
+            groupId: widget.tapRegionGroupId,
+            child: Builder(builder: (context) {
+              return widget.popoverToolbarBuilder(context, widget.editingController);
+            }),
+          ),
         ),
       ),
     );
@@ -473,26 +481,29 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
       offset: followerOffset,
       child: Transform.translate(
         offset: const Offset(-12, -5),
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onPanStart: onPanStart,
-          onPanUpdate: _onPanUpdate,
-          onPanEnd: _onPanEnd,
-          onPanCancel: _onPanCancel,
-          child: Container(
-            width: 24,
-            color: widget.showDebugPaint ? Colors.green : Colors.transparent,
-            child: showHandle
-                ? isUpstreamHandle
-                    ? IOSSelectionHandle.upstream(
-                        color: widget.handleColor,
-                        caretHeight: lineHeight,
-                      )
-                    : IOSSelectionHandle.downstream(
-                        color: widget.handleColor,
-                        caretHeight: lineHeight,
-                      )
-                : const SizedBox(),
+        child: TapRegion(
+          groupId: widget.tapRegionGroupId,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onPanStart: onPanStart,
+            onPanUpdate: _onPanUpdate,
+            onPanEnd: _onPanEnd,
+            onPanCancel: _onPanCancel,
+            child: Container(
+              width: 24,
+              color: widget.showDebugPaint ? Colors.green : Colors.transparent,
+              child: showHandle
+                  ? isUpstreamHandle
+                      ? IOSSelectionHandle.upstream(
+                          color: widget.handleColor,
+                          caretHeight: lineHeight,
+                        )
+                      : IOSSelectionHandle.downstream(
+                          color: widget.handleColor,
+                          caretHeight: lineHeight,
+                        )
+                  : const SizedBox(),
+            ),
           ),
         ),
       ),

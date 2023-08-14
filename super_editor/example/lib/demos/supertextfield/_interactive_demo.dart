@@ -1,10 +1,8 @@
+import 'package:example/demos/supertextfield/demo_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
-
-const brandAttribution = NamedAttribution('brand');
-const flutterAttribution = NamedAttribution('flutter');
 
 class InteractiveTextFieldDemo extends StatefulWidget {
   @override
@@ -12,6 +10,8 @@ class InteractiveTextFieldDemo extends StatefulWidget {
 }
 
 class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
+  static const _tapRegionGroupId = "desktop";
+
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
         text: 'Super Editor is an open source text editor for Flutter projects.',
@@ -118,78 +118,53 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
+    return TapRegion(
+      groupId: _tapRegionGroupId,
+      onTapOutside: (_) {
         // Remove focus from text field when the user taps anywhere else.
         _focusNode!.unfocus();
       },
       child: Center(
         child: SizedBox(
           width: 400,
-          child: GestureDetector(
-            onTap: () {
-              // no-op. Prevents unfocus from happening when text field is tapped.
-            },
-            child: SizedBox(
-              width: double.infinity,
-              child: SuperDesktopTextField(
-                textController: _textFieldController,
-                inputSource: TextInputSource.ime,
-                focusNode: _focusNode,
-                textStyleBuilder: _textStyleBuilder,
-                blinkTimingMode: BlinkTimingMode.timer,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decorationBuilder: (context, child) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: _focusNode!.hasFocus ? Colors.blue : Colors.grey.shade300,
-                        width: 1,
-                      ),
+          child: SizedBox(
+            width: double.infinity,
+            child: SuperDesktopTextField(
+              focusNode: _focusNode,
+              tapRegionGroupId: _tapRegionGroupId,
+              textController: _textFieldController,
+              inputSource: TextInputSource.ime,
+              textStyleBuilder: demoTextStyleBuilder,
+              blinkTimingMode: BlinkTimingMode.timer,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decorationBuilder: (context, child) {
+                return Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: _focusNode!.hasFocus ? Colors.blue : Colors.grey.shade300,
+                      width: 1,
                     ),
-                    child: child,
-                  );
-                },
-                hintBuilder: (context) {
-                  return const Text(
-                    'enter some text',
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
-                  );
-                },
-                hintBehavior: HintBehavior.displayHintUntilTextEntered,
-                minLines: 5,
-                maxLines: 5,
-                onRightClick: _onRightClick,
-              ),
+                  ),
+                  child: child,
+                );
+              },
+              hintBuilder: (context) {
+                return const Text(
+                  'enter some text',
+                  style: TextStyle(
+                    color: Colors.grey,
+                  ),
+                );
+              },
+              hintBehavior: HintBehavior.displayHintUntilTextEntered,
+              minLines: 5,
+              maxLines: 5,
+              onRightClick: _onRightClick,
             ),
           ),
         ),
       ),
     );
-  }
-
-  TextStyle _textStyleBuilder(Set<Attribution> attributions) {
-    TextStyle textStyle = const TextStyle(
-      color: Colors.black,
-      fontSize: 14,
-    );
-
-    if (attributions.contains(brandAttribution)) {
-      textStyle = textStyle.copyWith(
-        color: Colors.red,
-        fontWeight: FontWeight.bold,
-      );
-    }
-    if (attributions.contains(flutterAttribution)) {
-      textStyle = textStyle.copyWith(
-        color: Colors.blue,
-      );
-    }
-
-    return textStyle;
   }
 }

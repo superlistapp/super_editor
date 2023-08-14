@@ -26,6 +26,7 @@ class SuperAndroidTextField extends StatefulWidget {
   const SuperAndroidTextField({
     Key? key,
     this.focusNode,
+    this.tapRegionGroupId,
     this.textController,
     this.textAlign = TextAlign.left,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
@@ -46,6 +47,9 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
+
+  /// {@macro super_text_field_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   /// Controller that owns the text content and text selection for
   /// this text field.
@@ -347,6 +351,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           textFieldKey: _textFieldKey,
           textContentLayerLink: _textContentLayerLink,
           textContentKey: _textContentKey,
+          tapRegionGroupId: widget.tapRegionGroupId,
           handleColor: widget.handlesColor,
           popoverToolbarBuilder: widget.popoverToolbarBuilder,
           showDebugPaint: widget.showDebugPaint,
@@ -467,54 +472,57 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   @override
   Widget build(BuildContext context) {
-    return NonReparentingFocus(
-      key: _textFieldKey,
-      focusNode: _focusNode,
-      onKey: _onKeyPressed,
-      child: CompositedTransformTarget(
-        link: _textFieldLayerLink,
-        child: AndroidTextFieldTouchInteractor(
-          focusNode: _focusNode,
-          textKey: _textContentKey,
-          textFieldLayerLink: _textFieldLayerLink,
-          textController: _textEditingController,
-          editingOverlayController: _editingOverlayController,
-          textScrollController: _textScrollController,
-          isMultiline: _isMultiline,
-          handleColor: widget.handlesColor,
-          showDebugPaint: widget.showDebugPaint,
-          child: TextScrollView(
-            key: _scrollKey,
-            textScrollController: _textScrollController,
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: NonReparentingFocus(
+        key: _textFieldKey,
+        focusNode: _focusNode,
+        onKey: _onKeyPressed,
+        child: CompositedTransformTarget(
+          link: _textFieldLayerLink,
+          child: AndroidTextFieldTouchInteractor(
+            focusNode: _focusNode,
             textKey: _textContentKey,
-            textEditingController: _textEditingController,
-            textAlign: widget.textAlign,
-            minLines: widget.minLines,
-            maxLines: widget.maxLines,
-            lineHeight: widget.lineHeight,
-            perLineAutoScrollDuration: const Duration(milliseconds: 100),
+            textFieldLayerLink: _textFieldLayerLink,
+            textController: _textEditingController,
+            editingOverlayController: _editingOverlayController,
+            textScrollController: _textScrollController,
+            isMultiline: _isMultiline,
+            handleColor: widget.handlesColor,
             showDebugPaint: widget.showDebugPaint,
-            padding: widget.padding,
-            child: ListenableBuilder(
-              listenable: _textEditingController,
-              builder: (context, _) {
-                final isTextEmpty = _textEditingController.text.text.isEmpty;
-                final showHint = widget.hintBuilder != null &&
-                    ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                        (isTextEmpty &&
-                            !_focusNode.hasFocus &&
-                            widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+            child: TextScrollView(
+              key: _scrollKey,
+              textScrollController: _textScrollController,
+              textKey: _textContentKey,
+              textEditingController: _textEditingController,
+              textAlign: widget.textAlign,
+              minLines: widget.minLines,
+              maxLines: widget.maxLines,
+              lineHeight: widget.lineHeight,
+              perLineAutoScrollDuration: const Duration(milliseconds: 100),
+              showDebugPaint: widget.showDebugPaint,
+              padding: widget.padding,
+              child: ListenableBuilder(
+                listenable: _textEditingController,
+                builder: (context, _) {
+                  final isTextEmpty = _textEditingController.text.text.isEmpty;
+                  final showHint = widget.hintBuilder != null &&
+                      ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                          (isTextEmpty &&
+                              !_focusNode.hasFocus &&
+                              widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-                return CompositedTransformTarget(
-                  link: _textContentLayerLink,
-                  child: Stack(
-                    children: [
-                      if (showHint) widget.hintBuilder!(context),
-                      _buildSelectableText(),
-                    ],
-                  ),
-                );
-              },
+                  return CompositedTransformTarget(
+                    link: _textContentLayerLink,
+                    child: Stack(
+                      children: [
+                        if (showHint) widget.hintBuilder!(context),
+                        _buildSelectableText(),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -548,7 +556,10 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 }
 
 Widget _defaultAndroidToolbarBuilder(
-    BuildContext context, AndroidEditingOverlayController controller, ToolbarConfig config) {
+  BuildContext context,
+  AndroidEditingOverlayController controller,
+  ToolbarConfig config,
+) {
   return AndroidTextEditingFloatingToolbar(
     onCutPressed: () {
       final textController = controller.textController;
