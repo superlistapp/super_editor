@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
-import '../test_tools_ime.dart';
+import '../test_tools_user_input.dart';
 import 'super_textfield_robot.dart';
 
 void main() {

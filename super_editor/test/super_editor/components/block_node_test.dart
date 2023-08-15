@@ -4,14 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
-import 'document_test_tools.dart';
-import 'test_documents.dart';
+
+import '../supereditor_test_tools.dart';
+import '../test_documents.dart';
 
 /// Upstream/downstream selection refers components that only support
 /// a caret position at the upstream edge, or downstream edge. For
 /// example, an image component might use upstream/downstream selection.
 void main() {
-  group("Upstream-downstream block", () {
+  group("Block nodes", () {
     group("move caret up", () {
       testWidgets("up arrow moves text caret to upstream edge of block from node below", (tester) async {
         final document = paragraphThenHrThenParagraphDoc();

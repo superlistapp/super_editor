@@ -7,9 +7,8 @@ import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
-import '_document_test_tools.dart';
 import '../test_tools.dart';
-import 'document_test_tools.dart';
+import 'supereditor_test_tools.dart';
 
 void main() {
   group("SuperEditor scrolling", () {
@@ -580,6 +579,114 @@ void main() {
         expect(caretOffset.dy, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
         expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
       });
+
+      group('respects horizontal scrolling', () {
+        testWidgetsOnAllPlatforms('inside a TabBar', (tester) async {
+          final tabController = TabController(length: 2, vsync: tester);
+          final scrollController = ScrollController();
+
+          // Pump a SuperEditor with a small maxHeight, so adding lines
+          // will cause the editor to scroll.
+          await tester
+              .createDocument()
+              .withSingleEmptyParagraph()
+              .withInputSource(TextInputSource.ime)
+              .withScrollController(scrollController)
+              .withCustomWidgetTreeBuilder(
+                (superEditor) => MaterialApp(
+                  home: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 300,
+                      maxHeight: 100,
+                    ),
+                    child: Scaffold(
+                      appBar: AppBar(
+                        bottom: TabBar(
+                          controller: tabController,
+                          tabs: const [
+                            Tab(text: 'Tab 1'),
+                            Tab(text: 'Tab 2'),
+                          ],
+                        ),
+                      ),
+                      body: TabBarView(
+                        controller: tabController,
+                        children: [
+                          superEditor,
+                          const SizedBox(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              .pump();
+
+          // Select the editor.
+          await tester.placeCaretInParagraph('1', 0);
+
+          // Add new lines so the content will cause editor to scroll
+          await _addNewLines(tester, count: 40);
+          await tester.pumpAndSettle();
+
+          // Ensure SuperEditor has scrolled
+          expect(scrollController.offset, greaterThan(0));
+
+          // Ensure that scrolling didn't cause a tab change
+          expect(tabController.index, equals(0));
+        });
+
+        testWidgetsOnAllPlatforms('inside a horizontal ListView', (tester) async {
+          final listScrollController = ScrollController();
+          final editorScrollController = ScrollController();
+
+          // Pump a SuperEditor with a small maxHeight, so adding lines
+          // will cause the editor to scroll.
+          await tester
+              .createDocument()
+              .withSingleEmptyParagraph()
+              .withInputSource(TextInputSource.ime)
+              .withScrollController(editorScrollController)
+              .withCustomWidgetTreeBuilder(
+                (superEditor) => MaterialApp(
+                  home: Scaffold(
+                    body: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minWidth: 300,
+                        maxHeight: 100,
+                        maxWidth: 300,
+                      ),
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        controller: listScrollController,
+                        children: [
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 100),
+                            child: superEditor,
+                          ),
+                          ...List.generate(20, (index) => Text('Text $index')),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              .pump();
+
+          // Select the editor.
+          await tester.placeCaretInParagraph('1', 0);
+
+          // Add new lines so the content will cause editor to scroll
+          await _addNewLines(tester, count: 40);
+          await tester.pumpAndSettle();
+
+          // Ensure SuperEditor has scrolled
+          expect(editorScrollController.offset, greaterThan(0));
+
+          // Ensure that scrolling didn't scroll the ListView
+          expect(listScrollController.position.pixels, equals(0));
+        });
+      });
     });
   });
 }
@@ -611,7 +718,7 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
   void initState() {
     super.initState();
 
-    _doc = createExampleDocument();
+    _doc = _createExampleDocumentForScrolling();
     _composer = MutableDocumentComposer();
     _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
@@ -690,4 +797,59 @@ Future<void> _simulateKeyboardAppearance({
     // Let the scrolling system auto-scroll, as desired.
     await tester.pumpAndSettle();
   }
+}
+
+/// Adds [count] new lines using IME actions
+Future<void> _addNewLines(
+  WidgetTester tester, {
+  required int count,
+}) async {
+  for (int i = 0; i < count; i++) {
+    await tester.testTextInput.receiveAction(TextInputAction.newline);
+    await tester.pump();
+  }
+}
+
+MutableDocument _createExampleDocumentForScrolling() {
+  return MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(
+          text: 'Example Document',
+        ),
+        metadata: {
+          'blockType': header1Attribution,
+        },
+      ),
+      HorizontalRuleNode(id: Editor.createNodeId()),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(
+          text:
+              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
+        ),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(
+            text:
+                'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(
+          text:
+              'Nam hendrerit vitae elit ut placerat. Maecenas nec congue neque. Fusce eget tortor pulvinar, cursus neque vitae, sagittis lectus. Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.',
+        ),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(
+          text:
+              'Etiam id lacus interdum, efficitur ex convallis, accumsan ipsum. Integer faucibus mollis mauris, a suscipit ante mollis vitae. Fusce justo metus, congue non lectus ac, luctus rhoncus tellus. Phasellus vitae fermentum orci, sit amet sodales orci. Fusce at ante iaculis nunc aliquet pharetra. Nam placerat, nisl in gravida lacinia, nisl nibh feugiat nunc, in sagittis nisl sapien nec arcu. Nunc gravida faucibus massa, sit amet accumsan dolor feugiat in. Mauris ut elementum leo.',
+        ),
+      ),
+    ],
+  );
 }

@@ -5,10 +5,9 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
-import 'document_test_tools.dart';
+import 'supereditor_test_tools.dart';
 import 'test_documents.dart';
 import '../test_tools.dart';
-import '_document_test_tools.dart';
 
 void main() {
   group('IME input', () {
@@ -317,53 +316,17 @@ void main() {
       });
 
       testWidgets('can type compound character in an empty paragraph', (tester) async {
-        final document = twoParagraphEmptyDoc();
+        final editContext = await tester //
+            .createDocument()
+            .withTwoEmptyParagraphs()
+            .withInputSource(TextInputSource.ime)
+            .withGestureMode(DocumentGestureMode.mouse)
+            .autoFocus(true)
+            .pump();
 
-        // Inserting special characters, or compound characters, like ü, requires
-        // multiple key presses, which are combined by the IME, based on the
-        // composing region.
-        //
-        // A blank paragraph is serialized with a leading ". " to trick IMEs into
-        // auto-capitalizing the first character the user types, while still reporting
-        // a `backspace` operation, if the user presses backspace on a software keyboard.
-        //
-        // This test ensures that when we go from an empty paragraph with a hidden ". ", to
-        // a character with a composing region, like "¨", we report the correct composing region.
-        // For example, due to our hidden ". ", when the user enters a "¨", the IME thinks
-        // the composing region is [2,3], like ". ¨", but the text is actually "¨", so we
-        // need to adjust the composing region to [0,1].
-        final editContext = createEditContext(
-          // Use a two-paragraph document so that the selection in the 2nd
-          // paragraph sends a hidden placeholder to the IME for backspace.
-          document: document,
-          documentComposer: MutableDocumentComposer(
-            initialSelection: const DocumentSelection.collapsed(
-              position: DocumentPosition(
-                // Start the caret in the 2nd paragraph so that we send a
-                // hidden placeholder to the IME to report backspaces.
-                nodeId: "2",
-                nodePosition: TextNodePosition(
-                  offset: 0,
-                ),
-              ),
-            ),
-          ),
-        );
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editContext.editor,
-                document: editContext.document,
-                composer: editContext.composer,
-                inputSource: TextInputSource.ime,
-                gestureMode: DocumentGestureMode.mouse,
-                autofocus: true,
-              ),
-            ),
-          ),
-        );
+        // Start the caret in the 2nd paragraph so that we send a
+        // hidden placeholder to the IME to report backspaces.
+        await tester.placeCaretInParagraph("2", 0);
 
         // Send the deltas that should produce a ü.
         //
