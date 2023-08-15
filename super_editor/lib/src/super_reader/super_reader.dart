@@ -208,7 +208,6 @@ class SuperReaderState extends State<SuperReader> {
     caretLink: LayerLink(),
     upstreamLink: LayerLink(),
     downstreamLink: LayerLink(),
-    expandedSelectionBoundsLink: LayerLink(),
   );
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -175,11 +176,11 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
                     : null,
               ),
             ),
-          if (_expandedSelectionBounds != null && widget.links.expandedSelectionBoundsLink != null)
+          if (_expandedSelectionBounds != null)
             Positioned.fromRect(
               rect: _expandedSelectionBounds!,
-              child: CompositedTransformTarget(
-                link: widget.links.expandedSelectionBoundsLink!,
+              child: Leader(
+                link: widget.links.expandedSelectionBoundsLink,
                 child: widget.showDebugLeaderBounds
                     ? DecoratedBox(
                         decoration: BoxDecoration(border: Border.all(width: 4, color: const Color(0xFFFF00FF))),
@@ -196,12 +197,14 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
 /// A collection of [LayerLink]s that should be positioned near important
 /// visual selection locations, such as at the caret position.
 class SelectionLayerLinks {
-  const SelectionLayerLinks({
+  SelectionLayerLinks({
     this.caretLink,
     this.upstreamLink,
     this.downstreamLink,
-    this.expandedSelectionBoundsLink,
-  });
+    LeaderLink? expandedSelectionBoundsLink,
+  }) {
+    this.expandedSelectionBoundsLink = expandedSelectionBoundsLink ?? LeaderLink();
+  }
 
   /// [LayerLink] that's connected to a rectangle at the collapsed selection caret
   /// position.
@@ -217,5 +220,5 @@ class SelectionLayerLinks {
 
   /// [LayerLink] that's connected to a rectangle that bounds the entire expanded
   /// selection, from the top of upstream to the bottom of downstream.
-  final LayerLink? expandedSelectionBoundsLink;
+  late final LeaderLink expandedSelectionBoundsLink;
 }

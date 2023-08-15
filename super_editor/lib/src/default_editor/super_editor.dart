@@ -114,6 +114,7 @@ class SuperEditor extends StatefulWidget {
     this.iOSHandleColor,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
+    this.selectionLayerLinks,
     this.documentOverlayBuilders = const [DefaultCaretOverlayBuilder()],
     this.autofocus = false,
     this.overlayController,
@@ -242,6 +243,14 @@ class SuperEditor extends StatefulWidget {
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
+  /// Layer links that connect leader widgets near the user's selection
+  /// to carets, handles, and other things that want to follow the selection.
+  ///
+  /// These links are always created and used within [SuperEditor]. By providing
+  /// an explicit [selectionLayerLinks], external widgets can also follow the
+  /// user's selection.
+  final SelectionLayerLinks? selectionLayerLinks;
+
   /// Alters the [document] and other artifacts.
   final Editor editor;
 
@@ -310,12 +319,7 @@ class SuperEditorState extends State<SuperEditor> {
 
   // Layer links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
-  final _selectionLinks = SelectionLayerLinks(
-    caretLink: LayerLink(),
-    upstreamLink: LayerLink(),
-    downstreamLink: LayerLink(),
-    expandedSelectionBoundsLink: LayerLink(),
-  );
+  late SelectionLayerLinks _selectionLinks;
 
   @visibleForTesting
   SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
@@ -338,6 +342,7 @@ class SuperEditorState extends State<SuperEditor> {
       DocumentLayoutEditable(() => _docLayoutKey.currentState as DocumentLayout),
     );
 
+    _createSelectionLayerLinks();
     _createEditContext();
     _createLayoutPresenter();
   }
@@ -352,6 +357,10 @@ class SuperEditorState extends State<SuperEditor> {
 
     if (widget.documentLayoutKey != oldWidget.documentLayoutKey) {
       _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
+    }
+
+    if (widget.selectionLayerLinks != oldWidget.selectionLayerLinks) {
+      _createSelectionLayerLinks();
     }
 
     if (widget.editor != oldWidget.editor) {
@@ -395,6 +404,15 @@ class SuperEditorState extends State<SuperEditor> {
     }
 
     super.dispose();
+  }
+
+  void _createSelectionLayerLinks() {
+    _selectionLinks = widget.selectionLayerLinks ??
+        SelectionLayerLinks(
+          caretLink: LayerLink(),
+          upstreamLink: LayerLink(),
+          downstreamLink: LayerLink(),
+        );
   }
 
   void _createEditContext() {
@@ -511,7 +529,7 @@ class SuperEditorState extends State<SuperEditor> {
             scroller: _scroller,
             presenter: presenter,
             componentBuilders: widget.componentBuilders,
-            underlays: [
+            overlays: [
               // Layer that positions and sizes leader widgets at the bounds
               // of the users selection so that carets, handles, toolbars, and
               // other things can follow the selection.
@@ -520,8 +538,7 @@ class SuperEditorState extends State<SuperEditor> {
                   links: _selectionLinks,
                 ).build(context, editContext);
               },
-            ],
-            overlays: [
+              // Add all overlays that the app wants.
               for (final overlayBuilder in widget.documentOverlayBuilders) //
                 (context) => overlayBuilder.build(context, editContext),
             ],
