@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/document_ime/document_ime_communication.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
@@ -22,6 +23,7 @@ class SuperEditorHardwareKeyHandler extends StatefulWidget {
     required this.editContext,
     this.keyboardActions = const [],
     this.autofocus = false,
+    this.textInputDebugger,
     required this.child,
   }) : super(key: key);
 
@@ -42,6 +44,9 @@ class SuperEditorHardwareKeyHandler extends StatefulWidget {
 
   /// Whether or not the [SuperEditorHardwareKeyHandler] should autofocus
   final bool autofocus;
+
+  /// Event collector for debugging purposes.
+  final TextInputDebugger? textInputDebugger;
 
   /// The [child] widget, which is expected to include the document UI
   /// somewhere in the sub-tree.
@@ -69,6 +74,12 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
   }
 
   KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
+    int? logIndex = widget.textInputDebugger?.add(
+      TextInputDebugEvent(
+        method: 'onKey',
+        data: keyEvent,
+      ),
+    );
     editorKeyLog.info("Handling key press: $keyEvent");
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
@@ -78,6 +89,17 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
         keyEvent: keyEvent,
       );
       index += 1;
+    }
+
+    if (logIndex != null && (instruction != ExecutionInstruction.haltExecution)) {
+      // The key event wasn't handled by the editor.
+      //
+      // We inspect all key events, but not all key events are handled by the editor.
+      // For example, typing a character triggers _onKeyPressed, but we only handle the
+      // character via text deltas from the IME.
+      //
+      // So, as the key wasn't handled we remove it from the event list to avoid spamming.
+      widget.textInputDebugger?.removeAt(logIndex);
     }
 
     switch (instruction) {

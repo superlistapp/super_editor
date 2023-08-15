@@ -1,3 +1,4 @@
+import 'package:example/demos/example_editor/text_input_visualizer.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +43,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   final _overlayController = MagnifierAndToolbarController() //
     ..screenPadding = const EdgeInsets.all(20.0);
+
+  final TextInputDebugger _textInputDebugger = TextInputDebugger();
+  bool _showImeDebugger = false;
 
   @override
   void initState() {
@@ -319,20 +323,33 @@ class _ExampleEditorState extends State<ExampleEditor> {
           child: Builder(
             builder: (themedContext) {
               // This builder captures the new theme
-              return Stack(
+              return Row(
                 children: [
-                  Column(
-                    children: [
-                      Expanded(
-                        child: _buildEditor(themedContext),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Column(
+                          children: [
+                            Expanded(
+                              child: _buildEditor(themedContext),
+                            ),
+                            if (_isMobile) _buildMountedToolbar(),
+                          ],
+                        ),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: _buildCornerFabs(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_showImeDebugger)
+                    SizedBox(
+                      width: 400,
+                      child: SuperEditorImeDebugger(
+                        debugger: _textInputDebugger,
                       ),
-                      if (_isMobile) _buildMountedToolbar(),
-                    ],
-                  ),
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: _buildCornerFabs(),
-                  ),
+                    ),
                 ],
               );
             },
@@ -349,10 +366,34 @@ class _ExampleEditorState extends State<ExampleEditor> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          _buildImeDebuggerToggle(),
+          const SizedBox(height: 16),
           _buildDebugVisualsToggle(),
           const SizedBox(height: 16),
           _buildLightAndDarkModeToggle(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImeDebuggerToggle() {
+    return FloatingActionButton(
+      backgroundColor: _brightness.value == Brightness.light ? _darkBackground : _lightBackground,
+      foregroundColor: _brightness.value == Brightness.light ? _lightBackground : _darkBackground,
+      elevation: 5,
+      onPressed: () {
+        setState(() {
+          _showImeDebugger = !_showImeDebugger;
+
+          if (_showImeDebugger) {
+            _textInputDebugger.enable();
+          } else {
+            _textInputDebugger.disable();
+          }
+        });
+      },
+      child: const Icon(
+        Icons.translate,
       ),
     );
   }
@@ -410,6 +451,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           focusNode: _editorFocusNode,
           scrollController: _scrollController,
           documentLayoutKey: _docLayoutKey,
+          textInputDebugger: _textInputDebugger,
           documentOverlayBuilders: [
             DefaultCaretOverlayBuilder(
               caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
