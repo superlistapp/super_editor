@@ -4,7 +4,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../../test_tools.dart';
-import '../document_test_tools.dart';
+import '../supereditor_test_tools.dart';
 
 void main() {
   group('SuperEditor link editing >', () {
@@ -132,6 +132,50 @@ void main() {
           range: SpanRange(start: 0, end: text.text.length - 2),
         ),
         isTrue,
+      );
+    });
+
+    testWidgetsOnAllPlatforms('does not expand the link when inserting before the link', (tester) async {
+      // Configure and render a document.
+      await tester //
+          .createDocument()
+          .fromMarkdown("[www.google.com](www.google.com)")
+          .pump();
+
+      final doc = SuperEditorInspector.findDocument()!;
+
+      // Place the caret in the first paragraph at the start of the link.
+      await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+
+      // Type some text by simulating hardware keyboard key presses.
+      await tester.typeKeyboardText('Go to ');
+
+      // Ensure that the link is unchanged
+      expect(
+        SuperEditorInspector.findDocument(),
+        equalsMarkdown("Go to [www.google.com](www.google.com)"),
+      );
+    });
+
+    testWidgets('does not expand the link when inserting after the link', (tester) async {
+      // Configure and render a document.
+      await tester //
+          .createDocument()
+          .fromMarkdown("[www.google.com](www.google.com)")
+          .pump();
+
+      final doc = SuperEditorInspector.findDocument()!;
+
+      // Place the caret in the first paragraph at the start of the link.
+      await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
+
+      // Type some text by simulating hardware keyboard key presses.
+      await tester.typeKeyboardText(' to learn anything');
+
+      // Ensure that the link is unchanged
+      expect(
+        SuperEditorInspector.findDocument(),
+        equalsMarkdown("[www.google.com](www.google.com) to learn anything"),
       );
     });
 

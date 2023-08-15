@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
@@ -685,4 +686,38 @@ class StandardEditorPieces {
   final Document document;
   final DocumentComposer composer;
   final Editor editor;
+}
+
+/// Fake [DocumentLayout], intended for tests that interact with
+/// a logical [DocumentLayout] but do not depend upon a real
+/// widget tree with a real [DocumentLayout] implementation.
+class FakeDocumentLayout with Mock implements DocumentLayout {}
+
+/// Fake [SuperEditorScroll], intended for tests that interact
+/// with logical resources but do not depend upon a real widget
+/// tree with a real `Scrollable`.
+class FakeSuperEditorScroller implements DocumentScroller {
+  @override
+  double get viewportDimension => throw UnimplementedError();
+
+  @override
+  double get minScrollExtent => throw UnimplementedError();
+
+  @override
+  double get maxScrollExtent => throw UnimplementedError();
+
+  @override
+  double get scrollOffset => throw UnimplementedError();
+
+  @override
+  void jumpTo(double newScrollOffset) => throw UnimplementedError();
+
+  @override
+  void animateTo(double to, {required Duration duration, Curve curve = Curves.easeInOut}) => throw UnimplementedError();
+
+  @override
+  void attach(ScrollPosition scrollPosition) => throw UnimplementedError();
+
+  @override
+  void detach() => throw UnimplementedError();
 }

@@ -2,8 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
-import '../_document_test_tools.dart';
-import '../_text_entry_test_tools.dart';
+import '../../test_tools_user_input.dart';
+import '../supereditor_test_tools.dart';
 
 void main() {
   group('text.dart', () {

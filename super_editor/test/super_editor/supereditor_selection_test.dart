@@ -9,7 +9,7 @@ import 'package:super_editor/super_editor_test.dart';
 
 import '../super_textfield/super_textfield_robot.dart';
 import '../test_tools.dart';
-import 'document_test_tools.dart';
+import 'supereditor_test_tools.dart';
 
 void main() {
   group("SuperEditor selection", () {
