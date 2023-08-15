@@ -6,10 +6,31 @@ import 'package:super_editor/super_editor_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../test_tools.dart';
-import 'document_test_tools.dart';
+import 'supereditor_test_tools.dart';
 
 void main() {
   group('SuperEditor', () {
+    testWidgets("re-runs its presenter when the stylesheet changes", (tester) async {
+      // Configure and render a document.
+      final testDocumentContext = await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .useStylesheet(_stylesheetWithBlackText)
+          .pump();
+
+      // Ensure that the initial text is black
+      expect(SuperEditorInspector.findParagraphStyle("1")!.color, Colors.black);
+
+      // Configure and render a document with a different stylesheet.
+      await tester //
+          .updateDocument(testDocumentContext.configuration)
+          .useStylesheet(_stylesheetWithWhiteText)
+          .pump();
+
+      // Expect the paragraph to now be white.
+      expect(SuperEditorInspector.findParagraphStyle("1")!.color, Colors.white);
+    });
+
     testWidgetsOnArbitraryDesktop('changes visual text style when attributions change', (tester) async {
       final testContext = await tester
           .createDocument() //
@@ -34,7 +55,7 @@ void main() {
       final testContext = await tester //
           .createDocument()
           .withTwoEmptyParagraphs()
-          .useStylesheet(_stylesheet)
+          .useStylesheet(_stylesheetWithNodePositionRule)
           .pump();
 
       final doc = testContext.findEditContext().document;
@@ -232,7 +253,7 @@ InlineSpan _findSpanAtOffset(
   return superTextWithSelection.richText.getSpanForPosition(TextPosition(offset: offset))!;
 }
 
-final _stylesheet = Stylesheet(
+final _stylesheetWithNodePositionRule = Stylesheet(
   inlineTextStyler: inlineTextStyler,
   rules: [
     StyleRule(
@@ -257,6 +278,33 @@ final _stylesheet = Stylesheet(
     ),
   ],
 );
+
+final _stylesheetWithBlackText = Stylesheet(
+  inlineTextStyler: inlineTextStyler,
+  rules: [
+    StyleRule(BlockSelector.all, (document, node) {
+      return {
+        "textStyle": const TextStyle(
+          color: Colors.black,
+        ),
+      };
+    }),
+  ],
+);
+
+final _stylesheetWithWhiteText = Stylesheet(
+  inlineTextStyler: inlineTextStyler,
+  rules: [
+    StyleRule(BlockSelector.all, (document, node) {
+      return {
+        "textStyle": const TextStyle(
+          color: Colors.white,
+        ),
+      };
+    }),
+  ],
+);
+
 TextStyle inlineTextStyler(Set<Attribution> attributions, TextStyle base) {
   return base;
 }

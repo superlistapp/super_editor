@@ -3,25 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../supereditor_test_tools.dart';
+
 void main() {
   group('Blockquote', () {
-    final doc = _singleBlockquoteDoc();
-    final composer = MutableDocumentComposer();
-    final editor = createDefaultDocumentEditor(document: doc, composer: composer);
-
     testWidgets("applies the textStyle from SuperEditor's styleSheet", (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: doc,
-              composer: composer,
-              stylesheet: _styleSheet,
-            ),
-          ),
-        ),
-      );
+      await tester
+          .createDocument() //
+          .withCustomContent(_singleBlockquoteDoc())
+          .useStylesheet(_styleSheet)
+          .pump();
 
       // Ensure that the textStyle from the styleSheet was applied
       expect(find.byType(LayoutAwareRichText), findsOneWidget);
@@ -42,8 +33,6 @@ MutableDocument _singleBlockquoteDoc() => MutableDocument(
       ],
     );
 
-TextStyle _inlineTextStyler(Set<Attribution> attributions, TextStyle base) => base;
-
 final _styleSheet = Stylesheet(
   inlineTextStyler: _inlineTextStyler,
   rules: [
@@ -57,3 +46,5 @@ final _styleSheet = Stylesheet(
     ),
   ],
 );
+
+TextStyle _inlineTextStyler(Set<Attribution> attributions, TextStyle base) => base;
