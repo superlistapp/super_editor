@@ -11,7 +11,9 @@ enum TextInputSource {
 /// By default this is the same as [kIsWeb].
 ///
 /// [debugIsWebOverride] may be used to override the natural value of [isWeb].
-bool get isWeb => debugIsWebOverride ?? kIsWeb;
+bool get isWeb => debugIsWebOverride == null //
+    ? kIsWeb
+    : debugIsWebOverride == WebPlatformOverride.web;
 
 /// Overrides the value of [isWeb].
 ///
@@ -19,7 +21,17 @@ bool get isWeb => debugIsWebOverride ?? kIsWeb;
 ///
 /// Set it to `null` to use the default value of [isWeb].
 ///
-/// Set it to `true` to configure to run as if we are on web.
+/// Set it to [WebPlatformOverride.web] to configure to run as if we are on web.
 ///
-/// Set it to `false` to configure to run as if we are NOT on web.
-bool? debugIsWebOverride;
+/// Set it to [WebPlatformOverride.native] to configure to run as if we are NOT on web.
+@visibleForTesting
+WebPlatformOverride? debugIsWebOverride;
+
+@visibleForTesting
+enum WebPlatformOverride {
+  /// Configuration to run the app as if we are a native app.
+  native,
+
+  /// Configuration to run the app as if we are on web.
+  web,
+}

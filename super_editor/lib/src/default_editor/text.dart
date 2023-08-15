@@ -1815,17 +1815,6 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
   return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction deleteDownstreamContentWithDeleteWithIme({
-  required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (isWeb) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  return deleteDownstreamContentWithDelete(editContext: editContext, keyEvent: keyEvent);
-}
-
 ExecutionInstruction deleteDownstreamContentWithDelete({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,

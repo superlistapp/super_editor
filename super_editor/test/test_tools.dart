@@ -126,7 +126,7 @@ void testWidgetsOnMacWeb(
 }) {
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
-    debugIsWebOverride = true;
+    debugIsWebOverride = WebPlatformOverride.web;
 
     tester.view
       ..devicePixelRatio = 1.0
@@ -151,7 +151,7 @@ void testWidgetsOnWindowsWeb(
 }) {
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
-    debugIsWebOverride = true;
+    debugIsWebOverride = WebPlatformOverride.web;
 
     tester.view
       ..devicePixelRatio = 1.0
@@ -176,7 +176,7 @@ void testWidgetsOnLinuxWeb(
 }) {
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
-    debugIsWebOverride = true;
+    debugIsWebOverride = WebPlatformOverride.web;
 
     tester.view
       ..devicePixelRatio = 1.0

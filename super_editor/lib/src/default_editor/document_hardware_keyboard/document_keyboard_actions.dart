@@ -233,18 +233,6 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   return ExecutionInstruction.haltExecution;
 }
 
-ExecutionInstruction deleteUpstreamContentWithBackspaceWithIme({
-  required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (isWeb) {
-    // On web, pressing backspace reports both deletion deltas and key events.
-    // We handle the deletion delta to delete the content and ignore the key event.
-    return ExecutionInstruction.continueExecution;
-  }
-  return deleteUpstreamContentWithBackspace(editContext: editContext, keyEvent: keyEvent);
-}
-
 ExecutionInstruction deleteUpstreamContentWithBackspace({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -314,90 +302,11 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   return ExecutionInstruction.haltExecution;
 }
 
-ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
+ExecutionInstruction moveUpAndDownWithArrowKeys({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  const arrowKeys = [
-    LogicalKeyboardKey.arrowLeft,
-    LogicalKeyboardKey.arrowRight,
-    LogicalKeyboardKey.arrowUp,
-    LogicalKeyboardKey.arrowDown,
-  ];
-  if (!arrowKeys.contains(keyEvent.logicalKey)) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (defaultTargetPlatform == TargetPlatform.linux &&
-      keyEvent.isAltPressed &&
-      (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  bool didMove = false;
-  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft || keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
-    MovementModifier? movementModifier;
-    if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-        keyEvent.isControlPressed) {
-      movementModifier = MovementModifier.word;
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
-      movementModifier = MovementModifier.line;
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
-      movementModifier = MovementModifier.word;
-    }
-
-    if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
-      // Move the caret left/upstream.
-      didMove = editContext.commonOps.moveCaretUpstream(
-        expand: keyEvent.isShiftPressed,
-        movementModifier: movementModifier,
-      );
-    } else {
-      // Move the caret right/downstream.
-      didMove = editContext.commonOps.moveCaretDownstream(
-        expand: keyEvent.isShiftPressed,
-        movementModifier: movementModifier,
-      );
-    }
-  } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
-    didMove = editContext.commonOps.moveCaretUp(expand: keyEvent.isShiftPressed);
-  } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
-    didMove = editContext.commonOps.moveCaretDown(expand: keyEvent.isShiftPressed);
-  }
-
-  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
-
-ExecutionInstruction moveUpDownLeftAndRightWithArrowKeysWithIme({
-  required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (isWeb) {
-    // On web, pressing arrow keys reports both non-text deltas and key events.
-    // We handle the non-text delta to change the selection and ignore the key event.
-    return ExecutionInstruction.continueExecution;
-  }
-
-  return moveUpDownLeftAndRightWithArrowKeys(editContext: editContext, keyEvent: keyEvent);
-}
-
-ExecutionInstruction moveUpAndDownWithArrowKeysOnWeb({
-  required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!isWeb) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -427,7 +336,80 @@ ExecutionInstruction moveUpAndDownWithArrowKeysOnWeb({
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction moveBetweenNodesWithLeftAndRightArrowKeysOnWeb({
+ExecutionInstruction moveLeftAndRightWithArrowKeys({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  const arrowKeys = [
+    LogicalKeyboardKey.arrowLeft,
+    LogicalKeyboardKey.arrowRight,
+  ];
+  if (!arrowKeys.contains(keyEvent.logicalKey)) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  bool didMove = false;
+  MovementModifier? movementModifier;
+  if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
+      keyEvent.isControlPressed) {
+    movementModifier = MovementModifier.word;
+  } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+    movementModifier = MovementModifier.line;
+  } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+    movementModifier = MovementModifier.word;
+  }
+
+  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
+    // Move the caret left/upstream.
+    didMove = editContext.commonOps.moveCaretUpstream(
+      expand: keyEvent.isShiftPressed,
+      movementModifier: movementModifier,
+    );
+  } else {
+    // Move the caret right/downstream.
+    didMove = editContext.commonOps.moveCaretDownstream(
+      expand: keyEvent.isShiftPressed,
+      movementModifier: movementModifier,
+    );
+  }
+
+  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction doNothingWithLeftRightArrowKeysOnWeb({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  const arrowKeys = [
+    LogicalKeyboardKey.arrowLeft,
+    LogicalKeyboardKey.arrowRight,
+  ];
+  if (!arrowKeys.contains(keyEvent.logicalKey)) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (isWeb) {
+    // On web, pressing arrow keys reports both non-text deltas and key events.
+    // We handle the non-text delta to change the selection and ignore the key event.
+    return ExecutionInstruction.blocked;
+  }
+
+  return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction moveBetweenNodesWithLeftRightArrowKeysOnWeb({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
