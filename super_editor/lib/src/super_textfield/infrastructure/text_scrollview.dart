@@ -945,7 +945,7 @@ class _TextViewport extends SingleChildRenderObjectWidget {
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return _RenderTextHeightLimiter(
+    return _RenderTextViewport(
       text: text,
       textKey: textKey,
       minLines: minLines,
@@ -956,7 +956,7 @@ class _TextViewport extends SingleChildRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context, covariant _RenderTextHeightLimiter renderObject) {
+  void updateRenderObject(BuildContext context, covariant _RenderTextViewport renderObject) {
     renderObject
       ..text = text
       ..textKey = textKey
@@ -967,8 +967,8 @@ class _TextViewport extends SingleChildRenderObjectWidget {
   }
 }
 
-class _RenderTextHeightLimiter extends RenderProxyBox {
-  _RenderTextHeightLimiter({
+class _RenderTextViewport extends RenderProxyBox {
+  _RenderTextViewport({
     required AttributedText text,
     required GlobalKey<ProseTextState> textKey,
     int? minLines,
