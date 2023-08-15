@@ -14,7 +14,7 @@ void testGoldensOnAndroid(
   WidgetTesterCallback test, {
   bool skip = false,
 }) {
-  testGoldens(description, (tester) async {
+  testGoldens('$description (on Android)', (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     try {
       await test(tester);
@@ -32,7 +32,7 @@ void testGoldensOniOS(
   WidgetTesterCallback test, {
   bool skip = false,
 }) {
-  testGoldens(description, (tester) async {
+  testGoldens('$description (on iOS)', (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     try {
       await test(tester);

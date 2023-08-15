@@ -4,8 +4,8 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_android.
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
-import '../../super_editor/document_test_tools.dart';
-import '../../test_tools.dart';
+import 'supereditor_test_tools.dart';
+import '../test_tools.dart';
 
 void main() {
   group("SuperEditor", () {

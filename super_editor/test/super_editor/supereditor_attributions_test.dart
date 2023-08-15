@@ -9,7 +9,7 @@ import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.da
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 
 import '../test_tools.dart';
-import 'document_test_tools.dart';
+import 'supereditor_test_tools.dart';
 
 void main() {
   group("SuperEditor", () {

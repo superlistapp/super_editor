@@ -6,11 +6,79 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
 
+import '../../../test/super_editor/supereditor_test_tools.dart';
 import '../../test_tools_goldens.dart';
 
 void main() {
   group('SuperEditor', () {
+    group("mobile drag handles", () {
+      testGoldensOnAndroid("with caret change colors", (tester) async {
+        final testContext = await tester //
+            .createDocument() //
+            .fromMarkdown("This is some text to select.") //
+            .useAppTheme(ThemeData(primaryColor: Colors.red)) //
+            .pump();
+        final nodeId = testContext.findEditContext().document.nodes.first.id;
+
+        await tester.placeCaretInParagraph(nodeId, 15);
+
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile("goldens/supereditor_android_collapsed_handle_color.png"),
+        );
+      });
+
+      testGoldensOnAndroid("with selection change colors", (tester) async {
+        final testContext = await tester //
+            .createDocument() //
+            .fromMarkdown("This is some text to select.") //
+            .useAppTheme(ThemeData(primaryColor: Colors.red)) //
+            .pump();
+        final nodeId = testContext.findEditContext().document.nodes.first.id;
+
+        await tester.doubleTapInParagraph(nodeId, 15);
+
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile("goldens/supereditor_android_expanded_handle_color.png"),
+        );
+      });
+
+      testGoldensOniOS("with caret change colors", (tester) async {
+        final testContext = await tester //
+            .createDocument() //
+            .fromMarkdown("This is some text to select.") //
+            .useAppTheme(ThemeData(primaryColor: Colors.red)) //
+            .pump();
+        final nodeId = testContext.findEditContext().document.nodes.first.id;
+
+        await tester.placeCaretInParagraph(nodeId, 15);
+
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile("goldens/supereditor_ios_collapsed_handle_color.png"),
+        );
+      });
+
+      testGoldensOniOS("with selection change colors", (tester) async {
+        final testContext = await tester //
+            .createDocument() //
+            .fromMarkdown("This is some text to select.") //
+            .useAppTheme(ThemeData(primaryColor: Colors.red)) //
+            .pump();
+        final nodeId = testContext.findEditContext().document.nodes.first.id;
+
+        await tester.doubleTapInParagraph(nodeId, 15);
+
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile("goldens/supereditor_ios_expanded_handle_color.png"),
+        );
+      });
+    });
+
     group('mobile selection', () {
       group('Android', () {
         _testParagraphSelection(
