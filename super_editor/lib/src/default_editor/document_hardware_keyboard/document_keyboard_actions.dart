@@ -14,10 +14,8 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
-/// PAGE UP: Scrolls the viewport up by viewport height minus any overscroll distance.
-///
-/// If there is not a viewport worth of distance to scroll up, the viewport scrolls up as
-/// far as possible.
+/// Scrolls up by the viewport height, or as high as possible,
+/// when the user presses the Page Up key.
 ExecutionInstruction scrollOnPageUpKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -41,10 +39,8 @@ ExecutionInstruction scrollOnPageUpKeyPress({
   return ExecutionInstruction.haltExecution;
 }
 
-/// PAGE DOWN: Scrolls the viewport down by viewport height minus any overscroll distance.
-///
-/// If there is not a viewport worth of distance to scroll down, the viewport scrolls down
-/// as far as possible.
+/// Scrolls down by the viewport height, or as far as possible,
+/// when the user presses the Page Down key.
 ExecutionInstruction scrollOnPageDownKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -68,10 +64,8 @@ ExecutionInstruction scrollOnPageDownKeyPress({
   return ExecutionInstruction.haltExecution;
 }
 
-/// CTRL/CMD + HOME: Scrolls the viewport up as far as possible.
-///
-/// On mac, pressing `CMD + HOME` would scroll the viewport, while on all other
-/// platforms pressing `CTRL + HOME` would do it.
+/// Scrolls the viewport to the top of the content, when the user presses
+/// CMD + HOME on Mac, or CTRL + HOME on all other platforms.
 ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -80,14 +74,16 @@ ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform == TargetPlatform.macOS) {
-    if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId || !keyEvent.isMetaPressed) {
-      return ExecutionInstruction.continueExecution;
-    }
-  } else {
-    if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId || !keyEvent.isControlPressed) {
-      return ExecutionInstruction.continueExecution;
-    }
+  if (keyEvent.logicalKey != LogicalKeyboardKey.home) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.macOS && !keyEvent.isMetaPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform != TargetPlatform.macOS && !keyEvent.isControlPressed) {
+    return ExecutionInstruction.continueExecution;
   }
 
   final scrollController = editContext.scroller;
@@ -101,10 +97,8 @@ ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
   return ExecutionInstruction.haltExecution;
 }
 
-/// CTRL/CMD + END: Scrolls the viewport down as far as possible.
-///
-/// On mac, pressing `CMD + END` would scroll the viewport, while on all other
-/// platforms pressing `CTRL + END` would do it.
+/// Scrolls the viewport to the bottom of the content, when the user presses
+/// CMD + END on Mac, or CTRL + END on all other platforms.
 ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -113,14 +107,16 @@ ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform == TargetPlatform.macOS) {
-    if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId || !keyEvent.isMetaPressed) {
-      return ExecutionInstruction.continueExecution;
-    }
-  } else {
-    if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId || !keyEvent.isControlPressed) {
-      return ExecutionInstruction.continueExecution;
-    }
+  if (keyEvent.logicalKey != LogicalKeyboardKey.end) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.macOS && !keyEvent.isMetaPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform != TargetPlatform.macOS && !keyEvent.isControlPressed) {
+    return ExecutionInstruction.continueExecution;
   }
 
   final scrollController = editContext.scroller;
@@ -156,12 +152,11 @@ ExecutionInstruction doNothingWhenFnKeyPressed({
   return ExecutionInstruction.haltExecution;
 }
 
-/// Halt execution of the current key event if the [SuperEditorContext.scrollController]
-/// is null and the key pressed is one of the page up, page down, home or end key.
+/// Halt execution of the current key event if the PAGE UP/DOWN or
+/// HOME/END key is pressed.
 ///
-/// Without this action in place pressing the above mentioned keys in absense of
-/// [SuperEditorContext.scrollController] would display an unknown '?' character in
-/// the document.
+/// Without this action in place pressing the above mentioned keys would display an
+/// unknown '?' character in the document.
 ExecutionInstruction doNothingWhenPageUpOrPageDownOrHomeOrEndKeyPressed({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
