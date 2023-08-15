@@ -131,14 +131,14 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
     return IgnorePointer(
       child: Stack(
         children: [
-          if (_caret != null && widget.links.caretLink != null)
+          if (_caret != null)
             Positioned(
               top: _caret!.top,
               left: _caret!.left,
               width: 1,
               height: _caret!.height,
-              child: CompositedTransformTarget(
-                link: widget.links.caretLink!,
+              child: Leader(
+                link: widget.links.caretLink,
                 child: widget.showDebugLeaderBounds
                     ? DecoratedBox(
                         decoration: BoxDecoration(border: Border.all(width: 4, color: const Color(0xFFFF0000))),
@@ -146,14 +146,14 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
                     : null,
               ),
             ),
-          if (_upstream != null && widget.links.upstreamLink != null)
+          if (_upstream != null)
             Positioned(
               top: _upstream!.top,
               left: _upstream!.left,
               width: 1,
               height: _upstream!.height,
-              child: CompositedTransformTarget(
-                link: widget.links.upstreamLink!,
+              child: Leader(
+                link: widget.links.upstreamLink,
                 child: widget.showDebugLeaderBounds
                     ? DecoratedBox(
                         decoration: BoxDecoration(border: Border.all(width: 4, color: const Color(0xFF00FF00))),
@@ -161,14 +161,14 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
                     : null,
               ),
             ),
-          if (_downstream != null && widget.links.downstreamLink != null)
+          if (_downstream != null)
             Positioned(
               top: _downstream!.top,
               left: _downstream!.left,
               width: 1,
               height: _downstream!.height,
-              child: CompositedTransformTarget(
-                link: widget.links.downstreamLink!,
+              child: Leader(
+                link: widget.links.downstreamLink,
                 child: widget.showDebugLeaderBounds
                     ? DecoratedBox(
                         decoration: BoxDecoration(border: Border.all(width: 4, color: const Color(0xFF0000FF))),
@@ -198,25 +198,28 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
 /// visual selection locations, such as at the caret position.
 class SelectionLayerLinks {
   SelectionLayerLinks({
-    this.caretLink,
-    this.upstreamLink,
-    this.downstreamLink,
+    LeaderLink? caretLink,
+    LeaderLink? upstreamLink,
+    LeaderLink? downstreamLink,
     LeaderLink? expandedSelectionBoundsLink,
   }) {
+    this.caretLink = caretLink ?? LeaderLink();
+    this.upstreamLink = upstreamLink ?? LeaderLink();
+    this.downstreamLink = downstreamLink ?? LeaderLink();
     this.expandedSelectionBoundsLink = expandedSelectionBoundsLink ?? LeaderLink();
   }
 
   /// [LayerLink] that's connected to a rectangle at the collapsed selection caret
   /// position.
-  final LayerLink? caretLink;
+  late final LeaderLink caretLink;
 
   /// [LayerLink] that's connected to a rectangle at the expanded selection upstream
   /// position.
-  final LayerLink? upstreamLink;
+  late final LeaderLink upstreamLink;
 
   /// [LayerLink] that's connected to a rectangle at the expanded selection downstream
   /// position.
-  final LayerLink? downstreamLink;
+  late final LeaderLink downstreamLink;
 
   /// [LayerLink] that's connected to a rectangle that bounds the entire expanded
   /// selection, from the top of upstream to the bottom of downstream.

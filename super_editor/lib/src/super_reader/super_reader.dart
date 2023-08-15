@@ -204,11 +204,7 @@ class SuperReaderState extends State<SuperReader> {
 
   // Layer links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
-  final _selectionLinks = SelectionLayerLinks(
-    caretLink: LayerLink(),
-    upstreamLink: LayerLink(),
-    downstreamLink: LayerLink(),
-  );
+  final _selectionLinks = SelectionLayerLinks();
 
   @override
   void initState() {

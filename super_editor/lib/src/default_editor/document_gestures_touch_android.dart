@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -1339,8 +1340,8 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       return const SizedBox();
     }
 
-    return CompositedTransformFollower(
-      link: widget.editingController.selectionLinks.caretLink!,
+    return Follower.withOffset(
+      link: widget.editingController.selectionLinks.caretLink,
       showWhenUnlinked: false,
       child: IgnorePointer(
         child: BlinkingCaret(
@@ -1381,7 +1382,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   Widget _buildCollapsedHandle() {
     return _buildHandle(
       handleKey: _collapsedHandleKey,
-      handleLink: widget.editingController.selectionLinks.caretLink!,
+      handleLink: widget.editingController.selectionLinks.caretLink,
       leaderAnchor: Alignment.bottomCenter,
       followerAnchor: Alignment.topCenter,
       handleOffset: const Offset(-0.5, 5), // Chosen experimentally
@@ -1396,7 +1397,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       // upstream-bounding (left side of a RTL line of text) handle touch target
       _buildHandle(
         handleKey: _upstreamHandleKey,
-        handleLink: widget.editingController.selectionLinks.upstreamLink!,
+        handleLink: widget.editingController.selectionLinks.upstreamLink,
         leaderAnchor: Alignment.bottomLeft,
         followerAnchor: Alignment.topRight,
         handleOffset: const Offset(0, 2), // Chosen experimentally
@@ -1407,7 +1408,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       // downstream-bounding (right side of a RTL line of text) handle touch target
       _buildHandle(
         handleKey: _downstreamHandleKey,
-        handleLink: widget.editingController.selectionLinks.downstreamLink!,
+        handleLink: widget.editingController.selectionLinks.downstreamLink,
         leaderAnchor: Alignment.bottomRight,
         followerAnchor: Alignment.topLeft,
         handleOffset: const Offset(-1, 2), // Chosen experimentally
@@ -1420,7 +1421,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
   Widget _buildHandle({
     required Key handleKey,
-    required LayerLink handleLink,
+    required LeaderLink handleLink,
     required Alignment leaderAnchor,
     required Alignment followerAnchor,
     Offset? handleOffset,
@@ -1429,10 +1430,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     required Color debugColor,
     required void Function(DragStartDetails) onPanStart,
   }) {
-    return CompositedTransformFollower(
+    return Follower.withOffset(
       key: handleKey,
       link: handleLink,
-      targetAnchor: leaderAnchor,
+      leaderAnchor: leaderAnchor,
       followerAnchor: followerAnchor,
       offset: handleOffset ?? Offset.zero,
       showWhenUnlinked: false,

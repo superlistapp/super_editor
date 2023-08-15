@@ -337,12 +337,13 @@ class SuperEditorState extends State<SuperEditor> {
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
+    _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
+
     widget.editor.context.put(
       Editor.layoutKey,
       DocumentLayoutEditable(() => _docLayoutKey.currentState as DocumentLayout),
     );
 
-    _createSelectionLayerLinks();
     _createEditContext();
     _createLayoutPresenter();
   }
@@ -360,7 +361,7 @@ class SuperEditorState extends State<SuperEditor> {
     }
 
     if (widget.selectionLayerLinks != oldWidget.selectionLayerLinks) {
-      _createSelectionLayerLinks();
+      _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
     }
 
     if (widget.editor != oldWidget.editor) {
@@ -404,15 +405,6 @@ class SuperEditorState extends State<SuperEditor> {
     }
 
     super.dispose();
-  }
-
-  void _createSelectionLayerLinks() {
-    _selectionLinks = widget.selectionLayerLinks ??
-        SelectionLayerLinks(
-          caretLink: LayerLink(),
-          upstreamLink: LayerLink(),
-          downstreamLink: LayerLink(),
-        );
   }
 
   void _createEditContext() {

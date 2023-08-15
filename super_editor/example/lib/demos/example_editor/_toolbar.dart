@@ -459,40 +459,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return BuildInOrder(
       children: [
-        // Conditionally display the URL text field below
-        // the standard toolbar.
-        // if (_showUrlField)
-        // Positioned(
-        //   left: widget.anchor.value!.dx,
-        //   top: widget.anchor.value!.dy,
-        //   child: FractionalTranslation(
-        //     translation: const Offset(-0.5, 0.0),
-        //     child: _buildUrlField(),
-        //   ),
-        // ),
-        // _PositionedToolbar(
-        //   anchor: widget.anchor,
-        //   composer: widget.composer,
-        //   child: ValueListenableBuilder<DocumentSelection?>(
-        //     valueListenable: widget.composer.selectionNotifier,
-        //     builder: (context, selection, child) {
-        //       appLog.fine("Building toolbar. Selection: $selection");
-        //       if (selection == null) {
-        //         return const SizedBox();
-        //       }
-        //       if (selection.extent.nodePosition is! TextPosition) {
-        //         // The user selected non-text content. This toolbar is probably
-        //         // about to disappear. Until then, build nothing, because the
-        //         // toolbar needs to inspect selected text to build correctly.
-        //         return const SizedBox();
-        //       }
-        //
-        //       return _buildToolbar();
-        //     },
-        //   ),
-        // ),
         FollowerFadeOutBeyondBoundary(
           link: widget.anchor,
           boundary: _screenBoundary,
@@ -501,151 +469,141 @@ class _EditorToolbarState extends State<EditorToolbar> {
             aligner: _toolbarAligner,
             boundary: _screenBoundary,
             showWhenUnlinked: false,
-            child: _buildToolbar(),
+            child: _buildToolbars(),
           ),
         ),
-        // ValueListenableBuilder<DocumentSelection?>(
-        //   valueListenable: widget.composer.selectionNotifier,
-        //   builder: (context, selection, child) {
-        //     return FollowerFadeOutBeyondBoundary(
-        //       link: widget.anchor,
-        //       boundary: _screenBoundary,
-        //       child: Follower.withAligner(
-        //         link: widget.anchor,
-        //         aligner: _toolbarAligner,
-        //         boundary: _screenBoundary,
-        //         showWhenUnlinked: false,
-        //         child: _buildToolbar(),
-        //       ),
-        //     );
-        //   },
-        // ),
+      ],
+    );
+  }
+
+  Widget _buildToolbars() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildToolbar(),
+        if (_showUrlField) ...[
+          const SizedBox(height: 8),
+          _buildUrlField(),
+        ],
       ],
     );
   }
 
   Widget _buildToolbar() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IntrinsicWidth(
-          child: Material(
-            shape: const StadiumBorder(),
-            elevation: 5,
-            clipBehavior: Clip.hardEdge,
-            child: SizedBox(
-              height: 40,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Only allow the user to select a new type of text node if
-                  // the currently selected node can be converted.
-                  if (_isConvertibleNode()) ...[
-                    Tooltip(
-                      message: AppLocalizations.of(context)!.labelTextBlockType,
-                      child: DropdownButton<_TextType>(
-                        value: _getCurrentTextType(),
-                        items: _TextType.values
-                            .map((textType) => DropdownMenuItem<_TextType>(
-                                  value: textType,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 16.0),
-                                    child: Text(_getTextTypeName(textType)),
-                                  ),
-                                ))
-                            .toList(),
-                        icon: const Icon(Icons.arrow_drop_down),
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                        ),
-                        underline: const SizedBox(),
-                        elevation: 0,
-                        itemHeight: 48,
-                        onChanged: _convertTextToNewType,
-                      ),
+    return IntrinsicWidth(
+      child: Material(
+        shape: const StadiumBorder(),
+        elevation: 5,
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          height: 40,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Only allow the user to select a new type of text node if
+              // the currently selected node can be converted.
+              if (_isConvertibleNode()) ...[
+                Tooltip(
+                  message: AppLocalizations.of(context)!.labelTextBlockType,
+                  child: DropdownButton<_TextType>(
+                    value: _getCurrentTextType(),
+                    items: _TextType.values
+                        .map((textType) => DropdownMenuItem<_TextType>(
+                              value: textType,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 16.0),
+                                child: Text(_getTextTypeName(textType)),
+                              ),
+                            ))
+                        .toList(),
+                    icon: const Icon(Icons.arrow_drop_down),
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
                     ),
-                    _buildVerticalDivider(),
-                  ],
-                  Center(
-                    child: IconButton(
-                      onPressed: _toggleBold,
-                      icon: const Icon(Icons.format_bold),
-                      splashRadius: 16,
-                      tooltip: AppLocalizations.of(context)!.labelBold,
-                    ),
+                    underline: const SizedBox(),
+                    elevation: 0,
+                    itemHeight: 48,
+                    onChanged: _convertTextToNewType,
                   ),
-                  Center(
-                    child: IconButton(
-                      onPressed: _toggleItalics,
-                      icon: const Icon(Icons.format_italic),
-                      splashRadius: 16,
-                      tooltip: AppLocalizations.of(context)!.labelItalics,
-                    ),
-                  ),
-                  Center(
-                    child: IconButton(
-                      onPressed: _toggleStrikethrough,
-                      icon: const Icon(Icons.strikethrough_s),
-                      splashRadius: 16,
-                      tooltip: AppLocalizations.of(context)!.labelStrikethrough,
-                    ),
-                  ),
-                  Center(
-                    child: IconButton(
-                      onPressed: _areMultipleLinksSelected() ? null : _onLinkPressed,
-                      icon: const Icon(Icons.link),
-                      color: _isSingleLinkSelected() ? const Color(0xFF007AFF) : IconTheme.of(context).color,
-                      splashRadius: 16,
-                      tooltip: AppLocalizations.of(context)!.labelLink,
-                    ),
-                  ),
-                  // Only display alignment controls if the currently selected text
-                  // node respects alignment. List items, for example, do not.
-                  if (_isTextAlignable()) ...[
-                    _buildVerticalDivider(),
-                    Tooltip(
-                      message: AppLocalizations.of(context)!.labelTextAlignment,
-                      child: DropdownButton<TextAlign>(
-                        value: _getCurrentTextAlignment(),
-                        items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
-                            .map((textAlign) => DropdownMenuItem<TextAlign>(
-                                  value: textAlign,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 8.0),
-                                    child: Icon(_buildTextAlignIcon(textAlign)),
-                                  ),
-                                ))
-                            .toList(),
-                        icon: const Icon(Icons.arrow_drop_down),
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                        ),
-                        underline: const SizedBox(),
-                        elevation: 0,
-                        itemHeight: 48,
-                        onChanged: _changeAlignment,
-                      ),
-                    ),
-                  ],
-                  _buildVerticalDivider(),
-                  Center(
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.more_vert),
-                      splashRadius: 16,
-                      tooltip: AppLocalizations.of(context)!.labelMoreOptions,
-                    ),
-                  ),
-                ],
+                ),
+                _buildVerticalDivider(),
+              ],
+              Center(
+                child: IconButton(
+                  onPressed: _toggleBold,
+                  icon: const Icon(Icons.format_bold),
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelBold,
+                ),
               ),
-            ),
+              Center(
+                child: IconButton(
+                  onPressed: _toggleItalics,
+                  icon: const Icon(Icons.format_italic),
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelItalics,
+                ),
+              ),
+              Center(
+                child: IconButton(
+                  onPressed: _toggleStrikethrough,
+                  icon: const Icon(Icons.strikethrough_s),
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelStrikethrough,
+                ),
+              ),
+              Center(
+                child: IconButton(
+                  onPressed: _areMultipleLinksSelected() ? null : _onLinkPressed,
+                  icon: const Icon(Icons.link),
+                  color: _isSingleLinkSelected() ? const Color(0xFF007AFF) : IconTheme.of(context).color,
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelLink,
+                ),
+              ),
+              // Only display alignment controls if the currently selected text
+              // node respects alignment. List items, for example, do not.
+              if (_isTextAlignable()) ...[
+                _buildVerticalDivider(),
+                Tooltip(
+                  message: AppLocalizations.of(context)!.labelTextAlignment,
+                  child: DropdownButton<TextAlign>(
+                    value: _getCurrentTextAlignment(),
+                    items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
+                        .map((textAlign) => DropdownMenuItem<TextAlign>(
+                              value: textAlign,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Icon(_buildTextAlignIcon(textAlign)),
+                              ),
+                            ))
+                        .toList(),
+                    icon: const Icon(Icons.arrow_drop_down),
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                    ),
+                    underline: const SizedBox(),
+                    elevation: 0,
+                    itemHeight: 48,
+                    onChanged: _changeAlignment,
+                  ),
+                ),
+              ],
+              _buildVerticalDivider(),
+              Center(
+                child: IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.more_vert),
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelMoreOptions,
+                ),
+              ),
+            ],
           ),
         ),
-        if (_showUrlField) //
-          _buildUrlField(),
-      ],
+      ),
     );
   }
 

@@ -29,11 +29,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   late ScrollController _scrollController;
 
-  final SelectionLayerLinks _selectionLayerLinks = SelectionLayerLinks(
-    caretLink: LayerLink(),
-    upstreamLink: LayerLink(),
-    downstreamLink: LayerLink(),
-  );
+  final SelectionLayerLinks _selectionLayerLinks = SelectionLayerLinks();
 
   final _darkBackground = const Color(0xFF222222);
   final _lightBackground = Colors.white;
