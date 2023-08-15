@@ -1342,11 +1342,13 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
     return Follower.withOffset(
       link: widget.editingController.selectionLinks.caretLink,
+      leaderAnchor: Alignment.topCenter,
+      followerAnchor: Alignment.topCenter,
       showWhenUnlinked: false,
       child: IgnorePointer(
         child: BlinkingCaret(
           controller: _caretBlinkController,
-          caretOffset: const Offset(-1, 0),
+          caretOffset: const Offset(0, 0),
           caretHeight: widget.editingController.caretHeight!,
           width: 2,
           color: widget.showDebugPaint ? Colors.green : widget.handleColor,

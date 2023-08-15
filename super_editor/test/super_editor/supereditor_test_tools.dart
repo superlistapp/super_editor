@@ -276,6 +276,12 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] [DocumentLayout] to use the given [layoutKey].
+  TestSuperEditorConfigurator withLayoutKey(GlobalKey? layoutKey) {
+    _config.layoutKey = layoutKey;
+    return this;
+  }
+
   /// Applies the given [plugin] to the pumped [SuperEditor].
   TestSuperEditorConfigurator withPlugin(SuperEditorPlugin plugin) {
     _config.plugins.add(plugin);
