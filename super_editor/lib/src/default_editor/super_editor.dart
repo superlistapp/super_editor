@@ -243,7 +243,7 @@ class SuperEditor extends StatefulWidget {
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
-  /// Layer links that connect leader widgets near the user's selection
+  /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.
   ///
   /// These links are always created and used within [SuperEditor]. By providing
@@ -317,7 +317,7 @@ class SuperEditorState extends State<SuperEditor> {
 
   final _floatingCursorController = FloatingCursorController();
 
-  // Layer links that connect leader widgets near the user's selection
+  // Leader links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
   late SelectionLayerLinks _selectionLinks;
 

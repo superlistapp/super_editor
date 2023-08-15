@@ -202,7 +202,7 @@ class SuperReaderState extends State<SuperReader> {
   FocusNode get focusNode => _focusNode;
   late FocusNode _focusNode;
 
-  // Layer links that connect leader widgets near the user's selection
+  // Leader links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
   final _selectionLinks = SelectionLayerLinks();
 
