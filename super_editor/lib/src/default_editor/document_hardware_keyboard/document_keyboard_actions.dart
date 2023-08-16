@@ -78,11 +78,13 @@ ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform == TargetPlatform.macOS && !keyEvent.isMetaPressed) {
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
+  if (isMacOrIos && !keyEvent.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform != TargetPlatform.macOS && !keyEvent.isControlPressed) {
+  if (!isMacOrIos && !keyEvent.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -111,11 +113,13 @@ ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform == TargetPlatform.macOS && !keyEvent.isMetaPressed) {
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
+  if (isMacOrIos && !keyEvent.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform != TargetPlatform.macOS && !keyEvent.isControlPressed) {
+  if (!isMacOrIos && !keyEvent.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
 

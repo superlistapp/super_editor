@@ -326,19 +326,6 @@ void testWidgetsOnIos(
   }, skip: skip, variant: variant);
 }
 
-@isTestGroup
-void testWidgetsOnAllPlatformsExceptMac(
-  String description,
-  WidgetTesterCallback test, {
-  bool skip = false,
-  TestVariant<Object?> variant = const DefaultTestVariant(),
-}) {
-  testWidgetsOnWindows("$description (on Windows)", test, skip: skip, variant: variant);
-  testWidgetsOnLinux("$description (on Linux)", test, skip: skip, variant: variant);
-  testWidgetsOnAndroid("$description (on Android)", test, skip: skip, variant: variant);
-  testWidgetsOnIos("$description (on iOS)", test, skip: skip, variant: variant);
-}
-
 /// Extension on [WidgetTester] to easily intercept platform messages.
 extension TestMessageInterceptor on WidgetTester {
   /// Creates a handler to intercept messages of the given [channel].
