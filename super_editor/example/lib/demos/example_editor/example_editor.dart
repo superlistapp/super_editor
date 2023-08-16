@@ -16,6 +16,7 @@ class ExampleEditor extends StatefulWidget {
 }
 
 class _ExampleEditorState extends State<ExampleEditor> {
+  final GlobalKey _viewportKey = GlobalKey();
   final GlobalKey _docLayoutKey = GlobalKey();
 
   late MutableDocument _doc;
@@ -27,6 +28,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
   late FocusNode _editorFocusNode;
 
   late ScrollController _scrollController;
+
+  final SelectionLayerLinks _selectionLayerLinks = SelectionLayerLinks();
 
   final _darkBackground = const Color(0xFF222222);
   final _lightBackground = Colors.white;
@@ -143,7 +146,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
       //       application overlay
       _textFormatBarOverlayEntry ??= OverlayEntry(builder: (context) {
         return EditorToolbar(
-          anchor: _textSelectionAnchor,
+          editorViewportKey: _viewportKey,
+          anchor: _selectionLayerLinks.expandedSelectionBoundsLink,
           editorFocusNode: _editorFocusNode,
           editor: _docEditor,
           document: _doc,
@@ -225,7 +229,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
         return TextInputSource.ime;
-      // return DocumentInputSource.keyboard;
     }
   }
 
@@ -403,65 +406,69 @@ class _ExampleEditorState extends State<ExampleEditor> {
       color: isLight ? _lightBackground : _darkBackground,
       child: SuperEditorDebugVisuals(
         config: _debugConfig ?? const SuperEditorDebugVisualsConfig(),
-        child: SuperEditor(
-          editor: _docEditor,
-          document: _doc,
-          composer: _composer,
-          focusNode: _editorFocusNode,
-          scrollController: _scrollController,
-          documentLayoutKey: _docLayoutKey,
-          documentOverlayBuilders: [
-            DefaultCaretOverlayBuilder(
-              caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
-            ),
-          ],
-          selectionStyle: isLight
-              ? defaultSelectionStyle
-              : SelectionStyles(
-                  selectionColor: Colors.red.withOpacity(0.3),
-                ),
-          stylesheet: defaultStylesheet.copyWith(
-            addRulesAfter: [
-              if (!isLight) ..._darkModeStyles,
-              taskStyles,
+        child: KeyedSubtree(
+          key: _viewportKey,
+          child: SuperEditor(
+            editor: _docEditor,
+            document: _doc,
+            composer: _composer,
+            focusNode: _editorFocusNode,
+            scrollController: _scrollController,
+            documentLayoutKey: _docLayoutKey,
+            documentOverlayBuilders: [
+              DefaultCaretOverlayBuilder(
+                caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
+              ),
             ],
+            selectionLayerLinks: _selectionLayerLinks,
+            selectionStyle: isLight
+                ? defaultSelectionStyle
+                : SelectionStyles(
+                    selectionColor: Colors.red.withOpacity(0.3),
+                  ),
+            stylesheet: defaultStylesheet.copyWith(
+              addRulesAfter: [
+                if (!isLight) ..._darkModeStyles,
+                taskStyles,
+              ],
+            ),
+            componentBuilders: [
+              TaskComponentBuilder(_docEditor),
+              ...defaultComponentBuilders,
+            ],
+            gestureMode: _gestureMode,
+            inputSource: _inputSource,
+            keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
+            androidToolbarBuilder: (_) => ListenableBuilder(
+              listenable: _brightness,
+              builder: (context, _) {
+                return Theme(
+                  data: ThemeData(brightness: _brightness.value),
+                  child: AndroidTextEditingFloatingToolbar(
+                    onCutPressed: _cut,
+                    onCopyPressed: _copy,
+                    onPastePressed: _paste,
+                    onSelectAllPressed: _selectAll,
+                  ),
+                );
+              },
+            ),
+            iOSToolbarBuilder: (_) => ListenableBuilder(
+              listenable: _brightness,
+              builder: (context, _) {
+                return Theme(
+                  data: ThemeData(brightness: _brightness.value),
+                  child: IOSTextEditingFloatingToolbar(
+                    onCutPressed: _cut,
+                    onCopyPressed: _copy,
+                    onPastePressed: _paste,
+                    focalPoint: _overlayController.toolbarTopAnchor!,
+                  ),
+                );
+              },
+            ),
+            overlayController: _overlayController,
           ),
-          componentBuilders: [
-            TaskComponentBuilder(_docEditor),
-            ...defaultComponentBuilders,
-          ],
-          gestureMode: _gestureMode,
-          inputSource: _inputSource,
-          keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
-          androidToolbarBuilder: (_) => ListenableBuilder(
-            listenable: _brightness,
-            builder: (context, _) {
-              return Theme(
-                data: ThemeData(brightness: _brightness.value),
-                child: AndroidTextEditingFloatingToolbar(
-                  onCutPressed: _cut,
-                  onCopyPressed: _copy,
-                  onPastePressed: _paste,
-                  onSelectAllPressed: _selectAll,
-                ),
-              );
-            },
-          ),
-          iOSToolbarBuilder: (_) => ListenableBuilder(
-            listenable: _brightness,
-            builder: (context, _) {
-              return Theme(
-                data: ThemeData(brightness: _brightness.value),
-                child: IOSTextEditingFloatingToolbar(
-                  onCutPressed: _cut,
-                  onCopyPressed: _copy,
-                  onPastePressed: _paste,
-                  focalPoint: _overlayController.toolbarTopAnchor!,
-                ),
-              );
-            },
-          ),
-          overlayController: _overlayController,
         ),
       ),
     );
