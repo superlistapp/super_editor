@@ -471,7 +471,7 @@ Future<void> _pumpSuperTextFieldEmojiTest(
   SuperTextFieldPlatformConfiguration configuration = SuperTextFieldPlatformConfiguration.desktop,
 }) async {
   final controller = AttributedTextEditingController(
-    text: AttributedText(text: text),
+    text: AttributedText(text),
   );
   await tester.pumpWidget(
     MaterialApp(

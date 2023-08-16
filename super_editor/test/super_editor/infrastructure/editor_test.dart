@@ -14,7 +14,7 @@ void main() {
         final editor = Editor(
           editables: {
             Editor.documentKey: MutableDocument(
-              nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))],
+              nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText())],
             ),
           },
           requestHandlers: [],
@@ -82,7 +82,7 @@ void main() {
         // order is what we expect.
         List<EditEvent>? changeList;
         final document = MutableDocument(
-          nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))],
+          nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText())],
         );
 
         final composer = MutableDocumentComposer(
@@ -152,7 +152,7 @@ void main() {
           nodes: [
             ParagraphNode(
               id: "1",
-              text: AttributedText(text: ""),
+              text: AttributedText(),
             )
           ],
         );
@@ -195,7 +195,7 @@ void main() {
 
       test('interrupts back-to-back commands to run a reaction', () {
         final document = MutableDocument(
-          nodes: [ParagraphNode(id: "1", text: AttributedText(text: ""))],
+          nodes: [ParagraphNode(id: "1", text: AttributedText())],
         );
 
         final composer = MutableDocumentComposer(
@@ -285,7 +285,7 @@ void main() {
 
       test('reactions receive a change list with events from earlier reactions', () {
         final document = MutableDocument(
-          nodes: [ParagraphNode(id: "1", text: AttributedText(text: ""))],
+          nodes: [ParagraphNode(id: "1", text: AttributedText())],
         );
 
         final composer = MutableDocumentComposer(
@@ -371,7 +371,7 @@ void main() {
 
       test('reactions do not run in response to reactions', () {
         final document = MutableDocument(
-          nodes: [ParagraphNode(id: "1", text: AttributedText(text: ""))],
+          nodes: [ParagraphNode(id: "1", text: AttributedText())],
         );
 
         final composer = MutableDocumentComposer(

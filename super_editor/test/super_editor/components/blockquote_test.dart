@@ -27,7 +27,7 @@ MutableDocument _singleBlockquoteDoc() => MutableDocument(
       nodes: [
         ParagraphNode(
           id: '1',
-          text: AttributedText(text: "This is a blockquote."),
+          text: AttributedText("This is a blockquote."),
           metadata: {'blockType': blockquoteAttribution},
         )
       ],

@@ -56,67 +56,67 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
     return MutableDocument(nodes: [
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: "Example Doc"),
+        text: AttributedText("Example Doc"),
         metadata: {"blockType": header1Attribution},
       ),
       HorizontalRuleNode(id: Editor.createNodeId()),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: "Unordered list:"),
+        text: AttributedText("Unordered list:"),
       ),
       ListItemNode(
         id: Editor.createNodeId(),
         itemType: ListItemType.unordered,
-        text: AttributedText(text: "Unordered 1"),
+        text: AttributedText("Unordered 1"),
       ),
       ListItemNode(
         id: Editor.createNodeId(),
         itemType: ListItemType.unordered,
-        text: AttributedText(text: "Unordered 2"),
+        text: AttributedText("Unordered 2"),
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: "Ordered list:"),
+        text: AttributedText("Ordered list:"),
       ),
       ListItemNode(
         id: Editor.createNodeId(),
         itemType: ListItemType.unordered,
-        text: AttributedText(text: "Ordered 1"),
+        text: AttributedText("Ordered 1"),
       ),
       ListItemNode(
         id: Editor.createNodeId(),
         itemType: ListItemType.unordered,
-        text: AttributedText(text: "Ordered 2"),
+        text: AttributedText("Ordered 2"),
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'A blockquote:'),
+        text: AttributedText('A blockquote:'),
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'This is a blockquote.'),
+        text: AttributedText('This is a blockquote.'),
         metadata: {"blockType": blockquoteAttribution},
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'Some code:'),
+        text: AttributedText('Some code:'),
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: '{\n  // This is come code.\n}'),
+        text: AttributedText('{\n  // This is come code.\n}'),
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: "Header"),
+        text: AttributedText("Header"),
         metadata: {"blockType": header2Attribution},
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'More stuff 1'),
+        text: AttributedText('More stuff 1'),
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'More stuff 2'),
+        text: AttributedText('More stuff 2'),
       ),
     ]);
   }

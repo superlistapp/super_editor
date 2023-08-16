@@ -41,8 +41,8 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
         ParagraphNode(
           id: '1234',
           text: AttributedText(
-              text:
-                  'Notice that when this document is short enough, the messages are pushed to the bottom of the viewport.\n\nTry adding more content to see things scroll.'),
+            'Notice that when this document is short enough, the messages are pushed to the bottom of the viewport.\n\nTry adding more content to see things scroll.',
+          ),
         )
       ],
     );

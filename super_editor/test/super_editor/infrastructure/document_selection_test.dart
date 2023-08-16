@@ -193,8 +193,8 @@ void main() {
 
 final _testDoc = MutableDocument(
   nodes: [
-    ParagraphNode(id: "1", text: AttributedText(text: "Paragraph 1")),
-    ParagraphNode(id: "2", text: AttributedText(text: "Paragraph 2")),
-    ParagraphNode(id: "3", text: AttributedText(text: "Paragraph 3")),
+    ParagraphNode(id: "1", text: AttributedText("Paragraph 1")),
+    ParagraphNode(id: "2", text: AttributedText("Paragraph 2")),
+    ParagraphNode(id: "3", text: AttributedText("Paragraph 3")),
   ],
 );

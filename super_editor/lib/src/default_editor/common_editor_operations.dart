@@ -1629,7 +1629,7 @@ class CommonEditorOperations {
             existingNodeId: extentNode.id,
             newNode: ParagraphNode(
               id: newNodeId,
-              text: AttributedText(text: ''),
+              text: AttributedText(),
             ),
           ),
           // Place the caret at the beginning of the new node.
@@ -1653,7 +1653,7 @@ class CommonEditorOperations {
             existingNodeId: extentNode.id,
             newNode: ParagraphNode(
               id: newNodeId,
-              text: AttributedText(text: ''),
+              text: AttributedText(),
             ),
           ),
           // Place the caret at the beginning of the new node.
@@ -2237,8 +2237,8 @@ class PasteEditorCommand implements EditCommand {
     for (final line in lines) {
       attributedLines.add(
         AttributedText(
-          text: line,
-          spans: _findUrlSpansInText(pastedText: lines.first),
+          line,
+          _findUrlSpansInText(pastedText: lines.first),
         ),
       );
     }

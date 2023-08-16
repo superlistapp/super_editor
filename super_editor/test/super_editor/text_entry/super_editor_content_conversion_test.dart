@@ -50,7 +50,7 @@ void main() {
               .createDocument()
               .withCustomContent(MutableDocument(
                 nodes: [
-                  ParagraphNode(id: "1", text: AttributedText(text: "Some text")),
+                  ParagraphNode(id: "1", text: AttributedText("Some text")),
                 ],
               ))
               .forDesktop()
@@ -80,7 +80,7 @@ void main() {
               .createDocument()
               .withCustomContent(MutableDocument(
                 nodes: [
-                  ParagraphNode(id: "1", text: AttributedText(text: "Some text")),
+                  ParagraphNode(id: "1", text: AttributedText("Some text")),
                 ],
               ))
               .forDesktop()
@@ -110,7 +110,7 @@ void main() {
               .createDocument()
               .withCustomContent(MutableDocument(
                 nodes: [
-                  ParagraphNode(id: "1", text: AttributedText(text: "Some text")),
+                  ParagraphNode(id: "1", text: AttributedText("Some text")),
                 ],
               ))
               .forDesktop()
@@ -215,8 +215,8 @@ MutableDocument _singleParagraphWithLinkDoc() {
       ParagraphNode(
         id: "1",
         text: AttributedText(
-          text: "https://google.com",
-          spans: AttributedSpans(
+          "https://google.com",
+          AttributedSpans(
             attributions: [
               SpanMarker(
                 attribution: LinkAttribution(url: Uri.parse('https://google.com')),

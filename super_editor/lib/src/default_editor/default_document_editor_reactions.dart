@@ -138,7 +138,7 @@ class UnorderedListItemConversionReaction extends ParagraphPrefixConversionReact
         existingNodeId: paragraph.id,
         newNode: ListItemNode.unordered(
           id: paragraph.id,
-          text: AttributedText(text: ""),
+          text: AttributedText(),
         ),
       ),
       ChangeSelectionRequest(
@@ -180,7 +180,7 @@ class OrderedListItemConversionReaction extends ParagraphPrefixConversionReactio
         existingNodeId: paragraph.id,
         newNode: ListItemNode.ordered(
           id: paragraph.id,
-          text: AttributedText(text: ""),
+          text: AttributedText(),
         ),
       ),
       ChangeSelectionRequest(
@@ -222,7 +222,7 @@ class BlockquoteConversionReaction extends ParagraphPrefixConversionReaction {
         existingNodeId: paragraph.id,
         newNode: ParagraphNode(
           id: paragraph.id,
-          text: AttributedText(text: ""),
+          text: AttributedText(),
           metadata: {
             "blockType": blockquoteAttribution,
           },
@@ -274,7 +274,7 @@ class HorizontalRuleConversionReaction extends ParagraphPrefixConversionReaction
         existingNodeId: paragraph.id,
         newNode: ParagraphNode(
           id: paragraph.id,
-          text: AttributedText(text: ""),
+          text: AttributedText(),
         ),
       ),
       ChangeSelectionRequest(

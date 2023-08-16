@@ -13,16 +13,16 @@ void main() {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextWithHintComponent(
-              text: AttributedText(text: ''),
+              text: AttributedText(),
               textStyleBuilder: _textStyleBuilder,
-              hintText: AttributedText(text: "this is a hint..."),
+              hintText: AttributedText("this is a hint..."),
               hintStyleBuilder: (_) => _hintStyle,
             ),
             const SizedBox(height: 24),
             TextWithHintComponent(
-              text: AttributedText(text: 'This is content text.'),
+              text: AttributedText('This is content text.'),
               textStyleBuilder: _textStyleBuilder,
-              hintText: AttributedText(text: "this is a hint..."),
+              hintText: AttributedText("this is a hint..."),
               hintStyleBuilder: (_) => _hintStyle,
             ),
           ],

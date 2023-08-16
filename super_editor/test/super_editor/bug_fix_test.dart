@@ -10,7 +10,7 @@ void main() {
       testWidgets("bug repro", (tester) async {
         final document = MutableDocument(
           nodes: [
-            ParagraphNode(id: "1", text: AttributedText(text: "")),
+            ParagraphNode(id: "1", text: AttributedText()),
           ],
         );
         final composer = MutableDocumentComposer(
@@ -86,7 +86,7 @@ void main() {
       testWidgets("related to bug", (tester) async {
         final document = MutableDocument(
           nodes: [
-            ParagraphNode(id: "1", text: AttributedText(text: "")),
+            ParagraphNode(id: "1", text: AttributedText()),
           ],
         );
         final composer = MutableDocumentComposer(
