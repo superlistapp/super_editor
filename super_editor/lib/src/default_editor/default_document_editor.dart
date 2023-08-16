@@ -89,9 +89,6 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ParagraphNode
       ? DeleteUpstreamAtBeginningOfParagraphCommand(request.node)
       : null,
-  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is TaskNode
-      ? ConvertTaskToParagraphCommand(nodeId: request.node.id, paragraphMetadata: request.node.metadata)
-      : null,
   (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is BlockNode
       ? DeleteUpstreamAtBeginningOfBlockNodeCommand(request.node)
       : null,
@@ -137,6 +134,15 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           isComplete: request.isComplete,
         )
       : null,
+  (request) => request is ConvertTaskToParagraphRequest //
+      ? ConvertTaskToParagraphCommand(
+          nodeId: request.nodeId,
+          paragraphMetadata: request.paragraphMetadata,
+        )
+      : null,
+  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is TaskNode
+      ? ConvertTaskToParagraphCommand(nodeId: request.node.id, paragraphMetadata: request.node.metadata)
+      : null,
   (request) => request is ChangeTaskCompletionRequest
       ? ChangeTaskCompletionCommand(
           nodeId: request.nodeId,
@@ -148,12 +154,6 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           nodeId: request.existingNodeId,
           splitOffset: request.splitOffset,
           newNodeId: request.newNodeId,
-        )
-      : null,
-  (request) => request is ConvertTaskToParagraphRequest //
-      ? ConvertTaskToParagraphCommand(
-          nodeId: request.nodeId,
-          paragraphMetadata: request.paragraphMetadata,
         )
       : null,
   (request) => request is SplitListItemRequest
