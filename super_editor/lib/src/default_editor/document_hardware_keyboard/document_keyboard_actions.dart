@@ -384,43 +384,13 @@ ExecutionInstruction moveLeftAndRightWithArrowKeys({
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction doNothingWithLeftRightArrowKeysOnWeb({
-  required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  const arrowKeys = [
-    LogicalKeyboardKey.arrowLeft,
-    LogicalKeyboardKey.arrowRight,
-  ];
-  if (!arrowKeys.contains(keyEvent.logicalKey)) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (isWeb) {
-    // On web, pressing arrow keys reports both non-text deltas and key events.
-    // We handle the non-text delta to change the selection and ignore the key event.
-    return ExecutionInstruction.blocked;
-  }
-
-  return ExecutionInstruction.continueExecution;
-}
-
-ExecutionInstruction moveBetweenNodesWithLeftRightArrowKeysOnWeb({
+ExecutionInstruction doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (!isWeb) {
     return ExecutionInstruction.continueExecution;
   }
-
-  // On web, pressing left or right arrow keys generates non-text deltas.
-  // We handle those deltas to change the selection. However, if the caret sits at the beginning
-  // or end of a node, pressing these arrow keys doesn't generate any deltas.
-  // Therefore, we need to handle the key events to move the selection to the previous/next node.
 
   if (keyEvent is! RawKeyDownEvent) {
     return ExecutionInstruction.continueExecution;
@@ -444,52 +414,40 @@ ExecutionInstruction moveBetweenNodesWithLeftRightArrowKeysOnWeb({
     return ExecutionInstruction.continueExecution;
   }
 
-  bool didMove = false;
+  // On web, pressing left or right arrow keys generates non-text deltas.
+  // We handle those deltas to change the selection. However, if the caret sits at the beginning
+  // or end of a node, pressing these arrow keys doesn't generate any deltas.
+  // Therefore, we need to handle the key events to move the selection to the previous/next node.
 
-  MovementModifier? movementModifier;
-  if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-      keyEvent.isControlPressed) {
-    movementModifier = MovementModifier.word;
-  } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
-    movementModifier = MovementModifier.line;
-  } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
-    movementModifier = MovementModifier.word;
+  final currentExtent = editContext.composer.selection!.extent;
+  final nodeId = currentExtent.nodeId;
+  final node = editContext.document.getNodeById(nodeId);
+  if (node == null) {
+    return ExecutionInstruction.continueExecution;
   }
 
-  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
-    final currentExtent = editContext.composer.selection!.base;
-    final nodeId = currentExtent.nodeId;
-    final node = editContext.document.getNodeById(nodeId);
-    if (node == null) {
-      return ExecutionInstruction.continueExecution;
-    }
-
-    final extentComponent = editContext.documentLayout.getComponentByNodeId(nodeId);
-    if (extentComponent == null) {
-      return ExecutionInstruction.continueExecution;
-    }
-
-    NodePosition? newExtentNodePosition =
-        extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifier);
-
-    if (newExtentNodePosition != null) {
-      return ExecutionInstruction.continueExecution;
-    }
-
-    // Move the caret left/upstream.
-    didMove = editContext.commonOps.moveCaretUpstream(
-      expand: keyEvent.isShiftPressed,
-      movementModifier: movementModifier,
-    );
-  } else {
-    // Move the caret right/downstream.
-    didMove = editContext.commonOps.moveCaretDownstream(
-      expand: keyEvent.isShiftPressed,
-      movementModifier: movementModifier,
-    );
+  if (node is! TextNode) {
+    return ExecutionInstruction.continueExecution;
   }
 
-  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  if (currentExtent.nodePosition is! TextNodePosition) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final textNodePosition = currentExtent.nodePosition as TextNodePosition;
+  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft && textNodePosition.offset > 0) {
+    // We are not at the beginning of the node.
+    // Let the IME handle the key event.
+    return ExecutionInstruction.blocked;
+  }
+
+  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight && textNodePosition.offset < node.text.text.length) {
+    // We are not at the end of the node.
+    // Let the IME handle the key event.
+    return ExecutionInstruction.blocked;
+  }
+
+  return ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
