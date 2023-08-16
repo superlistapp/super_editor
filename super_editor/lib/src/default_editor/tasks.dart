@@ -436,7 +436,7 @@ class ConvertParagraphToTaskCommand implements EditCommand {
 }
 
 class ConvertTaskToParagraphCommand implements EditCommand {
-  ConvertTaskToParagraphCommand({
+  const ConvertTaskToParagraphCommand({
     required this.nodeId,
     this.paragraphMetadata,
   });
