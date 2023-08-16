@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -364,11 +365,11 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   }) {
     const ballDiameter = 8.0;
 
-    late LayerLink handleLink;
+    late LeaderLink handleLink;
     late Widget handle;
     switch (handleType) {
       case HandleType.collapsed:
-        handleLink = widget.editingController.selectionLinks.caretLink!;
+        handleLink = widget.editingController.selectionLinks.caretLink;
         handle = ValueListenableBuilder<bool>(
           valueListenable: _isShowingFloatingCursor,
           builder: (context, isShowingFloatingCursor, child) {
@@ -381,7 +382,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         );
         break;
       case HandleType.upstream:
-        handleLink = widget.editingController.selectionLinks.upstreamLink!;
+        handleLink = widget.editingController.selectionLinks.upstreamLink;
         handle = IOSSelectionHandle.upstream(
           color: widget.handleColor,
           handleType: handleType,
@@ -390,7 +391,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         );
         break;
       case HandleType.downstream:
-        handleLink = widget.editingController.selectionLinks.downstreamLink!;
+        handleLink = widget.editingController.selectionLinks.downstreamLink;
         handle = IOSSelectionHandle.upstream(
           color: widget.handleColor,
           handleType: handleType,
@@ -411,13 +412,13 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   Widget _buildHandle({
     required Key handleKey,
     required Widget handle,
-    required LayerLink handleLink,
+    required LeaderLink handleLink,
     required Color debugColor,
   }) {
-    return CompositedTransformFollower(
+    return Follower.withOffset(
       key: handleKey,
       link: handleLink,
-      targetAnchor: Alignment.center,
+      leaderAnchor: Alignment.center,
       followerAnchor: Alignment.center,
       showWhenUnlinked: false,
       child: IgnorePointer(

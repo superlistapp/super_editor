@@ -24,6 +24,7 @@ dependencies:
   attributed_text: ^0.2.2
   characters: ^1.2.0
   collection: ^1.15.0
+  follow_the_leader: ^0.0.4+3
   http: ">=0.13.1 <2.0.0"
   linkify: ^4.0.0
   logging: ^1.0.1
