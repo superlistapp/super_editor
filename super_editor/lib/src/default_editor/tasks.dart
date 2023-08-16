@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:collection/collection.dart';
 
 /// This file includes everything needed to add the concept of a task
 /// to Super Editor. This includes:
@@ -337,10 +336,7 @@ ExecutionInstruction backspaceToConvertTaskToParagraph({
   }
 
   editContext.editor.execute([
-    ConvertTaskToParagraphRequest(
-      nodeId: node.id,
-      paragraphMetadata: node.metadata,
-    ),
+    DeleteUpstreamAtBeginningOfNodeRequest(node),
   ]);
 
   return ExecutionInstruction.haltExecution;
@@ -437,27 +433,6 @@ class ConvertParagraphToTaskCommand implements EditCommand {
       ReplaceNodeCommand(existingNodeId: existingNode.id, newNode: taskNode),
     );
   }
-}
-
-class ConvertTaskToParagraphRequest implements EditRequest {
-  const ConvertTaskToParagraphRequest({
-    required this.nodeId,
-    required this.paragraphMetadata,
-  });
-
-  final String nodeId;
-  final Map<String, dynamic> paragraphMetadata;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ConvertTaskToParagraphRequest &&
-          runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          const DeepCollectionEquality().equals(paragraphMetadata, other.paragraphMetadata);
-
-  @override
-  int get hashCode => nodeId.hashCode ^ paragraphMetadata.hashCode;
 }
 
 class ConvertTaskToParagraphCommand implements EditCommand {
