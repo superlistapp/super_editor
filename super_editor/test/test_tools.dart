@@ -93,13 +93,8 @@ void testWidgetsOnDesktopAndWeb(
   bool skip = false,
   TestVariant<Object?> variant = const DefaultTestVariant(),
 }) {
-  testWidgetsOnMac("$description (on MAC)", test, skip: skip, variant: variant);
-  testWidgetsOnWindows("$description (on Windows)", test, skip: skip, variant: variant);
-  testWidgetsOnLinux("$description (on Linux)", test, skip: skip, variant: variant);
-
-  testWidgetsOnMacWeb("$description (on MAC Web)", test, skip: skip, variant: variant);
-  testWidgetsOnWindowsWeb("$description (on Windows Web)", test, skip: skip, variant: variant);
-  testWidgetsOnLinuxWeb("$description (on Linux Web)", test, skip: skip, variant: variant);
+  testWidgetsOnDesktop(description, test, skip: skip, variant: variant);
+  testWidgetsOnWebDesktop(description, test, skip: skip, variant: variant);
 }
 
 /// A widget test that runs a variant for every desktop platform on web, e.g.,
@@ -138,7 +133,7 @@ void testWidgetsOnMacWeb(
       debugDefaultTargetPlatformOverride = null;
       debugIsWebOverride = null;
     }
-  });
+  }, variant: variant, skip: skip);
 }
 
 // A widget test that runs for Windows web.
@@ -163,7 +158,7 @@ void testWidgetsOnWindowsWeb(
       debugDefaultTargetPlatformOverride = null;
       debugIsWebOverride = null;
     }
-  });
+  }, variant: variant, skip: skip);
 }
 
 // A widget test that runs for Linux web.
@@ -188,7 +183,7 @@ void testWidgetsOnLinuxWeb(
       debugDefaultTargetPlatformOverride = null;
       debugIsWebOverride = null;
     }
-  });
+  }, variant: variant, skip: skip);
 }
 
 /// A widget test that runs a variant for every mobile platform, e.g.,

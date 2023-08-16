@@ -5,6 +5,7 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../test_tools_user_input.dart';
 import 'supereditor_test_tools.dart';
 import 'test_documents.dart';
 import '../test_tools.dart';
@@ -745,14 +746,14 @@ Paragraph two
       });
     });
 
-    group('on web', () {
+    group('on desktop', () {
       group('moves caret', () {
         testWidgetsOnDesktopAndWeb('to end of previous node when LEFT_ARROW is pressed at the beginning of a paragraph',
             (tester) async {
           await tester
               .createDocument() //
               .withLongDoc()
-              .withInputSource(TextInputSource.ime)
+              .withInputSource(inputSourceVariant.currentValue!)
               .pump();
 
           // Place the caret at the beginning of the second paragraph.
@@ -771,14 +772,14 @@ Paragraph two
               ),
             ),
           );
-        });
+        }, variant: inputSourceVariant);
 
         testWidgetsOnDesktopAndWeb(
             'to the beginning of next node when RIGHT_ARROW is pressed at the end of a paragraph', (tester) async {
           await tester
               .createDocument() //
               .withLongDoc()
-              .withInputSource(TextInputSource.ime)
+              .withInputSource(inputSourceVariant.currentValue!)
               .pump();
 
           // Place the caret at the end of the first paragraph.
@@ -797,7 +798,7 @@ Paragraph two
               ),
             ),
           );
-        });
+        }, variant: inputSourceVariant);
       });
 
       testWidgetsOnWebDesktop('deletes a character with backspace', (tester) async {
