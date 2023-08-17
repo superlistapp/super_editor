@@ -21,7 +21,7 @@ MutableDocument _createParagraphTestDoc() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text: 'Various paragraph formations',
+          'Various paragraph formations',
         ),
         metadata: {
           'blockType': header1Attribution,
@@ -30,13 +30,13 @@ MutableDocument _createParagraphTestDoc() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text: 'This is a short\nparagraph of text\nthat is left aligned',
+          'This is a short\nparagraph of text\nthat is left aligned',
         ),
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text: 'This is a short\nparagraph of text\nthat is center aligned',
+          'This is a short\nparagraph of text\nthat is center aligned',
         ),
         metadata: {
           'textAlign': 'center',
@@ -45,7 +45,7 @@ MutableDocument _createParagraphTestDoc() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text: 'This is a short\nparagraph of text\nthat is right aligned',
+          'This is a short\nparagraph of text\nthat is right aligned',
         ),
         metadata: {
           'textAlign': 'right',
@@ -54,8 +54,7 @@ MutableDocument _createParagraphTestDoc() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text:
-              'orem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
+          'orem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
         ),
       ),
     ],

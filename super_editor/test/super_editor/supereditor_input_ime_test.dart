@@ -15,7 +15,7 @@ void main() {
       testWidgetsOnAllPlatforms('at the beginning of existing text', (tester) async {
         final document = MutableDocument(
           nodes: [
-            ParagraphNode(id: "1", text: AttributedText(text: "<- text here")),
+            ParagraphNode(id: "1", text: AttributedText("<- text here")),
           ],
         );
 
@@ -38,7 +38,7 @@ void main() {
       testWidgetsOnAllPlatforms('in the middle of existing text', (tester) async {
         final document = MutableDocument(
           nodes: [
-            ParagraphNode(id: "1", text: AttributedText(text: "text here -><---")),
+            ParagraphNode(id: "1", text: AttributedText("text here -><---")),
           ],
         );
 
@@ -61,7 +61,7 @@ void main() {
       testWidgetsOnAllPlatforms('at the end of existing text', (tester) async {
         final document = MutableDocument(
           nodes: [
-            ParagraphNode(id: "1", text: AttributedText(text: "text here ->")),
+            ParagraphNode(id: "1", text: AttributedText("text here ->")),
           ],
         );
 
@@ -255,7 +255,7 @@ void main() {
         final document = MutableDocument(nodes: [
           ParagraphNode(
             id: "1",
-            text: AttributedText(text: "This is a sentence"),
+            text: AttributedText("This is a sentence"),
           ),
         ]);
         final composer = MutableDocumentComposer(
@@ -752,7 +752,7 @@ Paragraph two
         _expectTextEditingValue(
           actualTextEditingValue: DocumentImeSerializer(
             MutableDocument(nodes: [
-              ParagraphNode(id: "1", text: AttributedText(text: text)),
+              ParagraphNode(id: "1", text: AttributedText(text)),
             ]),
             const DocumentSelection(
               base: DocumentPosition(
@@ -777,8 +777,8 @@ Paragraph two
         _expectTextEditingValue(
           actualTextEditingValue: DocumentImeSerializer(
             MutableDocument(nodes: [
-              ParagraphNode(id: "1", text: AttributedText(text: text1)),
-              ParagraphNode(id: "2", text: AttributedText(text: text2)),
+              ParagraphNode(id: "1", text: AttributedText(text1)),
+              ParagraphNode(id: "2", text: AttributedText(text2)),
             ]),
             const DocumentSelection(
               base: DocumentPosition(
@@ -802,9 +802,9 @@ Paragraph two
         _expectTextEditingValue(
           actualTextEditingValue: DocumentImeSerializer(
             MutableDocument(nodes: [
-              ParagraphNode(id: "1", text: AttributedText(text: text)),
+              ParagraphNode(id: "1", text: AttributedText(text)),
               HorizontalRuleNode(id: "2"),
-              ParagraphNode(id: "3", text: AttributedText(text: text)),
+              ParagraphNode(id: "3", text: AttributedText(text)),
             ]),
             const DocumentSelection(
               base: DocumentPosition(
@@ -829,7 +829,7 @@ Paragraph two
           actualTextEditingValue: DocumentImeSerializer(
             MutableDocument(nodes: [
               HorizontalRuleNode(id: "1"),
-              ParagraphNode(id: "2", text: AttributedText(text: text)),
+              ParagraphNode(id: "2", text: AttributedText(text)),
               HorizontalRuleNode(id: "3"),
             ]),
             const DocumentSelection(
@@ -972,8 +972,8 @@ MutableDocument _singleParagraphWithLinkDoc() {
       ParagraphNode(
         id: "1",
         text: AttributedText(
-          text: "https://google.com",
-          spans: AttributedSpans(
+          "https://google.com",
+          AttributedSpans(
             attributions: [
               SpanMarker(
                 attribution: LinkAttribution(url: Uri.parse('https://google.com')),

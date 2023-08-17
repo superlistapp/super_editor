@@ -77,7 +77,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
     _urlFocusNode = FocusNode();
     _urlController = SingleLineAttributedTextEditingController(_applyLink) //
-      ..text = AttributedText(text: "https://");
+      ..text = AttributedText("https://");
   }
 
   @override

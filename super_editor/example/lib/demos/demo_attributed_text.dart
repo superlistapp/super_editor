@@ -22,7 +22,7 @@ class _AttributedTextDemoState extends State<AttributedTextDemo> {
 
   void _computeStyledText() {
     AttributedText text = AttributedText(
-      text: 'This is some text styled with AttributedText',
+      'This is some text styled with AttributedText',
     );
 
     for (final range in _boldRanges) {

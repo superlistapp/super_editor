@@ -927,7 +927,7 @@ void main() {
               nodes: [
                 ParagraphNode(
                   id: '1',
-                  text: AttributedText(text: 'This is some text'),
+                  text: AttributedText('This is some text'),
                 ),
               ],
             ))
@@ -961,11 +961,11 @@ void main() {
                 nodes: [
                   ParagraphNode(
                     id: '1',
-                    text: AttributedText(text: 'This is some text'),
+                    text: AttributedText('This is some text'),
                   ),
                   ParagraphNode(
                     id: '2',
-                    text: AttributedText(text: 'This is some text'),
+                    text: AttributedText('This is some text'),
                   ),
                 ],
               ),
@@ -1004,7 +1004,7 @@ void main() {
                   ),
                   ParagraphNode(
                     id: '2',
-                    text: AttributedText(text: 'This is some text'),
+                    text: AttributedText('This is some text'),
                   ),
                   ImageNode(
                     id: '3',
@@ -1046,7 +1046,7 @@ void main() {
                 nodes: [
                   ParagraphNode(
                     id: '1',
-                    text: AttributedText(text: 'Text with [DELETEME] selection'),
+                    text: AttributedText('Text with [DELETEME] selection'),
                   ),
                 ],
               ),
@@ -1094,7 +1094,7 @@ void main() {
                 nodes: [
                   ParagraphNode(
                     id: '1',
-                    text: AttributedText(text: 'Text with [DELETEME] selection'),
+                    text: AttributedText('Text with [DELETEME] selection'),
                   ),
                 ],
               ),
@@ -1142,7 +1142,7 @@ void main() {
                 nodes: [
                   ParagraphNode(
                     id: '1',
-                    text: AttributedText(text: 'Text with [DELETEME] selection'),
+                    text: AttributedText('Text with [DELETEME] selection'),
                   ),
                 ],
               ),
@@ -1191,7 +1191,7 @@ void main() {
                 nodes: [
                   ParagraphNode(
                     id: '1',
-                    text: AttributedText(text: 'Text with [SELECTME] selection'),
+                    text: AttributedText('Text with [SELECTME] selection'),
                   ),
                 ],
               ),
@@ -1240,7 +1240,7 @@ void main() {
               nodes: [
                 ParagraphNode(
                   id: '1',
-                  text: AttributedText(text: 'This is some text'),
+                  text: AttributedText('This is some text'),
                 ),
               ],
             ),
@@ -1308,7 +1308,7 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',
+              'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',
             ),
           ),
         ],

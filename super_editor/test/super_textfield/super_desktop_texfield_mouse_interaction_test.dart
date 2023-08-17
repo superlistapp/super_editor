@@ -15,12 +15,12 @@ void main() {
       // Start a gesture outside SuperDesktopTextField bounds
       final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await gesture.addPointer(location: Offset.zero);
-      addTearDown(gesture.removePointer);      
+      addTearDown(gesture.removePointer);
       await tester.pump();
 
       // Ensure the cursor type is 'basic' when not hovering SuperDesktopTextField
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
-      
+
       // Hover over the text inside SuperDesktopTextField
       // TODO: add the ability to SuperTextFieldInspector to lookup an offset for a content position
       await gesture.moveTo(tester.getTopLeft(find.byType(SuperText)));
@@ -42,14 +42,14 @@ void main() {
       // Start a gesture outside SuperDesktopTextField bounds
       final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await gesture.addPointer(location: Offset.zero);
-      addTearDown(gesture.removePointer);      
+      addTearDown(gesture.removePointer);
       await tester.pump();
 
       // Ensure the cursor type is 'basic' when not hovering SuperDesktopTextField
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
-      
-      // Hover over the empty space within SuperDesktopTextField      
-      await gesture.moveTo(tester.getBottomRight(find.byType(SuperDesktopTextField)) - const Offset(10, 10));      
+
+      // Hover over the empty space within SuperDesktopTextField
+      await gesture.moveTo(tester.getBottomRight(find.byType(SuperDesktopTextField)) - const Offset(10, 10));
       await tester.pump();
 
       // Ensure the cursor type is 'text' when hovering the empty space
@@ -68,12 +68,12 @@ void main() {
       // Start a gesture outside SuperDesktopTextField bounds
       final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await gesture.addPointer(location: Offset.zero);
-      addTearDown(gesture.removePointer);      
+      addTearDown(gesture.removePointer);
       await tester.pump();
 
       // Ensure the cursor type is 'basic' when not hovering SuperDesktopTextField
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
-      
+
       // Hover over the padding within SuperDesktopTextField
       await gesture.moveTo(tester.getTopLeft(find.byType(SuperDesktopTextField)) + const Offset(10, 10));
       await tester.pump();
@@ -87,29 +87,26 @@ void main() {
       // Ensure the cursor type is 'basic' again
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
     });
-  });  
+  });
 }
 
 /// Creates a test app with the given [padding] applied to [SuperDesktopTextField]
-Future<void> _pumpGestureTestApp(WidgetTester tester, {
-  double padding = 0.0
-}) async {
+Future<void> _pumpGestureTestApp(WidgetTester tester, {double padding = 0.0}) async {
   await tester.pumpWidget(
-    MaterialApp(          
+    MaterialApp(
       home: Scaffold(
         body: Container(
           width: 300,
           padding: const EdgeInsets.all(20.0),
-          child: SuperDesktopTextField(              
+          child: SuperDesktopTextField(
             padding: EdgeInsets.all(padding),
             textController: AttributedTextEditingController(
-              text: AttributedText(text: "abc"),
+              text: AttributedText("abc"),
             ),
             textStyleBuilder: (_) => const TextStyle(fontSize: 16),
-          ),        
-        ), 
+          ),
+        ),
       ),
     ),
   );
 }
-

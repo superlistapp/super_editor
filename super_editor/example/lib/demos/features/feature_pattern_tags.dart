@@ -22,7 +22,12 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
   void initState() {
     super.initState();
 
-    _document = MutableDocument(nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))]);
+    _document = MutableDocument(nodes: [
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(""),
+      ),
+    ]);
     _composer = MutableDocumentComposer();
     _editor = Editor(
       editables: {

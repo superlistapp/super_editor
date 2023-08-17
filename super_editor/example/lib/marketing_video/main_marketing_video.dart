@@ -31,7 +31,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
       nodes: [
         ParagraphNode(
           id: Editor.createNodeId(),
-          text: AttributedText(text: ''),
+          text: AttributedText(),
         ),
       ],
     );

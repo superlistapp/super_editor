@@ -26,7 +26,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: '--><--'),
+              text: AttributedText('--><--'),
             ),
           );
           await tester.placeCaretInSuperTextField(3);
@@ -41,7 +41,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: '-->'),
+              text: AttributedText('-->'),
             ),
           );
           await tester.placeCaretInSuperTextField(3);
@@ -56,7 +56,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: '-->REPLACE<--'),
+              text: AttributedText('-->REPLACE<--'),
             ),
           );
           await tester.selectSuperTextFieldText(2, 10);
@@ -73,7 +73,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(8);
@@ -88,7 +88,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -103,7 +103,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(17);
@@ -120,7 +120,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -151,7 +151,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(2);
@@ -171,7 +171,7 @@ void main() {
           await _pumpSuperTextField(
               tester,
               AttributedTextEditingController(
-                text: AttributedText(text: _multilineLayoutText),
+                text: AttributedText(_multilineLayoutText),
               ));
           await tester.placeCaretInSuperTextField(18);
 
@@ -225,7 +225,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(2);
@@ -244,7 +244,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           // TODO: we begin 1 character ahead of where we should because
@@ -260,7 +260,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           // TODO: we begin 1 character behind where we should because
@@ -278,7 +278,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           await tester.placeCaretInSuperTextField(16);
@@ -292,7 +292,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           await tester.placeCaretInSuperTextField(2);
@@ -310,7 +310,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(18, null, TextAffinity.upstream);
@@ -331,7 +331,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           await tester.placeCaretInSuperTextField(2);
@@ -345,7 +345,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           // TODO: we begin 1 character ahead of where we should because
@@ -361,7 +361,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           // TODO: we begin 1 character after of where we should because
@@ -379,7 +379,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -393,7 +393,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(18);
@@ -407,7 +407,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(18);
@@ -421,7 +421,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(23);
@@ -437,7 +437,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(50);
@@ -452,7 +452,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -466,7 +466,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -480,7 +480,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -496,7 +496,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: ""),
+              text: AttributedText(),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -511,7 +511,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(2);
@@ -526,7 +526,7 @@ void main() {
           // TODO: We create the controller outside the pump so that we can
           // explicitly set its selection because of bug #549.
           final controller = AttributedTextEditingController(
-            text: AttributedText(text: _multilineLayoutText),
+            text: AttributedText(_multilineLayoutText),
           );
           await _pumpSuperTextField(
             tester,
@@ -547,7 +547,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: ""),
+              text: AttributedText(),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -562,7 +562,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(17);
@@ -577,7 +577,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(2);
@@ -592,7 +592,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           // TODO: the starting offset is one index to the left because
@@ -614,7 +614,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
 
@@ -633,7 +633,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
 
@@ -652,7 +652,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
 
@@ -671,7 +671,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
 
@@ -692,7 +692,7 @@ void main() {
 
           await _pumpSuperTextField(
             tester,
-            AttributedTextEditingController(text: AttributedText(text: "Pasted content: ")),
+            AttributedTextEditingController(text: AttributedText("Pasted content: ")),
           );
           await tester.placeCaretInSuperTextField(16);
 
@@ -708,7 +708,7 @@ void main() {
 
           await _pumpSuperTextField(
             tester,
-            AttributedTextEditingController(text: AttributedText(text: "Pasted content: ")),
+            AttributedTextEditingController(text: AttributedText("Pasted content: ")),
           );
           await tester.placeCaretInSuperTextField(16);
 
@@ -724,7 +724,7 @@ void main() {
 
           await _pumpSuperTextField(
             tester,
-            AttributedTextEditingController(text: AttributedText(text: "Pasted content: ")),
+            AttributedTextEditingController(text: AttributedText("Pasted content: ")),
           );
           await tester.placeCaretInSuperTextField(16);
 
@@ -740,7 +740,7 @@ void main() {
 
           await _pumpSuperTextField(
             tester,
-            AttributedTextEditingController(text: AttributedText(text: "Pasted content: ")),
+            AttributedTextEditingController(text: AttributedText("Pasted content: ")),
           );
           await tester.placeCaretInSuperTextField(16);
 
@@ -757,7 +757,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -778,7 +778,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -796,7 +796,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -814,7 +814,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -834,7 +834,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(12);
@@ -850,7 +850,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(12);
@@ -866,7 +866,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(12);
@@ -882,7 +882,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(12);
@@ -901,7 +901,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -915,7 +915,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -931,7 +931,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           await tester.placeCaretInSuperTextField(6);
@@ -945,7 +945,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           await tester.placeCaretInSuperTextField(16);
@@ -961,7 +961,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           await tester.placeCaretInSuperTextField(6);
@@ -975,7 +975,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           await tester.placeCaretInSuperTextField(6);
@@ -989,7 +989,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'super text field'),
+              text: AttributedText('super text field'),
             ),
           );
           await tester.placeCaretInSuperTextField(6);
@@ -1003,7 +1003,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -1017,7 +1017,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(17);
@@ -1033,7 +1033,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(4);
@@ -1048,7 +1048,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(2);
@@ -1063,7 +1063,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(8);
@@ -1078,7 +1078,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.selectSuperTextFieldText(0, 10);
@@ -1095,7 +1095,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(28);
@@ -1113,7 +1113,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(31, null, TextAffinity.upstream);
@@ -1128,7 +1128,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "This is line 1\nThis is line 2\nThis is line 3"),
+              text: AttributedText("This is line 1\nThis is line 2\nThis is line 3"),
             ),
           );
           await tester.placeCaretInSuperTextField(23);
@@ -1143,7 +1143,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "This is line 1\nThis is line 2\nThis is line 3"),
+              text: AttributedText("This is line 1\nThis is line 2\nThis is line 3"),
             ),
           );
           await tester.placeCaretInSuperTextField(29, null, TextAffinity.upstream);
@@ -1158,7 +1158,7 @@ void main() {
           // TODO: We create the controller outside the pump so that we can
           // explicitly set its selection because of bug #549.
           final controller = AttributedTextEditingController(
-            text: AttributedText(text: _multilineLayoutText),
+            text: AttributedText(_multilineLayoutText),
           );
           await _pumpSuperTextField(
             tester,
@@ -1179,7 +1179,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.placeCaretInSuperTextField(18);
@@ -1196,7 +1196,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -1210,7 +1210,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -1224,7 +1224,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -1238,7 +1238,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -1256,7 +1256,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "super text field"),
+              text: AttributedText("super text field"),
             ),
           );
           await tester.placeCaretInSuperTextField(10);
@@ -1272,7 +1272,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "super text field"),
+              text: AttributedText("super text field"),
             ),
           );
           await tester.placeCaretInSuperTextField(10);
@@ -1290,7 +1290,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(12);
@@ -1308,7 +1308,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(12);
@@ -1329,7 +1329,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
 
@@ -1348,7 +1348,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
 
@@ -1367,7 +1367,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
 
@@ -1386,7 +1386,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
 
@@ -1407,7 +1407,7 @@ void main() {
 
           await _pumpSuperTextField(
             tester,
-            AttributedTextEditingController(text: AttributedText(text: "Pasted content: ")),
+            AttributedTextEditingController(text: AttributedText("Pasted content: ")),
           );
           await tester.placeCaretInSuperTextField(16);
 
@@ -1423,7 +1423,7 @@ void main() {
 
           await _pumpSuperTextField(
             tester,
-            AttributedTextEditingController(text: AttributedText(text: "Pasted content: ")),
+            AttributedTextEditingController(text: AttributedText("Pasted content: ")),
           );
           await tester.placeCaretInSuperTextField(16);
 
@@ -1439,7 +1439,7 @@ void main() {
 
           await _pumpSuperTextField(
             tester,
-            AttributedTextEditingController(text: AttributedText(text: "Pasted content: ")),
+            AttributedTextEditingController(text: AttributedText("Pasted content: ")),
           );
           await tester.placeCaretInSuperTextField(16);
 
@@ -1455,7 +1455,7 @@ void main() {
 
           await _pumpSuperTextField(
             tester,
-            AttributedTextEditingController(text: AttributedText(text: "Pasted content: ")),
+            AttributedTextEditingController(text: AttributedText("Pasted content: ")),
           );
           await tester.placeCaretInSuperTextField(16);
 
@@ -1472,7 +1472,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -1493,7 +1493,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -1511,7 +1511,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -1529,7 +1529,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text'),
+              text: AttributedText('This is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -1549,7 +1549,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "super text field"),
+              text: AttributedText("super text field"),
             ),
           );
           await tester.placeCaretInSuperTextField(10);
@@ -1563,7 +1563,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "super text field"),
+              text: AttributedText("super text field"),
             ),
           );
           await tester.placeCaretInSuperTextField(10);
@@ -1577,7 +1577,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is a text big enough that will cause auto line wrapping"),
+              text: AttributedText("this is a text big enough that will cause auto line wrapping"),
             ),
           );
 
@@ -1595,7 +1595,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "super text field\nthis is second line"),
+              text: AttributedText("super text field\nthis is second line"),
             ),
           );
 
@@ -1615,7 +1615,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "super text field"),
+              text: AttributedText("super text field"),
             ),
           );
           await tester.placeCaretInSuperTextField(6);
@@ -1629,7 +1629,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "super text field"),
+              text: AttributedText("super text field"),
             ),
           );
           await tester.placeCaretInSuperTextField(6);
@@ -1643,7 +1643,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is a text big enough that will cause auto line wrapping"),
+              text: AttributedText("this is a text big enough that will cause auto line wrapping"),
             ),
           );
 
@@ -1661,7 +1661,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "super text field\nthis is second line"),
+              text: AttributedText("super text field\nthis is second line"),
             ),
           );
 
@@ -1681,7 +1681,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(4);
@@ -1696,7 +1696,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(2);
@@ -1712,7 +1712,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(8);
@@ -1727,7 +1727,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: _multilineLayoutText),
+              text: AttributedText(_multilineLayoutText),
             ),
           );
           await tester.selectSuperTextFieldText(0, 10);
@@ -1746,7 +1746,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -1760,7 +1760,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -1774,7 +1774,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(5);
@@ -1799,7 +1799,7 @@ const _multilineLayoutText = 'this text is long enough to be multiline in the av
 Future<void> _pumpEmptySuperTextField(WidgetTester tester) async {
   await _pumpSuperTextField(
     tester,
-    AttributedTextEditingController(text: AttributedText(text: '')),
+    AttributedTextEditingController(text: AttributedText('')),
   );
 }
 

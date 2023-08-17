@@ -48,7 +48,7 @@ MutableDocument deserializeMarkdownToDocument(
     // For the user to be able to interact with the editor, at least one
     // node is required, so we add an empty paragraph.
     documentNodes.add(
-      ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: '')),
+      ParagraphNode(id: Editor.createNodeId(), text: AttributedText()),
     );
   }
 
@@ -243,7 +243,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text: element.textContent,
+          element.textContent,
         ),
         metadata: {
           'blockType': codeAttribution,
@@ -358,7 +358,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
   @override
   void visitText(md.Text text) {
     final attributedText = _textStack.removeLast();
-    _textStack.add(attributedText.copyAndAppend(AttributedText(text: text.text)));
+    _textStack.add(attributedText.copyAndAppend(AttributedText(text.text)));
   }
 
   @override
@@ -446,8 +446,8 @@ class UnderlineSyntax extends md.TagSyntax {
 class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax {
   /// This pattern matches the text aligment notation.
   ///
-  /// Possible values are `:---`, `:---:` and `---:`
-  static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:$');
+  /// Possible values are `:---`, `:---:`, `---:` and `-::-`.
+  static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:|-::-$');
 
   const _ParagraphWithAlignmentSyntax();
 
@@ -506,6 +506,8 @@ class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax 
         return 'center';
       case '---:':
         return 'right';
+      case '-::-':
+        return 'justify';
       // As we already check that the input matches the notation,
       // we shouldn't reach this point.
       default:

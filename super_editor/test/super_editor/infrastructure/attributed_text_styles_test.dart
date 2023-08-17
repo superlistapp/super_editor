@@ -2,13 +2,12 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 void main() {
   group('Attributed Text', () {
     test('no styles', () {
-      final text = AttributedText(
-        text: 'abcdefghij',
-      );
+      final text = AttributedText('abcdefghij');
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, 'abcdefghij');
@@ -16,15 +15,7 @@ void main() {
     });
 
     test('full-span style', () {
-      final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
-          attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-          ],
-        ),
-      );
+      final text = attributedTextFromMarkdown("**abcdefghij**");
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, 'abcdefghij');
@@ -33,15 +24,7 @@ void main() {
     });
 
     test('single character style', () {
-      final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
-          attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 1, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 1, markerType: SpanMarkerType.end),
-          ],
-        ),
-      );
+      final text = attributedTextFromMarkdown("a**b**cdefghij");
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
@@ -55,8 +38,8 @@ void main() {
 
     test('single character style - reverse order', () {
       final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
+        'abcdefghij',
+        AttributedSpans(
           attributions: [
             // Notice that the markers are provided in reverse order:
             // end then start. Order shouldn't matter within a single
@@ -78,7 +61,7 @@ void main() {
     });
 
     test('add single character style', () {
-      final text = AttributedText(text: 'abcdefghij');
+      final text = AttributedText('abcdefghij');
       text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 1, end: 1));
       final textSpan = text.computeTextSpan(_styleBuilder);
 
@@ -92,15 +75,7 @@ void main() {
     });
 
     test('partial style', () {
-      final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
-          attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end),
-          ],
-        ),
-      );
+      final text = attributedTextFromMarkdown("ab**cdefgh**ij");
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
@@ -112,19 +87,11 @@ void main() {
     });
 
     test('add styled character to existing styled text', () {
-      final initialText = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
-          attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-          ],
-        ),
-      );
+      final initialText = attributedTextFromMarkdown("abcdefghi**j**");
 
       final newText = initialText.copyAndAppend(AttributedText(
-        text: 'k',
-        spans: AttributedSpans(
+        'k',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.end),
@@ -147,17 +114,7 @@ void main() {
     });
 
     test('non-mingled varying styles', () {
-      final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
-          attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.end),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 5, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 9, markerType: SpanMarkerType.end),
-          ],
-        ),
-      );
+      final text = attributedTextFromMarkdown("**abcde***fghij*");
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
@@ -171,9 +128,11 @@ void main() {
     });
 
     test('intermingled varying styles', () {
+      // Note: we configure attributed text directly because Markdown doesn't know
+      // how to parse overlapping bold and italics like we have in this test.
       final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
+        'abcdefghij',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),

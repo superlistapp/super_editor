@@ -242,8 +242,8 @@ class FillInComposingUserTagCommand implements EditCommand {
       InsertAttributedTextCommand(
         documentPosition: tagBasePosition,
         textToInsert: AttributedText(
-          text: "${_tagRule.trigger}$_tag ",
-          spans: AttributedSpans(
+          "${_tagRule.trigger}$_tag ",
+          AttributedSpans(
             attributions: [
               SpanMarker(attribution: stableTagAttribution, offset: 0, markerType: SpanMarkerType.start),
               SpanMarker(attribution: stableTagAttribution, offset: _tag.length, markerType: SpanMarkerType.end),

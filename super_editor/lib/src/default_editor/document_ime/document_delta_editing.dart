@@ -479,7 +479,7 @@ class TextDeltasDocumentEditor {
             existingNodeId: extentNode.id,
             newNode: ParagraphNode(
               id: newNodeId,
-              text: AttributedText(text: ''),
+              text: AttributedText(),
             ),
           ),
           ChangeSelectionRequest(
@@ -502,7 +502,7 @@ class TextDeltasDocumentEditor {
             existingNodeId: extentNode.id,
             newNode: ParagraphNode(
               id: newNodeId,
-              text: AttributedText(text: ''),
+              text: AttributedText(),
             ),
           ),
         ]);
