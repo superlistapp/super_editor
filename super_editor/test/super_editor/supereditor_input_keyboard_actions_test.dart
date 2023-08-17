@@ -1559,6 +1559,11 @@ class _PageScrollSetup {
   final String description;
   final _PumpEditor pumpEditor;
   final TextInputSource textInputSource;
+
+  @override
+  String toString() {
+    return "PageScrollSetup: $description, ${textInputSource.toString()}";
+  }
 }
 
 /// Variant for an editor experience with an internal scrollable and
