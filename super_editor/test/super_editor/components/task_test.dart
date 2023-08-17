@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:super_editor/src/test/ime.dart';
 import 'package:super_editor/src/test/super_editor_test/tasks_test_tools.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
@@ -368,6 +370,97 @@ void main() {
           ),
         ),
       );
+    });
+
+    testWidgetsOnAllPlatforms("converts task to paragraph when the user presses BACKSPACE at the beginning",
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+        ],
+      );
+
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the beginning of the task.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Press backspace to merge the task with the previous paragraph.
+      await tester.pressBackspace();
+
+      // Ensure the task converted to a paragraph.
+      expect(document.nodes.length, 1);
+      expect(document.nodes.first, isA<ParagraphNode>());
+      expect((document.nodes.first as ParagraphNode).text.text, "This is a task");
+    });
+
+    testWidgetsOnAllPlatforms(
+        "converts task to paragraph when the user presses BACKSPACE with software keyboard at the beginning",
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+        ],
+      );
+
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the beginning of the task.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Press backspace to convert the task into a paragraph.
+      // Simulate the user pressing BACKSPACE on a software keyboard.
+      await tester.ime.sendDeltas([
+        const TextEditingDeltaNonTextUpdate(
+          oldText: ". This is a task",
+          selection: TextSelection.collapsed(offset: 2),
+          composing: TextRange.empty,
+        ),
+        const TextEditingDeltaDeletion(
+            oldText: ". This is a task",
+            deletedRange: TextRange(start: 1, end: 2),
+            selection: TextSelection.collapsed(offset: 1),
+            composing: TextRange.empty),
+      ], getter: imeClientGetter);
+
+      // Ensure the task converted to a paragraph.
+      expect(document.nodes.length, 1);
+      expect(document.nodes.first, isA<ParagraphNode>());
+      expect((document.nodes.first as ParagraphNode).text.text, "This is a task");
     });
   });
 }
