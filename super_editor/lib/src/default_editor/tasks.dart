@@ -306,6 +306,42 @@ ExecutionInstruction enterToInsertNewTask({
   return ExecutionInstruction.haltExecution;
 }
 
+ExecutionInstruction backspaceToConvertTaskToParagraph({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!editContext.composer.selection!.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! TaskNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if ((editContext.composer.selection!.extent.nodePosition as TextPosition).offset > 0) {
+    // The selection isn't at the beginning.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.editor.execute([
+    DeleteUpstreamAtBeginningOfNodeRequest(node),
+  ]);
+
+  return ExecutionInstruction.haltExecution;
+}
+
 class ChangeTaskCompletionRequest implements EditRequest {
   ChangeTaskCompletionRequest({required this.nodeId, required this.isComplete});
 
@@ -396,6 +432,38 @@ class ConvertParagraphToTaskCommand implements EditCommand {
     executor.executeCommand(
       ReplaceNodeCommand(existingNodeId: existingNode.id, newNode: taskNode),
     );
+  }
+}
+
+class ConvertTaskToParagraphCommand implements EditCommand {
+  const ConvertTaskToParagraphCommand({
+    required this.nodeId,
+    this.paragraphMetadata,
+  });
+
+  final String nodeId;
+  final Map<String, dynamic>? paragraphMetadata;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final node = document.getNodeById(nodeId);
+    final taskNode = node as TaskNode;
+    final newMetadata = Map<String, dynamic>.from(paragraphMetadata ?? {});
+    newMetadata["blockType"] = paragraphAttribution;
+
+    final newParagraphNode = ParagraphNode(
+      id: taskNode.id,
+      text: taskNode.text,
+      metadata: newMetadata,
+    );
+    document.replaceNode(oldNode: taskNode, newNode: newParagraphNode);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(taskNode.id),
+      )
+    ]);
   }
 }
 

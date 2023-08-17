@@ -134,6 +134,9 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           isComplete: request.isComplete,
         )
       : null,
+  (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is TaskNode
+      ? ConvertTaskToParagraphCommand(nodeId: request.node.id, paragraphMetadata: request.node.metadata)
+      : null,
   (request) => request is ChangeTaskCompletionRequest
       ? ChangeTaskCompletionCommand(
           nodeId: request.nodeId,
