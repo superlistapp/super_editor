@@ -1269,7 +1269,7 @@ void main() {
 
     group("page scrolling", () {
       testWidgetsOnAllPlatforms(
-        'PAGE DOWN scrolls down by the viewport height within (${_scrollingVariant.currentValue!.description})',
+        'PAGE DOWN scrolls down by the viewport height',
         (tester) async {
           await _scrollingVariant.currentValue!.pumpEditor(
             tester,
@@ -1295,7 +1295,7 @@ void main() {
       );
 
       testWidgetsOnAllPlatforms(
-        'PAGE DOWN does not scroll past bottom of the (${_scrollingVariant.currentValue!.description})',
+        'PAGE DOWN does not scroll past bottom of the viewport',
         (tester) async {
           await _scrollingVariant.currentValue!.pumpEditor(
             tester,
@@ -1306,8 +1306,10 @@ void main() {
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          // Scroll to the bottom of the viewport.
-          scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
+          // Scroll very close to the bottom but not all the way to avoid explicit 
+          // checks comparing scroll offset directly against `maxScrollExtent` 
+          // and test scrolling behaviour in more realistic manner.
+          scrollState.position.jumpTo(scrollState.position.maxScrollExtent-10);
 
           await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
 
@@ -1321,7 +1323,7 @@ void main() {
       );
 
       testWidgetsOnAllPlatforms(
-        'PAGE UP scrolls up by the viewport height within (${_scrollingVariant.currentValue!.description})',
+        'PAGE UP scrolls up by the viewport height',
         (tester) async {
           await _scrollingVariant.currentValue!.pumpEditor(
             tester,
@@ -1350,7 +1352,7 @@ void main() {
       );
 
       testWidgetsOnAllPlatforms(
-        'PAGE UP does not scroll past top of the (${_scrollingVariant.currentValue!.description})',
+        'PAGE UP does not scroll past top of the viewport',
         (tester) async {
           await _scrollingVariant.currentValue!.pumpEditor(
             tester,
@@ -1360,6 +1362,11 @@ void main() {
           await tester.placeCaretInParagraph('1', 0);
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Scroll very close to the top but not all the way to avoid explicit 
+          // checks comparing scroll offset directly against `minScrollExtent` 
+          // and test scrolling behaviour in more realistic manner.
+          scrollState.position.jumpTo(scrollState.position.minScrollExtent+10);
 
           await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
 
@@ -1373,7 +1380,7 @@ void main() {
       );
 
       testWidgetsOnAllPlatforms(
-        'CMD + HOME on mac/ios and CTRL + HOME on other platforms scrolls to top of the (${_scrollingVariant.currentValue!.description})',
+        'CMD + HOME on mac/ios and CTRL + HOME on other platforms scrolls to top of viewport',
         (tester) async {
           await _scrollingVariant.currentValue!.pumpEditor(
             tester,
@@ -1403,7 +1410,7 @@ void main() {
       );
 
       testWidgetsOnAllPlatforms(
-        "CMD + HOME on mac/ios and CTRL + HOME on other platforms does not scroll past top of the (${_scrollingVariant.currentValue!.description})",
+        "CMD + HOME on mac/ios and CTRL + HOME on other platforms does not scroll past top of the viewport",
         (tester) async {
           await _scrollingVariant.currentValue!.pumpEditor(
             tester,
@@ -1413,6 +1420,11 @@ void main() {
           await tester.placeCaretInParagraph('1', 0);
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Scroll very close to the top but not all the way to avoid explicit 
+          // checks comparing scroll offset directly against `minScrollExtent` 
+          // and test scrolling behaviour in more realistic manner.
+          scrollState.position.jumpTo(scrollState.position.minScrollExtent+10);
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
             await _pressCmdHome(tester);
@@ -1427,7 +1439,7 @@ void main() {
       );
 
       testWidgetsOnAllPlatforms(
-        "CMD + END on mac/ios and CTRL + END on other platforms scrolls to bottom of (${_scrollingVariant.currentValue!.description})",
+        "CMD + END on mac/ios and CTRL + END on other platforms scrolls to bottom of viewport",
         (tester) async {
           await _scrollingVariant.currentValue!.pumpEditor(
             tester,
@@ -1451,7 +1463,7 @@ void main() {
       );
 
       testWidgetsOnAllPlatforms(
-        "CMD + END on mac/ios and CTRL + END on other platforms does not scroll past bottom of the (${_scrollingVariant.currentValue!.description})",
+        "CMD + END on mac/ios and CTRL + END on other platforms does not scroll past bottom of the viewport",
         (tester) async {
           await _scrollingVariant.currentValue!.pumpEditor(
             tester,
@@ -1462,8 +1474,10 @@ void main() {
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          // Scroll to the bottom of the viewport.
-          scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
+          // Scroll very close to the bottom but not all the way to avoid explicit 
+          // checks comparing scroll offset directly against `maxScrollExtent` 
+          // and test scrolling behaviour in more realistic manner.
+          scrollState.position.jumpTo(scrollState.position.maxScrollExtent-10);
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
             await _pressCmdEnd(tester);
@@ -1546,8 +1560,6 @@ class _PageScrollSetup {
   final _PumpEditor pumpEditor;
   final TextInputSource textInputSource;
 }
-
-
 
 /// Variant for an editor experience with an internal scrollable and
 /// an ancestor scrollable.
