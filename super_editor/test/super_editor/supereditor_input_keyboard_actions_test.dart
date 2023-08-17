@@ -1545,27 +1545,6 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
       .pump();
 }
 
-typedef _PumpEditor = Future<TestDocumentContext> Function(
-  WidgetTester tester,
-  TextInputSource textInputSource,
-  );
-  
-class _PageScrollSetup {
-  const _PageScrollSetup({
-    required this.description,
-    required this.pumpEditor,
-    required this.textInputSource,
-  });
-  final String description;
-  final _PumpEditor pumpEditor;
-  final TextInputSource textInputSource;
-
-  @override
-  String toString() {
-    return "PageScrollSetup: $description, ${textInputSource.toString()}";
-  }
-}
-
 /// Variant for an editor experience with an internal scrollable and
 /// an ancestor scrollable.
 final _scrollingVariant = ValueVariant<_PageScrollSetup>({
@@ -1687,3 +1666,25 @@ Future<void> _pressCtrlEnd(WidgetTester tester) async {
   await tester.sendKeyUpEvent(LogicalKeyboardKey.end, platform: 'macos');
   await tester.pumpAndSettle();
 }
+
+/// Holds the setup for a page scroll test.
+class _PageScrollSetup {
+  const _PageScrollSetup({
+    required this.description,
+    required this.pumpEditor,
+    required this.textInputSource,
+  });
+  final String description;
+  final _PumpEditorWidget pumpEditor;
+  final TextInputSource textInputSource;
+
+  @override
+  String toString() {
+    return "PageScrollSetup: $description, ${textInputSource.toString()}";
+  }
+}
+
+typedef _PumpEditorWidget = Future<TestDocumentContext> Function(
+  WidgetTester tester,
+  TextInputSource textInputSource,
+  );
