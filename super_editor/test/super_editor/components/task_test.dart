@@ -9,6 +9,7 @@ import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../test_tools.dart';
+import '../supereditor_test_tools.dart';
 
 void main() {
   group("SuperEditor task component", () {
@@ -120,6 +121,58 @@ void main() {
 
       // Press enter to create a new, empty task, below the original task.
       await tester.pressEnter();
+
+      // Ensure that a new, empty task was created.
+      expect(document.nodes.length, 2);
+      expect(document.nodes.first, isA<TaskNode>());
+      expect((document.nodes.first as TaskNode).text.text, "This is a task");
+      expect(document.nodes.last, isA<TaskNode>());
+      expect((document.nodes.last as TaskNode).text.text, "");
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: document.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnWebDesktop("inserts new task on ENTER at end of existing task", (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      final task = document.getNodeAt(0) as TaskNode;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              inputSource: TextInputSource.ime,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the end of the task.
+      await tester.placeCaretInParagraph("1", task.text.text.length);
+
+      // Press enter to create a new, empty task, below the original task.
+      // On Web, this generates both a newline input action and a key event.
+      await tester.pressEnter();
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pump();
 
       // Ensure that a new, empty task was created.
       expect(document.nodes.length, 2);

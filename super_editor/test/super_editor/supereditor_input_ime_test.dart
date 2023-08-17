@@ -5,6 +5,7 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../test_tools_user_input.dart';
 import 'supereditor_test_tools.dart';
 import 'test_documents.dart';
 import '../test_tools.dart';
@@ -743,6 +744,92 @@ Paragraph two
         // Ensure we cleared the composing region on the IME so the previous entered text is preserved.
         expect(composingRegion, TextRange.empty);
       });
+    });
+
+    group('moves caret', () {
+      testWidgetsOnDesktopAndWeb('to end of previous node when LEFT_ARROW is pressed at the beginning of a paragraph',
+          (tester) async {
+        await tester
+            .createDocument() //
+            .withLongDoc()
+            .withInputSource(inputSourceVariant.currentValue!)
+            .pump();
+
+        // Place the caret at the beginning of the second paragraph.
+        await tester.placeCaretInParagraph('2', 0);
+
+        // Press left arrow to move to the previous node.
+        await tester.pressLeftArrow();
+
+        // Ensure the caret sits at the end of the first paragraph.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 439),
+            ),
+          ),
+        );
+      }, variant: inputSourceVariant);
+
+      testWidgetsOnDesktopAndWeb('to the beginning of next node when RIGHT_ARROW is pressed at the end of a paragraph',
+          (tester) async {
+        await tester
+            .createDocument() //
+            .withLongDoc()
+            .withInputSource(inputSourceVariant.currentValue!)
+            .pump();
+
+        // Place the caret at the end of the first paragraph.
+        await tester.placeCaretInParagraph('1', 439);
+
+        // Press right arrow to move to the next node.
+        await tester.pressRightArrow();
+
+        // Ensure the caret sits at the beginning of the second paragraph.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: '2',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      }, variant: inputSourceVariant);
+    });
+
+    testWidgetsOnWebDesktop('deletes a character with backspace', (tester) async {
+      final testContext = await tester //
+          .createDocument()
+          .fromMarkdown('This is a paragraph')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = testContext.document.nodes.first.id;
+
+      // Place the caret at the end of the paragraph.
+      await tester.placeCaretInParagraph(nodeId, 19);
+
+      // Simulate the user pressing backspace.
+      //
+      // On web, this generates both a key event and a deletion delta.
+      await tester.pressBackspace();
+      await tester.ime.sendDeltas(
+        [
+          const TextEditingDeltaDeletion(
+            oldText: 'This is a paragraph',
+            deletedRange: TextRange(start: 18, end: 19),
+            selection: TextSelection.collapsed(offset: 18),
+            composing: TextRange.empty,
+          ),
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Ensure the last character was deleted.
+      expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'This is a paragrap');
     });
 
     group('text serialization and selected content', () {
