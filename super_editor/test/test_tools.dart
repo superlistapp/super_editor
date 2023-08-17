@@ -193,9 +193,10 @@ void testWidgetsOnMobile(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
 }) {
-  testWidgetsOnAndroid("$description (on Android)", test, skip: skip);
-  testWidgetsOnIos("$description (on iOS)", test, skip: skip);
+  testWidgetsOnAndroid("$description (on Android)", test, variant: variant, skip: skip);
+  testWidgetsOnIos("$description (on iOS)", test, variant: variant, skip: skip);
 }
 
 /// A widget test that runs a variant for every platform, e.g.,
