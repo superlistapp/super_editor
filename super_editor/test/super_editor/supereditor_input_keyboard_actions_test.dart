@@ -1269,14 +1269,14 @@ void main() {
 
     group("page scrolling", () {
       testWidgetsOnAllPlatforms(
-        'PAGE DOWN scrolls down by the viewport height',
+        'PAGE DOWN scrolls down by the viewport height within (${_scrollingVariant.currentValue!.description})',
         (tester) async {
-          await _pumpPageScrollTestWidgetVariant.currentValue!(tester);
-
-          await tester.placeCaretInParagraph(
-            '1',
-            0,
+          await _scrollingVariant.currentValue!.pumpEditor(
+            tester,
+            _scrollingVariant.currentValue!.textInputSource,
           );
+
+          await tester.placeCaretInParagraph('1', 0);
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
@@ -1291,18 +1291,18 @@ void main() {
             equals(scrollState.position.viewportDimension),
           );
         },
-        variant: _pumpPageScrollTestWidgetVariant,
+        variant: _scrollingVariant,
       );
 
       testWidgetsOnAllPlatforms(
-        'PAGE DOWN does not scroll past bottom of the viewport',
+        'PAGE DOWN does not scroll past bottom of the (${_scrollingVariant.currentValue!.description})',
         (tester) async {
-          await _pumpPageScrollTestWidgetVariant.currentValue!(tester);
-
-          await tester.placeCaretInParagraph(
-            '1',
-            0,
+          await _scrollingVariant.currentValue!.pumpEditor(
+            tester,
+            _scrollingVariant.currentValue!.textInputSource,
           );
+
+          await tester.placeCaretInParagraph('1', 0);
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
@@ -1317,18 +1317,18 @@ void main() {
           // Ensure we didn't scroll past the bottom of the viewport.
           expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
         },
-        variant: _pumpPageScrollTestWidgetVariant,
+        variant: _scrollingVariant,
       );
 
       testWidgetsOnAllPlatforms(
-        'PAGE UP scrolls up by the viewport height',
+        'PAGE UP scrolls up by the viewport height within (${_scrollingVariant.currentValue!.description})',
         (tester) async {
-          await _pumpPageScrollTestWidgetVariant.currentValue!(tester);
-
-          await tester.placeCaretInParagraph(
-            '1',
-            0,
+          await _scrollingVariant.currentValue!.pumpEditor(
+            tester,
+            _scrollingVariant.currentValue!.textInputSource,
           );
+
+          await tester.placeCaretInParagraph('1', 0);
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
@@ -1346,18 +1346,18 @@ void main() {
             equals(scrollState.position.maxScrollExtent - scrollState.position.viewportDimension),
           );
         },
-        variant: _pumpPageScrollTestWidgetVariant,
+        variant: _scrollingVariant,
       );
 
       testWidgetsOnAllPlatforms(
-        'PAGE UP does not scroll past top of the viewport',
+        'PAGE UP does not scroll past top of the (${_scrollingVariant.currentValue!.description})',
         (tester) async {
-          await _pumpPageScrollTestWidgetVariant.currentValue!(tester);
-
-          await tester.placeCaretInParagraph(
-            '1',
-            0,
+          await _scrollingVariant.currentValue!.pumpEditor(
+            tester,
+            _scrollingVariant.currentValue!.textInputSource,
           );
+
+          await tester.placeCaretInParagraph('1', 0);
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
@@ -1369,28 +1369,25 @@ void main() {
           // Ensure we didn't scroll past the top of the viewport.
           expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
         },
-        variant: _pumpPageScrollTestWidgetVariant,
+        variant: _scrollingVariant,
       );
 
       testWidgetsOnAllPlatforms(
-        'CMD + HOME on mac/ios and CTRL + HOME on other platforms scrolls to top of viewport',
+        'CMD + HOME on mac/ios and CTRL + HOME on other platforms scrolls to top of the (${_scrollingVariant.currentValue!.description})',
         (tester) async {
-          await _pumpPageScrollTestWidgetVariant.currentValue!(tester);
-
-          await tester.placeCaretInParagraph(
-            '1',
-            0,
+          await _scrollingVariant.currentValue!.pumpEditor(
+            tester,
+            _scrollingVariant.currentValue!.textInputSource,
           );
+
+          await tester.placeCaretInParagraph('1', 0);
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
           // Scroll to the bottom of the viewport.
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
 
-          final currentPlatform =
-              defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
-
-          if (currentPlatform) {
+          if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
             await _pressCmdHome(tester);
           } else {
             await _pressCtrlHome(tester);
@@ -1402,25 +1399,22 @@ void main() {
             equals(scrollState.position.minScrollExtent),
           );
         },
-        variant: _pumpPageScrollTestWidgetVariant,
+        variant: _scrollingVariant,
       );
 
       testWidgetsOnAllPlatforms(
-        "CMD + HOME on mac/ios and CTRL + HOME on other platforms does not scroll past top of the viewport",
+        "CMD + HOME on mac/ios and CTRL + HOME on other platforms does not scroll past top of the (${_scrollingVariant.currentValue!.description})",
         (tester) async {
-          await _pumpPageScrollTestWidgetVariant.currentValue!(tester);
-
-          await tester.placeCaretInParagraph(
-            '1',
-            0,
+          await _scrollingVariant.currentValue!.pumpEditor(
+            tester,
+            _scrollingVariant.currentValue!.textInputSource,
           );
+
+          await tester.placeCaretInParagraph('1', 0);
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          final currentPlatform =
-              defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
-
-          if (currentPlatform) {
+          if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
             await _pressCmdHome(tester);
           } else {
             await _pressCtrlHome(tester);
@@ -1429,25 +1423,22 @@ void main() {
           // Ensure we didn't scroll past the top of the viewport.
           expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
         },
-        variant: _pumpPageScrollTestWidgetVariant,
+        variant: _scrollingVariant,
       );
 
       testWidgetsOnAllPlatforms(
-        "CMD + END on mac/ios and CTRL + END on other platforms scrolls to bottom of viewport",
+        "CMD + END on mac/ios and CTRL + END on other platforms scrolls to bottom of (${_scrollingVariant.currentValue!.description})",
         (tester) async {
-          await _pumpPageScrollTestWidgetVariant.currentValue!(tester);
-
-          await tester.placeCaretInParagraph(
-            '1',
-            0,
+          await _scrollingVariant.currentValue!.pumpEditor(
+            tester,
+            _scrollingVariant.currentValue!.textInputSource,
           );
+
+          await tester.placeCaretInParagraph('1', 0);
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          final currentPlatform =
-              defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
-
-          if (currentPlatform) {
+          if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
             await _pressCmdEnd(tester);
           } else {
             await _pressCtrlEnd(tester);
@@ -1456,28 +1447,25 @@ void main() {
           // Ensure we scrolled to the bottom of the viewport.
           expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
         },
-        variant: _pumpPageScrollTestWidgetVariant,
+        variant: _scrollingVariant,
       );
 
       testWidgetsOnAllPlatforms(
-        "CMD + END on mac/ios and CTRL + END on other platforms does not scroll past bottom of the viewport",
+        "CMD + END on mac/ios and CTRL + END on other platforms does not scroll past bottom of the (${_scrollingVariant.currentValue!.description})",
         (tester) async {
-          await _pumpPageScrollTestWidgetVariant.currentValue!(tester);
-
-          await tester.placeCaretInParagraph(
-            '1',
-            0,
+          await _scrollingVariant.currentValue!.pumpEditor(
+            tester,
+            _scrollingVariant.currentValue!.textInputSource,
           );
+
+          await tester.placeCaretInParagraph('1', 0);
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
           // Scroll to the bottom of the viewport.
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
 
-          final currentPlatform =
-              defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
-
-          if (currentPlatform) {
+          if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
             await _pressCmdEnd(tester);
           } else {
             await _pressCtrlEnd(tester);
@@ -1486,7 +1474,7 @@ void main() {
           // Ensure we didn't scroll past the bottom of the viewport.
           expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
         },
-        variant: _pumpPageScrollTestWidgetVariant,
+        variant: _scrollingVariant,
       );
     });
   });
@@ -1543,32 +1531,83 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
       .pump();
 }
 
-/// Variant to pump up a [SuperEditor] experience with and without a parent [Scrollable].
-final _pumpPageScrollTestWidgetVariant = ValueVariant<Future<void> Function(WidgetTester)>({
-  _pumpPageScrollTestSetup,
-  _pumpPageScrollSliverTestSetup,
-});
-
-Future<TestDocumentContext> _pumpPageScrollTestSetup(WidgetTester tester) async {
-  return await tester.createDocument().withLongDoc().withInputSource(TextInputSource.ime).pump();
+typedef _PumpEditor = Future<TestDocumentContext> Function(
+  WidgetTester tester,
+  TextInputSource textInputSource,
+  );
+  
+class _PageScrollSetup {
+  const _PageScrollSetup({
+    required this.description,
+    required this.pumpEditor,
+    required this.textInputSource,
+  });
+  final String description;
+  final _PumpEditor pumpEditor;
+  final TextInputSource textInputSource;
 }
 
-/// Pumps a [SuperEditor] within a parent [Scrollable], including additional
+
+
+/// Variant for an editor experience with an internal scrollable and
+/// an ancestor scrollable.
+final _scrollingVariant = ValueVariant<_PageScrollSetup>({
+  const _PageScrollSetup(
+    description: "inner viewport",
+    pumpEditor: _pumpPageScrollTestSetup,
+    textInputSource: TextInputSource.ime,
+    ),
+  const _PageScrollSetup(
+    description: "inner viewport",
+    pumpEditor: _pumpPageScrollTestSetup,
+    textInputSource: TextInputSource.keyboard,
+    ),
+  const _PageScrollSetup(
+    description: "ancestor viewport",
+    pumpEditor: _pumpPageScrollSliverTestSetup,
+    textInputSource: TextInputSource.ime,
+    ),
+  const _PageScrollSetup(
+    description: "ancestor viewport",
+    pumpEditor: _pumpPageScrollSliverTestSetup,
+    textInputSource: TextInputSource.keyboard,
+    ),
+  
+});
+
+/// Pumps a [SuperEditor] experience with the default [Scrollable].
+Future<TestDocumentContext> _pumpPageScrollTestSetup(
+  WidgetTester tester,
+  TextInputSource textInputSource,
+  ) async {
+  return await tester
+  .createDocument()
+  .withLongDoc()
+  .withInputSource(textInputSource)
+  .pump();
+}
+
+/// Pumps a [SuperEditor] within a ancestor [Scrollable], including additional
 /// content above the [SuperEditor] and additional content on top of [Scrollable].
 ///
-/// By including content above the [SuperEditor], it doesn't have the same origin as the parent [Scrollable].
+/// By including content above the [SuperEditor], it doesn't have the same origin as
+/// the ancestor [Scrollable].
 ///
-/// By including content on top of [Scrollable], it doesn't have the origin at [Offset.zero].
+/// By including content on top of [Scrollable], it doesn't have the origin
+/// at [Offset.zero].
 ///
-/// This setup is intended for testing page scrolling actions behaviour in presense of an
-/// ancestor [Scrollable].
-Future<void> _pumpPageScrollSliverTestSetup(WidgetTester tester) async {
-  final doc = longDoc();
-  final composer = MutableDocumentComposer();
-  final docEditor = createDefaultDocumentEditor(document: doc, composer: composer);
-
-  return tester.pumpWidget(
-    MaterialApp(
+/// This setup is intended for testing page scrolling actions behaviour in presense
+/// of an ancestor [Scrollable].
+Future<TestDocumentContext> _pumpPageScrollSliverTestSetup(
+  WidgetTester tester,
+  TextInputSource textInputSource,
+  ) async {
+  return tester
+  .createDocument()
+  .withLongDoc()
+  .withInputSource(textInputSource)
+  .withCustomWidgetTreeBuilder((superEditor) {
+    return MaterialApp(
       home: Scaffold(
         body: Padding(
           padding: const EdgeInsets.only(top: 300),
@@ -1581,12 +1620,7 @@ Future<void> _pumpPageScrollSliverTestSetup(WidgetTester tester) async {
                 expandedHeight: 200.0,
               ),
               SliverToBoxAdapter(
-                child: SuperEditor(
-                  editor: docEditor,
-                  document: doc,
-                  composer: composer,
-                  inputSource: TextInputSource.ime,
-                ),
+                child: superEditor,
               ),
               SliverList(
                 delegate: SliverChildBuilderDelegate(
@@ -1601,8 +1635,8 @@ Future<void> _pumpPageScrollSliverTestSetup(WidgetTester tester) async {
         ),
       ),
       debugShowCheckedModeBanner: false,
-    ),
-  );
+    );
+  }).pump();
 }
 
 Future<void> _pressCmdHome(WidgetTester tester) async {

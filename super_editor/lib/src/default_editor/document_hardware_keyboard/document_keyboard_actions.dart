@@ -28,10 +28,10 @@ ExecutionInstruction scrollOnPageUpKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  final scrollController = editContext.scroller;
+  final scroller = editContext.scroller;
 
-  scrollController.animateTo(
-    max(scrollController.scrollOffset - scrollController.viewportDimension, scrollController.minScrollExtent),
+  scroller.animateTo(
+    max(scroller.scrollOffset - scroller.viewportDimension, scroller.minScrollExtent),
     duration: const Duration(milliseconds: 150),
     curve: Curves.decelerate,
   );
@@ -53,10 +53,10 @@ ExecutionInstruction scrollOnPageDownKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  final scrollController = editContext.scroller;
+  final scroller = editContext.scroller;
 
-  scrollController.animateTo(
-    min(scrollController.scrollOffset + scrollController.viewportDimension, scrollController.maxScrollExtent),
+  scroller.animateTo(
+    min(scroller.scrollOffset + scroller.viewportDimension, scroller.maxScrollExtent),
     duration: const Duration(milliseconds: 150),
     curve: Curves.decelerate,
   );
@@ -88,10 +88,10 @@ ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  final scrollController = editContext.scroller;
+  final scroller = editContext.scroller;
 
-  scrollController.animateTo(
-    scrollController.minScrollExtent,
+  scroller.animateTo(
+    scroller.minScrollExtent,
     duration: const Duration(milliseconds: 150),
     curve: Curves.decelerate,
   );
@@ -123,15 +123,15 @@ ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  final scrollController = editContext.scroller;
+  final scroller = editContext.scroller;
 
-  if (!scrollController.maxScrollExtent.isFinite) {
+  if (!scroller.maxScrollExtent.isFinite) {
     // Can't scroll to infinity, but we technically handled the task.
     return ExecutionInstruction.haltExecution;
   }
 
-  scrollController.animateTo(
-    scrollController.maxScrollExtent,
+  scroller.animateTo(
+    scroller.maxScrollExtent,
     duration: const Duration(milliseconds: 150),
     curve: Curves.decelerate,
   );
@@ -140,35 +140,20 @@ ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
 }
 
 /// Halt execution of the current key event if the key pressed is one of
-/// the function keys (F1, F2, F3, etc.).
+/// the functions keys (F1, F2, F3, etc.), or the Page Up/Down, Home/End key.
 ///
-/// Without this action in place pressing a function key would display
-/// an unknown '?' character in the document.
-ExecutionInstruction doNothingWhenFnKeyPressed({
+/// Without this action in place pressing one of the above mentioned keys
+/// would display an unknown '?' character in the document.
+ExecutionInstruction blockControlKeys({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey.keyId < LogicalKeyboardKey.f1.keyId ||
-      keyEvent.logicalKey.keyId > LogicalKeyboardKey.f12.keyId) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  return ExecutionInstruction.haltExecution;
-}
-
-/// Halt execution of the current key event if the PAGE UP/DOWN or
-/// HOME/END key is pressed.
-///
-/// Without this action in place pressing the above mentioned keys would display an
-/// unknown '?' character in the document.
-ExecutionInstruction doNothingWhenPageUpOrPageDownOrHomeOrEndKeyPressed({
-  required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId &&
-      keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId &&
-      keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId &&
-      keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId) {
+      keyEvent.logicalKey.keyId > LogicalKeyboardKey.f12.keyId ||
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId &&
+          keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId &&
+          keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId &&
+          keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId) {
     return ExecutionInstruction.continueExecution;
   }
 
