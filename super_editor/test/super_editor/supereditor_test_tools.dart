@@ -402,7 +402,7 @@ class TestSuperEditorConfigurator {
       imeOverrides: _config.imeOverrides,
       keyboardActions: [
         ..._config.prependedKeyboardActions,
-        ...defaultKeyboardActions,
+        ...(_config.inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions),
         ..._config.appendedKeyboardActions,
       ],
       gestureMode: _config.gestureMode,
