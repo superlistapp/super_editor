@@ -14,6 +14,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 
 import 'layout_single_column/layout_single_column.dart';
 import 'text_tools.dart';
@@ -810,4 +811,70 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
   ]);
 
   return ExecutionInstruction.haltExecution;
+}
+
+ExecutionInstruction doNothingWithEnterOnWeb({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (isWeb) {
+    // On web, pressing enter generates both a key event and a `TextInputAction.newline` action.
+    // We handle the newline action and ignore the key event.
+    // We return blocked so the OS can process it.
+    return ExecutionInstruction.blocked;
+  }
+
+  return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction doNothingWithBackspaceOnWeb({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (isWeb) {
+    // On web, pressing backspace generates both a key event and a deletion delta.
+    // We handle the deletion delta and ignore the key event.
+    // We return blocked so the OS can process it.
+    return ExecutionInstruction.blocked;
+  }
+
+  return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction doNothingWithDeleteOnWeb({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (isWeb) {
+    // On web, pressing delete generates both a key event and a deletion delta.
+    // We handle the deletion delta and ignore the key event.
+    // We return blocked so the OS can process it.
+    return ExecutionInstruction.blocked;
+  }
+
+  return ExecutionInstruction.continueExecution;
 }
