@@ -21,7 +21,7 @@ void main() {
       final heightWithHintText = tester.getSize(find.byType(SuperTextField)).height;
 
       // Change the text, this should recompute viewport height.
-      controller.text = AttributedText(text: 'Leave a message');
+      controller.text = AttributedText('Leave a message');
       await tester.pumpAndSettle();
 
       // When the text field has content the line height should be the true line height.

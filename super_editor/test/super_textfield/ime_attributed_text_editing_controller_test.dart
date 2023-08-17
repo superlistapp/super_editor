@@ -133,7 +133,7 @@ void main() {
       final controller = ImeAttributedTextEditingController(
           controller: AttributedTextEditingController(
             text: AttributedText(
-              text: 'Some text',
+              'Some text',
             ),
           ),
           // Decorate the TextInputConnection to track the number of IME updates.
@@ -183,8 +183,8 @@ void main() {
       final controller = ImeAttributedTextEditingController(
           controller: AttributedTextEditingController(
         text: AttributedText(
-          text: 'before [] after',
-          spans: AttributedSpans(
+          'before [] after',
+          AttributedSpans(
             attributions: [
               const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
               const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
@@ -214,8 +214,8 @@ void main() {
       final controller = ImeAttributedTextEditingController(
         controller: AttributedTextEditingController(
           text: AttributedText(
-            text: 'before [] after',
-            spans: AttributedSpans(
+            'before [] after',
+            AttributedSpans(
               attributions: [
                 const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
                 const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
@@ -246,8 +246,8 @@ void main() {
       final controller = ImeAttributedTextEditingController(
         controller: AttributedTextEditingController(
           text: AttributedText(
-            text: 'before [] after',
-            spans: AttributedSpans(
+            'before [] after',
+            AttributedSpans(
               attributions: [
                 const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
                 const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
@@ -278,8 +278,8 @@ void main() {
       final controller = ImeAttributedTextEditingController(
         controller: AttributedTextEditingController(
           text: AttributedText(
-            text: 'before [] after',
-            spans: AttributedSpans(
+            'before [] after',
+            AttributedSpans(
               attributions: [
                 const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
                 const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
@@ -315,7 +315,7 @@ void main() {
       final controller = ImeAttributedTextEditingController(
         controller: AttributedTextEditingController(
           text: AttributedText(
-            text: '[replaceme]',
+            '[replaceme]',
           ),
         ),
       )
@@ -338,7 +338,7 @@ void main() {
       final controller = ImeAttributedTextEditingController(
         controller: AttributedTextEditingController(
           text: AttributedText(
-            text: '[replaceme]',
+            '[replaceme]',
           ),
         ),
       )
@@ -361,7 +361,7 @@ void main() {
       final controller = ImeAttributedTextEditingController(
         controller: AttributedTextEditingController(
           text: AttributedText(
-            text: 'some text',
+            'some text',
           ),
         ),
       )
@@ -383,7 +383,7 @@ void main() {
       final controller = ImeAttributedTextEditingController(
         controller: AttributedTextEditingController(
           text: AttributedText(
-            text: 'some text',
+            'some text',
           ),
         ),
       )
@@ -405,7 +405,7 @@ void main() {
   testWidgets('isn\'t notified by inner controller after disposal', (tester) async {
     final innerController = AttributedTextEditingController(
       text: AttributedText(
-        text: 'some text',
+        'some text',
       ),
     );
 
@@ -429,7 +429,7 @@ void main() {
     );
 
     // Change the text of the inner controller to notify the listeners.
-    innerController.text = AttributedText(text: 'Another text');
+    innerController.text = AttributedText('Another text');
 
     // Reaching this point means that disposing the old controller didn't cause a crash.
   });

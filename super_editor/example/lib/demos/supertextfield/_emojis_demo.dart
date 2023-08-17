@@ -50,9 +50,7 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
   void _startDemo() {
     _textFieldController
       ..selection = const TextSelection.collapsed(offset: 0)
-      ..text = AttributedText(
-        text: 'turtle 🐢 bomb 💣 skull ☠',
-      );
+      ..text = AttributedText('turtle 🐢 bomb 💣 skull ☠');
 
     if (widget.direction == TextAffinity.upstream) {
       // simulate pressing backspace

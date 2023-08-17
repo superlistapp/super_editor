@@ -22,7 +22,7 @@ class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
       nodes: [
         ParagraphNode(
           id: Editor.createNodeId(),
-          text: AttributedText(text: 'Random paragraph....'),
+          text: AttributedText('Random paragraph....'),
         ),
       ],
     );

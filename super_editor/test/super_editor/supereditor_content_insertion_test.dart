@@ -449,7 +449,7 @@ Second paragraph"""). //
                   ),
                   ParagraphNode(
                     id: 'text-node',
-                    text: AttributedText(text: 'Paragraph'),
+                    text: AttributedText('Paragraph'),
                   ),
                 ],
               ),
@@ -509,7 +509,7 @@ Second paragraph"""). //
                   ),
                   ParagraphNode(
                     id: 'text-node',
-                    text: AttributedText(text: 'Paragraph'),
+                    text: AttributedText('Paragraph'),
                   ),
                 ],
               ),
@@ -568,7 +568,7 @@ Second paragraph"""). //
                   ),
                   ParagraphNode(
                     id: 'text-node',
-                    text: AttributedText(text: 'Paragraph'),
+                    text: AttributedText('Paragraph'),
                   ),
                 ],
               ),

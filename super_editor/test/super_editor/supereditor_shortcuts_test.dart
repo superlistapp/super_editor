@@ -66,7 +66,7 @@ Future<void> _pumpShortcutsAndSuperEditor(
 ) async {
   final document = MutableDocument(
     nodes: [
-      ParagraphNode(id: "1", text: AttributedText(text: "")),
+      ParagraphNode(id: "1", text: AttributedText()),
     ],
   );
   final composer = MutableDocumentComposer();

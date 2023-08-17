@@ -15,7 +15,7 @@ void main() {
     testWidgetsOnAllPlatforms("toggles on tap", (tester) async {
       final document = MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
       final composer = MutableDocumentComposer();
@@ -59,7 +59,7 @@ void main() {
     testWidgetsOnAllPlatforms("can be created from empty paragraph", (tester) async {
       final document = MutableDocument(
         nodes: [
-          ParagraphNode(id: "1", text: AttributedText(text: "This will be a task")),
+          ParagraphNode(id: "1", text: AttributedText("This will be a task")),
         ],
       );
       final composer = MutableDocumentComposer();
@@ -93,7 +93,7 @@ void main() {
     testWidgetsOnAllPlatforms("inserts new task on ENTER at end of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
       final composer = MutableDocumentComposer();
@@ -141,7 +141,7 @@ void main() {
     testWidgetsOnAndroid("inserts new task upon new line insertion at end of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
       final composer = MutableDocumentComposer();
@@ -189,7 +189,7 @@ void main() {
     testWidgetsOnMobile("inserts new task upon new line input action at end of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
       final composer = MutableDocumentComposer();
@@ -237,7 +237,7 @@ void main() {
     testWidgetsOnAllPlatforms("splits task into two on ENTER in middle of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
       final composer = MutableDocumentComposer();
@@ -283,7 +283,7 @@ void main() {
     testWidgetsOnAndroid("splits task into two upon new line insertion in middle of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
       final composer = MutableDocumentComposer();
@@ -329,7 +329,7 @@ void main() {
     testWidgetsOnMobile("splits task into two upon new line input action in middle of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
       final composer = MutableDocumentComposer();

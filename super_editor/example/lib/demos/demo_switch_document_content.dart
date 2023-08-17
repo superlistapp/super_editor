@@ -96,9 +96,7 @@ MutableDocument _createDocument1() {
     nodes: [
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(
-          text: 'Document #1',
-        ),
+        text: AttributedText('Document #1'),
         metadata: {
           'blockType': header1Attribution,
         },
@@ -106,8 +104,7 @@ MutableDocument _createDocument1() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text:
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
         ),
       ),
     ],
@@ -119,9 +116,7 @@ MutableDocument _createDocument2() {
     nodes: [
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(
-          text: 'Document #2',
-        ),
+        text: AttributedText('Document #2'),
         metadata: {
           'blockType': header1Attribution,
         },
@@ -129,8 +124,8 @@ MutableDocument _createDocument2() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-            text:
-                'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
+          'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.',
+        ),
       ),
     ],
   );

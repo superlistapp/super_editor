@@ -44,24 +44,23 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
       nodes: [
         ParagraphNode(
           id: Editor.createNodeId(),
-          text: AttributedText(text: ''),
+          text: AttributedText(),
           metadata: {'blockType': header1Attribution},
         ),
         ParagraphNode(
           id: Editor.createNodeId(),
-          text: AttributedText(text: ''),
+          text: AttributedText(),
           metadata: {'blockType': header2Attribution},
         ),
         ParagraphNode(
           id: Editor.createNodeId(),
-          text: AttributedText(text: ''),
+          text: AttributedText(),
           metadata: {'blockType': header3Attribution},
         ),
         ParagraphNode(
           id: Editor.createNodeId(),
           text: AttributedText(
-            text:
-                'Nam hendrerit vitae elit ut placerat. Maecenas nec congue neque. Fusce eget tortor pulvinar, cursus neque vitae, sagittis lectus. Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.',
+            'Nam hendrerit vitae elit ut placerat. Maecenas nec congue neque. Fusce eget tortor pulvinar, cursus neque vitae, sagittis lectus. Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.',
           ),
         ),
       ],
@@ -180,8 +179,8 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
           : {},
       // This is the text displayed as a hint.
       hintText: AttributedText(
-        text: 'header goes here...',
-        spans: AttributedSpans(
+        'header goes here...',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: italicsAttribution, offset: 15, markerType: SpanMarkerType.end),

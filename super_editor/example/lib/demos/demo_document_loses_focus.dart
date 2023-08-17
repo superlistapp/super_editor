@@ -72,9 +72,7 @@ MutableDocument _createDocument1() {
     nodes: [
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(
-          text: 'Document #1',
-        ),
+        text: AttributedText('Document #1'),
         metadata: {
           'blockType': header1Attribution,
         },
@@ -82,8 +80,7 @@ MutableDocument _createDocument1() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text:
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
         ),
       ),
     ],

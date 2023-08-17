@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -265,7 +264,7 @@ void main() {
                     data: data,
                     child: SuperTextField(
                       textController: AttributedTextEditingController(
-                        text: AttributedText(text: 'a b c'),
+                        text: AttributedText('a b c'),
                       ),
                     ),
                   );
@@ -318,7 +317,7 @@ void main() {
                     data: data,
                     child: SuperTextField(
                       textController: AttributedTextEditingController(
-                        text: AttributedText(text: 'a b c'),
+                        text: AttributedText('a b c'),
                       ),
                     ),
                   );
@@ -471,7 +470,7 @@ Future<void> _pumpTestApp(
                     textAlign: textAlign ?? TextAlign.left,
                     textController: controller ??
                         AttributedTextEditingController(
-                          text: AttributedText(text: 'abc'),
+                          text: AttributedText('abc'),
                         ),
                   ),
                 ),

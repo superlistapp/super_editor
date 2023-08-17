@@ -310,7 +310,7 @@ class KeyboardEditingToolbarOperations {
         existingNodeId: selectedNode.id,
         newNode: ParagraphNode(
           id: selectedNode.id,
-          text: AttributedText(text: '---'),
+          text: AttributedText('---'),
         ),
       ),
       ChangeSelectionRequest(
