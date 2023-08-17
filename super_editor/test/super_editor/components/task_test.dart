@@ -142,7 +142,7 @@ void main() {
     testWidgetsOnWebDesktop("inserts new task on ENTER at end of existing task", (tester) async {
       final document = MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
       final composer = MutableDocumentComposer();
@@ -429,7 +429,7 @@ void main() {
         (tester) async {
       final document = MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
 
@@ -469,7 +469,7 @@ void main() {
         (tester) async {
       final document = MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
 
