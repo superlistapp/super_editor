@@ -11,7 +11,7 @@ void main() {
   group('SuperTextField', () {
     testWidgetsOnAllPlatforms('single-line jumps scroll position horizontally as the user types', (tester) async {
       final controller = AttributedTextEditingController(
-        text: AttributedText(text: "ABCDEFG"),
+        text: AttributedText("ABCDEFG"),
       );
 
       // Pump the widget tree with a SuperTextField with a maxWidth smaller
@@ -41,7 +41,7 @@ void main() {
 
     testWidgetsOnAllPlatforms('multi-line jumps scroll position vertically as the user types', (tester) async {
       final controller = AttributedTextEditingController(
-        text: AttributedText(text: "A\nB\nC\nD"),
+        text: AttributedText("A\nB\nC\nD"),
       );
 
       // Pump the widget tree with a SuperTextField with a maxHeight smaller
@@ -73,7 +73,7 @@ void main() {
         "multi-line jumps scroll position vertically when selection extent moves above or below the visible viewport area",
         (tester) async {
       final controller = AttributedTextEditingController(
-        text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
+        text: AttributedText("First line\nSecond Line\nThird Line\nFourth Line"),
       );
 
       // Pump the widget tree with a SuperTextField which is two lines tall.
@@ -110,7 +110,7 @@ void main() {
     testWidgetsOnAllPlatforms("multi-line doesn't jump scroll position vertically when selection extent is visible",
         (tester) async {
       final controller = AttributedTextEditingController(
-        text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
+        text: AttributedText("First line\nSecond Line\nThird Line\nFourth Line"),
       );
 
       // Pump the widget tree with a SuperTextField which is two lines tall.
@@ -160,7 +160,7 @@ void main() {
                 minLines: 1,
                 maxLines: null,
                 textController: AttributedTextEditingController(
-                  text: AttributedText(text: "SuperTextField"),
+                  text: AttributedText("SuperTextField"),
                 ),
                 textStyleBuilder: (_) => const TextStyle(
                   fontSize: 14,

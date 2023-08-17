@@ -8,7 +8,7 @@ void main() {
   group('SuperTextField', () {
     testWidgetsOnAllPlatforms('renders text on the first frame when given a line height', (tester) async {
       final controller = AttributedTextEditingController(
-        text: AttributedText(text: 'Editing text'),
+        text: AttributedText('Editing text'),
       );
 
       // Indicates whether we should display the Text or the SuperTextField.

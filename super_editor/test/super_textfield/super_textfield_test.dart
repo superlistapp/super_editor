@@ -392,7 +392,7 @@ void main() {
       // Change the text so the content height is greater
       // than the initial content height.
       controller.text = AttributedText(
-        text: """
+        """
 This is
 a
 multi-line
@@ -428,7 +428,7 @@ SuperTextField
       // Change the text, so the content height is greater
       // than the initial content height.
       controller.text = AttributedText(
-        text: """
+        """
 This is
 a
 multi-line

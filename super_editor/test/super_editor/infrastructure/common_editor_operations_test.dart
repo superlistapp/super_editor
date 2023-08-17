@@ -14,15 +14,13 @@ void main() {
         final document = MutableDocument(nodes: [
           ParagraphNode(
             id: "1",
-            text: AttributedText(
-              text: 'This is a blockquote!',
-            ),
+            text: AttributedText('This is a blockquote!'),
           ),
           ParagraphNode(
             id: "2",
             text: AttributedText(
-                text:
-                    'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
+              'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.',
+            ),
           ),
         ]);
         final composer = MutableDocumentComposer(
@@ -59,8 +57,8 @@ void main() {
           ParagraphNode(
             id: "2",
             text: AttributedText(
-                text:
-                    'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
+              'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.',
+            ),
           ),
         ]);
         final composer = MutableDocumentComposer(
@@ -96,8 +94,8 @@ void main() {
           ParagraphNode(
             id: "1",
             text: AttributedText(
-                text:
-                    'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
+              'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.',
+            ),
           ),
           HorizontalRuleNode(id: "2"),
         ]);
@@ -197,8 +195,8 @@ MutableDocument _singleParagraphWithLinkDoc() {
       ParagraphNode(
         id: "1",
         text: AttributedText(
-          text: "https://google.com",
-          spans: AttributedSpans(
+          "https://google.com",
+          AttributedSpans(
             attributions: [
               SpanMarker(
                 attribution: LinkAttribution(url: Uri.parse('https://google.com')),

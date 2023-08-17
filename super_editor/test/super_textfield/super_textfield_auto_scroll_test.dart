@@ -120,7 +120,7 @@ void main() {
 
     testWidgetsOnAllPlatforms('auto scroll doesn\'t crash when text is empty', (tester) async {
       final controller = AttributedTextEditingController(
-        text: AttributedText(text: 'Text before'),
+        text: AttributedText('Text before'),
       );
 
       await _pumpScaffold(
@@ -167,7 +167,7 @@ Future<void> _pumpTestApp(
               maxLines: lineCount,
               lineHeight: 24,
               textController: AttributedTextEditingController(
-                text: AttributedText(text: text),
+                text: AttributedText(text),
               ),
             ),
           ],

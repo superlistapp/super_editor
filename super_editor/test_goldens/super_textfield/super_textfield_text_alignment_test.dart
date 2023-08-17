@@ -218,7 +218,7 @@ Widget _buildSuperTextField({
   int? maxLines,
 }) {
   final controller = AttributedTextEditingController(
-    text: AttributedText(text: text),
+    text: AttributedText(text),
   );
 
   return SizedBox(

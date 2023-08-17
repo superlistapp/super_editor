@@ -111,8 +111,8 @@ class HintTextComponentBuilder implements ComponentBuilder {
           : {},
       // This is the text displayed as a hint.
       hintText: AttributedText(
-        text: 'this is hint text...',
-        spans: AttributedSpans(
+        'this is hint text...',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: italicsAttribution, offset: 15, markerType: SpanMarkerType.end),

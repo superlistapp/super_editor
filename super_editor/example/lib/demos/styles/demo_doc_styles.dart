@@ -149,41 +149,41 @@ MutableDocument _createSampleDocument() {
     nodes: [
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'Header 1'),
+        text: AttributedText('Header 1'),
         metadata: {'blockType': header1Attribution},
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'Header 2'),
+        text: AttributedText('Header 2'),
         metadata: {'blockType': header2Attribution},
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'Header 3'),
+        text: AttributedText('Header 3'),
         metadata: {'blockType': header3Attribution},
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'Header 4'),
+        text: AttributedText('Header 4'),
         metadata: {'blockType': header4Attribution},
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'Header 5'),
+        text: AttributedText('Header 5'),
         metadata: {'blockType': header5Attribution},
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'Header 6'),
+        text: AttributedText('Header 6'),
         metadata: {'blockType': header6Attribution},
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'This is a paragraph of regular text'),
+        text: AttributedText('This is a paragraph of regular text'),
       ),
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(text: 'This is a blockquote'),
+        text: AttributedText('This is a blockquote'),
         metadata: {'blockType': blockquoteAttribution},
       ),
     ],

@@ -920,8 +920,8 @@ class AddTextAttributionsCommand implements EditCommand {
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
         node.text = AttributedText(
-          text: node.text.text,
-          spans: node.text.spans.copy()
+          node.text.text,
+          node.text.spans.copy()
             ..addAttribution(
               newAttribution: attribution,
               start: range.start,
@@ -1033,8 +1033,8 @@ class RemoveTextAttributionsCommand implements EditCommand {
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
         node.text = AttributedText(
-          text: node.text.text,
-          spans: node.text.spans.copy()
+          node.text.text,
+          node.text.spans.copy()
             ..removeAttribution(
               attributionToRemove: attribution,
               start: range.start,
@@ -1160,8 +1160,8 @@ class ToggleTextAttributionsCommand implements EditCommand {
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
         node.text = AttributedText(
-          text: node.text.text,
-          spans: node.text.spans.copy()
+          node.text.text,
+          node.text.spans.copy()
             ..toggleAttribution(
               attribution: attribution,
               start: range.start,
@@ -1227,7 +1227,7 @@ class InsertTextCommand implements EditCommand {
         TextInsertionEvent(
           nodeId: textNode.id,
           offset: textOffset,
-          text: AttributedText(text: textToInsert),
+          text: AttributedText(textToInsert),
         ),
       ),
     ]);
@@ -1693,7 +1693,7 @@ void _insertBlockLevelNewline({
           existingNodeId: extentNode.id,
           newNode: ParagraphNode(
             id: newNodeId,
-            text: AttributedText(text: ''),
+            text: AttributedText(''),
           ),
         ),
       );
@@ -1705,7 +1705,7 @@ void _insertBlockLevelNewline({
           existingNodeId: extentNode.id,
           newNode: ParagraphNode(
             id: newNodeId,
-            text: AttributedText(text: ''),
+            text: AttributedText(''),
           ),
         ),
       );

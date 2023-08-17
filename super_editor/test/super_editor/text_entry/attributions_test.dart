@@ -6,9 +6,7 @@ void main() {
   group('Default editor attributions', () {
     group('links', () {
       test('different link attributions cannot overlap', () {
-        final text = AttributedText(
-          text: 'one two three',
-        );
+        final text = AttributedText('one two three');
 
         // Add link across "one two"
         text.addAttribution(
@@ -27,9 +25,7 @@ void main() {
       });
 
       test('identical link attributions can overlap', () {
-        final text = AttributedText(
-          text: 'one two three',
-        );
+        final text = AttributedText('one two three');
 
         final linkAttribution = LinkAttribution(url: Uri.parse('https://flutter.dev'));
 

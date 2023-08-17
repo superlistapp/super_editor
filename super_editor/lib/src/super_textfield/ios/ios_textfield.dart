@@ -542,7 +542,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   Widget _buildSelectableText() {
     final textSpan = _textEditingController.text.text.isNotEmpty
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
-        : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
+        : AttributedText().computeTextSpan(widget.textStyleBuilder);
 
     CaretStyle caretStyle = widget.caretStyle;
 

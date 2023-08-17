@@ -17,10 +17,11 @@ final _log = attributionsLog;
 // TODO: there is a mixture of mutable and immutable behavior in this class.
 //       Pick one or the other, or offer 2 classes: mutable and immutable (#113)
 class AttributedText {
-  AttributedText({
-    this.text = '',
+  AttributedText([
+    String? text,
     AttributedSpans? spans,
-  }) : spans = spans ?? AttributedSpans();
+  ])  : text = text ?? "",
+        spans = spans ?? AttributedSpans();
 
   void dispose() {
     _listeners.clear();
@@ -215,8 +216,8 @@ class AttributedText {
     _log.fine('offsets, start: $startCopyOffset, end: $endCopyOffset');
 
     return AttributedText(
-      text: text.substring(startOffset, endOffset),
-      spans: spans.copyAttributionRegion(startCopyOffset, endCopyOffset),
+      text.substring(startOffset, endOffset),
+      spans.copyAttributionRegion(startCopyOffset, endCopyOffset),
     );
   }
 
@@ -228,22 +229,22 @@ class AttributedText {
     if (other.text.isEmpty) {
       _log.fine('`other` has no text. Returning a direct copy of ourselves.');
       return AttributedText(
-        text: text,
-        spans: spans.copy(),
+        text,
+        spans.copy(),
       );
     }
     if (text.isEmpty) {
       _log.fine('our `text` is empty. Returning a direct copy of the `other` text.');
       return AttributedText(
-        text: other.text,
-        spans: other.spans.copy(),
+        other.text,
+        other.spans.copy(),
       );
     }
 
     final newSpans = spans.copy()..addAt(other: other.spans, index: text.length);
     return AttributedText(
-      text: text + other.text,
-      spans: newSpans,
+      text + other.text,
+      newSpans,
     );
   }
 
@@ -281,9 +282,7 @@ class AttributedText {
     _log.fine('endText: $endText');
 
     _log.fine('creating new attributed text for insertion');
-    final insertedText = AttributedText(
-      text: textToInsert,
-    );
+    final insertedText = AttributedText(textToInsert);
     final insertTextRange = SpanRange(start: 0, end: textToInsert.length - 1);
     for (dynamic attribution in applyAttributions) {
       insertedText.addAttribution(attribution, insertTextRange);
@@ -317,8 +316,8 @@ class AttributedText {
     _log.fine(contractedAttributions.toString());
 
     return AttributedText(
-      text: reducedText,
-      spans: contractedAttributions,
+      reducedText,
+      contractedAttributions,
     );
   }
 

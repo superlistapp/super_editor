@@ -55,7 +55,7 @@ void main() {
             nodes: [
               ParagraphNode(
                 id: "1",
-                text: AttributedText(text: "before  after"),
+                text: AttributedText("before  after"),
               ),
             ],
           ),
@@ -111,7 +111,7 @@ void main() {
             nodes: [
               ParagraphNode(
                 id: "1",
-                text: AttributedText(text: "before "),
+                text: AttributedText("before "),
               ),
             ],
           ),
@@ -149,7 +149,7 @@ void main() {
             nodes: [
               ParagraphNode(
                 id: "1",
-                text: AttributedText(text: "before "),
+                text: AttributedText("before "),
               ),
             ],
           ),
@@ -186,7 +186,7 @@ void main() {
             nodes: [
               ParagraphNode(
                 id: "1",
-                text: AttributedText(text: "before "),
+                text: AttributedText("before "),
               ),
             ],
           ),
@@ -289,7 +289,7 @@ void main() {
             nodes: [
               ParagraphNode(
                 id: "1",
-                text: AttributedText(text: "before "),
+                text: AttributedText("before "),
               ),
             ],
           ),
@@ -337,7 +337,7 @@ void main() {
             nodes: [
               ParagraphNode(
                 id: "1",
-                text: AttributedText(text: "before "),
+                text: AttributedText("before "),
               ),
             ],
           ),
@@ -380,7 +380,7 @@ void main() {
             nodes: [
               ParagraphNode(
                 id: "1",
-                text: AttributedText(text: "before "),
+                text: AttributedText("before "),
               ),
             ],
           ),

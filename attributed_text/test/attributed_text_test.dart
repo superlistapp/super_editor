@@ -5,8 +5,8 @@ void main() {
   group('Attributed Text', () {
     test('Bug 145 - insert character at beginning of styled text', () {
       final initialText = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
+        'abcdefghij',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
@@ -30,7 +30,7 @@ void main() {
     group('span manipulation', () {
       test('combines overlapping spans when adding from left to right', () {
         // Note: span overlaps at the boundary had a bug that was filed in #582.
-        final text = AttributedText(text: '01234567');
+        final text = AttributedText('01234567');
         text.addAttribution(ExpectedSpans.bold, SpanRange(start: 0, end: 4));
         text.addAttribution(ExpectedSpans.bold, SpanRange(start: 4, end: 8));
 
@@ -47,7 +47,7 @@ void main() {
       });
 
       test('combines overlapping spans when adding from left to right', () {
-        final text = AttributedText(text: '01234567');
+        final text = AttributedText('01234567');
         text.addAttribution(ExpectedSpans.bold, SpanRange(start: 4, end: 8));
         text.addAttribution(ExpectedSpans.bold, SpanRange(start: 0, end: 4));
 
@@ -64,7 +64,7 @@ void main() {
       });
 
       test('automatically combines back-to-back spans after addition', () {
-        final text = AttributedText(text: 'ABCD');
+        final text = AttributedText('ABCD');
         text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 0, end: 1));
         text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 2, end: 3));
 
@@ -81,7 +81,7 @@ void main() {
       });
 
       test('keeps back-to-back spans separate when requested', () {
-        final text = AttributedText(text: '#john#sally');
+        final text = AttributedText('#john#sally');
         text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 0, end: 4));
         text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 5, end: 10), autoMerge: false);
 
@@ -112,7 +112,7 @@ void main() {
       });
 
       test('throws exception when compatible attributions overlap but auto-merge is false', () {
-        final text = AttributedText(text: '#john#sally');
+        final text = AttributedText('#john#sally');
         text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 0, end: 4));
 
         expect(
@@ -125,7 +125,7 @@ void main() {
     test('notifies listeners when style changes', () {
       bool listenerCalled = false;
 
-      final text = AttributedText(text: 'abcdefghij');
+      final text = AttributedText('abcdefghij');
       text.addListener(() {
         listenerCalled = true;
       });
@@ -139,8 +139,8 @@ void main() {
       test("equivalent AttributedText are equal", () {
         expect(
           AttributedText(
-            text: 'abcdefghij',
-            spans: AttributedSpans(
+            'abcdefghij',
+            AttributedSpans(
               attributions: [
                 const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
                 const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
@@ -151,8 +151,8 @@ void main() {
           ),
           equals(
             AttributedText(
-              text: 'abcdefghij',
-              spans: AttributedSpans(
+              'abcdefghij',
+              AttributedSpans(
                 attributions: [
                   const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
                   const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
@@ -168,8 +168,8 @@ void main() {
       test("different text are not equal", () {
         expect(
           AttributedText(
-                text: 'jihgfedcba',
-                spans: AttributedSpans(
+                'jihgfedcba',
+                AttributedSpans(
                   attributions: [
                     const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
                     const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
@@ -179,8 +179,8 @@ void main() {
                 ),
               ) ==
               AttributedText(
-                text: 'abcdefghij',
-                spans: AttributedSpans(
+                'abcdefghij',
+                AttributedSpans(
                   attributions: [
                     const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
                     const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
@@ -196,8 +196,8 @@ void main() {
       test("different spans are not equal", () {
         expect(
           AttributedText(
-                text: 'abcdefghij',
-                spans: AttributedSpans(
+                'abcdefghij',
+                AttributedSpans(
                   attributions: [
                     const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
                     const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
@@ -207,8 +207,8 @@ void main() {
                 ),
               ) ==
               AttributedText(
-                text: 'abcdefghij',
-                spans: AttributedSpans(
+                'abcdefghij',
+                AttributedSpans(
                   attributions: [
                     const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
                     const SpanMarker(attribution: ExpectedSpans.bold, offset: 5, markerType: SpanMarkerType.end),
@@ -223,8 +223,8 @@ void main() {
     group('attribution queries', () {
       test('finds all bold text around a character', () {
         final attributedText = AttributedText(
-          text: 'Hello world',
-          spans: AttributedSpans(
+          'Hello world',
+          AttributedSpans(
             attributions: [
               SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
               SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
@@ -238,8 +238,8 @@ void main() {
 
       test('finds all bold and italics text around a character', () {
         final attributedText = AttributedText(
-          text: 'Hello world',
-          spans: AttributedSpans(
+          'Hello world',
+          AttributedSpans(
             attributions: [
               SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
               SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
@@ -259,8 +259,8 @@ void main() {
           'finds all bold, italic and strikethrough text within a word that also includes a span with only bold and italics',
           () {
         final attributedText = AttributedText(
-          text: 'Hello world',
-          spans: AttributedSpans(
+          'Hello world',
+          AttributedSpans(
             attributions: [
               SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
               SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.end),

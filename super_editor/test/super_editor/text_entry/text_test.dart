@@ -13,7 +13,7 @@ void main() {
           nodes: [
             ParagraphNode(
               id: 'paragraph',
-              text: AttributedText(text: ' make me bold '),
+              text: AttributedText(' make me bold '),
             )
           ],
         );
@@ -111,7 +111,7 @@ void main() {
         (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
-            text: AttributedText(text: 'This is some text'),
+            text: AttributedText('This is some text'),
           ),
         );
 
@@ -192,7 +192,7 @@ void main() {
         (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
-            text: AttributedText(text: 'This is some text'),
+            text: AttributedText('This is some text'),
           ),
         );
 
@@ -249,7 +249,7 @@ void main() {
         (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
-            text: AttributedText(text: 'This is some text'),
+            text: AttributedText('This is some text'),
           ),
         );
 
@@ -294,7 +294,7 @@ void main() {
         (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
-            text: AttributedText(text: 'This is some text'),
+            text: AttributedText('This is some text'),
           ),
         );
 
@@ -338,7 +338,7 @@ void main() {
         test('throws if passed other types of NodePosition', () {
           final node = TextNode(
             id: 'text node',
-            text: AttributedText(text: 'text'),
+            text: AttributedText('text'),
           );
           expect(
             () => node.computeSelection(
@@ -352,7 +352,7 @@ void main() {
         test('preserves the affinity of extent', () {
           final node = TextNode(
             id: 'text node',
-            text: AttributedText(text: 'text'),
+            text: AttributedText('text'),
           );
 
           final selectionWithUpstream = node.computeSelection(

@@ -11,16 +11,7 @@ class SingleLineTextFieldDemo extends StatefulWidget {
 
 class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with TickerProviderStateMixin {
   final _textFieldController = AttributedTextEditingController(
-    text: AttributedText(
-        // text:
-        //     'Super Editor is an open source text editor for Flutter projects.\n\nThis is paragraph 2\n\nThis is paragraph 3',
-        // spans: AttributedSpans(
-        //   attributions: [
-        //     SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-        //     SpanMarker(attribution: 'bold', offset: 11, markerType: SpanMarkerType.end),
-        //   ],
-        // ),
-        ),
+    text: AttributedText(),
   );
 
   GlobalKey<SuperDesktopTextFieldState>? _textKey;
@@ -56,7 +47,7 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
       ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText();
     _demoRobot
-      ..typeText(AttributedText(text: 'Hello World! This is a robot typing some text into a SuperTextField.'))
+      ..typeText(AttributedText('Hello World! This is a robot typing some text into a SuperTextField.'))
       ..start();
   }
 

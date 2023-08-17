@@ -32,15 +32,14 @@ class _AnimatedTaskHeightDemoState extends State<AnimatedTaskHeightDemo> {
         ParagraphNode(
           id: Editor.createNodeId(),
           text: AttributedText(
-            text:
-                "Below are several tasks. These tasks will animate the appearance of a subtitle depending on whether they have selection. Try and find out:",
+            "Below are several tasks. These tasks will animate the appearance of a subtitle depending on whether they have selection. Try and find out:",
           ),
         ),
         ...List.generate(
           10,
           (index) => TaskNode(
             id: Editor.createNodeId(),
-            text: AttributedText(text: "Task ${index + 1}"),
+            text: AttributedText("Task ${index + 1}"),
             isComplete: false,
           ),
         ),

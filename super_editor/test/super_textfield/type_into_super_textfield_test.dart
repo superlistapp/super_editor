@@ -36,7 +36,7 @@ void main() {
         await _pumpDesktopScaffold(
           tester,
           AttributedTextEditingController(
-            text: AttributedText(text: "hello world"),
+            text: AttributedText("hello world"),
           ),
         );
         await tester.placeCaretInSuperTextField(6);
