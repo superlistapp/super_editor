@@ -148,12 +148,12 @@ ExecutionInstruction blockControlKeys({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.logicalKey.keyId < LogicalKeyboardKey.f1.keyId ||
-      keyEvent.logicalKey.keyId > LogicalKeyboardKey.f12.keyId ||
-      keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId &&
-          keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId &&
-          keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId &&
-          keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId) {
+  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId &&
+      (keyEvent.logicalKey.keyId < LogicalKeyboardKey.f1.keyId ||
+          keyEvent.logicalKey.keyId > LogicalKeyboardKey.f12.keyId)) {
     return ExecutionInstruction.continueExecution;
   }
 
