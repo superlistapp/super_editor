@@ -1309,7 +1309,7 @@ void main() {
           // Scroll very close to the bottom but not all the way to avoid explicit 
           // checks comparing scroll offset directly against `maxScrollExtent` 
           // and test scrolling behaviour in more realistic manner.
-          scrollState.position.jumpTo(scrollState.position.maxScrollExtent-10);
+          scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
 
           await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
 
@@ -1366,7 +1366,7 @@ void main() {
           // Scroll very close to the top but not all the way to avoid explicit 
           // checks comparing scroll offset directly against `minScrollExtent` 
           // and test scrolling behaviour in more realistic manner.
-          scrollState.position.jumpTo(scrollState.position.minScrollExtent+10);
+          scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
 
           await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
 
@@ -1424,7 +1424,7 @@ void main() {
           // Scroll very close to the top but not all the way to avoid explicit 
           // checks comparing scroll offset directly against `minScrollExtent` 
           // and test scrolling behaviour in more realistic manner.
-          scrollState.position.jumpTo(scrollState.position.minScrollExtent+10);
+          scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
             await _pressCmdHome(tester);
@@ -1477,7 +1477,7 @@ void main() {
           // Scroll very close to the bottom but not all the way to avoid explicit 
           // checks comparing scroll offset directly against `maxScrollExtent` 
           // and test scrolling behaviour in more realistic manner.
-          scrollState.position.jumpTo(scrollState.position.maxScrollExtent-10);
+          scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
             await _pressCmdEnd(tester);
