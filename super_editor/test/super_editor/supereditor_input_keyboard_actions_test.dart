@@ -1306,8 +1306,8 @@ void main() {
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          // Scroll very close to the bottom but not all the way to avoid explicit 
-          // checks comparing scroll offset directly against `maxScrollExtent` 
+          // Scroll very close to the bottom but not all the way to avoid explicit
+          // checks comparing scroll offset directly against `maxScrollExtent`
           // and test scrolling behaviour in more realistic manner.
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
 
@@ -1363,8 +1363,8 @@ void main() {
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          // Scroll very close to the top but not all the way to avoid explicit 
-          // checks comparing scroll offset directly against `minScrollExtent` 
+          // Scroll very close to the top but not all the way to avoid explicit
+          // checks comparing scroll offset directly against `minScrollExtent`
           // and test scrolling behaviour in more realistic manner.
           scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
 
@@ -1421,8 +1421,8 @@ void main() {
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          // Scroll very close to the top but not all the way to avoid explicit 
-          // checks comparing scroll offset directly against `minScrollExtent` 
+          // Scroll very close to the top but not all the way to avoid explicit
+          // checks comparing scroll offset directly against `minScrollExtent`
           // and test scrolling behaviour in more realistic manner.
           scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
 
@@ -1474,8 +1474,8 @@ void main() {
 
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-          // Scroll very close to the bottom but not all the way to avoid explicit 
-          // checks comparing scroll offset directly against `maxScrollExtent` 
+          // Scroll very close to the bottom but not all the way to avoid explicit
+          // checks comparing scroll offset directly against `maxScrollExtent`
           // and test scrolling behaviour in more realistic manner.
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
 
@@ -1552,35 +1552,34 @@ final _scrollingVariant = ValueVariant<_PageScrollSetup>({
     description: "inner viewport",
     pumpEditor: _pumpPageScrollTestSetup,
     textInputSource: TextInputSource.ime,
-    ),
+  ),
   const _PageScrollSetup(
     description: "inner viewport",
     pumpEditor: _pumpPageScrollTestSetup,
     textInputSource: TextInputSource.keyboard,
-    ),
+  ),
   const _PageScrollSetup(
     description: "ancestor viewport",
     pumpEditor: _pumpPageScrollSliverTestSetup,
     textInputSource: TextInputSource.ime,
-    ),
+  ),
   const _PageScrollSetup(
     description: "ancestor viewport",
     pumpEditor: _pumpPageScrollSliverTestSetup,
     textInputSource: TextInputSource.keyboard,
-    ),
-  
+  ),
 });
 
 /// Pumps a [SuperEditor] experience with the default [Scrollable].
 Future<TestDocumentContext> _pumpPageScrollTestSetup(
   WidgetTester tester,
   TextInputSource textInputSource,
-  ) async {
-  return await tester
-  .createDocument()
-  .withLongDoc()
-  .withInputSource(textInputSource)
-  .pump();
+) async {
+  return await tester //
+      .createDocument()
+      .withLongDoc()
+      .withInputSource(textInputSource)
+      .pump();
 }
 
 /// Pumps a [SuperEditor] within a ancestor [Scrollable], including additional
@@ -1597,12 +1596,12 @@ Future<TestDocumentContext> _pumpPageScrollTestSetup(
 Future<TestDocumentContext> _pumpPageScrollSliverTestSetup(
   WidgetTester tester,
   TextInputSource textInputSource,
-  ) async {
-  return tester
-  .createDocument()
-  .withLongDoc()
-  .withInputSource(textInputSource)
-  .withCustomWidgetTreeBuilder((superEditor) {
+) async {
+  return tester //
+      .createDocument()
+      .withLongDoc()
+      .withInputSource(textInputSource)
+      .withCustomWidgetTreeBuilder((superEditor) {
     return MaterialApp(
       home: Scaffold(
         body: Padding(
@@ -1687,4 +1686,4 @@ class _PageScrollSetup {
 typedef _PumpEditorWidget = Future<TestDocumentContext> Function(
   WidgetTester tester,
   TextInputSource textInputSource,
-  );
+);

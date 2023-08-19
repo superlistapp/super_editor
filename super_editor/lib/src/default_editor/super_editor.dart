@@ -932,7 +932,6 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   deleteWordDownstreamWithAltDeleteOnMac,
   deleteWordDownstreamWithControlDeleteOnWindowsAndLinux,
   deleteDownstreamContentWithDelete,
-  blockControlKeys,
 ];
 
 /// Stylesheet applied to all [SuperEditor]s by default.
