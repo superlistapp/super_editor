@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -10,10 +11,10 @@ final _log = scrollingTextFieldLog;
 
 /// A scrollable that positions its [child] based on text metrics.
 ///
-/// The [child] must contain a [SuperSelectableText] in its tree,
-/// [textKey] must refer to that [SuperSelectableText], and the
+/// The [child] must contain a [SuperTextWithSelection] in its tree,
+/// [textKey] must refer to that [SuperTextWithSelection], and the
 /// dimensions of the [child] subtree should match the dimensions
-/// of the [SuperSelectableText] so that there are no surprises
+/// of the [SuperTextWithSelection] so that there are no surprises
 /// when the scroll offset is configured based on where a given
 /// character appears in the [child] layout.
 ///
@@ -125,7 +126,7 @@ class _TextScrollViewState extends State<TextScrollView>
       ..delegate = this
       ..addListener(_onTextScrollChange);
 
-    widget.textEditingController.addListener(_scheduleRebuild);
+    widget.textEditingController.addListener(scheduleBuildAfterBuild);
   }
 
   @override
@@ -143,8 +144,8 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     if (widget.textEditingController != oldWidget.textEditingController) {
-      oldWidget.textEditingController.removeListener(_scheduleRebuild);
-      widget.textEditingController.addListener(_scheduleRebuild);
+      oldWidget.textEditingController.removeListener(scheduleBuildAfterBuild);
+      widget.textEditingController.addListener(scheduleBuildAfterBuild);
     }
 
     if (widget.minLines != oldWidget.minLines ||
@@ -158,7 +159,7 @@ class _TextScrollViewState extends State<TextScrollView>
       ..delegate = null
       ..removeListener(_onTextScrollChange);
 
-    widget.textEditingController.removeListener(_scheduleRebuild);
+    widget.textEditingController.removeListener(scheduleBuildAfterBuild);
 
     super.dispose();
   }
@@ -330,19 +331,13 @@ class _TextScrollViewState extends State<TextScrollView>
     }
   }
 
-  void _scheduleRebuild() {
-    setState(() {
-      //
-    });
-  }
-
   /// Returns the [ProseTextLayout] that lays out and renders the
   /// text in this text field.
   ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
 
   @override
   Widget build(BuildContext context) {
-    return _TextViewport(
+    return _TextLinesLimiter(
       text: widget.textEditingController.text,
       textKey: widget.textKey,
       minLines: widget.minLines,
@@ -897,24 +892,28 @@ enum _AutoScrollDirection {
   end,
 }
 
-/// Sizes a [child] containing a [SuperText] to respect the given [minLines] and [maxLines].
+/// Sizes a [child] to respect the given [minLines] and [maxLines].
 ///
-/// If the [child]'s desired height already respects [minLines] and [maxLines], it is used.
+/// The [child] must contain a [SuperTextWithSelection] in its tree,
+/// and the dimensions of the [child] subtree should match the dimensions
+/// of the [SuperTextWithSelection].
 ///
-/// If the [child]'s desired height is smaller than [minLines], the size is set to acommodate [minLines] of
+/// If the [child]'s intrinsic height already respects [minLines] and [maxLines], it is used.
+///
+/// If the [child]'s intrinsic height is smaller than [minLines], the size is set to acommodate [minLines] of
 /// text, plus [padding].
 ///
-/// If the [child]'s desired height is bigger than [maxLines], the size is set to acommodate [maxLines] of
+/// If the [child]'s intrinsic height is bigger than [maxLines], the size is set to acommodate [maxLines] of
 /// text, plus [padding].
-class _TextViewport extends SingleChildRenderObjectWidget {
-  const _TextViewport({
+class _TextLinesLimiter extends SingleChildRenderObjectWidget {
+  const _TextLinesLimiter({
     required this.text,
     required this.textKey,
     this.minLines,
     this.maxLines,
     this.lineHeight,
     this.padding,
-    super.child,
+    required super.child,
   });
 
   /// The text that the [child] will display.
@@ -934,9 +933,9 @@ class _TextViewport extends SingleChildRenderObjectWidget {
   /// The height of a single line of text, used
   /// with [minLines] and [maxLines] to size the viewport.
   ///
-  /// If a [lineHeight] is provided, the [_TextViewport] is sized as a
+  /// If a [lineHeight] is provided, the [_TextLinesLimiter] is sized as a
   /// multiple of that [lineHeight]. If no [lineHeight] is provided, the
-  /// [_TextViewport] is sized as a multiple of the line-height of the
+  /// [_TextLinesLimiter] is sized as a multiple of the line-height of the
   /// first line of text.
   final double? lineHeight;
 
@@ -1044,31 +1043,40 @@ class _RenderTextViewport extends RenderProxyBox {
 
   @override
   void performLayout() {
-    if (child == null) {
-      size = Size.zero;
+    if (_minLines == null && _maxLines == null) {
+      // We don't have restrictions about the number of visible lines.
+      // Let the child size itself.
+      child!.layout(constraints, parentUsesSize: true);
+      size = child!.size;
       return;
     }
 
     // Perform a first layout so we can access information about the text layout.
     child!.layout(constraints, parentUsesSize: true);
 
-    final viewportHeight = _computeViewportHeight();
-    if (viewportHeight == null) {
-      // We don't have to force a specific height.
-      //
-      // It might be the case that we don't have maxLines/minLines or the text
-      // intrinsic height already respects the line count restrictions.
-      //
-      // Use the size the child wants to be.
+    final lineHeight = _computeLineHeight();
+    final minHeight = _computeMinHeight(lineHeight);
+    final maxHeight = _computeMaxHeight(lineHeight);
+
+    // The height we need to enforce if the child doesn't already respects the line restrictions.
+    double? enforcedHeight;
+
+    final childIntrinsicHeight = child!.getMinIntrinsicHeight(constraints.maxWidth);
+    if (childIntrinsicHeight <= minHeight) {
+      enforcedHeight = minHeight;
+    } else if (maxHeight != null && childIntrinsicHeight > maxHeight) {
+      enforcedHeight = maxHeight;
+    }
+
+    if (enforcedHeight == null) {
+      // The child's intrinsic height already respects the line restrictions.
       size = child!.size;
       return;
     }
 
-    // The text height is bigger than the maximum height or smaller than the minimum height.
+    // The child height is bigger than the maximum height or smaller than the minimum height.
     // Adjust the constraints to respect these restrictions.
-
-    // Constrain to respect the incoming constraints.
-    final constrainedHeight = constraints.constrainHeight(viewportHeight);
+    final constrainedHeight = constraints.constrainHeight(enforcedHeight);
 
     final childConstraints = constraints.copyWith(
       minHeight: constrainedHeight,
@@ -1081,76 +1089,44 @@ class _RenderTextViewport extends RenderProxyBox {
     size = child!.size;
   }
 
-  /// Computes the height the child needs to be if the text intrinsic size
-  /// is bigger than [_maxLines] or smaller than [_minLines].
-  ///
-  /// Returns `null` if the child already respects [_minLines] and [_maxLines].
-  double? _computeViewportHeight() {
-    final linesOfText = _getLineCount();
-    _log.finer(' - lines of text: $linesOfText');
-
-    double? estimatedLineHeight;
-    if (_lineHeight != null) {
-      // Use the line height that was explicitly provided by the widget.
-      estimatedLineHeight = _lineHeight!;
-    } else {
-      // No line height was provided. Calculate a best-guess.
-      final textLayout = _textKey.currentState!.textLayout;
-      estimatedLineHeight = textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
-      _log.finer(' - line height at position 0: $estimatedLineHeight');
-
-      // We got 0.0 for the line height at the beginning of text. Maybe the
-      // text is empty. Ask the TextLayout to estimate a height for us that's
-      // based on the text style.
-      if (estimatedLineHeight == 0) {
-        estimatedLineHeight = _textKey.currentState!.textLayout.estimatedLineHeight;
-        _log.finer(' - estimated line height based on text styles: $estimatedLineHeight');
-      }
-    }
-
+  double _computeMinHeight(double lineHeight) {
     final totalVerticalPadding = _padding?.vertical ?? 0.0;
 
-    final estimatedContentHeight = (linesOfText * estimatedLineHeight) + totalVerticalPadding;
-    _log.finer(' - estimated content height: $estimatedContentHeight');
-
     final minContentHeight = _minLines != null //
-        ? _minLines! * estimatedLineHeight
-        : estimatedLineHeight; // Can't be shorter than 1 line.
+        ? _minLines! * lineHeight
+        : lineHeight; // Can't be shorter than 1 line.
 
-    final minHeight = minContentHeight + totalVerticalPadding;
-
-    final maxContentHeight = _maxLines != null //
-        ? (_maxLines! * estimatedLineHeight) //
-        : null;
-
-    final maxHeight = maxContentHeight != null //
-        ? maxContentHeight + totalVerticalPadding
-        : null;
-
-    _log.finer(' - minHeight: $minHeight, maxHeight: $maxHeight');
-
-    double? newViewportHeight;
-    if (maxHeight != null && estimatedContentHeight >= maxHeight) {
-      _log.finer(' - setting viewport height to maxHeight');
-      newViewportHeight = maxHeight;
-    } else if (estimatedContentHeight <= minHeight) {
-      _log.finer(' - setting viewport height to minHeight');
-      newViewportHeight = minHeight;
-    }
-
-    return newViewportHeight;
+    return minContentHeight + totalVerticalPadding;
   }
 
-  /// Returns the number of lines required to display the text.
-  ///
-  /// This isn't necessarily equal to the number of lines in the string.
-  /// For example, the content might have a single line of text that doesn't fit on the available width,
-  /// causing it to span multiple lines.
-  int _getLineCount() {
-    if (_text.text.isEmpty) {
-      return 0;
+  double? _computeMaxHeight(double lineHeight) {
+    final totalVerticalPadding = _padding?.vertical ?? 0.0;
+    final maxContentHeight = _maxLines != null //
+        ? (_maxLines! * lineHeight) //
+        : null;
+
+    return maxContentHeight != null //
+        ? maxContentHeight + totalVerticalPadding
+        : null;
+  }
+
+  double _computeLineHeight() {
+    if (_lineHeight != null) {
+      return _lineHeight!;
     }
 
-    return _textKey.currentState!.textLayout.getLineCount();
+    final textLayout = _textKey.currentState!.textLayout;
+    double lineHeight = textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
+    _log.finer(' - line height at position 0: $lineHeight');
+
+    // We got 0.0 for the line height at the beginning of text. Maybe the
+    // text is empty. Ask the TextLayout to estimate a height for us that's
+    // based on the text style.
+    if (lineHeight == 0) {
+      lineHeight = _textKey.currentState!.textLayout.estimatedLineHeight;
+      _log.finer(' - estimated line height based on text styles: $lineHeight');
+    }
+
+    return lineHeight;
   }
 }
