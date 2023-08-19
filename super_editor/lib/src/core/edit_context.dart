@@ -9,7 +9,7 @@ import 'editor.dart';
 /// Collection of core artifacts used to edit a document.
 ///
 /// In particular, the context contains the [DocumentEditor],
-/// [DocumentComposer], and [DocumentLayout].
+/// [DocumentComposer], [DocumentScroller] and [DocumentLayout].
 /// In addition, [commonOps] are available for directly applying common, complex
 /// changes to the document using the artifacts.
 class SuperEditorContext {

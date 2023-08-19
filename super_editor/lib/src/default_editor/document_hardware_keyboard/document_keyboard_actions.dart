@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -11,6 +14,152 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
+
+/// Scrolls up by the viewport height, or as high as possible,
+/// when the user presses the Page Up key.
+ExecutionInstruction scrollOnPageUpKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scroller = editContext.scroller;
+
+  scroller.animateTo(
+    max(scroller.scrollOffset - scroller.viewportDimension, scroller.minScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// Scrolls down by the viewport height, or as far as possible,
+/// when the user presses the Page Down key.
+ExecutionInstruction scrollOnPageDownKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scroller = editContext.scroller;
+
+  scroller.animateTo(
+    min(scroller.scrollOffset + scroller.viewportDimension, scroller.maxScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// Scrolls the viewport to the top of the content, when the user presses
+/// CMD + HOME on Mac, or CTRL + HOME on all other platforms.
+ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.home) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
+  if (isMacOrIos && !keyEvent.isMetaPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (!isMacOrIos && !keyEvent.isControlPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scroller = editContext.scroller;
+
+  scroller.animateTo(
+    scroller.minScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// Scrolls the viewport to the bottom of the content, when the user presses
+/// CMD + END on Mac, or CTRL + END on all other platforms.
+ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.end) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
+  if (isMacOrIos && !keyEvent.isMetaPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (!isMacOrIos && !keyEvent.isControlPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scroller = editContext.scroller;
+
+  if (!scroller.maxScrollExtent.isFinite) {
+    // Can't scroll to infinity, but we technically handled the task.
+    return ExecutionInstruction.haltExecution;
+  }
+
+  scroller.animateTo(
+    scroller.maxScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// Halt execution of the current key event if the key pressed is one of
+/// the functions keys (F1, F2, F3, etc.), or the Page Up/Down, Home/End key.
+///
+/// Without this action in place pressing one of the above mentioned keys
+/// would display an unknown '?' character in the document.
+ExecutionInstruction blockControlKeys({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId &&
+      keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId &&
+      (keyEvent.logicalKey.keyId < LogicalKeyboardKey.f1.keyId ||
+          keyEvent.logicalKey.keyId > LogicalKeyboardKey.f12.keyId)) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  return ExecutionInstruction.haltExecution;
+}
 
 ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
   required SuperEditorContext editContext,
