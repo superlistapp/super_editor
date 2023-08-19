@@ -3,9 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
-import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
+import 'package:super_editor/src/super_textfield/super_textfield.dart';
 
 final _log = scrollingTextFieldLog;
 
@@ -126,7 +127,7 @@ class _TextScrollViewState extends State<TextScrollView>
       ..delegate = this
       ..addListener(_onTextScrollChange);
 
-    widget.textEditingController.addListener(scheduleBuildAfterBuild);
+    widget.textEditingController.addListener(_onTextOrSelectionChanged);
   }
 
   @override
@@ -144,13 +145,9 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     if (widget.textEditingController != oldWidget.textEditingController) {
-      oldWidget.textEditingController.removeListener(scheduleBuildAfterBuild);
-      widget.textEditingController.addListener(scheduleBuildAfterBuild);
+      oldWidget.textEditingController.removeListener(_onTextOrSelectionChanged);
+      widget.textEditingController.addListener(_onTextOrSelectionChanged);
     }
-
-    if (widget.minLines != oldWidget.minLines ||
-        widget.maxLines != oldWidget.maxLines ||
-        widget.lineHeight != oldWidget.lineHeight) {}
   }
 
   @override
@@ -159,7 +156,7 @@ class _TextScrollViewState extends State<TextScrollView>
       ..delegate = null
       ..removeListener(_onTextScrollChange);
 
-    widget.textEditingController.removeListener(scheduleBuildAfterBuild);
+    widget.textEditingController.removeListener(_onTextOrSelectionChanged);
 
     super.dispose();
   }
@@ -335,10 +332,15 @@ class _TextScrollViewState extends State<TextScrollView>
   /// text in this text field.
   ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
 
+  void _onTextOrSelectionChanged() {
+    // After the text changes, the user might have entered new lines.
+    // Schedule a rebuild so our size is updated.
+    scheduleBuildAfterBuild();
+  }
+
   @override
   Widget build(BuildContext context) {
     return _TextLinesLimiter(
-      text: widget.textEditingController.text,
       textKey: widget.textKey,
       minLines: widget.minLines,
       maxLines: widget.maxLines,
@@ -907,7 +909,6 @@ enum _AutoScrollDirection {
 /// text, plus [padding].
 class _TextLinesLimiter extends SingleChildRenderObjectWidget {
   const _TextLinesLimiter({
-    required this.text,
     required this.textKey,
     this.minLines,
     this.maxLines,
@@ -915,9 +916,6 @@ class _TextLinesLimiter extends SingleChildRenderObjectWidget {
     this.padding,
     required super.child,
   });
-
-  /// The text that the [child] will display.
-  final AttributedText text;
 
   /// [GlobalKey] that references the widget that contains the text.
   final GlobalKey<ProseTextState> textKey;
@@ -945,7 +943,6 @@ class _TextLinesLimiter extends SingleChildRenderObjectWidget {
   @override
   RenderObject createRenderObject(BuildContext context) {
     return _RenderTextViewport(
-      text: text,
       textKey: textKey,
       minLines: minLines,
       maxLines: maxLines,
@@ -957,7 +954,6 @@ class _TextLinesLimiter extends SingleChildRenderObjectWidget {
   @override
   void updateRenderObject(BuildContext context, covariant _RenderTextViewport renderObject) {
     renderObject
-      ..text = text
       ..textKey = textKey
       ..minLines = minLines
       ..maxLines = maxLines
@@ -968,28 +964,16 @@ class _TextLinesLimiter extends SingleChildRenderObjectWidget {
 
 class _RenderTextViewport extends RenderProxyBox {
   _RenderTextViewport({
-    required AttributedText text,
     required GlobalKey<ProseTextState> textKey,
     int? minLines,
     int? maxLines,
     double? lineHeight,
     EdgeInsets? padding,
-  })  : _text = text,
-        _textKey = textKey,
+  })  : _textKey = textKey,
         _minLines = minLines,
         _maxLines = maxLines,
         _lineHeight = lineHeight,
         _padding = padding;
-
-  AttributedText _text;
-  set text(AttributedText value) {
-    if (value == _text) {
-      return;
-    }
-
-    _text = value;
-    markNeedsLayout();
-  }
 
   GlobalKey<ProseTextState> _textKey;
   set textKey(GlobalKey<ProseTextState> value) {
