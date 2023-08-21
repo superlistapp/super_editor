@@ -123,7 +123,7 @@ class SuperEditor extends StatefulWidget {
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ??
-            (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions),
+            (inputSource == TextInputSource.keyboard ? defaultKeyboardActions : defaultImeKeyboardActions),
         componentBuilders = componentBuilders != null
             ? [...componentBuilders, const UnknownComponentBuilder()]
             : [...defaultComponentBuilders, const UnknownComponentBuilder()],
