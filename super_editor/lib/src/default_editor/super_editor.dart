@@ -106,7 +106,7 @@ class SuperEditor extends StatefulWidget {
     this.imePolicies = const SuperEditorImePolicies(),
     this.imeConfiguration = const SuperEditorImeConfiguration(),
     this.imeOverrides,
-    List<DocumentKeyboardAction>? keyboardActions,
+    this.keyboardActions,
     this.gestureMode,
     this.contentTapDelegateFactory = superEditorLaunchLinkTapHandlerFactory,
     this.androidHandleColor,
@@ -122,8 +122,6 @@ class SuperEditor extends StatefulWidget {
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
-        keyboardActions = keyboardActions ??
-            (inputSource == TextInputSource.keyboard ? defaultKeyboardActions : defaultImeKeyboardActions),
         componentBuilders = componentBuilders != null
             ? [...componentBuilders, const UnknownComponentBuilder()]
             : [...defaultComponentBuilders, const UnknownComponentBuilder()],
@@ -273,10 +271,7 @@ class SuperEditor extends StatefulWidget {
   /// All actions that this editor takes in response to key
   /// events, e.g., text entry, newlines, character deletion,
   /// copy, paste, etc.
-  ///
-  /// These actions are only used when in [TextInputSource.keyboard]
-  /// mode.
-  final List<DocumentKeyboardAction> keyboardActions;
+  final List<DocumentKeyboardAction>? keyboardActions;
 
   /// Plugins that add sets of behaviors to the editing experience.
   final Set<SuperEditorPlugin> plugins;
@@ -323,6 +318,11 @@ class SuperEditorState extends State<SuperEditor> {
 
   @visibleForTesting
   SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
+
+  /// Returns the key handlers that respond to keyboard events within [SuperEditor].
+  List<DocumentKeyboardAction> get _keyboardActions =>
+      widget.keyboardActions ??
+      (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions);
 
   @override
   void initState() {
@@ -555,7 +555,7 @@ class SuperEditorState extends State<SuperEditor> {
           keyboardActions: [
             for (final plugin in widget.plugins) //
               ...plugin.keyboardActions,
-            ...widget.keyboardActions,
+            ..._keyboardActions,
           ],
           child: child,
         );
@@ -573,7 +573,7 @@ class SuperEditorState extends State<SuperEditor> {
           hardwareKeyboardActions: [
             for (final plugin in widget.plugins) //
               ...plugin.keyboardActions,
-            ...widget.keyboardActions,
+            ..._keyboardActions,
           ],
           floatingCursorController: _floatingCursorController,
           child: child,
