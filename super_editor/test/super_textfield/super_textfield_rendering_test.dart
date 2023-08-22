@@ -47,21 +47,18 @@ void main() {
         minLines: 5,
       );
 
-      // Switch to display the SuperTextField.
-      // As our text has only one line, we should expand the text field height
-      // to acommodate 5 lines.
+      // Switch to display the SuperTextField, so we can inspect it on its first frame.
       showTextField.value = true;
-
-      // Pump exactly one frame to inspect if the text was rendered.
       await tester.pump();
 
       // Ensure the text is rendered in the first frame.
       expect(find.text('1', findRichText: true), findsOneWidget);
 
-      // Ensure the text field expanded to the height of maxLines.
+      // Ensure the text field expanded to the height of minLines.
       final textHeight = tester.getSize(find.byType(SuperTextWithSelection)).height;
       final textFieldHeight = tester.getSize(find.byType(SuperTextField)).height;
-      expect(textFieldHeight, moreOrLessEquals(textHeight * 5));
+      final minLinesHeight = textHeight * 5;
+      expect(textFieldHeight, moreOrLessEquals(minLinesHeight));
     });
 
     testWidgetsOnMobile('shrinks to fit maxLines', (tester) async {
@@ -78,12 +75,8 @@ void main() {
         maxLines: 3,
       );
 
-      // Switch to display the SuperTextField.
-      // As our text has 6 lines, we should shrink the text field height
-      // to acommodate 3 lines only.
+      // Switch to display the SuperTextField, so we can inspect it on its first frame.
       showTextField.value = true;
-
-      // Pump exactly one frame to inspect if the text was rendered.
       await tester.pump();
 
       // Ensure the text is rendered in the first frame.
@@ -92,7 +85,8 @@ void main() {
       // Ensure the text field shrank to half of the text size.
       final textHeight = tester.getSize(find.byType(SuperTextWithSelection)).height;
       final textFieldHeight = tester.getSize(find.byType(SuperTextField)).height;
-      expect(textFieldHeight, moreOrLessEquals(textHeight / 2));
+      final maxLinesHeight = textHeight / 2;
+      expect(textFieldHeight, moreOrLessEquals(maxLinesHeight));
     });
   });
 }

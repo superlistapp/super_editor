@@ -894,19 +894,13 @@ enum _AutoScrollDirection {
   end,
 }
 
-/// Sizes a [child] to respect the given [minLines] and [maxLines].
+/// Sizes the [child] so its height falls within [minLines] and [maxLines], multiplied by the
+/// given [lineHeight].
 ///
 /// The [child] must contain a [SuperTextWithSelection] in its tree,
 /// and the dimensions of the [child] subtree should match the dimensions
-/// of the [SuperTextWithSelection].
-///
-/// If the [child]'s intrinsic height already respects [minLines] and [maxLines], it is used.
-///
-/// If the [child]'s intrinsic height is smaller than [minLines], the size is set to acommodate [minLines] of
-/// text, plus [padding].
-///
-/// If the [child]'s intrinsic height is bigger than [maxLines], the size is set to acommodate [maxLines] of
-/// text, plus [padding].
+/// of the [SuperTextWithSelection]. The given [textKey] must be bound to the [SuperTextWithSelection]
+/// within the [child]'s subtree.
 class _TextLinesLimiter extends SingleChildRenderObjectWidget {
   const _TextLinesLimiter({
     required this.textKey,
@@ -917,7 +911,7 @@ class _TextLinesLimiter extends SingleChildRenderObjectWidget {
     required super.child,
   });
 
-  /// [GlobalKey] that references the widget that contains the text.
+  /// [GlobalKey] that references the [SuperTextWithSelection] within the [child]'s subtree.
   final GlobalKey<ProseTextState> textKey;
 
   /// The minimum height of this text scroll view, represented as a
@@ -1035,7 +1029,7 @@ class _RenderTextViewport extends RenderProxyBox {
       return;
     }
 
-    // Perform a first layout so we can access information about the text layout.
+    // Layout the subtree with the text widget so we can query the text layout.
     child!.layout(constraints, parentUsesSize: true);
 
     final lineHeight = _computeLineHeight();
@@ -1043,55 +1037,43 @@ class _RenderTextViewport extends RenderProxyBox {
     final maxHeight = _computeMaxHeight(lineHeight);
 
     // The height we need to enforce if the child doesn't already respects the line restrictions.
-    double? enforcedHeight;
+    double? adjustedChildHeight;
 
     final childIntrinsicHeight = child!.getMinIntrinsicHeight(constraints.maxWidth);
-    if (childIntrinsicHeight <= minHeight) {
-      enforcedHeight = minHeight;
+    if (childIntrinsicHeight < minHeight) {
+      adjustedChildHeight = minHeight;
     } else if (maxHeight != null && childIntrinsicHeight > maxHeight) {
-      enforcedHeight = maxHeight;
+      adjustedChildHeight = maxHeight;
     }
 
-    if (enforcedHeight == null) {
+    if (adjustedChildHeight == null) {
       // The child's intrinsic height already respects the line restrictions.
+      // Layout the text subtree again, this time forcing the child to be exactly its instrinsic height tall.
+      child!.layout(constraints.tighten(height: childIntrinsicHeight), parentUsesSize: true);
       size = child!.size;
       return;
     }
 
-    // The child height is bigger than the maximum height or smaller than the minimum height.
-    // Adjust the constraints to respect these restrictions.
-    final constrainedHeight = constraints.constrainHeight(enforcedHeight);
-
-    final childConstraints = constraints.copyWith(
-      minHeight: constrainedHeight,
-      maxHeight: constrainedHeight,
-    );
-
-    // Perform the second layout with the adjusted constraints.
-    child!.layout(childConstraints, parentUsesSize: true);
+    // Layout the text subtree again, this time with forced height constraints.
+    child!.layout(constraints.tighten(height: adjustedChildHeight), parentUsesSize: true);
 
     size = child!.size;
   }
 
   double _computeMinHeight(double lineHeight) {
-    final totalVerticalPadding = _padding?.vertical ?? 0.0;
-
     final minContentHeight = _minLines != null //
         ? _minLines! * lineHeight
         : lineHeight; // Can't be shorter than 1 line.
 
-    return minContentHeight + totalVerticalPadding;
+    return minContentHeight + (_padding?.vertical ?? 0.0);
   }
 
   double? _computeMaxHeight(double lineHeight) {
-    final totalVerticalPadding = _padding?.vertical ?? 0.0;
-    final maxContentHeight = _maxLines != null //
-        ? (_maxLines! * lineHeight) //
-        : null;
+    if (_maxLines == null) {
+      return null;
+    }
 
-    return maxContentHeight != null //
-        ? maxContentHeight + totalVerticalPadding
-        : null;
+    return (_maxLines! * lineHeight) + (_padding?.vertical ?? 0.0);
   }
 
   double _computeLineHeight() {
