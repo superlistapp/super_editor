@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -43,6 +45,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
         _onIOSFloatingCursorChange = onIOSFloatingCursorChange,
         _keyboardAppearance = keyboardAppearance {
     _realController.addListener(_onInnerControllerChange);
+    _onPerformSelectorController = StreamController<String>.broadcast();
   }
 
   @override
@@ -61,6 +64,10 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   /// Only used for iOS devices.
   Brightness get keyboardAppearance => _keyboardAppearance;
   Brightness _keyboardAppearance;
+
+  /// A stream of `performSelector` calls.
+  Stream<String> get onPerformSelector => _onPerformSelectorController.stream;
+  late StreamController<String> _onPerformSelectorController;
 
   final AttributedTextEditingController _realController;
 
@@ -331,6 +338,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
           from: delta.replacedRange.start,
           to: delta.replacedRange.end,
           newSelection: delta.selection,
+          newComposingRegion: delta.composing,
         );
       } else if (delta is TextEditingDeltaNonTextUpdate) {
         _log.fine('Processing selection/composing change: $delta');
@@ -383,7 +391,8 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   @override
   void performSelector(String selectorName) {
-    // TODO: implement this method starting with Flutter 3.3.4
+    editorImeLog.fine("IME says to perform selector: $selectorName");
+    _onPerformSelectorController.sink.add(selectorName);
   }
   //------ End TextInputClient -----
 

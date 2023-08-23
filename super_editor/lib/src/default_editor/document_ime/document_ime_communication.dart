@@ -1,9 +1,15 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 
 import 'document_delta_editing.dart';
 import 'document_serialization.dart';
@@ -23,6 +29,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     required this.composingRegion,
     required this.textDeltasDocumentEditor,
     required this.imeConnection,
+    required this.editContext,
     FloatingCursorController? floatingCursorController,
   }) {
     // Note: we don't listen to document changes because we expect that any change during IME
@@ -58,8 +65,16 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
 
   final ValueListenable<TextInputConnection?> imeConnection;
 
+  /// All resources that are needed to edit a document.
+  final SuperEditorContext editContext;
+
   // TODO: get floating cursor out of here. Use a multi-client IME decorator to split responsibilities
   late FloatingCursorController? _floatingCursorController;
+
+  /// Map selector names to its handlers.
+  ///
+  /// Used on macOS to handle the `performSelector` call.
+  final Map<String, SuperEditorSelectorHandler> _selectorHandlers = defaultEditorSelectorHandlers;
 
   void _onContentChange() {
     if (!attached) {
@@ -254,7 +269,15 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
 
   @override
   void performSelector(String selectorName) {
-    editorImeLog.fine("IME says to perform selector (not implemented): $selectorName");
+    editorImeLog.fine("IME says to perform selector: $selectorName");
+
+    final handler = _selectorHandlers[selectorName];
+    if (handler == null) {
+      editorImeLog.warning("No handler found for $selectorName");
+      return;
+    }
+
+    handler(editContext);
   }
 
   @override
@@ -280,4 +303,350 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   void connectionClosed() {
     editorImeLog.info("IME connection was closed");
   }
+}
+
+const defaultEditorSelectorHandlers = <String, SuperEditorSelectorHandler>{
+  // Caret movement.
+  MacOsSelectors.moveLeft: _moveCaretUpstream,
+  MacOsSelectors.moveRight: _moveCaretDownstream,
+  MacOsSelectors.moveUp: _moveCaretUp,
+  MacOsSelectors.moveDown: _moveCaretDown,
+  MacOsSelectors.moveForward: _moveCaretDownstream,
+  MacOsSelectors.moveBackward: _moveCaretUpstream,
+  MacOsSelectors.moveWordLeft: _moveWordUpstream,
+  MacOsSelectors.moveWordRight: _moveWordDownstream,
+  MacOsSelectors.moveToLeftEndOfLine: _moveToLineBeginning,
+  MacOsSelectors.moveToRightEndOfLine: _moveToLineEnd,
+  MacOsSelectors.moveToBeginningOfParagraph: _moveToBeginningOfParagraph,
+  MacOsSelectors.moveToEndOfParagraph: _moveToEndOfParagraph,
+  MacOsSelectors.moveToBeginningOfDocument: _moveToBeginningOfDocument,
+  MacOsSelectors.moveToEndOfDocument: _moveToEndOfDocument,
+
+  // Selection expanding.
+  MacOsSelectors.moveLeftAndModifySelection: _expandSelectionUpstream,
+  MacOsSelectors.moveRightAndModifySelection: _expandSelectionDownstream,
+  MacOsSelectors.moveUpAndModifySelection: _expandSelectionLineUp,
+  MacOsSelectors.moveDownAndModifySelection: _expandSelectionLineDown,
+  MacOsSelectors.moveWordLeftAndModifySelection: _expandSelectionWordUpstream,
+  MacOsSelectors.moveWordRightAndModifySelection: _expandSelectionWordDownstream,
+  MacOsSelectors.moveToLeftEndOfLineAndModifySelection: _expandSelectionLineUpstream,
+  MacOsSelectors.moveToRightEndOfLineAndModifySelection: _expandSelectionLineDownstream,
+  MacOsSelectors.moveParagraphBackwardAndModifySelection: _expandSelectionToBeginningOfParagraph,
+  MacOsSelectors.moveParagraphForwardAndModifySelection: _expandSelectionToEndOfParagraph,
+  MacOsSelectors.moveToBeginningOfDocumentAndModifySelection: _expandSelectiontToBeginningOfDocument,
+  MacOsSelectors.moveToEndOfDocumentAndModifySelection: _expandSelectionToEndOfDocument,
+
+  // Insertion.
+  MacOsSelectors.insertTab: _indentListItem,
+  MacOsSelectors.insertBacktab: _unIndentListItem,
+  MacOsSelectors.insertNewLine: _insertNewLine,
+
+  // Deletion.
+  MacOsSelectors.deleteBackward: _deleteUpstream,
+  MacOsSelectors.deleteForward: _deleteDownstream,
+  MacOsSelectors.deleteWordBackward: _deleteWordUpstream,
+  MacOsSelectors.deleteWordForward: _deleteWordDownstream,
+  MacOsSelectors.deleteToBeginningOfLine: _deleteToBeginningOfLine,
+  MacOsSelectors.deleteToEndOfLine: _deleteToEndOfLine,
+  MacOsSelectors.deleteBackwardByDecomposingPreviousCharacter: _deleteUpstream,
+
+  // Scrolling.
+  MacOsSelectors.scrollToBeginningOfDocument: _scrollToBeginningOfDocument,
+  MacOsSelectors.scrollToEndOfDocument: _scrollToEndOfDocument,
+  MacOsSelectors.scrollPageUp: _scrollToStarOfPage,
+  MacOsSelectors.scrollPageDown: _scrollToEndOfPage,
+};
+
+void _moveCaretUpstream(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream();
+}
+
+void _moveCaretDownstream(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream();
+}
+
+void _moveCaretUp(SuperEditorContext context) {
+  context.commonOps.moveCaretUp();
+}
+
+void _moveCaretDown(SuperEditorContext context) {
+  context.commonOps.moveCaretDown();
+}
+
+void _moveWordUpstream(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(movementModifier: MovementModifier.word);
+}
+
+void _moveWordDownstream(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(movementModifier: MovementModifier.word);
+}
+
+void _moveToLineBeginning(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(movementModifier: MovementModifier.line);
+}
+
+void _moveToLineEnd(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(movementModifier: MovementModifier.line);
+}
+
+void _moveToBeginningOfParagraph(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(movementModifier: MovementModifier.paragraph);
+}
+
+void _moveToEndOfParagraph(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(movementModifier: MovementModifier.paragraph);
+}
+
+void _moveToBeginningOfDocument(SuperEditorContext context) {
+  context.commonOps.moveSelectionToBeginningOfDocument(expand: false);
+}
+
+void _moveToEndOfDocument(SuperEditorContext context) {
+  context.commonOps.moveSelectionToEndOfDocument(expand: false);
+}
+
+void _expandSelectionUpstream(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(expand: true);
+}
+
+void _expandSelectionDownstream(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(expand: true);
+}
+
+void _expandSelectionLineUp(SuperEditorContext context) {
+  context.commonOps.moveCaretUp(expand: true);
+}
+
+void _expandSelectionLineDown(SuperEditorContext context) {
+  context.commonOps.moveCaretDown(expand: true);
+}
+
+void _expandSelectionWordUpstream(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+}
+
+void _expandSelectionWordDownstream(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+}
+
+void _expandSelectionLineUpstream(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.line,
+  );
+}
+
+void _expandSelectionToBeginningOfParagraph(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.paragraph,
+  );
+}
+
+void _expandSelectionToEndOfParagraph(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.paragraph,
+  );
+}
+
+void _expandSelectiontToBeginningOfDocument(SuperEditorContext context) {
+  context.commonOps.moveSelectionToBeginningOfDocument(expand: true);
+}
+
+void _expandSelectionToEndOfDocument(SuperEditorContext context) {
+  context.commonOps.moveSelectionToEndOfDocument(expand: true);
+}
+
+void _expandSelectionLineDownstream(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.line,
+  );
+}
+
+void _indentListItem(SuperEditorContext context) {
+  context.commonOps.indentListItem();
+}
+
+void _unIndentListItem(SuperEditorContext context) {
+  context.commonOps.unindentListItem();
+}
+
+void _insertNewLine(SuperEditorContext context) {
+  if (isWeb) {
+    return;
+  }
+  context.commonOps.insertBlockLevelNewline();
+}
+
+void _deleteWordUpstream(SuperEditorContext context) {
+  bool didMove = false;
+
+  didMove = context.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+
+  if (didMove) {
+    context.commonOps.deleteSelection();
+  }
+}
+
+void _deleteWordDownstream(SuperEditorContext context) {
+  bool didMove = false;
+
+  didMove = context.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+
+  if (didMove) {
+    context.commonOps.deleteSelection();
+  }
+}
+
+void _deleteToBeginningOfLine(SuperEditorContext context) {
+  bool didMove = false;
+
+  didMove = context.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.line,
+  );
+
+  if (didMove) {
+    context.commonOps.deleteSelection();
+  }
+}
+
+void _deleteToEndOfLine(SuperEditorContext context) {
+  bool didMove = false;
+
+  didMove = context.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.line,
+  );
+
+  if (didMove) {
+    context.commonOps.deleteSelection();
+  }
+}
+
+void _deleteUpstream(SuperEditorContext context) {
+  if (isWeb) {
+    return;
+  }
+  context.commonOps.deleteUpstream();
+}
+
+void _deleteDownstream(SuperEditorContext context) {
+  if (isWeb) {
+    return;
+  }
+  context.commonOps.deleteDownstream();
+}
+
+void _scrollToBeginningOfDocument(SuperEditorContext context) {
+  context.scroller.animateTo(
+    context.scroller.minScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+void _scrollToEndOfDocument(SuperEditorContext context) {
+  context.scroller.animateTo(
+    context.scroller.maxScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+void _scrollToStarOfPage(SuperEditorContext context) {
+  context.scroller.animateTo(
+    max(context.scroller.scrollOffset - context.scroller.viewportDimension, context.scroller.minScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+void _scrollToEndOfPage(SuperEditorContext context) {
+  context.scroller.animateTo(
+    min(context.scroller.scrollOffset + context.scroller.viewportDimension, context.scroller.maxScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+/// A callback to handle a `performSelector` call.
+typedef SuperEditorSelectorHandler = void Function(SuperEditorContext context);
+
+/// MacOS selector names that are sent to [TextInputClient.performSelector].
+///
+/// These selectors express the user intent and are generated by shortcuts. For example,
+/// pressing SHIFT + Left Arrow key generates a moveLeftAndModifySelection selector.
+///
+/// The full list can be found on https://developer.apple.com/documentation/appkit/nsstandardkeybindingresponding?changes=_8&language=objc
+class MacOsSelectors {
+  static const String deleteBackward = 'deleteBackward:';
+  static const String deleteWordBackward = 'deleteWordBackward:';
+  static const String deleteToBeginningOfLine = 'deleteToBeginningOfLine:';
+  static const String deleteForward = 'deleteForward:';
+  static const String deleteWordForward = 'deleteWordForward:';
+  static const String deleteToEndOfLine = 'deleteToEndOfLine:';
+  static const String deleteBackwardByDecomposingPreviousCharacter = 'deleteBackwardByDecomposingPreviousCharacter:';
+
+  static const String moveLeft = 'moveLeft:';
+  static const String moveRight = 'moveRight:';
+  static const String moveForward = 'moveForward:';
+  static const String moveBackward = 'moveBackward:';
+  static const String moveUp = 'moveUp:';
+  static const String moveDown = 'moveDown:';
+
+  static const String moveWordLeft = 'moveWordLeft:';
+  static const String moveWordRight = 'moveWordRight:';
+  static const String moveToBeginningOfParagraph = 'moveToBeginningOfParagraph:';
+  static const String moveToEndOfParagraph = 'moveToEndOfParagraph:';
+
+  static const String moveToLeftEndOfLine = 'moveToLeftEndOfLine:';
+  static const String moveToRightEndOfLine = 'moveToRightEndOfLine:';
+  static const String moveToBeginningOfDocument = 'moveToBeginningOfDocument:';
+  static const String moveToEndOfDocument = 'moveToEndOfDocument:';
+
+  static const String moveLeftAndModifySelection = 'moveLeftAndModifySelection:';
+  static const String moveRightAndModifySelection = 'moveRightAndModifySelection:';
+  static const String moveUpAndModifySelection = 'moveUpAndModifySelection:';
+  static const String moveDownAndModifySelection = 'moveDownAndModifySelection:';
+
+  static const String moveWordLeftAndModifySelection = 'moveWordLeftAndModifySelection:';
+  static const String moveWordRightAndModifySelection = 'moveWordRightAndModifySelection:';
+  static const String moveParagraphBackwardAndModifySelection = 'moveParagraphBackwardAndModifySelection:';
+  static const String moveParagraphForwardAndModifySelection = 'moveParagraphForwardAndModifySelection:';
+
+  static const String moveToLeftEndOfLineAndModifySelection = 'moveToLeftEndOfLineAndModifySelection:';
+  static const String moveToRightEndOfLineAndModifySelection = 'moveToRightEndOfLineAndModifySelection:';
+  static const String moveToBeginningOfDocumentAndModifySelection = 'moveToBeginningOfDocumentAndModifySelection:';
+  static const String moveToEndOfDocumentAndModifySelection = 'moveToEndOfDocumentAndModifySelection:';
+
+  static const String transpose = 'transpose:';
+
+  static const String scrollToBeginningOfDocument = 'scrollToBeginningOfDocument:';
+  static const String scrollToEndOfDocument = 'scrollToEndOfDocument:';
+
+  static const String scrollPageUp = 'scrollPageUp:';
+  static const String scrollPageDown = 'scrollPageDown:';
+  static const String pageUpAndModifySelection = 'pageUpAndModifySelection:';
+  static const String pageDownAndModifySelection = 'pageDownAndModifySelection:';
+
+  static const String cancelOperation = 'cancelOperation:';
+
+  static const String insertTab = 'insertTab:';
+  static const String insertBacktab = 'insertBacktab:';
+  static const String insertNewLine = 'insertNewline:';
 }

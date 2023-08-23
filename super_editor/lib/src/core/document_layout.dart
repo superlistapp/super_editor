@@ -440,6 +440,13 @@ class MovementModifier {
   ///  * [word], which moves text selection word-by-word.
   static const line = MovementModifier('line');
 
+  /// Move text selection paragraph-by-paragraph.
+  ///
+  /// See also:
+  ///
+  ///  * [word], which moves text selection word-by-word.
+  static const paragraph = MovementModifier('paragraph');
+
   /// Creates a movement modifier that is globally uniquely identified by the
   /// provided [id].
   const MovementModifier(this.id);
