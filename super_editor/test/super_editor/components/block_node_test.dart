@@ -651,6 +651,7 @@ Widget _buildHardwareKeyboardEditor(MutableDocument document, MutableDocumentCom
           ],
         ),
         gestureMode: DocumentGestureMode.mouse,
+        inputSource: TextInputSource.keyboard,
         autofocus: true,
       ),
     ),
