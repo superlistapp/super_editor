@@ -200,7 +200,7 @@ ExecutionInstruction doNothingWhenThereIsNoSelection({
   }
 }
 
-ExecutionInstruction doNothinOnMac({
+ExecutionInstruction sendKeyEventToMacOs({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {

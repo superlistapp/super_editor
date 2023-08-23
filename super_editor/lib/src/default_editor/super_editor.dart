@@ -925,7 +925,7 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   scrollOnCtrlOrCmdAndEndKeyPress,
   shiftEnterToInsertNewlineInBlock,
   deleteToEndOfLineWithCmdDeleteOnMac,
-  doNothinOnMac,
+  sendKeyEventToMacOs,
   doNothingWhenThereIsNoSelection,
   scrollOnPageUpKeyPress,
   scrollOnPageDownKeyPress,

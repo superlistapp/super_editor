@@ -602,7 +602,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
           ? TextNodePosition(offset: endOfLine.offset - 1)
           : TextNodePosition.fromTextPosition(endOfLine);
     }
-    if (movementModifier != null && movementModifier == MovementModifier.word) {
+    if (movementModifier == MovementModifier.word) {
       final newOffset = getAllText().moveOffsetDownstreamByWord(textPosition.offset);
       if (newOffset == null) {
         return textPosition;
