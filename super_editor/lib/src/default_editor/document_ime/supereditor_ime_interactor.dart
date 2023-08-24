@@ -1,11 +1,16 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/debug_visualization.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 
 import '../document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_delta_editing.dart';
@@ -36,6 +41,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
     this.imeConfiguration = const SuperEditorImeConfiguration(),
     this.imeOverrides,
     this.hardwareKeyboardActions = const [],
+    required this.selectorHandlers,
     this.floatingCursorController,
     required this.child,
   }) : super(key: key);
@@ -117,6 +123,11 @@ class SuperEditorImeInteractor extends StatefulWidget {
   /// a property on this IME interactor.
   final FloatingCursorController? floatingCursorController;
 
+  /// Map selector names to its handlers.
+  ///
+  /// Used on macOS to handle the `performSelector` call.
+  final Map<String, SuperEditorSelectorHandler> selectorHandlers;
+
   final Widget child;
 
   @override
@@ -164,7 +175,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       textDeltasDocumentEditor: _textDeltasDocumentEditor,
       imeConnection: _imeConnection,
       floatingCursorController: widget.floatingCursorController,
-      editContext: widget.editContext,
+      onPerformSelector: _onPerformSelector,
     );
 
     _imeClient = DeltaTextInputClientDecorator();
@@ -289,6 +300,16 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     return caretOffset & rectInDocLayoutSpace.size;
   }
 
+  void _onPerformSelector(String selectorName) {
+    final handler = widget.selectorHandlers[selectorName];
+    if (handler == null) {
+      editorImeLog.warning("No handler found for $selectorName");
+      return;
+    }
+
+    handler(widget.editContext);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SuperEditorImeDebugVisuals(
@@ -334,6 +355,236 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       ),
     );
   }
+}
+
+/// A callback to handle a `performSelector` call.
+typedef SuperEditorSelectorHandler = void Function(SuperEditorContext context);
+
+void moveLeft(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream();
+}
+
+void moveRight(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream();
+}
+
+void moveUp(SuperEditorContext context) {
+  context.commonOps.moveCaretUp();
+}
+
+void moveDown(SuperEditorContext context) {
+  context.commonOps.moveCaretDown();
+}
+
+void moveWordLeft(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(movementModifier: MovementModifier.word);
+}
+
+void moveWordRight(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(movementModifier: MovementModifier.word);
+}
+
+void moveToLeftEndOfLine(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(movementModifier: MovementModifier.line);
+}
+
+void moveToRightEndOfLine(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(movementModifier: MovementModifier.line);
+}
+
+void moveToBeginningOfParagraph(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(movementModifier: MovementModifier.paragraph);
+}
+
+void moveToEndOfParagraph(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(movementModifier: MovementModifier.paragraph);
+}
+
+void moveToBeginningOfDocument(SuperEditorContext context) {
+  context.commonOps.moveSelectionToBeginningOfDocument(expand: false);
+}
+
+void moveToEndOfDocument(SuperEditorContext context) {
+  context.commonOps.moveSelectionToEndOfDocument(expand: false);
+}
+
+void moveLeftAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(expand: true);
+}
+
+void moveRightAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(expand: true);
+}
+
+void moveUpAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveCaretUp(expand: true);
+}
+
+void moveDownAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveCaretDown(expand: true);
+}
+
+void moveWordLeftAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+}
+
+void moveWordRightAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+}
+
+void moveToLeftEndOfLineAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.line,
+  );
+}
+
+void moveParagraphBackwardAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.paragraph,
+  );
+}
+
+void moveParagraphForwardAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.paragraph,
+  );
+}
+
+void moveToBeginningOfDocumentAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveSelectionToBeginningOfDocument(expand: true);
+}
+
+void moveToEndOfDocumentAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveSelectionToEndOfDocument(expand: true);
+}
+
+void moveToRightEndOfLineAndModifySelection(SuperEditorContext context) {
+  context.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.line,
+  );
+}
+
+void indentListItem(SuperEditorContext context) {
+  context.commonOps.indentListItem();
+}
+
+void unIndentListItem(SuperEditorContext context) {
+  context.commonOps.unindentListItem();
+}
+
+void insertNewLine(SuperEditorContext context) {
+  if (isWeb) {
+    return;
+  }
+  context.commonOps.insertBlockLevelNewline();
+}
+
+void deleteWordBackward(SuperEditorContext context) {
+  bool didMove = false;
+
+  didMove = context.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+
+  if (didMove) {
+    context.commonOps.deleteSelection();
+  }
+}
+
+void deleteWordForward(SuperEditorContext context) {
+  bool didMove = false;
+
+  didMove = context.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.word,
+  );
+
+  if (didMove) {
+    context.commonOps.deleteSelection();
+  }
+}
+
+void deleteToBeginningOfLine(SuperEditorContext context) {
+  bool didMove = false;
+
+  didMove = context.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifier: MovementModifier.line,
+  );
+
+  if (didMove) {
+    context.commonOps.deleteSelection();
+  }
+}
+
+void deleteToEndOfLine(SuperEditorContext context) {
+  bool didMove = false;
+
+  didMove = context.commonOps.moveCaretDownstream(
+    expand: true,
+    movementModifier: MovementModifier.line,
+  );
+
+  if (didMove) {
+    context.commonOps.deleteSelection();
+  }
+}
+
+void deleteBackward(SuperEditorContext context) {
+  if (isWeb) {
+    return;
+  }
+  context.commonOps.deleteUpstream();
+}
+
+void deleteForward(SuperEditorContext context) {
+  if (isWeb) {
+    return;
+  }
+  context.commonOps.deleteDownstream();
+}
+
+void scrollToBeginningOfDocument(SuperEditorContext context) {
+  context.scroller.animateTo(
+    context.scroller.minScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+void scrollToEndOfDocument(SuperEditorContext context) {
+  context.scroller.animateTo(
+    context.scroller.maxScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+void scrollPageUp(SuperEditorContext context) {
+  context.scroller.animateTo(
+    max(context.scroller.scrollOffset - context.scroller.viewportDimension, context.scroller.minScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+void scrollPageDown(SuperEditorContext context) {
+  context.scroller.animateTo(
+    min(context.scroller.scrollOffset + context.scroller.viewportDimension, context.scroller.maxScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
 }
 
 /// A collection of policies that dictate how a [SuperEditor]'s focus, selection, and

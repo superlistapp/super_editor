@@ -22,6 +22,7 @@ import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -580,6 +581,7 @@ class SuperEditorState extends State<SuperEditor> {
               ...plugin.keyboardActions,
             ..._keyboardActions,
           ],
+          selectorHandlers: defaultEditorSelectorHandlers,
           floatingCursorController: _floatingCursorController,
           child: child,
         );
@@ -948,6 +950,63 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   doNothingWithDeleteOnWeb,
   deleteDownstreamContentWithDelete,
 ];
+
+/// Map selector names to its handlers.
+///
+/// Selectors are like system-level shortcuts for macOS.
+///
+/// For more information, see [MacOsSelectors].
+const defaultEditorSelectorHandlers = <String, SuperEditorSelectorHandler>{
+  // Caret movement.
+  MacOsSelectors.moveLeft: moveLeft,
+  MacOsSelectors.moveRight: moveRight,
+  MacOsSelectors.moveUp: moveUp,
+  MacOsSelectors.moveDown: moveDown,
+  MacOsSelectors.moveForward: moveRight,
+  MacOsSelectors.moveBackward: moveLeft,
+  MacOsSelectors.moveWordLeft: moveWordLeft,
+  MacOsSelectors.moveWordRight: moveWordRight,
+  MacOsSelectors.moveToLeftEndOfLine: moveToLeftEndOfLine,
+  MacOsSelectors.moveToRightEndOfLine: moveToRightEndOfLine,
+  MacOsSelectors.moveToBeginningOfParagraph: moveToBeginningOfParagraph,
+  MacOsSelectors.moveToEndOfParagraph: moveToEndOfParagraph,
+  MacOsSelectors.moveToBeginningOfDocument: moveToBeginningOfDocument,
+  MacOsSelectors.moveToEndOfDocument: moveToEndOfDocument,
+
+  // Selection expanding.
+  MacOsSelectors.moveLeftAndModifySelection: moveLeftAndModifySelection,
+  MacOsSelectors.moveRightAndModifySelection: moveRightAndModifySelection,
+  MacOsSelectors.moveUpAndModifySelection: moveUpAndModifySelection,
+  MacOsSelectors.moveDownAndModifySelection: moveDownAndModifySelection,
+  MacOsSelectors.moveWordLeftAndModifySelection: moveWordLeftAndModifySelection,
+  MacOsSelectors.moveWordRightAndModifySelection: moveWordRightAndModifySelection,
+  MacOsSelectors.moveToLeftEndOfLineAndModifySelection: moveToLeftEndOfLineAndModifySelection,
+  MacOsSelectors.moveToRightEndOfLineAndModifySelection: moveToRightEndOfLineAndModifySelection,
+  MacOsSelectors.moveParagraphBackwardAndModifySelection: moveParagraphBackwardAndModifySelection,
+  MacOsSelectors.moveParagraphForwardAndModifySelection: moveParagraphForwardAndModifySelection,
+  MacOsSelectors.moveToBeginningOfDocumentAndModifySelection: moveToBeginningOfDocumentAndModifySelection,
+  MacOsSelectors.moveToEndOfDocumentAndModifySelection: moveToEndOfDocumentAndModifySelection,
+
+  // Insertion.
+  MacOsSelectors.insertTab: indentListItem,
+  MacOsSelectors.insertBacktab: unIndentListItem,
+  MacOsSelectors.insertNewLine: insertNewLine,
+
+  // Deletion.
+  MacOsSelectors.deleteBackward: deleteBackward,
+  MacOsSelectors.deleteForward: deleteForward,
+  MacOsSelectors.deleteWordBackward: deleteWordBackward,
+  MacOsSelectors.deleteWordForward: deleteWordForward,
+  MacOsSelectors.deleteToBeginningOfLine: deleteToBeginningOfLine,
+  MacOsSelectors.deleteToEndOfLine: deleteToEndOfLine,
+  MacOsSelectors.deleteBackwardByDecomposingPreviousCharacter: deleteBackward,
+
+  // Scrolling.
+  MacOsSelectors.scrollToBeginningOfDocument: scrollToBeginningOfDocument,
+  MacOsSelectors.scrollToEndOfDocument: scrollToEndOfDocument,
+  MacOsSelectors.scrollPageUp: scrollPageUp,
+  MacOsSelectors.scrollPageDown: scrollPageDown,
+};
 
 /// Stylesheet applied to all [SuperEditor]s by default.
 final defaultStylesheet = Stylesheet(
