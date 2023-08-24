@@ -324,11 +324,6 @@ class SuperEditorState extends State<SuperEditor> {
   @visibleForTesting
   SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
 
-  /// Returns the key handlers that respond to keyboard events within [SuperEditor].
-  List<DocumentKeyboardAction> get _keyboardActions =>
-      widget.keyboardActions ??
-      (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions);
-
   @override
   void initState() {
     super.initState();
@@ -503,7 +498,7 @@ class SuperEditorState extends State<SuperEditor> {
   TextInputSource get inputSource => widget.inputSource ?? TextInputSource.ime;
 
   /// Returns the key handlers that respond to keyboard events within [SuperEditor].
-  List<DocumentKeyboardAction> get keyboardActions =>
+  List<DocumentKeyboardAction> get _keyboardActions =>
       widget.keyboardActions ??
       (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions);
 
@@ -565,7 +560,7 @@ class SuperEditorState extends State<SuperEditor> {
           keyboardActions: [
             for (final plugin in widget.plugins) //
               ...plugin.keyboardActions,
-            ...keyboardActions,
+            ..._keyboardActions,
           ],
           child: child,
         );
@@ -583,7 +578,7 @@ class SuperEditorState extends State<SuperEditor> {
           hardwareKeyboardActions: [
             for (final plugin in widget.plugins) //
               ...plugin.keyboardActions,
-            ...keyboardActions,
+            ..._keyboardActions,
           ],
           floatingCursorController: _floatingCursorController,
           child: child,

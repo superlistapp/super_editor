@@ -26,7 +26,10 @@ void main() {
       expect(SuperEditorInspector.findDocumentSelection(), expectedSelection);
 
       // Press a control key.
-      await tester.sendKeyEvent(_desktopInputSourceAndControlKeyVariant.currentValue!.controlKey);
+      await tester.sendKeyEvent(
+        _desktopInputSourceAndControlKeyVariant.currentValue!.controlKey,
+        platform: _desktopInputSourceAndControlKeyVariant.currentValue!.platform,
+      );
 
       // Make sure the content and selection remains the same.
       expect(SuperEditorInspector.findTextInParagraph("1"), initialParagraphText);
@@ -51,7 +54,10 @@ void main() {
       expect(SuperEditorInspector.findDocumentSelection(), expectedSelection);
 
       // Press a control key.
-      await tester.sendKeyEvent(_mobileInputSourceAndControlKeyVariant.currentValue!.controlKey);
+      await tester.sendKeyEvent(
+        _mobileInputSourceAndControlKeyVariant.currentValue!.controlKey,
+        platform: _mobileInputSourceAndControlKeyVariant.currentValue!.platform,
+      );
 
       // Make sure the content and selection remains the same.
       expect(SuperEditorInspector.findTextInParagraph("1"), initialParagraphText);
@@ -61,30 +67,40 @@ void main() {
 }
 
 final _mobileInputSourceAndControlKeyVariant = ValueVariant({
-  for (final inputSource in TextInputSource.values)
-    for (final controlKey in _allPlatformControlKeys) //
-      _InputSourceAndControlKey(inputSource, controlKey),
+  for (final platform in _mobilePlatforms)
+    for (final inputSource in TextInputSource.values)
+      for (final controlKey in _allPlatformControlKeys) //
+        _InputSourceAndControlKey(inputSource, controlKey, platform),
 });
 
 final _desktopInputSourceAndControlKeyVariant = ValueVariant({
-  for (final inputSource in TextInputSource.values)
-    for (final controlKey in _desktopControlKeys) //
-      _InputSourceAndControlKey(inputSource, controlKey),
+  for (final platform in _desktopPlatforms)
+    for (final inputSource in TextInputSource.values)
+      for (final controlKey in _desktopControlKeys) //
+        _InputSourceAndControlKey(inputSource, controlKey, platform),
 });
 
+// TODO: Replace raw strings with constants when Flutter offers them (https://github.com/flutter/flutter/issues/133295)
+final _mobilePlatforms = ["android", "ios"];
+final _desktopPlatforms = ["macos", "windows", "linux"];
+
 class _InputSourceAndControlKey {
-  _InputSourceAndControlKey(this.inputSource, this.controlKey);
+  _InputSourceAndControlKey(
+    this.inputSource,
+    this.controlKey,
+    this.platform,
+  );
 
   final TextInputSource inputSource;
   final LogicalKeyboardKey controlKey;
+  final String platform;
 
   @override
-  String toString() => "$inputSource, ${controlKey.keyLabel}";
+  String toString() => "$inputSource, ${controlKey.keyLabel}, $platform";
 }
 
 final _allPlatformControlKeys = {
   LogicalKeyboardKey.tab,
-  LogicalKeyboardKey.escape,
   LogicalKeyboardKey.capsLock,
   LogicalKeyboardKey.shift,
   LogicalKeyboardKey.control,
@@ -122,8 +138,9 @@ final _desktopControlKeys = {
   LogicalKeyboardKey.f18,
   LogicalKeyboardKey.f19,
   LogicalKeyboardKey.f20,
-  LogicalKeyboardKey.f21,
-  LogicalKeyboardKey.f22,
-  LogicalKeyboardKey.f23,
-  LogicalKeyboardKey.f24,
+  // The following keys don't appear to be supported on desktop as of Aug 24, 2023.
+  // LogicalKeyboardKey.f21,
+  // LogicalKeyboardKey.f22,
+  // LogicalKeyboardKey.f23,
+  // LogicalKeyboardKey.f24,
 };

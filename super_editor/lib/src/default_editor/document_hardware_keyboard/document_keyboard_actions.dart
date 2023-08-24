@@ -149,16 +149,17 @@ ExecutionInstruction blockControlKeys({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId &&
-      keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId &&
-      keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId &&
-      keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId &&
-      (keyEvent.logicalKey.keyId < LogicalKeyboardKey.f1.keyId ||
-          keyEvent.logicalKey.keyId > LogicalKeyboardKey.f12.keyId)) {
-    return ExecutionInstruction.continueExecution;
+  if (keyEvent.logicalKey == LogicalKeyboardKey.escape ||
+      keyEvent.logicalKey == LogicalKeyboardKey.pageUp ||
+      keyEvent.logicalKey == LogicalKeyboardKey.pageDown ||
+      keyEvent.logicalKey == LogicalKeyboardKey.home ||
+      keyEvent.logicalKey == LogicalKeyboardKey.end ||
+      (keyEvent.logicalKey.keyId >= LogicalKeyboardKey.f1.keyId &&
+          keyEvent.logicalKey.keyId <= LogicalKeyboardKey.f23.keyId)) {
+    return ExecutionInstruction.haltExecution;
   }
 
-  return ExecutionInstruction.haltExecution;
+  return ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
