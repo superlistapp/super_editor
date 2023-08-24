@@ -88,6 +88,30 @@ void main() {
       final maxLinesHeight = textHeight / 2;
       expect(textFieldHeight, moreOrLessEquals(maxLinesHeight));
     });
+
+    testWidgetsOnAllPlatforms('renders a hint with baseline cross-axis alignment', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperTextField(
+              textController: AttributedTextEditingController(),
+              minLines: 1,
+              maxLines: 3,
+              hintBuilder: (context) => const Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text('Hint one'),
+                  Text('Hint two'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Reaching this point means that SuperTextField was able to render without errors.
+    });
   });
 }
 
