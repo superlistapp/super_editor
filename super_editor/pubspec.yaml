@@ -52,7 +52,7 @@ dependency_overrides:
 
 dev_dependencies:
   flutter_lints: ^2.0.1
-  golden_toolkit: ^0.13.0
+  golden_toolkit: ^0.15.0
   mockito: ^5.0.4
   super_editor_markdown:
     path: ../super_editor_markdown
