@@ -1039,7 +1039,13 @@ class _RenderTextViewport extends RenderProxyBox {
     // The height we need to enforce if the child doesn't already respects the line restrictions.
     double? adjustedChildHeight;
 
-    final childIntrinsicHeight = child!.getMinIntrinsicHeight(constraints.maxWidth);
+    // Compute the height the child wants to be.
+    //
+    // We layout instead of computing the child's intrinsic height, because RenderFlex doesn't
+    // support calling getMinIntrinsicHeight if it has baseline cross-axis alignment.
+    child!.layout(constraints.copyWith(maxHeight: double.infinity), parentUsesSize: true);
+    final childIntrinsicHeight = child!.size.height;
+
     if (childIntrinsicHeight < minHeight) {
       adjustedChildHeight = minHeight;
     } else if (maxHeight != null && childIntrinsicHeight > maxHeight) {
