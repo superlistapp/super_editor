@@ -1,6 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
@@ -271,6 +272,10 @@ class SuperEditor extends StatefulWidget {
   /// All actions that this editor takes in response to key
   /// events, e.g., text entry, newlines, character deletion,
   /// copy, paste, etc.
+  ///
+  /// If [keyboardActions] is `null`, [SuperEditor] uses [defaultKeyboardActions]
+  /// when the gesture mode is [TextInputSource.keyboard], and
+  /// [defaultImeKeyboardActions] when the gesture mode is [TextInputSource.ime].
   final List<DocumentKeyboardAction>? keyboardActions;
 
   /// Plugins that add sets of behaviors to the editing experience.
@@ -318,11 +323,6 @@ class SuperEditorState extends State<SuperEditor> {
 
   @visibleForTesting
   SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
-
-  /// Returns the key handlers that respond to keyboard events within [SuperEditor].
-  List<DocumentKeyboardAction> get _keyboardActions =>
-      widget.keyboardActions ??
-      (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions);
 
   @override
   void initState() {
@@ -496,6 +496,11 @@ class SuperEditorState extends State<SuperEditor> {
   /// the [TextInputSource] is chosen based on the platform.
   @visibleForTesting
   TextInputSource get inputSource => widget.inputSource ?? TextInputSource.ime;
+
+  /// Returns the key handlers that respond to keyboard events within [SuperEditor].
+  List<DocumentKeyboardAction> get _keyboardActions =>
+      widget.keyboardActions ??
+      (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions);
 
   @override
   Widget build(BuildContext context) {
