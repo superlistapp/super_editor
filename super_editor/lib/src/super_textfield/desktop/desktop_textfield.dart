@@ -1030,7 +1030,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     widget.focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
     widget.textController.inputConnectionNotifier.addListener(_reportVisualInformationToIme);
-    widget.textController.onPerformActionPressed ??= _onPerformActionPressed;
+    widget.textController.onPerformActionPressed ??= _onPerformAction;
     widget.textController.onPerformSelector ??= _onPerformSelector;
 
     if (widget.focusNode.hasFocus) {
@@ -1053,10 +1053,10 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     }
 
     if (widget.textController != oldWidget.textController) {
-      if (oldWidget.textController.onPerformActionPressed == _onPerformActionPressed) {
+      if (oldWidget.textController.onPerformActionPressed == _onPerformAction) {
         oldWidget.textController.onPerformActionPressed = null;
       }
-      widget.textController.onPerformActionPressed ??= _onPerformActionPressed;
+      widget.textController.onPerformActionPressed ??= _onPerformAction;
 
       if (oldWidget.textController.onPerformSelector == _onPerformSelector) {
         oldWidget.textController.onPerformSelector = null;
@@ -1171,7 +1171,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   }
 
   /// Handles actions from the IME.
-  void _onPerformActionPressed(TextInputAction action) {
+  void _onPerformAction(TextInputAction action) {
     switch (action) {
       case TextInputAction.newline:
         widget.textController.insertNewline();
