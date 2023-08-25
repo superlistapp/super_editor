@@ -109,6 +109,7 @@ class SuperEditor extends StatefulWidget {
     this.imeConfiguration = const SuperEditorImeConfiguration(),
     this.imeOverrides,
     this.keyboardActions,
+    this.selectorHandlers,
     this.gestureMode,
     this.contentTapDelegateFactory = superEditorLaunchLinkTapHandlerFactory,
     this.androidHandleColor,
@@ -278,6 +279,12 @@ class SuperEditor extends StatefulWidget {
   /// when the gesture mode is [TextInputSource.keyboard], and
   /// [defaultImeKeyboardActions] when the gesture mode is [TextInputSource.ime].
   final List<DocumentKeyboardAction>? keyboardActions;
+
+  /// Handlers for all Mac OS "selectors" reported by the IME.
+  ///
+  /// The IME reports selectors as unique `String`s, therefore selector handlers are
+  /// defined as a mapping from selector names to handler functions.
+  final Map<String, SuperEditorSelectorHandler>? selectorHandlers;
 
   /// Plugins that add sets of behaviors to the editing experience.
   final Set<SuperEditorPlugin> plugins;
@@ -581,7 +588,7 @@ class SuperEditorState extends State<SuperEditor> {
               ...plugin.keyboardActions,
             ..._keyboardActions,
           ],
-          selectorHandlers: defaultEditorSelectorHandlers,
+          selectorHandlers: widget.selectorHandlers ?? defaultEditorSelectorHandlers,
           floatingCursorController: _floatingCursorController,
           child: child,
         );
@@ -927,6 +934,10 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   scrollOnCtrlOrCmdAndEndKeyPress,
   shiftEnterToInsertNewlineInBlock,
   deleteToEndOfLineWithCmdDeleteOnMac,
+  // WARNING: No keyboard handlers below this point will run on Mac. On Mac, most
+  // common shortcuts are recognized by the OS. This line short circuits Super Editor
+  // handlers, passing the key combo to the OS on Mac. Place all custom Mac key
+  // combos above this handler.
   sendKeyEventToMacOs,
   doNothingWhenThereIsNoSelection,
   scrollOnPageUpKeyPress,

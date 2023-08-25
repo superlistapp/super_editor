@@ -322,6 +322,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           keyboardHandlers: widget.keyboardHandlers,
           padding: widget.padding ?? EdgeInsets.zero,
           inputSource: _inputSource,
+          textInputAction: _textInputAction,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(

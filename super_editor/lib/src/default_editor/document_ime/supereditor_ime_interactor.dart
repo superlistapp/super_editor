@@ -123,9 +123,10 @@ class SuperEditorImeInteractor extends StatefulWidget {
   /// a property on this IME interactor.
   final FloatingCursorController? floatingCursorController;
 
-  /// Map selector names to its handlers.
+  /// Handlers for all Mac OS "selectors" reported by the IME.
   ///
-  /// Used on macOS to handle the `performSelector` call.
+  /// The IME reports selectors as unique `String`s, therefore selector handlers are
+  /// defined as a mapping from selector names to handler functions.
   final Map<String, SuperEditorSelectorHandler> selectorHandlers;
 
   final Widget child;

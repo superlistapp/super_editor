@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
@@ -63,6 +62,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.decorationBuilder,
     this.onRightClick,
     this.inputSource = TextInputSource.keyboard,
+    this.textInputAction,
     List<TextFieldKeyboardHandler>? keyboardHandlers,
   })  : keyboardHandlers = keyboardHandlers ??
             (inputSource == TextInputSource.keyboard
@@ -122,6 +122,9 @@ class SuperDesktopTextField extends StatefulWidget {
   /// using [TextEditingDelta]s, so this list shouldn't include handlers
   /// that input text based on individual character key presses.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
+
+  /// The type of action associated with ENTER key.
+  final TextInputAction? textInputAction;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
@@ -400,6 +403,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                 focusNode: _focusNode,
                 textController: _controller,
                 isMultiline: isMultiline,
+                selectorHandlers: defaultTextFieldSelectorHandlers,
+                textInputAction: widget.textInputAction,
                 child: child,
               )
             : child,
@@ -984,6 +989,8 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
     required this.focusNode,
     required this.textController,
     required this.isMultiline,
+    required this.selectorHandlers,
+    this.textInputAction,
     required this.child,
   }) : super(key: key);
 
@@ -1000,6 +1007,15 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
   /// the [ProseTextLayout] widget that paints the text for this text field.
   final GlobalKey<ProseTextState> textKey;
 
+  /// Handlers for all Mac OS "selectors" reported by the IME.
+  ///
+  /// The IME reports selectors as unique `String`s, therefore selector handlers are
+  /// defined as a mapping from selector names to handler functions.
+  final Map<String, SuperTextFieldSelectorHandler> selectorHandlers;
+
+  /// The type of action associated with ENTER key.
+  final TextInputAction? textInputAction;
+
   /// The rest of the subtree for this text field.
   final Widget child;
 
@@ -1008,14 +1024,6 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
 }
 
 class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteractor> {
-  /// Map selector names to its handlers.
-  ///
-  /// Used on macOS to handle the `performSelector` call.
-  final Map<String, SuperTextFieldSelectorHandler> _selectorHandlers = defaultTextFieldSelectorHandlers;
-
-  /// Listen for `performSelector` calls.
-  late StreamSubscription<String> _onPerformSelectorSubscription;
-
   @override
   void initState() {
     super.initState();
@@ -1023,7 +1031,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
 
     widget.textController.inputConnectionNotifier.addListener(_reportVisualInformationToIme);
     widget.textController.onPerformActionPressed ??= _onPerformActionPressed;
-    _onPerformSelectorSubscription = widget.textController.onPerformSelector.listen(_onPerformSelector);
+    widget.textController.onPerformSelector ??= _onPerformSelector;
 
     if (widget.focusNode.hasFocus) {
       // We got an already focused FocusNode, we need to attach to the IME.
@@ -1045,14 +1053,15 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     }
 
     if (widget.textController != oldWidget.textController) {
-      _onPerformSelectorSubscription.cancel();
-      _onPerformSelectorSubscription = widget.textController.onPerformSelector.listen(_onPerformSelector);
-
       if (oldWidget.textController.onPerformActionPressed == _onPerformActionPressed) {
         oldWidget.textController.onPerformActionPressed = null;
       }
-
       widget.textController.onPerformActionPressed ??= _onPerformActionPressed;
+
+      if (oldWidget.textController.onPerformSelector == _onPerformSelector) {
+        oldWidget.textController.onPerformSelector = null;
+      }
+      widget.textController.onPerformSelector ??= _onPerformSelector;
     }
   }
 
@@ -1060,7 +1069,9 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   void dispose() {
     widget.focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
     widget.textController.inputConnectionNotifier.removeListener(_reportVisualInformationToIme);
-    _onPerformSelectorSubscription.cancel();
+    if (widget.textController.onPerformSelector == _onPerformSelector) {
+      widget.textController.onPerformSelector = null;
+    }
     super.dispose();
   }
 
@@ -1075,7 +1086,8 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
 
           widget.textController.attachToIme(
             textInputType: widget.isMultiline ? TextInputType.multiline : TextInputType.text,
-            textInputAction: widget.isMultiline ? TextInputAction.newline : TextInputAction.done,
+            textInputAction:
+                widget.textInputAction ?? (widget.isMultiline ? TextInputAction.newline : TextInputAction.done),
           );
         });
       }
@@ -1146,7 +1158,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   }
 
   void _onPerformSelector(String selectorName) {
-    final handler = _selectorHandlers[selectorName];
+    final handler = widget.selectorHandlers[selectorName];
     if (handler == null) {
       editorImeLog.warning("No handler found for $selectorName");
       return;
@@ -1158,11 +1170,20 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     );
   }
 
-  /// Handles actions from the IME
+  /// Handles actions from the IME.
   void _onPerformActionPressed(TextInputAction action) {
     switch (action) {
       case TextInputAction.newline:
         widget.textController.insertNewline();
+        break;
+      case TextInputAction.done:
+        widget.focusNode.unfocus();
+        break;
+      case TextInputAction.next:
+        widget.focusNode.nextFocus();
+        break;
+      case TextInputAction.previous:
+        widget.focusNode.previousFocus();
         break;
       default:
         _log.warning("User pressed unhandled action button: $action");
@@ -1603,7 +1624,11 @@ const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
-  DefaultSuperTextFieldKeyboardHandlers.doNothingOnMac,
+  // WARNING: No keyboard handlers below this point will run on Mac. On Mac, most
+  // common shortcuts are recognized by the OS. This line short circuits SuperTextField
+  // handlers, passing the key combo to the OS on Mac. Place all custom Mac key
+  // combos above this handler.
+  DefaultSuperTextFieldKeyboardHandlers.sendKeyEventToMacOs,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
@@ -2022,7 +2047,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
-  static TextFieldKeyboardHandlerResult doNothingOnMac({
+  static TextFieldKeyboardHandlerResult sendKeyEventToMacOs({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
     required RawKeyEvent keyEvent,
