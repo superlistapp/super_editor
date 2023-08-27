@@ -74,6 +74,9 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
   }
 
   KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
+    // Add the event before handling the key event, because the key handlers
+    // might also generate events.
+    // We add before the key is handled to make sure the events are ordered.
     int? logIndex = widget.textInputDebugger?.add(
       TextInputDebugEvent(
         method: 'onKey',

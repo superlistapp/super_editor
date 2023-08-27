@@ -29,6 +29,8 @@ class SuperEditorImeDebugger extends StatefulWidget {
 class _SuperEditorImeDebuggerState extends State<SuperEditorImeDebugger> {
   final ScrollController _scrollController = ScrollController();
 
+  bool _isExpanded = false;
+
   @override
   void initState() {
     super.initState();
@@ -59,31 +61,74 @@ class _SuperEditorImeDebuggerState extends State<SuperEditorImeDebugger> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          Expanded(
-            child: ListenableBuilder(
-              listenable: widget.debugger,
-              builder: (context, child) {
-                return ListView.separated(
+    return ColoredBox(
+      color: const Color(0xFF222222),
+      child: ListenableBuilder(
+        listenable: widget.debugger,
+        builder: (context, child) {
+          return Column(
+            children: [
+              _buildToolbar(),
+              Expanded(
+                child: ListView.separated(
                   controller: _scrollController,
                   itemCount: widget.debugger.events.length,
                   itemBuilder: (context, index) => _buildEvent(context, widget.debugger.events[index]),
                   separatorBuilder: (context, index) => SizedBox(height: 20),
-                );
-              },
-            ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildToolbar() {
+    return Material(
+      elevation: 5,
+      color: Colors.black,
+      child: SizedBox(
+        height: 40,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: widget.debugger.clear,
+                hoverColor: const Color(0xFF222222),
+                icon: Icon(
+                  Icons.clear,
+                  color: Colors.white,
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                hoverColor: const Color(0xFF222222),
+                icon: Icon(
+                  _isExpanded ? Icons.close_fullscreen : Icons.open_in_full,
+                  color: Colors.white,
+                ),
+              ),
+              Spacer(),
+              CircleAvatar(
+                maxRadius: 16,
+                backgroundColor: const Color(0xFF222222),
+                child: Text(
+                  widget.debugger.events.length.toString(),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: widget.debugger.clear,
-              child: Text('Clear'),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -94,7 +139,7 @@ class _SuperEditorImeDebuggerState extends State<SuperEditorImeDebugger> {
   Widget _buildEvent(BuildContext context, TextInputDebugEvent event) {
     Widget? content;
     for (final builder in widget.componentBuilders) {
-      content = builder(context, event);
+      content = builder(context, event, _isExpanded);
       if (content != null) {
         break;
       }
@@ -108,7 +153,8 @@ class _SuperEditorImeDebuggerState extends State<SuperEditorImeDebugger> {
   }
 }
 
-typedef TextInputDebugComponentBuilder = Widget? Function(BuildContext context, TextInputDebugEvent event);
+typedef TextInputDebugComponentBuilder = Widget? Function(
+    BuildContext context, TextInputDebugEvent event, bool detailed);
 
 /// Component builders that generate a visual representation for the events.
 const defaultTextInputDebugComponentBuilders = <TextInputDebugComponentBuilder>[
@@ -119,47 +165,50 @@ const defaultTextInputDebugComponentBuilders = <TextInputDebugComponentBuilder>[
 ];
 
 /// Build the widget for a `setEditingState` call.
-Widget? _buildSetEditingStateEvent(BuildContext context, TextInputDebugEvent event) {
+///
+/// When [detailed] is `false`, only the minimum relevant information should be shown.
+/// For example, when using an ExpansionTile, it should be expanded or collapsed based on [detailed].
+Widget? _buildSetEditingStateEvent(BuildContext context, TextInputDebugEvent event, bool detailed) {
   final textEditingValue = event.data;
   if (textEditingValue is! TextEditingValue) {
     return null;
   }
 
-  return ListTile(
+  return _ExpandableTile(
+    expanded: detailed,
     leading: Icon(
       Icons.arrow_upward,
       color: Colors.green,
     ),
     title: Text(
       event.method,
-      style: TextStyle(fontWeight: FontWeight.bold),
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: _fontColor,
+      ),
     ),
-    subtitle: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _createLabelAndValue(
-          label: 'Text',
-          text: textEditingValue.text,
-          selection: textEditingValue.selection,
-        ),
-        SizedBox(height: 5),
-        _createLabelAndValue(
-          label: 'Selection',
-          text: textEditingValue.selection.toString(),
-        ),
-        SizedBox(height: 5),
-        _createLabelAndValue(
-          label: 'Composing region',
-          text: textEditingValue.composing.toString(),
-        ),
-      ],
-    ),
+    children: [
+      _createLabelAndValue(
+        label: 'Text',
+        text: textEditingValue.text,
+        selection: textEditingValue.selection,
+      ),
+      SizedBox(height: 5),
+      _createLabelAndValue(
+        label: 'Selection',
+        text: textEditingValue.selection.toString(),
+      ),
+      SizedBox(height: 5),
+      _createLabelAndValue(
+        label: 'Composing region',
+        text: textEditingValue.composing.toString(),
+      ),
+    ],
   );
 }
 
 /// Build the widget for an `updateEditingStateWithDeltas` call.
-Widget? _buildTextDeltaEvents(BuildContext context, TextInputDebugEvent event) {
+Widget? _buildTextDeltaEvents(BuildContext context, TextInputDebugEvent event, bool detailed) {
   final params = event.data;
   if (params is! List<TextEditingDelta>) {
     return null;
@@ -186,22 +235,20 @@ Widget? _buildTextDeltaEvents(BuildContext context, TextInputDebugEvent event) {
       return SizedBox();
     },
   ).toList();
-  return ListTile(
+  return _ExpandableTile(
+    expanded: detailed,
     leading: Icon(
       Icons.arrow_downward,
       color: Colors.blue,
     ),
     title: Text(
       event.method,
-      style: TextStyle(fontWeight: FontWeight.bold),
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: _fontColor,
+      ),
     ),
-    subtitle: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ...deltaComponents,
-      ],
-    ),
+    children: deltaComponents,
   );
 }
 
@@ -371,53 +418,65 @@ Widget _buildNonTextDeltaEvent(BuildContext context, TextEditingDeltaNonTextUpda
 }
 
 /// Build the widget for an `onKey` call.
-Widget? _buildKeyEvent(BuildContext context, TextInputDebugEvent event) {
+Widget? _buildKeyEvent(BuildContext context, TextInputDebugEvent event, bool detailed) {
   final keyEvent = event.data;
   if (keyEvent is! RawKeyDownEvent) {
     return null;
   }
 
-  return ListTile(
+  return _ExpandableTile(
+    expanded: detailed,
     leading: Icon(
       Icons.arrow_downward,
       color: Colors.blue,
     ),
     title: Text(
       event.method,
-      style: TextStyle(fontWeight: FontWeight.bold),
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: _fontColor,
+      ),
     ),
-    subtitle: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _createLabelAndValue(
-          label: 'Key',
-          text: keyEvent.data.physicalKey.debugName ?? keyEvent.data.keyLabel,
-        ),
-      ],
-    ),
+    children: [
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _createLabelAndValue(
+            label: 'Key',
+            text: keyEvent.data.physicalKey.debugName ?? keyEvent.data.keyLabel,
+          ),
+        ],
+      ),
+    ],
   );
 }
 
 /// Build the widget for any given [event].
-Widget _buildGenericEvent(BuildContext context, TextInputDebugEvent event) {
-  return ListTile(
+Widget _buildGenericEvent(BuildContext context, TextInputDebugEvent event, bool detailed) {
+  return _ExpandableTile(
+    expanded: detailed,
     leading: Icon(
       Icons.info,
       color: Colors.blue,
     ),
     title: Text(
       event.method,
-      style: TextStyle(fontWeight: FontWeight.bold),
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: _fontColor,
+      ),
     ),
-    subtitle: Text(event.data.toString()),
+    children: [
+      Text(event.data.toString()),
+    ],
   );
 }
 
 /// Applies styles to highlight text insertions and deletions.
 TextStyle _deltaTextStyler(Set<Attribution> attributions) {
   TextStyle newStyle = TextStyle(
-    color: Colors.black,
+    color: Color(0xFFCCCCCC),
     fontSize: 14,
   );
 
@@ -494,3 +553,62 @@ const _insertedTextAttribution = const NamedAttribution('textInsertedAttribution
 
 /// [Attribution] which marks a range as removed.
 const _textRemovedAttribution = const NamedAttribution('textRemovedAttribution');
+
+const _fontColor = Color(0xFFCCCCCC);
+
+/// An [ExpansionTile] which expands and collapses based on [expanded].
+class _ExpandableTile extends StatefulWidget {
+  const _ExpandableTile({
+    required this.title,
+    required this.leading,
+    required this.children,
+    required this.expanded,
+  });
+
+  /// The primary content of the tile.
+  final Widget title;
+
+  /// A widget to display before the [title].
+  final Widget leading;
+
+  /// Controls if the tile is expanded or collapsed.
+  final bool expanded;
+
+  /// The widgets that are displayed when the tile is expanded.
+  final List<Widget> children;
+
+  @override
+  State<_ExpandableTile> createState() => _ExpandableTileState();
+}
+
+class _ExpandableTileState extends State<_ExpandableTile> {
+  final ExpansionTileController _controller = ExpansionTileController();
+
+  @override
+  void didUpdateWidget(covariant _ExpandableTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.expanded != widget.expanded) {
+      if (widget.expanded) {
+        _controller.expand();
+      } else {
+        _controller.collapse();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ExpansionTile(
+      controller: _controller,
+      expandedCrossAxisAlignment: CrossAxisAlignment.start,
+      expandedAlignment: Alignment.topLeft,
+      collapsedIconColor: Colors.white,
+      iconColor: Colors.white,
+      childrenPadding: EdgeInsets.all(8.0),
+      leading: widget.leading,
+      title: widget.title,
+      initiallyExpanded: widget.expanded,
+      children: widget.children,
+    );
+  }
+}
