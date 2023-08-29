@@ -1417,10 +1417,18 @@ class CommonEditorOperations {
       return false;
     }
 
+    late Set<Attribution>? replacedTextAttributions;
+
     if (!composer.selection!.isCollapsed) {
       // The selection is expanded. Delete the selected content
       // and then insert the new text.
       editorOpsLog.fine("The selection is expanded. Deleting the selection before inserting text.");
+
+      // As we are replacing text by deleting the selection and then inserting the new text,
+      // we need to store the current attributions.
+      // This is required as deleting text can clear the composer current attributions.
+      // Without this, the new text doesn't preserve the attributions of the replaced text.
+      replacedTextAttributions = {...composer.preferences.currentAttributions};
       _deleteExpandedSelection();
     }
 
@@ -1442,9 +1450,18 @@ class CommonEditorOperations {
       InsertTextRequest(
         documentPosition: composer.selection!.extent,
         textToInsert: text,
-        attributions: composer.preferences.currentAttributions,
+        attributions: replacedTextAttributions ?? composer.preferences.currentAttributions,
       ),
     ]);
+
+    if (replacedTextAttributions != null) {
+      // As we are replacing text we restore the composer current attributions.
+      // This is needed to ensure that, after replacing the text, newly inserted characters
+      // will use the existing attributions.
+      composer.preferences
+        ..clearStyles()
+        ..addStyles(replacedTextAttributions);
+    }
 
     return true;
   }
