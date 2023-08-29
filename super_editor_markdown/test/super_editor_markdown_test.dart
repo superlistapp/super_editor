@@ -1,5 +1,5 @@
-import 'package:super_editor/super_editor.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 void main() {
@@ -30,6 +30,64 @@ void main() {
 
         (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header6Attribution);
         expect(serializeDocumentToMarkdown(doc), '###### My Header');
+      });
+
+      test('header with left alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText('Header1'),
+            metadata: {
+              'textAlign': 'left',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+        // Even when using superEditor markdown syntax, which has support
+        // for text alignment, we don't add an alignment token when
+        // the paragraph is left-aligned.
+        // Paragraphs are left-aligned by default, so it isn't necessary
+        // to serialize the alignment token.
+        expect(serializeDocumentToMarkdown(doc), '# Header1');
+      });
+      test('header with center alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText('Header1'),
+            metadata: {
+              'textAlign': 'center',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+        expect(serializeDocumentToMarkdown(doc), ':---:\n# Header1');
+      });
+      test('header with right alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText('Header1'),
+            metadata: {
+              'textAlign': 'right',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+        expect(serializeDocumentToMarkdown(doc), '---:\n# Header1');
+      });
+      test('header with justify alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText('Header1'),
+            metadata: {
+              'textAlign': 'justify',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+        expect(serializeDocumentToMarkdown(doc), '-::-\n# Header1');
       });
 
       test('header with styles', () {
