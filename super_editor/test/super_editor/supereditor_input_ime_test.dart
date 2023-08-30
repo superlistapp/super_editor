@@ -1055,6 +1055,105 @@ Paragraph two
         );
       });
     });
+
+    group('applies keyboard appearance', () {
+      testWidgetsOnIos('dark from theme', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .useAppTheme(ThemeData.dark())
+            .pump();
+
+        // Holds the keyboard appearance sent to the platform.
+        String? keyboardAppearance;
+
+        // Intercept the setClient message sent to the platform so we can check
+        // the keyboardAppearance that was sent.
+        tester
+            .interceptChannel(SystemChannels.textInput.name) //
+            .interceptMethod(
+          'TextInput.setClient',
+          (methodCall) {
+            final params = methodCall.arguments[1] as Map;
+            keyboardAppearance = params['keyboardAppearance'];
+            return null;
+          },
+        );
+
+        // Place the caret at the empty paragraph to trigger the software keyboard.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Ensure the given keyboardAppearance was applied.
+        expect(keyboardAppearance, 'Brightness.dark');
+      });
+
+      testWidgetsOnIos('light from theme', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .useAppTheme(ThemeData.light())
+            .pump();
+
+        // Holds the keyboard appearance sent to the platform.
+        String? keyboardAppearance;
+
+        // Intercept the setClient message sent to the platform so we can check
+        // the keyboardAppearance that was sent.
+        tester
+            .interceptChannel(SystemChannels.textInput.name) //
+            .interceptMethod(
+          'TextInput.setClient',
+          (methodCall) {
+            final params = methodCall.arguments[1] as Map;
+            keyboardAppearance = params['keyboardAppearance'];
+            return null;
+          },
+        );
+
+        // Place the caret at the empty paragraph to trigger the software keyboard.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Ensure the given keyboardAppearance was applied.
+        expect(keyboardAppearance, 'Brightness.light');
+      });
+
+      testWidgetsOnIos('from the given configuration', (tester) async {
+        // Pump an editor with a light theme to ensure we are a configuration
+        // with different brightness.
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .useAppTheme(ThemeData.light())
+            .withImeConfiguration(
+              const SuperEditorImeConfiguration(
+                keyboardBrightness: Brightness.dark,
+              ),
+            )
+            .pump();
+
+        // Holds the keyboard appearance sent to the platform.
+        String? keyboardAppearance;
+
+        // Intercept the setClient message sent to the platform so we can check
+        // the keyboardAppearance that was sent.
+        tester
+            .interceptChannel(SystemChannels.textInput.name) //
+            .interceptMethod(
+          'TextInput.setClient',
+          (methodCall) {
+            final params = methodCall.arguments[1] as Map;
+            keyboardAppearance = params['keyboardAppearance'];
+            return null;
+          },
+        );
+
+        // Place the caret at the empty paragraph to trigger the software keyboard.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Ensure the given keyboardAppearance was applied.
+        expect(keyboardAppearance, 'Brightness.dark');
+      });
+    });
   });
 }
 

@@ -106,7 +106,7 @@ class SuperEditor extends StatefulWidget {
     this.inputSource,
     this.softwareKeyboardController,
     this.imePolicies = const SuperEditorImePolicies(),
-    this.imeConfiguration = const SuperEditorImeConfiguration(),
+    this.imeConfiguration,
     this.imeOverrides,
     this.keyboardActions,
     this.selectorHandlers,
@@ -198,7 +198,7 @@ class SuperEditor extends StatefulWidget {
   final SuperEditorImePolicies imePolicies;
 
   /// Preferences for how the platform IME should look and behave during editing.
-  final SuperEditorImeConfiguration imeConfiguration;
+  final SuperEditorImeConfiguration? imeConfiguration;
 
   /// Overrides for IME actions.
   ///
@@ -581,7 +581,10 @@ class SuperEditorState extends State<SuperEditor> {
           clearSelectionWhenImeConnectionCloses: widget.selectionPolicies.clearSelectionWhenImeConnectionCloses,
           softwareKeyboardController: widget.softwareKeyboardController,
           imePolicies: widget.imePolicies,
-          imeConfiguration: widget.imeConfiguration,
+          imeConfiguration: widget.imeConfiguration ??
+              SuperEditorImeConfiguration(
+                keyboardBrightness: Theme.of(context).brightness,
+              ),
           imeOverrides: widget.imeOverrides,
           hardwareKeyboardActions: [
             for (final plugin in widget.plugins) //
