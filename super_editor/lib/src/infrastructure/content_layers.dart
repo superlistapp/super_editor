@@ -192,11 +192,6 @@ class ContentLayersElement extends RenderObjectElement {
       return true;
     }
 
-    // if (element.renderObject?.debugNeedsLayout == true) {
-    //   contentLayersLog.finest("Found a dirty render object: $element, ${element.renderObject}");
-    //   return true;
-    // }
-
     bool isDirty = false;
     element.visitChildren((childElement) {
       isDirty = isDirty || _isSubtreeDirty(childElement);
