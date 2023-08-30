@@ -190,6 +190,12 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] to use the given selector [handlers].
+  TestSuperEditorConfigurator withSelectorHandlers(Map<String, SuperEditorSelectorHandler> handlers) {
+    _config.selectorHandlers = handlers;
+    return this;
+  }
+
   /// Configures the [SuperEditor] to use the given [gestureMode].
   TestSuperEditorConfigurator withGestureMode(DocumentGestureMode gestureMode) {
     _config.gestureMode = gestureMode;
@@ -405,6 +411,7 @@ class TestSuperEditorConfigurator {
         ...(_config.inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions),
         ..._config.appendedKeyboardActions,
       ],
+      selectorHandlers: _config.selectorHandlers,
       gestureMode: _config.gestureMode,
       androidToolbarBuilder: _config.androidToolbarBuilder,
       iOSToolbarBuilder: _config.iOSToolbarBuilder,
@@ -442,6 +449,7 @@ class SuperEditorTestConfiguration {
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;
   DeltaTextInputClientDecorator? imeOverrides;
+  Map<String, SuperEditorSelectorHandler>? selectorHandlers;
   final prependedKeyboardActions = <DocumentKeyboardAction>[];
   final appendedKeyboardActions = <DocumentKeyboardAction>[];
   final addedComponents = <ComponentBuilder>[];

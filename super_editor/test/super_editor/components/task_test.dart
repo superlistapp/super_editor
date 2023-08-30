@@ -9,7 +9,6 @@ import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../test_tools.dart';
-import '../supereditor_test_tools.dart';
 
 void main() {
   group("SuperEditor task component", () {

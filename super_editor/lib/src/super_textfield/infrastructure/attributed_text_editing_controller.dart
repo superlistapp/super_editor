@@ -933,6 +933,22 @@ class AttributedTextEditingController with ChangeNotifier {
     }
   }
 
+  void deleteTextOnLineAfterCaret({
+    required ProseTextLayout textLayout,
+  }) {
+    assert(selection.isCollapsed);
+
+    final endOfLinePosition = textLayout.getPositionAtEndOfLine(selection.extent);
+    selection = TextSelection(
+      baseOffset: selection.extentOffset,
+      extentOffset: endOfLinePosition.offset,
+    );
+
+    if (!selection.isCollapsed) {
+      deleteSelectedText();
+    }
+  }
+
   void deleteSelectedText() {
     assert(!selection.isCollapsed);
 

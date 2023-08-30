@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -164,6 +165,44 @@ void main() {
       // Ensure that the editor didn't receive the performAction call, and didn't
       // insert a new node.
       expect(document.nodes.length, 1);
+    });
+
+    testWidgetsOnMac('allows apps to handle selectors in their own way', (tester) async {
+      bool customHandlerCalled = false;
+
+      await tester //
+          .createDocument()
+          .withCustomContent(
+            MutableDocument(
+              nodes: [ParagraphNode(id: '1', text: AttributedText('First paragraph'))],
+            ),
+          )
+          .withInputSource(TextInputSource.ime)
+          .withSelectorHandlers({
+        MacOsSelectors.moveRight: (context) {
+          customHandlerCalled = true;
+        },
+      }).pump();
+
+      // Place the caret at the beginning of the document.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Press right arrow key to trigger the MacOsSelectors.moveRight selector.
+      await tester.pressRightArrow();
+
+      // Ensure the custom handler was called.
+      expect(customHandlerCalled, isTrue);
+
+      // Ensure that the editor didn't execute the default handler for the MacOsSelectors.moveRight selector.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 0),
+          ),
+        ),
+      );
     });
 
     testWidgetsOnAllPlatforms('applies list of deltas the way some IMEs report them', (tester) async {
