@@ -700,10 +700,10 @@ class _TaskSyntax extends md.BlockSyntax {
 
 /// Parses a header preceded by an alignment token.
 class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
-  /// This pattern matches the text aligment notation.
+  /// This pattern matches the text alignment notation.
   ///
-  /// Possible values are `:---`, `:---:` and `---:`
-  static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:$');
+  /// Possible values are `:---`, `:---:`, `---:` and `-::-`.
+  static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:|-::-$');
 
   /// Use internal HeaderSyntax
   final _headerSyntax = const md.HeaderSyntax();
