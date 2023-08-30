@@ -559,6 +559,8 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       }
 
       return TextNodePosition(offset: newOffset);
+    } else if (movementModifier == MovementModifier.paragraph) {
+      return const TextNodePosition(offset: 0);
     }
 
     final newOffset = getAllText().moveOffsetUpstreamByCharacter(textPosition.offset);
@@ -603,13 +605,15 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
           ? TextNodePosition(offset: endOfLine.offset - 1)
           : TextNodePosition.fromTextPosition(endOfLine);
     }
-    if (movementModifier != null && movementModifier == MovementModifier.word) {
+    if (movementModifier == MovementModifier.word) {
       final newOffset = getAllText().moveOffsetDownstreamByWord(textPosition.offset);
       if (newOffset == null) {
         return textPosition;
       }
 
       return TextNodePosition(offset: newOffset);
+    } else if (movementModifier == MovementModifier.paragraph) {
+      return TextNodePosition(offset: getAllText().length);
     }
 
     final newOffset = getAllText().moveOffsetDownstreamByCharacter(textPosition.offset);

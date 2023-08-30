@@ -654,6 +654,134 @@ class CommonEditorOperations {
     return true;
   }
 
+  /// Moves the [DocumentComposer]'s selection extent to the beginning of the document.
+  ///
+  /// Expands/contracts the selection if [expand] is `true`, otherwise
+  /// collapses the selection or keeps it collapsed.
+  ///
+  /// Returns `true` if the extent moved, or the selection changed, e.g., the
+  /// selection collapsed but the extent stayed in the same place. Returns
+  /// `false` if the extent did not move and the selection did not change.
+  bool moveSelectionToBeginningOfDocument({
+    bool expand = false,
+  }) {
+    if (composer.selection == null) {
+      return false;
+    }
+
+    if (document.nodes.isEmpty) {
+      return false;
+    }
+
+    final firstNode = document.nodes.first;
+
+    if (expand) {
+      final currentExtentNode = document.getNodeById(composer.selection!.extent.nodeId);
+      if (currentExtentNode == null) {
+        return false;
+      }
+
+      if (currentExtentNode is! TextNode) {
+        return false;
+      }
+
+      editor.execute([
+        ChangeSelectionRequest(
+          DocumentSelection(
+            base: composer.selection!.base,
+            extent: DocumentPosition(
+              nodeId: firstNode.id,
+              nodePosition: firstNode.beginningPosition,
+            ),
+          ),
+          SelectionChangeType.expandSelection,
+          SelectionReason.userInteraction,
+        ),
+      ]);
+
+      return true;
+    }
+
+    editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: firstNode.id,
+            nodePosition: firstNode.beginningPosition,
+          ),
+        ),
+        SelectionChangeType.placeCaret,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+
+    return true;
+  }
+
+  /// Moves the [DocumentComposer]'s selection extent to the end of the document.
+  ///
+  /// Expands/contracts the selection if [expand] is `true`, otherwise
+  /// collapses the selection or keeps it collapsed.
+  ///
+  /// Returns `true` if the extent moved, or the selection changed, e.g., the
+  /// selection collapsed but the extent stayed in the same place. Returns
+  /// `false` if the extent did not move and the selection did not change.
+  bool moveSelectionToEndOfDocument({
+    bool expand = false,
+  }) {
+    if (composer.selection == null) {
+      return false;
+    }
+
+    if (document.nodes.isEmpty) {
+      return false;
+    }
+
+    final lastNode = document.nodes.last;
+
+    if (expand) {
+      final currentExtentNode = document.getNodeById(composer.selection!.extent.nodeId);
+      if (currentExtentNode == null) {
+        return false;
+      }
+
+      if (currentExtentNode is! TextNode) {
+        return false;
+      }
+
+      editor.execute([
+        ChangeSelectionRequest(
+          DocumentSelection(
+            base: composer.selection!.base,
+            extent: DocumentPosition(
+              nodeId: lastNode.id,
+              nodePosition: lastNode.endPosition,
+            ),
+          ),
+          SelectionChangeType.expandSelection,
+          SelectionReason.userInteraction,
+        ),
+      ]);
+
+      return true;
+    }
+
+    editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: lastNode.id,
+            nodePosition: lastNode.endPosition,
+          ),
+        ),
+        SelectionChangeType.placeCaret,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+
+    return true;
+  }
+
   void _updateSelectionExtent({
     required DocumentPosition position,
     required bool expandSelection,

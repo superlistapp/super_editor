@@ -200,6 +200,44 @@ ExecutionInstruction doNothingWhenThereIsNoSelection({
   }
 }
 
+ExecutionInstruction sendKeyEventToMacOs({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (defaultTargetPlatform == TargetPlatform.macOS && !isWeb) {
+    // On macOS, we let the IME handle all key events. Then, the IME might generate
+    // selectors which express the user intent, e.g, moveLeftAndModifySelection:.
+    //
+    // For the full list of selectors handled by SuperEditor, see the MacOsSelectors class.
+    //
+    // This is needed for the interaction with the accent panel to work.
+    return ExecutionInstruction.blocked;
+  }
+
+  return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction deleteDownstreamCharacterWithCtrlDeleteOnMac({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (defaultTargetPlatform != TargetPlatform.macOS) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.delete || !keyEvent.isControlPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final didDelete = editContext.commonOps.deleteDownstream();
+
+  return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
 ExecutionInstruction pasteWhenCmdVIsPressed({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
@@ -478,9 +516,27 @@ ExecutionInstruction moveUpAndDownWithArrowKeys({
 
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
-    didMove = editContext.commonOps.moveCaretUp(expand: keyEvent.isShiftPressed);
+    if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+      didMove = editContext.commonOps.moveCaretUpstream(
+        expand: keyEvent.isShiftPressed,
+        movementModifier: MovementModifier.paragraph,
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+      didMove = editContext.commonOps.moveSelectionToBeginningOfDocument(expand: keyEvent.isShiftPressed);
+    } else {
+      didMove = editContext.commonOps.moveCaretUp(expand: keyEvent.isShiftPressed);
+    }
   } else {
-    didMove = editContext.commonOps.moveCaretDown(expand: keyEvent.isShiftPressed);
+    if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+      didMove = editContext.commonOps.moveCaretDownstream(
+        expand: keyEvent.isShiftPressed,
+        movementModifier: MovementModifier.paragraph,
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+      didMove = editContext.commonOps.moveSelectionToEndOfDocument(expand: keyEvent.isShiftPressed);
+    } else {
+      didMove = editContext.commonOps.moveCaretDown(expand: keyEvent.isShiftPressed);
+    }
   }
 
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;

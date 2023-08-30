@@ -9,7 +9,6 @@ import 'package:super_editor/super_editor_test.dart';
 import '../test_tools.dart';
 import '../test_tools_user_input.dart';
 import 'supereditor_test_tools.dart';
-import 'test_documents.dart';
 
 void main() {
   group('Super Editor keyboard actions', () {
@@ -91,6 +90,212 @@ void main() {
               ),
             );
           });
+
+          testWidgetsOnMac('beginning of paragraph with OPTION + UP ARROW', (tester) async {
+            await _pumpTwoParagraphsTestApp(
+              tester,
+              inputSource: inputSourceVariant.currentValue!,
+            );
+
+            // Place caret at the end of the second paragraph.
+            await tester.placeCaretInParagraph('2', 36);
+
+            // Press option + up arrow.
+            await tester.pressAltUpArrow();
+
+            // Ensure that the caret moved to the beginning of the paragraph.
+            expect(
+              SuperEditorInspector.findDocumentSelection(),
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: "2",
+                  nodePosition: TextNodePosition(offset: 0),
+                ),
+              ),
+            );
+          }, variant: inputSourceVariant);
+
+          testWidgetsOnMac('end of paragraph with OPTION + DOWN ARROW', (tester) async {
+            await _pumpTwoParagraphsTestApp(
+              tester,
+              inputSource: inputSourceVariant.currentValue!,
+            );
+
+            // Place caret at the beginning of the first paragraph.
+            await tester.placeCaretInParagraph('1', 0);
+
+            // Press option + down arrow.
+            await tester.pressAltDownArrow();
+
+            // Ensure that the caret moved to the beginning of the paragraph.
+            expect(
+              SuperEditorInspector.findDocumentSelection(),
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 35),
+                ),
+              ),
+            );
+          }, variant: inputSourceVariant);
+
+          testWidgetsOnMac('beginning of document with CMD + UP ARROW', (tester) async {
+            await _pumpTwoParagraphsTestApp(
+              tester,
+              inputSource: inputSourceVariant.currentValue!,
+            );
+
+            // Place caret at the end of the second paragraph.
+            await tester.placeCaretInParagraph('2', 36);
+
+            await tester.pressCmdUpArrow();
+
+            // Ensure that the caret moved to the beginning of the document.
+            expect(
+              SuperEditorInspector.findDocumentSelection(),
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 0),
+                ),
+              ),
+            );
+          }, variant: inputSourceVariant);
+
+          testWidgetsOnMac('end of document with CMD + DOWN ARROW', (tester) async {
+            await _pumpTwoParagraphsTestApp(
+              tester,
+              inputSource: inputSourceVariant.currentValue!,
+            );
+
+            // Place caret at the beginning of the first paragraph.
+            await tester.placeCaretInParagraph('1', 0);
+
+            await tester.pressCmdDownArrow();
+
+            // Ensure that the caret moved to the end of the document.
+            expect(
+              SuperEditorInspector.findDocumentSelection(),
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: "2",
+                  nodePosition: TextNodePosition(offset: 36),
+                ),
+              ),
+            );
+          }, variant: inputSourceVariant);
+        });
+
+        group("expands to", () {
+          testWidgetsOnMac('beginning of paragraph with SHIFT + OPTION + UP ARROW', (tester) async {
+            await _pumpTwoParagraphsTestApp(
+              tester,
+              inputSource: inputSourceVariant.currentValue!,
+            );
+
+            // Place caret at the end of the second paragraph.
+            await tester.placeCaretInParagraph('2', 36);
+
+            // Press shift option + up arrow.
+            await _pressShiftAltUpArrow(tester);
+
+            // Ensure that the selection expanded to the beginning of the paragraph.
+            expect(
+              SuperEditorInspector.findDocumentSelection(),
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "2",
+                  nodePosition: TextNodePosition(offset: 36, affinity: TextAffinity.upstream),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "2",
+                  nodePosition: TextNodePosition(offset: 0),
+                ),
+              ),
+            );
+          }, variant: inputSourceVariant);
+
+          testWidgetsOnMac('end of paragraph with SHIFT + OPTION + DOWN ARROW', (tester) async {
+            await _pumpTwoParagraphsTestApp(
+              tester,
+              inputSource: inputSourceVariant.currentValue!,
+            );
+
+            // Place caret at the beginning of the first paragraph.
+            await tester.placeCaretInParagraph('1', 0);
+
+            // Press shift + option + down arrow.
+            await _pressShiftAltDownArrow(tester);
+
+            // Ensure that the selection expanded to the end of the paragraph.
+            expect(
+              SuperEditorInspector.findDocumentSelection(),
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 0),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 35),
+                ),
+              ),
+            );
+          }, variant: inputSourceVariant);
+
+          testWidgetsOnMac('beginning of document with SHIFT + CMD + UP ARROW', (tester) async {
+            await _pumpTwoParagraphsTestApp(
+              tester,
+              inputSource: inputSourceVariant.currentValue!,
+            );
+
+            // Place caret at the end of the second paragraph.
+            await tester.placeCaretInParagraph('2', 36);
+
+            await tester.pressShiftCmdUpArrow();
+
+            // Ensure that the selection expanded to the beginning of the document.
+            expect(
+              SuperEditorInspector.findDocumentSelection(),
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "2",
+                  nodePosition: TextNodePosition(offset: 36, affinity: TextAffinity.upstream),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 0),
+                ),
+              ),
+            );
+          }, variant: inputSourceVariant);
+
+          testWidgetsOnMac('end of document with SHIFT + CMD + DOWN ARROW', (tester) async {
+            await _pumpTwoParagraphsTestApp(
+              tester,
+              inputSource: inputSourceVariant.currentValue!,
+            );
+
+            // Place caret at the beginning of the first paragraph.
+            await tester.placeCaretInParagraph('1', 0);
+
+            await tester.pressShiftCmdDownArrow();
+
+            // Ensure that the selection expanded to the end of the document.
+            expect(
+              SuperEditorInspector.findDocumentSelection(),
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 0),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "2",
+                  nodePosition: TextNodePosition(offset: 36),
+                ),
+              ),
+            );
+          }, variant: inputSourceVariant);
         });
 
         testWidgetsOnMac("option + backspace: deletes a word upstream", (tester) async {
@@ -1545,6 +1750,35 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
       .pump();
 }
 
+/// Pumps a [SuperEditor] with a document with two multi-line paragraphs.
+Future<TestDocumentContext> _pumpTwoParagraphsTestApp(
+  WidgetTester tester, {
+  required TextInputSource inputSource,
+}) async {
+  final context = await tester //
+      .createDocument()
+      .withCustomContent(MutableDocument(
+        nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              'First paragraph\nwith multiple lines',
+            ),
+          ),
+          ParagraphNode(
+            id: '2',
+            text: AttributedText(
+              'Second paragraph\nwith multiple lines',
+            ),
+          ),
+        ],
+      ))
+      .withInputSource(inputSource)
+      .pump();
+
+  return context;
+}
+
 /// Variant for an editor experience with an internal scrollable and
 /// an ancestor scrollable.
 final _scrollingVariant = ValueVariant<_PageScrollSetup>({
@@ -1663,6 +1897,26 @@ Future<void> _pressCtrlEnd(WidgetTester tester) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.end, platform: 'macos');
   await tester.sendKeyUpEvent(LogicalKeyboardKey.control, platform: 'macos');
   await tester.sendKeyUpEvent(LogicalKeyboardKey.end, platform: 'macos');
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pressShiftAltUpArrow(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.shift, platform: 'macos');
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowUp, platform: 'macos');
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowUp, platform: 'macos');
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.shift, platform: 'macos');
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pressShiftAltDownArrow(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.shift, platform: 'macos');
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowDown, platform: 'macos');
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowDown, platform: 'macos');
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.shift, platform: 'macos');
   await tester.pumpAndSettle();
 }
 
