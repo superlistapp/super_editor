@@ -180,10 +180,57 @@ void main() {
           // Ensure we sent the value back to the IME.
           expect(sentToPlatform, true);
         });
+
+        testWidgetsOnAllPlatforms(
+            'and don\'t send editing value back to the IME on replacements if matches the expected value',
+            (tester) async {
+          final controller = ImeAttributedTextEditingController(
+            controller: AttributedTextEditingController(
+              text: AttributedText('-->REPLACE'),
+            ),
+          );
+
+          await _pumpSuperTextField(tester, controller);
+
+          // Select the word REPLACE.
+          await tester.doubleTapAtSuperTextField(3);
+
+          bool sentToPlatform = false;
+
+          // Intercept the setEditingState message sent to the platform to check if we sent the value
+          // back to the IME.
+          tester
+              .interceptChannel(SystemChannels.textInput.name) //
+              .interceptMethod(
+            'TextInput.setEditingState',
+            (methodCall) {
+              if (methodCall.method == 'TextInput.setEditingState') {
+                sentToPlatform = true;
+              }
+              return null;
+            },
+          );
+
+          // Simulate the IME sending a replacement with a non-empty composing region.
+          await tester.ime.sendDeltas([
+            const TextEditingDeltaReplacement(
+              oldText: '-->REPLACE',
+              replacementText: 'a',
+              replacedRange: TextRange(start: 3, end: 10),
+              selection: TextSelection.collapsed(offset: 4),
+              composing: TextRange(start: 3, end: 4),
+            ),
+          ], getter: imeClientGetter);
+
+          // Ensure we send the value back to the IME.
+          //
+          // As both us and the IME agree on what's the current editing value, we don't need to send it back.
+          expect(sentToPlatform, false);
+        });
       });
 
       group('inserts line', () {
-        testWidgetsOnDesktop('when ENTER is pressed in middle of text', (tester) async {
+        testWidgetsOnWindowsAndLinux('when ENTER is pressed in middle of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -198,7 +245,25 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
         });
 
-        testWidgetsOnDesktop('when ENTER is pressed at beginning of text', (tester) async {
+        testWidgetsOnMac('when ENTER is pressed in middle of text (on MAC)', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText('this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(8);
+
+          // Simulate the user pressing ENTER.
+          // On macOS, pressing ENTER generates a new line input action.
+          await tester.testTextInput.receiveAction(TextInputAction.newline);
+          await tester.pump();
+
+          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
+        });
+
+        testWidgetsOnWindowsAndLinux('when ENTER is pressed at beginning of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -213,7 +278,25 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
-        testWidgetsOnDesktop('when ENTER is pressed at end of text', (tester) async {
+        testWidgetsOnMac('when ENTER is pressed at beginning of text (on MAC)', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText('this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(0);
+
+          // Simulate the user pressing ENTER.
+          // On macOS, pressing ENTER generates a new line input action.
+          await tester.testTextInput.receiveAction(TextInputAction.newline);
+          await tester.pump();
+
+          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
+        });
+
+        testWidgetsOnWindowsAndLinux('when ENTER is pressed at end of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -228,7 +311,25 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
         });
 
-        testWidgetsOnDesktop('when NUMPAD ENTER is pressed in middle of text', (tester) async {
+        testWidgetsOnMac('when ENTER is pressed at end of text (on MAC)', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText('this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(17);
+
+          // Simulate the user pressing ENTER.
+          // On macOS, pressing ENTER generates a new line input action.
+          await tester.testTextInput.receiveAction(TextInputAction.newline);
+          await tester.pump();
+
+          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
+        });
+
+        testWidgetsOnWindowsAndLinux('when NUMPAD ENTER is pressed in middle of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -243,7 +344,25 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
         });
 
-        testWidgetsOnDesktop('when NUMPAD ENTER is pressed at beginning of text', (tester) async {
+        testWidgetsOnMac('when NUMPAD ENTER is pressed in middle of text (on MAC)', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText('this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(8);
+
+          // Simulate the user pressing ENTER.
+          // On macOS, pressing ENTER generates a new line input action.
+          await tester.testTextInput.receiveAction(TextInputAction.newline);
+          await tester.pump();
+
+          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
+        });
+
+        testWidgetsOnWindowsAndLinux('when NUMPAD ENTER is pressed at beginning of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -258,7 +377,25 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
-        testWidgetsOnDesktop('when NUMPAD ENTER is pressed at end of text', (tester) async {
+        testWidgetsOnMac('when NUMPAD ENTER is pressed at beginning of text (on MAC)', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText('this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(0);
+
+          // Simulate the user pressing ENTER.
+          // On macOS, pressing ENTER generates a new line input action.
+          await tester.testTextInput.receiveAction(TextInputAction.newline);
+          await tester.pump();
+
+          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
+        });
+
+        testWidgetsOnWindowsAndLinux('when NUMPAD ENTER is pressed at end of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -268,6 +405,24 @@ void main() {
           await tester.placeCaretInSuperTextField(17);
 
           await tester.pressNumpadEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
+        });
+
+        testWidgetsOnMac('when NUMPAD ENTER is pressed at end of text (on MAC)', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText('this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(17);
+
+          // Simulate the user pressing ENTER.
+          // On macOS, pressing ENTER generates a new line input action.
+          await tester.testTextInput.receiveAction(TextInputAction.newline);
+          await tester.pump();
 
           expect(SuperTextFieldInspector.findText().text, "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
