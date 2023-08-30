@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
+
+import '../super_editor/supereditor_test_tools.dart';
 
 void main() {
   group("Content layers", () {
@@ -284,6 +290,7 @@ void main() {
     testWidgets("re-uses layer Elements instead of always re-inflating layer Widgets", (tester) async {
       final rebuildSignal = ValueNotifier<int>(0);
       final buildTracker = ValueNotifier<int>(0);
+      final contentKey = GlobalKey();
       final contentLayoutCount = ValueNotifier<int>(0);
       final underlayElementTracker = ValueNotifier<Element?>(null);
       Element? underlayElement;
@@ -294,6 +301,7 @@ void main() {
         tester,
         child: ContentLayers(
           content: (_) => _RebuildableWidget(
+            key: contentKey,
             rebuildSignal: rebuildSignal,
             buildTracker: buildTracker,
             // We don't pass in the onBuildScheduled callback here because we're simulating
@@ -308,12 +316,26 @@ void main() {
           underlays: [
             (context) => _RebuildableWidget(
                   elementTracker: underlayElementTracker,
+                  onBuild: () {
+                    // Ensure that this layer can access the render object of the content.
+                    final contentBox = contentKey.currentContext!.findRenderObject() as RenderBox?;
+                    expect(contentBox, isNotNull);
+                    expect(contentBox!.hasSize, isTrue);
+                    expect(contentBox.localToGlobal(Offset.zero), isNotNull);
+                  },
                   child: const SizedBox.expand(),
                 ),
           ],
           overlays: [
             (context) => _RebuildableWidget(
                   elementTracker: overlayElementTracker,
+                  onBuild: () {
+                    // Ensure that this layer can access the render object of the content.
+                    final contentBox = contentKey.currentContext!.findRenderObject() as RenderBox?;
+                    expect(contentBox, isNotNull);
+                    expect(contentBox!.hasSize, isTrue);
+                    expect(contentBox.localToGlobal(Offset.zero), isNotNull);
+                  },
                   child: const SizedBox.expand(),
                 ),
           ],
@@ -346,15 +368,19 @@ void main() {
           content: (_) => const SizedBox.expand(),
           underlays: [
             (context) {
+              // Ensure that this layer can access ancestors.
               final directionality = Directionality.of(context);
               expect(directionality, isNotNull);
+
               return const SizedBox();
             },
           ],
           overlays: [
             (context) {
+              // Ensure that this layer can access ancestors.
               final directionality = Directionality.of(context);
               expect(directionality, isNotNull);
+
               return const SizedBox();
             },
           ],
@@ -362,6 +388,55 @@ void main() {
       );
 
       // Getting here without an error means the test passes.
+    });
+
+    testWidgets("SuperEditor ContentLayers full rebuild", (tester) async {
+      // This test recreates a nuanced timing scenario where rebuilding
+      // all of SuperEditor, while also rebuilding its selection layer,
+      // results in an attempt to access a dirty document layout during
+      // selection layer build.
+
+      final rebuildSignal = ValueNotifier<int>(0);
+
+      final editorContext = tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .build();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: _RebuildableWidget(
+              rebuildSignal: rebuildSignal,
+              builder: (context) => SuperEditor(
+                editor: editorContext.context.editor,
+                document: editorContext.context.document,
+                composer: editorContext.context.composer,
+                inputSource: TextInputSource.keyboard,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Insert a character so that the document content and the selection layer changes.
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+
+      // CRITICAL: We must request a full SuperEditor rebuild before starting to pump
+      // another frame. This timing is critical to causing the content layout bug.
+      //
+      // This SuperEditor rebuild simulates a situation where a change in the editor
+      // requests a rebuild of the content, rebuild of a layer, and also a rebuild
+      // of the full editor, all in the same frame. This has happened, for example, in
+      // the demo app where the user types text to create a tag. When the tag is
+      // recognized, it includes a new character, a new caret position, and a new tag
+      // display in the widget tree around the editor.
+      rebuildSignal.value += 1;
+
+      // Pumping this frame would trigger the build order bug if it still existed.
+      await tester.pump();
     });
   });
 }
@@ -438,14 +513,30 @@ class _RebuildableWidget extends StatefulWidget {
     this.buildTracker,
     this.elementTracker,
     this.onBuildScheduled,
-    required this.child,
-  }) : super(key: key);
+    this.onBuild,
+    this.builder,
+    this.child,
+  })  : assert(child != null || builder != null, "Must provide either a child OR a builder."),
+        assert(child == null || builder == null, "Can't provide a child AND a builder. Choose one."),
+        super(key: key);
 
+  /// Signal that instructs this widget to call `setState()`.
   final Listenable? rebuildSignal;
+
+  /// The number of times this widget has run `build()`.
   final ValueNotifier<int>? buildTracker;
+
+  /// The [Element] that currently owns this `Widget` and its `State`.
   final ValueNotifier<Element?>? elementTracker;
+
+  /// Callback that's invoked when this widget calls `setState()`.
   final VoidCallback? onBuildScheduled;
-  final Widget child;
+
+  /// Callback that's invoked during this widget's `build()` method.
+  final VoidCallback? onBuild;
+
+  final WidgetBuilder? builder;
+  final Widget? child;
 
   @override
   State<_RebuildableWidget> createState() => _RebuildableWidgetState();
@@ -502,7 +593,10 @@ class _RebuildableWidgetState extends State<_RebuildableWidget> {
   Widget build(BuildContext context) {
     widget.buildTracker?.value += 1;
     widget.elementTracker?.value = context as Element;
-    return widget.child;
+
+    widget.onBuild?.call();
+
+    return widget.child != null ? widget.child! : widget.builder!.call(context);
   }
 }
 

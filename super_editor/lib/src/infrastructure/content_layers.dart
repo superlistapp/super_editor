@@ -1,4 +1,5 @@
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
@@ -22,6 +23,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 /// position a caret on top of a document, using only the widget tree.
 class ContentLayers extends RenderObjectWidget {
   const ContentLayers({
+    super.key,
     this.underlays = const [],
     required this.content,
     this.overlays = const [],
@@ -68,7 +70,7 @@ class ContentLayers extends RenderObjectWidget {
 ///
 /// Must have a [renderObject] of type [RenderContentLayers].
 class ContentLayersElement extends RenderObjectElement {
-  ContentLayersElement(RenderObjectWidget widget) : super(widget);
+  ContentLayersElement(ContentLayers widget) : super(widget);
 
   List<Element> _underlays = <Element>[];
   Element? _content;
@@ -81,9 +83,20 @@ class ContentLayersElement extends RenderObjectElement {
   RenderContentLayers get renderObject => super.renderObject as RenderContentLayers;
 
   @override
+  BuildOwner? get owner => _owner ?? super.owner;
+  BuildOwner? _owner;
+
+  late VoidCallback _realOnBuildScheduled;
+
+  @override
   void mount(Element? parent, Object? newSlot) {
     contentLayersLog.fine("ContentLayersElement - mounting");
     super.mount(parent, newSlot);
+
+    // Intercept calls to the BuildOwner's onBuildScheduled so that we can hijack an
+    // opportunity to check our subtrees for dirty elements before they rebuild.
+    _realOnBuildScheduled = owner!.onBuildScheduled!;
+    owner!.onBuildScheduled = _onBuildScheduled;
 
     _content = inflateWidget(widget.content(_onContentBuildScheduled), _contentSlot);
   }
@@ -115,23 +128,89 @@ class ContentLayersElement extends RenderObjectElement {
   @override
   void unmount() {
     contentLayersLog.fine("ContentLayersElement - unmounting");
+
+    // Remove our intercepting onBuildScheduled callback.
+    owner!.onBuildScheduled = _realOnBuildScheduled;
+
     super.unmount();
+  }
+
+  void _onBuildScheduled() {
+    // Call the real Flutter onBuildScheduled callback so Flutter works as expected.
+    _realOnBuildScheduled();
+
+    // Schedule a callback to run at the beginning of the next frame so we can check
+    // for dirty subtrees.
+    //
+    // If the content is dirty, but the layers are clean, then the layers won't attempt
+    // to rebuild, and we can let Flutter build the content whenever it wants.
+    //
+    // If a layer is dirty, but the content is clean, then the content layout is still
+    // valid, and we can let Flutter build the layer whenever it wants.
+    //
+    // However, if both the content and at least one layer are both dirty, then we must
+    // make absolutely sure that the content builds first. To do this, we deactivate the
+    // layer Elements, preventing Flutter from rebuilding them, and then we reactivate
+    // the layers during the next layout pass, after the content is laid out.
+    SchedulerBinding.instance.scheduleFrameCallback((timeStamp) {
+      contentLayersLog.finer("SCHEDULED FRAME CALLBACK");
+      final isContentDirty = _isContentDirty();
+      final isAnyLayerDirty = _isAnyLayerDirty();
+
+      if (isContentDirty && isAnyLayerDirty) {
+        contentLayersLog.fine("Marking needs build because content and at least one layer are both dirty.");
+        _deactivateLayers();
+      }
+    });
+  }
+
+  bool _isContentDirty() => _isSubtreeDirty(_content!);
+
+  bool _isAnyLayerDirty() {
+    contentLayersLog.finer("Checking if any layer is dirty");
+    bool hasDirtyElements = false;
+
+    contentLayersLog.finer("Checking underlays");
+    for (final underlay in _underlays) {
+      contentLayersLog.finer(" - Is underlay ($underlay) subtree dirty? ${_isSubtreeDirty(underlay)}");
+      hasDirtyElements = hasDirtyElements || _isSubtreeDirty(underlay);
+    }
+
+    contentLayersLog.finer("Checking overlays");
+    for (final overlay in _overlays) {
+      contentLayersLog.finer(" - Is overlay ($overlay) subtree dirty? ${_isSubtreeDirty(overlay)}");
+      hasDirtyElements = hasDirtyElements || _isSubtreeDirty(overlay);
+    }
+
+    return hasDirtyElements;
+  }
+
+  bool _isSubtreeDirty(Element element) {
+    contentLayersLog.finest("Finding dirty children for: $element");
+    if (element.dirty) {
+      contentLayersLog.finest("Found a dirty child: $element");
+      return true;
+    }
+
+    // if (element.renderObject?.debugNeedsLayout == true) {
+    //   contentLayersLog.finest("Found a dirty render object: $element, ${element.renderObject}");
+    //   return true;
+    // }
+
+    bool isDirty = false;
+    element.visitChildren((childElement) {
+      isDirty = isDirty || _isSubtreeDirty(childElement);
+    });
+    return isDirty;
   }
 
   void _onContentBuildScheduled() {
     _deactivateLayers();
   }
 
-  void checkContent() {
-    contentLayersLog.finer("ContentLayersElement - checkContent(). Is content dirty? ${_content?.dirty}");
-  }
-
   @override
   void markNeedsBuild() {
     contentLayersLog.finer("ContentLayersElement - marking needs build");
-    // Deactivate the layers whenever we rebuild, to make sure that the layers don't run
-    // their build methods before `RenderContentLayers` runs layout.
-    _deactivateLayers();
     super.markNeedsBuild();
   }
 
@@ -469,6 +548,7 @@ class RenderContentLayers extends RenderBox {
     // Always layout the content first, so that layers can inspect the content layout.
     contentLayersLog.fine("Laying out content - $_content");
     _content!.layout(constraints, parentUsesSize: true);
+    contentLayersLog.fine("Content after layout: $_content");
 
     // The size of the layers, and the our size, is exactly the same as the content.
     size = _content!.size;
@@ -484,14 +564,16 @@ class RenderContentLayers extends RenderBox {
     });
     contentLayersLog.finer("Done building layers");
 
-    contentLayersLog.fine("Laying out layers (${_underlays.length} underlays, ${_overlays.length} overlays");
+    contentLayersLog.fine("Laying out layers (${_underlays.length} underlays, ${_overlays.length} overlays)");
     // Layout the layers below and above the content.
     final layerConstraints = BoxConstraints.tight(size);
 
     for (final underlay in _underlays) {
+      contentLayersLog.fine("Laying out underlay: $underlay");
       underlay.layout(layerConstraints);
     }
     for (final overlay in _overlays) {
+      contentLayersLog.fine("Laying out overlay: $overlay");
       overlay.layout(layerConstraints);
     }
     contentLayersLog.finer("Done laying out layers");
