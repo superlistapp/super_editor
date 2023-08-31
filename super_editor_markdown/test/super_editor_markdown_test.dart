@@ -510,6 +510,43 @@ Paragraph3""");
         expect(serializeDocumentToMarkdown(doc), '  1. **Ordered** 1');
       });
 
+      test('tasks', () {
+        final doc = MutableDocument(
+          nodes: [
+            TaskNode(
+              id: '1',
+              text: AttributedText('Task 1'),
+              isComplete: true,
+            ),
+            TaskNode(
+              id: '2',
+              text: AttributedText('Task 2\nwith multiple lines'),
+              isComplete: false,
+            ),
+            TaskNode(
+              id: '3',
+              text: AttributedText('Task 3'),
+              isComplete: false,
+            ),
+            TaskNode(
+              id: '4',
+              text: AttributedText('Task 4'),
+              isComplete: true,
+            ),
+          ],
+        );
+
+        expect(
+          serializeDocumentToMarkdown(doc),
+          '''
+- [x] Task 1
+- [ ] Task 2
+with multiple lines
+- [ ] Task 3
+- [x] Task 4''',
+        );
+      });
+
       test('example doc', () {
         final doc = MutableDocument(nodes: [
           ImageNode(
@@ -567,6 +604,16 @@ Paragraph3""");
             id: Editor.createNodeId(),
             text: AttributedText('{\n  // This is some code.\n}'),
             metadata: {'blockType': codeAttribution},
+          ),
+          TaskNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('Task 1'),
+            isComplete: true,
+          ),
+          TaskNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('Task 2'),
+            isComplete: false,
           ),
         ]);
 
@@ -791,10 +838,40 @@ This is some code
         expect((document.nodes[4] as ListItemNode).indent, 0);
       });
 
+      test('tasks', () {
+        const markdown = '''
+- [x] Task 1
+- [ ] Task 2
+- [ ] Task 3
+with multiple lines
+- [x] Task 4''';
+
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 4);
+
+        expect(document.nodes[0], isA<TaskNode>());
+        expect(document.nodes[1], isA<TaskNode>());
+        expect(document.nodes[2], isA<TaskNode>());
+        expect(document.nodes[3], isA<TaskNode>());
+
+        expect((document.nodes[0] as TaskNode).text.text, 'Task 1');
+        expect((document.nodes[0] as TaskNode).isComplete, isTrue);
+
+        expect((document.nodes[1] as TaskNode).text.text, 'Task 2');
+        expect((document.nodes[1] as TaskNode).isComplete, isFalse);
+
+        expect((document.nodes[2] as TaskNode).text.text, 'Task 3\nwith multiple lines');
+        expect((document.nodes[2] as TaskNode).isComplete, isFalse);
+
+        expect((document.nodes[3] as TaskNode).text.text, 'Task 4');
+        expect((document.nodes[3] as TaskNode).isComplete, isTrue);
+      });
+
       test('example doc 1', () {
         final document = deserializeMarkdownToDocument(exampleMarkdownDoc1);
 
-        expect(document.nodes.length, 18);
+        expect(document.nodes.length, 21);
 
         expect(document.nodes[0], isA<ParagraphNode>());
         expect((document.nodes[0] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
@@ -819,7 +896,13 @@ This is some code
 
         expect(document.nodes[16], isA<ImageNode>());
 
-        expect(document.nodes[17], isA<ParagraphNode>());
+        expect(document.nodes[17], isA<TaskNode>());
+
+        expect(document.nodes[18], isA<ParagraphNode>());
+
+        expect(document.nodes[19], isA<TaskNode>());
+
+        expect(document.nodes[20], isA<ParagraphNode>());
       });
 
       test('paragraph with strikethrough', () {
@@ -1047,6 +1130,13 @@ It includes multiple paragraphs, ordered list items, unordered list items, image
 ---
 
 ![Image alt text](https://images.com/some/image.png)
+
+- [ ] Pending task
+with multiple lines
+
+Another paragraph
+
+- [x] Completed task
 
 The end!
 ''';
