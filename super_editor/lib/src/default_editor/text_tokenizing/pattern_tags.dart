@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -129,12 +130,20 @@ class PatternTagIndex with ChangeNotifier implements Editable {
   }
 
   void _setTagsInNode(String nodeId, Set<IndexedTag> tags) {
+    if (const DeepCollectionEquality().equals(_tags[nodeId], tags)) {
+      return;
+    }
+
     _tags[nodeId] ??= <IndexedTag>{};
     _tags[nodeId]!.addAll(tags);
     _onChange();
   }
 
   void _clearNode(String nodeId) {
+    if (_tags[nodeId] == null || _tags[nodeId]!.isEmpty) {
+      return;
+    }
+
     _tags[nodeId]?.clear();
     _onChange();
   }

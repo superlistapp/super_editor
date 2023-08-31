@@ -105,7 +105,7 @@ void main() {
               ),
             ],
           ),
-          const TagRule(trigger: "/"),
+          tagRule: const TagRule(trigger: "/"),
         );
 
         // Place the caret at "before |"
@@ -144,7 +144,7 @@ void main() {
               ),
             ],
           ),
-          const TagRule(trigger: "@", excludedCharacters: {" "}),
+          tagRule: const TagRule(trigger: "@", excludedCharacters: {" "}),
         );
 
         // Place the caret at "before |"
@@ -517,6 +517,48 @@ void main() {
           const SpanRange(start: 7, end: 7),
         );
       });
+
+      testWidgetsOnAllPlatforms("only notifies tag index listeners when tags change", (tester) async {
+        final actionTagPlugin = ActionTagsPlugin();
+
+        await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+          plugin: actionTagPlugin,
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Listen for tag notifications.
+        int tagNotificationCount = 0;
+        actionTagPlugin.composingActionTag.addListener(() {
+          tagNotificationCount += 1;
+        });
+
+        // Type some non tag text.
+        await tester.typeImeText("hello ");
+
+        // Ensure that no tag notifications were sent, because the typed text
+        // has no tag artifacts.
+        expect(tagNotificationCount, 0);
+
+        // Start a tag.
+        await tester.typeImeText("/");
+
+        // Ensure that we received one notification when the tag started.
+        expect(tagNotificationCount, 1);
+
+        // Create and update a tag.
+        await tester.typeImeText("world");
+
+        // Ensure that we received a notification for every character we typed.
+        expect(tagNotificationCount, 6);
+
+        // Cancel the tag.
+        await tester.pressEscape();
+
+        // Ensure that we received a notification when the tag was cancelled.
+        expect(tagNotificationCount, 7);
+      });
     });
 
     group("submissions >", () {
@@ -613,10 +655,14 @@ void main() {
 
 Future<TestDocumentContext> _pumpTestEditor(
   WidgetTester tester,
-  MutableDocument document, [
-  TagRule tagRule = defaultActionTagRule,
-]) async {
-  final actionTagPlugin = ActionTagsPlugin(tagRule: tagRule);
+  MutableDocument document, {
+  TagRule? tagRule,
+  ActionTagsPlugin? plugin,
+}) async {
+  assert(tagRule == null || plugin == null,
+      "You can provide a custom tagRule, or a custom ActionsTagPlugin, but not both");
+
+  final actionTagPlugin = plugin ?? ActionTagsPlugin(tagRule: tagRule ?? defaultActionTagRule);
 
   return await tester //
       .createDocument()
