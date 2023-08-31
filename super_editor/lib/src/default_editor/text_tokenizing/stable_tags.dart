@@ -1022,7 +1022,6 @@ class TagUserReaction implements EditReaction {
           _findAllTagsInNode(document, change.nodeId, (attribution) => attribution == stableTagCancelledAttribution),
         );
       } else if (change is NodeChangeEvent) {
-        index._clearCommittedTagsInNode(change.nodeId);
         index._setCommittedTagsInNode(
           change.nodeId,
           _findAllTagsInNode(document, change.nodeId, (attribution) => attribution is CommittedStableTagAttribution),
@@ -1084,11 +1083,22 @@ class StableTagIndex with ChangeNotifier implements Editable {
 
   void _setCommittedTagsInNode(String nodeId, Set<IndexedTag> tags) {
     _committedTags[nodeId] ??= <IndexedTag>{};
-    _committedTags[nodeId]!.addAll(tags);
+
+    if (const DeepCollectionEquality().equals(_committedTags[nodeId], tags)) {
+      return;
+    }
+
+    _committedTags[nodeId]!
+      ..clear()
+      ..addAll(tags);
     _onChange();
   }
 
   void _clearCommittedTagsInNode(String nodeId) {
+    if (_committedTags[nodeId] == null || _committedTags[nodeId]!.isEmpty) {
+      return;
+    }
+
     _committedTags[nodeId]?.clear();
     _onChange();
   }
@@ -1107,11 +1117,22 @@ class StableTagIndex with ChangeNotifier implements Editable {
 
   void _setCancelledTagsInNode(String nodeId, Set<IndexedTag> tags) {
     _cancelledTags[nodeId] ??= <IndexedTag>{};
-    _cancelledTags[nodeId]!.addAll(tags);
+
+    if (const DeepCollectionEquality().equals(_cancelledTags[nodeId], tags)) {
+      return;
+    }
+
+    _cancelledTags[nodeId]!
+      ..clear()
+      ..addAll(tags);
     _onChange();
   }
 
   void _clearCancelledTagsInNode(String nodeId) {
+    if (_cancelledTags[nodeId] == null || _cancelledTags[nodeId]!.isEmpty) {
+      return;
+    }
+
     _cancelledTags[nodeId]?.clear();
     _onChange();
   }

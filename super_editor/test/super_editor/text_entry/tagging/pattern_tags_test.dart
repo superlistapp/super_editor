@@ -279,6 +279,40 @@ void main() {
           const SpanRange(start: 15, end: 19),
         );
       });
+
+      testWidgetsOnAllPlatforms("only notifies tag index listeners when tags change", (tester) async {
+        final testContext = await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Listen for tag notifications.
+        int tagNotificationCount = 0;
+        testContext.editor.context.patternTagIndex.addListener(() {
+          tagNotificationCount += 1;
+        });
+
+        // Type some non pattern text.
+        await tester.typeImeText("hello ");
+
+        // Ensure that no tag notifications were sent, because the typed text
+        // has no tag artifacts.
+        expect(tagNotificationCount, 0);
+
+        // Start a tag.
+        await tester.typeImeText("#");
+
+        // Ensure that no tag notifications were sent, because we haven't completed
+        // a tag.
+        expect(tagNotificationCount, 0);
+
+        // Create and update a tag.
+        await tester.typeImeText("world");
+
+        // Ensure that we received a notification for every letter in the tag.
+        expect(tagNotificationCount, 5);
+      });
     });
 
     group("caret placement >", () {

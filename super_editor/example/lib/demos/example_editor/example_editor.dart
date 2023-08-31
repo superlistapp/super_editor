@@ -127,7 +127,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
     }
 
     if (selectedNode is TextNode) {
-      appLog.fine("Showing text format toolbar");
       // Show the editor's toolbar for text styling.
       _showEditorToolbar();
       _hideImageToolbar();

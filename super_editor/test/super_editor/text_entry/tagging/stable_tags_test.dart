@@ -343,6 +343,54 @@ void main() {
           const SpanRange(start: 7, end: 7),
         );
       });
+
+      testWidgetsOnAllPlatforms("only notifies tag index listeners when tags change", (tester) async {
+        final testContext = await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Listen for tag notifications.
+        int tagNotificationCount = 0;
+        testContext.editor.context.stableTagIndex.addListener(() {
+          tagNotificationCount += 1;
+        });
+
+        // Type some non tag text.
+        await tester.typeImeText("hello ");
+
+        // Ensure that no tag notifications were sent, because the typed text
+        // has no tag artifacts.
+        expect(tagNotificationCount, 0);
+
+        // Start a tag.
+        await tester.typeImeText("@");
+
+        // Ensure that no tag notifications were sent, because we haven't completed
+        // a tag.
+        expect(tagNotificationCount, 0);
+
+        // Create and update a tag.
+        await tester.typeImeText("world ");
+
+        // Ensure that we received a notification when the tag was committed.
+        expect(tagNotificationCount, 1);
+
+        // Delete the committed tag.
+        await tester.pressBackspace();
+        await tester.pressBackspace();
+
+        // Ensure that we received a notification when the tag was deleted.
+        expect(tagNotificationCount, 2);
+
+        // Create a tag and then cancel it.
+        await tester.typeImeText("@cancelled");
+        await tester.pressEscape();
+
+        // Ensure that we received a notification when the tag was cancelled.
+        expect(tagNotificationCount, 3);
+      });
     });
 
     group("commits >", () {
