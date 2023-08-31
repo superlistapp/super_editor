@@ -1421,7 +1421,19 @@ class CommonEditorOperations {
       // The selection is expanded. Delete the selected content
       // and then insert the new text.
       editorOpsLog.fine("The selection is expanded. Deleting the selection before inserting text.");
+
+      // As we are replacing text by deleting the selection and then inserting the new text,
+      // we need to store the current attributions.
+      // This is required as deleting text can clear the composer current attributions.
+      // Without this, the new text doesn't preserve the attributions of the replaced text.
+      final composerAttributions = {...composer.preferences.currentAttributions};
+
       _deleteExpandedSelection();
+
+      // Restore the previous attributions.
+      composer.preferences
+        ..clearStyles()
+        ..addStyles(composerAttributions);
     }
 
     final extentNodePosition = composer.selection!.extent.nodePosition;
