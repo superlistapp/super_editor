@@ -1067,17 +1067,9 @@ Paragraph two
         // Holds the keyboard appearance sent to the platform.
         String? keyboardAppearance;
 
-        // Intercept the setClient message sent to the platform so we can check
-        // the keyboardAppearance that was sent.
-        tester
-            .interceptChannel(SystemChannels.textInput.name) //
-            .interceptMethod(
-          'TextInput.setClient',
-          (methodCall) {
-            final params = methodCall.arguments[1] as Map;
-            keyboardAppearance = params['keyboardAppearance'];
-            return null;
-          },
+        _interceptKeyboardAppearanceSentToPlatform(
+          tester,
+          (appearance) => keyboardAppearance = appearance,
         );
 
         // Place the caret at the empty paragraph to trigger the software keyboard.
@@ -1097,17 +1089,9 @@ Paragraph two
         // Holds the keyboard appearance sent to the platform.
         String? keyboardAppearance;
 
-        // Intercept the setClient message sent to the platform so we can check
-        // the keyboardAppearance that was sent.
-        tester
-            .interceptChannel(SystemChannels.textInput.name) //
-            .interceptMethod(
-          'TextInput.setClient',
-          (methodCall) {
-            final params = methodCall.arguments[1] as Map;
-            keyboardAppearance = params['keyboardAppearance'];
-            return null;
-          },
+        _interceptKeyboardAppearanceSentToPlatform(
+          tester,
+          (appearance) => keyboardAppearance = appearance,
         );
 
         // Place the caret at the empty paragraph to trigger the software keyboard.
@@ -1134,17 +1118,9 @@ Paragraph two
         // Holds the keyboard appearance sent to the platform.
         String? keyboardAppearance;
 
-        // Intercept the setClient message sent to the platform so we can check
-        // the keyboardAppearance that was sent.
-        tester
-            .interceptChannel(SystemChannels.textInput.name) //
-            .interceptMethod(
-          'TextInput.setClient',
-          (methodCall) {
-            final params = methodCall.arguments[1] as Map;
-            keyboardAppearance = params['keyboardAppearance'];
-            return null;
-          },
+        _interceptKeyboardAppearanceSentToPlatform(
+          tester,
+          (appearance) => keyboardAppearance = appearance,
         );
 
         // Place the caret at the empty paragraph to trigger the software keyboard.
@@ -1155,6 +1131,22 @@ Paragraph two
       });
     });
   });
+}
+
+/// Intercepts `TextInput.setClient` calls and invokes [onSetKeyboard]
+/// with the configured keyboard keyboardAppearance.
+void _interceptKeyboardAppearanceSentToPlatform(
+    WidgetTester tester, void Function(String keyboardAppearance) onSetKeyboard) {
+  tester
+      .interceptChannel(SystemChannels.textInput.name) //
+      .interceptMethod(
+    'TextInput.setClient',
+    (methodCall) {
+      final params = methodCall.arguments[1] as Map;
+      onSetKeyboard(params['keyboardAppearance']);
+      return null;
+    },
+  );
 }
 
 /// Expects that the given [expectedTextWithSelection] corresponds to a
