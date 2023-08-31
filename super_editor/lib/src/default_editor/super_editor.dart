@@ -385,12 +385,13 @@ class SuperEditorState extends State<SuperEditor> {
 
       _createEditContext();
       _createLayoutPresenter();
-    } else if (widget.selectionStyles != oldWidget.selectionStyles) {
-      _docLayoutSelectionStyler.selectionStyles = widget.selectionStyles;
-    }
-
-    if (widget.stylesheet != oldWidget.stylesheet) {
-      _docStylesheetStyler.stylesheet = widget.stylesheet;
+    } else {
+      if (widget.selectionStyles != oldWidget.selectionStyles) {
+        _docLayoutSelectionStyler.selectionStyles = widget.selectionStyles;
+      }
+      if (widget.stylesheet != oldWidget.stylesheet) {
+        _createLayoutPresenter();
+      }
     }
 
     if (widget.scrollController != oldWidget.scrollController) {
@@ -449,7 +450,7 @@ class SuperEditorState extends State<SuperEditor> {
 
     final document = editContext.document;
 
-    _docStylesheetStyler = SingleColumnStylesheetStyler(stylesheet: widget.stylesheet);
+    _docStylesheetStyler = SingleColumnStylesheetStyler();
 
     _docLayoutPerComponentBlockStyler = SingleColumnLayoutCustomComponentStyler();
 
@@ -461,6 +462,7 @@ class SuperEditorState extends State<SuperEditor> {
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
       document: document,
+      stylesheet: widget.stylesheet,
       componentBuilders: widget.componentBuilders,
       pipeline: [
         _docStylesheetStyler,
@@ -1168,6 +1170,10 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
         decoration: newStyle.decoration == null
             ? TextDecoration.lineThrough
             : TextDecoration.combine([TextDecoration.lineThrough, newStyle.decoration!]),
+      );
+    } else if (attribution is ColorAttribution) {
+      newStyle = newStyle.copyWith(
+        color: attribution.color,
       );
     } else if (attribution is LinkAttribution) {
       newStyle = newStyle.copyWith(

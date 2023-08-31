@@ -17,6 +17,7 @@ import 'package:example/demos/features/feature_stable_tags.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
+import 'package:example/demos/in_the_lab/selected_text_colors_demo.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
 import 'package:example/demos/sliver_example_editor.dart';
 import 'package:example/demos/styles/demo_doc_styles.dart';
@@ -39,7 +40,7 @@ import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
 Future<void> main() async {
-  initLoggers(Level.FINEST, {
+  initLoggers(Level.FINE, {
     // editorScrollingLog,
     // editorGesturesLog,
     // editorImeLog,
@@ -51,6 +52,7 @@ Future<void> main() async {
     // editorStyleLog,
     // textFieldLog,
     // editorUserTagsLog,
+    contentLayersLog,
     appLog,
   });
 
@@ -293,6 +295,18 @@ final _menu = <_MenuGroup>[
         title: 'Action Tags',
         pageBuilder: (context) {
           return const ActionTagsFeatureDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'IN THE LAB',
+    items: [
+      _MenuItem(
+        icon: Icons.color_lens,
+        title: 'Selected Text Colors',
+        pageBuilder: (context) {
+          return const SelectedTextColorsDemo();
         },
       ),
     ],

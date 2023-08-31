@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:attributed_text/attributed_text.dart';
 
 /// Header 1 style block attribution.
@@ -38,6 +40,38 @@ const strikethroughAttribution = NamedAttribution('strikethrough');
 
 /// Code style attribution.
 const codeAttribution = NamedAttribution('code');
+
+/// Attribution to be used within [AttributedText] to
+/// represent an inline span of a text color change.
+///
+/// Every [ColorAttribution] is considered equivalent so
+/// that [AttributedText] prevents multiple [ColorAttribution]s
+/// from overlapping.
+class ColorAttribution implements Attribution {
+  const ColorAttribution(this.color);
+
+  @override
+  String get id => "${color.value}";
+
+  final Color color;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is ColorAttribution && runtimeType == other.runtimeType && color == other.color;
+
+  @override
+  int get hashCode => color.hashCode;
+
+  @override
+  String toString() {
+    return '[ColorAttribution]: $color';
+  }
+}
 
 /// Attribution to be used within [AttributedText] to
 /// represent a link.

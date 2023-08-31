@@ -1,4 +1,5 @@
 import 'package:flutter/painting.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import '../../core/document.dart';
@@ -18,10 +19,11 @@ class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePha
   SingleColumnLayoutCustomComponentStyler();
 
   @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel, Stylesheet stylesheet) {
     editorStyleLog.info("(Re)calculating custom component styles view model for document layout");
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,
+      selectedTextColorStrategy: stylesheet.selectedTextColorStrategy ?? viewModel.selectedTextColorStrategy,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels)
           _applyLayoutStyles(

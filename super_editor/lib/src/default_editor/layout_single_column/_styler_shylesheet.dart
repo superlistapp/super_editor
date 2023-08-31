@@ -6,38 +6,36 @@ import '_presenter.dart';
 
 /// Style phase that applies a given [Stylesheet] to the document view model.
 class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
-  SingleColumnStylesheetStyler({
-    required Stylesheet stylesheet,
-  }) : _stylesheet = stylesheet;
+  SingleColumnStylesheetStyler();
 
-  Stylesheet _stylesheet;
-
-  /// Sets the [stylesheet] that's used by this styler to generate view models
-  /// for document content.
-  ///
-  /// If [newStylesheet] is the same as the existing stylesheet, this method
-  /// does nothing.
-  ///
-  /// If [newStylesheet] is different than the existing stylesheet, this method
-  /// marks this style phase a dirty, which will cause the associated presenter
-  /// to re-run this style phase, and all presentation phases after it.
-  set stylesheet(Stylesheet newStylesheet) {
-    if (newStylesheet == _stylesheet) {
-      return;
-    }
-
-    _stylesheet = newStylesheet;
-    markDirty();
-  }
+  // /// Sets the [stylesheet] that's used by this styler to generate view models
+  // /// for document content.
+  // ///
+  // /// If [newStylesheet] is the same as the existing stylesheet, this method
+  // /// does nothing.
+  // ///
+  // /// If [newStylesheet] is different than the existing stylesheet, this method
+  // /// marks this style phase a dirty, which will cause the associated presenter
+  // /// to re-run this style phase, and all presentation phases after it.
+  // set stylesheet(Stylesheet newStylesheet) {
+  //   if (newStylesheet == _stylesheet) {
+  //     return;
+  //   }
+  //
+  //   _stylesheet = newStylesheet;
+  //   markDirty();
+  // }
 
   @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel, Stylesheet stylesheet) {
     return SingleColumnLayoutViewModel(
-      padding: _stylesheet.documentPadding ?? viewModel.padding,
+      padding: stylesheet.documentPadding ?? viewModel.padding,
+      selectedTextColorStrategy: stylesheet.selectedTextColorStrategy ?? viewModel.selectedTextColorStrategy,
       componentViewModels: [
         for (final componentViewModel in viewModel.componentViewModels)
           _styleComponent(
             document,
+            stylesheet,
             document.getNodeById(componentViewModel.nodeId)!,
             componentViewModel.copy(),
           ),
@@ -47,15 +45,16 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
 
   SingleColumnLayoutComponentViewModel _styleComponent(
     Document document,
+    Stylesheet stylesheet,
     DocumentNode node,
     SingleColumnLayoutComponentViewModel viewModel,
   ) {
     // Combine all applicable style rules into a single set of styles
     // for this component.
     final aggregateStyles = <String, dynamic>{
-      "inlineTextStyler": _stylesheet.inlineTextStyler,
+      "inlineTextStyler": stylesheet.inlineTextStyler,
     };
-    for (final rule in _stylesheet.rules) {
+    for (final rule in stylesheet.rules) {
       if (rule.selector.matches(document, node)) {
         _mergeStyles(
           existingStyles: aggregateStyles,

@@ -138,8 +138,9 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
 
   bool isComplete;
   void Function(bool) setComplete;
-  AttributedText text;
 
+  @override
+  AttributedText text;
   @override
   AttributionStyleBuilder textStyleBuilder;
   @override

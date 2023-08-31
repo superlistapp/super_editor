@@ -1,3 +1,4 @@
+import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
@@ -10,6 +11,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import '../../core/document.dart';
+import '../attributions.dart';
 import '_presenter.dart';
 
 /// [SingleColumnLayoutStylePhase] that applies visual selections to each component,
@@ -30,6 +32,11 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   void dispose() {
     _selection.removeListener(markDirty);
     super.dispose();
+  }
+
+  void markDirty() {
+    print("SingleColumnLayoutSelectionStyler marking itself dirty (probably due to selection change)");
+    super.markDirty();
   }
 
   final Document _document;
@@ -57,19 +64,21 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   }
 
   @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel, Stylesheet stylesheet) {
     editorStyleLog.info("(Re)calculating selection view model for document layout");
     editorStyleLog.fine("Applying selection to components: ${_selection.value}");
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,
+      selectedTextColorStrategy: stylesheet.selectedTextColorStrategy ?? viewModel.selectedTextColorStrategy,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels) //
-          _applySelection(previousViewModel.copy()),
+          _applySelection(previousViewModel.copy(), viewModel.selectedTextColorStrategy),
       ],
     );
   }
 
-  SingleColumnLayoutComponentViewModel _applySelection(SingleColumnLayoutComponentViewModel viewModel) {
+  SingleColumnLayoutComponentViewModel _applySelection(
+      SingleColumnLayoutComponentViewModel viewModel, SelectedTextColorStrategy selectedTextColorStrategy) {
     final documentSelection = _selection.value;
     final node = _document.getNodeById(viewModel.nodeId)!;
 
@@ -120,7 +129,26 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       editorStyleLog.finer('   - extent: ${textSelection?.extent}');
 
       if (viewModel is TextComponentViewModel) {
+        // final textWithSelectionAttributions = textSelection != null
+        //     ? (viewModel.text.copyText(0)
+        //       ..addAttribution(const ColorAttribution(Color(0xFFFF0000)),
+        //           SpanRange(start: textSelection.start, end: textSelection.end - 1)))
+        //     : viewModel.text;
+
+        final componentTextColor = viewModel.textStyleBuilder({}).color!;
+
+        final textWithSelectionAttributions = textSelection != null
+            ? (viewModel.text.copyText(0)
+              ..addAttribution(
+                  ColorAttribution(selectedTextColorStrategy(
+                    originalTextColor: componentTextColor,
+                    selectionHighlightColor: _selectionStyles.selectionColor,
+                  )),
+                  SpanRange(start: textSelection.start, end: textSelection.end - 1)))
+            : viewModel.text;
+
         viewModel
+          ..text = textWithSelectionAttributions
           ..selection = textSelection
           ..selectionColor = _selectionStyles.selectionColor
           ..highlightWhenEmpty = highlightWhenEmpty;

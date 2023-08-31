@@ -125,6 +125,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   Attribution? blockType;
+
+  @override
   AttributedText text;
   @override
   AttributionStyleBuilder textStyleBuilder;

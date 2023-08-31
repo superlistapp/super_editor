@@ -48,9 +48,11 @@ class SingleColumnDocumentComponentContext {
 class SingleColumnLayoutPresenter {
   SingleColumnLayoutPresenter({
     required Document document,
+    required Stylesheet stylesheet,
     required List<ComponentBuilder> componentBuilders,
     required List<SingleColumnLayoutStylePhase> pipeline,
   })  : _document = document,
+        _stylesheet = stylesheet,
         _componentBuilders = componentBuilders,
         _pipeline = pipeline {
     _assemblePipeline();
@@ -65,6 +67,7 @@ class SingleColumnLayoutPresenter {
   }
 
   final Document _document;
+  final Stylesheet _stylesheet;
   final List<ComponentBuilder> _componentBuilders;
   final List<SingleColumnLayoutStylePhase> _pipeline;
   final List<SingleColumnLayoutViewModel?> _phaseViewModels = [];
@@ -107,6 +110,8 @@ class SingleColumnLayoutPresenter {
 
       // Listen for all dirty phase notifications.
       _pipeline[i].dirtyCallback = () {
+        print("Marking phase $i as dirty");
+
         final phaseIndex = i;
         if (phaseIndex < 0) {
           throw Exception("A phase marked itself as dirty, but that phase isn't in the pipeline. Index: $phaseIndex");
@@ -124,6 +129,8 @@ class SingleColumnLayoutPresenter {
           for (final listener in _listeners) {
             listener.onPresenterMarkedDirty();
           }
+        } else {
+          print("Presenter was already dirty");
         }
       };
     }
@@ -136,6 +143,7 @@ class SingleColumnLayoutPresenter {
   }
 
   void updateViewModel() {
+    print("Generating a new Presenter ViewModel");
     editorLayoutLog.info("Calculating an updated view model for document layout.");
     if (_earliestDirtyPhase == _pipeline.length) {
       editorLayoutLog.fine("The presenter is already up to date");
@@ -187,7 +195,7 @@ class SingleColumnLayoutPresenter {
     // Style the document view model.
     for (int i = _earliestDirtyPhase; i < _pipeline.length; i += 1) {
       editorLayoutLog.fine("Running phase $i: ${_pipeline[i]}");
-      newViewModel = _pipeline[i].style(_document, newViewModel!);
+      newViewModel = _pipeline[i].style(_document, newViewModel!, _stylesheet);
       editorLayoutLog.fine("Storing phase $i view model");
       _phaseViewModels[i] = newViewModel;
     }
@@ -409,7 +417,7 @@ abstract class SingleColumnLayoutStylePhase {
   }
 
   /// Styles a [SingleColumnLayoutViewModel] by adjusting the given viewModel.
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel);
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel, Stylesheet stylesheet);
 }
 
 /// [AttributionStyleBuilder] that returns a default `TextStyle`, for
@@ -429,6 +437,7 @@ TextStyle noStyleBuilder(Set<Attribution> attributions) {
 class SingleColumnLayoutViewModel {
   SingleColumnLayoutViewModel({
     this.padding = EdgeInsets.zero,
+    this.selectedTextColorStrategy = defaultSelectedTextColorStrategy,
     required List<SingleColumnLayoutComponentViewModel> componentViewModels,
   })  : _componentViewModels = componentViewModels,
         _viewModelsByNodeId = {} {
@@ -438,6 +447,9 @@ class SingleColumnLayoutViewModel {
   }
 
   final EdgeInsetsGeometry padding;
+
+  /// The strategy that chooses the color for selected text.
+  final SelectedTextColorStrategy selectedTextColorStrategy;
 
   final List<SingleColumnLayoutComponentViewModel> _componentViewModels;
   List<SingleColumnLayoutComponentViewModel> get componentViewModels => _componentViewModels;
