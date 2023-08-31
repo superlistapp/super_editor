@@ -171,11 +171,13 @@ class SuperEditorInspector {
     return (documentLayout.getComponentByNodeId(nodeId) as TextComponentState).widget.text;
   }
 
-  /// Finds and returns the [TextStyle] that's applied to the top-level of the [TextSpan]
-  /// in the paragraph with the given [nodeId].
+  /// Finds the paragraph with the given [nodeId] and returns the paragraph's content as a [TextSpan].
+  ///
+  /// A [TextSpan] is the fundamental way that Flutter styles text. It's the lowest level reflection
+  /// of what the user will see, short of rendering the actual UI.
   ///
   /// {@macro supereditor_finder}
-  static TextStyle? findParagraphStyle(String nodeId, [Finder? superEditorFinder]) {
+  static TextSpan findRichTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
     final documentLayout = _findDocumentLayout(superEditorFinder);
 
     final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
@@ -184,7 +186,15 @@ class SuperEditorInspector {
         .evaluate()
         .single
         .widget as SuperTextWithSelection;
-    return superTextWithSelection.richText.style;
+    return superTextWithSelection.richText as TextSpan;
+  }
+
+  /// Finds and returns the [TextStyle] that's applied to the top-level of the [TextSpan]
+  /// in the paragraph with the given [nodeId].
+  ///
+  /// {@macro supereditor_finder}
+  static TextStyle? findParagraphStyle(String nodeId, [Finder? superEditorFinder]) {
+    return findRichTextInParagraph(nodeId, superEditorFinder).style;
   }
 
   /// Returns the [DocumentNode] at given the [index].

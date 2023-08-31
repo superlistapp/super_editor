@@ -5,15 +5,19 @@ import 'package:super_editor/super_editor.dart';
 class InTheLabScaffold extends StatelessWidget {
   const InTheLabScaffold({
     super.key,
+    required this.content,
     this.supplemental,
-    required this.child,
+    this.overlay,
   });
+
+  /// Primary demo content.
+  final Widget content;
 
   /// An (optional) supplemental control panel for the demo.
   final Widget? supplemental;
 
-  /// Primary demo content.
-  final Widget child;
+  /// An (optional) widget that's displayed on top of all content in this scaffold.
+  final Widget? overlay;
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +27,23 @@ class InTheLabScaffold extends StatelessWidget {
         builder: (context) {
           return Scaffold(
             backgroundColor: const Color(0xFF222222),
-            body: Row(
+            body: Stack(
               children: [
-                Expanded(
-                  child: child,
+                Positioned.fill(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: content,
+                      ),
+                      if (supplemental != null) //
+                        _buildSupplementalPanel(),
+                    ],
+                  ),
                 ),
-                if (supplemental != null) //
-                  _buildSupplementalPanel(),
+                if (overlay != null) //
+                  Positioned.fill(
+                    child: overlay!,
+                  ),
               ],
             ),
           );

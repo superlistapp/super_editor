@@ -13,6 +13,34 @@ import 'supereditor_test_tools.dart';
 
 void main() {
   group("SuperEditor selection", () {
+    group("styles", () {
+      testWidgetsOnAllPlatforms("changes color of selected text", (tester) async {
+        final stylesheet = defaultStylesheet.copyWith(
+          selectedTextColorStrategy: ({required Color originalTextColor, required Color selectionHighlightColor}) {
+            return Colors.white;
+          },
+        );
+
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .useStylesheet(stylesheet)
+            .pump();
+
+        // Select the 2nd word in the paragraph.
+        await tester.doubleTapInParagraph("1", 7);
+
+        // Ensure that the first word is black and the second (selected) word is white.
+        final richText = SuperEditorInspector.findRichTextInParagraph("1");
+
+        expect(richText.getSpanForPosition(const TextPosition(offset: 0))!.style!.color, Colors.black);
+        expect(richText.getSpanForPosition(const TextPosition(offset: 5))!.style!.color, Colors.black);
+
+        expect(richText.getSpanForPosition(const TextPosition(offset: 6))!.style!.color, Colors.white);
+        expect(richText.getSpanForPosition(const TextPosition(offset: 10))!.style!.color, Colors.white);
+      });
+    });
+
     testWidgetsOnArbitraryDesktop("calculates upstream document selection within a single node", (tester) async {
       await tester //
           .createDocument() //
