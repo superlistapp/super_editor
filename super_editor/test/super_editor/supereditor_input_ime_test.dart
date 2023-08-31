@@ -783,6 +783,45 @@ Paragraph two
         // Ensure we cleared the composing region on the IME so the previous entered text is preserved.
         expect(composingRegion, TextRange.empty);
       });
+
+      testWidgetsOnIos('applies keyboard suggestions and keeps styles', (tester) async {
+        // Pump an editor with a bold text.
+        final testContext = await tester //
+            .createDocument()
+            .fromMarkdown('**Fix**')
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the end of the paragraph.
+        await tester.placeCaretInParagraph(testContext.document.nodes.first.id, 3);
+
+        // Type a letter simulating a typo. The current text results in "Fixs".
+        await tester.typeImeText('s');
+
+        // Simulate the user accepting a suggestion.
+        // The IME replaces the word and inserts a space after it.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaReplacement(
+            oldText: 'Fixs',
+            replacementText: 'Fixed',
+            replacedRange: TextRange(start: 0, end: 4),
+            selection: TextSelection.collapsed(offset: 5),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaInsertion(
+            oldText: 'Fixed',
+            textInserted: ' ',
+            insertionOffset: 5,
+            selection: TextSelection.collapsed(offset: 6),
+            composing: TextRange(start: -1, end: -1),
+          )
+        ], getter: imeClientGetter);
+
+        // Ensure the text was replaced and the style was preserved.
+        expect(testContext.document, equalsMarkdown('**Fixed **'));
+      });
     });
 
     group('moves caret', () {
