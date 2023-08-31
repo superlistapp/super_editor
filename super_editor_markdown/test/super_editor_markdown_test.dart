@@ -612,8 +612,22 @@ with multiple lines
           ),
           TaskNode(
             id: Editor.createNodeId(),
-            text: AttributedText('Task 2'),
+            text: AttributedText('Task 2\nwith multiple lines'),
             isComplete: false,
+          ),
+          ParagraphNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('A paragraph between tasks'),
+          ),
+          TaskNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('Task 3'),
+            isComplete: false,
+          ),
+          TaskNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('Task 4\nwith multiple lines'),
+            isComplete: true,
           ),
         ]);
 

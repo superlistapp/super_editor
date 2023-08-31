@@ -295,7 +295,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
       TaskNode(
         id: Editor.createNodeId(),
         text: _parseInlineText(element),
-        isComplete: element.attributes['completed'] == 'x',
+        isComplete: element.attributes['completed'] == 'true',
       ),
     );
   }
@@ -682,11 +682,11 @@ class _TaskSyntax extends md.BlockSyntax {
     }
 
     final completionToken = match.group(1)!;
+    final taskDescriptionFirstLine = match.group(2)!;
 
-    // Add the first line of content to the buffer.
-    final buffer = StringBuffer(match.group(2)!);
+    final buffer = StringBuffer(taskDescriptionFirstLine);
 
-    // Consume the first line.
+    // Move to the second line.
     parser.advance();
 
     // Consume the following lines until we:
@@ -705,7 +705,7 @@ class _TaskSyntax extends md.BlockSyntax {
     return md.Element(
       'task',
       [md.Text(buffer.toString())],
-    )..attributes['completed'] = completionToken;
+    )..attributes['completed'] = (completionToken == 'x').toString();
   }
 }
 
