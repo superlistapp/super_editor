@@ -21,9 +21,11 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     required Document document,
     required ValueListenable<DocumentSelection?> selection,
     required SelectionStyles selectionStyles,
+    SelectedTextColorStrategy? selectedTextColorStrategy,
   })  : _document = document,
         _selection = selection,
-        _selectionStyles = selectionStyles {
+        _selectionStyles = selectionStyles,
+        _selectedTextColorStrategy = selectedTextColorStrategy {
     // Our styles need to be re-applied whenever the document selection changes.
     _selection.addListener(markDirty);
   }
@@ -47,6 +49,16 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     markDirty();
   }
 
+  SelectedTextColorStrategy? _selectedTextColorStrategy;
+  set selectedTextColorStrategy(SelectedTextColorStrategy? strategy) {
+    if (strategy == _selectedTextColorStrategy) {
+      return;
+    }
+
+    _selectedTextColorStrategy = strategy;
+    markDirty();
+  }
+
   bool _shouldDocumentShowCaret = false;
   set shouldDocumentShowCaret(bool newValue) {
     if (newValue == _shouldDocumentShowCaret) {
@@ -59,21 +71,19 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   }
 
   @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel, Stylesheet stylesheet) {
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
     editorStyleLog.info("(Re)calculating selection view model for document layout");
     editorStyleLog.fine("Applying selection to components: ${_selection.value}");
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,
-      selectedTextColorStrategy: stylesheet.selectedTextColorStrategy ?? viewModel.selectedTextColorStrategy,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels) //
-          _applySelection(previousViewModel.copy(), viewModel.selectedTextColorStrategy),
+          _applySelection(previousViewModel.copy()),
       ],
     );
   }
 
-  SingleColumnLayoutComponentViewModel _applySelection(
-      SingleColumnLayoutComponentViewModel viewModel, SelectedTextColorStrategy? selectedTextColorStrategy) {
+  SingleColumnLayoutComponentViewModel _applySelection(SingleColumnLayoutComponentViewModel viewModel) {
     final documentSelection = _selection.value;
     final node = _document.getNodeById(viewModel.nodeId)!;
 
@@ -124,19 +134,13 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       editorStyleLog.finer('   - extent: ${textSelection?.extent}');
 
       if (viewModel is TextComponentViewModel) {
-        // final textWithSelectionAttributions = textSelection != null
-        //     ? (viewModel.text.copyText(0)
-        //       ..addAttribution(const ColorAttribution(Color(0xFFFF0000)),
-        //           SpanRange(start: textSelection.start, end: textSelection.end - 1)))
-        //     : viewModel.text;
-
         final componentTextColor = viewModel.textStyleBuilder({}).color;
 
         final textWithSelectionAttributions =
-            textSelection != null && selectedTextColorStrategy != null && componentTextColor != null
+            textSelection != null && _selectedTextColorStrategy != null && componentTextColor != null
                 ? (viewModel.text.copyText(0)
                   ..addAttribution(
-                      ColorAttribution(selectedTextColorStrategy(
+                      ColorAttribution(_selectedTextColorStrategy!(
                         originalTextColor: componentTextColor,
                         selectionHighlightColor: _selectionStyles.selectionColor,
                       )),

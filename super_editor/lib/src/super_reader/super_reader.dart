@@ -277,7 +277,9 @@ class SuperReaderState extends State<SuperReader> {
       _docLayoutPresenter!.dispose();
     }
 
-    _docStylesheetStyler = SingleColumnStylesheetStyler();
+    _docStylesheetStyler = SingleColumnStylesheetStyler(
+      stylesheet: widget.stylesheet,
+    );
 
     _docLayoutPerComponentBlockStyler = SingleColumnLayoutCustomComponentStyler();
 
@@ -289,7 +291,6 @@ class SuperReaderState extends State<SuperReader> {
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
       document: widget.document,
-      stylesheet: widget.stylesheet,
       componentBuilders: widget.componentBuilders,
       pipeline: [
         _docStylesheetStyler,

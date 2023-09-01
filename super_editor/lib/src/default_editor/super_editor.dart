@@ -450,7 +450,9 @@ class SuperEditorState extends State<SuperEditor> {
 
     final document = editContext.document;
 
-    _docStylesheetStyler = SingleColumnStylesheetStyler();
+    _docStylesheetStyler = SingleColumnStylesheetStyler(
+      stylesheet: widget.stylesheet,
+    );
 
     _docLayoutPerComponentBlockStyler = SingleColumnLayoutCustomComponentStyler();
 
@@ -458,11 +460,11 @@ class SuperEditorState extends State<SuperEditor> {
       document: document,
       selection: editContext.composer.selectionNotifier,
       selectionStyles: widget.selectionStyles,
+      selectedTextColorStrategy: widget.stylesheet.selectedTextColorStrategy,
     );
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
       document: document,
-      stylesheet: widget.stylesheet,
       componentBuilders: widget.componentBuilders,
       pipeline: [
         _docStylesheetStyler,

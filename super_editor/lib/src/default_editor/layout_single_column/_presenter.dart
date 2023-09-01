@@ -48,11 +48,9 @@ class SingleColumnDocumentComponentContext {
 class SingleColumnLayoutPresenter {
   SingleColumnLayoutPresenter({
     required Document document,
-    required Stylesheet stylesheet,
     required List<ComponentBuilder> componentBuilders,
     required List<SingleColumnLayoutStylePhase> pipeline,
   })  : _document = document,
-        _stylesheet = stylesheet,
         _componentBuilders = componentBuilders,
         _pipeline = pipeline {
     _assemblePipeline();
@@ -67,7 +65,6 @@ class SingleColumnLayoutPresenter {
   }
 
   final Document _document;
-  final Stylesheet _stylesheet;
   final List<ComponentBuilder> _componentBuilders;
   final List<SingleColumnLayoutStylePhase> _pipeline;
   final List<SingleColumnLayoutViewModel?> _phaseViewModels = [];
@@ -190,7 +187,7 @@ class SingleColumnLayoutPresenter {
     // Style the document view model.
     for (int i = _earliestDirtyPhase; i < _pipeline.length; i += 1) {
       editorLayoutLog.fine("Running phase $i: ${_pipeline[i]}");
-      newViewModel = _pipeline[i].style(_document, newViewModel!, _stylesheet);
+      newViewModel = _pipeline[i].style(_document, newViewModel!);
       editorLayoutLog.fine("Storing phase $i view model");
       _phaseViewModels[i] = newViewModel;
     }
@@ -412,7 +409,7 @@ abstract class SingleColumnLayoutStylePhase {
   }
 
   /// Styles a [SingleColumnLayoutViewModel] by adjusting the given viewModel.
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel, Stylesheet stylesheet);
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel);
 }
 
 /// [AttributionStyleBuilder] that returns a default `TextStyle`, for
@@ -432,7 +429,6 @@ TextStyle noStyleBuilder(Set<Attribution> attributions) {
 class SingleColumnLayoutViewModel {
   SingleColumnLayoutViewModel({
     this.padding = EdgeInsets.zero,
-    this.selectedTextColorStrategy,
     required List<SingleColumnLayoutComponentViewModel> componentViewModels,
   })  : _componentViewModels = componentViewModels,
         _viewModelsByNodeId = {} {
@@ -442,9 +438,6 @@ class SingleColumnLayoutViewModel {
   }
 
   final EdgeInsetsGeometry padding;
-
-  /// The strategy that chooses the color for selected text.
-  final SelectedTextColorStrategy? selectedTextColorStrategy;
 
   final List<SingleColumnLayoutComponentViewModel> _componentViewModels;
   List<SingleColumnLayoutComponentViewModel> get componentViewModels => _componentViewModels;

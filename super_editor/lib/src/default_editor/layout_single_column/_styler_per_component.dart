@@ -19,11 +19,10 @@ class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePha
   SingleColumnLayoutCustomComponentStyler();
 
   @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel, Stylesheet stylesheet) {
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
     editorStyleLog.info("(Re)calculating custom component styles view model for document layout");
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,
-      selectedTextColorStrategy: stylesheet.selectedTextColorStrategy ?? viewModel.selectedTextColorStrategy,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels)
           _applyLayoutStyles(
