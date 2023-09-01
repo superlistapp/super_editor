@@ -95,6 +95,11 @@ class DeltaTextInputClientDecorator with DeltaTextInputClient, TextInputClient {
   }
 
   @override
+  void performSelector(String selectorName) {
+    _client?.performSelector(selectorName);
+  }
+
+  @override
   void removeTextPlaceholder() {
     _client?.removeTextPlaceholder();
   }
