@@ -81,8 +81,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
   }
 
   void _hideOrShowToolbar() {
-    print("Selection changed: ${_composer.selection}");
-
     if (_gestureMode != DocumentGestureMode.mouse) {
       // We only add our own toolbar when using mouse. On mobile, a bar
       // is rendered for us.
@@ -432,8 +430,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
                   ),
             stylesheet: defaultStylesheet.copyWith(
               selectedTextColorStrategy: ({required Color originalTextColor, required Color selectionHighlightColor}) {
-                print(
-                    "Highlight color: $selectionHighlightColor, luminance: ${selectionHighlightColor.computeLuminance()}");
                 return selectionHighlightColor.computeLuminance() >= 0.5 ? Colors.black : Colors.white;
               },
               addRulesAfter: [
