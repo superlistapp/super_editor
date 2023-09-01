@@ -421,9 +421,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
             ],
             selectionLayerLinks: _selectionLayerLinks,
             selectionStyle: isLight
-                ? SelectionStyles(
-                    selectionColor: Color(0xFF0088F7),
-                  )
+                ? defaultSelectionStyle
                 : SelectionStyles(
                     selectionColor: Colors.red.withOpacity(0.3),
                   ),
