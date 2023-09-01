@@ -432,7 +432,7 @@ TextStyle noStyleBuilder(Set<Attribution> attributions) {
 class SingleColumnLayoutViewModel {
   SingleColumnLayoutViewModel({
     this.padding = EdgeInsets.zero,
-    this.selectedTextColorStrategy = defaultSelectedTextColorStrategy,
+    this.selectedTextColorStrategy,
     required List<SingleColumnLayoutComponentViewModel> componentViewModels,
   })  : _componentViewModels = componentViewModels,
         _viewModelsByNodeId = {} {
@@ -444,7 +444,7 @@ class SingleColumnLayoutViewModel {
   final EdgeInsetsGeometry padding;
 
   /// The strategy that chooses the color for selected text.
-  final SelectedTextColorStrategy selectedTextColorStrategy;
+  final SelectedTextColorStrategy? selectedTextColorStrategy;
 
   final List<SingleColumnLayoutComponentViewModel> _componentViewModels;
   List<SingleColumnLayoutComponentViewModel> get componentViewModels => _componentViewModels;

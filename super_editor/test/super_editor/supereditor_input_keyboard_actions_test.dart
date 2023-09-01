@@ -429,7 +429,7 @@ void main() {
 
           // Ensure that a character was deleted.
           final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
-          expect(paragraphNode.text.text.startsWith("Lorem ipsu dolor sit amet"), isTrue);
+          expect(paragraphNode.text.text, startsWith("Lorem ipsu dolor sit amet"));
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(

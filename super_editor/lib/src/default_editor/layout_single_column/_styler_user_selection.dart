@@ -73,7 +73,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   }
 
   SingleColumnLayoutComponentViewModel _applySelection(
-      SingleColumnLayoutComponentViewModel viewModel, SelectedTextColorStrategy selectedTextColorStrategy) {
+      SingleColumnLayoutComponentViewModel viewModel, SelectedTextColorStrategy? selectedTextColorStrategy) {
     final documentSelection = _selection.value;
     final node = _document.getNodeById(viewModel.nodeId)!;
 
@@ -130,17 +130,18 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         //           SpanRange(start: textSelection.start, end: textSelection.end - 1)))
         //     : viewModel.text;
 
-        final componentTextColor = viewModel.textStyleBuilder({}).color!;
+        final componentTextColor = viewModel.textStyleBuilder({}).color;
 
-        final textWithSelectionAttributions = textSelection != null
-            ? (viewModel.text.copyText(0)
-              ..addAttribution(
-                  ColorAttribution(selectedTextColorStrategy(
-                    originalTextColor: componentTextColor,
-                    selectionHighlightColor: _selectionStyles.selectionColor,
-                  )),
-                  SpanRange(start: textSelection.start, end: textSelection.end - 1)))
-            : viewModel.text;
+        final textWithSelectionAttributions =
+            textSelection != null && selectedTextColorStrategy != null && componentTextColor != null
+                ? (viewModel.text.copyText(0)
+                  ..addAttribution(
+                      ColorAttribution(selectedTextColorStrategy(
+                        originalTextColor: componentTextColor,
+                        selectionHighlightColor: _selectionStyles.selectionColor,
+                      )),
+                      SpanRange(start: textSelection.start, end: textSelection.end - 1)))
+                : viewModel.text;
 
         viewModel
           ..text = textWithSelectionAttributions
