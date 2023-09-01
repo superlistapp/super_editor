@@ -427,6 +427,20 @@ void main() {
           // Press control + backspace
           await tester.pressCtlBackspace();
 
+          // TODO: remove this code after Flutter's next stable version.
+          // In Flutter 3.13, released in August 2023, this selector isn't generated during tests yet.
+          // Simulate a performSelector call from the IME.
+          await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
+            SystemChannels.textInput.name,
+            SystemChannels.textInput.codec.encodeMethodCall(
+              const MethodCall('TextInputClient.performSelectors', <dynamic>[
+                -1,
+                ['deleteBackwardByDecomposingPreviousCharacter:']
+              ]),
+            ),
+            (ByteData? data) {/* response from framework is discarded */},
+          );
+
           // Ensure that a character was deleted.
           final paragraphNode = testContext.findEditContext().document.nodes.first as ParagraphNode;
           expect(paragraphNode.text.text.startsWith("Lorem ipsu dolor sit amet"), isTrue);
