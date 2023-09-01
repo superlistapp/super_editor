@@ -422,16 +422,12 @@ class _ExampleEditorState extends State<ExampleEditor> {
             selectionLayerLinks: _selectionLayerLinks,
             selectionStyle: isLight
                 ? SelectionStyles(
-                    // selectionColor: Color(0xFF0088F7),
-                    selectionColor: Color(0xFFACDDFF),
+                    selectionColor: Color(0xFF0088F7),
                   )
                 : SelectionStyles(
                     selectionColor: Colors.red.withOpacity(0.3),
                   ),
             stylesheet: defaultStylesheet.copyWith(
-              selectedTextColorStrategy: ({required Color originalTextColor, required Color selectionHighlightColor}) {
-                return selectionHighlightColor.computeLuminance() >= 0.5 ? Colors.black : Colors.white;
-              },
               addRulesAfter: [
                 if (!isLight) ..._darkModeStyles,
                 taskStyles,
