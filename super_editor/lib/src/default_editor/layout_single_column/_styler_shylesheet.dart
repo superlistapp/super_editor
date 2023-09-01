@@ -38,7 +38,6 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
         for (final componentViewModel in viewModel.componentViewModels)
           _styleComponent(
             document,
-            _stylesheet,
             document.getNodeById(componentViewModel.nodeId)!,
             componentViewModel.copy(),
           ),
@@ -48,16 +47,15 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
 
   SingleColumnLayoutComponentViewModel _styleComponent(
     Document document,
-    Stylesheet stylesheet,
     DocumentNode node,
     SingleColumnLayoutComponentViewModel viewModel,
   ) {
     // Combine all applicable style rules into a single set of styles
     // for this component.
     final aggregateStyles = <String, dynamic>{
-      "inlineTextStyler": stylesheet.inlineTextStyler,
+      "inlineTextStyler": _stylesheet.inlineTextStyler,
     };
-    for (final rule in stylesheet.rules) {
+    for (final rule in _stylesheet.rules) {
       if (rule.selector.matches(document, node)) {
         _mergeStyles(
           existingStyles: aggregateStyles,

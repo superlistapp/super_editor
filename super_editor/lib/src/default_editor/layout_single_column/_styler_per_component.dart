@@ -1,5 +1,4 @@
 import 'package:flutter/painting.dart';
-import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import '../../core/document.dart';

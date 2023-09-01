@@ -450,9 +450,7 @@ class SuperEditorState extends State<SuperEditor> {
 
     final document = editContext.document;
 
-    _docStylesheetStyler = SingleColumnStylesheetStyler(
-      stylesheet: widget.stylesheet,
-    );
+    _docStylesheetStyler = SingleColumnStylesheetStyler(stylesheet: widget.stylesheet);
 
     _docLayoutPerComponentBlockStyler = SingleColumnLayoutCustomComponentStyler();
 
