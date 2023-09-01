@@ -75,7 +75,6 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
   @override
   void initState() {
-    print("Initializing SingleColumnDocumentLayoutState");
     super.initState();
 
     _presenterListener = SingleColumnLayoutPresenterChangeListener(
@@ -94,7 +93,6 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     super.didUpdateWidget(oldWidget);
 
     if (widget.presenter != oldWidget.presenter) {
-      print("Switching out Presenter listener in SingleColumnDocumentLayoutState");
       oldWidget.presenter.removeChangeListener(_presenterListener);
       widget.presenter.addChangeListener(_presenterListener);
 
@@ -104,14 +102,12 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
   @override
   void dispose() {
-    print("Disposing SingleColumnDocumentLayoutState");
     widget.presenter.removeChangeListener(_presenterListener);
     super.dispose();
   }
 
   Future<void> _onPresenterMarkedDirty() async {
     editorLayoutLog.fine("Layout presenter is dirty. Instructing it to update the view model.");
-    print("_onPresenterMarkedDirty()");
     widget.presenter.updateViewModel();
   }
 

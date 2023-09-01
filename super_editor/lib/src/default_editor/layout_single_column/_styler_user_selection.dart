@@ -34,11 +34,6 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     super.dispose();
   }
 
-  void markDirty() {
-    print("SingleColumnLayoutSelectionStyler marking itself dirty (probably due to selection change)");
-    super.markDirty();
-  }
-
   final Document _document;
   final ValueListenable<DocumentSelection?> _selection;
 

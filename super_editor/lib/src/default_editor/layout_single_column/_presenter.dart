@@ -110,8 +110,6 @@ class SingleColumnLayoutPresenter {
 
       // Listen for all dirty phase notifications.
       _pipeline[i].dirtyCallback = () {
-        print("Marking phase $i as dirty");
-
         final phaseIndex = i;
         if (phaseIndex < 0) {
           throw Exception("A phase marked itself as dirty, but that phase isn't in the pipeline. Index: $phaseIndex");
@@ -129,8 +127,6 @@ class SingleColumnLayoutPresenter {
           for (final listener in _listeners) {
             listener.onPresenterMarkedDirty();
           }
-        } else {
-          print("Presenter was already dirty");
         }
       };
     }
@@ -143,7 +139,6 @@ class SingleColumnLayoutPresenter {
   }
 
   void updateViewModel() {
-    print("Generating a new Presenter ViewModel");
     editorLayoutLog.info("Calculating an updated view model for document layout.");
     if (_earliestDirtyPhase == _pipeline.length) {
       editorLayoutLog.fine("The presenter is already up to date");
