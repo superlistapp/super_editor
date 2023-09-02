@@ -241,6 +241,10 @@ class SuperReaderState extends State<SuperReader> {
         widget.scrollController != oldWidget.scrollController) {
       _createReaderContext();
     }
+
+    if (widget.stylesheet != oldWidget.stylesheet) {
+      _createLayoutPresenter();
+    }
   }
 
   @override
@@ -273,7 +277,9 @@ class SuperReaderState extends State<SuperReader> {
       _docLayoutPresenter!.dispose();
     }
 
-    _docStylesheetStyler = SingleColumnStylesheetStyler(stylesheet: widget.stylesheet);
+    _docStylesheetStyler = SingleColumnStylesheetStyler(
+      stylesheet: widget.stylesheet,
+    );
 
     _docLayoutPerComponentBlockStyler = SingleColumnLayoutCustomComponentStyler();
 

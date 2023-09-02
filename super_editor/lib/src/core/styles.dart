@@ -13,6 +13,7 @@ class Stylesheet {
     this.documentPadding,
     required this.rules,
     required this.inlineTextStyler,
+    this.selectedTextColorStrategy,
   });
 
   /// Padding applied around the interior edge of the document.
@@ -25,12 +26,16 @@ class Stylesheet {
   /// Styles all in-line text in the document.
   final AttributionStyleAdjuster inlineTextStyler;
 
+  /// The strategy that chooses the color for selected text.
+  final SelectedTextColorStrategy? selectedTextColorStrategy;
+
   /// Priority-order list of style rules.
   final List<StyleRule> rules;
 
   Stylesheet copyWith({
     EdgeInsets? documentPadding,
     AttributionStyleAdjuster? inlineTextStyler,
+    SelectedTextColorStrategy? selectedTextColorStrategy,
     List<StyleRule> addRulesBefore = const [],
     List<StyleRule>? rules,
     List<StyleRule> addRulesAfter = const [],
@@ -38,6 +43,7 @@ class Stylesheet {
     return Stylesheet(
       documentPadding: documentPadding ?? this.documentPadding,
       inlineTextStyler: inlineTextStyler ?? this.inlineTextStyler,
+      selectedTextColorStrategy: selectedTextColorStrategy ?? this.selectedTextColorStrategy,
       rules: [
         ...addRulesBefore,
         ...(rules ?? this.rules),
@@ -46,6 +52,22 @@ class Stylesheet {
     );
   }
 }
+
+/// Default [SelectedTextColorStrategy], which retains the original text color,
+/// regardless of selection color.
+Color defaultSelectedTextColorStrategy({
+  required Color originalTextColor,
+  required Color selectionHighlightColor,
+}) {
+  return originalTextColor;
+}
+
+/// Returns the [Color] that should be used for selected text, possibly based
+/// on the [originalTextColor].
+typedef SelectedTextColorStrategy = Color Function({
+  required Color originalTextColor,
+  required Color selectionHighlightColor,
+});
 
 /// Adjusts the given [existingStyle] based on the given [attributions].
 typedef AttributionStyleAdjuster = TextStyle Function(Set<Attribution> attributions, TextStyle existingStyle);

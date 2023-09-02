@@ -385,12 +385,13 @@ class SuperEditorState extends State<SuperEditor> {
 
       _createEditContext();
       _createLayoutPresenter();
-    } else if (widget.selectionStyles != oldWidget.selectionStyles) {
-      _docLayoutSelectionStyler.selectionStyles = widget.selectionStyles;
-    }
-
-    if (widget.stylesheet != oldWidget.stylesheet) {
-      _docStylesheetStyler.stylesheet = widget.stylesheet;
+    } else {
+      if (widget.selectionStyles != oldWidget.selectionStyles) {
+        _docLayoutSelectionStyler.selectionStyles = widget.selectionStyles;
+      }
+      if (widget.stylesheet != oldWidget.stylesheet) {
+        _createLayoutPresenter();
+      }
     }
 
     if (widget.scrollController != oldWidget.scrollController) {
@@ -457,6 +458,7 @@ class SuperEditorState extends State<SuperEditor> {
       document: document,
       selection: editContext.composer.selectionNotifier,
       selectionStyles: widget.selectionStyles,
+      selectedTextColorStrategy: widget.stylesheet.selectedTextColorStrategy,
     );
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
@@ -1168,6 +1170,10 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
         decoration: newStyle.decoration == null
             ? TextDecoration.lineThrough
             : TextDecoration.combine([TextDecoration.lineThrough, newStyle.decoration!]),
+      );
+    } else if (attribution is ColorAttribution) {
+      newStyle = newStyle.copyWith(
+        color: attribution.color,
       );
     } else if (attribution is LinkAttribution) {
       newStyle = newStyle.copyWith(
