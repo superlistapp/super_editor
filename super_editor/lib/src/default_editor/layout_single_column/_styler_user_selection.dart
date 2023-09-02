@@ -1,3 +1,4 @@
+import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
@@ -10,6 +11,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import '../../core/document.dart';
+import '../attributions.dart';
 import '_presenter.dart';
 
 /// [SingleColumnLayoutStylePhase] that applies visual selections to each component,
@@ -19,9 +21,11 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     required Document document,
     required ValueListenable<DocumentSelection?> selection,
     required SelectionStyles selectionStyles,
+    SelectedTextColorStrategy? selectedTextColorStrategy,
   })  : _document = document,
         _selection = selection,
-        _selectionStyles = selectionStyles {
+        _selectionStyles = selectionStyles,
+        _selectedTextColorStrategy = selectedTextColorStrategy {
     // Our styles need to be re-applied whenever the document selection changes.
     _selection.addListener(markDirty);
   }
@@ -42,6 +46,16 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     }
 
     _selectionStyles = selectionStyles;
+    markDirty();
+  }
+
+  SelectedTextColorStrategy? _selectedTextColorStrategy;
+  set selectedTextColorStrategy(SelectedTextColorStrategy? strategy) {
+    if (strategy == _selectedTextColorStrategy) {
+      return;
+    }
+
+    _selectedTextColorStrategy = strategy;
     markDirty();
   }
 
@@ -120,7 +134,21 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       editorStyleLog.finer('   - extent: ${textSelection?.extent}');
 
       if (viewModel is TextComponentViewModel) {
+        final componentTextColor = viewModel.textStyleBuilder({}).color;
+
+        final textWithSelectionAttributions =
+            textSelection != null && _selectedTextColorStrategy != null && componentTextColor != null
+                ? (viewModel.text.copyText(0)
+                  ..addAttribution(
+                      ColorAttribution(_selectedTextColorStrategy!(
+                        originalTextColor: componentTextColor,
+                        selectionHighlightColor: _selectionStyles.selectionColor,
+                      )),
+                      SpanRange(start: textSelection.start, end: textSelection.end - 1)))
+                : viewModel.text;
+
         viewModel
+          ..text = textWithSelectionAttributions
           ..selection = textSelection
           ..selectionColor = _selectionStyles.selectionColor
           ..highlightWhenEmpty = highlightWhenEmpty;

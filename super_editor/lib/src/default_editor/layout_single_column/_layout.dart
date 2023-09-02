@@ -95,6 +95,8 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     if (widget.presenter != oldWidget.presenter) {
       oldWidget.presenter.removeChangeListener(_presenterListener);
       widget.presenter.addChangeListener(_presenterListener);
+
+      widget.presenter.updateViewModel();
     }
   }
 
