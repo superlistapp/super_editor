@@ -44,6 +44,7 @@ class SuperIOSTextField extends StatefulWidget {
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
+    this.imeConfiguration,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
@@ -128,7 +129,13 @@ class SuperIOSTextField extends StatefulWidget {
 
   /// The type of action associated with the action button on the mobile
   /// keyboard.
+  ///
+  /// This property is ignored when an [imeConfiguration] is provided.
+  @Deprecated('This will be removed in a future release. Use imeConfiguration instead')
   final TextInputAction textInputAction;
+
+  /// Preferences for how the platform IME should look and behave during editing.
+  final SuperTextFieldImeConfiguration? imeConfiguration;
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
@@ -242,6 +249,18 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         ..onPerformActionPressed ??= _onPerformActionPressed;
     }
 
+    if (widget.imeConfiguration != oldWidget.imeConfiguration &&
+        widget.imeConfiguration != null &&
+        _textEditingController.isAttachedToIme) {
+      _textEditingController.updateTextInputConfiguration(
+        textInputAction: widget.imeConfiguration!.keyboardActionButton,
+        textInputType: widget.imeConfiguration!.keyboardInputType,
+        autocorrect: widget.imeConfiguration!.enableAutocorrect,
+        enableSuggestions: widget.imeConfiguration!.enableSuggestions,
+        keyboardAppearance: widget.imeConfiguration!.keyboardBrightness,
+      );
+    }
+
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
       onNextFrame((_) => _rebuildHandles());
     }
@@ -327,10 +346,14 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.text.length);
           }
 
-          _textEditingController.attachToIme(
-            textInputAction: widget.textInputAction,
-            textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
-          );
+          if (widget.imeConfiguration != null) {
+            _textEditingController.attachToImeWithConfig(widget.imeConfiguration!);
+          } else {
+            _textEditingController.attachToIme(
+              textInputAction: widget.textInputAction,
+              textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
+            );
+          }
 
           _autoScrollToKeepTextFieldVisible();
           _showHandles();

@@ -123,14 +123,24 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       return;
     }
 
-    final imeConfig = TextInputConfiguration(
-      autocorrect: autocorrect,
-      enableDeltaModel: true,
+    final config = SuperTextFieldImeConfiguration(
+      enableAutocorrect: autocorrect,
       enableSuggestions: enableSuggestions,
-      inputAction: textInputAction,
-      inputType: textInputType,
-      keyboardAppearance: keyboardAppearance,
+      keyboardInputType: textInputType,
+      keyboardActionButton: textInputAction,
+      keyboardBrightness: _keyboardAppearance,
     );
+
+    attachToImeWithConfig(config);
+  }
+
+  void attachToImeWithConfig(SuperTextFieldImeConfiguration configuration) {
+    if (isAttachedToIme) {
+      // We're already connected to the IME.
+      return;
+    }
+
+    final imeConfig = configuration.toTextInputConfiguration();
     final inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
     inputConnection.show();
 
@@ -665,3 +675,77 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
 typedef TextInputConnectionFactory = TextInputConnection Function(
     TextInputClient client, TextInputConfiguration configuration);
+
+/// Input Method Engine (IME) configuration for text input.
+class SuperTextFieldImeConfiguration {
+  const SuperTextFieldImeConfiguration({
+    this.enableAutocorrect = true,
+    this.enableSuggestions = true,
+    this.keyboardInputType = TextInputType.text,
+    this.keyboardBrightness = Brightness.light,
+    this.keyboardActionButton = TextInputAction.newline,
+  });
+
+  /// Whether the OS should offer auto-correction options to the user.
+  final bool enableAutocorrect;
+
+  /// Whether the OS should offer text completion suggestions to the user.
+  final bool enableSuggestions;
+
+  /// The brightness of the software keyboard (only applies to platforms
+  /// with a software keyboard).
+  final Brightness keyboardBrightness;
+
+  /// The action button that's displayed on a software keyboard, e.g.,
+  /// new-line, done, go, etc.
+  final TextInputAction keyboardActionButton;
+
+  /// Configures the keyboard layout to a specific type of information.
+  final TextInputType keyboardInputType;
+
+  TextInputConfiguration toTextInputConfiguration() {
+    return TextInputConfiguration(
+      enableDeltaModel: true,
+      autocorrect: enableAutocorrect,
+      enableSuggestions: enableSuggestions,
+      inputAction: keyboardActionButton,
+      inputType: keyboardInputType,
+      keyboardAppearance: keyboardBrightness,
+    );
+  }
+
+  SuperTextFieldImeConfiguration copyWith({
+    bool? enableAutocorrect,
+    bool? enableSuggestions,
+    Brightness? keyboardBrightness,
+    TextInputType? keyboardInputType,
+    TextInputAction? keyboardActionButton,
+  }) {
+    return SuperTextFieldImeConfiguration(
+      enableAutocorrect: enableAutocorrect ?? this.enableAutocorrect,
+      enableSuggestions: enableSuggestions ?? this.enableSuggestions,
+      keyboardBrightness: keyboardBrightness ?? this.keyboardBrightness,
+      keyboardActionButton: keyboardActionButton ?? this.keyboardActionButton,
+      keyboardInputType: keyboardInputType ?? this.keyboardInputType,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SuperTextFieldImeConfiguration &&
+          runtimeType == other.runtimeType &&
+          enableAutocorrect == other.enableAutocorrect &&
+          enableSuggestions == other.enableSuggestions &&
+          keyboardBrightness == other.keyboardBrightness &&
+          keyboardActionButton == other.keyboardActionButton &&
+          keyboardInputType == other.keyboardInputType;
+
+  @override
+  int get hashCode =>
+      enableAutocorrect.hashCode ^
+      enableSuggestions.hashCode ^
+      keyboardBrightness.hashCode ^
+      keyboardActionButton.hashCode ^
+      keyboardInputType.hashCode;
+}
