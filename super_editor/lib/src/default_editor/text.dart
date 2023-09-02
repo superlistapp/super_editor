@@ -20,7 +20,6 @@ import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/strings.dart';
-import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'layout_single_column/layout_single_column.dart';
