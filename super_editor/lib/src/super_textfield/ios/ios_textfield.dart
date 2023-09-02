@@ -43,7 +43,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.blinkTimingMode = BlinkTimingMode.ticker,
     required this.selectionColor,
     required this.handlesColor,
-    this.textInputAction = TextInputAction.done,
+    this.textInputAction,
     this.imeConfiguration,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
@@ -132,7 +132,7 @@ class SuperIOSTextField extends StatefulWidget {
   ///
   /// This property is ignored when an [imeConfiguration] is provided.
   @Deprecated('This will be removed in a future release. Use imeConfiguration instead')
-  final TextInputAction textInputAction;
+  final TextInputAction? textInputAction;
 
   /// Preferences for how the platform IME should look and behave during editing.
   final SuperTextFieldImeConfiguration? imeConfiguration;
@@ -350,7 +350,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             _textEditingController.attachToImeWithConfig(widget.imeConfiguration!);
           } else {
             _textEditingController.attachToIme(
-              textInputAction: widget.textInputAction,
+              textInputAction: widget.textInputAction ?? TextInputAction.done,
               textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
             );
           }

@@ -39,7 +39,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.blinkTimingMode = BlinkTimingMode.ticker,
     required this.selectionColor,
     required this.handlesColor,
-    this.textInputAction = TextInputAction.done,
+    this.textInputAction,
     this.imeConfiguration,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
@@ -128,7 +128,7 @@ class SuperAndroidTextField extends StatefulWidget {
   ///
   /// This property is ignored when an [imeConfiguration] is provided.
   @Deprecated('This will be removed in a future release. Use imeConfiguration instead')
-  final TextInputAction textInputAction;
+  final TextInputAction? textInputAction;
 
   /// Preferences for how the platform IME should look and behave during editing.
   final SuperTextFieldImeConfiguration? imeConfiguration;
@@ -209,9 +209,11 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
     }
 
-    if (widget.textInputAction != oldWidget.textInputAction && _textEditingController.isAttachedToIme) {
+    if (widget.textInputAction != oldWidget.textInputAction &&
+        widget.textInputAction != null &&
+        _textEditingController.isAttachedToIme) {
       _textEditingController.updateTextInputConfiguration(
-        textInputAction: widget.textInputAction,
+        textInputAction: widget.textInputAction!,
         textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
       );
     }
@@ -330,7 +332,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             _textEditingController.attachToImeWithConfig(widget.imeConfiguration!);
           } else {
             _textEditingController.attachToIme(
-              textInputAction: widget.textInputAction,
+              textInputAction: widget.textInputAction ?? TextInputAction.done,
               textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
             );
           }
