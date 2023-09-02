@@ -297,6 +297,9 @@ class TextNodePosition extends TextPosition implements NodePosition {
 /// provides consistent application of text-based styling for all
 /// view models that add this mixin.
 mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
+  AttributedText get text;
+  set text(AttributedText text);
+
   AttributionStyleBuilder get textStyleBuilder;
   set textStyleBuilder(AttributionStyleBuilder styleBuilder);
 

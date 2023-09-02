@@ -154,6 +154,11 @@ class ContentLayersElement extends RenderObjectElement {
     // the layers during the next layout pass, after the content is laid out.
     SchedulerBinding.instance.scheduleFrameCallback((timeStamp) {
       contentLayersLog.finer("SCHEDULED FRAME CALLBACK");
+      if (!mounted) {
+        contentLayersLog.finer("We've unmounted since the end of the frame. Fizzling.");
+        return;
+      }
+
       final isContentDirty = _isContentDirty();
       final isAnyLayerDirty = _isAnyLayerDirty();
 
