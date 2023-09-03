@@ -24,6 +24,7 @@ String serializeDocumentToMarkdown(
     const ImageNodeSerializer(),
     const HorizontalRuleNodeSerializer(),
     const ListItemNodeSerializer(),
+    const TaskNodeSerializer(),
     ParagraphNodeSerializer(syntax),
   ];
 
@@ -181,6 +182,19 @@ class ParagraphNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Pa
     }
 
     return buffer.toString();
+  }
+}
+
+/// [DocumentNodeMarkdownSerializer] for serializing [TaskNode]s using Github's style syntax.
+///
+/// A completed task is serialized as `- [x] This is a completed task`
+/// An incomplete task is serialized as `- [ ] This is an incomplete task`
+class TaskNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<TaskNode> {
+  const TaskNodeSerializer();
+
+  @override
+  String doSerialization(Document document, TaskNode node) {
+    return '- [${node.isComplete ? 'x' : ' '}] ${node.text.text}';
   }
 }
 

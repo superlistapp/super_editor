@@ -28,6 +28,7 @@ MutableDocument deserializeMarkdownToDocument(
       if (syntax == MarkdownSyntax.superEditor) //
         _ParagraphWithAlignmentSyntax(),
       _EmptyLinePreservingParagraphSyntax(),
+      _TaskSyntax(),
     ],
   );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
@@ -148,6 +149,9 @@ class _MarkdownToDocument implements md.NodeVisitor {
         break;
       case 'hr':
         _addHorizontalRule();
+        break;
+      case 'task':
+        _addTask(element);
         break;
     }
 
@@ -282,6 +286,16 @@ class _MarkdownToDocument implements md.NodeVisitor {
         itemType: listItemType,
         indent: indent,
         text: _parseInlineText(element),
+      ),
+    );
+  }
+
+  void _addTask(md.Element element) {
+    _content.add(
+      TaskNode(
+        id: Editor.createNodeId(),
+        text: _parseInlineText(element),
+        isComplete: element.attributes['completed'] == 'true',
       ),
     );
   }
@@ -629,6 +643,57 @@ class _LineBreakSeparatedElement extends md.Element {
   }
 }
 
+/// A [md.BlockSyntax] that parses tasks.
+///
+/// A compled task starts with `- [x] ` followed by the task's content.
+///
+/// An incomplete task starts with `- [ ] ` followed by the task's content.
+///
+/// Tasks can have multiple lines of content.
+class _TaskSyntax extends md.BlockSyntax {
+  const _TaskSyntax();
+
+  /// Parses the first line of a task.
+  ///
+  /// `- [x] ` or `- [ ]` followed by any text.
+  @override
+  RegExp get pattern => RegExp(r'^- \[( |x)\] (.*)');
+
+  @override
+  md.Node? parse(md.BlockParser parser) {
+    final match = pattern.firstMatch(parser.current);
+    if (match == null) {
+      return null;
+    }
+
+    final completionToken = match.group(1)!;
+    final taskDescriptionFirstLine = match.group(2)!;
+
+    final buffer = StringBuffer(taskDescriptionFirstLine);
+
+    // Move to the second line.
+    parser.advance();
+
+    // Consume the following lines until we:
+    // - reach the end of the input OR
+    // - find a blank line OR
+    // - find the start of another block element (including another task)
+    while (!parser.isDone &&
+        !_blankLinePattern.hasMatch(parser.current) &&
+        !_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(parser.current))) {
+      buffer.write('\n');
+      buffer.write(parser.current);
+
+      parser.advance();
+    }
+
+    return md.Element(
+      'task',
+      [md.Text(buffer.toString())],
+    )..attributes['completed'] = (completionToken == 'x').toString();
+  }
+}
+
 /// Matches empty lines or lines containing only whitespace.
 final _blankLinePattern = RegExp(r'^(?:[ \t]*)$');
 
@@ -638,6 +703,7 @@ const List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
   md.FencedCodeBlockSyntax(),
   md.BlockquoteSyntax(),
   md.HorizontalRuleSyntax(),
+  _TaskSyntax(),
   md.UnorderedListSyntax(),
   md.OrderedListSyntax(),
 ];
