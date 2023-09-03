@@ -68,6 +68,10 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
               editor: _docEditor,
               document: _doc,
               composer: _composer,
+              componentBuilders: [
+                TaskComponentBuilder(_docEditor),
+                ...defaultComponentBuilders,
+              ],
               stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
               ),
@@ -171,6 +175,20 @@ MutableDocument _createInitialDocument() {
         id: Editor.createNodeId(),
         text: AttributedText(
           'Etiam id lacus interdum, efficitur ex convallis, accumsan ipsum. Integer faucibus mollis mauris, a suscipit ante mollis vitae. Fusce justo metus, congue non lectus ac, luctus rhoncus tellus. Phasellus vitae fermentum orci, sit amet sodales orci. Fusce at ante iaculis nunc aliquet pharetra. Nam placerat, nisl in gravida lacinia, nisl nibh feugiat nunc, in sagittis nisl sapien nec arcu. Nunc gravida faucibus massa, sit amet accumsan dolor feugiat in. Mauris ut elementum leo.',
+        ),
+      ),
+      TaskNode(
+        id: Editor.createNodeId(),
+        isComplete: false,
+        text: AttributedText(
+          'This is an incomplete task',
+        ),
+      ),
+      TaskNode(
+        id: Editor.createNodeId(),
+        isComplete: true,
+        text: AttributedText(
+          'This is a completed task',
         ),
       ),
     ],
