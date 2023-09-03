@@ -404,7 +404,7 @@ class TestSuperEditorConfigurator {
       selectionPolicies: _config.selectionPolicies ?? const SuperEditorSelectionPolicies(),
       softwareKeyboardController: _config.softwareKeyboardController,
       imePolicies: _config.imePolicies ?? const SuperEditorImePolicies(),
-      imeConfiguration: _config.imeConfiguration ?? const SuperEditorImeConfiguration(),
+      imeConfiguration: _config.imeConfiguration,
       imeOverrides: _config.imeOverrides,
       keyboardActions: [
         ..._config.prependedKeyboardActions,
