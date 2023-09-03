@@ -135,7 +135,7 @@ class SuperIOSTextField extends StatefulWidget {
   final TextInputAction? textInputAction;
 
   /// Preferences for how the platform IME should look and behave during editing.
-  final SuperTextFieldImeConfiguration? imeConfiguration;
+  final TextInputConfiguration? imeConfiguration;
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
@@ -253,11 +253,11 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         widget.imeConfiguration != null &&
         _textEditingController.isAttachedToIme) {
       _textEditingController.updateTextInputConfiguration(
-        textInputAction: widget.imeConfiguration!.keyboardActionButton,
-        textInputType: widget.imeConfiguration!.keyboardInputType,
-        autocorrect: widget.imeConfiguration!.enableAutocorrect,
+        textInputAction: widget.imeConfiguration!.inputAction,
+        textInputType: widget.imeConfiguration!.inputType,
+        autocorrect: widget.imeConfiguration!.autocorrect,
         enableSuggestions: widget.imeConfiguration!.enableSuggestions,
-        keyboardAppearance: widget.imeConfiguration!.keyboardBrightness,
+        keyboardAppearance: widget.imeConfiguration!.keyboardAppearance,
       );
     }
 

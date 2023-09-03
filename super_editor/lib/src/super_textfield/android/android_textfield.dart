@@ -131,7 +131,7 @@ class SuperAndroidTextField extends StatefulWidget {
   final TextInputAction? textInputAction;
 
   /// Preferences for how the platform IME should look and behave during editing.
-  final SuperTextFieldImeConfiguration? imeConfiguration;
+  final TextInputConfiguration? imeConfiguration;
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;
@@ -222,11 +222,11 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         widget.imeConfiguration != null &&
         _textEditingController.isAttachedToIme) {
       _textEditingController.updateTextInputConfiguration(
-        textInputAction: widget.imeConfiguration!.keyboardActionButton,
-        textInputType: widget.imeConfiguration!.keyboardInputType,
-        autocorrect: widget.imeConfiguration!.enableAutocorrect,
+        textInputAction: widget.imeConfiguration!.inputAction,
+        textInputType: widget.imeConfiguration!.inputType,
+        autocorrect: widget.imeConfiguration!.autocorrect,
         enableSuggestions: widget.imeConfiguration!.enableSuggestions,
-        keyboardAppearance: widget.imeConfiguration!.keyboardBrightness,
+        keyboardAppearance: widget.imeConfiguration!.keyboardAppearance,
       );
     }
 

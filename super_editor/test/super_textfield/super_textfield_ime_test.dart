@@ -538,12 +538,13 @@ void main() {
         _buildScaffold(
           child: const SuperTextField(
             inputSource: TextInputSource.ime,
-            imeConfiguration: SuperTextFieldImeConfiguration(
+            imeConfiguration: TextInputConfiguration(
               enableSuggestions: false,
-              enableAutocorrect: false,
-              keyboardActionButton: TextInputAction.search,
-              keyboardBrightness: Brightness.dark,
-              keyboardInputType: TextInputType.number,
+              autocorrect: false,
+              inputAction: TextInputAction.search,
+              keyboardAppearance: Brightness.dark,
+              inputType: TextInputType.number,
+              enableDeltaModel: false,
             ),
           ),
         ),
@@ -555,6 +556,7 @@ void main() {
       bool? autocorrect;
       bool? enableSuggestions;
       String? keyboardAppearance;
+      bool? enableDeltaModel;
 
       // Intercept the setClient message sent to the platform to check the configuration.
       tester
@@ -567,6 +569,7 @@ void main() {
           autocorrect = params['autocorrect'];
           enableSuggestions = params['enableSuggestions'];
           keyboardAppearance = params['keyboardAppearance'];
+          enableDeltaModel = params['enableDeltaModel'];
 
           final inputTypeConfig = params['inputType'] as Map;
           inputType = inputTypeConfig['name'];
@@ -583,6 +586,7 @@ void main() {
       expect(inputType, 'TextInputType.number');
       expect(autocorrect, false);
       expect(enableSuggestions, false);
+      expect(enableDeltaModel, true);
       expect(keyboardAppearance, 'Brightness.dark');
     });
   });

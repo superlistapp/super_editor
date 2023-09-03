@@ -131,7 +131,7 @@ class SuperDesktopTextField extends StatefulWidget {
   final TextInputAction? textInputAction;
 
   /// Preferences for how the platform IME should look and behave during editing.
-  final SuperTextFieldImeConfiguration? imeConfiguration;
+  final TextInputConfiguration? imeConfiguration;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
@@ -1026,7 +1026,7 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
   final TextInputAction? textInputAction;
 
   /// Preferences for how the platform IME should look and behave during editing.
-  final SuperTextFieldImeConfiguration? imeConfiguration;
+  final TextInputConfiguration? imeConfiguration;
 
   /// The rest of the subtree for this text field.
   final Widget child;
@@ -1080,11 +1080,11 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
         widget.imeConfiguration != null &&
         widget.textController.isAttachedToIme) {
       widget.textController.updateTextInputConfiguration(
-        textInputAction: widget.imeConfiguration!.keyboardActionButton,
-        textInputType: widget.imeConfiguration!.keyboardInputType,
-        autocorrect: widget.imeConfiguration!.enableAutocorrect,
+        textInputAction: widget.imeConfiguration!.inputAction,
+        textInputType: widget.imeConfiguration!.inputType,
+        autocorrect: widget.imeConfiguration!.autocorrect,
         enableSuggestions: widget.imeConfiguration!.enableSuggestions,
-        keyboardAppearance: widget.imeConfiguration!.keyboardBrightness,
+        keyboardAppearance: widget.imeConfiguration!.keyboardAppearance,
       );
     }
   }

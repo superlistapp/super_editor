@@ -189,7 +189,7 @@ class SuperTextField extends StatefulWidget {
   final TextInputAction? textInputAction;
 
   /// Preferences for how the platform IME should look and behave during editing.
-  final SuperTextFieldImeConfiguration? imeConfiguration;
+  final TextInputConfiguration? imeConfiguration;
 
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
