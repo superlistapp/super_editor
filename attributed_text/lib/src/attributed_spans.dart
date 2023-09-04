@@ -1089,6 +1089,12 @@ class AttributionSpan {
   final int start;
   final int end;
 
+  /// Returns a [SpanRange] from [start] to [end].
+  SpanRange get range => SpanRange(start: start, end: end);
+
+  /// Create a returns a copy of this [AttributionSpan], which is constrained
+  /// by the given [start] and [end], i.e., the returned value's `start` is
+  /// >= [start], and its `end` is <= [end].
   AttributionSpan constrain({
     required int start,
     required int end,
