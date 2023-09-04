@@ -30,6 +30,11 @@ class AttributedText {
   /// The text that this [AttributedText] attributes.
   final String text;
 
+  /// Returns the `length` of this [AttributedText]'s [text] `String`.
+  ///
+  /// This accessor is a convenience to avoid writing `myAttText.text.length`.
+  int get length => text.length;
+
   /// The attributes applied to [text].
   final AttributedSpans spans;
 
@@ -197,8 +202,12 @@ class AttributedText {
     _notifyListeners();
   }
 
+  /// Copies all text and attributions from [range.start] to [range.end] (exclusive),
+  /// and returns them as a new [AttributedText].
+  AttributedText copyTextInRange(SpanRange range) => copyText(range.start, range.end);
+
   /// Copies all text and attributions from [startOffset] to
-  /// [endOffset], inclusive, and returns them as a new [AttributedText].
+  /// [endOffset], exclusive, and returns them as a new [AttributedText].
   AttributedText copyText(int startOffset, [int? endOffset]) {
     _log.fine('start: $startOffset, end: $endOffset');
 
@@ -219,6 +228,15 @@ class AttributedText {
       text.substring(startOffset, endOffset),
       spans.copyAttributionRegion(startCopyOffset, endCopyOffset),
     );
+  }
+
+  /// Returns a plain-text substring of [text], from [range.start] to [range.end] (exclusive).
+  String substringInRange(SpanRange range) => substring(range.start, range.end);
+
+  /// Returns a plain-text substring of [text], from [start] to [end] (exclusive), or the end of
+  /// [text] if [end] isn't provided.
+  String substring(int start, [int? end]) {
+    return text.substring(start, end);
   }
 
   /// Returns a copy of this [AttributedText] with the [other] text
