@@ -298,6 +298,81 @@ void main() {
     });
 
     group('attribution queries', () {
+      test('finds all spans for single attribution throughout text', () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final ranges = attributedText.getAttributionSpans({ExpectedSpans.bold});
+
+        expect(ranges.length, 3);
+        expect(
+          ranges,
+          [
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 3),
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 6, end: 7),
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 9, end: 10),
+          ],
+        );
+      });
+
+      test('finds all spans for multiple attributions throughout text', () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 5, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 9, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final ranges = attributedText.getAttributionSpans({ExpectedSpans.bold, ExpectedSpans.italics});
+
+        expect(ranges.length, 4);
+        expect(
+          ranges,
+          [
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 3),
+            AttributionSpan(attribution: ExpectedSpans.italics, start: 5, end: 7),
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 6, end: 7),
+            AttributionSpan(attribution: ExpectedSpans.italics, start: 9, end: 10),
+          ],
+        );
+      });
+
+      test('returns empty list when searching for non-existent attribution spans', () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final ranges = attributedText.getAttributionSpans({ExpectedSpans.italics});
+
+        expect(ranges.length, 0);
+      });
+
       test('finds all bold text around a character', () {
         final attributedText = AttributedText(
           'Hello world',
