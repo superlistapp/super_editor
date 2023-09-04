@@ -123,6 +123,19 @@ class AttributedText {
     return attributionsThroughout;
   }
 
+  /// Returns all spans in this [AttributedText] for the given [attributions].
+  Set<AttributionSpan> getAttributionSpans(Set<Attribution> attributions) => getAttributionSpansInRange(
+        attributionFilter: (a) => attributions.contains(a),
+        range: SpanRange(start: 0, end: text.length),
+      );
+
+  /// Returns all spans in this [AttributedText], for attributions that are
+  /// selected by the given [filter].
+  Set<AttributionSpan> getAttributionSpansByFilter(AttributionFilter filter) => getAttributionSpansInRange(
+        attributionFilter: filter,
+        range: SpanRange(start: 0, end: text.length),
+      );
+
   /// Returns spans for each attribution that (at least partially) appear
   /// within the given [range], as selected by [attributionFilter].
   ///
@@ -132,7 +145,7 @@ class AttributedText {
   /// returned, including the area that sits outside the given [range].
   ///
   /// To obtain attribution spans that are cut down and limited to the
-  /// given [range], pass [true] for [resizeSpansToFitInRange]. This setting
+  /// given [range], pass `true` for [resizeSpansToFitInRange]. This setting
   /// only effects the returned spans, it does not alter the attributions
   /// within this [AttributedText].
   Set<AttributionSpan> getAttributionSpansInRange({
