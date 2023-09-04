@@ -27,6 +27,82 @@ void main() {
       );
     });
 
+    group('fragments', () {
+      test('can be copied as attributed text with a SpanRange', () {
+        final text = AttributedText(
+          "this that other",
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final slice = text.copyTextInRange(SpanRange(start: 5, end: 9));
+        expect(slice.text, "that");
+        expect(slice.length, 4);
+        expect(slice.getAttributedRange({ExpectedSpans.bold}, 0), SpanRange(start: 0, end: 1));
+        expect(slice.getAttributedRange({ExpectedSpans.italics}, 2), SpanRange(start: 2, end: 3));
+      });
+
+      test('can be copied as attributed text with start and end bounds', () {
+        final text = AttributedText(
+          "this that other",
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final slice = text.copyText(5, 9);
+        expect(slice.text, "that");
+        expect(slice.length, 4);
+        expect(slice.getAttributedRange({ExpectedSpans.bold}, 0), SpanRange(start: 0, end: 1));
+        expect(slice.getAttributedRange({ExpectedSpans.italics}, 2), SpanRange(start: 2, end: 3));
+      });
+
+      test('can be copied as plain text with a SpanRange', () {
+        final text = AttributedText(
+          "this that other",
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final substring = text.substringInRange(SpanRange(start: 5, end: 9));
+        expect(substring, "that");
+      });
+
+      test('can be copied as plain text with start and end bounds', () {
+        final text = AttributedText(
+          "this that other",
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final substring = text.substring(5, 9);
+        expect(substring, "that");
+      });
+    });
+
     group('span manipulation', () {
       test('combines overlapping spans when adding from left to right', () {
         // Note: span overlaps at the boundary had a bug that was filed in #582.
