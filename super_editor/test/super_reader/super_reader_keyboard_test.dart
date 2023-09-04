@@ -213,9 +213,9 @@ void main() {
       // Hold shift and move the caret to the beginning of the selected word, which
       // collapses the selection. Release the shift key pressed, which should check
       // the selection, see that it's collapsed, and then remove it.
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+      await tester.pressKeyDown(LogicalKeyboardKey.shift);
       await tester.pressCtlLeftArrow();
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+      await tester.releaseKeyUp(LogicalKeyboardKey.shift);
 
       // Ensure that the selection is gone.
       expect(

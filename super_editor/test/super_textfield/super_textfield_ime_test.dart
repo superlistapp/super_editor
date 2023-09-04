@@ -329,7 +329,8 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
         });
 
-        testWidgetsOnWindowsAndLinux('when NUMPAD ENTER is pressed in middle of text', (tester) async {
+        // TODO: Make this a Windows + Linux test when Flutter supports numpad enter on windows
+        testWidgetsOnLinux('when NUMPAD ENTER is pressed in middle of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -362,7 +363,8 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
         });
 
-        testWidgetsOnWindowsAndLinux('when NUMPAD ENTER is pressed at beginning of text', (tester) async {
+        // TODO: Make this a Windows + Linux test when Flutter supports numpad enter on windows
+        testWidgetsOnLinux('when NUMPAD ENTER is pressed at beginning of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -395,7 +397,8 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
-        testWidgetsOnWindowsAndLinux('when NUMPAD ENTER is pressed at end of text', (tester) async {
+        // TODO: Make this a Windows + Linux test when Flutter supports numpad enter on windows
+        testWidgetsOnLinux('when NUMPAD ENTER is pressed at end of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
