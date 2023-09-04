@@ -3,7 +3,7 @@
 /// This was copied from Flutter so that attributed_text could be distributed
 /// as a Dart package, instead of a Flutter package.
 class SpanRange {
-  /// Creates a text range.
+  /// Creates a span range.
   ///
   /// The [start] and [end] arguments must not be null. Both the [start] and
   /// [end] must either be greater than or equal to zero or both exactly -1.
@@ -11,15 +11,15 @@ class SpanRange {
   /// The text included in the range includes the character at [start], but not
   /// the one at [end].
   ///
-  /// Instead of creating an empty text range, consider using the [empty]
+  /// Instead of creating an empty span range, consider using the [empty]
   /// constant.
-  const SpanRange({
-    required this.start,
-    required this.end,
-  })  : assert(start >= -1),
+  const SpanRange(
+    this.start,
+    this.end,
+  )   : assert(start >= -1),
         assert(end >= -1);
 
-  /// A text range that starts and ends at offset.
+  /// A span range that starts and ends at offset.
   ///
   /// The [offset] argument must be non-null and greater than or equal to -1.
   const SpanRange.collapsed(int offset)
@@ -27,8 +27,8 @@ class SpanRange {
         start = offset,
         end = offset;
 
-  /// A text range that contains nothing and is not in the text.
-  static const SpanRange empty = SpanRange(start: -1, end: -1);
+  /// A span range that contains nothing and is not in the text.
+  static const SpanRange empty = SpanRange(-1, -1);
 
   /// The index of the first character in the range.
   ///
@@ -77,5 +77,5 @@ class SpanRange {
   int get hashCode => start.hashCode ^ end.hashCode;
 
   @override
-  String toString() => 'TextRange(start: $start, end: $end)';
+  String toString() => 'SpanRange(start: $start, end: $end)';
 }

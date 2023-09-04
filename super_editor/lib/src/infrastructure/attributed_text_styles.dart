@@ -9,7 +9,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 typedef AttributionStyleBuilder = TextStyle Function(Set<Attribution> attributions);
 
 extension ToSpanRange on TextRange {
-  SpanRange toSpanRange() => SpanRange(start: start, end: end);
+  SpanRange toSpanRange() => SpanRange(start, end);
 }
 
 extension ComputeTextSpan on AttributedText {

@@ -65,7 +65,7 @@ class _AttributionBoundsState extends State<AttributionBounds> {
 
       final spans = node.text.getAttributionSpansInRange(
         attributionFilter: widget.selector,
-        range: SpanRange(start: 0, end: node.text.text.length - 1),
+        range: SpanRange(0, node.text.text.length - 1),
       );
 
       for (final span in spans) {

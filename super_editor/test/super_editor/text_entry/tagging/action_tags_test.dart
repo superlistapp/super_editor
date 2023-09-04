@@ -26,7 +26,7 @@ void main() {
         expect(text.text, "/header");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 0),
-          const SpanRange(start: 0, end: 6),
+          const SpanRange(0, 6),
         );
       });
 
@@ -54,7 +54,7 @@ void main() {
         expect(text.text, "before /header after");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 13),
+          const SpanRange(7, 13),
         );
       });
 
@@ -84,13 +84,13 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
-            range: const SpanRange(start: 0, end: 18),
+            range: const SpanRange(0, 18),
           ),
           isEmpty,
         );
         expect(
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
       });
 
@@ -119,7 +119,7 @@ void main() {
         expect(text.text, "before /header");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 13),
+          const SpanRange(7, 13),
         );
 
         await tester.typeImeText(" after");
@@ -129,7 +129,7 @@ void main() {
         expect(text.text, "before /header after");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 19),
+          const SpanRange(7, 19),
         );
       });
 
@@ -158,7 +158,7 @@ void main() {
         expect(text.text, "before @john");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
       });
 
@@ -205,7 +205,7 @@ void main() {
         AttributedText text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 13),
+          const SpanRange(7, 13),
         );
 
         // Expand the selection to "before |/header|"
@@ -220,7 +220,7 @@ void main() {
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 13),
+          const SpanRange(7, 13),
         );
 
         // Expand the selection to "befor|e /header|"
@@ -231,7 +231,7 @@ void main() {
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 13),
+          const SpanRange(7, 13),
         );
       });
 
@@ -293,7 +293,7 @@ void main() {
         AttributedText text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 13),
+          const SpanRange(7, 13),
         );
       });
 
@@ -335,7 +335,7 @@ void main() {
         expect(text.text, "before /header");
         expect(
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
       });
 
@@ -381,7 +381,7 @@ void main() {
         expect(text.text, "before /header");
         expect(
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
       });
 
@@ -434,7 +434,7 @@ void main() {
         expect(text.text, "before /header after");
         expect(
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
       });
 
@@ -461,7 +461,7 @@ void main() {
         var text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributedRange({actionTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
 
         // Cancel composing.
@@ -472,13 +472,13 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
-            range: const SpanRange(start: 0, end: 7),
+            range: const SpanRange(0, 7),
           ),
           isEmpty,
         );
         expect(
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
 
         // Start typing again.
@@ -490,13 +490,13 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
-            range: const SpanRange(start: 0, end: 8),
+            range: const SpanRange(0, 8),
           ),
           isEmpty,
         );
         expect(
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
 
         // Add a space, cause the tag to end.
@@ -508,13 +508,13 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
-            range: const SpanRange(start: 0, end: 9),
+            range: const SpanRange(0, 9),
           ),
           isEmpty,
         );
         expect(
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
       });
 
@@ -610,7 +610,7 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
-            range: const SpanRange(start: 0, end: 6),
+            range: const SpanRange(0, 6),
           ),
           isEmpty,
         );
@@ -644,7 +644,7 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == actionTagComposingAttribution,
-            range: const SpanRange(start: 0, end: 12),
+            range: const SpanRange(0, 12),
           ),
           isEmpty,
         );

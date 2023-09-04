@@ -16,7 +16,7 @@ class MobileStyleBar extends StatelessWidget {
       final selection = textController.selection;
       return textController.text.hasAttributionsThroughout(
         attributions: {attribution},
-        range: SpanRange(start: selection.start, end: selection.end - 1),
+        range: SpanRange(selection.start, selection.end - 1),
       );
     }
   }

@@ -23,7 +23,7 @@ void main() {
 
       expect(newText.text, 'aabcdefghij');
       expect(
-        newText.hasAttributionsWithin(attributions: {ExpectedSpans.bold}, range: const SpanRange(start: 0, end: 10)),
+        newText.hasAttributionsWithin(attributions: {ExpectedSpans.bold}, range: const SpanRange(0, 10)),
         true,
       );
     });
@@ -34,19 +34,19 @@ void main() {
           "this that other",
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
             ],
           ),
         );
 
-        final slice = text.copyTextInRange(SpanRange(start: 5, end: 9));
+        final slice = text.copyTextInRange(const SpanRange(5, 9));
         expect(slice.text, "that");
         expect(slice.length, 4);
-        expect(slice.getAttributedRange({ExpectedSpans.bold}, 0), SpanRange(start: 0, end: 1));
-        expect(slice.getAttributedRange({ExpectedSpans.italics}, 2), SpanRange(start: 2, end: 3));
+        expect(slice.getAttributedRange({ExpectedSpans.bold}, 0), const SpanRange(0, 1));
+        expect(slice.getAttributedRange({ExpectedSpans.italics}, 2), const SpanRange(2, 3));
       });
 
       test('can be copied as attributed text with start and end bounds', () {
@@ -54,10 +54,10 @@ void main() {
           "this that other",
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -65,8 +65,8 @@ void main() {
         final slice = text.copyText(5, 9);
         expect(slice.text, "that");
         expect(slice.length, 4);
-        expect(slice.getAttributedRange({ExpectedSpans.bold}, 0), SpanRange(start: 0, end: 1));
-        expect(slice.getAttributedRange({ExpectedSpans.italics}, 2), SpanRange(start: 2, end: 3));
+        expect(slice.getAttributedRange({ExpectedSpans.bold}, 0), const SpanRange(0, 1));
+        expect(slice.getAttributedRange({ExpectedSpans.italics}, 2), const SpanRange(2, 3));
       });
 
       test('can be copied as plain text with a SpanRange', () {
@@ -74,15 +74,15 @@ void main() {
           "this that other",
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
             ],
           ),
         );
 
-        final substring = text.substringInRange(SpanRange(start: 5, end: 9));
+        final substring = text.substringInRange(const SpanRange(5, 9));
         expect(substring, "that");
       });
 
@@ -91,10 +91,10 @@ void main() {
           "this that other",
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 14, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -108,59 +108,59 @@ void main() {
       test('combines overlapping spans when adding from left to right', () {
         // Note: span overlaps at the boundary had a bug that was filed in #582.
         final text = AttributedText('01234567');
-        text.addAttribution(ExpectedSpans.bold, SpanRange(start: 0, end: 4));
-        text.addAttribution(ExpectedSpans.bold, SpanRange(start: 4, end: 8));
+        text.addAttribution(ExpectedSpans.bold, const SpanRange(0, 4));
+        text.addAttribution(ExpectedSpans.bold, const SpanRange(4, 8));
 
         // Ensure that the spans were merged into a single span.
         expect(text.spans.markers.length, 2);
         expect(
           text.spans.markers.first,
-          SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
         );
         expect(
           text.spans.markers.last,
-          SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+          const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
         );
       });
 
       test('combines overlapping spans when adding from left to right', () {
         final text = AttributedText('01234567');
-        text.addAttribution(ExpectedSpans.bold, SpanRange(start: 4, end: 8));
-        text.addAttribution(ExpectedSpans.bold, SpanRange(start: 0, end: 4));
+        text.addAttribution(ExpectedSpans.bold, const SpanRange(4, 8));
+        text.addAttribution(ExpectedSpans.bold, const SpanRange(0, 4));
 
         // Ensure that the spans were merged into a single span.
         expect(text.spans.markers.length, 2);
         expect(
           text.spans.markers.first,
-          SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
         );
         expect(
           text.spans.markers.last,
-          SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+          const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
         );
       });
 
       test('automatically combines back-to-back spans after addition', () {
         final text = AttributedText('ABCD');
-        text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 0, end: 1));
-        text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 2, end: 3));
+        text.addAttribution(ExpectedSpans.bold, const SpanRange(0, 1));
+        text.addAttribution(ExpectedSpans.bold, const SpanRange(2, 3));
 
         // Ensure that we only have a single span
         expect(text.spans.markers.length, 2);
         expect(
           text.spans.markers.first,
-          SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
         );
         expect(
           text.spans.markers.last,
-          SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
+          const SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
         );
       });
 
       test('keeps back-to-back spans separate when requested', () {
         final text = AttributedText('#john#sally');
-        text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 0, end: 4));
-        text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 5, end: 10), autoMerge: false);
+        text.addAttribution(ExpectedSpans.hashTag, const SpanRange(0, 4));
+        text.addAttribution(ExpectedSpans.hashTag, const SpanRange(5, 10), autoMerge: false);
 
         // Ensure that the hash tag spans were kept separate
         expect(text.spans.markers.length, 2 * 2);
@@ -170,30 +170,30 @@ void main() {
         // #john
         expect(
           markers[0],
-          SpanMarker(attribution: ExpectedSpans.hashTag, offset: 0, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: ExpectedSpans.hashTag, offset: 0, markerType: SpanMarkerType.start),
         );
         expect(
           markers[1],
-          SpanMarker(attribution: ExpectedSpans.hashTag, offset: 4, markerType: SpanMarkerType.end),
+          const SpanMarker(attribution: ExpectedSpans.hashTag, offset: 4, markerType: SpanMarkerType.end),
         );
 
         // #sally
         expect(
           markers[2],
-          SpanMarker(attribution: ExpectedSpans.hashTag, offset: 5, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: ExpectedSpans.hashTag, offset: 5, markerType: SpanMarkerType.start),
         );
         expect(
           markers[3],
-          SpanMarker(attribution: ExpectedSpans.hashTag, offset: 10, markerType: SpanMarkerType.end),
+          const SpanMarker(attribution: ExpectedSpans.hashTag, offset: 10, markerType: SpanMarkerType.end),
         );
       });
 
       test('throws exception when compatible attributions overlap but auto-merge is false', () {
         final text = AttributedText('#john#sally');
-        text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 0, end: 4));
+        text.addAttribution(ExpectedSpans.hashTag, const SpanRange(0, 4));
 
         expect(
-          () => text.addAttribution(ExpectedSpans.hashTag, const SpanRange(start: 0, end: 10), autoMerge: false),
+          () => text.addAttribution(ExpectedSpans.hashTag, const SpanRange(0, 10), autoMerge: false),
           throwsA(isA<IncompatibleOverlappingAttributionsException>()),
         );
       });
@@ -207,7 +207,7 @@ void main() {
         listenerCalled = true;
       });
 
-      text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 1, end: 1));
+      text.addAttribution(ExpectedSpans.bold, const SpanRange(1, 1));
 
       expect(listenerCalled, isTrue);
     });
@@ -303,12 +303,12 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -319,9 +319,9 @@ void main() {
         expect(
           ranges,
           [
-            AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 3),
-            AttributionSpan(attribution: ExpectedSpans.bold, start: 6, end: 7),
-            AttributionSpan(attribution: ExpectedSpans.bold, start: 9, end: 10),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 3),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 6, end: 7),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 9, end: 10),
           ],
         );
       });
@@ -331,14 +331,14 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 5, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 9, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 5, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 9, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -349,10 +349,10 @@ void main() {
         expect(
           ranges,
           [
-            AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 3),
-            AttributionSpan(attribution: ExpectedSpans.italics, start: 5, end: 7),
-            AttributionSpan(attribution: ExpectedSpans.bold, start: 6, end: 7),
-            AttributionSpan(attribution: ExpectedSpans.italics, start: 9, end: 10),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 3),
+            const AttributionSpan(attribution: ExpectedSpans.italics, start: 5, end: 7),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 6, end: 7),
+            const AttributionSpan(attribution: ExpectedSpans.italics, start: 9, end: 10),
           ],
         );
       });
@@ -362,8 +362,8 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -378,14 +378,14 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
             ],
           ),
         );
 
         final range = attributedText.getAttributedRange({ExpectedSpans.bold}, 5);
-        expect(range, SpanRange(start: 4, end: 9));
+        expect(range, const SpanRange(4, 9));
       });
 
       test('finds all bold and italics text around a character', () {
@@ -393,18 +393,18 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 10, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 10, markerType: SpanMarkerType.end),
             ],
           ),
         );
 
         final range = attributedText.getAttributedRange({ExpectedSpans.bold, ExpectedSpans.italics}, 5);
-        expect(range, SpanRange(start: 4, end: 7));
+        expect(range, const SpanRange(4, 7));
       });
 
       test(
@@ -414,19 +414,19 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 1, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 3, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 1, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 3, markerType: SpanMarkerType.end),
             ],
           ),
         );
 
         final range = attributedText
             .getAttributedRange({ExpectedSpans.bold, ExpectedSpans.italics, ExpectedSpans.strikethrough}, 2);
-        expect(range, SpanRange(start: 1, end: 3));
+        expect(range, const SpanRange(1, 3));
       });
     });
 
@@ -436,8 +436,8 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -467,8 +467,8 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -498,10 +498,10 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -533,10 +533,10 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 2, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 8, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 2, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 8, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -568,8 +568,8 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -591,16 +591,16 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
             ],
           ),
         );
 
         final expectedVisits = [
-          MultiAttributionSpan(attributions: {}, start: 0, end: 1),
+          const MultiAttributionSpan(attributions: {}, start: 0, end: 1),
           MultiAttributionSpan(attributions: {ExpectedSpans.bold}, start: 2, end: 8),
-          MultiAttributionSpan(attributions: {}, start: 9, end: 10),
+          const MultiAttributionSpan(attributions: {}, start: 9, end: 10),
         ];
 
         attributedText.visitAttributionSpans(
@@ -616,10 +616,10 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -643,18 +643,18 @@ void main() {
           'Hello world',
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 2, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 8, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 2, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: ExpectedSpans.italics, offset: 8, markerType: SpanMarkerType.end),
             ],
           ),
         );
 
         final expectedVisits = [
-          MultiAttributionSpan(attributions: {}, start: 0, end: 1),
+          const MultiAttributionSpan(attributions: {}, start: 0, end: 1),
           MultiAttributionSpan(attributions: {ExpectedSpans.bold, ExpectedSpans.italics}, start: 2, end: 8),
-          MultiAttributionSpan(attributions: {}, start: 9, end: 10),
+          const MultiAttributionSpan(attributions: {}, start: 9, end: 10),
         ];
 
         attributedText.visitAttributionSpans(
@@ -689,8 +689,8 @@ class _AttributionVisit {
       other is _AttributionVisit &&
           runtimeType == other.runtimeType &&
           index == other.index &&
-          DeepCollectionEquality().equals(startingAttributions, other.startingAttributions) &&
-          DeepCollectionEquality().equals(endingAttributions, other.endingAttributions);
+          const DeepCollectionEquality().equals(startingAttributions, other.startingAttributions) &&
+          const DeepCollectionEquality().equals(endingAttributions, other.endingAttributions);
 
   @override
   int get hashCode => index.hashCode ^ startingAttributions.hashCode ^ endingAttributions.hashCode;

@@ -239,12 +239,12 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
           rangeStart = i;
         }
       } else if (rangeStart >= 0) {
-        ranges.add(SpanRange(start: rangeStart, end: i - 1));
+        ranges.add(SpanRange(rangeStart, i - 1));
         rangeStart = -1;
       }
     }
     if (rangeStart >= 0) {
-      ranges.add(SpanRange(start: rangeStart, end: widget.cellCount - 1));
+      ranges.add(SpanRange(rangeStart, widget.cellCount - 1));
     }
 
     widget.onRangesChange!(ranges);
