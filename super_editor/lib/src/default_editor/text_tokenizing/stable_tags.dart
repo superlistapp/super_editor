@@ -454,7 +454,7 @@ class TagUserReaction implements EditReaction {
   List<EditRequest> _healCancelledTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
     final cancelledTagRanges = node.text.getAttributionSpansInRange(
       attributionFilter: (a) => a == stableTagCancelledAttribution,
-      range: SpanRange(start: 0, end: node.text.text.length - 1),
+      range: SpanRange(0, node.text.text.length - 1),
     );
 
     final changeRequests = <EditRequest>[];
@@ -513,8 +513,7 @@ class TagUserReaction implements EditReaction {
 
     final composingToken = _findComposingTagAtCaret(editContext);
     if (composingToken != null) {
-      final tagRange =
-          SpanRange(start: composingToken.indexedTag.startOffset, end: composingToken.indexedTag.endOffset);
+      final tagRange = SpanRange(composingToken.indexedTag.startOffset, composingToken.indexedTag.endOffset);
       final hasComposingThroughout =
           composingToken.indexedTag.computeLeadingSpanForAttribution(document, stableTagComposingAttribution) ==
               tagRange;
@@ -570,7 +569,7 @@ class TagUserReaction implements EditReaction {
       final tagsInDeletedText = change.deletedText.getAttributionSpansInRange(
         attributionFilter: (attribution) =>
             attribution == stableTagComposingAttribution || attribution is CommittedStableTagAttribution,
-        range: SpanRange(start: 0, end: change.deletedText.text.length),
+        range: SpanRange(0, change.deletedText.text.length),
       );
       if (tagsInDeletedText.isEmpty) {
         continue;
@@ -589,7 +588,7 @@ class TagUserReaction implements EditReaction {
       // If a composing tag no longer contains a trigger ("@"), remove the attribution.
       final allComposingTags = textNode.text.getAttributionSpansInRange(
         attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
-        range: SpanRange(start: 0, end: textNode.text.text.length - 1),
+        range: SpanRange(0, textNode.text.text.length - 1),
       );
 
       for (final tag in allComposingTags) {
@@ -629,7 +628,7 @@ class TagUserReaction implements EditReaction {
       final allStableTags = textNode.text
           .getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution is CommittedStableTagAttribution,
-            range: SpanRange(start: 0, end: textNode.text.text.length - 1),
+            range: SpanRange(0, textNode.text.text.length - 1),
           )
           .sorted((tag1, tag2) => tag2.start - tag1.start);
 
@@ -1041,7 +1040,7 @@ class TagUserReaction implements EditReaction {
     final allTags = textNode.text
         .getAttributionSpansInRange(
           attributionFilter: attributionFilter,
-          range: SpanRange(start: 0, end: textNode.text.text.length - 1),
+          range: SpanRange(0, textNode.text.text.length - 1),
         )
         .map(
           (span) => IndexedTag(
@@ -1390,8 +1389,8 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
 
     final tokenAttributions = paragraphText.getAllAttributionsThroughout(
       SpanRange(
-        start: tagAroundCaret.indexedTag.startOffset,
-        end: tagAroundCaret.indexedTag.endOffset - 1,
+        tagAroundCaret.indexedTag.startOffset,
+        tagAroundCaret.indexedTag.endOffset - 1,
       ),
     );
     if (tokenAttributions.any((attribution) => attribution is CommittedStableTagAttribution)) {

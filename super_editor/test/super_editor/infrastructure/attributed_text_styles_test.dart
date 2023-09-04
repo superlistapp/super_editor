@@ -62,7 +62,7 @@ void main() {
 
     test('add single character style', () {
       final text = AttributedText('abcdefghij');
-      text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 1, end: 1));
+      text.addAttribution(ExpectedSpans.bold, const SpanRange(1, 1));
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);

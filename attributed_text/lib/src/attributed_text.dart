@@ -126,14 +126,14 @@ class AttributedText {
   /// Returns all spans in this [AttributedText] for the given [attributions].
   Set<AttributionSpan> getAttributionSpans(Set<Attribution> attributions) => getAttributionSpansInRange(
         attributionFilter: (a) => attributions.contains(a),
-        range: SpanRange(start: 0, end: text.length),
+        range: SpanRange(0, text.length),
       );
 
   /// Returns all spans in this [AttributedText], for attributions that are
   /// selected by the given [filter].
   Set<AttributionSpan> getAttributionSpansByFilter(AttributionFilter filter) => getAttributionSpansInRange(
         attributionFilter: filter,
-        range: SpanRange(start: 0, end: text.length),
+        range: SpanRange(0, text.length),
       );
 
   /// Returns spans for each attribution that (at least partially) appear
@@ -314,7 +314,7 @@ class AttributedText {
 
     _log.fine('creating new attributed text for insertion');
     final insertedText = AttributedText(textToInsert);
-    final insertTextRange = SpanRange(start: 0, end: textToInsert.length - 1);
+    final insertTextRange = SpanRange(0, textToInsert.length - 1);
     for (dynamic attribution in applyAttributions) {
       insertedText.addAttribution(attribution, insertTextRange);
     }
@@ -372,8 +372,8 @@ class AttributedText {
   /// is notified about italics beginning at `6`, visitor is NOT notified that bold applies
   /// at that same index.
   void visitAttributions(AttributionVisitor visitor) {
-    final startingAttributions = Set<Attribution>();
-    final endingAttributions = Set<Attribution>();
+    final startingAttributions = <Attribution>{};
+    final endingAttributions = <Attribution>{};
     int currentIndex = -1;
 
     visitor.onVisitBegin();
@@ -462,7 +462,7 @@ class AttributedText {
 
   @override
   String toString() {
-    return '[AttributedText] - "$text"\n' + spans.toString();
+    return '[AttributedText] - "$text"\n$spans';
   }
 }
 

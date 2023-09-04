@@ -372,7 +372,7 @@ class ActionTagComposingReaction implements EditReaction {
   List<EditRequest> _healCancelledTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
     final cancelledTagRanges = node.text.getAttributionSpansInRange(
       attributionFilter: (a) => a == actionTagCancelledAttribution,
-      range: SpanRange(start: 0, end: node.text.text.length - 1),
+      range: SpanRange(0, node.text.text.length - 1),
     );
 
     final changeRequests = <EditRequest>[];

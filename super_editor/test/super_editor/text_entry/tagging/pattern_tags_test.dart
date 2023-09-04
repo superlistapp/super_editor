@@ -44,7 +44,7 @@ void main() {
         expect(text.text, "#flutter");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 0),
-          const SpanRange(start: 0, end: 7),
+          const SpanRange(0, 7),
         );
       });
 
@@ -72,7 +72,7 @@ void main() {
         expect(text.text, "before #flutter after");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 7),
-          const SpanRange(start: 7, end: 14),
+          const SpanRange(7, 14),
         );
       });
 
@@ -130,7 +130,7 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution is PatternTagAttribution,
-            range: const SpanRange(start: 0, end: 18),
+            range: const SpanRange(0, 18),
           ),
           {
             const AttributionSpan(
@@ -167,7 +167,7 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution is PatternTagAttribution,
-            range: const SpanRange(start: 0, end: 19),
+            range: const SpanRange(0, 19),
           ),
           {
             const AttributionSpan(
@@ -208,7 +208,7 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution is PatternTagAttribution,
-            range: const SpanRange(start: 0, end: 19),
+            range: const SpanRange(0, 19),
           ),
           {
             const AttributionSpan(
@@ -234,11 +234,11 @@ void main() {
         expect(text.text, "hello #flutter#d");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 6),
-          const SpanRange(start: 6, end: 13),
+          const SpanRange(6, 13),
         );
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 14),
-          const SpanRange(start: 14, end: 15),
+          const SpanRange(14, 15),
         );
 
         // Finish the second hash tag.
@@ -249,11 +249,11 @@ void main() {
         expect(text.text, "hello #flutter#dart");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 6),
-          const SpanRange(start: 6, end: 13),
+          const SpanRange(6, 13),
         );
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 14),
-          const SpanRange(start: 14, end: 18),
+          const SpanRange(14, 18),
         );
       });
 
@@ -272,11 +272,11 @@ void main() {
         expect(text.text, "hello #flutter #dart");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 6),
-          const SpanRange(start: 6, end: 13),
+          const SpanRange(6, 13),
         );
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 15),
-          const SpanRange(start: 15, end: 19),
+          const SpanRange(15, 19),
         );
       });
 
@@ -479,7 +479,7 @@ void main() {
         expect(text.text, "#bcdfghi ");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 0),
-          const SpanRange(start: 0, end: 7),
+          const SpanRange(0, 7),
         );
       });
     });

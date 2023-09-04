@@ -25,7 +25,7 @@ void main() {
         expect(text.text, "@john");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 0),
-          const SpanRange(start: 0, end: 4),
+          const SpanRange(0, 4),
         );
       });
 
@@ -53,7 +53,7 @@ void main() {
         expect(text.text, "before @john after");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
       });
 
@@ -83,7 +83,7 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
-            range: const SpanRange(start: 0, end: 18),
+            range: const SpanRange(0, 18),
           ),
           isEmpty,
         );
@@ -114,7 +114,7 @@ void main() {
         expect(text.text, "before @john");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
 
         await tester.typeImeText(" after");
@@ -124,7 +124,7 @@ void main() {
         expect(text.text, "before @john after");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 17),
+          const SpanRange(7, 17),
         );
       });
 
@@ -171,7 +171,7 @@ void main() {
         AttributedText text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
 
         // Expand the selection to "before |@john|"
@@ -184,7 +184,7 @@ void main() {
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
 
         // Expand the selection to "befor|e @john|"
@@ -195,7 +195,7 @@ void main() {
         text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
       });
 
@@ -253,7 +253,7 @@ void main() {
         AttributedText text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
       });
 
@@ -280,7 +280,7 @@ void main() {
         var text = SuperEditorInspector.findTextInParagraph("1");
         expect(
           text.getAttributedRange({stableTagComposingAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
 
         // Cancel composing.
@@ -291,13 +291,13 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
-            range: const SpanRange(start: 0, end: 7),
+            range: const SpanRange(0, 7),
           ),
           isEmpty,
         );
         expect(
           text.getAttributedRange({stableTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
 
         // Start typing again.
@@ -309,13 +309,13 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
-            range: const SpanRange(start: 0, end: 8),
+            range: const SpanRange(0, 8),
           ),
           isEmpty,
         );
         expect(
           text.getAttributedRange({stableTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
 
         // Add a space, cause the tag to end.
@@ -327,20 +327,20 @@ void main() {
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
-            range: const SpanRange(start: 0, end: 9),
+            range: const SpanRange(0, 9),
           ),
           isEmpty,
         );
         expect(
           text.getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution is CommittedStableTagAttribution,
-            range: const SpanRange(start: 0, end: 9),
+            range: const SpanRange(0, 9),
           ),
           isEmpty,
         );
         expect(
           text.getAttributedRange({stableTagCancelledAttribution}, 7),
-          const SpanRange(start: 7, end: 7),
+          const SpanRange(7, 7),
         );
       });
 
@@ -411,7 +411,7 @@ void main() {
         expect(text.text, "@john after");
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 0),
-          const SpanRange(start: 0, end: 4),
+          const SpanRange(0, 4),
         );
       });
 
@@ -439,7 +439,7 @@ void main() {
         expect(text.text, "before @john after");
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
       });
 
@@ -481,7 +481,7 @@ void main() {
         expect(text.text, "before @john");
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
       });
 
@@ -525,7 +525,7 @@ void main() {
         expect(text.text, "before @john");
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
       });
 
@@ -574,7 +574,7 @@ void main() {
         expect(text.text, "before @john after");
         expect(
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
-          const SpanRange(start: 7, end: 11),
+          const SpanRange(7, 11),
         );
       });
     });
