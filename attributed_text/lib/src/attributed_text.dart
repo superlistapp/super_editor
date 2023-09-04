@@ -339,6 +339,25 @@ class AttributedText {
     );
   }
 
+  /// Visits all attributions in this [AttributedText] by calling [visitor] whenever
+  /// an attribution begins or ends.
+  ///
+  /// If multiple attributions begin or end at the same index, then all of those attributions
+  /// are reported together.
+  ///
+  /// **Only Reports Beginnings and Endings:**
+  ///
+  /// This visitation method does not report all applied attributions at a given index. It
+  /// only reports attributions that begin or end at a specific index.
+  ///
+  /// For example:
+  ///
+  /// Bold:         |xxxxxxxxxxxx|
+  /// Italics:      |------xxxxxx|
+  ///
+  /// Bold is attributed throughout the range. Italics begins at index `6`. When [visitor]
+  /// is notified about italics beginning at `6`, visitor is NOT notified that bold applies
+  /// at that same index.
   void visitAttributions(AttributionVisitor visitor) {
     final startingAttributions = Set<Attribution>();
     final endingAttributions = Set<Attribution>();
@@ -375,6 +394,50 @@ class AttributedText {
     visitor.onVisitEnd();
   }
 
+  /// Visits attributions in this [AttributedText], reporting every changing group of
+  /// attributions to the given [visitor].
+  ///
+  /// See [computeAttributionSpans] for an example.
+  ///
+  /// See also:
+  ///
+  ///   * [visitAttributions], to visit attributions markers instead of attribution groups.
+  ///   * [computeAttributionSpans], to work with a list of [MultiAttributionSpan]s instead
+  ///     of visiting each span with a callback.
+  void visitAttributionSpans(AttributionSpanVisitor visitor) {
+    final collapsedSpans = computeAttributionSpans();
+    for (final span in collapsedSpans) {
+      visitor(span);
+    }
+  }
+
+  /// Collapses all attribution markers down into a series of attribution groups,
+  /// starting at the beginning of this [AttributedText], until the end.
+  ///
+  /// A new group of attributions begin wherever an attribution begins or ends.
+  ///
+  /// For example:
+  ///
+  /// Bold:         |----xxxxxxxxxxxx------------|
+  /// Italics:      |-------xxxxxxxxxxxxx--------|
+  /// Strikethru:   |-----------xxxxxxxxxxxxx----|
+  ///
+  /// Given the above attributions, the given [visitor] would be notified of the following
+  /// groups:
+  ///
+  ///  1. [0, 4]   - No attributions
+  ///  2. [5, 8]   - Bold
+  ///  3. [9, 12]  - Bold, Italics
+  ///  4. [13, 16] - Bold, Italics, Strikethru
+  ///  5. [17, 20] - Italics, Strikethru
+  ///  6. [21, 24] - Strikethru
+  ///  7. [25, 28] - No attributions
+  ///
+  /// Attribution groups are useful when computing all style variations for [AttributedText].
+  Iterable<MultiAttributionSpan> computeAttributionSpans() {
+    return spans.collapseSpans(contentLength: text.length);
+  }
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -389,6 +452,8 @@ class AttributedText {
     return '[AttributedText] - "$text"\n' + spans.toString();
   }
 }
+
+typedef AttributionSpanVisitor = void Function(MultiAttributionSpan span);
 
 /// Visits every [index] in the the given [AttributedText] which has at least
 /// one start or end marker, passing the attributions that start or end at the [index].

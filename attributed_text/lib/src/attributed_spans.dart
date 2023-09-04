@@ -1157,6 +1157,18 @@ class MultiAttributionSpan {
 
   @override
   String toString() => '[MultiAttributionSpan] - attributions: $attributions, start: $start, end: $end';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MultiAttributionSpan &&
+          runtimeType == other.runtimeType &&
+          start == other.start &&
+          end == other.end &&
+          DeepCollectionEquality().equals(attributions, other.attributions);
+
+  @override
+  int get hashCode => attributions.hashCode ^ start.hashCode ^ end.hashCode;
 }
 
 /// Returns `true` when the given [candidate] [Attribution] matches the desired condition.
