@@ -246,5 +246,49 @@ void main() {
       // Ensure that the text is inserted.
       expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!ABC");
     });
+
+    testWidgetsOnAllPlatforms("performs back to back taps with hardware keyboard", (tester) async {
+      final testContext = await tester //
+          .createDocument()
+          .fromMarkdown('Hello, world!')
+          .withInputSource(TextInputSource.keyboard)
+          .pump();
+
+      final nodeId = testContext.document.nodes.first.id;
+
+      // Tap to place the caret in the first paragraph.
+      await tester.placeCaretInParagraph(nodeId, 0);
+
+      // Place the caret at 'Hello, |world!'.
+      await tester.placeCaretInParagraph(nodeId, 7);
+
+      // Type another text.
+      await tester.typeKeyboardText("new ");
+
+      // Ensure that the text is inserted.
+      expect(SuperEditorInspector.findTextInParagraph(nodeId).text, "Hello, new world!");
+    });
+
+    testWidgetsOnAllPlatforms("performs back to back taps with software keyboard", (tester) async {
+      final testContext = await tester //
+          .createDocument()
+          .fromMarkdown('Hello, world!')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = testContext.document.nodes.first.id;
+
+      // Tap to place the caret in the first paragraph.
+      await tester.placeCaretInParagraph(nodeId, 0);
+
+      // Place the caret at 'Hello, |world!'.
+      await tester.placeCaretInParagraph(nodeId, 7);
+
+      // Type another text.
+      await tester.typeImeText("new ");
+
+      // Ensure that the text is inserted.
+      expect(SuperEditorInspector.findTextInParagraph(nodeId).text, "Hello, new world!");
+    });
   });
 }
