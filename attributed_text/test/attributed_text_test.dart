@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -353,5 +354,269 @@ void main() {
         expect(range, SpanRange(start: 1, end: 3));
       });
     });
+
+    group("attribution visitation", () {
+      test("visits full-length attributions", () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final expectedVisits = [
+          _AttributionVisit(0, {ExpectedSpans.bold}, {}),
+          _AttributionVisit(10, {}, {ExpectedSpans.bold}),
+        ];
+
+        attributedText.visitAttributions(
+          CallbackAttributionVisitor(
+            visitAttributions: (
+              AttributedText fullText,
+              int index,
+              Set<Attribution> startingAttributions,
+              Set<Attribution> endingAttributions,
+            ) {
+              expect(_AttributionVisit(index, startingAttributions, endingAttributions), expectedVisits.first);
+              expectedVisits.removeAt(0);
+            },
+          ),
+        );
+      });
+
+      test("visits partial-length attributions", () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final expectedVisits = [
+          _AttributionVisit(2, {ExpectedSpans.bold}, {}),
+          _AttributionVisit(8, {}, {ExpectedSpans.bold}),
+        ];
+
+        attributedText.visitAttributions(
+          CallbackAttributionVisitor(
+            visitAttributions: (
+              AttributedText fullText,
+              int index,
+              Set<Attribution> startingAttributions,
+              Set<Attribution> endingAttributions,
+            ) {
+              expect(_AttributionVisit(index, startingAttributions, endingAttributions), expectedVisits.first);
+              expectedVisits.removeAt(0);
+            },
+          ),
+        );
+      });
+
+      test("visits overlapping attributions", () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final expectedVisits = [
+          _AttributionVisit(0, {ExpectedSpans.bold}, {}),
+          _AttributionVisit(4, {ExpectedSpans.italics}, {}),
+          _AttributionVisit(6, {}, {ExpectedSpans.bold}),
+          _AttributionVisit(10, {}, {ExpectedSpans.italics}),
+        ];
+
+        attributedText.visitAttributions(
+          CallbackAttributionVisitor(
+            visitAttributions: (
+              AttributedText fullText,
+              int index,
+              Set<Attribution> startingAttributions,
+              Set<Attribution> endingAttributions,
+            ) {
+              expect(_AttributionVisit(index, startingAttributions, endingAttributions), expectedVisits.first);
+              expectedVisits.removeAt(0);
+            },
+          ),
+        );
+      });
+
+      test("visits multiple starting and ending attributions", () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 2, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 8, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final expectedVisits = [
+          _AttributionVisit(2, {ExpectedSpans.bold, ExpectedSpans.italics}, {}),
+          _AttributionVisit(8, {}, {ExpectedSpans.bold, ExpectedSpans.italics}),
+        ];
+
+        attributedText.visitAttributions(
+          CallbackAttributionVisitor(
+            visitAttributions: (
+              AttributedText fullText,
+              int index,
+              Set<Attribution> startingAttributions,
+              Set<Attribution> endingAttributions,
+            ) {
+              expect(_AttributionVisit(index, startingAttributions, endingAttributions), expectedVisits.first);
+              expectedVisits.removeAt(0);
+            },
+          ),
+        );
+      });
+    });
+
+    group("attribution span visitation", () {
+      test("visits full-length attributions", () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final expectedVisits = [
+          MultiAttributionSpan(attributions: {ExpectedSpans.bold}, start: 0, end: 10),
+        ];
+
+        attributedText.visitAttributionSpans(
+          (span) {
+            expect(span, expectedVisits.first);
+            expectedVisits.removeAt(0);
+          },
+        );
+      });
+
+      test("visits partial-length attributions", () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final expectedVisits = [
+          MultiAttributionSpan(attributions: {}, start: 0, end: 1),
+          MultiAttributionSpan(attributions: {ExpectedSpans.bold}, start: 2, end: 8),
+          MultiAttributionSpan(attributions: {}, start: 9, end: 10),
+        ];
+
+        attributedText.visitAttributionSpans(
+          (span) {
+            expect(span, expectedVisits.first);
+            expectedVisits.removeAt(0);
+          },
+        );
+      });
+
+      test("visits overlapping attributions", () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final expectedVisits = [
+          MultiAttributionSpan(attributions: {ExpectedSpans.bold}, start: 0, end: 3),
+          MultiAttributionSpan(attributions: {ExpectedSpans.bold, ExpectedSpans.italics}, start: 4, end: 6),
+          MultiAttributionSpan(attributions: {ExpectedSpans.italics}, start: 7, end: 10),
+        ];
+
+        attributedText.visitAttributionSpans(
+          (span) {
+            expect(span, expectedVisits.first);
+            expectedVisits.removeAt(0);
+          },
+        );
+      });
+
+      test("visits multiple starting and ending attributions", () {
+        final attributedText = AttributedText(
+          'Hello world',
+          AttributedSpans(
+            attributions: [
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 2, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 8, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final expectedVisits = [
+          MultiAttributionSpan(attributions: {}, start: 0, end: 1),
+          MultiAttributionSpan(attributions: {ExpectedSpans.bold, ExpectedSpans.italics}, start: 2, end: 8),
+          MultiAttributionSpan(attributions: {}, start: 9, end: 10),
+        ];
+
+        attributedText.visitAttributionSpans(
+          (span) {
+            expect(span, expectedVisits.first);
+            expectedVisits.removeAt(0);
+          },
+        );
+      });
+    });
   });
+}
+
+class _AttributionVisit {
+  _AttributionVisit(
+    this.index,
+    this.startingAttributions,
+    this.endingAttributions,
+  );
+
+  final int index;
+  final Set<Attribution> startingAttributions;
+  final Set<Attribution> endingAttributions;
+
+  @override
+  String toString() =>
+      "[_AttributionVisit] - index: $index, starting: $startingAttributions, ending: $endingAttributions";
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _AttributionVisit &&
+          runtimeType == other.runtimeType &&
+          index == other.index &&
+          DeepCollectionEquality().equals(startingAttributions, other.startingAttributions) &&
+          DeepCollectionEquality().equals(endingAttributions, other.endingAttributions);
+
+  @override
+  int get hashCode => index.hashCode ^ startingAttributions.hashCode ^ endingAttributions.hashCode;
 }
