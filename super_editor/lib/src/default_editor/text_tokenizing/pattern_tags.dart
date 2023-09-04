@@ -78,7 +78,7 @@ class PatternTagPlugin extends SuperEditorPlugin {
 
       final tagSpans = node.text.getAttributionSpansInRange(
         attributionFilter: (a) => a is PatternTagAttribution,
-        range: SpanRange(start: 0, end: node.text.text.length - 1),
+        range: SpanRange(0, node.text.text.length - 1),
       );
 
       final tags = <IndexedTag>{};
@@ -246,7 +246,7 @@ class PatternTagReaction implements EditReaction {
       return;
     }
 
-    final tagRange = SpanRange(start: tag.indexedTag.startOffset, end: tag.indexedTag.endOffset);
+    final tagRange = SpanRange(tag.indexedTag.startOffset, tag.indexedTag.endOffset);
     final hasTagAttributionThroughout =
         tag.indexedTag.computeLeadingSpanForAttribution(document, const PatternTagAttribution()) == tagRange;
     if (hasTagAttributionThroughout) {
@@ -427,7 +427,7 @@ class PatternTagReaction implements EditReaction {
   void _splitBackToBackTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
     final patternTags = node.text.getAttributionSpansInRange(
       attributionFilter: (attribution) => attribution is PatternTagAttribution,
-      range: SpanRange(start: 0, end: node.text.text.length),
+      range: SpanRange(0, node.text.text.length),
     );
     if (patternTags.isEmpty) {
       return;
@@ -453,7 +453,7 @@ class PatternTagReaction implements EditReaction {
       editorPatternTagsLog.finer("There are multiple triggers in this tag. Splitting.");
 
       // Remove the existing attribution, which covers multiple pattern tags.
-      spanRemovals.add(SpanRange(start: patternTag.start, end: patternTag.end));
+      spanRemovals.add(SpanRange(patternTag.start, patternTag.end));
       editorPatternTagsLog.finer(
           "Removing multi-tag span: ${patternTag.start} -> ${patternTag.end}, '${node.text.text.substring(patternTag.start, patternTag.end + 1)}'");
 
@@ -469,8 +469,8 @@ class PatternTagReaction implements EditReaction {
           editorPatternTagsLog.finer(
               "Adding a split tag span: ${patternTag.start + triggerSymbolIndex} -> ${patternTag.start + tagEnd}, '${node.text.text.substring(patternTag.start + triggerSymbolIndex, patternTag.start + tagEnd + 1)}'");
           spanCreations.add(SpanRange(
-            start: patternTag.start + triggerSymbolIndex,
-            end: patternTag.start + tagEnd,
+            patternTag.start + triggerSymbolIndex,
+            patternTag.start + tagEnd,
           ));
         }
 
@@ -537,7 +537,7 @@ class PatternTagReaction implements EditReaction {
       // We only care about deleted text when the deleted text contains at least one tag.
       final tagsInDeletedText = change.deletedText.getAttributionSpansInRange(
         attributionFilter: (attribution) => attribution is PatternTagAttribution,
-        range: SpanRange(start: 0, end: change.deletedText.text.length),
+        range: SpanRange(0, change.deletedText.text.length),
       );
       if (tagsInDeletedText.isEmpty) {
         continue;
@@ -555,7 +555,7 @@ class PatternTagReaction implements EditReaction {
       final textNode = document.getNodeById(nodeId) as TextNode;
       final allTags = textNode.text.getAttributionSpansInRange(
         attributionFilter: (attribution) => attribution is PatternTagAttribution,
-        range: SpanRange(start: 0, end: textNode.text.text.length - 1),
+        range: SpanRange(0, textNode.text.text.length - 1),
       );
 
       for (final tag in allTags) {
@@ -625,7 +625,7 @@ class PatternTagReaction implements EditReaction {
     final allTags = textNode.text
         .getAttributionSpansInRange(
           attributionFilter: (attribution) => attribution is PatternTagAttribution,
-          range: SpanRange(start: 0, end: textNode.text.text.length - 1),
+          range: SpanRange(0, textNode.text.text.length - 1),
         )
         .map(
           (span) => IndexedTag(

@@ -31,7 +31,7 @@ void main() {
       expect(
         text.getAttributionSpansInRange(
           attributionFilter: (attribution) => true,
-          range: SpanRange(start: 0, end: text.text.length - 1),
+          range: SpanRange(0, text.text.length - 1),
         ),
         isEmpty,
       );
@@ -48,7 +48,7 @@ void main() {
           attributions: {
             LinkAttribution(url: Uri.parse("https://www.google.com")),
           },
-          range: SpanRange(start: 0, end: text.text.length - 2),
+          range: SpanRange(0, text.text.length - 2),
         ),
         isTrue,
       );
@@ -77,7 +77,7 @@ void main() {
       expect(
         text.getAttributionSpansInRange(
           attributionFilter: (attribution) => true,
-          range: SpanRange(start: 0, end: text.text.length - 1),
+          range: SpanRange(0, text.text.length - 1),
         ),
         isEmpty,
       );
@@ -94,7 +94,7 @@ void main() {
           attributions: {
             LinkAttribution(url: Uri.parse("https://google.com")),
           },
-          range: SpanRange(start: 0, end: text.text.length - 2),
+          range: SpanRange(0, text.text.length - 2),
         ),
         isTrue,
       );
@@ -129,7 +129,7 @@ void main() {
           attributions: {
             LinkAttribution(url: Uri.parse("https://www.google.com")),
           },
-          range: SpanRange(start: 0, end: text.text.length - 2),
+          range: SpanRange(0, text.text.length - 2),
         ),
         isTrue,
       );
@@ -204,7 +204,7 @@ void main() {
           attributions: {
             LinkAttribution(url: Uri.parse("www.google.com")),
           },
-          range: SpanRange(start: 0, end: text.text.length - 1),
+          range: SpanRange(0, text.text.length - 1),
         ),
         isTrue,
       );
@@ -238,7 +238,7 @@ void main() {
           attributions: {
             LinkAttribution(url: Uri.parse("www.google.com")),
           },
-          range: SpanRange(start: 0, end: text.text.length - 1),
+          range: SpanRange(0, text.text.length - 1),
         ),
         isTrue,
       );
@@ -273,7 +273,7 @@ void main() {
           attributions: {
             LinkAttribution(url: Uri.parse("www.google.com")),
           },
-          range: SpanRange(start: 0, end: text.text.length - 1),
+          range: SpanRange(0, text.text.length - 1),
         ),
         isTrue,
       );
@@ -307,7 +307,7 @@ void main() {
           attributions: {
             LinkAttribution(url: Uri.parse("www.google.com")),
           },
-          range: SpanRange(start: 0, end: text.text.length - 1),
+          range: SpanRange(0, text.text.length - 1),
         ),
         isTrue,
       );
@@ -341,7 +341,7 @@ void main() {
           attributions: {
             LinkAttribution(url: Uri.parse("www.google.com")),
           },
-          range: const SpanRange(start: 0, end: 12),
+          range: const SpanRange(0, 12),
         ),
         isTrue,
       );
@@ -350,7 +350,7 @@ void main() {
           attributions: {
             LinkAttribution(url: Uri.parse("www.google.com")),
           },
-          range: SpanRange(start: 13, end: text.text.length - 1),
+          range: SpanRange(13, text.text.length - 1),
         ),
         isFalse,
       );
@@ -388,7 +388,7 @@ void main() {
       expect(
         newParagraphText.getAttributionSpansInRange(
           attributionFilter: (a) => a is LinkAttribution,
-          range: SpanRange(start: 0, end: newParagraphText.text.length - 1),
+          range: SpanRange(0, newParagraphText.text.length - 1),
         ),
         isEmpty,
       );
@@ -430,7 +430,7 @@ void main() {
       expect(
         newListItemText.getAttributionSpansInRange(
           attributionFilter: (a) => a is LinkAttribution,
-          range: SpanRange(start: 0, end: newListItemText.text.length - 1),
+          range: SpanRange(0, newListItemText.text.length - 1),
         ),
         isEmpty,
       );

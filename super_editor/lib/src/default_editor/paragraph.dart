@@ -393,7 +393,7 @@ class SplitParagraphCommand implements EditCommand {
       // of one paragraph, to the beginning of a new paragraph.
       final newParagraphAttributions = endText.getAttributionSpansInRange(
         attributionFilter: (a) => true,
-        range: const SpanRange(start: 0, end: 0),
+        range: const SpanRange(0, 0),
       );
       for (final attributionRange in newParagraphAttributions) {
         if (attributionsToExtendToNewParagraph(attributionRange.attribution)) {
@@ -405,7 +405,7 @@ class SplitParagraphCommand implements EditCommand {
         // This attribution shouldn't extend from one paragraph to another. Remove it.
         endText.removeAttribution(
           attributionRange.attribution,
-          SpanRange(start: attributionRange.start, end: attributionRange.end),
+          SpanRange(attributionRange.start, attributionRange.end),
         );
       }
     }
