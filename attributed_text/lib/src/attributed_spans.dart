@@ -259,11 +259,8 @@ class AttributedSpans {
     return _markers //
         .reversed // search from the end so its the nearest start marker
         .where((marker) {
-      return attribution == null ||
-          (marker.attribution.id == attribution.id && marker.attribution.canMergeWith(attribution));
-    })
-        // .where((marker) => attribution == null || marker.attribution.id == attribution.id)
-        .firstWhereOrNull((marker) => marker.isStart && marker.offset <= offset);
+      return attribution == null || (marker.attribution.id == attribution.id);
+    }).firstWhereOrNull((marker) => marker.isStart && marker.offset <= offset);
   }
 
   /// Finds and returns the nearest [end] marker that appears at or after the
@@ -271,9 +268,7 @@ class AttributedSpans {
   /// the given [attribution].
   SpanMarker? _getEndingMarkerAtOrAfter(int offset, {Attribution? attribution}) {
     return _markers
-        .where((marker) =>
-            attribution == null ||
-            (marker.attribution.id == attribution.id && marker.attribution.canMergeWith(attribution)))
+        .where((marker) => attribution == null || (marker.attribution.id == attribution.id))
         .firstWhereOrNull((marker) => marker.isEnd && marker.offset >= offset);
   }
 
