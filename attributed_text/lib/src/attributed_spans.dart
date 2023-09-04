@@ -247,8 +247,8 @@ class AttributedSpans {
     // Note: maxStartMarkerOffset and minEndMarkerOffset are non-null because we verified
     // that all desired attributions are present at the given offset.
     return SpanRange(
-      start: maxStartMarkerOffset!,
-      end: minEndMarkerOffset!,
+      maxStartMarkerOffset!,
+      minEndMarkerOffset!,
     );
   }
 
@@ -1090,7 +1090,7 @@ class AttributionSpan {
   final int end;
 
   /// Returns a [SpanRange] from [start] to [end].
-  SpanRange get range => SpanRange(start: start, end: end);
+  SpanRange get range => SpanRange(start, end);
 
   /// Create a returns a copy of this [AttributionSpan], which is constrained
   /// by the given [start] and [end], i.e., the returned value's `start` is
@@ -1171,7 +1171,7 @@ class MultiAttributionSpan {
           runtimeType == other.runtimeType &&
           start == other.start &&
           end == other.end &&
-          DeepCollectionEquality().equals(attributions, other.attributions);
+          const DeepCollectionEquality().equals(attributions, other.attributions);
 
   @override
   int get hashCode => attributions.hashCode ^ start.hashCode ^ end.hashCode;

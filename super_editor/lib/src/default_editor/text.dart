@@ -181,7 +181,7 @@ extension DocumentSelectionWithText on Document {
         endOffset = max(textNode.text.text.length - 1, 0);
       }
 
-      final selectionRange = SpanRange(start: startOffset, end: endOffset);
+      final selectionRange = SpanRange(startOffset, endOffset);
 
       if (textNode.text.hasAttributionsWithin(
         attributions: attributions,
@@ -1146,7 +1146,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
         endOffset = max(textNode.text.text.length - 1, 0);
       }
 
-      final selectionRange = SpanRange(start: startOffset, end: endOffset);
+      final selectionRange = SpanRange(startOffset, endOffset);
 
       alreadyHasAttributions = alreadyHasAttributions ||
           textNode.text.hasAttributionsWithin(

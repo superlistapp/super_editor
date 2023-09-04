@@ -49,7 +49,7 @@ class AttributedTextEditingController with ChangeNotifier {
       _composingAttributions
         ..clear()
         ..addAll(text.getAllAttributionsThroughout(
-          SpanRange(start: selection.start, end: selection.end),
+          SpanRange(selection.start, selection.end),
         ));
     }
   }
@@ -119,7 +119,7 @@ class AttributedTextEditingController with ChangeNotifier {
     for (final attribution in attributions) {
       _text.toggleAttribution(
         attribution,
-        SpanRange(start: selection.start, end: selection.end - 1),
+        SpanRange(selection.start, selection.end - 1),
       );
     }
 
@@ -133,7 +133,7 @@ class AttributedTextEditingController with ChangeNotifier {
     }
 
     _text.clearAttributions(
-      SpanRange(start: selection.start, end: selection.end - 1),
+      SpanRange(selection.start, selection.end - 1),
     );
 
     notifyListeners();

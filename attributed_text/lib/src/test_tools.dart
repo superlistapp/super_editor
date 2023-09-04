@@ -61,6 +61,7 @@ class ExpectedSpans {
         }
 
         if (!spans.hasAttributionAt(characterIndex, attribution: namedAttribution)) {
+          // ignore: avoid_print
           print("SPAN MISMATCH: missing $namedAttribution at $characterIndex");
         }
         expect(spans.hasAttributionAt(characterIndex, attribution: namedAttribution), true);

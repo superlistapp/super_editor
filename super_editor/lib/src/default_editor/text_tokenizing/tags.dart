@@ -67,7 +67,7 @@ class TagFinder {
     // Make end off exclusive.
     tokenEndOffset += 1;
 
-    final tokenRange = SpanRange(start: tokenStartOffset, end: tokenEndOffset);
+    final tokenRange = SpanRange(tokenStartOffset, tokenEndOffset);
     if (tokenRange.end - tokenRange.start <= 0) {
       return null;
     }

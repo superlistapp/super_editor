@@ -84,7 +84,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
 
         final actionSpans = node.text.getAttributionSpansInRange(
           attributionFilter: (a) => a == actionTagComposingAttribution,
-          range: SpanRange(start: 0, end: node.text.text.length - 1),
+          range: SpanRange(0, node.text.text.length - 1),
         );
 
         for (final actionSpan in actionSpans) {

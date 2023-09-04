@@ -537,7 +537,7 @@ class LinkifyReaction implements EditReaction {
         if (textNode.text
             .getAttributionSpansInRange(
               attributionFilter: (attribution) => attribution is LinkAttribution,
-              range: SpanRange(start: wordStartOffset, end: linkifyCandidate.offset),
+              range: SpanRange(wordStartOffset, linkifyCandidate.offset),
             )
             .isNotEmpty) {
           // There are link attributions in the preceding word. We don't want to mess with them.
@@ -560,7 +560,7 @@ class LinkifyReaction implements EditReaction {
 
           textNode.text.addAttribution(
             LinkAttribution(url: uri),
-            SpanRange(start: wordStartOffset, end: linkifyCandidate.offset - 1),
+            SpanRange(wordStartOffset, linkifyCandidate.offset - 1),
           );
         }
       }

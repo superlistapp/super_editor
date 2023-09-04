@@ -144,7 +144,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
                         originalTextColor: componentTextColor,
                         selectionHighlightColor: _selectionStyles.selectionColor,
                       )),
-                      SpanRange(start: textSelection.start, end: textSelection.end - 1)))
+                      SpanRange(textSelection.start, textSelection.end - 1)))
                 : viewModel.text;
 
         viewModel

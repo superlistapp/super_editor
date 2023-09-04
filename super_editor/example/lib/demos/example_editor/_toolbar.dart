@@ -295,7 +295,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
-    final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
+    final selectionRange = SpanRange(selectionStart, selectionEnd - 1);
 
     final textNode = widget.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
@@ -316,7 +316,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
-    final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
+    final selectionRange = SpanRange(selectionStart, selectionEnd - 1);
 
     final textNode = widget.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
@@ -347,7 +347,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         // the entire link attribution.
         text.removeAttribution(
           overlappingLinkSpan.attribution,
-          SpanRange(start: overlappingLinkSpan.start, end: overlappingLinkSpan.end),
+          SpanRange(overlappingLinkSpan.start, overlappingLinkSpan.end),
         );
       }
     } else {
@@ -405,7 +405,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       endOffset -= 1;
     }
 
-    return SpanRange(start: startOffset, end: endOffset);
+    return SpanRange(startOffset, endOffset);
   }
 
   /// Changes the alignment of the current selected text node
