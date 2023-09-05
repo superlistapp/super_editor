@@ -1,8 +1,9 @@
-import 'package:example/demos/features/feature_demo_scaffold.dart';
-import 'package:example/demos/features/popover_list.dart';
+import 'package:example/demos/in_the_lab/in_the_lab_scaffold.dart';
 import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
+
+import 'popover_list.dart';
 
 class ActionTagsFeatureDemo extends StatefulWidget {
   const ActionTagsFeatureDemo({super.key});
@@ -98,16 +99,9 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        FeatureDemoScaffold(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _buildEditor(),
-              ),
-              _buildTagList(),
-            ],
-          ),
+        InTheLabScaffold(
+          content: _buildEditor(),
+          supplemental: _buildTagList(),
         ),
         if (_actionTagPlugin.composingActionTag.value != null)
           Follower.withOffset(
@@ -127,85 +121,73 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
   }
 
   Widget _buildEditor() {
-    return SuperEditor(
-      editor: _editor,
-      document: _document,
-      composer: _composer,
-      focusNode: _editorFocusNode,
-      componentBuilders: [
-        TaskComponentBuilder(_editor),
-        ...defaultComponentBuilders,
-      ],
-      stylesheet: defaultStylesheet.copyWith(
-        inlineTextStyler: (attributions, existingStyle) {
-          TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
-
-          if (attributions.contains(actionTagComposingAttribution)) {
-            style = style.copyWith(
-              color: Colors.blue,
-            );
-          }
-
-          return style;
-        },
-        addRulesAfter: [
-          ...darkModeStyles,
+    return IntrinsicHeight(
+      child: SuperEditor(
+        editor: _editor,
+        document: _document,
+        composer: _composer,
+        focusNode: _editorFocusNode,
+        componentBuilders: [
+          TaskComponentBuilder(_editor),
+          ...defaultComponentBuilders,
         ],
-      ),
-      documentOverlayBuilders: [
-        AttributedTextBoundsOverlay(
-          selector: (a) => a == actionTagComposingAttribution,
-          builder: (BuildContext context, Attribution attribution) {
-            return Leader(
-              link: _composingLink,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blue),
-                ),
-              ),
-            );
+        stylesheet: defaultStylesheet.copyWith(
+          inlineTextStyler: (attributions, existingStyle) {
+            TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
+
+            if (attributions.contains(actionTagComposingAttribution)) {
+              style = style.copyWith(
+                color: Colors.blue,
+              );
+            }
+
+            return style;
           },
+          addRulesAfter: [
+            ...darkModeStyles,
+          ],
         ),
-        DefaultCaretOverlayBuilder(
-          caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
-        ),
-      ],
-      plugins: {
-        _actionTagPlugin,
-      },
+        documentOverlayBuilders: [
+          AttributedTextBoundsOverlay(
+            selector: (a) => a == actionTagComposingAttribution,
+            builder: (BuildContext context, Attribution attribution) {
+              return Leader(
+                link: _composingLink,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue),
+                  ),
+                ),
+              );
+            },
+          ),
+          DefaultCaretOverlayBuilder(
+            caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
+          ),
+        ],
+        plugins: {
+          _actionTagPlugin,
+        },
+      ),
     );
   }
 
   Widget _buildTagList() {
-    return Container(
-      width: 300,
-      decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(width: 1, color: Colors.white.withOpacity(0.1)),
+    if (_actions.isEmpty) {
+      return const SizedBox();
+    }
+
+    return Center(
+      child: SingleChildScrollView(
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          alignment: WrapAlignment.center,
+          children: [
+            for (final tag in _actions) //
+              Chip(label: Text(tag)),
+          ],
         ),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Center(
-        child: _actions.isNotEmpty
-            ? SingleChildScrollView(
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    for (final tag in _actions) //
-                      Chip(label: Text(tag)),
-                  ],
-                ),
-              )
-            : Text(
-                "NOT COMPOSING",
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.1),
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
       ),
     );
   }

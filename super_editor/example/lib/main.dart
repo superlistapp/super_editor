@@ -11,9 +11,9 @@ import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_android.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
-import 'package:example/demos/features/feature_action_tags.dart';
-import 'package:example/demos/features/feature_pattern_tags.dart';
-import 'package:example/demos/features/feature_stable_tags.dart';
+import 'package:example/demos/in_the_lab/feature_action_tags.dart';
+import 'package:example/demos/in_the_lab/feature_pattern_tags.dart';
+import 'package:example/demos/in_the_lab/feature_stable_tags.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
@@ -275,7 +275,18 @@ final _menu = <_MenuGroup>[
   ),
   _MenuGroup(
     title: 'FEATURES',
+    items: [],
+  ),
+  _MenuGroup(
+    title: 'IN THE LAB',
     items: [
+      _MenuItem(
+        icon: Icons.color_lens,
+        title: 'Selected Text Colors',
+        pageBuilder: (context) {
+          return const SelectedTextColorsDemo();
+        },
+      ),
       _MenuItem(
         icon: Icons.tag,
         title: 'Hash Tags',
@@ -295,18 +306,6 @@ final _menu = <_MenuGroup>[
         title: 'Action Tags',
         pageBuilder: (context) {
           return const ActionTagsFeatureDemo();
-        },
-      ),
-    ],
-  ),
-  _MenuGroup(
-    title: 'IN THE LAB',
-    items: [
-      _MenuItem(
-        icon: Icons.color_lens,
-        title: 'Selected Text Colors',
-        pageBuilder: (context) {
-          return const SelectedTextColorsDemo();
         },
       ),
     ],
