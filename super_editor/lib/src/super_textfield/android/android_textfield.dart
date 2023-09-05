@@ -39,7 +39,8 @@ class SuperAndroidTextField extends StatefulWidget {
     this.blinkTimingMode = BlinkTimingMode.ticker,
     required this.selectionColor,
     required this.handlesColor,
-    this.textInputAction = TextInputAction.done,
+    this.textInputAction,
+    this.imeConfiguration,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
@@ -124,7 +125,13 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// The type of action associated with the action button on the mobile
   /// keyboard.
-  final TextInputAction textInputAction;
+  ///
+  /// This property is ignored when an [imeConfiguration] is provided.
+  @Deprecated('This will be removed in a future release. Use imeConfiguration instead')
+  final TextInputAction? textInputAction;
+
+  /// Preferences for how the platform IME should look and behave during editing.
+  final TextInputConfiguration? imeConfiguration;
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;
@@ -202,10 +209,24 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
     }
 
-    if (widget.textInputAction != oldWidget.textInputAction && _textEditingController.isAttachedToIme) {
+    if (widget.textInputAction != oldWidget.textInputAction &&
+        widget.textInputAction != null &&
+        _textEditingController.isAttachedToIme) {
       _textEditingController.updateTextInputConfiguration(
-        textInputAction: widget.textInputAction,
+        textInputAction: widget.textInputAction!,
         textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
+      );
+    }
+
+    if (widget.imeConfiguration != oldWidget.imeConfiguration &&
+        widget.imeConfiguration != null &&
+        _textEditingController.isAttachedToIme) {
+      _textEditingController.updateTextInputConfiguration(
+        textInputAction: widget.imeConfiguration!.inputAction,
+        textInputType: widget.imeConfiguration!.inputType,
+        autocorrect: widget.imeConfiguration!.autocorrect,
+        enableSuggestions: widget.imeConfiguration!.enableSuggestions,
+        keyboardAppearance: widget.imeConfiguration!.keyboardAppearance,
       );
     }
 
@@ -307,10 +328,14 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.text.length);
           }
 
-          _textEditingController.attachToIme(
-            textInputAction: widget.textInputAction,
-            textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
-          );
+          if (widget.imeConfiguration != null) {
+            _textEditingController.attachToImeWithConfig(widget.imeConfiguration!);
+          } else {
+            _textEditingController.attachToIme(
+              textInputAction: widget.textInputAction ?? TextInputAction.done,
+              textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
+            );
+          }
 
           _autoScrollToKeepTextFieldVisible();
           _showEditingControlsOverlay();

@@ -530,6 +530,65 @@ void main() {
       // Ensure the IME connection is closed.
       expect(controller.isAttachedToIme, isFalse);
     });
+
+    testWidgetsOnAllPlatforms('applies custom IME configuration', (tester) async {
+      // Pump a SuperTextField with an IME configuration with values
+      // that differ from the defaults.
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: const SuperTextField(
+            inputSource: TextInputSource.ime,
+            imeConfiguration: TextInputConfiguration(
+              enableSuggestions: false,
+              autocorrect: false,
+              inputAction: TextInputAction.search,
+              keyboardAppearance: Brightness.dark,
+              inputType: TextInputType.number,
+              enableDeltaModel: false,
+            ),
+          ),
+        ),
+      );
+
+      // Holds the IME configuration values passed to the platform.
+      String? inputAction;
+      String? inputType;
+      bool? autocorrect;
+      bool? enableSuggestions;
+      String? keyboardAppearance;
+      bool? enableDeltaModel;
+
+      // Intercept the setClient message sent to the platform to check the configuration.
+      tester
+          .interceptChannel(SystemChannels.textInput.name) //
+          .interceptMethod(
+        'TextInput.setClient',
+        (methodCall) {
+          final params = methodCall.arguments[1] as Map;
+          inputAction = params['inputAction'];
+          autocorrect = params['autocorrect'];
+          enableSuggestions = params['enableSuggestions'];
+          keyboardAppearance = params['keyboardAppearance'];
+          enableDeltaModel = params['enableDeltaModel'];
+
+          final inputTypeConfig = params['inputType'] as Map;
+          inputType = inputTypeConfig['name'];
+
+          return null;
+        },
+      );
+
+      // Tap to focus the text field and attach to the IME.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Ensure we use the values from the configuration.
+      expect(inputAction, 'TextInputAction.search');
+      expect(inputType, 'TextInputType.number');
+      expect(autocorrect, false);
+      expect(enableSuggestions, false);
+      expect(enableDeltaModel, true);
+      expect(keyboardAppearance, 'Brightness.dark');
+    });
   });
 
   group('SuperTextField on some bad Android software keyboards', () {

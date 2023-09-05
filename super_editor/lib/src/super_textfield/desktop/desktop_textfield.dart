@@ -63,6 +63,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.onRightClick,
     this.inputSource = TextInputSource.keyboard,
     this.textInputAction,
+    this.imeConfiguration,
     List<TextFieldKeyboardHandler>? keyboardHandlers,
   })  : keyboardHandlers = keyboardHandlers ??
             (inputSource == TextInputSource.keyboard
@@ -124,7 +125,13 @@ class SuperDesktopTextField extends StatefulWidget {
   final List<TextFieldKeyboardHandler> keyboardHandlers;
 
   /// The type of action associated with ENTER key.
+  ///
+  /// This property is ignored when an [imeConfiguration] is provided.
+  @Deprecated('This will be removed in a future release. Use imeConfiguration instead')
   final TextInputAction? textInputAction;
+
+  /// Preferences for how the platform IME should look and behave during editing.
+  final TextInputConfiguration? imeConfiguration;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
@@ -405,6 +412,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                 isMultiline: isMultiline,
                 selectorHandlers: defaultTextFieldSelectorHandlers,
                 textInputAction: widget.textInputAction,
+                imeConfiguration: widget.imeConfiguration,
                 child: child,
               )
             : child,
@@ -991,6 +999,7 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
     required this.isMultiline,
     required this.selectorHandlers,
     this.textInputAction,
+    this.imeConfiguration,
     required this.child,
   }) : super(key: key);
 
@@ -1015,6 +1024,9 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
 
   /// The type of action associated with ENTER key.
   final TextInputAction? textInputAction;
+
+  /// Preferences for how the platform IME should look and behave during editing.
+  final TextInputConfiguration? imeConfiguration;
 
   /// The rest of the subtree for this text field.
   final Widget child;
@@ -1063,6 +1075,18 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
       }
       widget.textController.onPerformSelector ??= _onPerformSelector;
     }
+
+    if (widget.imeConfiguration != oldWidget.imeConfiguration &&
+        widget.imeConfiguration != null &&
+        widget.textController.isAttachedToIme) {
+      widget.textController.updateTextInputConfiguration(
+        textInputAction: widget.imeConfiguration!.inputAction,
+        textInputType: widget.imeConfiguration!.inputType,
+        autocorrect: widget.imeConfiguration!.autocorrect,
+        enableSuggestions: widget.imeConfiguration!.enableSuggestions,
+        keyboardAppearance: widget.imeConfiguration!.keyboardAppearance,
+      );
+    }
   }
 
   @override
@@ -1084,11 +1108,15 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
             widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.text.length);
           }
 
-          widget.textController.attachToIme(
-            textInputType: widget.isMultiline ? TextInputType.multiline : TextInputType.text,
-            textInputAction:
-                widget.textInputAction ?? (widget.isMultiline ? TextInputAction.newline : TextInputAction.done),
-          );
+          if (widget.imeConfiguration != null) {
+            widget.textController.attachToImeWithConfig(widget.imeConfiguration!);
+          } else {
+            widget.textController.attachToIme(
+              textInputType: widget.isMultiline ? TextInputType.multiline : TextInputType.text,
+              textInputAction:
+                  widget.textInputAction ?? (widget.isMultiline ? TextInputAction.newline : TextInputAction.done),
+            );
+          }
         });
       }
     } else {
