@@ -123,14 +123,26 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       return;
     }
 
-    final imeConfig = TextInputConfiguration(
-      autocorrect: autocorrect,
+    final config = TextInputConfiguration(
       enableDeltaModel: true,
+      autocorrect: autocorrect,
       enableSuggestions: enableSuggestions,
-      inputAction: textInputAction,
       inputType: textInputType,
-      keyboardAppearance: keyboardAppearance,
+      inputAction: textInputAction,
+      keyboardAppearance: _keyboardAppearance,
     );
+
+    attachToImeWithConfig(config);
+  }
+
+  void attachToImeWithConfig(TextInputConfiguration configuration) {
+    if (isAttachedToIme) {
+      // We're already connected to the IME.
+      return;
+    }
+
+    // Delta model is required for SuperTextField to work.
+    final imeConfig = configuration.copyWith(enableDeltaModel: true);
     final inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
     inputConnection.show();
 

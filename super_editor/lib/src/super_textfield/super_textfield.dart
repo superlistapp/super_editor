@@ -71,6 +71,7 @@ class SuperTextField extends StatefulWidget {
     this.keyboardHandlers,
     this.padding,
     this.textInputAction,
+    this.imeConfiguration,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -178,11 +179,17 @@ class SuperTextField extends StatefulWidget {
 
   /// The main action for the virtual keyboard, e.g. [TextInputAction.done].
   ///
+  /// This property is ignored when an [imeConfiguration] is provided.
+  ///
   /// When `null`, and in single-line mode, the action will be [TextInputAction.done],
   /// and when in multi-line mode, the action will be  [TextInputAction.newline].
   ///
   /// Only used on mobile.
+  @Deprecated('This will be removed in a future release. Use imeConfiguration instead')
   final TextInputAction? textInputAction;
+
+  /// Preferences for how the platform IME should look and behave during editing.
+  final TextInputConfiguration? imeConfiguration;
 
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
@@ -323,6 +330,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           padding: widget.padding ?? EdgeInsets.zero,
           inputSource: _inputSource,
           textInputAction: _textInputAction,
+          imeConfiguration: widget.imeConfiguration,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(
@@ -346,6 +354,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
             textInputAction: _textInputAction,
+            imeConfiguration: widget.imeConfiguration,
             padding: widget.padding,
           ),
         );
@@ -371,6 +380,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
             textInputAction: _textInputAction,
+            imeConfiguration: widget.imeConfiguration,
             padding: widget.padding,
           ),
         );
