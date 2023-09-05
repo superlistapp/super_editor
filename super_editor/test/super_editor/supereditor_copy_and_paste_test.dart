@@ -86,5 +86,34 @@ This is the third paragraph''');
       expect((doc.nodes[1] as ParagraphNode).text.text, 'This is a second paragraph');
       expect((doc.nodes[2] as ParagraphNode).text.text, 'This is the third paragraph');
     });
+
+    testAllInputsOnWindowsAndLinux('pastes multiple paragraphs', (
+      tester, {
+      required TextInputSource inputSource,
+    }) async {
+      final testContext = await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(inputSource)
+          .pump();
+
+      // Place the caret at the empty paragraph.
+      await tester.placeCaretInParagraph('1', 0);
+
+      // Simulate pasting multiple lines.
+      tester
+        ..simulateClipboard()
+        ..setSimulatedClipboardContent('''This is a paragraph
+This is a second paragraph
+This is the third paragraph''');
+      await tester.pressCtlV();
+
+      // Ensure three paragraphs were created.
+      final doc = testContext.document;
+      expect(doc.nodes.length, 3);
+      expect((doc.nodes[0] as ParagraphNode).text.text, 'This is a paragraph');
+      expect((doc.nodes[1] as ParagraphNode).text.text, 'This is a second paragraph');
+      expect((doc.nodes[2] as ParagraphNode).text.text, 'This is the third paragraph');
+    });
   });
 }
