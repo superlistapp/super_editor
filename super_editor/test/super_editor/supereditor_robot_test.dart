@@ -181,6 +181,29 @@ void main() {
       expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!");
     });
 
+    testWidgetsOnDesktop("enters text with hardware keyboard with multiple taps", (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.keyboard)
+          .pump();
+
+      // Tap to place the caret in the first paragraph.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Type some text by simulating hardware keyboard key presses.
+      await tester.typeKeyboardText("Hello, world!");
+
+      // Place the caret at the end of the paragraph.
+      await tester.placeCaretInParagraph("1", 13);
+
+      // Type another text.
+      await tester.typeKeyboardText("ABC");
+
+      // Ensure that the text is inserted.
+      expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!ABC");
+    });
+
     testWidgetsOnDesktop("enters text with IME keyboard", (tester) async {
       // Configure and render a document.
       await tester //
@@ -199,6 +222,73 @@ void main() {
 
       // Verify that SuperEditor displays the text we typed.
       expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!");
+    });
+
+    testWidgetsOnDesktop("enters text with IME keyboard with multiple taps", (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Tap to place the caret in the first paragraph.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Type some text by simulating IME keyboard key presses.
+      await tester.typeImeText("Hello, world!");
+
+      // Place the caret at the end of the paragraph.
+      await tester.placeCaretInParagraph("1", 13);
+
+      // Type another text.
+      await tester.typeImeText("ABC");
+
+      // Ensure that the text is inserted.
+      expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!ABC");
+    });
+
+    testWidgetsOnAllPlatforms("performs back to back taps with hardware keyboard", (tester) async {
+      final testContext = await tester //
+          .createDocument()
+          .fromMarkdown('Hello, world!')
+          .withInputSource(TextInputSource.keyboard)
+          .pump();
+
+      final nodeId = testContext.document.nodes.first.id;
+
+      // Tap to place the caret in the first paragraph.
+      await tester.placeCaretInParagraph(nodeId, 0);
+
+      // Place the caret at 'Hello, |world!'.
+      await tester.placeCaretInParagraph(nodeId, 7);
+
+      // Type another text.
+      await tester.typeKeyboardText("new ");
+
+      // Ensure that the text is inserted.
+      expect(SuperEditorInspector.findTextInParagraph(nodeId).text, "Hello, new world!");
+    });
+
+    testWidgetsOnAllPlatforms("performs back to back taps with software keyboard", (tester) async {
+      final testContext = await tester //
+          .createDocument()
+          .fromMarkdown('Hello, world!')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = testContext.document.nodes.first.id;
+
+      // Tap to place the caret in the first paragraph.
+      await tester.placeCaretInParagraph(nodeId, 0);
+
+      // Place the caret at 'Hello, |world!'.
+      await tester.placeCaretInParagraph(nodeId, 7);
+
+      // Type another text.
+      await tester.typeImeText("new ");
+
+      // Ensure that the text is inserted.
+      expect(SuperEditorInspector.findTextInParagraph(nodeId).text, "Hello, new world!");
     });
   });
 }
