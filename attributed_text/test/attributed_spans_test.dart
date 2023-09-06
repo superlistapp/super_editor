@@ -203,6 +203,7 @@ void main() {
           false,
         );
       });
+
       group('getAttributedRange', () {
         test('returns the range of a single attribution for an offset in the middle of a span', () {
           final spans = AttributedSpans(

@@ -68,7 +68,9 @@ class AttributedSpans {
       final foundAttributions = <Attribution>{};
       for (final attribution in attributionsToFind) {
         if (hasAttributionAt(i, attribution: attribution)) {
-          // Add the attribution to be removed later.
+          // Store the attributions we found so far to remove them
+          // from attributionsToFind after the loop.
+          //
           // Removing from the set while iterating throws an exception.
           foundAttributions.add(attribution);
         }
