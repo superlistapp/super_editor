@@ -2366,7 +2366,7 @@ class PasteEditorCommand implements EditCommand {
   List<AttributedText> _inferAttributionsForLinesOfPastedText(String content) {
     // Split the pasted content by newlines, because each new line of content
     // needs to placed in its own ParagraphNode.
-    final lines = content.split('\n\n');
+    final lines = content.split('\n');
     editorOpsLog.fine("Breaking pasted content into lines and adding attributions:");
     editorOpsLog.fine("Lines of content:");
     for (final line in lines) {
