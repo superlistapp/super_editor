@@ -157,6 +157,53 @@ void main() {
         );
       });
 
+      test('hasAttributionsWithin can look for multiple attributions at the same time', () {
+        final spans = AttributedSpans()
+          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 8)
+          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 1, end: 5)
+          ..addAttribution(newAttribution: ExpectedSpans.strikethrough, start: 5, end: 9);
+
+        ExpectedSpans(
+          [
+            'bbbbbbbbb_',
+            '_iiiii____',
+            '_____sssss',
+          ],
+        ).expectSpans(spans);
+
+        expect(
+          spans.hasAttributionsWithin(attributions: {
+            ExpectedSpans.bold,
+            ExpectedSpans.italics,
+            ExpectedSpans.strikethrough,
+          }, start: 0, end: 9),
+          true,
+        );
+
+        expect(
+          spans.hasAttributionsWithin(attributions: {
+            ExpectedSpans.bold,
+            ExpectedSpans.italics,
+          }, start: 0, end: 9),
+          true,
+        );
+
+        expect(
+            spans.hasAttributionsWithin(attributions: {
+              ExpectedSpans.bold,
+              ExpectedSpans.italics,
+            }, start: 0, end: 4),
+            true);
+
+        expect(
+          spans.hasAttributionsWithin(attributions: {
+            ExpectedSpans.bold,
+            ExpectedSpans.strikethrough,
+          }, start: 0, end: 4),
+          false,
+        );
+      });
+
       group('getAttributedRange', () {
         test('returns the range of a single attribution for an offset in the middle of a span', () {
           final spans = AttributedSpans(

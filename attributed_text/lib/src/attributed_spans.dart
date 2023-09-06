@@ -65,14 +65,20 @@ class AttributedSpans {
   }) {
     final attributionsToFind = Set.from(attributions);
     for (int i = start; i <= end; ++i) {
+      final foundAttributions = <Attribution>{};
       for (final attribution in attributionsToFind) {
         if (hasAttributionAt(i, attribution: attribution)) {
-          attributionsToFind.remove(attribution);
+          // Store the attributions we found so far to remove them
+          // from attributionsToFind after the loop.
+          //
+          // Removing from the set while iterating throws an exception.
+          foundAttributions.add(attribution);
         }
-
-        if (attributionsToFind.isEmpty) {
-          return true;
-        }
+      }
+      attributionsToFind.removeAll(foundAttributions);
+      if (attributionsToFind.isEmpty) {
+        // We found all attributions.
+        return true;
       }
     }
     return false;
