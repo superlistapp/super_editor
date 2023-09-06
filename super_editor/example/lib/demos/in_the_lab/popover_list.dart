@@ -89,6 +89,7 @@ class _PopoverListState extends State<PopoverList> {
   }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    print("_onKeyEvent() - $event");
     final reservedKeys = {
       LogicalKeyboardKey.arrowUp,
       LogicalKeyboardKey.arrowDown,
@@ -99,6 +100,7 @@ class _PopoverListState extends State<PopoverList> {
 
     final key = event.logicalKey;
     if (!reservedKeys.contains(key)) {
+      print("Ignoring this key. Letting ancestors handle it.");
       return KeyEventResult.ignored;
     }
 
@@ -130,32 +132,39 @@ class _PopoverListState extends State<PopoverList> {
         widget.onCancelRequested();
     }
 
+    print("We handled this key");
     return KeyEventResult.handled;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      focusNode: _focusNode,
-      parentNode: widget.editorFocusNode,
-      onKeyEvent: _onKeyEvent,
-      child: ListenableBuilder(
-        listenable: _focusNode,
-        builder: (context, child) {
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: _focusNode.hasFocus ? Colors.blue : Colors.transparent),
-            ),
-            child: CupertinoPopoverMenu(
-              focalPoint: LeaderMenuFocalPoint(link: widget.leaderLink),
-              child: SizedBox(
-                width: 200,
-                height: 125,
-                child: _buildContent(),
-              ),
-            ),
-          );
-        },
+    return Shortcuts(
+      shortcuts: {},
+      child: Actions(
+        actions: {},
+        child: Focus(
+          focusNode: _focusNode,
+          parentNode: widget.editorFocusNode,
+          onKeyEvent: _onKeyEvent,
+          child: ListenableBuilder(
+            listenable: _focusNode,
+            builder: (context, child) {
+              return DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: _focusNode.hasFocus ? Colors.blue : Colors.transparent),
+                ),
+                child: CupertinoPopoverMenu(
+                  focalPoint: LeaderMenuFocalPoint(link: widget.leaderLink),
+                  child: SizedBox(
+                    width: 200,
+                    height: 125,
+                    child: _buildContent(),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

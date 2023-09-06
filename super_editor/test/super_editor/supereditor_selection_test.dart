@@ -535,7 +535,11 @@ Second Paragraph
       expect(_caretFinder(), findsOneWidget);
     });
 
-    testWidgetsOnAllPlatforms("closes IME connection when it loses primary focus", (tester) async {
+    testWidgetsOnDesktop("by default keeps IME connection open when it loses primary focus", (tester) async {
+      // Note: we don't include mobile in this test because mobile text fields always use IME
+      // which will steal the IME connection away from SuperEditor and interfere with the expected
+      // result.
+
       final textFieldFocus = FocusNode();
       final editorFocus = FocusNode();
       await tester
@@ -543,6 +547,76 @@ Second Paragraph
           .withSingleParagraph()
           .withInputSource(TextInputSource.ime)
           .withFocusNode(editorFocus)
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    FocusWithCustomParent(
+                      focusNode: textFieldFocus,
+                      parentFocusNode: editorFocus,
+                      child: SuperTextField(
+                        focusNode: textFieldFocus,
+                        // We put the SuperTextField in keyboard mode so that the SuperTextField
+                        // doesn't steal the IME connection. This way, we ensure that SuperEditor,
+                        // left to its own devices, will proactively close the IME connection when
+                        // it loses primary focus.
+                        inputSource: TextInputSource.keyboard,
+                      ),
+                    ),
+                    Expanded(
+                      child: superEditor,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .autoFocus(true)
+          .pump();
+
+      // Ensure that SuperEditor begins with focus, a selection, and IME connection
+      expect(editorFocus.hasPrimaryFocus, isTrue);
+      expect(SuperEditorInspector.findDocumentSelection(), isNotNull);
+      expect(SuperEditorInspector.isImeConnectionOpen(), isTrue);
+
+      // Focus the textfield.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Ensure that the textfield has primary focus, the editor doesn't, and the editor
+      // still has an open IME connection.
+      expect(textFieldFocus.hasPrimaryFocus, isTrue);
+      expect(editorFocus.hasPrimaryFocus, isFalse);
+      expect(editorFocus.hasFocus, isTrue);
+      expect(SuperEditorInspector.findDocumentSelection(), isNotNull);
+      expect(SuperEditorInspector.isImeConnectionOpen(), isTrue);
+
+      // Give focus back to the editor.
+      textFieldFocus.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
+      await tester.pump();
+
+      // Ensure that the textfield doesn't have any focus, and the editor has primary focus again.
+      expect(textFieldFocus.hasFocus, isFalse);
+      expect(editorFocus.hasPrimaryFocus, isTrue);
+      expect(SuperEditorInspector.findDocumentSelection(), isNotNull);
+      expect(SuperEditorInspector.isImeConnectionOpen(), isTrue);
+    });
+
+    testWidgetsOnDesktop("can optionally close IME connection when it loses primary focus", (tester) async {
+      // Note: we don't include mobile in this test because mobile text fields always use IME
+      // which will steal the IME connection away from SuperEditor and interfere with the expected
+      // result.
+
+      final textFieldFocus = FocusNode();
+      final editorFocus = FocusNode();
+      await tester
+          .createDocument()
+          .withSingleParagraph()
+          .withInputSource(TextInputSource.ime)
+          .withFocusNode(editorFocus)
+          .withImePolicies(
+            const SuperEditorImePolicies(closeKeyboardOnLosePrimaryFocus: true),
+          )
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(
               home: Scaffold(

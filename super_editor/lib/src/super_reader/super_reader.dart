@@ -21,6 +21,7 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
@@ -442,7 +443,7 @@ class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuil
   final bool showDebugLeaderBounds;
 
   @override
-  Widget build(BuildContext context, SuperReaderContext readerContext) {
+  ContentLayerStatefulWidget build(BuildContext context, SuperReaderContext readerContext) {
     return SelectionLeadersDocumentLayer(
       document: readerContext.document,
       selection: readerContext.selection,
@@ -456,7 +457,7 @@ class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuil
 /// Builds widgets that are displayed at the same position and size as
 /// the document layout within a [SuperReader].
 abstract class ReadOnlyDocumentLayerBuilder {
-  Widget build(BuildContext context, SuperReaderContext documentContext);
+  ContentLayerStatefulWidget build(BuildContext context, SuperReaderContext documentContext);
 }
 
 typedef SuperReaderContentTapDelegateFactory = ContentTapDelegate Function(SuperReaderContext editContext);

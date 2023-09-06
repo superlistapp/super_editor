@@ -40,7 +40,7 @@ import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
 Future<void> main() async {
-  initLoggers(Level.FINE, {
+  initLoggers(Level.FINEST, {
     // editorScrollingLog,
     // editorGesturesLog,
     // editorImeLog,
@@ -52,7 +52,7 @@ Future<void> main() async {
     // editorStyleLog,
     // textFieldLog,
     // editorUserTagsLog,
-    // contentLayersLog,
+    contentLayersLog,
     appLog,
   });
 

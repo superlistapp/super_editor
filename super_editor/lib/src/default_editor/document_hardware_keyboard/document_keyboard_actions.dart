@@ -211,7 +211,8 @@ ExecutionInstruction sendKeyEventToMacOs({
     // For the full list of selectors handled by SuperEditor, see the MacOsSelectors class.
     //
     // This is needed for the interaction with the accent panel to work.
-    return ExecutionInstruction.blocked;
+    // return ExecutionInstruction.blocked;
+    return editContext.hasPrimaryFocus.value ? ExecutionInstruction.blocked : ExecutionInstruction.continueExecution;
   }
 
   return ExecutionInstruction.continueExecution;

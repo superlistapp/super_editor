@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 
 /// Positions invisible widgets around runs of attributed text.
 ///
@@ -10,7 +11,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 ///
 /// The bounding widget is build with a given [builder], so that any number
 /// of use-cases can be implemented with this widget.
-class AttributionBounds extends StatefulWidget {
+class AttributionBounds extends ContentLayerStatefulWidget {
   const AttributionBounds({
     Key? key,
     required this.document,
@@ -25,17 +26,13 @@ class AttributionBounds extends StatefulWidget {
   final AttributionBoundsBuilder builder;
 
   @override
-  State<AttributionBounds> createState() => _AttributionBoundsState();
+  ContentLayerState<ContentLayerStatefulWidget, List<_AttributionBounds>> createState() => _AttributionBoundsState();
 }
 
-class _AttributionBoundsState extends State<AttributionBounds> {
-  final _bounds = <_AttributionBounds>{};
-
+class _AttributionBoundsState extends ContentLayerState<AttributionBounds, List<_AttributionBounds>> {
   @override
   void initState() {
     super.initState();
-
-    _findBounds();
     widget.document.addListener(_onDocumentChange);
   }
 
@@ -51,12 +48,13 @@ class _AttributionBoundsState extends State<AttributionBounds> {
     }
 
     setState(() {
-      _findBounds();
+      // Rebuild, which will cause ContentLayerState to re-compute layout data, i.e., attribution bounds.
     });
   }
 
-  void _findBounds() {
-    _bounds.clear();
+  @override
+  List<_AttributionBounds>? computeLayoutData(RenderObject? contentLayout) {
+    final bounds = <_AttributionBounds>[];
 
     for (final node in widget.document.nodes) {
       if (node is! TextNode) {
@@ -74,7 +72,7 @@ class _AttributionBoundsState extends State<AttributionBounds> {
           end: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: span.end + 1)),
         );
 
-        _bounds.add(
+        bounds.add(
           _AttributionBounds(
             span.attribution,
             widget.layout.getRectForSelection(range.start, range.end) ?? Rect.zero,
@@ -82,22 +80,26 @@ class _AttributionBoundsState extends State<AttributionBounds> {
         );
       }
     }
+
+    return bounds;
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget doBuild(BuildContext context, List<_AttributionBounds>? layoutData) {
+    if (layoutData == null) {
+      return const SizedBox();
+    }
+
     return IgnorePointer(
       child: Stack(
-        children: _buildBounds(),
+        children: _buildBounds(layoutData),
       ),
     );
   }
 
-  List<Widget> _buildBounds() {
-    _findBounds();
-
+  List<Widget> _buildBounds(List<_AttributionBounds> bounds) {
     final boundWidgets = <Widget>[];
-    for (final bound in _bounds) {
+    for (final bound in bounds) {
       final boundWidget = widget.builder(context, bound.attribution);
       if (boundWidget != null) {
         boundWidgets.add(
