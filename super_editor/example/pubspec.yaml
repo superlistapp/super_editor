@@ -36,7 +36,7 @@ dependencies:
   flutter_keyboard_visibility: ^5.0.3
   google_fonts: ^2.0.0
   http: ^0.13.1
-  linkify: ^4.0.0
+  linkify: ^5.0.0
   logging: ^1.0.1
   uuid: ^3.0.3
 
