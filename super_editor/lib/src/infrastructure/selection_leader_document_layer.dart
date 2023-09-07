@@ -44,12 +44,12 @@ class SelectionLeadersDocumentLayer extends ContentLayerStatefulWidget {
   final bool showDebugLeaderBounds;
 
   @override
-  ContentLayerState<ContentLayerStatefulWidget, SelectionLeaderLayout> createState() =>
+  ContentLayerState<ContentLayerStatefulWidget, DocumentSelectionLayout> createState() =>
       _SelectionLeadersDocumentLayerState();
 }
 
 class _SelectionLeadersDocumentLayerState
-    extends ContentLayerState<SelectionLeadersDocumentLayer, SelectionLeaderLayout>
+    extends ContentLayerState<SelectionLeadersDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
   @override
   void initState() {
@@ -86,7 +86,7 @@ class _SelectionLeadersDocumentLayerState
 
   /// Updates the caret rect, immediately, without scheduling a rebuild.
   @override
-  SelectionLeaderLayout? computeLayoutData(RenderObject? contentLayout) {
+  DocumentSelectionLayout? computeLayoutData(RenderObject? contentLayout) {
     final documentSelection = widget.selection.value;
     if (documentSelection == null) {
       return null;
@@ -102,11 +102,11 @@ class _SelectionLeadersDocumentLayerState
     }
 
     if (documentSelection.isCollapsed) {
-      return SelectionLeaderLayout(
+      return DocumentSelectionLayout(
         caret: documentLayout.getRectForPosition(documentSelection.extent)!,
       );
     } else {
-      return SelectionLeaderLayout(
+      return DocumentSelectionLayout(
         upstream: documentLayout.getRectForPosition(
           widget.document.selectUpstreamPosition(documentSelection.base, documentSelection.extent),
         )!,
@@ -122,7 +122,7 @@ class _SelectionLeadersDocumentLayerState
   }
 
   @override
-  Widget doBuild(BuildContext context, SelectionLeaderLayout? selectionLayout) {
+  Widget doBuild(BuildContext context, DocumentSelectionLayout? selectionLayout) {
     if (selectionLayout == null) {
       return const SizedBox();
     }
@@ -193,8 +193,10 @@ class _SelectionLeadersDocumentLayerState
   }
 }
 
-class SelectionLeaderLayout {
-  SelectionLeaderLayout({
+/// Visual layout bounds related to a user selection in a document, such as the
+/// caret rect, a bounding box around all selected content, etc.
+class DocumentSelectionLayout {
+  DocumentSelectionLayout({
     this.caret,
     this.upstream,
     this.downstream,

@@ -70,9 +70,28 @@ class ContentLayers extends RenderObjectWidget {
 ///
 /// Must have a [renderObject] of type [RenderContentLayers].
 class ContentLayersElement extends RenderObjectElement {
+  /// The real Flutter framework `onBuildScheduled` callback.
+  ///
+  /// This property is non-null when one or more [ContentLayersElement]s are in the
+  /// tree, and `null` otherwise.
+  ///
+  /// This callback is held statically, rather than per-instance, because Flutter
+  /// might activate a new [ContentLayersElement] before deactivating an old
+  /// [ContentLayersElement], or there might be multiple [ContentLayersElement]s
+  /// in the tree. In these cases, we can't consistently replace Flutter's
+  /// `onBuildScheduled` callback without losing the original callback.
   static VoidCallback? _realOnBuildScheduled;
+
+  /// Listeners that are registered by [ContentLayersElement]s to find out when
+  /// the Flutter framework schedules builds, so that [ContentLayerElement]s can
+  /// manage their layers to avoid invalid build timing.
   static final _onBuildListeners = <VoidCallback>{};
 
+  /// The Flutter framework has scheduled a build by calling `onBuildScheduled`
+  /// on a [BuildOwner].
+  ///
+  /// This global static method calls build schedule listeners on all instances
+  /// of [ContentLayersElement], which registered a listener with [_onBuildListeners].
   static void _globalOnBuildScheduled() {
     // Call the real Flutter onBuildScheduled callback so Flutter works as expected.
     _realOnBuildScheduled!();
