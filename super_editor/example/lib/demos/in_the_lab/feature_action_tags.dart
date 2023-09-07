@@ -44,12 +44,9 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
             : null,
         ...defaultRequestHandlers,
       ],
-      listeners: [
-        FunctionalEditListener(_onEdit),
-      ],
     );
 
-    _actionTagPlugin = ActionTagsPlugin();
+    _actionTagPlugin = ActionTagsPlugin()..composingActionTag.addListener(_updateActionTagList);
 
     _editorFocusNode = FocusNode();
   }
@@ -58,6 +55,8 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
   void dispose() {
     _editorFocusNode.dispose();
 
+    _actionTagPlugin.composingActionTag.removeListener(_updateActionTagList);
+
     _composer.dispose();
     _editor.dispose();
     _document.dispose();
@@ -65,16 +64,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
     super.dispose();
   }
 
-  void _onEdit(List<EditEvent> changeList) {
-    if (changeList.whereType<DocumentEdit>().isEmpty) {
-      return;
-    }
-
-    _updateActionTagList();
-  }
-
   void _updateActionTagList() {
-    print("_updateActionTagList()");
     setState(() {
       _actions.clear();
 
@@ -153,11 +143,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
             builder: (BuildContext context, Attribution attribution) {
               return Leader(
                 link: _composingLink,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue),
-                  ),
-                ),
+                child: const SizedBox(),
               );
             },
           ),

@@ -41,12 +41,11 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
       requestHandlers: [
         ...defaultRequestHandlers,
       ],
-      listeners: [
-        FunctionalEditListener(_onEdit),
-      ],
     );
 
-    _userTagPlugin = StableTagPlugin();
+    _userTagPlugin = StableTagPlugin()
+      ..tagIndex.composingStableTag.addListener(_updateUserTagList)
+      ..tagIndex.addListener(_updateUserTagList);
 
     _editorFocusNode = FocusNode();
   }
@@ -55,19 +54,15 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
   void dispose() {
     _editorFocusNode.dispose();
 
+    _userTagPlugin.tagIndex
+      ..composingStableTag.removeListener(_updateUserTagList)
+      ..removeListener(_updateUserTagList);
+
     _composer.dispose();
     _editor.dispose();
     _document.dispose();
 
     super.dispose();
-  }
-
-  void _onEdit(List<EditEvent> changeList) {
-    if (changeList.whereType<DocumentEdit>().isEmpty) {
-      return;
-    }
-
-    _updateUserTagList();
   }
 
   void _updateUserTagList() {
@@ -99,17 +94,6 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
           content: _buildEditor(),
           supplemental: _buildTagList(),
         ),
-        // FeatureDemoScaffold(
-        //   child: Row(
-        //     crossAxisAlignment: CrossAxisAlignment.stretch,
-        //     children: [
-        //       Expanded(
-        //         child: _buildEditor(),
-        //       ),
-        //       _buildTagList(),
-        //     ],
-        //   ),
-        // ),
         if (_userTagPlugin.tagIndex.composingStableTag.value != null)
           Follower.withOffset(
             link: _composingLink,
@@ -162,11 +146,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
             builder: (context, attribution) {
               return Leader(
                 link: _composingLink,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue),
-                  ),
-                ),
+                child: const SizedBox(),
               );
             },
           ),

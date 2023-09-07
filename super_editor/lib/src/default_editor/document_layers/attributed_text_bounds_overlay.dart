@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/attribution_layout_bounds.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 
 class AttributedTextBoundsOverlay implements SuperEditorLayerBuilder {
   const AttributedTextBoundsOverlay({
@@ -13,7 +14,7 @@ class AttributedTextBoundsOverlay implements SuperEditorLayerBuilder {
   final AttributionBoundsBuilder builder;
 
   @override
-  Widget build(BuildContext context, SuperEditorContext editContext) {
+  ContentLayerStatefulWidget build(BuildContext context, SuperEditorContext editContext) {
     return AttributionBounds(
       document: editContext.document,
       layout: editContext.documentLayout,
