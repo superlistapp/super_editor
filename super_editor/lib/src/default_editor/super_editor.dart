@@ -18,6 +18,7 @@ import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
@@ -308,9 +309,10 @@ class SuperEditorState extends State<SuperEditor> {
   late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
   late SingleColumnLayoutSelectionStyler _docLayoutSelectionStyler;
 
-  late FocusNode _focusNode;
   @visibleForTesting
   FocusNode get focusNode => _focusNode;
+  late FocusNode _focusNode;
+  final _primaryFocusListener = ValueNotifier(false);
 
   late DocumentComposer _composer;
 
@@ -425,6 +427,7 @@ class SuperEditorState extends State<SuperEditor> {
       composer: _composer,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
       scroller: _scroller,
+      hasPrimaryFocus: _primaryFocusListener,
       commonOps: CommonEditorOperations(
         editor: widget.editor,
         document: widget.document,
@@ -479,6 +482,7 @@ class SuperEditorState extends State<SuperEditor> {
 
   void _onFocusChange() {
     _recomputeIfLayoutShouldShowCaret();
+    _primaryFocusListener.value = _focusNode.hasPrimaryFocus;
   }
 
   void _recomputeIfLayoutShouldShowCaret() {
@@ -685,7 +689,7 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
   final bool showDebugLeaderBounds;
 
   @override
-  Widget build(BuildContext context, SuperEditorContext editContext) {
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
     return SelectionLeadersDocumentLayer(
       document: editContext.document,
       selection: editContext.composer.selectionNotifier,
@@ -797,7 +801,7 @@ class SuperEditorSelectionPolicies {
 /// Builds widgets that are displayed at the same position and size as
 /// the document layout within a [SuperEditor].
 abstract class SuperEditorLayerBuilder {
-  Widget build(BuildContext context, SuperEditorContext editContext);
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext);
 }
 
 /// A [SuperEditorLayerBuilder] that's implemented with a given function, so
@@ -805,10 +809,10 @@ abstract class SuperEditorLayerBuilder {
 class FunctionalSuperEditorLayerBuilder implements SuperEditorLayerBuilder {
   const FunctionalSuperEditorLayerBuilder(this._delegate);
 
-  final Widget Function(BuildContext context, SuperEditorContext editContext) _delegate;
+  final ContentLayerWidget Function(BuildContext context, SuperEditorContext editContext) _delegate;
 
   @override
-  Widget build(BuildContext context, SuperEditorContext editContext) => _delegate(context, editContext);
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) => _delegate(context, editContext);
 }
 
 /// A [SuperEditorLayerBuilder] that paints a caret at the primary selection extent
@@ -841,24 +845,14 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
   final BlinkTimingMode blinkTimingMode;
 
   @override
-  Widget build(BuildContext context, SuperEditorContext editContext) {
-    // By default, don't show a caret on mobile because SuperEditor displays
-    // mobile carets and handles elsewhere. This can be overridden by settings
-    // `displayOnAllPlatforms` to true.
-    final platform = platformOverride ?? defaultTargetPlatform;
-    if (!displayOnAllPlatforms && (platform == TargetPlatform.android || platform == TargetPlatform.iOS)) {
-      return const SizedBox();
-    }
-
-    return IgnorePointer(
-      // ^ ignore pointer so that user gestures fall through to the document gesture
-      //   system, which sits beneath the document.
-      child: CaretDocumentOverlay(
-        composer: editContext.composer,
-        documentLayoutResolver: () => editContext.documentLayout,
-        caretStyle: caretStyle,
-        blinkTimingMode: blinkTimingMode,
-      ),
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
+    return CaretDocumentOverlay(
+      composer: editContext.composer,
+      documentLayoutResolver: () => editContext.documentLayout,
+      caretStyle: caretStyle,
+      platformOverride: platformOverride,
+      displayOnAllPlatforms: displayOnAllPlatforms,
+      blinkTimingMode: blinkTimingMode,
     );
   }
 }

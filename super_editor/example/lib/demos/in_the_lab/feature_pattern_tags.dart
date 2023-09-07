@@ -1,6 +1,7 @@
 import 'package:example/demos/in_the_lab/in_the_lab_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 class HashTagsFeatureDemo extends StatefulWidget {
   const HashTagsFeatureDemo({super.key});
@@ -115,37 +116,5 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
         ],
       ),
     );
-
-    // return Container(
-    //   width: 300,
-    //   decoration: BoxDecoration(
-    //     border: Border(
-    //       left: BorderSide(width: 1, color: Colors.white.withOpacity(0.1)),
-    //     ),
-    //   ),
-    //   padding: const EdgeInsets.all(24),
-    //   child: Center(
-    //     child: _tags.isNotEmpty
-    //         ? SingleChildScrollView(
-    //             child: Wrap(
-    //               spacing: 12,
-    //               runSpacing: 12,
-    //               alignment: WrapAlignment.center,
-    //               children: [
-    //                 for (final tag in _tags) //
-    //                   Chip(label: Text(tag.tag.raw)),
-    //               ],
-    //             ),
-    //           )
-    //         : Text(
-    //             "NO TAGS",
-    //             style: TextStyle(
-    //               color: Colors.white.withOpacity(0.1),
-    //               fontSize: 32,
-    //               fontWeight: FontWeight.bold,
-    //             ),
-    //           ),
-    //   ),
-    // );
   }
 }

@@ -211,6 +211,17 @@ ExecutionInstruction sendKeyEventToMacOs({
     // For the full list of selectors handled by SuperEditor, see the MacOsSelectors class.
     //
     // This is needed for the interaction with the accent panel to work.
+
+    if (!editContext.hasPrimaryFocus.value) {
+      // SuperEditor has focus, but not primary focus. This can happen, for example,
+      // when an app displays a popover that takes primary focus. In this case, because
+      // SuperEditor no longer has primary focus, Flutter might intercept keys and do
+      // things we don't want, like move focus around when the user presses arrow keys.
+      // To prevent Flutter from doing things we don't want, in this case we run the
+      // standard key handlers instead of sending the signal to the OS.
+      return ExecutionInstruction.continueExecution;
+    }
+
     return ExecutionInstruction.blocked;
   }
 

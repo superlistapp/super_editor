@@ -135,27 +135,25 @@ class _PopoverListState extends State<PopoverList> {
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      focusNode: _focusNode,
-      parentNode: widget.editorFocusNode,
-      onKeyEvent: _onKeyEvent,
-      child: ListenableBuilder(
-        listenable: _focusNode,
-        builder: (context, child) {
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: _focusNode.hasFocus ? Colors.blue : Colors.transparent),
-            ),
-            child: CupertinoPopoverMenu(
+    return GestureDetector(
+      onTap: () => !_focusNode.hasPrimaryFocus ? _focusNode.requestFocus() : null,
+      child: Focus(
+        focusNode: _focusNode,
+        parentNode: widget.editorFocusNode,
+        onKeyEvent: _onKeyEvent,
+        child: ListenableBuilder(
+          listenable: _focusNode,
+          builder: (context, child) {
+            return CupertinoPopoverMenu(
               focalPoint: LeaderMenuFocalPoint(link: widget.leaderLink),
               child: SizedBox(
                 width: 200,
                 height: 125,
                 child: _buildContent(),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -183,7 +181,9 @@ class _PopoverListState extends State<PopoverList> {
           const SizedBox(height: 8),
           for (int i = 0; i < widget.listItems.length; i += 1) ...[
             ColoredBox(
-              color: i == _selectedValueIndex ? Colors.white.withOpacity(0.05) : Colors.transparent,
+              color: i == _selectedValueIndex && _focusNode.hasPrimaryFocus
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.transparent,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: Row(

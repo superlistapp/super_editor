@@ -18,7 +18,9 @@ class ImeFocusPolicy extends StatefulWidget {
     required this.imeClientFactory,
     required this.imeConfiguration,
     this.openImeOnPrimaryFocusGain = true,
-    this.closeImeOnPrimaryFocusLost = true,
+    this.closeImeOnPrimaryFocusLost = false,
+    this.openImeOnNonPrimaryFocusGain = true,
+    this.closeImeOnNonPrimaryFocusLost = true,
     required this.child,
   }) : super(key: key);
 
@@ -40,13 +42,23 @@ class ImeFocusPolicy extends StatefulWidget {
 
   /// Whether to open an [imeConnection] when the [FocusNode] gains primary focus.
   ///
-  /// Defaults to `true`.
+  /// Defaults to `false`.
   final bool openImeOnPrimaryFocusGain;
 
   /// Whether to close the [imeConnection] when the [FocusNode] loses primary focus.
   ///
-  /// Defaults to `true`.
+  /// Defaults to `false`.
   final bool closeImeOnPrimaryFocusLost;
+
+  /// Whether to open an [imeConnection] when the [FocusNode] gains NON-primary focus.
+  ///
+  /// Defaults to `true`.
+  final bool openImeOnNonPrimaryFocusGain;
+
+  /// Whether to close the [imeConnection] when the [FocusNode] loses NON-primary focus.
+  ///
+  /// Defaults to `true`.
+  final bool closeImeOnNonPrimaryFocusLost;
 
   final Widget child;
 
@@ -82,11 +94,22 @@ class _ImeFocusPolicyState extends State<ImeFocusPolicy> {
   }
 
   void _onFocusChange() {
+    bool shouldOpenIme = false;
     if (_focusNode.hasPrimaryFocus &&
         widget.openImeOnPrimaryFocusGain &&
         (widget.imeConnection.value == null || !widget.imeConnection.value!.attached)) {
       editorPoliciesLog
           .info("[${widget.runtimeType}] - Document editor gained primary focus. Opening an IME connection.");
+      shouldOpenIme = true;
+    } else if (!_focusNode.hasPrimaryFocus &&
+        _focusNode.hasFocus &&
+        widget.openImeOnNonPrimaryFocusGain &&
+        (widget.imeConnection.value == null || !widget.imeConnection.value!.attached)) {
+      editorPoliciesLog
+          .info("[${widget.runtimeType}] - Document editor gained non-primary focus. Opening an IME connection.");
+      shouldOpenIme = true;
+    }
+    if (shouldOpenIme) {
       WidgetsBinding.instance.runAsSoonAsPossible(() {
         if (!mounted) {
           return;
@@ -100,9 +123,16 @@ class _ImeFocusPolicyState extends State<ImeFocusPolicy> {
       }, debugLabel: 'Open IME Connection on Primary Focus Change');
     }
 
+    bool shouldCloseIme = false;
     if (!_focusNode.hasPrimaryFocus && widget.closeImeOnPrimaryFocusLost) {
       editorPoliciesLog
           .info("[${widget.runtimeType}] - Document editor lost primary focus. Closing the IME connection.");
+      shouldCloseIme = true;
+    } else if (!_focusNode.hasFocus && widget.closeImeOnNonPrimaryFocusLost) {
+      editorPoliciesLog.info("[${widget.runtimeType}] - Document editor lost all focus. Closing the IME connection.");
+      shouldCloseIme = true;
+    }
+    if (shouldCloseIme) {
       widget.imeConnection.value?.close();
       widget.imeConnection.value = null;
     }
