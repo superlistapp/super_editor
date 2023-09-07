@@ -7,6 +7,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/debug_visualization.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
@@ -269,7 +270,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     // For example, the editor might be resized or moved around the screen.
     // Because of this, we update our size, transform and caret rect at every frame.
     // FIXME: This call seems to be scheduling frames. When the caret is in Timer mode, we see this method running continuously even though the only change should be the caret blinking every half a second
-    // onNextFrame((_) => _reportVisualInformationToIme());
+    onNextFrame((_) => _reportVisualInformationToIme());
   }
 
   /// Compute the caret rect in the editor's content space.

@@ -689,7 +689,7 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
   final bool showDebugLeaderBounds;
 
   @override
-  ContentLayerStatefulWidget build(BuildContext context, SuperEditorContext editContext) {
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
     return SelectionLeadersDocumentLayer(
       document: editContext.document,
       selection: editContext.composer.selectionNotifier,
@@ -801,7 +801,7 @@ class SuperEditorSelectionPolicies {
 /// Builds widgets that are displayed at the same position and size as
 /// the document layout within a [SuperEditor].
 abstract class SuperEditorLayerBuilder {
-  ContentLayerStatefulWidget build(BuildContext context, SuperEditorContext editContext);
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext);
 }
 
 /// A [SuperEditorLayerBuilder] that's implemented with a given function, so
@@ -809,11 +809,10 @@ abstract class SuperEditorLayerBuilder {
 class FunctionalSuperEditorLayerBuilder implements SuperEditorLayerBuilder {
   const FunctionalSuperEditorLayerBuilder(this._delegate);
 
-  final ContentLayerStatefulWidget Function(BuildContext context, SuperEditorContext editContext) _delegate;
+  final ContentLayerWidget Function(BuildContext context, SuperEditorContext editContext) _delegate;
 
   @override
-  ContentLayerStatefulWidget build(BuildContext context, SuperEditorContext editContext) =>
-      _delegate(context, editContext);
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) => _delegate(context, editContext);
 }
 
 /// A [SuperEditorLayerBuilder] that paints a caret at the primary selection extent
@@ -846,7 +845,7 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
   final BlinkTimingMode blinkTimingMode;
 
   @override
-  ContentLayerStatefulWidget build(BuildContext context, SuperEditorContext editContext) {
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
     return CaretDocumentOverlay(
       composer: editContext.composer,
       documentLayoutResolver: () => editContext.documentLayout,

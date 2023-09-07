@@ -443,7 +443,7 @@ class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuil
   final bool showDebugLeaderBounds;
 
   @override
-  ContentLayerStatefulWidget build(BuildContext context, SuperReaderContext readerContext) {
+  ContentLayerWidget build(BuildContext context, SuperReaderContext readerContext) {
     return SelectionLeadersDocumentLayer(
       document: readerContext.document,
       selection: readerContext.selection,
@@ -457,7 +457,7 @@ class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuil
 /// Builds widgets that are displayed at the same position and size as
 /// the document layout within a [SuperReader].
 abstract class ReadOnlyDocumentLayerBuilder {
-  ContentLayerStatefulWidget build(BuildContext context, SuperReaderContext documentContext);
+  ContentLayerWidget build(BuildContext context, SuperReaderContext documentContext);
 }
 
 typedef SuperReaderContentTapDelegateFactory = ContentTapDelegate Function(SuperReaderContext editContext);

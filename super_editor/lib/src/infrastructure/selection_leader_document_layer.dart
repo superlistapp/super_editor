@@ -44,12 +44,12 @@ class SelectionLeadersDocumentLayer extends ContentLayerStatefulWidget {
   final bool showDebugLeaderBounds;
 
   @override
-  ContentLayerState<ContentLayerStatefulWidget, SelectionLeaderLayoutData> createState() =>
+  ContentLayerState<ContentLayerStatefulWidget, SelectionLeaderLayout> createState() =>
       _SelectionLeadersDocumentLayerState();
 }
 
 class _SelectionLeadersDocumentLayerState
-    extends ContentLayerState<SelectionLeadersDocumentLayer, SelectionLeaderLayoutData>
+    extends ContentLayerState<SelectionLeadersDocumentLayer, SelectionLeaderLayout>
     with SingleTickerProviderStateMixin {
   @override
   void initState() {
@@ -86,7 +86,7 @@ class _SelectionLeadersDocumentLayerState
 
   /// Updates the caret rect, immediately, without scheduling a rebuild.
   @override
-  SelectionLeaderLayoutData? computeLayoutData(RenderObject? contentLayout) {
+  SelectionLeaderLayout? computeLayoutData(RenderObject? contentLayout) {
     final documentSelection = widget.selection.value;
     if (documentSelection == null) {
       return null;
@@ -102,11 +102,11 @@ class _SelectionLeadersDocumentLayerState
     }
 
     if (documentSelection.isCollapsed) {
-      return SelectionLeaderLayoutData(
+      return SelectionLeaderLayout(
         caret: documentLayout.getRectForPosition(documentSelection.extent)!,
       );
     } else {
-      return SelectionLeaderLayoutData(
+      return SelectionLeaderLayout(
         upstream: documentLayout.getRectForPosition(
           widget.document.selectUpstreamPosition(documentSelection.base, documentSelection.extent),
         )!,
@@ -122,7 +122,7 @@ class _SelectionLeadersDocumentLayerState
   }
 
   @override
-  Widget doBuild(BuildContext context, SelectionLeaderLayoutData? selectionLayout) {
+  Widget doBuild(BuildContext context, SelectionLeaderLayout? selectionLayout) {
     if (selectionLayout == null) {
       return const SizedBox();
     }
@@ -193,8 +193,8 @@ class _SelectionLeadersDocumentLayerState
   }
 }
 
-class SelectionLeaderLayoutData {
-  SelectionLeaderLayoutData({
+class SelectionLeaderLayout {
+  SelectionLeaderLayout({
     this.caret,
     this.upstream,
     this.downstream,

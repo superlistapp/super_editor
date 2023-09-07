@@ -26,10 +26,11 @@ class AttributionBounds extends ContentLayerStatefulWidget {
   final AttributionBoundsBuilder builder;
 
   @override
-  ContentLayerState<ContentLayerStatefulWidget, List<_AttributionBounds>> createState() => _AttributionBoundsState();
+  ContentLayerState<ContentLayerStatefulWidget, List<AttributionBoundsLayout>> createState() =>
+      _AttributionBoundsState();
 }
 
-class _AttributionBoundsState extends ContentLayerState<AttributionBounds, List<_AttributionBounds>> {
+class _AttributionBoundsState extends ContentLayerState<AttributionBounds, List<AttributionBoundsLayout>> {
   @override
   void initState() {
     super.initState();
@@ -53,8 +54,8 @@ class _AttributionBoundsState extends ContentLayerState<AttributionBounds, List<
   }
 
   @override
-  List<_AttributionBounds>? computeLayoutData(RenderObject? contentLayout) {
-    final bounds = <_AttributionBounds>[];
+  List<AttributionBoundsLayout>? computeLayoutData(RenderObject? contentLayout) {
+    final bounds = <AttributionBoundsLayout>[];
 
     for (final node in widget.document.nodes) {
       if (node is! TextNode) {
@@ -73,7 +74,7 @@ class _AttributionBoundsState extends ContentLayerState<AttributionBounds, List<
         );
 
         bounds.add(
-          _AttributionBounds(
+          AttributionBoundsLayout(
             span.attribution,
             widget.layout.getRectForSelection(range.start, range.end) ?? Rect.zero,
           ),
@@ -85,7 +86,7 @@ class _AttributionBoundsState extends ContentLayerState<AttributionBounds, List<
   }
 
   @override
-  Widget doBuild(BuildContext context, List<_AttributionBounds>? layoutData) {
+  Widget doBuild(BuildContext context, List<AttributionBoundsLayout>? layoutData) {
     if (layoutData == null) {
       return const SizedBox();
     }
@@ -97,7 +98,7 @@ class _AttributionBoundsState extends ContentLayerState<AttributionBounds, List<
     );
   }
 
-  List<Widget> _buildBounds(List<_AttributionBounds> bounds) {
+  List<Widget> _buildBounds(List<AttributionBoundsLayout> bounds) {
     final boundWidgets = <Widget>[];
     for (final bound in bounds) {
       final boundWidget = widget.builder(context, bound.attribution);
@@ -115,8 +116,8 @@ class _AttributionBoundsState extends ContentLayerState<AttributionBounds, List<
   }
 }
 
-class _AttributionBounds {
-  const _AttributionBounds(this.attribution, this.rect);
+class AttributionBoundsLayout {
+  const AttributionBoundsLayout(this.attribution, this.rect);
 
   final Attribution attribution;
   final Rect rect;

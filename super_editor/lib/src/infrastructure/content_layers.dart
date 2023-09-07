@@ -131,18 +131,18 @@ class ContentLayersElement extends RenderObjectElement {
     }
     _overlays = const [];
 
-    // Remove our intercepting onBuildScheduled callback.
-    _onBuildListeners.remove(_onBuildScheduled);
-    if (_onBuildListeners.isEmpty) {
-      owner!.onBuildScheduled = _realOnBuildScheduled;
-    }
-
     super.deactivate();
   }
 
   @override
   void unmount() {
     contentLayersLog.fine("ContentLayersElement - unmounting");
+
+    // Remove our intercepting onBuildScheduled callback.
+    _onBuildListeners.remove(_onBuildScheduled);
+    if (_onBuildListeners.isEmpty) {
+      owner!.onBuildScheduled = _realOnBuildScheduled;
+    }
 
     super.unmount();
   }
@@ -585,12 +585,7 @@ class RenderContentLayers extends RenderBox {
     }
     for (final overlay in _overlays) {
       contentLayersLog.fine("Laying out overlay: $overlay");
-      try {
-        overlay.layout(layerConstraints);
-      } catch (error) {
-        contentLayersLog.shout("Error while laying out overlay: $error");
-        rethrow;
-      }
+      overlay.layout(layerConstraints);
     }
     contentLayersLog.finer("Done laying out layers");
   }
@@ -694,6 +689,7 @@ class _NullWidget extends Widget {
   Element createElement() => throw UnimplementedError();
 }
 
+/// A widget builder, which builds a [ContentLayerWidget].
 typedef ContentLayerWidgetBuilder = ContentLayerWidget Function(BuildContext context);
 
 /// A widget that can be displayed as a layer in a [ContentLayers] widget.
@@ -787,6 +783,9 @@ class ContentLayerStatefulElement extends StatefulElement {
   @override
   void markNeedsBuild() {
     if (_isActive && mounted) {
+      // Our Element is attached to the tree. Mark our ancestor ContentLayers as
+      // needing to build, too.
+      //
       // Flutter blows up if we try to climb the Element tree when this Element
       // isn't active, because when this Element is deactivated, it's technically
       // detached from the tree until its reactivated or disposed.

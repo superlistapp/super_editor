@@ -60,8 +60,6 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building pattern tag demo");
-
     return InTheLabScaffold(
       content: _buildEditor(),
       supplemental: _buildTagList(),
@@ -93,7 +91,6 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
         documentOverlayBuilders: [
           DefaultCaretOverlayBuilder(
             caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
-            blinkTimingMode: BlinkTimingMode.ticker,
           ),
         ],
         plugins: {

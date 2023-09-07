@@ -49,6 +49,7 @@ class SuperEditorContext {
   /// scrolling.
   final DocumentScroller scroller;
 
+  /// Whether `SuperEditor` currently has primary focus.
   final ValueListenable<bool> hasPrimaryFocus;
 
   /// Common operations that can be executed to apply common, complex changes to
