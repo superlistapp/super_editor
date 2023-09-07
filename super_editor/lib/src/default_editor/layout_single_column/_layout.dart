@@ -231,6 +231,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       editorLayoutLog.info('Could not find any component for node position: $position');
       return null;
     }
+
     final componentRect = component.getRectForPosition(position.nodePosition);
 
     final componentBox = component.context.findRenderObject() as RenderBox;

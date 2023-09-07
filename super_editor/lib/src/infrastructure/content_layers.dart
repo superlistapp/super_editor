@@ -41,7 +41,7 @@ class ContentLayers extends RenderObjectWidget {
   /// [BuildOwner] works. For more details, see https://github.com/flutter/flutter/issues/123305
   /// and https://github.com/superlistapp/super_editor/pull/1239
   /// {@endtemplate}
-  final List<WidgetBuilder> underlays;
+  final List<ContentLayerWidgetBuilder> underlays;
 
   /// The primary content displayed in this widget, which determines the size and location
   /// of all [underlays] and [overlays].
@@ -53,7 +53,7 @@ class ContentLayers extends RenderObjectWidget {
   /// at the exact same size as [content].
   ///
   /// {@macro layers_as_builders}
-  final List<WidgetBuilder> overlays;
+  final List<ContentLayerWidgetBuilder> overlays;
 
   @override
   RenderObjectElement createElement() {
@@ -70,6 +70,37 @@ class ContentLayers extends RenderObjectWidget {
 ///
 /// Must have a [renderObject] of type [RenderContentLayers].
 class ContentLayersElement extends RenderObjectElement {
+  /// The real Flutter framework `onBuildScheduled` callback.
+  ///
+  /// This property is non-null when one or more [ContentLayersElement]s are in the
+  /// tree, and `null` otherwise.
+  ///
+  /// This callback is held statically, rather than per-instance, because Flutter
+  /// might activate a new [ContentLayersElement] before deactivating an old
+  /// [ContentLayersElement], or there might be multiple [ContentLayersElement]s
+  /// in the tree. In these cases, we can't consistently replace Flutter's
+  /// `onBuildScheduled` callback without losing the original callback.
+  static VoidCallback? _realOnBuildScheduled;
+
+  /// Listeners that are registered by [ContentLayersElement]s to find out when
+  /// the Flutter framework schedules builds, so that [ContentLayerElement]s can
+  /// manage their layers to avoid invalid build timing.
+  static final _onBuildListeners = <VoidCallback>{};
+
+  /// The Flutter framework has scheduled a build by calling `onBuildScheduled`
+  /// on a [BuildOwner].
+  ///
+  /// This global static method calls build schedule listeners on all instances
+  /// of [ContentLayersElement], which registered a listener with [_onBuildListeners].
+  static void _globalOnBuildScheduled() {
+    // Call the real Flutter onBuildScheduled callback so Flutter works as expected.
+    _realOnBuildScheduled!();
+
+    for (final listener in _onBuildListeners) {
+      listener();
+    }
+  }
+
   ContentLayersElement(ContentLayers widget) : super(widget);
 
   List<Element> _underlays = <Element>[];
@@ -83,20 +114,17 @@ class ContentLayersElement extends RenderObjectElement {
   RenderContentLayers get renderObject => super.renderObject as RenderContentLayers;
 
   @override
-  BuildOwner? get owner => _owner ?? super.owner;
-  BuildOwner? _owner;
-
-  late VoidCallback _realOnBuildScheduled;
-
-  @override
   void mount(Element? parent, Object? newSlot) {
     contentLayersLog.fine("ContentLayersElement - mounting");
     super.mount(parent, newSlot);
 
     // Intercept calls to the BuildOwner's onBuildScheduled so that we can hijack an
     // opportunity to check our subtrees for dirty elements before they rebuild.
-    _realOnBuildScheduled = owner!.onBuildScheduled!;
-    owner!.onBuildScheduled = _onBuildScheduled;
+    if (_realOnBuildScheduled == null) {
+      _realOnBuildScheduled = owner!.onBuildScheduled!;
+      owner!.onBuildScheduled = _globalOnBuildScheduled;
+      _onBuildListeners.add(_onBuildScheduled);
+    }
 
     _content = inflateWidget(widget.content(_onContentBuildScheduled), _contentSlot);
   }
@@ -130,14 +158,16 @@ class ContentLayersElement extends RenderObjectElement {
     contentLayersLog.fine("ContentLayersElement - unmounting");
 
     // Remove our intercepting onBuildScheduled callback.
-    owner!.onBuildScheduled = _realOnBuildScheduled;
+    _onBuildListeners.remove(_onBuildScheduled);
+    if (_onBuildListeners.isEmpty) {
+      owner!.onBuildScheduled = _realOnBuildScheduled;
+    }
 
     super.unmount();
   }
 
   void _onBuildScheduled() {
-    // Call the real Flutter onBuildScheduled callback so Flutter works as expected.
-    _realOnBuildScheduled();
+    contentLayersLog.finer("ON BUILD SCHEDULED");
 
     // Schedule a callback to run at the beginning of the next frame so we can check
     // for dirty subtrees.
@@ -676,4 +706,150 @@ class _NullWidget extends Widget {
 
   @override
   Element createElement() => throw UnimplementedError();
+}
+
+/// A widget builder, which builds a [ContentLayerWidget].
+typedef ContentLayerWidgetBuilder = ContentLayerWidget Function(BuildContext context);
+
+/// A widget that can be displayed as a layer in a [ContentLayers] widget.
+///
+/// [ContentLayers] uses a special type of layer widget to avoid timing issues with
+/// Flutter's build order. This timing issue is only a concern when a layer
+/// widget inspects content layout within [ContentLayers]. However, to prevent
+/// developer confusion and mistakes, all layer widgets are forced to be
+/// a [ContentLayerWidget].
+///
+/// Extend [ContentLayerStatefulWidget] to create a layer that's based on the
+/// content layout within the ancestor [ContentLayers], or a layer that requires
+/// mutable state.
+///
+/// Extend [ContentLayerStatelessWidget] to create a layer that doesn't need to
+/// inspect the content layout within the ancestor [ContentLayers], and doesn't
+/// need mutable state.
+///
+/// To quickly and easily build a traditional layer widget tree, create a
+/// [ContentLayerProxyWidget] with the desired subtree. This approach is a
+/// quicker and more convenient alternative to [ContentLayerStatelessWidget]
+/// for the simplest of layer trees.
+abstract class ContentLayerWidget implements Widget {
+  // Marker interface.
+}
+
+/// Widget that builds a [ContentLayers] layer based on a traditional widget
+/// subtree, as represented by the given [child].
+///
+/// The [child] subtree must NOT access the content layout within [ContentLayers].
+class ContentLayerProxyWidget extends ContentLayerStatelessWidget {
+  const ContentLayerProxyWidget({
+    super.key,
+    required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  Widget doBuild(BuildContext context, RenderObject? contentLayout) {
+    return child;
+  }
+}
+
+/// Widget that builds a stateless [ContentLayers] layer, which is given access
+/// to the ancestor [ContentLayers] content.
+abstract class ContentLayerStatelessWidget extends StatelessWidget implements ContentLayerWidget {
+  const ContentLayerStatelessWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final contentLayers = (context as Element).findAncestorContentLayers();
+    final contentLayout = contentLayers?._content?.findRenderObject();
+
+    return doBuild(context, contentLayout);
+  }
+
+  @protected
+  Widget doBuild(BuildContext context, RenderObject? contentLayout);
+}
+
+abstract class ContentLayerStatefulWidget extends StatefulWidget implements ContentLayerWidget {
+  const ContentLayerStatefulWidget({super.key});
+
+  @override
+  StatefulElement createElement() {
+    return ContentLayerStatefulElement(this);
+  }
+
+  @override
+  ContentLayerState createState();
+}
+
+class ContentLayerStatefulElement extends StatefulElement {
+  ContentLayerStatefulElement(super.widget);
+
+  bool _isActive = false;
+
+  @override
+  void activate() {
+    super.activate();
+    _isActive = true;
+  }
+
+  @override
+  void deactivate() {
+    _isActive = false;
+    super.deactivate();
+  }
+
+  @override
+  void markNeedsBuild() {
+    if (_isActive && mounted) {
+      // Our Element is attached to the tree. Mark our ancestor ContentLayers as
+      // needing to build, too.
+      //
+      // Flutter blows up if we try to climb the Element tree when this Element
+      // isn't active, because when this Element is deactivated, it's technically
+      // detached from the tree until its reactivated or disposed.
+      findAncestorContentLayers()?.markNeedsBuild();
+    }
+
+    super.markNeedsBuild();
+  }
+}
+
+extension on Element {
+  ContentLayersElement? findAncestorContentLayers() {
+    ContentLayersElement? contentLayersElement;
+
+    visitAncestorElements((element) {
+      if (element is ContentLayersElement) {
+        contentLayersElement = element;
+        return false;
+      }
+
+      return true;
+    });
+
+    return contentLayersElement;
+  }
+}
+
+abstract class ContentLayerState<WidgetType extends ContentLayerStatefulWidget, LayoutDataType>
+    extends State<WidgetType> {
+  LayoutDataType? _layoutData;
+
+  @override
+  Widget build(BuildContext context) {
+    final contentLayers = (context as Element).findAncestorContentLayers();
+    final contentLayout = contentLayers?._content?.findRenderObject();
+
+    if (contentLayers != null && !contentLayers.renderObject._content!.debugNeedsLayout) {
+      _layoutData = computeLayoutData(contentLayout);
+    }
+
+    return doBuild(context, _layoutData);
+  }
+
+  LayoutDataType? computeLayoutData(RenderObject? contentLayout);
+
+  @protected
+  Widget doBuild(BuildContext context, LayoutDataType? layoutData);
 }

@@ -62,11 +62,11 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
 
   /// Layers that are displayed below the document layout, aligned
   /// with the location and size of the document layout.
-  final List<WidgetBuilder> underlays;
+  final List<ContentLayerWidgetBuilder> underlays;
 
   /// Layers that are displayed on top of the document layout, aligned
   /// with the location and size of the document layout.
-  final List<WidgetBuilder> overlays;
+  final List<ContentLayerWidgetBuilder> overlays;
 
   /// Paints some extra visual ornamentation to help with debugging.
   final DebugPaintConfig debugPaint;

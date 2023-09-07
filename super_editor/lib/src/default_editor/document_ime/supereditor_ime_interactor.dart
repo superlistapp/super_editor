@@ -269,6 +269,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     // but we can't react to them.
     // For example, the editor might be resized or moved around the screen.
     // Because of this, we update our size, transform and caret rect at every frame.
+    // FIXME: This call seems to be scheduling frames. When the caret is in Timer mode, we see this method running continuously even though the only change should be the caret blinking every half a second
     onNextFrame((_) => _reportVisualInformationToIme());
   }
 
@@ -343,6 +344,10 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
               imeConnection: _imeConnection,
               imeClientFactory: () => _imeClient,
               imeConfiguration: _textInputConfiguration,
+              openImeOnPrimaryFocusGain: widget.imePolicies.openKeyboardOnGainPrimaryFocus,
+              closeImeOnPrimaryFocusLost: widget.imePolicies.closeKeyboardOnLosePrimaryFocus,
+              openImeOnNonPrimaryFocusGain: widget.imePolicies.openImeOnNonPrimaryFocusGain,
+              closeImeOnNonPrimaryFocusLost: widget.imePolicies.closeImeOnNonPrimaryFocusLost,
               child: SoftwareKeyboardOpener(
                 controller: widget.softwareKeyboardController,
                 imeConnection: _imeConnection,
@@ -594,7 +599,9 @@ void scrollPageDown(SuperEditorContext context) {
 class SuperEditorImePolicies {
   const SuperEditorImePolicies({
     this.openKeyboardOnGainPrimaryFocus = true,
-    this.closeKeyboardOnLosePrimaryFocus = true,
+    this.closeKeyboardOnLosePrimaryFocus = false,
+    this.openImeOnNonPrimaryFocusGain = true,
+    this.closeImeOnNonPrimaryFocusLost = true,
     this.openKeyboardOnSelectionChange = true,
     this.closeKeyboardOnSelectionLost = true,
   });
@@ -608,8 +615,20 @@ class SuperEditorImePolicies {
   /// Whether to automatically close the software keyboard when [SuperEditor]
   /// loses primary focus (even if it retains regular focus).
   ///
-  /// Defaults to `true`.
+  /// Defaults to `false`, so that affordances, like a popover, can take primary
+  /// focus, while still sending IME content input to `SuperEditor` at the same
+  /// time.
   final bool closeKeyboardOnLosePrimaryFocus;
+
+  /// Whether to open an IME connection when `SuperEditor` gains NON-primary focus.
+  ///
+  /// Defaults to `true`.
+  final bool openImeOnNonPrimaryFocusGain;
+
+  /// Whether to close the IME connection when `SuperEditor` loses NON-primary focus.
+  ///
+  /// Defaults to `true`.
+  final bool closeImeOnNonPrimaryFocusLost;
 
   /// Whether the software keyboard should be raised whenever the editor's selection
   /// changes, such as when a user taps to place the caret.
@@ -634,6 +653,8 @@ class SuperEditorImePolicies {
           runtimeType == other.runtimeType &&
           openKeyboardOnGainPrimaryFocus == other.openKeyboardOnGainPrimaryFocus &&
           closeKeyboardOnLosePrimaryFocus == other.closeKeyboardOnLosePrimaryFocus &&
+          openImeOnNonPrimaryFocusGain == other.openImeOnNonPrimaryFocusGain &&
+          closeImeOnNonPrimaryFocusLost == other.closeImeOnNonPrimaryFocusLost &&
           openKeyboardOnSelectionChange == other.openKeyboardOnSelectionChange &&
           closeKeyboardOnSelectionLost == other.closeKeyboardOnSelectionLost;
 
@@ -641,6 +662,8 @@ class SuperEditorImePolicies {
   int get hashCode =>
       openKeyboardOnGainPrimaryFocus.hashCode ^
       closeKeyboardOnLosePrimaryFocus.hashCode ^
+      openImeOnNonPrimaryFocusGain.hashCode ^
+      closeImeOnNonPrimaryFocusLost.hashCode ^
       openKeyboardOnSelectionChange.hashCode ^
       closeKeyboardOnSelectionLost.hashCode;
 }

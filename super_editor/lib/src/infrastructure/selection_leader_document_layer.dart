@@ -5,6 +5,7 @@ import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 
 /// A document layer that positions leader widgets at the user's selection bounds.
 ///
@@ -14,7 +15,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 /// on the document's self-reported caret height for the given document position.
 ///
 /// When no selection exists, no leaders are built in the layer's widget tree.
-class SelectionLeadersDocumentLayer extends StatefulWidget {
+class SelectionLeadersDocumentLayer extends ContentLayerStatefulWidget {
   const SelectionLeadersDocumentLayer({
     Key? key,
     required this.document,
@@ -43,17 +44,13 @@ class SelectionLeadersDocumentLayer extends StatefulWidget {
   final bool showDebugLeaderBounds;
 
   @override
-  State<SelectionLeadersDocumentLayer> createState() => _SelectionLeadersDocumentLayerState();
+  ContentLayerState<ContentLayerStatefulWidget, DocumentSelectionLayout> createState() =>
+      _SelectionLeadersDocumentLayerState();
 }
 
-class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocumentLayer>
+class _SelectionLeadersDocumentLayerState
+    extends ContentLayerState<SelectionLeadersDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
-  Rect? _caret;
-
-  Rect? _upstream;
-  Rect? _downstream;
-  Rect? _expandedSelectionBounds;
-
   @override
   void initState() {
     super.initState();
@@ -79,7 +76,7 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
   }
 
   void _onSelectionChange() {
-    if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.persistentCallbacks) {
+    if (mounted && SchedulerBinding.instance.schedulerPhase != SchedulerPhase.persistentCallbacks) {
       // The Flutter pipeline isn't running. Schedule a re-build and re-position the caret.
       setState(() {
         // The leaders are positioned in the build() call.
@@ -88,15 +85,11 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
   }
 
   /// Updates the caret rect, immediately, without scheduling a rebuild.
-  void _positionCaret() {
-    _caret = null;
-    _upstream = null;
-    _downstream = null;
-    _expandedSelectionBounds = null;
-
+  @override
+  DocumentSelectionLayout? computeLayoutData(RenderObject? contentLayout) {
     final documentSelection = widget.selection.value;
     if (documentSelection == null) {
-      return;
+      return null;
     }
 
     final documentLayout = widget.documentLayoutResolver();
@@ -105,38 +98,44 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
       // Assume that we're in a momentary transitive state where the document layout
       // just gained or lost a component. We expect this method ot run again in a moment
       // to correct for this.
-      return;
+      return null;
     }
 
     if (documentSelection.isCollapsed) {
-      _caret = documentLayout.getRectForPosition(documentSelection.extent)!;
+      return DocumentSelectionLayout(
+        caret: documentLayout.getRectForPosition(documentSelection.extent)!,
+      );
     } else {
-      _upstream = documentLayout.getRectForPosition(
-        widget.document.selectUpstreamPosition(documentSelection.base, documentSelection.extent),
-      )!;
-      _downstream = documentLayout.getRectForPosition(
-        widget.document.selectDownstreamPosition(documentSelection.base, documentSelection.extent),
-      )!;
-      _expandedSelectionBounds = documentLayout.getRectForSelection(
-        documentSelection.base,
-        documentSelection.extent,
+      return DocumentSelectionLayout(
+        upstream: documentLayout.getRectForPosition(
+          widget.document.selectUpstreamPosition(documentSelection.base, documentSelection.extent),
+        )!,
+        downstream: documentLayout.getRectForPosition(
+          widget.document.selectDownstreamPosition(documentSelection.base, documentSelection.extent),
+        )!,
+        expandedSelectionBounds: documentLayout.getRectForSelection(
+          documentSelection.base,
+          documentSelection.extent,
+        ),
       );
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    _positionCaret();
+  Widget doBuild(BuildContext context, DocumentSelectionLayout? selectionLayout) {
+    if (selectionLayout == null) {
+      return const SizedBox();
+    }
 
     return IgnorePointer(
       child: Stack(
         children: [
-          if (_caret != null)
+          if (selectionLayout.caret != null)
             Positioned(
-              top: _caret!.top,
-              left: _caret!.left,
+              top: selectionLayout.caret!.top,
+              left: selectionLayout.caret!.left,
               width: 1,
-              height: _caret!.height,
+              height: selectionLayout.caret!.height,
               child: Leader(
                 link: widget.links.caretLink,
                 child: widget.showDebugLeaderBounds
@@ -146,12 +145,12 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
                     : null,
               ),
             ),
-          if (_upstream != null)
+          if (selectionLayout.upstream != null)
             Positioned(
-              top: _upstream!.top,
-              left: _upstream!.left,
+              top: selectionLayout.upstream!.top,
+              left: selectionLayout.upstream!.left,
               width: 1,
-              height: _upstream!.height,
+              height: selectionLayout.upstream!.height,
               child: Leader(
                 link: widget.links.upstreamLink,
                 child: widget.showDebugLeaderBounds
@@ -161,12 +160,12 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
                     : null,
               ),
             ),
-          if (_downstream != null)
+          if (selectionLayout.downstream != null)
             Positioned(
-              top: _downstream!.top,
-              left: _downstream!.left,
+              top: selectionLayout.downstream!.top,
+              left: selectionLayout.downstream!.left,
               width: 1,
-              height: _downstream!.height,
+              height: selectionLayout.downstream!.height,
               child: Leader(
                 link: widget.links.downstreamLink,
                 child: widget.showDebugLeaderBounds
@@ -176,9 +175,9 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
                     : null,
               ),
             ),
-          if (_expandedSelectionBounds != null)
+          if (selectionLayout.expandedSelectionBounds != null)
             Positioned.fromRect(
-              rect: _expandedSelectionBounds!,
+              rect: selectionLayout.expandedSelectionBounds!,
               child: Leader(
                 link: widget.links.expandedSelectionBoundsLink,
                 child: widget.showDebugLeaderBounds
@@ -192,6 +191,22 @@ class _SelectionLeadersDocumentLayerState extends State<SelectionLeadersDocument
       ),
     );
   }
+}
+
+/// Visual layout bounds related to a user selection in a document, such as the
+/// caret rect, a bounding box around all selected content, etc.
+class DocumentSelectionLayout {
+  DocumentSelectionLayout({
+    this.caret,
+    this.upstream,
+    this.downstream,
+    this.expandedSelectionBounds,
+  });
+
+  final Rect? caret;
+  final Rect? upstream;
+  final Rect? downstream;
+  final Rect? expandedSelectionBounds;
 }
 
 /// A collection of [LayerLink]s that should be positioned near important

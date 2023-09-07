@@ -116,14 +116,14 @@ void main() {
             child: const SizedBox(),
           ),
           underlays: [
-            (context) => _RebuildableWidget(
+            (context) => _RebuildableContentLayerWidget(
                   rebuildSignal: underlayRebuildSignal,
                   buildTracker: underlayBuildTracker,
                   child: const SizedBox(),
                 ),
           ],
           overlays: [
-            (context) => _RebuildableWidget(
+            (context) => _RebuildableContentLayerWidget(
                   rebuildSignal: overlayRebuildSignal,
                   buildTracker: overlayBuildTracker,
                   child: const SizedBox(),
@@ -165,14 +165,18 @@ void main() {
             (context) {
               expect(didContentLayout.value, isTrue);
               didUnderlayLayout = true;
-              return const SizedBox();
+              return const ContentLayerProxyWidget(
+                child: SizedBox(),
+              );
             },
           ],
           overlays: [
             (context) {
               expect(didContentLayout.value, isTrue);
               expect(didUnderlayLayout, isTrue);
-              return const SizedBox();
+              return const ContentLayerProxyWidget(
+                child: SizedBox(),
+              );
             },
           ],
         ),
@@ -204,14 +208,18 @@ void main() {
           underlays: [
             (context) {
               expect(contentLayoutCount.value, layerLayoutCount.value + 1);
-              return const SizedBox();
+              return const ContentLayerProxyWidget(
+                child: SizedBox(),
+              );
             },
           ],
           overlays: [
             (context) {
               expect(contentLayoutCount.value, layerLayoutCount.value + 1);
               layerLayoutCount.value += 1;
-              return const SizedBox();
+              return const ContentLayerProxyWidget(
+                child: SizedBox(),
+              );
             },
           ],
         ),
@@ -259,14 +267,18 @@ void main() {
           underlays: [
             (context) {
               expect(contentLayoutCount.value, layerLayoutCount.value + 1);
-              return const SizedBox();
+              return const ContentLayerProxyWidget(
+                child: SizedBox(),
+              );
             },
           ],
           overlays: [
             (context) {
               expect(contentLayoutCount.value, layerLayoutCount.value + 1);
               layerLayoutCount.value += 1;
-              return const SizedBox();
+              return const ContentLayerProxyWidget(
+                child: SizedBox(),
+              );
             },
           ],
         ),
@@ -313,7 +325,7 @@ void main() {
             ),
           ),
           underlays: [
-            (context) => _RebuildableWidget(
+            (context) => _RebuildableContentLayerWidget(
                   elementTracker: underlayElementTracker,
                   onBuild: () {
                     // Ensure that this layer can access the render object of the content.
@@ -326,7 +338,7 @@ void main() {
                 ),
           ],
           overlays: [
-            (context) => _RebuildableWidget(
+            (context) => _RebuildableContentLayerWidget(
                   elementTracker: overlayElementTracker,
                   onBuild: () {
                     // Ensure that this layer can access the render object of the content.
@@ -371,7 +383,9 @@ void main() {
               final directionality = Directionality.of(context);
               expect(directionality, isNotNull);
 
-              return const SizedBox();
+              return const ContentLayerProxyWidget(
+                child: SizedBox(),
+              );
             },
           ],
           overlays: [
@@ -380,7 +394,9 @@ void main() {
               final directionality = Directionality.of(context);
               expect(directionality, isNotNull);
 
-              return const SizedBox();
+              return const ContentLayerProxyWidget(
+                child: SizedBox(),
+              );
             },
           ],
         ),
@@ -405,7 +421,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: _RebuildableWidget(
+            body: _RebuildableContentLayerWidget(
               rebuildSignal: rebuildSignal,
               builder: (context) => SuperEditor(
                 editor: editorContext.context.editor,
@@ -466,13 +482,30 @@ const _windowSize = Size(600, 1000);
 /// Returns a [LayoutBuilder] that expects its constraints to be the same as the window,
 /// used for quickly verifying the constraints given to underlays and overlays in
 /// ContentLayers widgets in this test suite.
-WidgetBuilder _buildSizeValidatingLayer() {
-  return (context) => LayoutBuilder(
-        builder: (context, constraints) {
-          _expectLayerConstraintsThatMatchContent(constraints);
-          return const SizedBox();
-        },
-      );
+ContentLayerWidgetBuilder _buildSizeValidatingLayer() {
+  return (context) => const _SizeValidatingLayer();
+}
+
+class _SizeValidatingLayer extends ContentLayerStatefulWidget {
+  const _SizeValidatingLayer();
+
+  @override
+  ContentLayerState<ContentLayerStatefulWidget, Object> createState() => _SizeValidatingLayerState();
+}
+
+class _SizeValidatingLayerState extends ContentLayerState<_SizeValidatingLayer, Object> {
+  @override
+  Object? computeLayoutData(RenderObject? contentLayout) => null;
+
+  @override
+  Widget doBuild(BuildContext context, Object? layoutData) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _expectLayerConstraintsThatMatchContent(constraints);
+        return const SizedBox();
+      },
+    );
+  }
 }
 
 void _expectLayerConstraintsThatMatchContent(BoxConstraints constraints) {
@@ -590,6 +623,104 @@ class _RebuildableWidgetState extends State<_RebuildableWidget> {
 
   @override
   Widget build(BuildContext context) {
+    widget.buildTracker?.value += 1;
+    widget.elementTracker?.value = context as Element;
+
+    widget.onBuild?.call();
+
+    return widget.child != null ? widget.child! : widget.builder!.call(context);
+  }
+}
+
+/// Content layer that can be told to rebuild from the outside, and also tracks its build count.
+class _RebuildableContentLayerWidget extends ContentLayerStatefulWidget {
+  const _RebuildableContentLayerWidget({
+    Key? key,
+    this.rebuildSignal,
+    this.buildTracker,
+    this.elementTracker,
+    this.onBuildScheduled,
+    this.onBuild,
+    this.builder,
+    this.child,
+  })  : assert(child != null || builder != null, "Must provide either a child OR a builder."),
+        assert(child == null || builder == null, "Can't provide a child AND a builder. Choose one."),
+        super(key: key);
+
+  /// Signal that instructs this widget to call `setState()`.
+  final Listenable? rebuildSignal;
+
+  /// The number of times this widget has run `build()`.
+  final ValueNotifier<int>? buildTracker;
+
+  /// The [Element] that currently owns this `Widget` and its `State`.
+  final ValueNotifier<Element?>? elementTracker;
+
+  /// Callback that's invoked when this widget calls `setState()`.
+  final VoidCallback? onBuildScheduled;
+
+  /// Callback that's invoked during this widget's `build()` method.
+  final VoidCallback? onBuild;
+
+  final WidgetBuilder? builder;
+  final Widget? child;
+
+  @override
+  ContentLayerState<ContentLayerStatefulWidget, Object> createState() => _RebuildableContentLayerWidgetState();
+}
+
+class _RebuildableContentLayerWidgetState extends ContentLayerState<_RebuildableContentLayerWidget, Object> {
+  @override
+  void initState() {
+    super.initState();
+    widget.rebuildSignal?.addListener(_onRebuildSignal);
+  }
+
+  @override
+  void didUpdateWidget(_RebuildableContentLayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.rebuildSignal != oldWidget.rebuildSignal) {
+      oldWidget.rebuildSignal?.removeListener(_onRebuildSignal);
+      widget.rebuildSignal?.addListener(_onRebuildSignal);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.rebuildSignal?.removeListener(_onRebuildSignal);
+    super.dispose();
+  }
+
+  void _onRebuildSignal() {
+    setState(() {
+      // rebuild
+    });
+
+    // Explicitly mark our RenderObject as needing layout so that we simulate content
+    // that rebuilds because its layout changed. Without this call, we'd get a widget
+    // rebuild, but we wouldn't trigger another content layout pass. We want that
+    // layout pass so that our tests can inspect the order of operations and ensure that
+    // when the content layout changes, the content is always laid out before layers.
+    context.findRenderObject()?.markNeedsLayout();
+  }
+
+  // This override is a regrettable requirement for ContentLayers, which is needed so
+  // that ContentLayers can remove the layers to prevent them from building during a
+  // regular build phase when the content changes. This is the result of Flutter making
+  // it impossible to monitor dirty subtrees, and making it impossible to control build
+  // order.
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    widget.onBuildScheduled?.call();
+  }
+
+  @override
+  Object? computeLayoutData(RenderObject? contentLayout) => null;
+
+  @override
+  Widget doBuild(BuildContext context, Object? object) {
     widget.buildTracker?.value += 1;
     widget.elementTracker?.value = context as Element;
 

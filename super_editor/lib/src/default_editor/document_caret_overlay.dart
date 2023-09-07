@@ -1,16 +1,23 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 /// Document overlay that paints a caret with the given [caretStyle].
-class CaretDocumentOverlay extends StatefulWidget {
+class CaretDocumentOverlay extends ContentLayerStatefulWidget {
   const CaretDocumentOverlay({
     Key? key,
     required this.composer,
     required this.documentLayoutResolver,
-    required this.caretStyle,
+    this.caretStyle = const CaretStyle(
+      width: 2,
+      color: Colors.black,
+    ),
+    this.platformOverride,
+    this.displayOnAllPlatforms = false,
     this.blinkTimingMode = BlinkTimingMode.ticker,
   }) : super(key: key);
 
@@ -24,17 +31,25 @@ class CaretDocumentOverlay extends StatefulWidget {
   /// The visual style of the caret that this overlay paints.
   final CaretStyle caretStyle;
 
+  /// The platform to use to determine caret behavior, defaults to [defaultTargetPlatform].
+  final TargetPlatform? platformOverride;
+
+  /// Whether to display a caret on all platforms, including mobile.
+  ///
+  /// By default, the caret is only displayed on desktop.
+  final bool displayOnAllPlatforms;
+
   /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
   ///
   /// `Timer`s are not expected to work in tests.
   final BlinkTimingMode blinkTimingMode;
 
   @override
-  State<CaretDocumentOverlay> createState() => _CaretDocumentOverlayState();
+  ContentLayerState<CaretDocumentOverlay, Rect?> createState() => _CaretDocumentOverlayState();
 }
 
-class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with SingleTickerProviderStateMixin {
-  Rect? _caret;
+class _CaretDocumentOverlayState extends ContentLayerState<CaretDocumentOverlay, Rect?>
+    with SingleTickerProviderStateMixin {
   late final BlinkController _blinkController;
 
   @override
@@ -102,7 +117,6 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   void _updateCaretFlash() {
     final documentSelection = widget.composer.selection;
     if (documentSelection == null) {
-      _caret = null;
       _blinkController.stopBlinking();
       return;
     }
@@ -111,11 +125,11 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     _blinkController.jumpToOpaque();
   }
 
-  /// Updates the caret rect, immediately, without scheduling a rebuild.
-  void _positionCaret() {
+  @override
+  Rect? computeLayoutData(RenderObject? contentLayout) {
     final documentSelection = widget.composer.selection;
     if (documentSelection == null) {
-      return;
+      return null;
     }
 
     final documentLayout = widget.documentLayoutResolver();
@@ -124,41 +138,49 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
       // Assume that we're in a momentary transitive state where the document layout
       // just gained or lost a component. We expect this method ot run again in a moment
       // to correct for this.
-      return;
+      return null;
     }
 
-    _caret = documentLayout.getRectForPosition(documentSelection.extent)!;
+    return documentLayout.getRectForPosition(documentSelection.extent)!;
   }
 
   @override
-  Widget build(BuildContext context) {
-    _positionCaret();
+  Widget doBuild(BuildContext context, Rect? caret) {
+    // By default, don't show a caret on mobile because SuperEditor displays
+    // mobile carets and handles elsewhere. This can be overridden by settings
+    // `displayOnAllPlatforms` to true.
+    final platform = widget.platformOverride ?? defaultTargetPlatform;
+    if (!widget.displayOnAllPlatforms && (platform == TargetPlatform.android || platform == TargetPlatform.iOS)) {
+      return const SizedBox();
+    }
 
     // Use a RepaintBoundary so that caret flashing doesn't invalidate our
     // ancestor painting.
-    return RepaintBoundary(
-      child: Stack(
-        children: [
-          if (_caret != null)
-            Positioned(
-              top: _caret!.top,
-              left: _caret!.left,
-              height: _caret!.height,
-              child: AnimatedBuilder(
-                animation: _blinkController,
-                builder: (context, child) {
-                  return Container(
-                    key: primaryCaretKey,
-                    width: widget.caretStyle.width,
-                    decoration: BoxDecoration(
-                      color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
-                      borderRadius: widget.caretStyle.borderRadius,
-                    ),
-                  );
-                },
+    return IgnorePointer(
+      child: RepaintBoundary(
+        child: Stack(
+          children: [
+            if (caret != null)
+              Positioned(
+                top: caret.top,
+                left: caret.left,
+                height: caret.height,
+                child: AnimatedBuilder(
+                  animation: _blinkController,
+                  builder: (context, child) {
+                    return Container(
+                      key: primaryCaretKey,
+                      width: widget.caretStyle.width,
+                      decoration: BoxDecoration(
+                        color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
+                        borderRadius: widget.caretStyle.borderRadius,
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
