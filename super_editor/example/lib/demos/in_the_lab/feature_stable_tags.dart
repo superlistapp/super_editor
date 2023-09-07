@@ -146,11 +146,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
             builder: (context, attribution) {
               return Leader(
                 link: _composingLink,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue),
-                  ),
-                ),
+                child: const SizedBox(),
               );
             },
           ),

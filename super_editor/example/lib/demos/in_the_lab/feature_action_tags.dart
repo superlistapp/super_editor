@@ -143,11 +143,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
             builder: (BuildContext context, Attribution attribution) {
               return Leader(
                 link: _composingLink,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue),
-                  ),
-                ),
+                child: const SizedBox(),
               );
             },
           ),
