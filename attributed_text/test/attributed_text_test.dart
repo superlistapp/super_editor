@@ -460,6 +460,8 @@ void main() {
             },
           ),
         );
+
+        expect(expectedVisits, isEmpty);
       });
 
       test("visits partial-length attributions", () {
@@ -491,6 +493,8 @@ void main() {
             },
           ),
         );
+
+        expect(expectedVisits, isEmpty);
       });
 
       test("visits overlapping attributions", () {
@@ -526,6 +530,8 @@ void main() {
             },
           ),
         );
+
+        expect(expectedVisits, isEmpty);
       });
 
       test("visits multiple starting and ending attributions", () {
@@ -559,6 +565,8 @@ void main() {
             },
           ),
         );
+
+        expect(expectedVisits, isEmpty);
       });
     });
 
@@ -584,6 +592,8 @@ void main() {
             expectedVisits.removeAt(0);
           },
         );
+
+        expect(expectedVisits, isEmpty);
       });
 
       test("visits partial-length attributions", () {
@@ -609,6 +619,8 @@ void main() {
             expectedVisits.removeAt(0);
           },
         );
+
+        expect(expectedVisits, isEmpty);
       });
 
       test("visits overlapping attributions", () {
@@ -636,6 +648,8 @@ void main() {
             expectedVisits.removeAt(0);
           },
         );
+
+        expect(expectedVisits, isEmpty);
       });
 
       test("visits multiple starting and ending attributions", () {
@@ -663,6 +677,8 @@ void main() {
             expectedVisits.removeAt(0);
           },
         );
+
+        expect(expectedVisits, isEmpty);
       });
     });
   });
