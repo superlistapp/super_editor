@@ -221,7 +221,9 @@ class TaskComponent extends StatefulWidget {
   State<TaskComponent> createState() => _TaskComponentState();
 }
 
-class _TaskComponentState extends State<TaskComponent> with ProxyDocumentComponent<TaskComponent>, ProxyTextComposable {
+class _TaskComponentState extends State<TaskComponent>
+    with ProxyDocumentComponent<TaskComponent>, ProxyTextComposable
+    implements TextInputComponent {
   final _textKey = GlobalKey();
 
   @override
@@ -229,6 +231,38 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
 
   @override
   TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+
+  @override
+  Rect getTextBounds() {
+    final renderBox = _textKey.currentContext!.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    return offset & renderBox.size;
+  }
+
+  @override
+  TextStyle getTextStyleAt(int offset) {
+    final attributions = widget.viewModel.text.getAllAttributionsAt(offset);
+
+    return _computeStyles(attributions);
+  }
+
+  @override
+  TextAlign? get textAlign => TextAlign.left;
+
+  @override
+  TextDirection? get textDirection => Directionality.of(context);
+
+  TextStyle _computeStyles(Set<Attribution> attributions) {
+    // Show a strikethrough across the entire task if it's complete.
+    final style = widget.viewModel.textStyleBuilder(attributions);
+    return widget.viewModel.isComplete
+        ? style.copyWith(
+            decoration: style.decoration == null
+                ? TextDecoration.lineThrough
+                : TextDecoration.combine([TextDecoration.lineThrough, style.decoration!]),
+          )
+        : style;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -248,17 +282,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
           child: TextComponent(
             key: _textKey,
             text: widget.viewModel.text,
-            textStyleBuilder: (attributions) {
-              // Show a strikethrough across the entire task if it's complete.
-              final style = widget.viewModel.textStyleBuilder(attributions);
-              return widget.viewModel.isComplete
-                  ? style.copyWith(
-                      decoration: style.decoration == null
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.combine([TextDecoration.lineThrough, style.decoration!]),
-                    )
-                  : style;
-            },
+            textStyleBuilder: _computeStyles,
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,

@@ -517,6 +517,14 @@ ExecutionInstruction moveUpAndDownWithArrowKeys({
     return ExecutionInstruction.continueExecution;
   }
 
+  if (isWeb && (editContext.hasPrimaryFocus.value) && (editContext.composer.composingRegion.value != null)) {
+    // We are composing a character on web. It's possible that a native element is being displayed,
+    // like an emoji picker or a character selection panel.
+    // We need to let the OS handle the key so the user can navigate
+    // on the list of possible characters.
+    return ExecutionInstruction.blocked;
+  }
+
   if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
     return ExecutionInstruction.continueExecution;
   }
@@ -567,6 +575,14 @@ ExecutionInstruction moveLeftAndRightWithArrowKeys({
   ];
   if (!arrowKeys.contains(keyEvent.logicalKey)) {
     return ExecutionInstruction.continueExecution;
+  }
+
+  if (isWeb && (editContext.hasPrimaryFocus.value) && (editContext.composer.composingRegion.value != null)) {
+    // We are composing a character on web. It's possible that a native element is being displayed,
+    // like an emoji picker or a character selection panel.
+    // We need to let the OS handle the key so the user can navigate
+    // on the list of possible characters.
+    return ExecutionInstruction.blocked;
   }
 
   if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {

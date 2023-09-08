@@ -498,7 +498,9 @@ class TextComponent extends StatefulWidget {
   TextComponentState createState() => TextComponentState();
 }
 
-class TextComponentState extends State<TextComponent> with DocumentComponent implements TextComposable {
+class TextComponentState extends State<TextComponent>
+    with DocumentComponent
+    implements TextComposable, TextInputComponent {
   final _textKey = GlobalKey<ProseTextState>();
 
   @visibleForTesting
@@ -833,6 +835,26 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       textLayout.getPositionAtStartOfLine(textNodePosition),
     );
   }
+
+  @override
+  TextStyle getTextStyleAt(int offset) {
+    final attributions = widget.text.getAllAttributionsAt(offset);
+
+    return _textStyleWithBlockType(attributions);
+  }
+
+  @override
+  Rect getTextBounds() {
+    final renderBox = context.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    return offset & renderBox.size;
+  }
+
+  @override
+  TextAlign? get textAlign => widget.textAlign;
+
+  @override
+  TextDirection? get textDirection => widget.textDirection;
 
   @override
   Widget build(BuildContext context) {

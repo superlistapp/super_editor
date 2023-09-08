@@ -2,15 +2,18 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/debug_visualization.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_delta_editing.dart';
@@ -183,6 +186,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _configureImeClientDecorators();
 
     _imeConnection.addListener(_onImeConnectionChange);
+    widget.editContext.composer.selectionNotifier.addListener(_onSelectionChanged);
 
     _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
   }
@@ -202,6 +206,11 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       oldWidget.imeOverrides?.client = null;
       _configureImeClientDecorators();
     }
+
+    if (widget.editContext.composer.selectionNotifier != oldWidget.editContext.composer.selectionNotifier) {
+      oldWidget.editContext.composer.selectionNotifier.removeListener(_onSelectionChanged);
+      widget.editContext.composer.selectionNotifier.addListener(_onSelectionChanged);
+    }
   }
 
   @override
@@ -217,6 +226,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       _focusNode.dispose();
     }
 
+    widget.editContext.composer.selectionNotifier.removeListener(_onSelectionChanged);
+
     super.dispose();
   }
 
@@ -231,11 +242,18 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     if (_imeConnection.value == null) {
       _documentImeConnection.value = null;
       widget.imeOverrides?.client = null;
-    } else {
-      _configureImeClientDecorators();
-      _documentImeConnection.value = _documentImeClient;
-      _reportVisualInformationToIme();
+      return;
     }
+
+    _configureImeClientDecorators();
+    _documentImeConnection.value = _documentImeClient;
+
+    if (!_imeConnection.value!.attached) {
+      return;
+    }
+
+    _reportTextStyleToIme();
+    _reportVisualInformationToIme();
   }
 
   void _configureImeClientDecorators() {
@@ -257,13 +275,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       return;
     }
 
-    final renderBox = context.findRenderObject() as RenderBox;
-    _imeConnection.value!.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
-
-    final caretRect = _computeCaretRectInViewportSpace();
-    if (caretRect != null) {
-      _imeConnection.value!.setCaretRect(caretRect);
-    }
+    _reportSizeAndTransformToIme();
+    _reportCaretRectToIme();
 
     // There are some operations that might affect our transform, size and the caret rect,
     // but we can't react to them.
@@ -271,6 +284,104 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     // Because of this, we update our size, transform and caret rect at every frame.
     // FIXME: This call seems to be scheduling frames. When the caret is in Timer mode, we see this method running continuously even though the only change should be the caret blinking every half a second
     onNextFrame((_) => _reportVisualInformationToIme());
+  }
+
+  /// Report our size and transform to the root node coordinates to the IME.
+  ///
+  /// This is needed to display the OS emoji & symbols panel at the editor selected position.
+  void _reportSizeAndTransformToIme() {
+    //print('reporting size and transform');
+    late Size size;
+    late Matrix4 transform;
+
+    if (isWeb) {
+      // On web, we can't set the caret rect.
+      // To display the IME panels at the correct position,
+      // instead of reporting the whole editor size and transform,
+      // we report only the information about the selected node.
+      final sizeAndTransform = _computeSizeAndTransformOfSelectNode();
+      if (sizeAndTransform == null) {
+        return;
+      }
+
+      size = sizeAndTransform.$1;
+      transform = sizeAndTransform.$2;
+    } else {
+      final renderBox = context.findRenderObject() as RenderBox;
+
+      size = renderBox.size;
+      transform = renderBox.getTransformTo(null);
+    }
+
+    _imeConnection.value!.setEditableSizeAndTransform(size, transform);
+  }
+
+  void _reportCaretRectToIme() {
+    if (isWeb) {
+      // On web, setting the caret rect isn't supported.
+      return;
+    }
+
+    final caretRect = _computeCaretRectInViewportSpace();
+    if (caretRect != null) {
+      _imeConnection.value!.setCaretRect(caretRect);
+    }
+  }
+
+  /// Report our text style to the IME.
+  ///
+  /// This is used on web to set the text style of the hidden native input,
+  /// to try to match the text size on the browser with our text size.
+  ///
+  /// As our content can have multiple styles, the sizes won't be 100% in sync.
+  void _reportTextStyleToIme() {
+    if (!isWeb) {
+      // If we are not on the web, we can position the caret rect without the need
+      // to send the text styles to the IME.
+      return;
+    }
+
+    final selection = widget.editContext.composer.selection;
+    if (selection == null) {
+      return;
+    }
+
+    final nodePosition = selection.extent.nodePosition;
+    if (nodePosition is! TextNodePosition) {
+      // The selected component doesn't contain text.
+      return;
+    }
+
+    final docLayout = widget.editContext.documentLayout;
+    final selectedComponent = docLayout.getComponentByNodeId(selection.extent.nodeId);
+    if (selectedComponent == null) {
+      return;
+    }
+
+    if (selectedComponent is! TextInputComponent) {
+      // The selected component doesn't report its text style.
+      return;
+    }
+
+    final textInputComponent = selectedComponent as TextInputComponent;
+    final style = textInputComponent.getTextStyleAt(nodePosition.offset);
+    _imeConnection.value!.setStyle(
+      fontFamily: style.fontFamily,
+      fontSize: style.fontSize,
+      fontWeight: style.fontWeight,
+      textDirection: textInputComponent.textDirection ?? TextDirection.ltr,
+      textAlign: textInputComponent.textAlign ?? TextAlign.left,
+    );
+  }
+
+  void _onSelectionChanged() {
+    if (!isWeb) {
+      return;
+    }
+
+    // Selection has changed.
+    // Report the text style of the current selection to the IME.
+    onNextFrame((timeStamp) => _reportTextStyleToIme());
   }
 
   /// Compute the caret rect in the editor's content space.
@@ -300,6 +411,32 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     );
 
     return caretOffset & rectInDocLayoutSpace.size;
+  }
+
+  /// Compute the size and transform of the selected node's visual component
+  /// to the root node coordinates.
+  (Size size, Matrix4 transform)? _computeSizeAndTransformOfSelectNode() {
+    final selection = widget.editContext.composer.selection;
+    if (selection == null) {
+      return null;
+    }
+
+    final docLayout = widget.editContext.documentLayout;
+    final selectedComponent = docLayout.getComponentByNodeId(selection.extent.nodeId);
+    if (selectedComponent == null) {
+      return null;
+    }
+
+    if (selectedComponent is! TextInputComponent) {
+      // The selected doesn't report text bounds.
+      return null;
+    }
+
+    final rect = (selectedComponent as TextInputComponent).getTextBounds();
+    final transform = Matrix4.identity() //
+      ..translate(rect.left, rect.top);
+
+    return (rect.size, transform);
   }
 
   void _onPerformSelector(String selectorName) {

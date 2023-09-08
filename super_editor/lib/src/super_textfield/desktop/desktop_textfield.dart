@@ -413,6 +413,9 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                 selectorHandlers: defaultTextFieldSelectorHandlers,
                 textInputAction: widget.textInputAction,
                 imeConfiguration: widget.imeConfiguration,
+                textStyleBuilder: widget.textStyleBuilder,
+                textAlign: widget.textAlign,
+                textDirection: Directionality.of(context),
                 child: child,
               )
             : child,
@@ -997,9 +1000,12 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
     required this.focusNode,
     required this.textController,
     required this.isMultiline,
+    required this.textStyleBuilder,
     required this.selectorHandlers,
     this.textInputAction,
     this.imeConfiguration,
+    this.textAlign,
+    this.textDirection,
     required this.child,
   }) : super(key: key);
 
@@ -1016,6 +1022,8 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
   /// the [ProseTextLayout] widget that paints the text for this text field.
   final GlobalKey<ProseTextState> textKey;
 
+  final AttributionStyleBuilder textStyleBuilder;
+
   /// Handlers for all Mac OS "selectors" reported by the IME.
   ///
   /// The IME reports selectors as unique `String`s, therefore selector handlers are
@@ -1027,6 +1035,10 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
 
   /// Preferences for how the platform IME should look and behave during editing.
   final TextInputConfiguration? imeConfiguration;
+
+  final TextAlign? textAlign;
+
+  final TextDirection? textDirection;
 
   /// The rest of the subtree for this text field.
   final Widget child;
@@ -1041,7 +1053,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     super.initState();
     widget.focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
-    widget.textController.inputConnectionNotifier.addListener(_reportVisualInformationToIme);
+    widget.textController.inputConnectionNotifier.addListener(_onImeConnectionChanged);
     widget.textController.onPerformActionPressed ??= _onPerformAction;
     widget.textController.onPerformSelector ??= _onPerformSelector;
 
@@ -1074,6 +1086,9 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
         oldWidget.textController.onPerformSelector = null;
       }
       widget.textController.onPerformSelector ??= _onPerformSelector;
+
+      oldWidget.textController.inputConnectionNotifier.removeListener(_onImeConnectionChanged);
+      widget.textController.inputConnectionNotifier.addListener(_onImeConnectionChanged);
     }
 
     if (widget.imeConfiguration != oldWidget.imeConfiguration &&
@@ -1092,7 +1107,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   @override
   void dispose() {
     widget.focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
-    widget.textController.inputConnectionNotifier.removeListener(_reportVisualInformationToIme);
+    widget.textController.inputConnectionNotifier.removeListener(_onImeConnectionChanged);
     if (widget.textController.onPerformSelector == _onPerformSelector) {
       widget.textController.onPerformSelector = null;
     }
@@ -1128,6 +1143,15 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     }
   }
 
+  void _onImeConnectionChanged() {
+    if (!widget.textController.isAttachedToIme) {
+      return;
+    }
+
+    _reportTextStyleToIme();
+    _reportVisualInformationToIme();
+  }
+
   /// Report our size, transform to the root node coordinates, and caret rect to the IME.
   ///
   /// This is needed to display the OS emoji & symbols panel at the text field selected position.
@@ -1138,14 +1162,8 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
       return;
     }
 
-    final renderBox = context.findRenderObject() as RenderBox;
-    widget.textController.inputConnectionNotifier.value!
-        .setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
-
-    final caretRect = _computeCaretRectInContentSpace();
-    if (caretRect != null) {
-      widget.textController.inputConnectionNotifier.value!.setCaretRect(caretRect);
-    }
+    _reportSizeAndTransformToIme();
+    _reportCaretRectToIme();
 
     // Without showing the keyboard, the panel is always positioned at the screen center after the first time.
     // I'm not sure why this is needed in SuperTextField, but not in SuperEditor.
@@ -1155,6 +1173,58 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     // For example, the text field might be resized or moved around the screen.
     // Because of this, we update our size, transform and caret rect at every frame.
     onNextFrame((_) => _reportVisualInformationToIme());
+  }
+
+  void _reportSizeAndTransformToIme() {
+    final renderBox = widget.textKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) {
+      return;
+    }
+
+    widget.textController.inputConnectionNotifier.value!
+        .setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
+  }
+
+  void _reportCaretRectToIme() {
+    if (isWeb) {
+      // On web, setting the caret rect isn't supported.
+      return;
+    }
+
+    final caretRect = _computeCaretRectInContentSpace();
+    if (caretRect != null) {
+      widget.textController.inputConnectionNotifier.value!.setCaretRect(caretRect);
+    }
+  }
+
+  /// Report our text style to the IME.
+  ///
+  /// This is used on web to set the text style of the hidden native input,
+  /// to try to match the text size on the browser with our text size.
+  ///
+  /// As our content can have multiple styles, the sizes won't be 100% in sync.
+  void _reportTextStyleToIme() {
+    late TextStyle textStyle;
+
+    final selection = widget.textController.selection;
+    if (selection.isValid) {
+      // We have a selection, compute the style based on the attributions present
+      // at the selection extent.
+      final text = widget.textController.text;
+      final attributions = text.getAllAttributionsAt(selection.extentOffset);
+      textStyle = widget.textStyleBuilder(attributions);
+    } else {
+      // We don't have a selection, use the default style.
+      textStyle = widget.textStyleBuilder({});
+    }
+
+    widget.textController.inputConnectionNotifier.value!.setStyle(
+      fontFamily: textStyle.fontFamily,
+      fontSize: textStyle.fontSize,
+      fontWeight: textStyle.fontWeight,
+      textDirection: widget.textDirection ?? TextDirection.ltr,
+      textAlign: widget.textAlign ?? TextAlign.left,
+    );
   }
 
   Rect? _computeCaretRectInContentSpace() {
@@ -1789,6 +1859,15 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (!arrowKeys.contains(keyEvent.logicalKey)) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
+
+    if (isWeb && (controller.composingRegion.isValid)) {
+      // We are composing a character on web. It's possible that a native element is being displayed,
+      // like an emoji picker or a character selection panel.
+      // We need to let the OS handle the key so the user can navigate
+      // on the list of possible characters.
+      return TextFieldKeyboardHandlerResult.blocked;
+    }
+
     if (controller.selection.extentOffset == -1) {
       // The result is reported as "handled" because an arrow
       // key was pressed, but we return early because there is
