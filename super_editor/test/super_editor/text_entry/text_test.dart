@@ -22,7 +22,7 @@ void main() {
         final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
         final request = ToggleTextAttributionsRequest(
-          documentSelection: const DocumentSelection(
+          documentRange: const DocumentSelection(
             base: DocumentPosition(
               nodeId: 'paragraph',
               nodePosition: TextNodePosition(offset: 1),

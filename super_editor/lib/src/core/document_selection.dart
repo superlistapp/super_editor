@@ -17,7 +17,7 @@ import 'document.dart';
 /// to locate nodes between [base] and [extent], and to identify
 /// partial content that is selected within the [base] and [extent]
 /// nodes within the document.
-class DocumentSelection {
+class DocumentSelection extends DocumentRange {
   /// Creates a collapsed selection at the given [position] within the document.
   ///
   /// See also:
@@ -27,14 +27,15 @@ class DocumentSelection {
   const DocumentSelection.collapsed({
     required DocumentPosition position,
   })  : base = position,
-        extent = position;
+        extent = position,
+        super(start: position, end: position);
 
   /// Creates a selection from the [base] position to the [extent] position
   /// within the document.
   const DocumentSelection({
     required this.base,
     required this.extent,
-  });
+  }) : super(start: base, end: extent);
 
   /// The base position of the selection within the document.
   ///
@@ -209,6 +210,10 @@ class DocumentSelection {
 extension InspectDocumentAffinity on Document {
   TextAffinity getAffinityForSelection(DocumentSelection selection) {
     return getAffinityBetween(base: selection.base, extent: selection.extent);
+  }
+
+  TextAffinity getAffinityForRange(DocumentRange range) {
+    return getAffinityBetween(base: range.start, extent: range.end);
   }
 
   /// Returns the affinity direction implied by the given [base] and [extent].

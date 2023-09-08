@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/super_editor.dart';
 
 /// A read-only document with styled text and multimedia elements.
 ///
@@ -211,34 +211,54 @@ class NodeChangeEvent implements NodeDocumentChange {
   int get hashCode => nodeId.hashCode;
 }
 
-/// A span within a [Document] that begins at [start] and
-/// ends at [end].
+/// A span within a [Document] with one side bounded at [start] and the other
+/// side bounded at [end].
 ///
-/// The [start] position must come before the [end] position in
-/// the document.
+/// A [DocumentRange] is considered "normalized" if [start] comes before [end].
+/// A [DocumentRange] is NOT "normalized" if [end] comes before [start].
+///
+/// To check if a [DocumentRange] is normalized, call [isNormalized] with
+/// a [Document].
+///
+/// Use [normalize] to create a version of this [DocumentRange] that's guaranteed
+/// to be normalized for the given [Document].
+///
+/// Determining normalization requires a [Document] because a [Document] is the
+/// source of truth for [DocumentNode] content order.
 class DocumentRange {
-  /// Creates a document range from its start and end positions.
-  ///
-  /// The [start] position must come before the [end] position in
-  /// the document.
+  /// Creates a document range between [start] and [end].
   const DocumentRange({
     required this.start,
     required this.end,
   });
 
-  /// The start position of the range represented by its position within the
-  /// document.
+  /// The bounding position of one side of a [DocumentRange].
   ///
-  /// The [start] position comes before the [end] position, or is equivalent to
-  /// the [end] position.
+  /// {@template start_and_end}
+  /// If this [DocumentRange] is normalized then [start] comes before [end], otherwise
+  /// [end] comes before [start].
+  /// {@endtemplate}
   final DocumentPosition start;
 
-  /// The end position of the range represented by its position within the
-  /// document.
+  /// The bounding position of the other side of a [DocumentRange].
   ///
-  /// The [end] position comes after the [start] position, or is equivalent to
-  /// the [start] position.
+  /// {@macro start_and_end}
   final DocumentPosition end;
+
+  /// Returns `true` if [start] appears at, or before [end], or `false` otherwise.
+  bool isNormalized(Document document) => document.getAffinityForRange(this) == TextAffinity.downstream;
+
+  /// Returns a version of this [DocumentRange] that's normalized.
+  ///
+  /// See [isNormalized] for a definition of normalized.
+  DocumentRange normalize(Document document) {
+    if (isNormalized(document)) {
+      return this;
+    }
+
+    // We're not normalized. To return a normalized version, reverse our bounds.
+    return DocumentRange(start: end, end: start);
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -250,7 +270,7 @@ class DocumentRange {
 
   @override
   String toString() {
-    return '[DocumentRange] - from: ($start), to: ($end)';
+    return '[DocumentRange] - start: ($start), end: ($end)';
   }
 }
 

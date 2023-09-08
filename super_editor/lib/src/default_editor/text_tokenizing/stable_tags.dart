@@ -223,8 +223,8 @@ class FillInComposingUserTagCommand implements EditCommand {
 
     // Delete the composing stable tag text.
     executor.executeCommand(
-      DeleteSelectionCommand(
-        documentSelection: textNode!.selectionBetween(
+      DeleteContentCommand(
+        documentRange: textNode!.selectionBetween(
           composingToken.indexedTag.startOffset,
           composingToken.indexedTag.endOffset,
         ),
@@ -334,7 +334,7 @@ class CancelComposingStableTagCommand implements EditCommand {
     // Remove the composing attribution.
     executor.executeCommand(
       RemoveTextAttributionsCommand(
-        documentSelection: textNode!.selectionBetween(
+        documentRange: textNode!.selectionBetween(
           composingToken.indexedTag.startOffset,
           composingToken.indexedTag.endOffset,
         ),
@@ -343,7 +343,7 @@ class CancelComposingStableTagCommand implements EditCommand {
     );
     executor.executeCommand(
       AddTextAttributionsCommand(
-        documentSelection: textNode.selectionBetween(
+        documentRange: textNode.selectionBetween(
           composingToken.indexedTag.startOffset,
           composingToken.indexedTag.startOffset + 1,
         ),
@@ -453,12 +453,12 @@ class TagUserReaction implements EditReaction {
 
       changeRequests.addAll([
         RemoveTextAttributionsRequest(
-          documentSelection: node.selectionBetween(range.start, range.end),
+          documentRange: node.selectionBetween(range.start, range.end),
           attributions: {stableTagCancelledAttribution},
         ),
         if (addedRange != null) //
           AddTextAttributionsRequest(
-            documentSelection: addedRange,
+            documentRange: addedRange,
             attributions: {stableTagCancelledAttribution},
           ),
       ]);
@@ -496,7 +496,7 @@ class TagUserReaction implements EditReaction {
       // The token is only partially attributed. Expand the attribution around the token.
       requestDispatcher.execute([
         AddTextAttributionsRequest(
-          documentSelection: DocumentSelection(
+          documentRange: DocumentSelection(
             base: composingToken.indexedTag.start,
             extent: composingToken.indexedTag.end,
           ),
@@ -572,7 +572,7 @@ class TagUserReaction implements EditReaction {
 
           removeTagRequests.add(
             RemoveTextAttributionsRequest(
-              documentSelection: textNode.selectionBetween(tag.start, tag.end + 1),
+              documentRange: textNode.selectionBetween(tag.start, tag.end + 1),
               attributions: {stableTagComposingAttribution},
             ),
           );
@@ -644,8 +644,8 @@ class TagUserReaction implements EditReaction {
           }
 
           deleteTagRequests.add(
-            DeleteSelectionRequest(
-              documentSelection: textNode.selectionBetween(deleteFrom, deleteTo),
+            DeleteContentRequest(
+              documentRange: textNode.selectionBetween(deleteFrom, deleteTo),
             ),
           );
         }
@@ -758,7 +758,7 @@ class TagUserReaction implements EditReaction {
 
     requestDispatcher.execute([
       AddTextAttributionsRequest(
-        documentSelection: selectedNode.selectionBetween(
+        documentRange: selectedNode.selectionBetween(
           nonAttributedTagAroundCaret.indexedTag.startOffset,
           nonAttributedTagAroundCaret.indexedTag.endOffset,
         ),
@@ -855,14 +855,14 @@ class TagUserReaction implements EditReaction {
       // Remove composing tag attribution.
       ..execute([
         RemoveTextAttributionsRequest(
-          documentSelection: tagSelection,
+          documentRange: tagSelection,
           attributions: {stableTagComposingAttribution},
         )
       ])
       // Add stable tag attribution.
       ..execute([
         AddTextAttributionsRequest(
-          documentSelection: tagSelection,
+          documentRange: tagSelection,
           attributions: {
             CommittedStableTagAttribution(textNode.text.text.substring(
               tag.startOffset + 1, // +1 to remove the trigger ("@") from the value

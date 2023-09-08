@@ -248,7 +248,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _toggleBold() {
     widget.editor!.execute([
       ToggleTextAttributionsRequest(
-        documentSelection: widget.composer.selection!,
+        documentRange: widget.composer.selection!,
         attributions: {boldAttribution},
       ),
     ]);
@@ -258,7 +258,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _toggleItalics() {
     widget.editor!.execute([
       ToggleTextAttributionsRequest(
-        documentSelection: widget.composer.selection!,
+        documentRange: widget.composer.selection!,
         attributions: {italicsAttribution},
       ),
     ]);
@@ -268,7 +268,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _toggleStrikethrough() {
     widget.editor!.execute([
       ToggleTextAttributionsRequest(
-        documentSelection: widget.composer.selection!,
+        documentRange: widget.composer.selection!,
         attributions: {strikethroughAttribution},
       ),
     ]);
