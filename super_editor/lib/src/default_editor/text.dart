@@ -92,6 +92,50 @@ class TextNode extends DocumentNode with ChangeNotifier {
     return position1.offset > position2.offset ? position1 : position2;
   }
 
+  /// Returns a [DocumentSelection] within this [TextNode] from [startIndex] to [endIndex].
+  DocumentSelection selectionBetween(int startIndex, int endIndex) {
+    return DocumentSelection(
+      base: DocumentPosition(
+        nodeId: id,
+        nodePosition: TextNodePosition(offset: startIndex),
+      ),
+      extent: DocumentPosition(
+        nodeId: id,
+        nodePosition: TextNodePosition(offset: endIndex),
+      ),
+    );
+  }
+
+  /// Returns a collapsed [DocumentSelection], positioned within this [TextNode] at the
+  /// given [collapsedIndex].
+  DocumentSelection selectionAt(int collapsedIndex) {
+    return DocumentSelection.collapsed(
+      position: positionAt(collapsedIndex),
+    );
+  }
+
+  /// Returns a [DocumentPosition] within this [TextNode] at the given text [index].
+  DocumentPosition positionAt(int index) {
+    return DocumentPosition(
+      nodeId: id,
+      nodePosition: TextNodePosition(offset: index),
+    );
+  }
+
+  /// Returns a [DocumentRange] within this [TextNode] between [startIndex] and [endIndex].
+  DocumentRange rangeBetween(int startIndex, int endIndex) {
+    return DocumentRange(
+      start: DocumentPosition(
+        nodeId: id,
+        nodePosition: TextNodePosition(offset: startIndex),
+      ),
+      end: DocumentPosition(
+        nodeId: id,
+        nodePosition: TextNodePosition(offset: endIndex),
+      ),
+    );
+  }
+
   @override
   TextNodeSelection computeSelection({
     required NodePosition base,
