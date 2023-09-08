@@ -236,32 +236,21 @@ class CancelComposingActionTagCommand implements EditCommand {
       return;
     }
 
-    final actionTagBasePosition = DocumentPosition(
-      nodeId: textNode!.id,
-      nodePosition: TextNodePosition(offset: composingToken.indexedTag.startOffset),
-    );
-
     // Remove the composing attribution.
     executor.executeCommand(
       RemoveTextAttributionsCommand(
-        documentSelection: DocumentSelection(
-          base: actionTagBasePosition,
-          extent: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: composingToken.indexedTag.endOffset),
-          ),
+        documentSelection: textNode!.selectionBetween(
+          composingToken.indexedTag.startOffset,
+          composingToken.indexedTag.endOffset,
         ),
         attributions: {actionTagComposingAttribution},
       ),
     );
     executor.executeCommand(
       AddTextAttributionsCommand(
-        documentSelection: DocumentSelection(
-          base: actionTagBasePosition,
-          extent: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: composingToken.indexedTag.endOffset),
-          ),
+        documentSelection: textNode.selectionBetween(
+          composingToken.indexedTag.startOffset,
+          composingToken.indexedTag.endOffset,
         ),
         attributions: {actionTagCancelledAttribution},
       ),
@@ -389,18 +378,12 @@ class ActionTagComposingReaction implements EditReaction {
         // This cancelled range includes more than just a trigger. Reduce it back
         // down to the trigger.
         final triggerIndex = cancelledText.indexOf(_tagRule.trigger);
-        addedRange = DocumentSelection(
-          base: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: triggerIndex)),
-          extent: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: triggerIndex)),
-        );
+        addedRange = node.selectionBetween(triggerIndex, triggerIndex);
       }
 
       changeRequests.addAll([
         RemoveTextAttributionsRequest(
-          documentSelection: DocumentSelection(
-            base: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: range.start)),
-            extent: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: range.end)),
-          ),
+          documentSelection: node.selectionBetween(range.start, range.end),
           attributions: {actionTagCancelledAttribution},
         ),
         if (addedRange != null) //
