@@ -190,15 +190,9 @@ class CommonEditorOperations {
 
     editor.execute([
       ChangeSelectionRequest(
-        DocumentSelection(
-          base: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: wordNodeSelection.base,
-          ),
-          extent: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: wordNodeSelection.extent,
-          ),
+        selectedNode.selectionBetween(
+          wordNodeSelection.baseOffset,
+          wordNodeSelection.extentOffset,
         ),
         SelectionChangeType.expandSelection,
         SelectionReason.userInteraction,
@@ -1008,25 +1002,19 @@ class CommonEditorOperations {
 
     final textNode = document.getNode(composer.selection!.extent) as TextNode;
     final text = textNode.text;
-    final currentTextPosition = (composer.selection!.extent.nodePosition as TextNodePosition);
-    if (currentTextPosition.offset >= text.text.length) {
+    final currentTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
+    if (currentTextOffset >= text.text.length) {
       return false;
     }
 
-    final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextPosition.offset);
+    final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextOffset);
 
     // Delete the selected content.
     editor.execute([
       DeleteSelectionRequest(
-        documentSelection: DocumentSelection(
-          base: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: currentTextPosition,
-          ),
-          extent: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: nextCharacterOffset),
-          ),
+        documentSelection: textNode.selectionBetween(
+          currentTextOffset,
+          nextCharacterOffset,
         ),
       ),
     ]);
@@ -1228,9 +1216,9 @@ class CommonEditorOperations {
     }
 
     final textNode = document.getNode(composer.selection!.extent) as TextNode;
-    final currentTextPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+    final currentTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
-    final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextPosition.offset);
+    final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextOffset);
 
     final newSelectionPosition = DocumentPosition(
       nodeId: textNode.id,
@@ -1240,15 +1228,9 @@ class CommonEditorOperations {
     // Delete the selected content.
     editor.execute([
       DeleteSelectionRequest(
-        documentSelection: DocumentSelection(
-          base: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: currentTextPosition,
-          ),
-          extent: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: previousCharacterOffset),
-          ),
+        documentSelection: textNode.selectionBetween(
+          currentTextOffset,
+          previousCharacterOffset,
         ),
       ),
       ChangeSelectionRequest(
@@ -2455,34 +2437,23 @@ class DeleteUpstreamCharacterCommand implements EditCommand {
     }
 
     final textNode = document.getNode(selection.extent) as TextNode;
-    final currentTextPosition = selection.extent.nodePosition as TextNodePosition;
+    final currentTextOffset = (selection.extent.nodePosition as TextNodePosition).offset;
 
-    final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextPosition.offset);
-
-    final newSelectionPosition = DocumentPosition(
-      nodeId: textNode.id,
-      nodePosition: TextNodePosition(offset: previousCharacterOffset),
-    );
+    final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextOffset);
 
     // Delete the selected content.
     executor
       ..executeCommand(
         DeleteSelectionCommand(
-          documentSelection: DocumentSelection(
-            base: DocumentPosition(
-              nodeId: textNode.id,
-              nodePosition: currentTextPosition,
-            ),
-            extent: DocumentPosition(
-              nodeId: textNode.id,
-              nodePosition: TextNodePosition(offset: previousCharacterOffset),
-            ),
+          documentSelection: textNode.selectionBetween(
+            currentTextOffset,
+            previousCharacterOffset,
           ),
         ),
       )
       ..executeCommand(
         ChangeSelectionCommand(
-          DocumentSelection.collapsed(position: newSelectionPosition),
+          textNode.selectionAt(previousCharacterOffset),
           SelectionChangeType.deleteContent,
           SelectionReason.userInteraction,
         ),
@@ -2515,25 +2486,19 @@ class DeleteDownstreamCharacterCommand implements EditCommand {
 
     final textNode = document.getNode(selection.extent) as TextNode;
     final text = textNode.text;
-    final currentTextPosition = (selection.extent.nodePosition as TextNodePosition);
-    if (currentTextPosition.offset >= text.text.length) {
+    final currentTextPositionOffset = (selection.extent.nodePosition as TextNodePosition).offset;
+    if (currentTextPositionOffset >= text.text.length) {
       throw Exception("Tried to delete downstream character but the caret is sitting at the end of the text.");
     }
 
-    final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextPosition.offset);
+    final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextPositionOffset);
 
     // Delete the selected content.
     executor.executeCommand(
       DeleteSelectionCommand(
-        documentSelection: DocumentSelection(
-          base: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: currentTextPosition,
-          ),
-          extent: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: nextCharacterOffset),
-          ),
+        documentSelection: textNode.selectionBetween(
+          currentTextPositionOffset,
+          nextCharacterOffset,
         ),
       ),
     );

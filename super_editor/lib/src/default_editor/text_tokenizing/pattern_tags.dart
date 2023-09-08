@@ -358,15 +358,9 @@ class PatternTagReaction implements EditReaction {
     requestDispatcher.execute([
       // Remove the old pattern tag attribution(s).
       RemoveTextAttributionsRequest(
-        documentSelection: DocumentSelection(
-          base: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tagAroundCaret.indexedTag.startOffset),
-          ),
-          extent: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tagAroundCaret.indexedTag.endOffset),
-          ),
+        documentSelection: selectedNode.selectionBetween(
+          tagAroundCaret.indexedTag.startOffset,
+          tagAroundCaret.indexedTag.endOffset,
         ),
         attributions: {
           ...selectedNode.text
@@ -376,15 +370,9 @@ class PatternTagReaction implements EditReaction {
       ),
       // Add the new/updated pattern tag attribution.
       AddTextAttributionsRequest(
-        documentSelection: DocumentSelection(
-          base: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tagAroundCaret.indexedTag.startOffset),
-          ),
-          extent: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: tagAroundCaret.indexedTag.endOffset),
-          ),
+        documentSelection: selectedNode.selectionBetween(
+          tagAroundCaret.indexedTag.startOffset,
+          tagAroundCaret.indexedTag.endOffset,
         ),
         attributions: {
           const PatternTagAttribution(),
@@ -483,15 +471,9 @@ class PatternTagReaction implements EditReaction {
       // Remove the original multi-tag attribution spans.
       for (final removal in spanRemovals)
         RemoveTextAttributionsRequest(
-          documentSelection: DocumentSelection(
-            base: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: TextNodePosition(offset: removal.start),
-            ),
-            extent: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: TextNodePosition(offset: removal.end + 1),
-            ),
+          documentSelection: node.selectionBetween(
+            removal.start,
+            removal.end + 1,
           ),
           attributions: {const PatternTagAttribution()},
         ),
@@ -499,15 +481,9 @@ class PatternTagReaction implements EditReaction {
       // Add the new, narrowed attribution spans.
       for (final creation in spanCreations)
         AddTextAttributionsRequest(
-          documentSelection: DocumentSelection(
-            base: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: TextNodePosition(offset: creation.start),
-            ),
-            extent: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: TextNodePosition(offset: creation.end + 1),
-            ),
+          documentSelection: node.selectionBetween(
+            creation.start,
+            creation.end + 1,
           ),
           attributions: {const PatternTagAttribution()},
           autoMerge: false,
@@ -564,15 +540,9 @@ class PatternTagReaction implements EditReaction {
           editorPatternTagsLog.info("Removing tag with value: '$tagText'");
           removeTagRequests.add(
             RemoveTextAttributionsRequest(
-              documentSelection: DocumentSelection(
-                base: DocumentPosition(
-                  nodeId: textNode.id,
-                  nodePosition: TextNodePosition(offset: tag.start),
-                ),
-                extent: DocumentPosition(
-                  nodeId: textNode.id,
-                  nodePosition: TextNodePosition(offset: tag.end + 1),
-                ),
+              documentSelection: textNode.selectionBetween(
+                tag.start,
+                tag.end + 1,
               ),
               attributions: {const PatternTagAttribution()},
             ),
