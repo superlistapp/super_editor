@@ -566,15 +566,6 @@ class MutableDocument implements Document, Editable {
   DocumentNode? getNode(DocumentPosition position) => getNodeById(position.nodeId);
 
   @override
-  DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2) {
-    late TextAffinity affinity = getAffinityBetween(base: position1, extent: position2);
-    return DocumentRange(
-      start: affinity == TextAffinity.downstream ? position1 : position2,
-      end: affinity == TextAffinity.downstream ? position2 : position1,
-    );
-  }
-
-  @override
   List<DocumentNode> getNodesInside(DocumentPosition position1, DocumentPosition position2) {
     final node1 = getNode(position1);
     if (node1 == null) {

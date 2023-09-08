@@ -207,6 +207,69 @@ class DocumentSelection extends DocumentRange {
   }
 }
 
+/// A span within a [Document] with one side bounded at [start] and the other
+/// side bounded at [end].
+///
+/// A [DocumentRange] is considered "normalized" if [start] comes before [end].
+/// A [DocumentRange] is NOT "normalized" if [end] comes before [start].
+///
+/// To check if a [DocumentRange] is normalized, call [isNormalized] with
+/// a [Document].
+///
+/// Use [normalize] to create a version of this [DocumentRange] that's guaranteed
+/// to be normalized for the given [Document].
+///
+/// Determining normalization requires a [Document] because a [Document] is the
+/// source of truth for [DocumentNode] content order.
+class DocumentRange {
+  /// Creates a document range between [start] and [end].
+  const DocumentRange({
+    required this.start,
+    required this.end,
+  });
+
+  /// The bounding position of one side of a [DocumentRange].
+  ///
+  /// {@template start_and_end}
+  /// If this [DocumentRange] is normalized then [start] comes before [end], otherwise
+  /// [end] comes before [start].
+  /// {@endtemplate}
+  final DocumentPosition start;
+
+  /// The bounding position of the other side of a [DocumentRange].
+  ///
+  /// {@macro start_and_end}
+  final DocumentPosition end;
+
+  /// Returns `true` if [start] appears at, or before [end], or `false` otherwise.
+  bool isNormalized(Document document) => document.getAffinityForRange(this) == TextAffinity.downstream;
+
+  /// Returns a version of this [DocumentRange] that's normalized.
+  ///
+  /// See [isNormalized] for a definition of normalized.
+  DocumentRange normalize(Document document) {
+    if (isNormalized(document)) {
+      return this;
+    }
+
+    // We're not normalized. To return a normalized version, reverse our bounds.
+    return DocumentRange(start: end, end: start);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DocumentRange && runtimeType == other.runtimeType && start == other.start && end == other.end;
+
+  @override
+  int get hashCode => start.hashCode ^ end.hashCode;
+
+  @override
+  String toString() {
+    return '[DocumentRange] - start: ($start), end: ($end)';
+  }
+}
+
 extension InspectDocumentAffinity on Document {
   TextAffinity getAffinityForSelection(DocumentSelection selection) {
     return getAffinityBetween(base: selection.base, extent: selection.extent);
@@ -246,6 +309,18 @@ extension InspectDocumentAffinity on Document {
     }
 
     return affinity;
+  }
+}
+
+extension InspectDocumentRange on Document {
+  /// Returns a [DocumentRange] that ranges from [position1] to [position2],
+  /// including [position1] and [position2].
+  DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2) {
+    late TextAffinity affinity = getAffinityBetween(base: position1, extent: position2);
+    return DocumentRange(
+      start: affinity == TextAffinity.downstream ? position1 : position2,
+      end: affinity == TextAffinity.downstream ? position2 : position1,
+    );
   }
 }
 
