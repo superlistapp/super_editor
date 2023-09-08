@@ -219,28 +219,21 @@ class FillInComposingUserTagCommand implements EditCommand {
       return;
     }
 
-    final tagBasePosition = DocumentPosition(
-      nodeId: textNode!.id,
-      nodePosition: TextNodePosition(offset: composingToken.indexedTag.startOffset),
-    );
     final stableTagAttribution = CommittedStableTagAttribution(_tag);
 
     // Delete the composing stable tag text.
     executor.executeCommand(
       DeleteSelectionCommand(
-        documentSelection: DocumentSelection(
-          base: tagBasePosition,
-          extent: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: composingToken.indexedTag.endOffset),
-          ),
+        documentSelection: textNode!.selectionBetween(
+          composingToken.indexedTag.startOffset,
+          composingToken.indexedTag.endOffset,
         ),
       ),
     );
     // Insert a committed stable tag.
     executor.executeCommand(
       InsertAttributedTextCommand(
-        documentPosition: tagBasePosition,
+        documentPosition: textNode.positionAt(composingToken.indexedTag.startOffset),
         textToInsert: AttributedText(
           "${_tagRule.trigger}$_tag ",
           AttributedSpans(
@@ -255,13 +248,8 @@ class FillInComposingUserTagCommand implements EditCommand {
     // Place the caret at the end of the inserted text.
     executor.executeCommand(
       ChangeSelectionCommand(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: textNode.id,
-            // +1 for trigger symbol, +1 for space after the token
-            nodePosition: TextNodePosition(offset: composingToken.indexedTag.startOffset + _tag.length + 2),
-          ),
-        ),
+        // +1 for trigger symbol, +1 for space after the token
+        textNode.selectionAt(composingToken.indexedTag.startOffset + _tag.length + 2),
         SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
       ),
@@ -343,32 +331,21 @@ class CancelComposingStableTagCommand implements EditCommand {
       return;
     }
 
-    final stableTagBasePosition = DocumentPosition(
-      nodeId: textNode!.id,
-      nodePosition: TextNodePosition(offset: composingToken.indexedTag.startOffset),
-    );
-
     // Remove the composing attribution.
     executor.executeCommand(
       RemoveTextAttributionsCommand(
-        documentSelection: DocumentSelection(
-          base: stableTagBasePosition,
-          extent: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: composingToken.indexedTag.endOffset),
-          ),
+        documentSelection: textNode!.selectionBetween(
+          composingToken.indexedTag.startOffset,
+          composingToken.indexedTag.endOffset,
         ),
         attributions: {stableTagComposingAttribution},
       ),
     );
     executor.executeCommand(
       AddTextAttributionsCommand(
-        documentSelection: DocumentSelection(
-          base: stableTagBasePosition,
-          extent: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(offset: composingToken.indexedTag.startOffset + 1),
-          ),
+        documentSelection: textNode.selectionBetween(
+          composingToken.indexedTag.startOffset,
+          composingToken.indexedTag.startOffset + 1,
         ),
         attributions: {stableTagCancelledAttribution},
       ),
@@ -471,18 +448,12 @@ class TagUserReaction implements EditReaction {
         // This cancelled range includes more than just a trigger. Reduce it back
         // down to the trigger.
         final triggerIndex = cancelledText.indexOf(_tagRule.trigger);
-        addedRange = DocumentSelection(
-          base: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: triggerIndex)),
-          extent: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: triggerIndex)),
-        );
+        addedRange = node.selectionBetween(triggerIndex, triggerIndex);
       }
 
       changeRequests.addAll([
         RemoveTextAttributionsRequest(
-          documentSelection: DocumentSelection(
-            base: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: range.start)),
-            extent: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: range.end)),
-          ),
+          documentSelection: node.selectionBetween(range.start, range.end),
           attributions: {stableTagCancelledAttribution},
         ),
         if (addedRange != null) //
@@ -601,16 +572,7 @@ class TagUserReaction implements EditReaction {
 
           removeTagRequests.add(
             RemoveTextAttributionsRequest(
-              documentSelection: DocumentSelection(
-                base: DocumentPosition(
-                  nodeId: textNode.id,
-                  nodePosition: TextNodePosition(offset: tag.start),
-                ),
-                extent: DocumentPosition(
-                  nodeId: textNode.id,
-                  nodePosition: TextNodePosition(offset: tag.end + 1),
-                ),
-              ),
+              documentSelection: textNode.selectionBetween(tag.start, tag.end + 1),
               attributions: {stableTagComposingAttribution},
             ),
           );
@@ -683,16 +645,7 @@ class TagUserReaction implements EditReaction {
 
           deleteTagRequests.add(
             DeleteSelectionRequest(
-              documentSelection: DocumentSelection(
-                base: DocumentPosition(
-                  nodeId: textNode.id,
-                  nodePosition: TextNodePosition(offset: deleteFrom),
-                ),
-                extent: DocumentPosition(
-                  nodeId: textNode.id,
-                  nodePosition: TextNodePosition(offset: deleteTo),
-                ),
-              ),
+              documentSelection: textNode.selectionBetween(deleteFrom, deleteTo),
             ),
           );
         }
@@ -702,17 +655,9 @@ class TagUserReaction implements EditReaction {
         deleteTagRequests.add(
           ChangeSelectionRequest(
             DocumentSelection(
-              base: baseOffsetAfterDeletions >= 0
-                  ? DocumentPosition(
-                      nodeId: textNode.id,
-                      nodePosition: TextNodePosition(offset: baseOffsetAfterDeletions),
-                    )
-                  : baseBeforeDeletions,
+              base: baseOffsetAfterDeletions >= 0 ? textNode.positionAt(baseOffsetAfterDeletions) : baseBeforeDeletions,
               extent: extentOffsetAfterDeletions >= 0
-                  ? DocumentPosition(
-                      nodeId: textNode.id,
-                      nodePosition: TextNodePosition(offset: extentOffsetAfterDeletions),
-                    )
+                  ? textNode.positionAt(extentOffsetAfterDeletions)
                   : extentBeforeDeletions,
             ),
             SelectionChangeType.placeCaret,
@@ -769,16 +714,9 @@ class TagUserReaction implements EditReaction {
     if (existingComposingTag != null && caretPosition.offset > existingComposingTag.indexedTag.startOffset) {
       onUpdateComposingStableTag?.call(
         ComposingStableTag(
-          DocumentRange(
-            start: DocumentPosition(
-              nodeId: selectedNode.id,
-              // +1 to remove trigger symbol
-              nodePosition: TextNodePosition(offset: existingComposingTag.indexedTag.startOffset + 1),
-            ),
-            end: DocumentPosition(
-              nodeId: selectedNode.id,
-              nodePosition: TextNodePosition(offset: existingComposingTag.indexedTag.endOffset),
-            ),
+          selectedNode.rangeBetween(
+            existingComposingTag.indexedTag.startOffset + 1,
+            existingComposingTag.indexedTag.endOffset,
           ),
           existingComposingTag.indexedTag.tag.token,
         ),
@@ -809,16 +747,10 @@ class TagUserReaction implements EditReaction {
     editorImeLog.fine("Found a stable token around caret: ${nonAttributedTagAroundCaret.indexedTag.tag}");
     onUpdateComposingStableTag?.call(
       ComposingStableTag(
-        DocumentRange(
-          start: DocumentPosition(
-            nodeId: selectedNode.id,
-            // +1 to remove trigger symbol
-            nodePosition: TextNodePosition(offset: nonAttributedTagAroundCaret.indexedTag.startOffset + 1),
-          ),
-          end: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: nonAttributedTagAroundCaret.indexedTag.endOffset),
-          ),
+        selectedNode.rangeBetween(
+          // +1 to remove trigger symbol
+          nonAttributedTagAroundCaret.indexedTag.startOffset + 1,
+          nonAttributedTagAroundCaret.indexedTag.endOffset,
         ),
         nonAttributedTagAroundCaret.indexedTag.tag.token,
       ),
@@ -826,15 +758,9 @@ class TagUserReaction implements EditReaction {
 
     requestDispatcher.execute([
       AddTextAttributionsRequest(
-        documentSelection: DocumentSelection(
-          base: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: nonAttributedTagAroundCaret.indexedTag.startOffset),
-          ),
-          extent: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: TextNodePosition(offset: nonAttributedTagAroundCaret.indexedTag.endOffset),
-          ),
+        documentSelection: selectedNode.selectionBetween(
+          nonAttributedTagAroundCaret.indexedTag.startOffset,
+          nonAttributedTagAroundCaret.indexedTag.endOffset,
         ),
         attributions: {
           stableTagComposingAttribution,
@@ -923,16 +849,7 @@ class TagUserReaction implements EditReaction {
   void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, IndexedTag tag) {
     onUpdateComposingStableTag?.call(null);
 
-    final tagSelection = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: textNode.id,
-        nodePosition: TextNodePosition(offset: tag.startOffset),
-      ),
-      extent: DocumentPosition(
-        nodeId: textNode.id,
-        nodePosition: TextNodePosition(offset: tag.endOffset),
-      ),
-    );
+    final tagSelection = textNode.selectionBetween(tag.startOffset, tag.endOffset);
 
     requestDispatcher
       // Remove composing tag attribution.
