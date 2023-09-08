@@ -72,6 +72,8 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
         TextButton(
           onPressed: () {
             setState(() {
+              _activeDocument = _doc1;
+              _activeComposer = _composer1;
               _activeDocumentEditor = _docEditor1;
             });
           },
@@ -81,6 +83,8 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
         TextButton(
           onPressed: () {
             setState(() {
+              _activeDocument = _doc2;
+              _activeComposer = _composer2;
               _activeDocumentEditor = _docEditor2;
             });
           },
