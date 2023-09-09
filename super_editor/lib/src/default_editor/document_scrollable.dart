@@ -197,10 +197,9 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
   }
 
   void _recomputeShoulDisableScrollingIfContentFitsWithinViewport() {
-    final contentAfter = (widget.scroller!.extentAfter - widget.docPadding.bottom);
+    final contentAfter = (_scrollPosition.extentAfter - widget.docPadding.bottom);
     final isContentFit = //
-        (widget.scroller!.extentTotal - widget.scroller!.extentAfter + contentAfter) <=
-            widget.scroller!.viewportDimension;
+        (_scrollPosition.extentTotal - _scrollPosition.extentAfter + contentAfter) <= _scrollPosition.viewportDimension;
 
     widget.scroller!.isScrollingEnabled = !isContentFit;
     widget.autoScroller.isScrollingEnabled = !isContentFit;

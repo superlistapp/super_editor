@@ -724,12 +724,6 @@ class FakeSuperEditorScroller implements DocumentScroller {
   double get scrollOffset => throw UnimplementedError();
 
   @override
-  double get extentAfter => throw UnimplementedError();
-
-  @override
-  double get extentTotal => throw UnimplementedError();
-
-  @override
   bool isScrollingEnabled = true;
 
   @override

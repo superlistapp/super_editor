@@ -51,7 +51,7 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
         children: [
           _buildDocSelector(),
           IntrinsicHeight(
-            // height: 300,
+            //  height: 400,
             child: SuperEditor(
               editor: _activeDocumentEditor,
               document: _activeDocument,

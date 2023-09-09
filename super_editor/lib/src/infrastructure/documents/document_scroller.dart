@@ -24,10 +24,6 @@ class DocumentScroller {
   /// of the content that sits inside the viewport.
   double get scrollOffset => _scrollPosition!.pixels;
 
-  double get extentTotal => _scrollPosition!.extentTotal;
-
-  double get extentAfter => _scrollPosition!.extentAfter;
-
   bool _isScrollingEnabled = true;
 
   set isScrollingEnabled(bool value) {
