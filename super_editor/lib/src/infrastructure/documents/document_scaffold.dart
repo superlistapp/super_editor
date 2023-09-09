@@ -91,9 +91,18 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
   Widget _buildDocumentScrollable({
     required Widget child,
   }) {
+    final docPadding = EdgeInsets.fromLTRB(
+      0,
+      widget.presenter.viewModel.padding.resolve(TextDirection.ltr).top +
+          widget.presenter.viewModel.componentViewModels.first.padding.resolve(TextDirection.ltr).top,
+      0,
+      widget.presenter.viewModel.padding.resolve(TextDirection.ltr).bottom +
+          widget.presenter.viewModel.componentViewModels.last.padding.resolve(TextDirection.ltr).bottom,
+    );
     return ViewportBoundsReporter(
       viewportOuterConstraints: _contentConstraints,
       child: DocumentScrollable(
+        docPadding: docPadding,
         autoScroller: widget.autoScrollController,
         scrollController: widget.scrollController,
         scrollingMinimapId: widget.debugPaint.scrollingMinimapId,

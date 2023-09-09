@@ -50,7 +50,8 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
       child: Column(
         children: [
           _buildDocSelector(),
-          Expanded(
+          IntrinsicHeight(
+            // height: 300,
             child: SuperEditor(
               editor: _activeDocumentEditor,
               document: _activeDocument,

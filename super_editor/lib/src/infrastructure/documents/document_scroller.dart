@@ -24,8 +24,21 @@ class DocumentScroller {
   /// of the content that sits inside the viewport.
   double get scrollOffset => _scrollPosition!.pixels;
 
+  double get extentTotal => _scrollPosition!.extentTotal;
+
+  double get extentAfter => _scrollPosition!.extentAfter;
+
+  bool _isScrollingEnabled = true;
+
+  set isScrollingEnabled(bool value) {
+    _isScrollingEnabled = value;
+  }
+
   /// Immediately moves the [scrollOffset] to [newScrollOffset].
   void jumpTo(double newScrollOffset) {
+    if (!_isScrollingEnabled) {
+      return;
+    }
     _scrollPosition!.jumpTo(newScrollOffset);
   }
 
@@ -36,6 +49,9 @@ class DocumentScroller {
     required Duration duration,
     Curve curve = Curves.easeInOut,
   }) {
+    if (!_isScrollingEnabled) {
+      return;
+    }
     _scrollPosition!.animateTo(to, duration: duration, curve: curve);
   }
 
