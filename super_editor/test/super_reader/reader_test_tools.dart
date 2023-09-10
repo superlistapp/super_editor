@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/test/super_reader_test/super_reader_inspector.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
@@ -212,7 +211,7 @@ class TestDocumentConfigurator {
       document: _document!,
       getDocumentLayout: () => layoutKey.currentState as DocumentLayout,
       selection: ValueNotifier<DocumentSelection?>(_selection),
-      scrollController: AutoScrollController(),
+      scroller: DocumentScroller(),
     );
     final testContext = TestDocumentContext._(
       focusNode: _focusNode ?? FocusNode(),
