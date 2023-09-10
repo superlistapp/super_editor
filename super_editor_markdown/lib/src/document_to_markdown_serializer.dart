@@ -364,10 +364,7 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   }
 }
 
-/// [DocumentNodeMarkdownSerializer] for serializing [ParagraphNode]s as standard Markdown
-/// paragraphs.
-///
-/// Includes support for headers, blockquotes, and code blocks.
+/// [DocumentNodeMarkdownSerializer] for serializing [ParagraphNode]s as headers
 class HeaderNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<ParagraphNode> {
   const HeaderNodeSerializer(this.markdownSyntax);
 
