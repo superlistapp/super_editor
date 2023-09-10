@@ -378,15 +378,14 @@ class HeaderNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Parag
 
     // Only serialize this node when this is a header node
     final Attribution? blockType = node.getMetadataValue('blockType');
-    if (blockType == header1Attribution ||
+    final isHeaderNode = blockType == header1Attribution ||
         blockType == header2Attribution ||
         blockType == header3Attribution ||
         blockType == header4Attribution ||
         blockType == header5Attribution ||
-        blockType == header6Attribution) {
-      // this node is a header node
-    } else {
-      // this node is not a header node
+        blockType == header6Attribution;
+
+    if (!isHeaderNode) {
       return null;
     }
 
