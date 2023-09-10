@@ -141,7 +141,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
 
   final _imeConnection = ValueNotifier<TextInputConnection?>(null);
   late TextInputConfiguration _textInputConfiguration;
-  late final DocumentImeInputClient _documentImeClient;
+  late DocumentImeInputClient _documentImeClient;
   // The _imeClient is setup in one of two ways at any given time:
   //   _imeClient -> _documentImeClient, or
   //   _imeClient -> widget.imeOverrides -> _documentImeClient
@@ -153,31 +153,15 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   // implementation of DocumentImeInputClient. If we find a less confusing
   // way to handle that scenario, then get rid of this property.
   final _documentImeConnection = ValueNotifier<TextInputConnection?>(null);
-  late final TextDeltasDocumentEditor _textDeltasDocumentEditor;
+  late TextDeltasDocumentEditor _textDeltasDocumentEditor;
 
   @override
   void initState() {
     super.initState();
     _focusNode = (widget.focusNode ?? FocusNode());
 
-    _textDeltasDocumentEditor = TextDeltasDocumentEditor(
-      editor: widget.editContext.editor,
-      document: widget.editContext.document,
-      documentLayoutResolver: () => widget.editContext.documentLayout,
-      selection: widget.editContext.composer.selectionNotifier,
-      composerPreferences: widget.editContext.composer.preferences,
-      composingRegion: widget.editContext.composer.composingRegion,
-      commonOps: widget.editContext.commonOps,
-      onPerformAction: (action) => _imeClient.performAction(action),
-    );
-    _documentImeClient = DocumentImeInputClient(
-      selection: widget.editContext.composer.selectionNotifier,
-      composingRegion: widget.editContext.composer.composingRegion,
-      textDeltasDocumentEditor: _textDeltasDocumentEditor,
-      imeConnection: _imeConnection,
-      floatingCursorController: widget.floatingCursorController,
-      onPerformSelector: _onPerformSelector,
-    );
+    _createTextDeltasDocumentEditor();
+    _createDocumentImeClient();
 
     _imeClient = DeltaTextInputClientDecorator();
     _configureImeClientDecorators();
@@ -190,6 +174,12 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   @override
   void didUpdateWidget(SuperEditorImeInteractor oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (widget.editContext != oldWidget.editContext) {
+      _createTextDeltasDocumentEditor();
+      _createDocumentImeClient();
+      _imeConnection.notifyListeners();
+    }
 
     if (widget.imeConfiguration != oldWidget.imeConfiguration) {
       _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
@@ -226,6 +216,30 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
 
   @visibleForTesting
   bool get isAttachedToIme => _imeConnection.value?.attached ?? false;
+
+  void _createDocumentImeClient() {
+    _documentImeClient = DocumentImeInputClient(
+      selection: widget.editContext.composer.selectionNotifier,
+      composingRegion: widget.editContext.composer.composingRegion,
+      textDeltasDocumentEditor: _textDeltasDocumentEditor,
+      imeConnection: _imeConnection,
+      floatingCursorController: widget.floatingCursorController,
+      onPerformSelector: _onPerformSelector,
+    );
+  }
+
+  void _createTextDeltasDocumentEditor() {
+    _textDeltasDocumentEditor = TextDeltasDocumentEditor(
+      editor: widget.editContext.editor,
+      document: widget.editContext.document,
+      documentLayoutResolver: () => widget.editContext.documentLayout,
+      selection: widget.editContext.composer.selectionNotifier,
+      composerPreferences: widget.editContext.composer.preferences,
+      composingRegion: widget.editContext.composer.composingRegion,
+      commonOps: widget.editContext.commonOps,
+      onPerformAction: (action) => _imeClient.performAction(action),
+    );
+  }
 
   void _onImeConnectionChange() {
     if (_imeConnection.value == null) {

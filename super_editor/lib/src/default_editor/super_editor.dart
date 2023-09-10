@@ -362,6 +362,10 @@ class SuperEditorState extends State<SuperEditor> {
   void didUpdateWidget(SuperEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (widget.composer != oldWidget.composer) {
+      _composer = widget.composer;
+    }
+
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     }
