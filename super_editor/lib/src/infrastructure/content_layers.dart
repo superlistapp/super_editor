@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
@@ -841,7 +842,7 @@ abstract class ContentLayerState<WidgetType extends ContentLayerStatefulWidget, 
     final contentLayers = (context as Element).findAncestorContentLayers();
     final contentLayout = contentLayers?._content?.findRenderObject();
 
-    if (contentLayers != null && !contentLayers.renderObject._content!.debugNeedsLayout) {
+    if (contentLayers != null && (!kDebugMode || !contentLayers.renderObject._content!.debugNeedsLayout)) {
       _layoutData = computeLayoutData(contentLayout);
     }
 
