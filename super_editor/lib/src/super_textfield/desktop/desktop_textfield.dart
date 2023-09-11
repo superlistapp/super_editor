@@ -1000,12 +1000,12 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
     required this.focusNode,
     required this.textController,
     required this.isMultiline,
-    required this.textStyleBuilder,
     required this.selectorHandlers,
     this.textInputAction,
     this.imeConfiguration,
     this.textAlign,
     this.textDirection,
+    required this.textStyleBuilder,
     required this.child,
   }) : super(key: key);
 
@@ -1022,6 +1022,8 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
   /// the [ProseTextLayout] widget that paints the text for this text field.
   final GlobalKey<ProseTextState> textKey;
 
+  /// Text style factory that creates styles for the content in
+  /// [textController] based on the attributions in that content.
   final AttributionStyleBuilder textStyleBuilder;
 
   /// Handlers for all Mac OS "selectors" reported by the IME.
@@ -1148,7 +1150,6 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
       return;
     }
 
-    _reportTextStyleToIme();
     _reportVisualInformationToIme();
   }
 
@@ -1164,6 +1165,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
 
     _reportSizeAndTransformToIme();
     _reportCaretRectToIme();
+    _reportTextStyleToIme();
 
     // Without showing the keyboard, the panel is always positioned at the screen center after the first time.
     // I'm not sure why this is needed in SuperTextField, but not in SuperEditor.
@@ -1175,6 +1177,9 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     onNextFrame((_) => _reportVisualInformationToIme());
   }
 
+  /// Report the global size and transform of the text field to the IME.
+  ///
+  /// This is needed to display the OS emoji & symbols panel at the selected position.
   void _reportSizeAndTransformToIme() {
     final renderBox = widget.textKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) {
@@ -1188,6 +1193,8 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   void _reportCaretRectToIme() {
     if (isWeb) {
       // On web, setting the caret rect isn't supported.
+      // To position the IME popovers, we report our size, transform and text style
+      // and let the browser position the popovers.
       return;
     }
 
@@ -1207,16 +1214,15 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     late TextStyle textStyle;
 
     final selection = widget.textController.selection;
-    if (selection.isValid) {
-      // We have a selection, compute the style based on the attributions present
-      // at the selection extent.
-      final text = widget.textController.text;
-      final attributions = text.getAllAttributionsAt(selection.extentOffset);
-      textStyle = widget.textStyleBuilder(attributions);
-    } else {
-      // We don't have a selection, use the default style.
-      textStyle = widget.textStyleBuilder({});
+    if (!selection.isValid) {
+      return;
     }
+
+    // We have a selection, compute the style based on the attributions present
+    // at the selection extent.
+    final text = widget.textController.text;
+    final attributions = text.getAllAttributionsAt(selection.extentOffset);
+    textStyle = widget.textStyleBuilder(attributions);
 
     widget.textController.inputConnectionNotifier.value!.setStyle(
       fontFamily: textStyle.fontFamily,
@@ -1865,6 +1871,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       // like an emoji picker or a character selection panel.
       // We need to let the OS handle the key so the user can navigate
       // on the list of possible characters.
+      // TODO: update this after https://github.com/flutter/flutter/issues/134268 is resolved.
       return TextFieldKeyboardHandlerResult.blocked;
     }
 

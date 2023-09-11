@@ -252,6 +252,7 @@ class _TaskComponentState extends State<TaskComponent>
   @override
   TextDirection? get textDirection => Directionality.of(context);
 
+  /// Computes the [TextStyle] for this task's inner [TextComponent].
   TextStyle _computeStyles(Set<Attribution> attributions) {
     // Show a strikethrough across the entire task if it's complete.
     final style = widget.viewModel.textStyleBuilder(attributions);

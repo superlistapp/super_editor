@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
@@ -13,7 +12,6 @@ import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
-import 'package:super_text_layout/super_text_layout.dart';
 
 import '../document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_delta_editing.dart';
@@ -186,7 +184,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _configureImeClientDecorators();
 
     _imeConnection.addListener(_onImeConnectionChange);
-    widget.editContext.composer.selectionNotifier.addListener(_onSelectionChanged);
 
     _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
   }
@@ -206,11 +203,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       oldWidget.imeOverrides?.client = null;
       _configureImeClientDecorators();
     }
-
-    if (widget.editContext.composer.selectionNotifier != oldWidget.editContext.composer.selectionNotifier) {
-      oldWidget.editContext.composer.selectionNotifier.removeListener(_onSelectionChanged);
-      widget.editContext.composer.selectionNotifier.addListener(_onSelectionChanged);
-    }
   }
 
   @override
@@ -225,8 +217,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
-
-    widget.editContext.composer.selectionNotifier.removeListener(_onSelectionChanged);
 
     super.dispose();
   }
@@ -252,7 +242,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       return;
     }
 
-    _reportTextStyleToIme();
     _reportVisualInformationToIme();
   }
 
@@ -265,7 +254,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _imeClient.client = widget.imeOverrides ?? _documentImeClient;
   }
 
-  /// Report our size, transform to the root node coordinates, and caret rect to the IME.
+  /// Report the global size and transform of the editor and the caret rect to the IME.
   ///
   /// This is needed to display the OS emoji & symbols panel at the editor selected position.
   ///
@@ -277,6 +266,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
 
     _reportSizeAndTransformToIme();
     _reportCaretRectToIme();
+    _reportTextStyleToIme();
 
     // There are some operations that might affect our transform, size and the caret rect,
     // but we can't react to them.
@@ -286,11 +276,10 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     onNextFrame((_) => _reportVisualInformationToIme());
   }
 
-  /// Report our size and transform to the root node coordinates to the IME.
+  /// Report the global size and transform of the editor to the IME.
   ///
   /// This is needed to display the OS emoji & symbols panel at the editor selected position.
   void _reportSizeAndTransformToIme() {
-    //print('reporting size and transform');
     late Size size;
     late Matrix4 transform;
 
@@ -304,8 +293,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
         return;
       }
 
-      size = sizeAndTransform.$1;
-      transform = sizeAndTransform.$2;
+      (size, transform) = sizeAndTransform;
     } else {
       final renderBox = context.findRenderObject() as RenderBox;
 
@@ -319,6 +307,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   void _reportCaretRectToIme() {
     if (isWeb) {
       // On web, setting the caret rect isn't supported.
+      // To position the IME popovers, we report the size, transform and style
+      // of the selected component and let the browser position the popovers.
       return;
     }
 
@@ -334,6 +324,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   /// to try to match the text size on the browser with our text size.
   ///
   /// As our content can have multiple styles, the sizes won't be 100% in sync.
+  ///
+  /// TODO: update this after https://github.com/flutter/flutter/issues/134265 is resolved.
   void _reportTextStyleToIme() {
     if (!isWeb) {
       // If we are not on the web, we can position the caret rect without the need
@@ -374,16 +366,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     );
   }
 
-  void _onSelectionChanged() {
-    if (!isWeb) {
-      return;
-    }
-
-    // Selection has changed.
-    // Report the text style of the current selection to the IME.
-    onNextFrame((timeStamp) => _reportTextStyleToIme());
-  }
-
   /// Compute the caret rect in the editor's content space.
   ///
   /// Returns `null` if we don't have a selection or if we can't get the caret rect
@@ -414,15 +396,18 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   }
 
   /// Compute the size and transform of the selected node's visual component
-  /// to the root node coordinates.
+  /// to the global coordinates.
+  ///
+  /// Returns `null` if the we don't have a selection, or if the selected
+  /// component can't report its inner text bounds.
   (Size size, Matrix4 transform)? _computeSizeAndTransformOfSelectNode() {
     final selection = widget.editContext.composer.selection;
     if (selection == null) {
       return null;
     }
 
-    final docLayout = widget.editContext.documentLayout;
-    final selectedComponent = docLayout.getComponentByNodeId(selection.extent.nodeId);
+    final documentLayout = widget.editContext.documentLayout;
+    final selectedComponent = documentLayout.getComponentByNodeId(selection.extent.nodeId);
     if (selectedComponent == null) {
       return null;
     }
