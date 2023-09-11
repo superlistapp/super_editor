@@ -145,8 +145,8 @@ class SubmitComposingActionTagCommand implements EditCommand {
     context.composingActionTag.value = null;
 
     executor.executeCommand(
-      DeleteSelectionCommand(
-        documentSelection: DocumentSelection(
+      DeleteContentCommand(
+        documentRange: DocumentSelection(
           base: tagAroundPosition.indexedTag.start,
           extent: tagAroundPosition.indexedTag.end,
         ),
@@ -239,7 +239,7 @@ class CancelComposingActionTagCommand implements EditCommand {
     // Remove the composing attribution.
     executor.executeCommand(
       RemoveTextAttributionsCommand(
-        documentSelection: textNode!.selectionBetween(
+        documentRange: textNode!.selectionBetween(
           composingToken.indexedTag.startOffset,
           composingToken.indexedTag.endOffset,
         ),
@@ -248,7 +248,7 @@ class CancelComposingActionTagCommand implements EditCommand {
     );
     executor.executeCommand(
       AddTextAttributionsCommand(
-        documentSelection: textNode.selectionBetween(
+        documentRange: textNode.selectionBetween(
           composingToken.indexedTag.startOffset,
           composingToken.indexedTag.endOffset,
         ),
@@ -383,12 +383,12 @@ class ActionTagComposingReaction implements EditReaction {
 
       changeRequests.addAll([
         RemoveTextAttributionsRequest(
-          documentSelection: node.selectionBetween(range.start, range.end),
+          documentRange: node.selectionBetween(range.start, range.end),
           attributions: {actionTagCancelledAttribution},
         ),
         if (addedRange != null) //
           AddTextAttributionsRequest(
-            documentSelection: addedRange,
+            documentRange: addedRange,
             attributions: {actionTagCancelledAttribution},
           ),
       ]);
@@ -404,14 +404,14 @@ class ActionTagComposingReaction implements EditReaction {
     requestDispatcher.execute([
       if (oldComposingTag != null)
         RemoveTextAttributionsRequest(
-          documentSelection: DocumentSelection(
+          documentRange: DocumentSelection(
             base: oldComposingTag.start,
             extent: oldComposingTag.end,
           ),
           attributions: {actionTagComposingAttribution},
         ),
       AddTextAttributionsRequest(
-        documentSelection: DocumentSelection(
+        documentRange: DocumentSelection(
           base: newTag.start,
           extent: newTag.end,
         ),
@@ -430,14 +430,14 @@ class ActionTagComposingReaction implements EditReaction {
 
     requestDispatcher.execute([
       RemoveTextAttributionsRequest(
-        documentSelection: DocumentSelection(
+        documentRange: DocumentSelection(
           base: composingTag.start,
           extent: composingTag.end,
         ),
         attributions: {actionTagComposingAttribution},
       ),
       AddTextAttributionsRequest(
-        documentSelection: DocumentSelection(
+        documentRange: DocumentSelection(
           base: composingTag.start,
           extent: composingTag.start.copyWith(
             nodePosition: TextNodePosition(offset: composingTag.startOffset + 1),
