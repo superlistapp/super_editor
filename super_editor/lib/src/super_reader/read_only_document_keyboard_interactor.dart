@@ -158,7 +158,7 @@ final scrollUpWithArrowKey = createShortcut(
     required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
-    documentContext.scrollController.jumpBy(-20);
+    documentContext.scroller.jumpBy(-20);
     return ExecutionInstruction.haltExecution;
   },
   keyPressedOrReleased: LogicalKeyboardKey.arrowUp,
@@ -170,7 +170,7 @@ final scrollDownWithArrowKey = createShortcut(
     required SuperReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
-    documentContext.scrollController.jumpBy(20);
+    documentContext.scroller.jumpBy(20);
     return ExecutionInstruction.haltExecution;
   },
   keyPressedOrReleased: LogicalKeyboardKey.arrowDown,

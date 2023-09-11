@@ -29,6 +29,11 @@ class DocumentScroller {
     _scrollPosition!.jumpTo(newScrollOffset);
   }
 
+  /// Immediately moves the [scrollOffset] by [delta] pixels.
+  void jumpBy(double delta) {
+    _scrollPosition!.jumpTo(_scrollPosition!.pixels + delta);
+  }
+
   /// Animates [scrollOffset] from its current offset to [to], over the given [duration]
   /// of time, following the given animation [curve].
   void animateTo(
