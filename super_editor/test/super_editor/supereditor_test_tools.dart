@@ -727,6 +727,9 @@ class FakeSuperEditorScroller implements DocumentScroller {
   void jumpTo(double newScrollOffset) => throw UnimplementedError();
 
   @override
+  void jumpBy(double delta) => throw UnimplementedError();
+
+  @override
   void animateTo(double to, {required Duration duration, Curve curve = Curves.easeInOut}) => throw UnimplementedError();
 
   @override
