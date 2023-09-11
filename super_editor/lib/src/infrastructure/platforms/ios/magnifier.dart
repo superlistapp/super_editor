@@ -55,7 +55,7 @@ Widget _circleMagnifierBuilder(BuildContext context, Offset offsetFromFocalPoint
     );
 
 class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
-  static const _magnification = 1.0;
+  static const _magnification = 1.5;
 
   const IOSRoundedRectangleMagnifyingGlass({
     this.offsetFromFocalPoint = Offset.zero,
@@ -67,14 +67,6 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        MagnifyingGlass(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(24)),
-          ),
-          size: const Size(72, 48),
-          offsetFromFocalPoint: offsetFromFocalPoint,
-          magnificationScale: _magnification,
-        ),
         Container(
           width: 72,
           height: 48,
@@ -89,6 +81,14 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
               ),
             ],
           ),
+        ),
+        MagnifyingGlass(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(24)),
+          ),
+          size: const Size(72, 48),
+          offsetFromFocalPoint: offsetFromFocalPoint,
+          magnificationScale: _magnification,
         ),
       ],
     );
