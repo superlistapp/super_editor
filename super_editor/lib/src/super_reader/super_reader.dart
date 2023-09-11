@@ -266,7 +266,7 @@ class SuperReaderState extends State<SuperReader> {
       document: widget.document,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
       selection: _selection,
-      scrollController: _autoScrollController,
+      scroller: _scroller,
     );
 
     _contentTapDelegate?.dispose();
@@ -345,7 +345,6 @@ class SuperReaderState extends State<SuperReader> {
         gestureBuilder: _buildGestureInteractor,
         scrollController: _scrollController,
         autoScrollController: _autoScrollController,
-        // TODO: Finish integrating the DocumentScroller in SuperReader (https://github.com/superlistapp/super_editor/issues/1306)
         scroller: _scroller,
         presenter: _docLayoutPresenter!,
         componentBuilders: widget.componentBuilders,
