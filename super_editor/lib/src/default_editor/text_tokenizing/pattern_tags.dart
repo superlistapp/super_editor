@@ -257,7 +257,7 @@ class PatternTagReaction implements EditReaction {
     // The token is only partially attributed. Expand the attribution around the token.
     requestDispatcher.execute([
       AddTextAttributionsRequest(
-        documentSelection: DocumentSelection(
+        documentRange: DocumentSelection(
           base: tag.indexedTag.start,
           extent: tag.indexedTag.end,
         ),
@@ -358,7 +358,7 @@ class PatternTagReaction implements EditReaction {
     requestDispatcher.execute([
       // Remove the old pattern tag attribution(s).
       RemoveTextAttributionsRequest(
-        documentSelection: selectedNode.selectionBetween(
+        documentRange: selectedNode.selectionBetween(
           tagAroundCaret.indexedTag.startOffset,
           tagAroundCaret.indexedTag.endOffset,
         ),
@@ -370,7 +370,7 @@ class PatternTagReaction implements EditReaction {
       ),
       // Add the new/updated pattern tag attribution.
       AddTextAttributionsRequest(
-        documentSelection: selectedNode.selectionBetween(
+        documentRange: selectedNode.selectionBetween(
           tagAroundCaret.indexedTag.startOffset,
           tagAroundCaret.indexedTag.endOffset,
         ),
@@ -471,7 +471,7 @@ class PatternTagReaction implements EditReaction {
       // Remove the original multi-tag attribution spans.
       for (final removal in spanRemovals)
         RemoveTextAttributionsRequest(
-          documentSelection: node.selectionBetween(
+          documentRange: node.selectionBetween(
             removal.start,
             removal.end + 1,
           ),
@@ -481,7 +481,7 @@ class PatternTagReaction implements EditReaction {
       // Add the new, narrowed attribution spans.
       for (final creation in spanCreations)
         AddTextAttributionsRequest(
-          documentSelection: node.selectionBetween(
+          documentRange: node.selectionBetween(
             creation.start,
             creation.end + 1,
           ),
@@ -540,7 +540,7 @@ class PatternTagReaction implements EditReaction {
           editorPatternTagsLog.info("Removing tag with value: '$tagText'");
           removeTagRequests.add(
             RemoveTextAttributionsRequest(
-              documentSelection: textNode.selectionBetween(
+              documentRange: textNode.selectionBetween(
                 tag.start,
                 tag.end + 1,
               ),

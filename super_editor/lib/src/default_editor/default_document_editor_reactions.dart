@@ -94,8 +94,8 @@ class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
         SelectionChangeType.expandSelection,
         SelectionReason.contentChange,
       ),
-      DeleteSelectionRequest(
-        documentSelection: paragraphPatternSelection,
+      DeleteContentRequest(
+        documentRange: paragraphPatternSelection,
       ),
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
