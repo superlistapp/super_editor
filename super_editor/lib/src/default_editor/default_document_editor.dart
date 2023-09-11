@@ -80,8 +80,8 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (request) => request is ReplaceNodeWithEmptyParagraphWithCaretRequest
       ? ReplaceNodeWithEmptyParagraphWithCaretCommand(nodeId: request.nodeId)
       : null,
-  (request) => request is DeleteSelectionRequest //
-      ? DeleteSelectionCommand(documentSelection: request.documentSelection)
+  (request) => request is DeleteContentRequest //
+      ? DeleteContentCommand(documentRange: request.documentRange)
       : null,
   (request) => request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is ListItemNode
       ? ConvertListItemToParagraphCommand(nodeId: request.node.id, paragraphMetadata: request.node.metadata)
@@ -174,16 +174,16 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       : null,
   (request) => request is AddTextAttributionsRequest
       ? AddTextAttributionsCommand(
-          documentSelection: request.documentSelection,
+          documentRange: request.documentRange,
           attributions: request.attributions,
           autoMerge: request.autoMerge,
         )
       : null,
   (request) => request is ToggleTextAttributionsRequest
-      ? ToggleTextAttributionsCommand(documentSelection: request.documentSelection, attributions: request.attributions)
+      ? ToggleTextAttributionsCommand(documentRange: request.documentRange, attributions: request.attributions)
       : null,
   (request) => request is RemoveTextAttributionsRequest
-      ? RemoveTextAttributionsCommand(documentSelection: request.documentSelection, attributions: request.attributions)
+      ? RemoveTextAttributionsCommand(documentRange: request.documentRange, attributions: request.attributions)
       : null,
   (request) => request is ConvertTextNodeToParagraphRequest
       ? ConvertTextNodeToParagraphCommand(nodeId: request.nodeId, newMetadata: request.newMetadata)

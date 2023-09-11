@@ -1011,8 +1011,8 @@ class CommonEditorOperations {
 
     // Delete the selected content.
     editor.execute([
-      DeleteSelectionRequest(
-        documentSelection: textNode.selectionBetween(
+      DeleteContentRequest(
+        documentRange: textNode.selectionBetween(
           currentTextOffset,
           nextCharacterOffset,
         ),
@@ -1227,8 +1227,8 @@ class CommonEditorOperations {
 
     // Delete the selected content.
     editor.execute([
-      DeleteSelectionRequest(
-        documentSelection: textNode.selectionBetween(
+      DeleteContentRequest(
+        documentRange: textNode.selectionBetween(
           currentTextOffset,
           previousCharacterOffset,
         ),
@@ -1281,7 +1281,7 @@ class CommonEditorOperations {
 
     // Delete the selected content.
     editor.execute([
-      DeleteSelectionRequest(documentSelection: composer.selection!),
+      DeleteContentRequest(documentRange: composer.selection!),
       ChangeSelectionRequest(
         DocumentSelection.collapsed(position: newSelectionPosition),
         SelectionChangeType.deleteContent,
@@ -1335,11 +1335,11 @@ class CommonEditorOperations {
 
     if (baseNodeIndex != extentNodeIndex) {
       if (topNodePosition == topNode.beginningPosition && bottomNodePosition == bottomNode.endPosition) {
-        // All nodes in the selection will be deleted. Assume that the base
+        // All nodes in the selection will be deleted. Assume that the start
         // node will be retained and converted into a paragraph, if it's not
         // already a paragraph.
         newSelectionPosition = DocumentPosition(
-          nodeId: baseNode.id,
+          nodeId: topNode.id,
           nodePosition: const TextNodePosition(offset: 0),
         );
       } else if (topNodePosition == topNode.beginningPosition) {
@@ -1417,7 +1417,7 @@ class CommonEditorOperations {
 
     editor.execute([
       AddTextAttributionsRequest(
-        documentSelection: composer.selection!,
+        documentRange: composer.selection!,
         attributions: attributions,
       ),
     ]);
@@ -1441,7 +1441,7 @@ class CommonEditorOperations {
 
     editor.execute([
       RemoveTextAttributionsRequest(
-        documentSelection: composer.selection!,
+        documentRange: composer.selection!,
         attributions: attributions,
       ),
     ]);
@@ -1465,7 +1465,7 @@ class CommonEditorOperations {
 
     editor.execute([
       ToggleTextAttributionsRequest(
-        documentSelection: composer.selection!,
+        documentRange: composer.selection!,
         attributions: attributions,
       ),
     ]);
@@ -2195,7 +2195,7 @@ class CommonEditorOperations {
 
       // Delete the selected content.
       editor.execute([
-        DeleteSelectionRequest(documentSelection: composer.selection!),
+        DeleteContentRequest(documentRange: composer.selection!),
         ChangeSelectionRequest(
           DocumentSelection.collapsed(position: pastePosition),
           SelectionChangeType.deleteContent,
@@ -2444,8 +2444,8 @@ class DeleteUpstreamCharacterCommand implements EditCommand {
     // Delete the selected content.
     executor
       ..executeCommand(
-        DeleteSelectionCommand(
-          documentSelection: textNode.selectionBetween(
+        DeleteContentCommand(
+          documentRange: textNode.selectionBetween(
             currentTextOffset,
             previousCharacterOffset,
           ),
@@ -2495,8 +2495,8 @@ class DeleteDownstreamCharacterCommand implements EditCommand {
 
     // Delete the selected content.
     executor.executeCommand(
-      DeleteSelectionCommand(
-        documentSelection: textNode.selectionBetween(
+      DeleteContentCommand(
+        documentRange: textNode.selectionBetween(
           currentTextPositionOffset,
           nextCharacterOffset,
         ),

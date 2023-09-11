@@ -1,8 +1,6 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:collection/collection.dart';
-import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
 
@@ -564,15 +562,6 @@ class MutableDocument implements Document, Editable {
 
   @override
   DocumentNode? getNode(DocumentPosition position) => getNodeById(position.nodeId);
-
-  @override
-  DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2) {
-    late TextAffinity affinity = getAffinityBetween(base: position1, extent: position2);
-    return DocumentRange(
-      start: affinity == TextAffinity.downstream ? position1 : position2,
-      end: affinity == TextAffinity.downstream ? position2 : position1,
-    );
-  }
 
   @override
   List<DocumentNode> getNodesInside(DocumentPosition position1, DocumentPosition position2) {

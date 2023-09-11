@@ -875,12 +875,12 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
 
 class AddTextAttributionsRequest implements EditRequest {
   AddTextAttributionsRequest({
-    required this.documentSelection,
+    required this.documentRange,
     required this.attributions,
     this.autoMerge = true,
   });
 
-  final DocumentSelection documentSelection;
+  final DocumentRange documentRange;
   final Set<Attribution> attributions;
   final bool autoMerge;
 }
@@ -890,12 +890,12 @@ class AddTextAttributionsRequest implements EditRequest {
 /// Applies the given `attributions` to the given `documentSelection`.
 class AddTextAttributionsCommand implements EditCommand {
   AddTextAttributionsCommand({
-    required this.documentSelection,
+    required this.documentRange,
     required this.attributions,
     this.autoMerge = true,
   });
 
-  final DocumentSelection documentSelection;
+  final DocumentRange documentRange;
   final Set<Attribution> attributions;
   final bool autoMerge;
 
@@ -903,16 +903,16 @@ class AddTextAttributionsCommand implements EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     editorDocLog.info('Executing AddTextAttributionsCommand');
     final document = context.find<MutableDocument>(Editor.documentKey);
-    final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
+    final nodes = document.getNodesInside(documentRange.start, documentRange.end);
     if (nodes.isEmpty) {
-      editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
+      editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentRange');
       return;
     }
 
-    // Calculate a DocumentRange so we know which DocumentPosition
+    // Calculate a normalized DocumentRange so we know which DocumentPosition
     // belongs to the first node, and which belongs to the last node.
-    final nodeRange = document.getRangeBetween(documentSelection.base, documentSelection.extent);
-    editorDocLog.info(' - node range: $nodeRange');
+    final normalRange = documentRange.normalize(document);
+    editorDocLog.info(' - node range: $normalRange');
 
     // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, TextRange>();
@@ -928,18 +928,16 @@ class AddTextAttributionsCommand implements EditCommand {
       if (textNode == nodes.first && textNode == nodes.last) {
         // Handle selection within a single node
         editorDocLog.info(' - the selection is within a single node: ${textNode.id}');
-        final baseOffset = (documentSelection.base.nodePosition as TextPosition).offset;
-        final extentOffset = (documentSelection.extent.nodePosition as TextPosition).offset;
-        startOffset = baseOffset < extentOffset ? baseOffset : extentOffset;
-        endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
+
+        startOffset = (normalRange.start.nodePosition as TextPosition).offset;
 
         // -1 because TextPosition's offset indexes the character after the
         // selection, not the final character in the selection.
-        endOffset -= 1;
+        endOffset = (normalRange.end.nodePosition as TextPosition).offset - 1;
       } else if (textNode == nodes.first) {
         // Handle partial node selection in first node.
         editorDocLog.info(' - selecting part of the first node: ${textNode.id}');
-        startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
+        startOffset = (normalRange.start.nodePosition as TextPosition).offset;
         endOffset = max(textNode.text.text.length - 1, 0);
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
@@ -948,7 +946,7 @@ class AddTextAttributionsCommand implements EditCommand {
 
         // -1 because TextPosition's offset indexes the character after the
         // selection, not the final character in the selection.
-        endOffset = (nodeRange.end.nodePosition as TextPosition).offset - 1;
+        endOffset = (normalRange.end.nodePosition as TextPosition).offset - 1;
       } else {
         // Handle full node selection.
         editorDocLog.info(' - adding full node: ${textNode.id}');
@@ -994,38 +992,38 @@ class AddTextAttributionsCommand implements EditCommand {
 
 class RemoveTextAttributionsRequest implements EditRequest {
   RemoveTextAttributionsRequest({
-    required this.documentSelection,
+    required this.documentRange,
     required this.attributions,
   });
 
-  final DocumentSelection documentSelection;
+  final DocumentRange documentRange;
   final Set<Attribution> attributions;
 }
 
 /// Removes the given `attributions` from the given `documentSelection`.
 class RemoveTextAttributionsCommand implements EditCommand {
   RemoveTextAttributionsCommand({
-    required this.documentSelection,
+    required this.documentRange,
     required this.attributions,
   });
 
-  final DocumentSelection documentSelection;
+  final DocumentRange documentRange;
   final Set<Attribution> attributions;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
     editorDocLog.info('Executing RemoveTextAttributionsCommand');
     final document = context.find<MutableDocument>(Editor.documentKey);
-    final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
+    final nodes = document.getNodesInside(documentRange.start, documentRange.end);
     if (nodes.isEmpty) {
-      editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
+      editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentRange');
       return;
     }
 
-    // Calculate a DocumentRange so we know which DocumentPosition
+    // Normalize the DocumentRange so we know which DocumentPosition
     // belongs to the first node, and which belongs to the last node.
-    final nodeRange = document.getRangeBetween(documentSelection.base, documentSelection.extent);
-    editorDocLog.info(' - node range: $nodeRange');
+    final normalizedRange = documentRange.normalize(document);
+    editorDocLog.info(' - node range: $normalizedRange');
 
     // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, TextRange>();
@@ -1041,18 +1039,16 @@ class RemoveTextAttributionsCommand implements EditCommand {
       if (textNode == nodes.first && textNode == nodes.last) {
         // Handle selection within a single node
         editorDocLog.info(' - the selection is within a single node: ${textNode.id}');
-        final baseOffset = (documentSelection.base.nodePosition as TextPosition).offset;
-        final extentOffset = (documentSelection.extent.nodePosition as TextPosition).offset;
-        startOffset = baseOffset < extentOffset ? baseOffset : extentOffset;
-        endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
+
+        startOffset = (normalizedRange.start.nodePosition as TextPosition).offset;
 
         // -1 because TextPosition's offset indexes the character after the
         // selection, not the final character in the selection.
-        endOffset -= 1;
+        endOffset = (normalizedRange.end.nodePosition as TextPosition).offset - 1;
       } else if (textNode == nodes.first) {
         // Handle partial node selection in first node.
         editorDocLog.info(' - selecting part of the first node: ${textNode.id}');
-        startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
+        startOffset = (normalizedRange.start.nodePosition as TextPosition).offset;
         endOffset = max(textNode.text.text.length - 1, 0);
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
@@ -1061,7 +1057,7 @@ class RemoveTextAttributionsCommand implements EditCommand {
 
         // -1 because TextPosition's offset indexes the character after the
         // selection, not the final character in the selection.
-        endOffset = (nodeRange.end.nodePosition as TextPosition).offset - 1;
+        endOffset = (normalizedRange.end.nodePosition as TextPosition).offset - 1;
       } else {
         // Handle full node selection.
         editorDocLog.info(' - adding full node: ${textNode.id}');
@@ -1107,11 +1103,11 @@ class RemoveTextAttributionsCommand implements EditCommand {
 
 class ToggleTextAttributionsRequest implements EditRequest {
   ToggleTextAttributionsRequest({
-    required this.documentSelection,
+    required this.documentRange,
     required this.attributions,
   });
 
-  final DocumentSelection documentSelection;
+  final DocumentRange documentRange;
   final Set<Attribution> attributions;
 }
 
@@ -1121,11 +1117,11 @@ class ToggleTextAttributionsRequest implements EditRequest {
 /// are removed from the content within the `documentSelection`.
 class ToggleTextAttributionsCommand implements EditCommand {
   ToggleTextAttributionsCommand({
-    required this.documentSelection,
+    required this.documentRange,
     required this.attributions,
   });
 
-  final DocumentSelection documentSelection;
+  final DocumentRange documentRange;
   final Set<Attribution> attributions;
 
   // TODO: The structure of this command looks nearly identical to the two other attribution
@@ -1136,16 +1132,16 @@ class ToggleTextAttributionsCommand implements EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     editorDocLog.info('Executing ToggleTextAttributionsCommand');
     final document = context.find<MutableDocument>(Editor.documentKey);
-    final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
+    final nodes = document.getNodesInside(documentRange.start, documentRange.end);
     if (nodes.isEmpty) {
-      editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
+      editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentRange');
       return;
     }
 
-    // Calculate a DocumentRange so we know which DocumentPosition
+    // Normalize DocumentRange so we know which DocumentPosition
     // belongs to the first node, and which belongs to the last node.
-    final nodeRange = document.getRangeBetween(documentSelection.base, documentSelection.extent);
-    editorDocLog.info(' - node range: $nodeRange');
+    final normalizedRange = documentRange.normalize(document);
+    editorDocLog.info(' - node range: $normalizedRange');
 
     // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, SpanRange>();
@@ -1162,18 +1158,16 @@ class ToggleTextAttributionsCommand implements EditCommand {
       if (textNode == nodes.first && textNode == nodes.last) {
         // Handle selection within a single node
         editorDocLog.info(' - the selection is within a single node: ${textNode.id}');
-        final baseOffset = (documentSelection.base.nodePosition as TextPosition).offset;
-        final extentOffset = (documentSelection.extent.nodePosition as TextPosition).offset;
-        startOffset = baseOffset < extentOffset ? baseOffset : extentOffset;
-        endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
+
+        startOffset = (normalizedRange.start.nodePosition as TextPosition).offset;
 
         // -1 because TextPosition's offset indexes the character after the
         // selection, not the final character in the selection.
-        endOffset -= 1;
+        endOffset = (normalizedRange.end.nodePosition as TextPosition).offset - 1;
       } else if (textNode == nodes.first) {
         // Handle partial node selection in first node.
         editorDocLog.info(' - selecting part of the first node: ${textNode.id}');
-        startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
+        startOffset = (normalizedRange.start.nodePosition as TextPosition).offset;
         endOffset = max(textNode.text.text.length - 1, 0);
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
@@ -1182,7 +1176,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
         // -1 because TextPosition's offset indexes the character after the
         // selection, not the final character in the selection.
-        endOffset = (nodeRange.end.nodePosition as TextPosition).offset - 1;
+        endOffset = (normalizedRange.end.nodePosition as TextPosition).offset - 1;
       } else {
         // Handle full node selection.
         editorDocLog.info(' - toggling full node: ${textNode.id}');
@@ -1562,8 +1556,8 @@ void _deleteExpandedSelection({
 
   // Delete the selected content.
   executor.executeCommand(
-    DeleteSelectionCommand(
-      documentSelection: composer.selection!,
+    DeleteContentCommand(
+      documentRange: composer.selection!,
     ),
   );
 
