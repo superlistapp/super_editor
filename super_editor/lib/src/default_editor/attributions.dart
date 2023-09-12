@@ -90,7 +90,7 @@ class LinkAttribution implements Attribution {
   });
 
   @override
-  String get id => "link";
+  String get id => 'link';
 
   final Uri url;
 
