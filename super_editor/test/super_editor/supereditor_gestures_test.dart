@@ -537,6 +537,56 @@ spans multiple lines.''',
           expect(testUrlLauncher.urlLaunchLog.length, 1);
           expect(testUrlLauncher.urlLaunchLog.first.toString(), "https://fake.url");
         });
+
+        testWidgetsOnAllPlatforms("launches different URLs on tap", (tester) async {
+          // Setup test version of UrlLauncher to log URL launches.
+          final testUrlLauncher = TestUrlLauncher();
+          UrlLauncher.instance = testUrlLauncher;
+          addTearDown(() => UrlLauncher.instance = null);
+
+          // Pump the UI.
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown("[Google](https://google.com) and [Flutter](https://flutter.dev)")
+              .autoFocus(true)
+              .pump();
+
+          // Activate interaction mode.
+          if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
+            // On mobile, there's no hardware keyboard to easily activate
+            // interaction mode. In practice, app developers will decide
+            // when/how to activate interaction mode on mobile. Rather than
+            // add buttons in our test just for this purpose, we'll explicitly
+            // activate interaction mode.
+            context.findEditContext().editor.execute([
+              const ChangeInteractionModeRequest(isInteractionModeDesired: true),
+            ]);
+          } else if (defaultTargetPlatform == TargetPlatform.macOS) {
+            // Press CMD to activate interaction mode on Mac.
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.meta);
+          } else {
+            // Press CTRL to activate interaction mode on Windows and Linux.
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+          }
+
+          // Ensure that interaction mode is "on".
+          expect(context.findEditContext().composer.isInInteractionMode.value, isTrue);
+
+          // Tap on the first link.
+          final textNode = context.document.nodes.first;
+          await tester.tapInParagraph(textNode.id, 3);
+
+          // Ensure that we tried to launch the first URL.
+          expect(testUrlLauncher.urlLaunchLog.length, 1);
+          expect(testUrlLauncher.urlLaunchLog.first.toString(), "https://google.com");
+
+          // Tap on the second link.
+          await tester.tapInParagraph(textNode.id, 14);
+
+          // Ensure that we tried to launch the second URL.
+          expect(testUrlLauncher.urlLaunchLog.length, 2);
+          expect(testUrlLauncher.urlLaunchLog.last.toString(), "https://flutter.dev");
+        });
       });
 
       group("when inactive", () {
