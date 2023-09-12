@@ -387,14 +387,10 @@ class AutoScrollController with ChangeNotifier {
       return;
     }
 
-    // There's no content to scroll. So, we can't go ballistic as it would result
-    // in overscroll.
-    if (pos.maxScrollExtent == 0) {
-      return;
-    }
-
     if (pos is ScrollPositionWithSingleContext) {
-      pos.goBallistic(pixelsPerSecond);
+      if (pos.maxScrollExtent > 0) {
+        pos.goBallistic(pixelsPerSecond);
+      }
       pos.context.setIgnorePointer(false);
     }
   }
