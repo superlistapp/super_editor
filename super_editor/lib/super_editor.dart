@@ -58,6 +58,7 @@ export 'src/infrastructure/_logging.dart';
 export 'src/infrastructure/attributed_text_styles.dart';
 export 'src/infrastructure/attribution_layout_bounds.dart';
 export 'src/infrastructure/composable_text.dart';
+export 'src/infrastructure/content_layers.dart';
 export 'src/infrastructure/documents/document_scroller.dart';
 export 'src/infrastructure/focus.dart';
 export 'src/infrastructure/ime_input_owner.dart';
