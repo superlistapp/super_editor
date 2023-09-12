@@ -724,9 +724,6 @@ class FakeSuperEditorScroller implements DocumentScroller {
   double get scrollOffset => throw UnimplementedError();
 
   @override
-  bool isScrollingEnabled = true;
-
-  @override
   void jumpTo(double newScrollOffset) => throw UnimplementedError();
 
   @override

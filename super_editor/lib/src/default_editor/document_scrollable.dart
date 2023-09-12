@@ -31,7 +31,6 @@ class DocumentScrollable extends StatefulWidget {
     this.scroller,
     this.scrollingMinimapId,
     this.showDebugPaint = false,
-    required this.docPadding,
     required this.child,
   }) : super(key: key);
 
@@ -57,8 +56,6 @@ class DocumentScrollable extends StatefulWidget {
   /// Paints some extra visual ornamentation to help with
   /// debugging, when `true`.
   final bool showDebugPaint;
-
-  final EdgeInsets docPadding;
 
   /// This widget's child, which should include a document.
   final Widget child;
@@ -90,7 +87,6 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
       );
 
       widget.scroller?.attach(_scrollPosition);
-      _recomputeShoulDisableScrollingIfContentFitsWithinViewport();
     });
   }
 
@@ -132,9 +128,6 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
       oldWidget.scroller?.detach();
       widget.scroller?.attach(_scrollPosition);
     }
-    onNextFrame((timeStamp) {
-      _recomputeShoulDisableScrollingIfContentFitsWithinViewport();
-    });
   }
 
   @override
@@ -194,15 +187,6 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     }
 
     return ancestorScrollable;
-  }
-
-  void _recomputeShoulDisableScrollingIfContentFitsWithinViewport() {
-    final contentAfter = (_scrollPosition.extentAfter - widget.docPadding.bottom);
-    final isContentFit = //
-        (_scrollPosition.extentTotal - _scrollPosition.extentAfter + contentAfter) <= _scrollPosition.viewportDimension;
-
-    widget.scroller!.isScrollingEnabled = !isContentFit;
-    widget.autoScroller.isScrollingEnabled = !isContentFit;
   }
 
   @override
@@ -338,12 +322,6 @@ class AutoScrollController with ChangeNotifier {
   double get deltaWhileAutoScrolling => _deltaWhileAutoScrolling;
   double _deltaWhileAutoScrolling = 0;
 
-  bool _isScrollingEnabled = true;
-
-  set isScrollingEnabled(bool value) {
-    _isScrollingEnabled = value;
-  }
-
   /// Starts controlling the scroll offset for a [Scrollable].
   ///
   /// A [viewportResolver] is needed so that auto-scroll regions can be
@@ -388,9 +366,6 @@ class AutoScrollController with ChangeNotifier {
 
   /// Immediately changes the attached [Scrollable]'s scroll offset by [delta].
   void jumpBy(double delta) {
-    if (!_isScrollingEnabled) {
-      return;
-    }
     if (_getScrollPosition == null) {
       editorScrollingLog.warning(
           "Tried to jump a document scrollable by $delta pixels, but no scrollable is attached to this controller.");
@@ -406,9 +381,6 @@ class AutoScrollController with ChangeNotifier {
   /// Animates the scroll position like a ballistic particle with friction, beginning
   /// with the given [pixelsPerSecond] velocity.
   void goBallistic(double pixelsPerSecond) {
-    if (!_isScrollingEnabled) {
-      return;
-    }
     final pos = _getScrollPosition?.call();
     if (pos == null) {
       // We're not attached to a scroll position. We can't go ballistic.
@@ -550,10 +522,6 @@ class AutoScrollController with ChangeNotifier {
       _ticker!
         ..stop()
         ..dispose();
-      return;
-    }
-
-    if (!_isScrollingEnabled) {
       return;
     }
 
