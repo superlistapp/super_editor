@@ -10,6 +10,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 
 import '../document_hardware_keyboard/document_input_keyboard.dart';
@@ -317,12 +318,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     return SuperEditorImeDebugVisuals(
       imeConnection: _imeConnection,
       child: Actions(
-        actions: defaultTargetPlatform == TargetPlatform.macOS
-            ? {
-                // Prevents the framework from using the arrow keys to move focus.
-                DoNothingAndStopPropagationTextIntent: DoNothingAction(consumesKey: false),
-              }
-            : {},
+        actions: defaultTargetPlatform == TargetPlatform.macOS ? disabledMacIntents : {},
         child: SuperEditorHardwareKeyHandler(
           focusNode: _focusNode,
           editContext: widget.editContext,
