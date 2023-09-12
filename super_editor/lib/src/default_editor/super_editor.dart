@@ -362,10 +362,6 @@ class SuperEditorState extends State<SuperEditor> {
   void didUpdateWidget(SuperEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.composer != oldWidget.composer) {
-      _composer = widget.composer;
-    }
-
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     }
@@ -376,6 +372,10 @@ class SuperEditorState extends State<SuperEditor> {
 
     if (widget.selectionLayerLinks != oldWidget.selectionLayerLinks) {
       _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
+    }
+
+    if (widget.composer != oldWidget.composer) {
+      _composer = widget.composer;
     }
 
     if (widget.editor != oldWidget.editor) {

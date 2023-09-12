@@ -160,8 +160,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     super.initState();
     _focusNode = (widget.focusNode ?? FocusNode());
 
-    _createTextDeltasDocumentEditor();
-    _createDocumentImeClient();
+    _setupImeConnection();
 
     _imeClient = DeltaTextInputClientDecorator();
     _configureImeClientDecorators();
@@ -176,8 +175,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     super.didUpdateWidget(oldWidget);
 
     if (widget.editContext != oldWidget.editContext) {
-      _createTextDeltasDocumentEditor();
-      _createDocumentImeClient();
+      _setupImeConnection();
       _imeConnection.notifyListeners();
     }
 
@@ -216,6 +214,11 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
 
   @visibleForTesting
   bool get isAttachedToIme => _imeConnection.value?.attached ?? false;
+
+  void _setupImeConnection() {
+    _createTextDeltasDocumentEditor();
+    _createDocumentImeClient();
+  }
 
   void _createDocumentImeClient() {
     _documentImeClient = DocumentImeInputClient(
