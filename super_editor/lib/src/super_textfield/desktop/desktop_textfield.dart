@@ -393,12 +393,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required Widget child,
   }) {
     return Actions(
-      actions: defaultTargetPlatform == TargetPlatform.macOS
-          ? {
-              // Prevents the framework from using the arrow keys to move focus.
-              DoNothingAndStopPropagationTextIntent: DoNothingAction(consumesKey: false),
-            }
-          : {},
+      actions: defaultTargetPlatform == TargetPlatform.macOS ? disabledMacIntents : {},
       child: SuperTextFieldKeyboardInteractor(
         focusNode: _focusNode,
         textController: _controller,
