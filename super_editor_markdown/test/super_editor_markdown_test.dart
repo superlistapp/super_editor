@@ -50,6 +50,7 @@ void main() {
         // to serialize the alignment token.
         expect(serializeDocumentToMarkdown(doc), '# Header1');
       });
+
       test('header with center alignment', () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
@@ -63,6 +64,7 @@ void main() {
         ]);
         expect(serializeDocumentToMarkdown(doc), ':---:\n# Header1');
       });
+
       test('header with right alignment', () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
@@ -76,6 +78,7 @@ void main() {
         ]);
         expect(serializeDocumentToMarkdown(doc), '---:\n# Header1');
       });
+
       test('header with justify alignment', () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(

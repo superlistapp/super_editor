@@ -699,13 +699,17 @@ class _TaskSyntax extends md.BlockSyntax {
 }
 
 /// Parses a header preceded by an alignment token.
+///
+/// We already had a header serializer in [_ParagraphWithAlignmentSyntax] but without the alignment,
+/// so we added [_HeaderWithAlignmentSyntax] to support the alignment for headers. Therefore,
+/// the [_HeaderWithAlignmentSyntax] **MUST** be put before the [_ParagraphWithAlignmentSyntax].
 class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
   /// This pattern matches the text alignment notation.
   ///
   /// Possible values are `:---`, `:---:`, `---:` and `-::-`.
   static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:|-::-$');
 
-  /// Use internal HeaderSyntax
+  /// Use internal HeaderSyntax.
   final _headerSyntax = const md.HeaderSyntax();
 
   @override
@@ -716,7 +720,6 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
 
   @override
   bool canParse(md.BlockParser parser) {
-    //
     if (!_alignmentNotationPattern.hasMatch(parser.current)) {
       return false;
     }
@@ -726,9 +729,11 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
     // We found a match for a paragraph alignment token. However, the alignment token is the last
     // line of content in the document. Therefore, it's not really a paragraph alignment token, and we
     // should treat it as regular content.
-    if (nextLine == null) return false;
+    if (nextLine == null) {
+      return false;
+    }
 
-    // Only parse if the next line is header
+    // Only parse if the next line is header.
     if (!_headerSyntax.pattern.hasMatch(nextLine)) {
       return false;
     }
@@ -740,13 +745,12 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
   md.Node? parse(md.BlockParser parser) {
     final match = _alignmentNotationPattern.firstMatch(parser.current);
 
-    // We've parsed the alignment token on the current line. We know a paragraph starts on the
-    // next line. Move the parser to the next line so that we can parse the paragraph.
+    // We've parsed the alignment token on the current line. We know a header starts on the
+    // next line. Move the parser to the next line so that we can parse the header.
     parser.advance();
 
     final headerNode = _headerSyntax.parse(parser);
 
-    // Use markdown alignment converter from [_ParagraphWithAlignmentSyntax]
     if (headerNode is md.Element) {
       headerNode.attributes.addAll({'textAlign': _convertMarkdownAlignmentTokenToSuperEditorAlignment(match!.input)});
     }
