@@ -135,24 +135,26 @@ class _PopoverListState extends State<PopoverList> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => !_focusNode.hasPrimaryFocus ? _focusNode.requestFocus() : null,
-      child: Focus(
-        focusNode: _focusNode,
-        parentNode: widget.editorFocusNode,
-        onKeyEvent: _onKeyEvent,
-        child: ListenableBuilder(
-          listenable: _focusNode,
-          builder: (context, child) {
-            return CupertinoPopoverMenu(
-              focalPoint: LeaderMenuFocalPoint(link: widget.leaderLink),
-              child: SizedBox(
-                width: 200,
-                height: 125,
-                child: _buildContent(),
-              ),
-            );
-          },
+    return SuperEditorPopover(
+      child: GestureDetector(
+        onTap: () => !_focusNode.hasPrimaryFocus ? _focusNode.requestFocus() : null,
+        child: Focus(
+          focusNode: _focusNode,
+          parentNode: widget.editorFocusNode,
+          onKeyEvent: _onKeyEvent,
+          child: ListenableBuilder(
+            listenable: _focusNode,
+            builder: (context, child) {
+              return CupertinoPopoverMenu(
+                focalPoint: LeaderMenuFocalPoint(link: widget.leaderLink),
+                child: SizedBox(
+                  width: 200,
+                  height: 125,
+                  child: _buildContent(),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

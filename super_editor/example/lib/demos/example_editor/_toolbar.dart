@@ -67,7 +67,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   bool _showUrlField = false;
   late FocusNode _urlFocusNode;
-  AttributedTextEditingController? _urlController;
+  ImeAttributedTextEditingController? _urlController;
 
   @override
   void initState() {
@@ -76,8 +76,10 @@ class _EditorToolbarState extends State<EditorToolbar> {
     _toolbarAligner = CupertinoPopoverToolbarAligner(widget.editorViewportKey);
 
     _urlFocusNode = FocusNode();
-    _urlController = SingleLineAttributedTextEditingController(_applyLink) //
-      ..text = AttributedText("https://");
+    _urlController =
+        ImeAttributedTextEditingController(controller: SingleLineAttributedTextEditingController(_applyLink)) //
+          ..onPerformActionPressed = _onPerformAction
+          ..text = AttributedText("https://");
   }
 
   @override
@@ -454,6 +456,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
         return AppLocalizations.of(context)!.labelOrderedListItem;
       case _TextType.unorderedListItem:
         return AppLocalizations.of(context)!.labelUnorderedListItem;
+    }
+  }
+
+  void _onPerformAction(TextInputAction action) {
+    if (action == TextInputAction.done) {
+      _applyLink();
     }
   }
 
