@@ -221,9 +221,7 @@ class TaskComponent extends StatefulWidget {
   State<TaskComponent> createState() => _TaskComponentState();
 }
 
-class _TaskComponentState extends State<TaskComponent>
-    with ProxyDocumentComponent<TaskComponent>, ProxyTextComposable
-    implements TextInputComponent {
+class _TaskComponentState extends State<TaskComponent> with ProxyDocumentComponent<TaskComponent>, ProxyTextComposable {
   final _textKey = GlobalKey();
 
   @override
@@ -231,26 +229,6 @@ class _TaskComponentState extends State<TaskComponent>
 
   @override
   TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
-
-  @override
-  Rect getTextBounds() {
-    final renderBox = _textKey.currentContext!.findRenderObject() as RenderBox;
-    final offset = renderBox.localToGlobal(Offset.zero);
-    return offset & renderBox.size;
-  }
-
-  @override
-  TextStyle getTextStyleAt(int offset) {
-    final attributions = widget.viewModel.text.getAllAttributionsAt(offset);
-
-    return _computeStyles(attributions);
-  }
-
-  @override
-  TextAlign? get textAlign => TextAlign.left;
-
-  @override
-  TextDirection? get textDirection => Directionality.of(context);
 
   /// Computes the [TextStyle] for this task's inner [TextComponent].
   TextStyle _computeStyles(Set<Attribution> attributions) {

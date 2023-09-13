@@ -239,6 +239,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _documentImeConnection.value = _documentImeClient;
 
     if (!_imeConnection.value!.attached) {
+      // The IME connection has closed.
+      // We can't report any information to the IME.
       return;
     }
 
@@ -345,24 +347,31 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     }
 
     final docLayout = widget.editContext.documentLayout;
-    final selectedComponent = docLayout.getComponentByNodeId(selection.extent.nodeId);
+
+    DocumentComponent? selectedComponent = docLayout.getComponentByNodeId(selection.extent.nodeId);
+    if (selectedComponent is ProxyDocumentComponent) {
+      // The selected componente is a proxy.
+      // If this component displays text, the text component is bounded to childDocumentComponentKey.
+      selectedComponent = selectedComponent.childDocumentComponentKey.currentState as DocumentComponent?;
+    }
+
     if (selectedComponent == null) {
+      editorImeLog.warning('A selection exists but no component for node ${selection.extent.nodeId} was found');
       return;
     }
 
-    if (selectedComponent is! TextInputComponent) {
-      // The selected component doesn't report its text style.
+    if (selectedComponent is! TextComponentState) {
+      // The selected component isn't a text component. We can't query its style.
       return;
     }
 
-    final textInputComponent = selectedComponent as TextInputComponent;
-    final style = textInputComponent.getTextStyleAt(nodePosition.offset);
+    final style = selectedComponent.getTextStyleAt(nodePosition.offset);
     _imeConnection.value!.setStyle(
       fontFamily: style.fontFamily,
       fontSize: style.fontSize,
       fontWeight: style.fontWeight,
-      textDirection: textInputComponent.textDirection ?? TextDirection.ltr,
-      textAlign: textInputComponent.textAlign ?? TextAlign.left,
+      textDirection: selectedComponent.textDirection ?? TextDirection.ltr,
+      textAlign: selectedComponent.textAlign ?? TextAlign.left,
     );
   }
 
@@ -407,21 +416,21 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     }
 
     final documentLayout = widget.editContext.documentLayout;
-    final selectedComponent = documentLayout.getComponentByNodeId(selection.extent.nodeId);
+
+    DocumentComponent? selectedComponent = documentLayout.getComponentByNodeId(selection.extent.nodeId);
+    if (selectedComponent is ProxyDocumentComponent) {
+      // The selected componente is a proxy.
+      // If this component displays text, the text component is bounded to childDocumentComponentKey.
+      selectedComponent = selectedComponent.childDocumentComponentKey.currentState as DocumentComponent;
+    }
+
     if (selectedComponent == null) {
+      editorImeLog.warning('A selection exists but no component for node ${selection.extent.nodeId} was found');
       return null;
     }
 
-    if (selectedComponent is! TextInputComponent) {
-      // The selected doesn't report text bounds.
-      return null;
-    }
-
-    final rect = (selectedComponent as TextInputComponent).getTextBounds();
-    final transform = Matrix4.identity() //
-      ..translate(rect.left, rect.top);
-
-    return (rect.size, transform);
+    final renderBox = selectedComponent.context.findRenderObject() as RenderBox;
+    return (renderBox.size, renderBox.getTransformTo(null));
   }
 
   void _onPerformSelector(String selectorName) {

@@ -411,22 +411,6 @@ mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentCompon
   }
 }
 
-/// Contract for components that allow text input, e.g, paragraphs, list items and tasks.
-///
-/// Provides information needed to interact with native input elements,
-/// like emoji pickers and character input panels.
-abstract class TextInputComponent {
-  /// Return the text bounds in global coordinates.
-  Rect getTextBounds();
-
-  /// Return the [TextStyle] for the character at [offset].
-  TextStyle getTextStyleAt(int offset);
-
-  TextDirection? get textDirection;
-
-  TextAlign? get textAlign;
-}
-
 /// Preferences for how the document selection should change, e.g.,
 /// move word-by-word instead of character-by-character.
 ///
