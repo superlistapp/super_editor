@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -588,6 +589,46 @@ void main() {
       expect(enableSuggestions, false);
       expect(enableDeltaModel, true);
       expect(keyboardAppearance, 'Brightness.dark');
+    });
+
+    testWidgetsOnMac('allows apps to handle selectors in their own way', (tester) async {
+      bool customHandlerCalled = false;
+
+      final controller = AttributedTextEditingController(
+        text: AttributedText('Selectors test'),
+      );
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            textController: controller,
+            inputSource: TextInputSource.ime,
+            selectorHandlers: {
+              MacOsSelectors.moveRight: ({
+                required AttributedTextEditingController controller,
+                required textLayout,
+              }) {
+                customHandlerCalled = true;
+              }
+            },
+          ),
+        ),
+      );
+
+      // Place the caret at the beginning of the text field.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Press right arrow key to trigger the MacOsSelectors.moveRight selector.
+      await tester.pressRightArrow();
+
+      // Ensure the custom handler was called.
+      expect(customHandlerCalled, isTrue);
+
+      // Ensure that the textfield didn't execute the default handler for the MacOsSelectors.moveRight selector.
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: 0),
+      );
     });
   });
 

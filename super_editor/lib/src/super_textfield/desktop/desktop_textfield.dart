@@ -64,6 +64,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.inputSource = TextInputSource.keyboard,
     this.textInputAction,
     this.imeConfiguration,
+    this.selectorHandlers,
     List<TextFieldKeyboardHandler>? keyboardHandlers,
   })  : keyboardHandlers = keyboardHandlers ??
             (inputSource == TextInputSource.keyboard
@@ -123,6 +124,12 @@ class SuperDesktopTextField extends StatefulWidget {
   /// using [TextEditingDelta]s, so this list shouldn't include handlers
   /// that input text based on individual character key presses.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
+
+  /// Handlers for all Mac OS "selectors" reported by the IME.
+  ///
+  /// The IME reports selectors as unique `String`s, therefore selector handlers are
+  /// defined as a mapping from selector names to handler functions.
+  final Map<String, SuperTextFieldSelectorHandler>? selectorHandlers;
 
   /// The type of action associated with ENTER key.
   ///
@@ -405,7 +412,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                 focusNode: _focusNode,
                 textController: _controller,
                 isMultiline: isMultiline,
-                selectorHandlers: defaultTextFieldSelectorHandlers,
+                selectorHandlers: widget.selectorHandlers ?? defaultTextFieldSelectorHandlers,
                 textInputAction: widget.textInputAction,
                 imeConfiguration: widget.imeConfiguration,
                 child: child,
