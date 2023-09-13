@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
@@ -423,6 +424,17 @@ class RenderContentLayers extends RenderBox {
   RenderBox? _content;
   final _overlays = <RenderBox>[];
 
+  /// Whether this render object's layout information or its content
+  /// layout information is dirty.
+  ///
+  /// This is set to `true` when `markNeedsLayout` is called and it's
+  /// set to `false` after laying out the content.
+  bool get contentNeedsLayout => _contentNeedsLayout;
+  bool _contentNeedsLayout = true;
+
+  /// Whether we are at the middle of a [performLayout] call.
+  bool _runningLayout = false;
+
   @override
   void attach(PipelineOwner owner) {
     contentLayersLog.info("Attaching RenderContentLayers to owner: $owner");
@@ -444,6 +456,19 @@ class RenderContentLayers extends RenderBox {
     visitChildren((child) {
       child.detach();
     });
+  }
+
+  @override
+  void markNeedsLayout() {
+    super.markNeedsLayout();
+
+    if (_runningLayout) {
+      // We are already in a layout phase.
+      // When we call ContentLayerElement.buildLayers, markNeedsLayout is called again.
+      // We don't to mark the content as dirty, because otherwise the layers will never build.
+      return;
+    }
+    _contentNeedsLayout = true;
   }
 
   @override
@@ -572,8 +597,11 @@ class RenderContentLayers extends RenderBox {
     contentLayersLog.info("Laying out ContentLayers");
     if (_content == null) {
       size = Size.zero;
+      _contentNeedsLayout = false;
       return;
     }
+
+    _runningLayout = true;
 
     // Always layout the content first, so that layers can inspect the content layout.
     contentLayersLog.fine("Laying out content - $_content");
@@ -582,6 +610,8 @@ class RenderContentLayers extends RenderBox {
 
     // The size of the layers, and the our size, is exactly the same as the content.
     size = _content!.size;
+
+    _contentNeedsLayout = false;
 
     // Build the underlay and overlays during the layout phase so that they can inspect an
     // up-to-date content layout.
@@ -606,6 +636,8 @@ class RenderContentLayers extends RenderBox {
       contentLayersLog.fine("Laying out overlay: $overlay");
       overlay.layout(layerConstraints);
     }
+
+    _runningLayout = false;
     contentLayersLog.finer("Done laying out layers");
   }
 
@@ -841,7 +873,7 @@ abstract class ContentLayerState<WidgetType extends ContentLayerStatefulWidget, 
     final contentLayers = (context as Element).findAncestorContentLayers();
     final contentLayout = contentLayers?._content?.findRenderObject();
 
-    if (contentLayers != null && !contentLayers.renderObject._content!.debugNeedsLayout) {
+    if (contentLayers != null && !contentLayers.renderObject.contentNeedsLayout) {
       _layoutData = computeLayoutData(contentLayout);
     }
 
