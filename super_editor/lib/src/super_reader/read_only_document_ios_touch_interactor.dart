@@ -272,6 +272,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     _removeEditingOverlayControls();
 
     widget.scrollController.removeListener(_onScrollChange);
+    _activeScrollPosition?.removeListener(_onScrollChange);
 
     _handleAutoScrolling.dispose();
 
@@ -704,9 +705,13 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       if (scrollPosition is ScrollPositionWithSingleContext) {
         (scrollPosition as ScrollPositionWithSingleContext).goBallistic(-details.velocity.pixelsPerSecond.dy);
 
-        // We add the scroll change listener again, because going ballistic
-        // seems to switch out the scroll position.
-        scrollPosition.addListener(_onScrollChange);
+        if (_activeScrollPosition != scrollPosition) {
+          // We add the scroll change listener again, because going ballistic
+          // seems to switch out the scroll position.
+          _activeScrollPosition?.removeListener(_onScrollChange);
+          _activeScrollPosition = scrollPosition;
+          scrollPosition.addListener(_onScrollChange);
+        }
       }
     } else {
       // The user was dragging a handle. Stop any auto-scrolling that may have started.
@@ -957,6 +962,8 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         scheduleBuildAfterBuild();
       } else {
         if (scrollPosition != _activeScrollPosition) {
+          _activeScrollPosition?.removeListener(_onScrollChange);
+
           _activeScrollPosition = scrollPosition;
           _activeScrollPosition?.addListener(_onScrollChange);
         }
