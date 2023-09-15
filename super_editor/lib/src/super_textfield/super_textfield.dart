@@ -69,6 +69,7 @@ class SuperTextField extends StatefulWidget {
     this.lineHeight,
     this.inputSource,
     this.keyboardHandlers,
+    this.selectorHandlers,
     this.padding,
     this.textInputAction,
     this.imeConfiguration,
@@ -172,6 +173,12 @@ class SuperTextField extends StatefulWidget {
   ///
   /// Only used on desktop.
   final List<TextFieldKeyboardHandler>? keyboardHandlers;
+
+  /// Handlers for all Mac OS "selectors" reported by the IME.
+  ///
+  /// The IME reports selectors as unique `String`s, therefore selector handlers are
+  /// defined as a mapping from selector names to handler functions.
+  final Map<String, SuperTextFieldSelectorHandler>? selectorHandlers;
 
   /// Padding placed around the text content of this text field, but within the
   /// scrollable viewport.
@@ -327,6 +334,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
+          selectorHandlers: widget.selectorHandlers,
           padding: widget.padding ?? EdgeInsets.zero,
           inputSource: _inputSource,
           textInputAction: _textInputAction,
