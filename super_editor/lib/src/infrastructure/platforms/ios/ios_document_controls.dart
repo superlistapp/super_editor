@@ -217,6 +217,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         SelectionReason.userInteraction,
       );
       onNextFrame((_) => _onFloatingCursorChange());
+      return;
     }
 
     if (_floatingCursorOffset.value == null) {
