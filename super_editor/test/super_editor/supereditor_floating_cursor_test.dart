@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
@@ -129,6 +132,48 @@ void main() {
         // Ensure the caret is blue.
         caret = tester.widget<BlinkingCaret>(_caretFinder());
         expect(caret.color, Colors.blue);
+      });
+
+      testWidgetsOnIos('collapses an expanded selection', (tester) async {
+        final testContext = await tester //
+            .createDocument()
+            .fromMarkdown('This is a paragraph')
+            .pump();
+
+        final nodeId = testContext.document.nodes.first.id;
+
+        // Double tap to select the word "This"
+        await tester.doubleTapInParagraph(nodeId, 0);
+
+        // Ensure the word is selected.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection(
+            base: DocumentPosition(
+              nodeId: nodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+            extent: DocumentPosition(
+              nodeId: nodeId,
+              nodePosition: const TextNodePosition(offset: 4),
+            ),
+          ),
+        );
+
+        // Show the floating cursor.
+        await tester.startFloatingCursorGesture();
+        await tester.pump();
+
+        // Ensure the selection collapsed.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: nodeId,
+              nodePosition: const TextNodePosition(offset: 4, affinity: TextAffinity.upstream),
+            ),
+          ),
+        );
       });
     });
   });
