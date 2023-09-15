@@ -51,6 +51,8 @@ void main() {
       await SuperEditorRobot(tester).doubleTapInParagraph('1', 0);
       scrollController.jumpTo(200.0);
       await tester.pump();
+
+      // Reaching this point means we switched between SuperEditor and SuperReader without any crashes.
     });
   });
 }
