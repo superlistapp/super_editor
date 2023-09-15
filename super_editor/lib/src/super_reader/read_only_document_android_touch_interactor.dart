@@ -230,9 +230,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
 
-    // TODO: I commented this out because the scroll position is already
-    //       disposed by the time this runs and it causes an error.
-    // _activeScrollPosition?.removeListener(_onScrollChange);
+    _activeScrollPosition?.removeListener(_onScrollChange);
 
     // We dispose the EditingController on the next frame because
     // the ListenableBuilder that uses it throws an error if we
