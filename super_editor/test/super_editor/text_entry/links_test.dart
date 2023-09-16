@@ -15,17 +15,14 @@ void main() {
           .withInputSource(TextInputSource.ime)
           .pump();
 
-      final doc = SuperEditorInspector.findDocument()!;
-
       // Place the caret at the beginning of the empty document.
-      await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+      await tester.placeCaretInParagraph("1", 0);
 
       // Type a URL. It shouldn't linkify until we add a space.
       await tester.typeImeText("https://www.google.com");
 
       // Ensure it's not linkified yet.
-      final nodeId = doc.nodes.first.id;
-      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      var text = SuperEditorInspector.findTextInParagraph("1");
 
       expect(text.text, "https://www.google.com");
       expect(
@@ -40,7 +37,7 @@ void main() {
       await tester.typeImeText(" ");
 
       // Ensure it's linkified.
-      text = SuperEditorInspector.findTextInParagraph(nodeId);
+      text = SuperEditorInspector.findTextInParagraph("1");
 
       expect(text.text, "https://www.google.com ");
       expect(
@@ -54,6 +51,44 @@ void main() {
       );
     });
 
+    testWidgetsOnAllPlatforms('recognizes a second URL when typing and converts it to a link', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Place the caret at the beginning of the empty document.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Type text with two URLs
+      await tester.typeImeText("https://www.google.com and https://flutter.dev ");
+
+      // Ensure both URLs are linkified with the correct URLs.
+      final text = SuperEditorInspector.findTextInParagraph("1");
+
+      expect(text.text, "https://www.google.com and https://flutter.dev ");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: const SpanRange(0, 21),
+        ),
+        isTrue,
+      );
+
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://flutter.dev")),
+          },
+          range: const SpanRange(27, 45),
+        ),
+        isTrue,
+      );
+    });
+
     testWidgetsOnAllPlatforms('recognizes a URL without www and converts it to a link', (tester) async {
       await tester //
           .createDocument()
@@ -61,17 +96,14 @@ void main() {
           .withInputSource(TextInputSource.ime)
           .pump();
 
-      final doc = SuperEditorInspector.findDocument()!;
-
       // Place the caret at the beginning of the empty document.
-      await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+      await tester.placeCaretInParagraph("1", 0);
 
       // Type a URL without the www. It shouldn't linkify until we add a space.
       await tester.typeImeText("google.com");
 
       // Ensure it's not linkified yet.
-      final nodeId = doc.nodes.first.id;
-      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      var text = SuperEditorInspector.findTextInParagraph("1");
 
       expect(text.text, "google.com");
       expect(
@@ -86,7 +118,7 @@ void main() {
       await tester.typeImeText(" ");
 
       // Ensure it's linkified.
-      text = SuperEditorInspector.findTextInParagraph(nodeId);
+      text = SuperEditorInspector.findTextInParagraph("1");
 
       expect(text.text, "google.com ");
       expect(
@@ -107,10 +139,8 @@ void main() {
           .withInputSource(TextInputSource.ime)
           .pump();
 
-      final doc = SuperEditorInspector.findDocument()!;
-
       // Place the caret at the beginning of the empty document.
-      await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+      await tester.placeCaretInParagraph("1", 0);
 
       // Type a URL. It shouldn't linkify until we add a space.
       await tester.typeImeText("www.google.com");
@@ -119,9 +149,8 @@ void main() {
       await tester.typeImeText(" ");
 
       // Ensure it's linkified with a URL schema.
-      final nodeId = doc.nodes.first.id;
-      var text = SuperEditorInspector.findTextInParagraph(nodeId);
-      text = SuperEditorInspector.findTextInParagraph(nodeId);
+      var text = SuperEditorInspector.findTextInParagraph("1");
+      text = SuperEditorInspector.findTextInParagraph("1");
 
       expect(text.text, "www.google.com ");
       expect(

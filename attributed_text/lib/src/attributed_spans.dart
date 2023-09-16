@@ -265,7 +265,7 @@ class AttributedSpans {
     return _markers //
         .reversed // search from the end so its the nearest start marker
         .where((marker) {
-      return attribution == null || (marker.attribution.id == attribution.id);
+      return attribution == null || (marker.attribution == attribution);
     }).firstWhereOrNull((marker) => marker.isStart && marker.offset <= offset);
   }
 
