@@ -25,7 +25,6 @@ class SuperEditorContext {
     required DocumentLayout Function() getDocumentLayout,
     required this.composer,
     required this.scroller,
-    required this.hasPrimaryFocus,
     required this.commonOps,
   }) : _getDocumentLayout = getDocumentLayout;
 
@@ -48,9 +47,6 @@ class SuperEditorContext {
   /// The [DocumentScroller] that provides status and control over [SuperEditor]
   /// scrolling.
   final DocumentScroller scroller;
-
-  /// Whether `SuperEditor` currently has primary focus.
-  final ValueListenable<bool> hasPrimaryFocus;
 
   /// Common operations that can be executed to apply common, complex changes to
   /// the document.
