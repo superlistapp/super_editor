@@ -238,12 +238,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _configureImeClientDecorators();
     _documentImeConnection.value = _documentImeClient;
 
-    if (!_imeConnection.value!.attached) {
-      // The IME connection has closed.
-      // We can't report any information to the IME.
-      return;
-    }
-
     _reportVisualInformationToIme();
   }
 

@@ -1003,9 +1003,9 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
     required this.selectorHandlers,
     this.textInputAction,
     this.imeConfiguration,
+    required this.textStyleBuilder,
     this.textAlign,
     this.textDirection,
-    required this.textStyleBuilder,
     required this.child,
   }) : super(key: key);
 
@@ -1024,6 +1024,14 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
 
   /// Text style factory that creates styles for the content in
   /// [textController] based on the attributions in that content.
+  ///
+  /// On web, we can't set the position of IME popovers (e.g, emoji picker,
+  /// character selection panel) ourselves. Because of that, we need
+  /// to report to the IME what is our text style, so the browser can position
+  /// the popovers based on text metrics computed for the given style.
+  ///
+  /// This should be the same [AttributionStyleBuilder] used to
+  /// render the text.
   final AttributionStyleBuilder textStyleBuilder;
 
   /// Handlers for all Mac OS "selectors" reported by the IME.
