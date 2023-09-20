@@ -401,8 +401,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   /// Compute the size and transform of the selected node's visual component
   /// to the global coordinates.
   ///
-  /// Returns `null` if the we don't have a selection, or if the selected
-  /// component can't report its inner text bounds.
+  /// Returns `null` if the we don't have a selection, or if we can't find
+  /// a component for the selected node.
   (Size size, Matrix4 transform)? _computeSizeAndTransformOfSelectNode() {
     final selection = widget.editContext.composer.selection;
     if (selection == null) {
