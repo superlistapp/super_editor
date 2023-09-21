@@ -66,8 +66,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
   late FollowerBoundary _screenBoundary;
 
   bool _showUrlField = false;
+  late FocusNode _popoverFocusNode;
   late FocusNode _urlFocusNode;
-  AttributedTextEditingController? _urlController;
+  ImeAttributedTextEditingController? _urlController;
 
   @override
   void initState() {
@@ -75,9 +76,13 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
     _toolbarAligner = CupertinoPopoverToolbarAligner(widget.editorViewportKey);
 
+    _popoverFocusNode = FocusNode();
+
     _urlFocusNode = FocusNode();
-    _urlController = SingleLineAttributedTextEditingController(_applyLink) //
-      ..text = AttributedText("https://");
+    _urlController =
+        ImeAttributedTextEditingController(controller: SingleLineAttributedTextEditingController(_applyLink)) //
+          ..onPerformActionPressed = _onPerformAction
+          ..text = AttributedText("https://");
   }
 
   @override
@@ -94,6 +99,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void dispose() {
     _urlFocusNode.dispose();
     _urlController!.dispose();
+    _popoverFocusNode.dispose();
     super.dispose();
   }
 
@@ -457,6 +463,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
     }
   }
 
+  void _onPerformAction(TextInputAction action) {
+    if (action == TextInputAction.done) {
+      _applyLink();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BuildInOrder(
@@ -477,15 +489,19 @@ class _EditorToolbarState extends State<EditorToolbar> {
   }
 
   Widget _buildToolbars() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildToolbar(),
-        if (_showUrlField) ...[
-          const SizedBox(height: 8),
-          _buildUrlField(),
+    return SuperEditorPopover(
+      popoverFocusNode: _popoverFocusNode,
+      editorFocusNode: widget.editorFocusNode,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildToolbar(),
+          if (_showUrlField) ...[
+            const SizedBox(height: 8),
+            _buildUrlField(),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -619,9 +635,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
         child: Row(
           children: [
             Expanded(
-              child: FocusWithCustomParent(
+              child: Focus(
                 focusNode: _urlFocusNode,
-                parentFocusNode: widget.editorFocusNode,
+                parentNode: _popoverFocusNode,
                 // We use a SuperTextField instead of a TextField because TextField
                 // automatically re-parents its FocusNode, which causes #609. Flutter
                 // #106923 tracks the TextField issue.
