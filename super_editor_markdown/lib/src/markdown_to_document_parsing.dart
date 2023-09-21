@@ -700,9 +700,9 @@ class _TaskSyntax extends md.BlockSyntax {
 
 /// Parses a header preceded by an alignment token.
 ///
-/// We already had a header serializer in [_ParagraphWithAlignmentSyntax] but without the alignment,
-/// so we added [_HeaderWithAlignmentSyntax] to support the alignment for headers. Therefore,
-/// the [_HeaderWithAlignmentSyntax] **MUST** be put before the [_ParagraphWithAlignmentSyntax].
+/// Headers are represented by `_ParagraphWithAlignmentSyntax`s and therefore
+/// this parser must run before a [_ParagraphWithAlignmentSyntax], so that this parser
+/// can process header-specific details, such as header alignment.
 class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
   /// This pattern matches the text alignment notation.
   ///

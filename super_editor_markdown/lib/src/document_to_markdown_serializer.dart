@@ -364,11 +364,13 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   }
 }
 
-/// [DocumentNodeMarkdownSerializer] for serializing [ParagraphNode]s as headers.
+/// [DocumentNodeMarkdownSerializer], which serializes Markdown headers to
+/// [ParagraphNode]s with an appropriate header block type, and (optionally) a
+/// block alignment.
 ///
-/// We already had a header parser in [ParagraphNodeSerializer] but without the alignment,
-/// so we added [HeaderNodeSerializer] to support the alignment for headers. Therefore,
-/// the [HeaderNodeSerializer] **MUST** be put before the [ParagraphNodeSerializer].
+/// Headers are represented by `ParagraphNode`s and therefore this serializer must
+/// run before a [ParagraphNodeSerializer], so that this serializer can process
+/// header-specific details, such as header alignment.
 class HeaderNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<ParagraphNode> {
   const HeaderNodeSerializer(this.markdownSyntax);
 
