@@ -230,6 +230,19 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
   @override
   TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
 
+  /// Computes the [TextStyle] for this task's inner [TextComponent].
+  TextStyle _computeStyles(Set<Attribution> attributions) {
+    // Show a strikethrough across the entire task if it's complete.
+    final style = widget.viewModel.textStyleBuilder(attributions);
+    return widget.viewModel.isComplete
+        ? style.copyWith(
+            decoration: style.decoration == null
+                ? TextDecoration.lineThrough
+                : TextDecoration.combine([TextDecoration.lineThrough, style.decoration!]),
+          )
+        : style;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -248,17 +261,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
           child: TextComponent(
             key: _textKey,
             text: widget.viewModel.text,
-            textStyleBuilder: (attributions) {
-              // Show a strikethrough across the entire task if it's complete.
-              final style = widget.viewModel.textStyleBuilder(attributions);
-              return widget.viewModel.isComplete
-                  ? style.copyWith(
-                      decoration: style.decoration == null
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.combine([TextDecoration.lineThrough, style.decoration!]),
-                    )
-                  : style;
-            },
+            textStyleBuilder: _computeStyles,
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,

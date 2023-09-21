@@ -834,6 +834,28 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
     );
   }
 
+  /// Return the [TextStyle] for the character at [offset].
+  ///
+  /// If the caret sits at the beginning of the text, the style
+  /// of the first character is returned.
+  ///
+  /// If the caret sits at the end of the text, the style
+  /// of the last character is returned.
+  ///
+  /// If the text is empty, the style computed by the widget's `textStyleBuilder`
+  /// without any attributions is returned.
+  TextStyle getTextStyleAt(int offset) {
+    final attributions = widget.text.getAllAttributionsAt(offset < widget.text.length //
+        ? offset
+        : widget.text.length - 1);
+
+    return _textStyleWithBlockType(attributions);
+  }
+
+  TextAlign? get textAlign => widget.textAlign;
+
+  TextDirection? get textDirection => widget.textDirection;
+
   @override
   Widget build(BuildContext context) {
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
