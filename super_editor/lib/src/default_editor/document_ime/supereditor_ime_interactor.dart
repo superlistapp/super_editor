@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/debug_visualization.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
@@ -232,11 +233,13 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     if (_imeConnection.value == null) {
       _documentImeConnection.value = null;
       widget.imeOverrides?.client = null;
-    } else {
-      _configureImeClientDecorators();
-      _documentImeConnection.value = _documentImeClient;
-      _reportVisualInformationToIme();
+      return;
     }
+
+    _configureImeClientDecorators();
+    _documentImeConnection.value = _documentImeClient;
+
+    _reportVisualInformationToIme();
   }
 
   void _configureImeClientDecorators() {
@@ -248,7 +251,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _imeClient.client = widget.imeOverrides ?? _documentImeClient;
   }
 
-  /// Report our size, transform to the root node coordinates, and caret rect to the IME.
+  /// Report the global size and transform of the editor and the caret rect to the IME.
   ///
   /// This is needed to display the OS emoji & symbols panel at the editor selected position.
   ///
@@ -258,13 +261,9 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       return;
     }
 
-    final renderBox = context.findRenderObject() as RenderBox;
-    _imeConnection.value!.setEditableSizeAndTransform(renderBox.size, renderBox.getTransformTo(null));
-
-    final caretRect = _computeCaretRectInViewportSpace();
-    if (caretRect != null) {
-      _imeConnection.value!.setCaretRect(caretRect);
-    }
+    _reportSizeAndTransformToIme();
+    _reportCaretRectToIme();
+    _reportTextStyleToIme();
 
     // There are some operations that might affect our transform, size and the caret rect,
     // but we can't react to them.
@@ -272,6 +271,103 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     // Because of this, we update our size, transform and caret rect at every frame.
     // FIXME: This call seems to be scheduling frames. When the caret is in Timer mode, we see this method running continuously even though the only change should be the caret blinking every half a second
     onNextFrame((_) => _reportVisualInformationToIme());
+  }
+
+  /// Report the global size and transform of the editor to the IME.
+  ///
+  /// This is needed to display the OS emoji & symbols panel at the editor selected position.
+  void _reportSizeAndTransformToIme() {
+    late Size size;
+    late Matrix4 transform;
+
+    if (isWeb) {
+      // On web, we can't set the caret rect.
+      // To display the IME panels at the correct position,
+      // instead of reporting the whole editor size and transform,
+      // we report only the information about the selected node.
+      final sizeAndTransform = _computeSizeAndTransformOfSelectNode();
+      if (sizeAndTransform == null) {
+        return;
+      }
+
+      (size, transform) = sizeAndTransform;
+    } else {
+      final renderBox = context.findRenderObject() as RenderBox;
+
+      size = renderBox.size;
+      transform = renderBox.getTransformTo(null);
+    }
+
+    _imeConnection.value!.setEditableSizeAndTransform(size, transform);
+  }
+
+  void _reportCaretRectToIme() {
+    if (isWeb) {
+      // On web, setting the caret rect isn't supported.
+      // To position the IME popovers, we report the size, transform and style
+      // of the selected component and let the browser position the popovers.
+      return;
+    }
+
+    final caretRect = _computeCaretRectInViewportSpace();
+    if (caretRect != null) {
+      _imeConnection.value!.setCaretRect(caretRect);
+    }
+  }
+
+  /// Report our text style to the IME.
+  ///
+  /// This is used on web to set the text style of the hidden native input,
+  /// to try to match the text size on the browser with our text size.
+  ///
+  /// As our content can have multiple styles, the sizes won't be 100% in sync.
+  ///
+  /// TODO: update this after https://github.com/flutter/flutter/issues/134265 is resolved.
+  void _reportTextStyleToIme() {
+    if (!isWeb) {
+      // If we are not on the web, we can position the caret rect without the need
+      // to send the text styles to the IME.
+      return;
+    }
+
+    final selection = widget.editContext.composer.selection;
+    if (selection == null) {
+      return;
+    }
+
+    final nodePosition = selection.extent.nodePosition;
+    if (nodePosition is! TextNodePosition) {
+      // The selected component doesn't contain text.
+      return;
+    }
+
+    final docLayout = widget.editContext.documentLayout;
+
+    DocumentComponent? selectedComponent = docLayout.getComponentByNodeId(selection.extent.nodeId);
+    if (selectedComponent is ProxyDocumentComponent) {
+      // The selected componente is a proxy.
+      // If this component displays text, the text component is bounded to childDocumentComponentKey.
+      selectedComponent = selectedComponent.childDocumentComponentKey.currentState as DocumentComponent?;
+    }
+
+    if (selectedComponent == null) {
+      editorImeLog.warning('A selection exists but no component for node ${selection.extent.nodeId} was found');
+      return;
+    }
+
+    if (selectedComponent is! TextComponentState) {
+      // The selected component isn't a text component. We can't query its style.
+      return;
+    }
+
+    final style = selectedComponent.getTextStyleAt(nodePosition.offset);
+    _imeConnection.value!.setStyle(
+      fontFamily: style.fontFamily,
+      fontSize: style.fontSize,
+      fontWeight: style.fontWeight,
+      textDirection: selectedComponent.textDirection ?? TextDirection.ltr,
+      textAlign: selectedComponent.textAlign ?? TextAlign.left,
+    );
   }
 
   /// Compute the caret rect in the editor's content space.
@@ -301,6 +397,35 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     );
 
     return caretOffset & rectInDocLayoutSpace.size;
+  }
+
+  /// Compute the size and transform of the selected node's visual component
+  /// to the global coordinates.
+  ///
+  /// Returns `null` if the we don't have a selection, or if we can't find
+  /// a component for the selected node.
+  (Size size, Matrix4 transform)? _computeSizeAndTransformOfSelectNode() {
+    final selection = widget.editContext.composer.selection;
+    if (selection == null) {
+      return null;
+    }
+
+    final documentLayout = widget.editContext.documentLayout;
+
+    DocumentComponent? selectedComponent = documentLayout.getComponentByNodeId(selection.extent.nodeId);
+    if (selectedComponent is ProxyDocumentComponent) {
+      // The selected componente is a proxy.
+      // If this component displays text, the text component is bounded to childDocumentComponentKey.
+      selectedComponent = selectedComponent.childDocumentComponentKey.currentState as DocumentComponent;
+    }
+
+    if (selectedComponent == null) {
+      editorImeLog.warning('A selection exists but no component for node ${selection.extent.nodeId} was found');
+      return null;
+    }
+
+    final renderBox = selectedComponent.context.findRenderObject() as RenderBox;
+    return (renderBox.size, renderBox.getTransformTo(null));
   }
 
   void _onPerformSelector(String selectorName) {
