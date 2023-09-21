@@ -118,12 +118,30 @@ class _PreventPrioritizedIntentsFromBubblingUp extends Action<PrioritizedIntents
     }
 
     for (final Intent candidateIntent in intent.orderedIntents) {
-      if (intentFilter(candidateIntent)) {
-        // We found an Intent we want to block.
-        return true;
+      final Action<Intent>? candidateAction = Actions.maybeFind<Intent>(
+        focus.context!,
+        intent: candidateIntent,
+      );
+      if (candidateAction != null && _isActionEnabled(candidateAction, candidateIntent, context)) {
+        // The corresponding Action for the Intent is enabled.
+        // This is the Action that Flutter will execute.
+        if (intentFilter(candidateIntent)) {
+          return true;
+        }
+
+        // We don't care about the Intent that is going to have its corresponding Action executed.
+        // Don't block it.
+        return false;
       }
     }
 
     return false;
+  }
+
+  bool _isActionEnabled(Action action, Intent intent, BuildContext? context) {
+    if (action is ContextAction<Intent>) {
+      return action.isEnabled(intent, context);
+    }
+    return action.isEnabled(intent);
   }
 }
