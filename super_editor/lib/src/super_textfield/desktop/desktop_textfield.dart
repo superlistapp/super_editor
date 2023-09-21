@@ -347,6 +347,22 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     return _estimatedLineHeight.calculate(defaultStyle, _textScaler);
   }
 
+  ScrollableState? _findAncestorScrollable(BuildContext context) {
+    final ancestorScrollable = Scrollable.maybeOf(context);
+    if (ancestorScrollable == null) {
+      return null;
+    }
+
+    final direction = ancestorScrollable.axisDirection;
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
+    if (direction == AxisDirection.left || direction == AxisDirection.right) {
+      return null;
+    }
+
+    return ancestorScrollable;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_textKey.currentContext == null) {
@@ -420,6 +436,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required bool isMultiline,
     required Widget child,
   }) {
+    final ancestorScrollable = _findAncestorScrollable(context)?.position;
     return Actions(
       actions: defaultTargetPlatform == TargetPlatform.macOS ? disabledMacIntents : {},
       child: SuperTextFieldKeyboardInteractor(
@@ -427,6 +444,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
         textFieldContext: _textFieldContext,
         textKey: _textKey,
         keyboardActions: widget.keyboardHandlers,
+        ancestorScrollable: ancestorScrollable,
         child: widget.inputSource == TextInputSource.ime
             ? SuperTextFieldImeInteractor(
                 textKey: _textKey,
@@ -900,6 +918,7 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
     required this.textFieldContext,
     required this.textKey,
     required this.keyboardActions,
+    required this.ancestorScrollable,
     required this.child,
   }) : super(key: key);
 
@@ -934,6 +953,8 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
   /// If all handlers report [TextFieldKeyboardHandlerResult.notHandled], the key
   /// event propagates up the widget tree for other listeners to act upon.
   final List<TextFieldKeyboardHandler> keyboardActions;
+
+  final ScrollPosition? ancestorScrollable;
 
   /// The rest of the subtree for this text field.
   final Widget child;
@@ -1746,6 +1767,10 @@ TextFieldKeyboardHandler ignoreTextFieldKeyCombos(List<ShortcutActivator> keys) 
 /// );
 /// ```
 const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageUpKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageDownKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndHomeKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndEndKeyPress,
   DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
@@ -1783,6 +1808,10 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
 /// );
 /// ```
 const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageUpKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageDownKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndHomeKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndEndKeyPress,
   DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
@@ -2228,6 +2257,138 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.notHandled;
   }
 
+  static TextFieldKeyboardHandlerResult scrollOnPageUpKeyPress({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final ScrollPosition? scrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (scrollable == null) {
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    scrollable.animateTo(
+      max(scrollable.pixels - scrollable.viewportDimension, scrollable.minScrollExtent),
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult scrollOnPageDownKeyPress({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final ScrollPosition? scrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (scrollable == null) {
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    scrollable.animateTo(
+      min(scrollable.pixels + scrollable.viewportDimension, scrollable.maxScrollExtent),
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult scrollOnCtrlOrCmdAndHomeKeyPress({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final ScrollPosition? scrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.home) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
+    if (isMacOrIos && !keyEvent.isMetaPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (!isMacOrIos && !keyEvent.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (scrollable == null) {
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    scrollable.animateTo(
+      scrollable.minScrollExtent,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult scrollOnCtrlOrCmdAndEndKeyPress({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final ScrollPosition? scrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.end) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
+    if (isMacOrIos && !keyEvent.isMetaPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (!isMacOrIos && !keyEvent.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (scrollable == null) {
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+    if (!scrollable.maxScrollExtent.isFinite) {
+      // Can't scroll to infinity, but we technically handled the task.
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    scrollable.animateTo(
+      scrollable.maxScrollExtent,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
   DefaultSuperTextFieldKeyboardHandlers._();
 }
 
@@ -2311,6 +2472,12 @@ const defaultTextFieldSelectorHandlers = <String, SuperTextFieldSelectorHandler>
   MacOsSelectors.deleteToBeginningOfLine: _deleteToBeginningOfLine,
   MacOsSelectors.deleteToEndOfLine: _deleteToEndOfLine,
   MacOsSelectors.deleteBackwardByDecomposingPreviousCharacter: _deleteUpstream,
+
+  // Scrolling.
+  MacOsSelectors.scrollToBeginningOfDocument: _scrollToBeginningOfDocument,
+  MacOsSelectors.scrollToEndOfDocument: _scrollToEndOfDocument,
+  MacOsSelectors.scrollPageUp: _scrollPageUp,
+  MacOsSelectors.scrollPageDown: _scrollPageDown,
 };
 
 void _giveUpFocus({
@@ -2587,4 +2754,80 @@ void _deleteToEndOfLine({
   }
 
   textFieldContext.controller.deleteTextOnLineAfterCaret(textLayout: textFieldContext.getTextLayout());
+}
+
+void _scrollToBeginningOfDocument({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final ScrollPosition? scrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+
+  if (scrollable == null) {
+    return;
+  }
+  scrollable.animateTo(
+    scrollable.minScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+void _scrollToEndOfDocument({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final ScrollPosition? scrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+
+  if (scrollable == null) {
+    return;
+  }
+  scrollable.animateTo(
+    scrollable.maxScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+void _scrollPageUp({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final ScrollPosition? scrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+
+  if (scrollable == null) {
+    return;
+  }
+  scrollable.animateTo(
+    max(scrollable.pixels - scrollable.viewportDimension, scrollable.minScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+void _scrollPageDown({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final ScrollPosition? scrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+
+  if (scrollable == null) {
+    return;
+  }
+  scrollable.animateTo(
+    min(scrollable.pixels + scrollable.viewportDimension, scrollable.maxScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+}
+
+ScrollableState? _findAncestorScrollable(BuildContext context) {
+  final ancestorScrollable = Scrollable.maybeOf(context);
+  if (ancestorScrollable == null) {
+    return null;
+  }
+
+  final direction = ancestorScrollable.axisDirection;
+  // If the direction is horizontal, then we are inside a widget like a TabBar
+  // or a horizontal ListView, so we can't use the ancestor scrollable
+  if (direction == AxisDirection.left || direction == AxisDirection.right) {
+    return null;
+  }
+
+  return ancestorScrollable;
 }
