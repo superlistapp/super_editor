@@ -135,12 +135,12 @@ class _PopoverListState extends State<PopoverList> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => !_focusNode.hasPrimaryFocus ? _focusNode.requestFocus() : null,
-      child: Focus(
-        focusNode: _focusNode,
-        parentNode: widget.editorFocusNode,
-        onKeyEvent: _onKeyEvent,
+    return SuperEditorPopover(
+      popoverFocusNode: _focusNode,
+      editorFocusNode: widget.editorFocusNode,
+      onKeyEvent: _onKeyEvent,
+      child: GestureDetector(
+        onTap: () => !_focusNode.hasPrimaryFocus ? _focusNode.requestFocus() : null,
         child: ListenableBuilder(
           listenable: _focusNode,
           builder: (context, child) {

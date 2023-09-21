@@ -427,7 +427,6 @@ class SuperEditorState extends State<SuperEditor> {
       composer: _composer,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
       scroller: _scroller,
-      hasPrimaryFocus: _primaryFocusListener,
       commonOps: CommonEditorOperations(
         editor: widget.editor,
         document: widget.document,

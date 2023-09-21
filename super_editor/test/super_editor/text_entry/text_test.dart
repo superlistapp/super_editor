@@ -418,7 +418,6 @@ SuperEditorContext _createEditContext() {
     getDocumentLayout: () => fakeLayout,
     composer: composer,
     scroller: FakeSuperEditorScroller(),
-    hasPrimaryFocus: ValueNotifier(false),
     commonOps: CommonEditorOperations(
       editor: documentEditor,
       document: document,
