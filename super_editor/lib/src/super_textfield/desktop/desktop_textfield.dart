@@ -1000,10 +1000,10 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
     required this.focusNode,
     required this.textController,
     required this.isMultiline,
-    required this.textStyleBuilder,
     required this.selectorHandlers,
     this.textInputAction,
     this.imeConfiguration,
+    required this.textStyleBuilder,
     this.textAlign,
     this.textDirection,
     required this.child,
@@ -1022,18 +1022,6 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
   /// the [ProseTextLayout] widget that paints the text for this text field.
   final GlobalKey<ProseTextState> textKey;
 
-  /// Text style factory that creates styles for the content in
-  /// [textController] based on the attributions in that content.
-  ///
-  /// On web, we can't set the position of IME popovers (e.g, emoji picker,
-  /// character selection panel) ourselves. Because of that, we need
-  /// to report to the IME what is our text style, so the browser can position
-  /// the popovers based on text metrics computed for the given style.
-  ///
-  /// This should be the same [AttributionStyleBuilder] used to
-  /// render the text.
-  final AttributionStyleBuilder textStyleBuilder;
-
   /// Handlers for all Mac OS "selectors" reported by the IME.
   ///
   /// The IME reports selectors as unique `String`s, therefore selector handlers are
@@ -1045,6 +1033,18 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
 
   /// Preferences for how the platform IME should look and behave during editing.
   final TextInputConfiguration? imeConfiguration;
+
+  /// Text style factory that creates styles for the content in
+  /// [textController] based on the attributions in that content.
+  ///
+  /// On web, we can't set the position of IME popovers (e.g, emoji picker,
+  /// character selection panel) ourselves. Because of that, we need
+  /// to report to the IME what is our text style, so the browser can position
+  /// the popovers based on text metrics computed for the given style.
+  ///
+  /// This should be the same [AttributionStyleBuilder] used to
+  /// render the text.
+  final AttributionStyleBuilder textStyleBuilder;
 
   final TextAlign? textAlign;
 
