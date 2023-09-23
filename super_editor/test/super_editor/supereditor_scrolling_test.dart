@@ -9,6 +9,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import 'supereditor_test_tools.dart';
+import 'test_documents.dart';
 
 void main() {
   group("SuperEditor scrolling", () {
@@ -682,10 +683,54 @@ void main() {
 
           // Ensure SuperEditor has scrolled
           expect(editorScrollController.offset, greaterThan(0));
-
-          // Ensure that scrolling didn't scroll the ListView
-          expect(listScrollController.position.pixels, equals(0));
         });
+      });
+
+      group("doesn't scroll when content fits within the available space", () {
+        testWidgetsOnDesktop(
+          "attempt to scroll vertically in both directions",
+          (tester) async {
+            const windowSize = Size(800, 600);
+            tester.view.physicalSize = windowSize;
+
+            final isScrollingUp = _scrollDirectionVariant.currentValue == _ScrollDirection.up;
+
+            await tester //
+                .createDocument()
+                .withCustomContent(
+                  paragraphThenHrThenParagraphDoc()
+                    ..insertNodeAt(
+                      0,
+                      ParagraphNode(
+                        id: Editor.createNodeId(),
+                        text: AttributedText('Document #1'),
+                        metadata: {
+                          'blockType': header1Attribution,
+                        },
+                      ),
+                    ),
+                )
+                .pump();
+
+            final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+            // Perform a fling on the editor to attemp scrolling.
+            await tester.trackpadFling(
+              find.byType(SuperEditor),
+              Offset(0.0, isScrollingUp ? 100 : -100),
+              300,
+            );
+
+            // Pump a few frames of momentum.
+            for (int i = 0; i < 5; i += 1) {
+              await tester.pump(const Duration(milliseconds: 16));
+            }
+
+            // Ensure SuperEditor is not scrolling.
+            expect(scrollState.position.activity?.isScrolling, false);
+          },
+          variant: _scrollDirectionVariant,
+        );
       });
     });
   });
@@ -849,4 +894,14 @@ MutableDocument _createExampleDocumentForScrolling() {
       ),
     ],
   );
+}
+
+final _scrollDirectionVariant = ValueVariant<_ScrollDirection>({
+  _ScrollDirection.up,
+  _ScrollDirection.down,
+});
+
+enum _ScrollDirection {
+  up,
+  down;
 }

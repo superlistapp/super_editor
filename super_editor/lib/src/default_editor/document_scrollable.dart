@@ -392,12 +392,10 @@ class AutoScrollController with ChangeNotifier {
       return;
     }
 
-    if (pos.maxScrollExtent == 0) {
-      return;
-    }
-
     if (pos is ScrollPositionWithSingleContext) {
-      pos.goBallistic(pixelsPerSecond);
+      if (pos.maxScrollExtent > 0) {
+        pos.goBallistic(pixelsPerSecond);
+      }
       pos.context.setIgnorePointer(false);
     }
   }

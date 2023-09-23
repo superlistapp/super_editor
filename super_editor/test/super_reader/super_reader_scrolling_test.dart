@@ -6,6 +6,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_reader_test.dart';
 
 import 'reader_test_tools.dart';
+import 'test_documents.dart';
 
 void main() {
   group("SuperReader scrolling", () {
@@ -218,5 +219,62 @@ void main() {
         isTrue,
       );
     });
+
+    group("doesn't scroll when content fits within the available space", () {
+      testWidgetsOnDesktop(
+        "attempt to scroll vertically in both directions",
+        (tester) async {
+          const windowSize = Size(800, 600);
+          tester.view.physicalSize = windowSize;
+
+          final isScrollUp = _scrollDirectionVariant.currentValue == _ScrollDirection.up;
+
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                paragraphThenHrThenParagraphDoc()
+                  ..insertNodeAt(
+                    0,
+                    ParagraphNode(
+                      id: Editor.createNodeId(),
+                      text: AttributedText('Document #1'),
+                      metadata: {
+                        'blockType': header1Attribution,
+                      },
+                    ),
+                  ),
+              )
+              .pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Perform a fling on the reader to attemp scrolling.
+          await tester.trackpadFling(
+            find.byType(SuperReader),
+            Offset(0.0, isScrollUp ? 100 : -100),
+            300,
+          );
+
+          // Pump a few frames of momentum.
+          for (int i = 0; i < 5; i += 1) {
+            await tester.pump(const Duration(milliseconds: 16));
+          }
+
+          // Ensure SuperReader is not scrolling.
+          expect(scrollState.position.activity?.isScrolling, false);
+        },
+        variant: _scrollDirectionVariant,
+      );
+    });
   });
+}
+
+final _scrollDirectionVariant = ValueVariant<_ScrollDirection>({
+  _ScrollDirection.up,
+  _ScrollDirection.down,
+});
+
+enum _ScrollDirection {
+  up,
+  down;
 }
