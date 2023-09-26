@@ -10,6 +10,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -275,12 +276,14 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
                     // Build the floating cursor
                     _buildFloatingCursor(),
                     // Build the editing toolbar
-                    if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
+                    if (!isWeb &&
+                        widget.editingController.shouldDisplayToolbar &&
+                        widget.editingController.isToolbarPositioned)
                       _buildToolbar(),
                     // Build the focal point for the magnifier
-                    if (widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
+                    if (!isWeb && widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
                     // Build the magnifier
-                    if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
+                    if (!isWeb && widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
                     if (widget.showDebugPaint)
                       IgnorePointer(
                         child: Container(
