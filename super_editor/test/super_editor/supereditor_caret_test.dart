@@ -246,7 +246,7 @@ void main() {
       });
 
       group('on iOS', () {
-        testWidgets('from portrait to landscape updates caret position', (WidgetTester tester) async {
+        testWidgetsOnIos('from portrait to landscape updates caret position', (WidgetTester tester) async {
           tester.view
             ..devicePixelRatio = 1.0
             ..platformDispatcher.textScaleFactorTestValue = 1.0
@@ -282,7 +282,7 @@ void main() {
           expect(finalCaretOffset, expectedFinalCaretOffset);
         });
 
-        testWidgets('from landscape to portrait updates caret position', (WidgetTester tester) async {
+        testWidgetsOnIos('from landscape to portrait updates caret position', (WidgetTester tester) async {
           tester.view
             ..devicePixelRatio = 1.0
             ..platformDispatcher.textScaleFactorTestValue = 1.0
@@ -367,8 +367,13 @@ Offset _getCurrentAndroidCaretOffset(WidgetTester tester) {
 /// The reason for having different implementations is that depending on the gesture mode,
 /// the widget that holds the caret offset is different
 Offset _getIosCurrentCaretOffset(WidgetTester tester) {
-  final controls = tester.widget<IosDocumentTouchEditingControls>(find.byType(IosDocumentTouchEditingControls).last);
-  return controls.editingController.caretTop!;
+  // TODO: provide new way to query the top of the caret now that we're using an iOS controls context and not an edit controller
+  // final controls = tester.widget<IosEditingToolbarOverlay>(find.byType(IosEditingToolbarOverlay).last);
+  // return controls.editingController.caretTop!;
+
+  final controls =
+      tester.state(find.byType(IosEditorControlsDocumentLayer).last) as IosEditorControlsDocumentLayerState;
+  return controls.caret!.topCenter;
 }
 
 /// Given a [textPosition], compute the expected (x,y) for the caret

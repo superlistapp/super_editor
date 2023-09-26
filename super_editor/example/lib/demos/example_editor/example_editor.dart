@@ -333,7 +333,16 @@ class _ExampleEditorState extends State<ExampleEditor> {
                   ),
                   Align(
                     alignment: Alignment.bottomRight,
-                    child: _buildCornerFabs(),
+                    child: ListenableBuilder(
+                      listenable: _composer.selectionNotifier,
+                      builder: (context, child) {
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: _isMobile && _composer.selection != null ? 48 : 0),
+                          child: child,
+                        );
+                      },
+                      child: _buildCornerFabs(),
+                    ),
                   ),
                 ],
               );
@@ -418,6 +427,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
               DefaultCaretOverlayBuilder(
                 caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
               ),
+              IosEditorControlsDocumentLayerBuilder(),
             ],
             selectionLayerLinks: _selectionLayerLinks,
             selectionStyle: isLight
@@ -461,7 +471,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
                     onCutPressed: _cut,
                     onCopyPressed: _copy,
                     onPastePressed: _paste,
-                    focalPoint: _overlayController.toolbarTopAnchor!,
+                    // TODO: bring back an anchor Offset
+                    // focalPoint: _overlayController.toolbarTopAnchor!,
+                    focalPoint: Offset.zero,
                   ),
                 );
               },

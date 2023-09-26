@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 /// Document overlay that paints a caret with the given [caretStyle].
-class CaretDocumentOverlay extends ContentLayerStatefulWidget {
+class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
   const CaretDocumentOverlay({
     Key? key,
     required this.composer,
@@ -45,10 +45,10 @@ class CaretDocumentOverlay extends ContentLayerStatefulWidget {
   final BlinkTimingMode blinkTimingMode;
 
   @override
-  ContentLayerState<CaretDocumentOverlay, Rect?> createState() => _CaretDocumentOverlayState();
+  DocumentLayoutLayerState<CaretDocumentOverlay, Rect?> createState() => _CaretDocumentOverlayState();
 }
 
-class _CaretDocumentOverlayState extends ContentLayerState<CaretDocumentOverlay, Rect?>
+class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOverlay, Rect?>
     with SingleTickerProviderStateMixin {
   late final BlinkController _blinkController;
 
@@ -126,13 +126,12 @@ class _CaretDocumentOverlayState extends ContentLayerState<CaretDocumentOverlay,
   }
 
   @override
-  Rect? computeLayoutData(RenderObject? contentLayout) {
+  Rect? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
     final documentSelection = widget.composer.selection;
     if (documentSelection == null) {
       return null;
     }
 
-    final documentLayout = widget.documentLayoutResolver();
     final selectedComponent = documentLayout.getComponentByNodeId(widget.composer.selection!.extent.nodeId);
     if (selectedComponent == null) {
       // Assume that we're in a momentary transitive state where the document layout

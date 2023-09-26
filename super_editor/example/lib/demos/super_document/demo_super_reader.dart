@@ -125,10 +125,18 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
         onCopyPressed: _copy,
         onSelectAllPressed: _selectAll,
       ),
-      iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-        onCopyPressed: _copy,
-        focalPoint: _overlayController.toolbarTopAnchor!,
-      ),
+      // iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+      //   onCopyPressed: _copy,
+      //   focalPoint: _overlayController.toolbarTopAnchor!,
+      // ),
+      iOSToolbarBuilder: (context) {
+        return IOSTextEditingFloatingToolbar(
+          onCopyPressed: _copy,
+          // TODO: bring back an anchor Offset
+          // focalPoint: _overlayController.toolbarTopAnchor!,
+          focalPoint: Offset.zero,
+        );
+      },
     );
   }
 }

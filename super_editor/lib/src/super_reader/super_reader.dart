@@ -9,6 +9,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blockquote.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
@@ -25,8 +26,9 @@ import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
+import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
-import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
 import 'read_only_document_android_touch_interactor.dart';
@@ -45,7 +47,7 @@ class SuperReader extends StatefulWidget {
     this.scrollController,
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
-    this.documentOverlayBuilders = const [],
+    this.documentOverlayBuilders = defaultSuperReaderDocumentOverlayBuilders,
     List<ComponentBuilder>? componentBuilders,
     List<ReadOnlyDocumentKeyboardAction>? keyboardActions,
     SelectionStyles? selectionStyle,
@@ -207,6 +209,15 @@ class SuperReaderState extends State<SuperReader> {
   // to carets, handles, and other things that want to follow the selection.
   final _selectionLinks = SelectionLayerLinks();
 
+  // GlobalKey for the iOS editor controls context so that the context data doesn't
+  // continuously replace itself every time we rebuild. We want to retain the same
+  // controls because they're shared throughout a number of disconnected widgets.
+  final _iosEditorControlsContextKey = GlobalKey();
+  final _floatingCursorController = FloatingCursorController();
+  late final _iosEditorControlsContextData = IosEditorControlsContextData(
+    floatingCursorController: _floatingCursorController,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -331,98 +342,145 @@ class SuperReaderState extends State<SuperReader> {
 
   @override
   Widget build(BuildContext context) {
-    return ReadOnlyDocumentKeyboardInteractor(
-      // In a read-only document, we don't expect the software keyboard
-      // to ever be open. Therefore, we only respond to key presses, such
-      // as arrow keys.
-      focusNode: _focusNode,
-      readerContext: _readerContext,
-      keyboardActions: widget.keyboardActions,
-      autofocus: widget.autofocus,
-      child: DocumentScaffold(
-        documentLayoutLink: _documentLayoutLink,
-        documentLayoutKey: _docLayoutKey,
-        gestureBuilder: _buildGestureInteractor,
-        scrollController: _scrollController,
-        autoScrollController: _autoScrollController,
-        scroller: _scroller,
-        presenter: _docLayoutPresenter!,
-        componentBuilders: widget.componentBuilders,
-        underlays: [
-          // Layer that positions and sizes leader widgets at the bounds
-          // of the users selection so that carets, handles, toolbars, and
-          // other things can follow the selection.
-          (context) => _SelectionLeadersDocumentLayerBuilder(
-                links: _selectionLinks,
-              ).build(context, _readerContext),
-        ],
-        overlays: [
-          for (final overlayBuilder in widget.documentOverlayBuilders) //
-            (context) => overlayBuilder.build(context, _readerContext),
-        ],
-        debugPaint: widget.debugPaint,
+    return _buildGestureControlsContext(
+      child: ReadOnlyDocumentKeyboardInteractor(
+        // In a read-only document, we don't expect the software keyboard
+        // to ever be open. Therefore, we only respond to key presses, such
+        // as arrow keys.
+        focusNode: _focusNode,
+        readerContext: _readerContext,
+        keyboardActions: widget.keyboardActions,
+        autofocus: widget.autofocus,
+        child: _buildPlatformSpecificViewportDecorations(
+          child: DocumentScaffold(
+            documentLayoutLink: _documentLayoutLink,
+            documentLayoutKey: _docLayoutKey,
+            gestureBuilder: _buildGestureInteractor,
+            scrollController: _scrollController,
+            autoScrollController: _autoScrollController,
+            // TODO: Finish integrating the DocumentScroller in SuperReader (https://github.com/superlistapp/super_editor/issues/1306)
+            scroller: _scroller,
+            presenter: _docLayoutPresenter!,
+            componentBuilders: widget.componentBuilders,
+            underlays: [
+              // Layer that positions and sizes leader widgets at the bounds
+              // of the users selection so that carets, handles, toolbars, and
+              // other things can follow the selection.
+              (context) => _SelectionLeadersDocumentLayerBuilder(
+                    links: _selectionLinks,
+                  ).build(context, _readerContext),
+            ],
+            overlays: [
+              for (final overlayBuilder in widget.documentOverlayBuilders) //
+                (context) => overlayBuilder.build(context, _readerContext),
+            ],
+            debugPaint: widget.debugPaint,
+          ),
+        ),
       ),
     );
+  }
+
+  /// Builds an [InheritedWidget] that holds a shared context for editor controls,
+  /// e.g., caret, handles, magnifier, toolbar.
+  ///
+  /// This context may be shared by multiple widgets within [SuperEditor]. It's also
+  /// possible that a client app has wrapped [SuperEditor] with its own context
+  /// [InheritedWidget], in which case the context is shared with widgets inside
+  /// of [SuperEditor], and widgets outside of [SuperEditor].
+  Widget _buildGestureControlsContext({
+    required Widget child,
+  }) {
+    switch (_gestureMode) {
+      // case DocumentGestureMode.mouse:
+      //   // TODO: create context for mouse mode
+      //   return IOSEditorControlsContext(
+      //     data: data,
+      //     child: child,
+      //   );
+      // case DocumentGestureMode.android:
+      //   // TODO: create context for Android
+      //   return IOSEditorControlsContext(
+      //     data: data,
+      //     child: child,
+      //   );
+      case DocumentGestureMode.iOS:
+      default:
+        return IosEditorControlsContext(
+          key: _iosEditorControlsContextKey,
+          controlsContext: _iosEditorControlsContextData,
+          child: child,
+        );
+    }
+  }
+
+  /// Builds any widgets that a platform wants to wrap around the editor viewport,
+  /// e.g., reader toolbar.
+  Widget _buildPlatformSpecificViewportDecorations({
+    required Widget child,
+  }) {
+    switch (_gestureMode) {
+      case DocumentGestureMode.iOS:
+        return IosToolbarOverlayManager(
+          selectionLinks: _selectionLinks,
+          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
+          createOverlayControlsClipper: widget.createOverlayControlsClipper,
+          child: child,
+        );
+      case DocumentGestureMode.mouse:
+      case DocumentGestureMode.android:
+      default:
+        return child;
+    }
   }
 
   Widget _buildGestureInteractor(BuildContext context) {
     switch (_gestureMode) {
       case DocumentGestureMode.mouse:
-        return _buildDesktopGestureSystem();
+        return ReadOnlyDocumentMouseInteractor(
+          focusNode: _focusNode,
+          readerContext: _readerContext,
+          contentTapHandler: _contentTapDelegate,
+          autoScroller: _autoScrollController,
+          showDebugPaint: widget.debugPaint.gestures,
+          child: const SizedBox(),
+        );
       case DocumentGestureMode.android:
-        return _buildAndroidGestureSystem();
+        return ReadOnlyAndroidDocumentTouchInteractor(
+          focusNode: _focusNode,
+          document: _readerContext.document,
+          documentKey: _docLayoutKey,
+          getDocumentLayout: () => _readerContext.documentLayout,
+          selection: _readerContext.selection,
+          selectionLinks: _selectionLinks,
+          contentTapHandler: _contentTapDelegate,
+          scrollController: _scrollController,
+          handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
+          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
+          createOverlayControlsClipper: widget.createOverlayControlsClipper,
+          showDebugPaint: widget.debugPaint.gestures,
+          overlayController: widget.overlayController,
+        );
       case DocumentGestureMode.iOS:
-        return _buildIOSGestureSystem();
+        return ReadOnlyIOSDocumentTouchInteractor(
+          focusNode: _focusNode,
+          document: _readerContext.document,
+          documentKey: _docLayoutKey,
+          getDocumentLayout: () => _readerContext.documentLayout,
+          selection: _readerContext.selection,
+          contentTapHandler: _contentTapDelegate,
+          scrollController: _scrollController,
+          showDebugPaint: widget.debugPaint.gestures,
+        );
     }
   }
-
-  Widget _buildDesktopGestureSystem() {
-    return ReadOnlyDocumentMouseInteractor(
-      focusNode: _focusNode,
-      readerContext: _readerContext,
-      contentTapHandler: _contentTapDelegate,
-      autoScroller: _autoScrollController,
-      showDebugPaint: widget.debugPaint.gestures,
-      child: const SizedBox(),
-    );
-  }
-
-  Widget _buildAndroidGestureSystem() {
-    return ReadOnlyAndroidDocumentTouchInteractor(
-      focusNode: _focusNode,
-      document: _readerContext.document,
-      documentKey: _docLayoutKey,
-      getDocumentLayout: () => _readerContext.documentLayout,
-      selection: _readerContext.selection,
-      selectionLinks: _selectionLinks,
-      contentTapHandler: _contentTapDelegate,
-      scrollController: _scrollController,
-      handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
-      popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
-      createOverlayControlsClipper: widget.createOverlayControlsClipper,
-      showDebugPaint: widget.debugPaint.gestures,
-      overlayController: widget.overlayController,
-    );
-  }
-
-  Widget _buildIOSGestureSystem() {
-    return ReadOnlyIOSDocumentTouchInteractor(
-      focusNode: _focusNode,
-      document: _readerContext.document,
-      getDocumentLayout: () => _readerContext.documentLayout,
-      selection: _readerContext.selection,
-      selectionLinks: _selectionLinks,
-      contentTapHandler: _contentTapDelegate,
-      scrollController: _scrollController,
-      documentKey: _docLayoutKey,
-      handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
-      popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
-      createOverlayControlsClipper: widget.createOverlayControlsClipper,
-      showDebugPaint: widget.debugPaint.gestures,
-      overlayController: widget.overlayController,
-    );
-  }
 }
+
+/// Default list of document overlays that are displayed on top of the document
+/// layout in a [SuperReader].
+const defaultSuperReaderDocumentOverlayBuilders = [
+  IosReaderControlsDocumentLayerBuilder(),
+];
 
 /// A [ReadOnlyDocumentLayerBuilder] that builds a [SelectionLeadersDocumentLayer], which positions
 /// leader widgets at the base and extent of the user's selection, so that other widgets
@@ -446,7 +504,6 @@ class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuil
     return SelectionLeadersDocumentLayer(
       document: readerContext.document,
       selection: readerContext.selection,
-      documentLayoutResolver: () => readerContext.documentLayout,
       links: links,
       showDebugLeaderBounds: showDebugLeaderBounds,
     );

@@ -95,10 +95,13 @@ class SuperEditorInspector {
       return androidControls.editingController.caretTop!;
     }
 
-    final iOSControls =
-        find.byType(IosDocumentTouchEditingControls).evaluate().lastOrNull?.widget as IosDocumentTouchEditingControls?;
-    if (iOSControls != null) {
-      return iOSControls.editingController.caretTop!;
+    final iOSControls = (find.byType(IosEditorControlsDocumentLayer).evaluate().lastOrNull as StatefulElement?)?.state
+        as IosEditorControlsDocumentLayerState?;
+    // find.byType(IosEditingToolbarOverlay).evaluate().lastOrNull?.widget as IosEditingToolbarOverlay?;
+    if (iOSControls != null && iOSControls.caret != null) {
+      // TODO: provide new way to query the top of the caret now that we're using an iOS controls context and not an edit controller
+      // return iOSControls.editingController.caretTop!;
+      return iOSControls.caret!.topCenter;
     }
 
     throw Exception('Could not locate caret in document');

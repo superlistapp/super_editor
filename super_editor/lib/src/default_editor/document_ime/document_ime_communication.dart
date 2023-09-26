@@ -274,13 +274,22 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
 
   @override
   void updateFloatingCursor(RawFloatingCursorPoint point) {
+    if (_floatingCursorController == null) {
+      return;
+    }
+
     switch (point.state) {
       case FloatingCursorDragState.Start:
+        _floatingCursorController!
+          ..onStart()
+          ..onMove(point.offset);
       case FloatingCursorDragState.Update:
-        _floatingCursorController?.offset = point.offset;
+        _floatingCursorController!.onMove(point.offset);
         break;
       case FloatingCursorDragState.End:
-        _floatingCursorController?.offset = null;
+        _floatingCursorController!
+          ..onMove(null)
+          ..onStop();
         break;
     }
   }
