@@ -644,8 +644,8 @@ Future<void> _pressNumpadEnterOnSuperTextField(WidgetTester tester) async {
     return;
   }
 
-  // Simulate the user pressing ENTER.
-  // On macOS, pressing ENTER generates both a new line input action and a performAction call.
+  // The ENTER key event wasn't handled by the textfield.
+  // The OS generates both a "\n" insertion and a new line action.
   await tester.ime.typeText('\n', getter: imeClientGetter);
   await tester.pump();
   await tester.testTextInput.receiveAction(TextInputAction.newline);
