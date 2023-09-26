@@ -214,7 +214,7 @@ class SuperReaderState extends State<SuperReader> {
   // controls because they're shared throughout a number of disconnected widgets.
   final _iosEditorControlsContextKey = GlobalKey();
   final _floatingCursorController = FloatingCursorController();
-  late final _iosEditorControlsContextData = IosEditorControlsContextData(
+  late final _iosEditorControlsContextData = IosEditorControlsContext(
     floatingCursorController: _floatingCursorController,
   );
 
@@ -406,7 +406,7 @@ class SuperReaderState extends State<SuperReader> {
       //   );
       case DocumentGestureMode.iOS:
       default:
-        return IosEditorControlsContext(
+        return IosEditorControlsScope(
           key: _iosEditorControlsContextKey,
           controlsContext: _iosEditorControlsContextData,
           child: child,

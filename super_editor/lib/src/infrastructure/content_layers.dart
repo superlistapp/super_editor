@@ -883,7 +883,7 @@ extension on Element {
   }
 }
 
-/// A state objects for a [ContentLayerStatefulWidget].
+/// A state object for a [ContentLayerStatefulWidget].
 ///
 /// A [ContentLayerState] needs to be implemented a little bit differently than
 /// a traditional [StatefulWidget]. Calling `setState()` will cause this widget

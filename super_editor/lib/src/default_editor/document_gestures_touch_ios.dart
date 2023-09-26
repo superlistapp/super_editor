@@ -31,7 +31,7 @@ import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
 import 'selection_upstream_downstream.dart';
 
-/// An [InheritedWidget] that provides shared access to a [IosEditorControlsContextData],
+/// An [InheritedWidget] that provides shared access to a [IosEditorControlsContext],
 /// which coordinates the state of iOS controls like the caret, handles, magnifier, etc.
 ///
 /// This widget and its associated context exist so that [SuperEditor] has maximum freedom
@@ -42,13 +42,13 @@ import 'selection_upstream_downstream.dart';
 /// responsibilities.
 ///
 /// Centralizing a context in an [InheritedWidget] also allows [SuperEditor] to share that
-/// control with application code outside of [SuperEditor], by placing an [IosEditorControlsContext]
+/// control with application code outside of [SuperEditor], by placing an [IosEditorControlsScope]
 /// above the [SuperEditor] in the widget tree. For this reason, [SuperEditor] should access
-/// the [IosEditorControlsContext] through [rootOf].
-class IosEditorControlsContext extends InheritedWidget {
-  /// Finds the highest [IosEditorControlsContext] in the widget tree, above the given
-  /// [context], and returns its associated [IosEditorControlsContextData].
-  static IosEditorControlsContextData rootOf(BuildContext context) {
+/// the [IosEditorControlsScope] through [rootOf].
+class IosEditorControlsScope extends InheritedWidget {
+  /// Finds the highest [IosEditorControlsScope] in the widget tree, above the given
+  /// [context], and returns its associated [IosEditorControlsContext].
+  static IosEditorControlsContext rootOf(BuildContext context) {
     final data = maybeRootOf(context);
 
     if (data == null) {
@@ -58,11 +58,11 @@ class IosEditorControlsContext extends InheritedWidget {
     return data;
   }
 
-  static IosEditorControlsContextData? maybeRootOf(BuildContext context) {
+  static IosEditorControlsContext? maybeRootOf(BuildContext context) {
     InheritedElement? root;
 
     context.visitAncestorElements((element) {
-      if (element is! InheritedElement || element.widget is! IosEditorControlsContext) {
+      if (element is! InheritedElement || element.widget is! IosEditorControlsScope) {
         // Keep visiting.
         return true;
       }
@@ -81,35 +81,35 @@ class IosEditorControlsContext extends InheritedWidget {
     context.dependOnInheritedElement(root!);
 
     // Return the current iOS controls data.
-    return (root!.widget as IosEditorControlsContext).controlsContext;
+    return (root!.widget as IosEditorControlsScope).controlsContext;
   }
 
-  /// Finds the nearest [IosEditorControlsContext] in the widget tree, above the given
-  /// [context], and returns its associated [IosEditorControlsContextData].
-  static IosEditorControlsContextData nearestOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<IosEditorControlsContext>()!.controlsContext;
+  /// Finds the nearest [IosEditorControlsScope] in the widget tree, above the given
+  /// [context], and returns its associated [IosEditorControlsContext].
+  static IosEditorControlsContext nearestOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<IosEditorControlsScope>()!.controlsContext;
 
-  static IosEditorControlsContextData? maybeNearestOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<IosEditorControlsContext>()?.controlsContext;
+  static IosEditorControlsContext? maybeNearestOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<IosEditorControlsScope>()?.controlsContext;
 
-  const IosEditorControlsContext({
+  const IosEditorControlsScope({
     super.key,
     required this.controlsContext,
     required super.child,
   });
 
-  final IosEditorControlsContextData controlsContext;
+  final IosEditorControlsContext controlsContext;
 
   @override
-  bool updateShouldNotify(IosEditorControlsContext oldWidget) {
+  bool updateShouldNotify(IosEditorControlsScope oldWidget) {
     return controlsContext != oldWidget.controlsContext;
   }
 }
 
 /// A context, which coordinates the state of various iOS editor controls, including
 /// the caret, handles, floating cursor, magnifier, and toolbar.
-class IosEditorControlsContextData {
-  IosEditorControlsContextData({
+class IosEditorControlsContext {
+  IosEditorControlsContext({
     required this.floatingCursorController,
   });
 
@@ -151,20 +151,20 @@ class FloatingCursorStatus {
 /// drag to scroll, tap to place the caret, double tap to select a word,
 /// triple tap to select a paragraph.
 ///
-/// Depends upon an ancestor [IosEditorControlsContext], which coordinates the
+/// Depends upon an ancestor [IosEditorControlsScope], which coordinates the
 /// state of visual iOS controls, e.g., caret, handles, magnifier, toolbar.
 ///
 /// [IosDocumentTouchInteractor] coordinates half of the iOS floating cursor behavior.
 /// This widget handles the following:
 ///  * Listens for the user to start moving the floating cursor, notifies the ancestor
-///    [IosEditorControlsContext] that the floating cursor is active, and starts
+///    [IosEditorControlsScope] that the floating cursor is active, and starts
 ///    managing auto-scrolling based on the floating cursor offset in the viewport.
 ///  * Listens for all user movements of the floating cursor, maps the floating
 ///    cursor offset to a document position, chooses an appropriate size for the
 ///    floating cursor based on the content beneath it, and then notifies the ancestor
-///    [IosEditorControlsContext] of the new floating cursor position and size.
+///    [IosEditorControlsScope] of the new floating cursor position and size.
 ///  * Listens for the user to stop using the floating cursor, notifies the ancestor
-///    [IosEditorControlsContext] thta the floating cursor is inactive, and stops
+///    [IosEditorControlsScope] thta the floating cursor is inactive, and stops
 ///    managing auto-scrolling based on the floating cursor offset in the viewport.
 ///
 /// This widget does NOT paint a floating cursor. That responsibility is left to
@@ -222,7 +222,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
   ScrollPosition? _activeScrollPosition;
 
-  IosEditorControlsContextData? _controlsContext;
+  IosEditorControlsContext? _controlsContext;
   late FloatingCursorListener _floatingCursorListener;
 
   late DragHandleAutoScroller _handleAutoScrolling;
@@ -276,7 +276,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     if (_controlsContext != null) {
       _controlsContext!.floatingCursorController.removeListener(_floatingCursorListener);
     }
-    _controlsContext = IosEditorControlsContext.rootOf(context);
+    _controlsContext = IosEditorControlsScope.rootOf(context);
     _controlsContext!.floatingCursorController.addListener(_floatingCursorListener);
 
     _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
@@ -1073,7 +1073,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     final cursorViewportOffset =
         Offset(cursorViewportOffsetRaw.dx, cursorViewportOffsetRaw.dy.clamp(0, viewportHeight));
     _initialFloatingCursorOffset = _initialFloatingCursorOffset! + (cursorViewportOffset - cursorViewportOffsetRaw);
-    IosEditorControlsContext.rootOf(context).floatingCursor.cursorGeometryInViewport.value = Rect.fromLTWH(
+    IosEditorControlsScope.rootOf(context).floatingCursor.cursorGeometryInViewport.value = Rect.fromLTWH(
       cursorViewportOffsetRaw.dx,
       cursorViewportOffsetRaw.dy - (_floatingCursorHeight / 2),
       FloatingCursorPolicies.defaultFloatingCursorWidth,
@@ -1252,7 +1252,7 @@ enum DragMode {
 }
 
 /// Adds and removes an iOS-style editor toolbar, as dictated by an ancestor
-/// [IosEditorControlsContext].
+/// [IosEditorControlsScope].
 class IosToolbarOverlayManager extends StatefulWidget {
   const IosToolbarOverlayManager({
     super.key,
@@ -1282,14 +1282,14 @@ class IosToolbarOverlayManager extends StatefulWidget {
 }
 
 class _IosToolbarOverlayManagerState extends State<IosToolbarOverlayManager> {
-  IosEditorControlsContextData? _controlsContext;
+  IosEditorControlsContext? _controlsContext;
   OverlayEntry? _toolbarOverlayEntry;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = IosEditorControlsContext.rootOf(context);
+    _controlsContext = IosEditorControlsScope.rootOf(context);
 
     // Add our overlay on the next frame. If we did it immediately, it would
     // cause a setState() to be called during didChangeDependencies, which is
@@ -1368,7 +1368,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
 
   Widget _buildFloatingCursor() {
     return ValueListenableBuilder<Rect?>(
-      valueListenable: IosEditorControlsContext.rootOf(context).floatingCursor.cursorGeometryInViewport,
+      valueListenable: IosEditorControlsScope.rootOf(context).floatingCursor.cursorGeometryInViewport,
       builder: (context, floatingCursorRect, child) {
         if (floatingCursorRect == null) {
           return const SizedBox();
@@ -1513,7 +1513,7 @@ class IosEditorControlsDocumentLayerState
 
   late BlinkController _caretBlinkController;
 
-  IosEditorControlsContextData? _controlsContext;
+  IosEditorControlsContext? _controlsContext;
 
   @override
   void initState() {
@@ -1530,7 +1530,7 @@ class IosEditorControlsDocumentLayerState
     if (_controlsContext != null) {
       _controlsContext!.floatingCursor.isActive.removeListener(_onFloatingCursorActivationChange);
     }
-    _controlsContext = IosEditorControlsContext.rootOf(context)
+    _controlsContext = IosEditorControlsScope.rootOf(context)
       ..floatingCursor.isActive.addListener(_onFloatingCursorActivationChange);
   }
 
@@ -1619,7 +1619,7 @@ class IosEditorControlsDocumentLayerState
     // changes this state or when it changes its visibility,
     // this widget is rebuilt.
     return ValueListenableBuilder<bool>(
-      valueListenable: IosEditorControlsContext.rootOf(context).floatingCursor.isNearText,
+      valueListenable: IosEditorControlsScope.rootOf(context).floatingCursor.isNearText,
       builder: (context, isNearText, _) {
         if (isNearText) {
           return const SizedBox.shrink();
@@ -1658,7 +1658,7 @@ class IosEditorControlsDocumentLayerState
       left: caret.left,
       top: caret.top,
       child: ValueListenableBuilder<bool>(
-        valueListenable: IosEditorControlsContext.rootOf(context).floatingCursor.isActive,
+        valueListenable: IosEditorControlsScope.rootOf(context).floatingCursor.isActive,
         builder: (context, isShowingFloatingCursor, child) {
           return IOSCollapsedHandle(
             controller: _caretBlinkController,
@@ -1717,7 +1717,7 @@ class IosEditorControlsDocumentLayerState
     // target. This magnifier follows that target.
     return Positioned.fill(
       child: ValueListenableBuilder(
-        valueListenable: IosEditorControlsContext.rootOf(context).shouldShowMagnifier,
+        valueListenable: IosEditorControlsScope.rootOf(context).shouldShowMagnifier,
         builder: (context, shouldShowMagnifier, child) {
           if (!shouldShowMagnifier) {
             return const SizedBox();
@@ -1727,7 +1727,7 @@ class IosEditorControlsDocumentLayerState
         },
         child: Center(
           child: IOSFollowingMagnifier.roundedRectangle(
-            layerLink: IosEditorControlsContext.rootOf(context).magnifierFocalPoint,
+            layerLink: IosEditorControlsScope.rootOf(context).magnifierFocalPoint,
             offsetFromFocalPoint: const Offset(0, -72),
           ),
         ),

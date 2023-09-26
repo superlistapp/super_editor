@@ -77,7 +77,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
   ScrollPosition? _activeScrollPosition;
 
-  IosEditorControlsContextData? _controlsContext;
+  IosEditorControlsContext? _controlsContext;
 
   late DragHandleAutoScroller _handleAutoScrolling;
   Offset? _globalStartDragOffset;
@@ -127,7 +127,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = IosEditorControlsContext.rootOf(context);
+    _controlsContext = IosEditorControlsScope.rootOf(context);
 
     _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
 
