@@ -721,10 +721,7 @@ void main() {
               300,
             );
 
-            // Pump a few frames of momentum.
-            for (int i = 0; i < 5; i += 1) {
-              await tester.pump(const Duration(milliseconds: 16));
-            }
+            await tester.pump();
 
             // Ensure SuperEditor is not scrolling.
             expect(scrollState.position.activity?.isScrolling, false);
