@@ -220,9 +220,9 @@ void main() {
       );
     });
 
-    group("doesn't scroll when content fits within the available space", () {
+    group("doesn't scroll reader when content fits within the available space", () {
       testWidgetsOnDesktop(
-        "attempt to scroll vertically in both directions",
+        "attempts to scroll reader vertically in both directions using trackpad",
         (tester) async {
           const windowSize = Size(800, 600);
           tester.view.physicalSize = windowSize;
@@ -262,6 +262,57 @@ void main() {
 
           // Ensure SuperReader is not scrolling.
           expect(scrollState.position.activity?.isScrolling, false);
+        },
+        variant: _scrollDirectionVariant,
+      );
+
+      testWidgetsOnDesktop(
+        "attempts to scroll reader vertically in both directions using scroll wheel",
+        (tester) async {
+          const windowSize = Size(800, 600);
+          tester.view.physicalSize = windowSize;
+
+          final isScrollUp = _scrollDirectionVariant.currentValue == _ScrollDirection.up;
+
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                paragraphThenHrThenParagraphDoc()
+                  ..insertNodeAt(
+                    0,
+                    ParagraphNode(
+                      id: Editor.createNodeId(),
+                      text: AttributedText('Document #1'),
+                      metadata: {
+                        'blockType': header1Attribution,
+                      },
+                    ),
+                  ),
+              )
+              .pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          final Offset scrollEventLocation = tester.getCenter(find.byType(SuperReader));
+          final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
+
+          // Send initial pointer event to set the location for subsequent pointer scroll events.
+          await tester.sendEventToBinding(testPointer.hover(scrollEventLocation));
+
+          // Send pointer scroll event to start scrolling.
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              Offset(
+                0.0,
+                isScrollUp ? 100 : -100.0,
+              ),
+            ),
+          );
+
+          await tester.pump();
+
+          // Ensure SuperReader is not scrolling.
+          expect(scrollState.position.activity!.isScrolling, false);
         },
         variant: _scrollDirectionVariant,
       );
