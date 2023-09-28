@@ -6,8 +6,8 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 void main() {
-  group("SuperEditor document content switching", () {
-    testWidgetsOnAllPlatforms("active document content is visible", (tester) async {
+  group("SuperEditor switching between multiple editors", () {
+    testWidgetsOnAllPlatforms("selected editor is visible after switching from a different editor", (tester) async {
       await tester.pumpWidget(const _SwitchDocumentDemo());
 
       // Ensure that the first documents content is visible.
@@ -23,7 +23,7 @@ void main() {
       expect(SuperEditorInspector.findWidgetForComponent<TextComponent>("Document2_Para"), isNotNull);
     });
 
-    testWidgetsOnAllPlatforms("each document maintains its selection when switching between documents", (tester) async {
+    testWidgetsOnAllPlatforms("restores selection when switching back to a previously selected editor", (tester) async {
       const docSelection1 = DocumentSelection(
         base: DocumentPosition(
           nodeId: "Document1_Header",
@@ -77,7 +77,7 @@ void main() {
       );
     });
 
-    testWidgetsOnDesktop("changes selection of the second document after switching", (tester) async {
+    testWidgetsOnDesktop("the user can select content after switching to a different editor", (tester) async {
       await tester.pumpWidget(const _SwitchDocumentDemo());
 
       // Switch to the second document.
@@ -113,7 +113,8 @@ void main() {
       );
     });
 
-    testWidgetsOnDesktop("able to edit the content of the active document after switching", (tester) async {
+    testWidgetsOnDesktop("the user can edit content in the selected editor after switching from a different editor",
+        (tester) async {
       await tester.pumpWidget(
         _SwitchDocumentDemo(
           composer2: MutableDocumentComposer(
