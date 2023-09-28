@@ -628,6 +628,11 @@ Future<void> _pressEnterOnSuperTextField(WidgetTester tester) async {
     return;
   }
 
+  if (!tester.testTextInput.hasAnyClients) {
+    // There isn't any IME connections.
+    return;
+  }
+
   // The ENTER key event wasn't handled by the textfield.
   // The OS generates both a "\n" insertion and a new line action.
   await tester.ime.typeText('\n', getter: imeClientGetter);
