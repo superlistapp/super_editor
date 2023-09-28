@@ -191,7 +191,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       return;
     }
 
-    if (_isFloatingCursorVisible) {
+    if (_isFloatingCursorVisible && textEditingDeltas.every((e) => e is TextEditingDeltaNonTextUpdate)) {
       // On iOS, dragging the floating cursor generates non-text deltas to update the selection.
       //
       // When dragging the floating cursor between paragraphs, we receive a non-text delta for the previously
