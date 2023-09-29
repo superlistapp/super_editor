@@ -25,6 +25,7 @@ String serializeDocumentToMarkdown(
     const HorizontalRuleNodeSerializer(),
     const ListItemNodeSerializer(),
     const TaskNodeSerializer(),
+    HeaderNodeSerializer(syntax),
     ParagraphNodeSerializer(syntax),
   ];
 
@@ -360,5 +361,80 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
       }
     }
     return "";
+  }
+}
+
+/// [DocumentNodeMarkdownSerializer], which serializes Markdown headers to
+/// [ParagraphNode]s with an appropriate header block type, and (optionally) a
+/// block alignment.
+///
+/// Headers are represented by `ParagraphNode`s and therefore this serializer must
+/// run before a [ParagraphNodeSerializer], so that this serializer can process
+/// header-specific details, such as header alignment.
+class HeaderNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<ParagraphNode> {
+  const HeaderNodeSerializer(this.markdownSyntax);
+
+  final MarkdownSyntax markdownSyntax;
+
+  @override
+  String? serialize(Document document, DocumentNode node) {
+    if (node is! ParagraphNode) {
+      return null;
+    }
+
+    // Only serialize this node when this is a header node.
+    final Attribution? blockType = node.getMetadataValue('blockType');
+    final isHeaderNode = blockType == header1Attribution ||
+        blockType == header2Attribution ||
+        blockType == header3Attribution ||
+        blockType == header4Attribution ||
+        blockType == header5Attribution ||
+        blockType == header6Attribution;
+
+    if (!isHeaderNode) {
+      return null;
+    }
+
+    return doSerialization(document, node);
+  }
+
+  @override
+  String doSerialization(Document document, ParagraphNode node) {
+    final buffer = StringBuffer();
+
+    final Attribution? blockType = node.getMetadataValue('blockType');
+    final String? textAlign = node.getMetadataValue('textAlign');
+
+    // Add the alignment token, we exclude the left alignment because it's the default.
+    if (markdownSyntax == MarkdownSyntax.superEditor && textAlign != null && textAlign != 'left') {
+      final alignmentToken = _convertAlignmentToMarkdown(textAlign);
+      if (alignmentToken != null) {
+        buffer.writeln(alignmentToken);
+      }
+    }
+
+    if (blockType == header1Attribution) {
+      buffer.write('# ${node.text.toMarkdown()}');
+    } else if (blockType == header2Attribution) {
+      buffer.write('## ${node.text.toMarkdown()}');
+    } else if (blockType == header3Attribution) {
+      buffer.write('### ${node.text.toMarkdown()}');
+    } else if (blockType == header4Attribution) {
+      buffer.write('#### ${node.text.toMarkdown()}');
+    } else if (blockType == header5Attribution) {
+      buffer.write('##### ${node.text.toMarkdown()}');
+    } else if (blockType == header6Attribution) {
+      buffer.write('###### ${node.text.toMarkdown()}');
+    }
+
+    // We're not at the end of the document yet. Add a blank line after the
+    // paragraph so that we can tell the difference between separate
+    // paragraphs vs. newlines within a single paragraph.
+    final nodeIndex = document.getNodeIndexById(node.id);
+    if (nodeIndex != document.nodes.length - 1) {
+      buffer.writeln();
+    }
+
+    return buffer.toString();
   }
 }

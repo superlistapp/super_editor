@@ -25,8 +25,10 @@ MutableDocument deserializeMarkdownToDocument(
   final markdownDoc = md.Document(
     blockSyntaxes: [
       ...customBlockSyntax,
-      if (syntax == MarkdownSyntax.superEditor) //
+      if (syntax == MarkdownSyntax.superEditor) ...[
+        _HeaderWithAlignmentSyntax(),
         _ParagraphWithAlignmentSyntax(),
+      ],
       _EmptyLinePreservingParagraphSyntax(),
       _TaskSyntax(),
     ],
@@ -197,12 +199,14 @@ class _MarkdownToDocument implements md.NodeVisitor {
         break;
     }
 
+    final textAlign = element.attributes['textAlign'];
     _content.add(
       ParagraphNode(
         id: Editor.createNodeId(),
         text: _parseInlineText(element),
         metadata: {
           'blockType': headerAttribution,
+          'textAlign': textAlign,
         },
       ),
     );
@@ -691,6 +695,86 @@ class _TaskSyntax extends md.BlockSyntax {
       'task',
       [md.Text(buffer.toString())],
     )..attributes['completed'] = (completionToken == 'x').toString();
+  }
+}
+
+/// Parses a header preceded by an alignment token.
+///
+/// Headers are represented by `_ParagraphWithAlignmentSyntax`s and therefore
+/// this parser must run before a [_ParagraphWithAlignmentSyntax], so that this parser
+/// can process header-specific details, such as header alignment.
+class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
+  /// This pattern matches the text alignment notation.
+  ///
+  /// Possible values are `:---`, `:---:`, `---:` and `-::-`.
+  static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:|-::-$');
+
+  /// Use internal HeaderSyntax.
+  final _headerSyntax = const md.HeaderSyntax();
+
+  @override
+  RegExp get pattern => RegExp('');
+
+  @override
+  bool canEndBlock(md.BlockParser parser) => false;
+
+  @override
+  bool canParse(md.BlockParser parser) {
+    if (!_alignmentNotationPattern.hasMatch(parser.current)) {
+      return false;
+    }
+
+    final nextLine = parser.peek(1);
+
+    // We found a match for a paragraph alignment token. However, the alignment token is the last
+    // line of content in the document. Therefore, it's not really a paragraph alignment token, and we
+    // should treat it as regular content.
+    if (nextLine == null) {
+      return false;
+    }
+
+    // Only parse if the next line is header.
+    if (!_headerSyntax.pattern.hasMatch(nextLine)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @override
+  md.Node? parse(md.BlockParser parser) {
+    final match = _alignmentNotationPattern.firstMatch(parser.current);
+
+    // We've parsed the alignment token on the current line. We know a header starts on the
+    // next line. Move the parser to the next line so that we can parse the header.
+    parser.advance();
+
+    final headerNode = _headerSyntax.parse(parser);
+
+    if (headerNode is md.Element) {
+      headerNode.attributes.addAll({'textAlign': _convertMarkdownAlignmentTokenToSuperEditorAlignment(match!.input)});
+    }
+
+    return headerNode;
+  }
+
+  /// Converts a markdown alignment token to the textAlign metadata used to configure
+  /// the [ParagraphNode] alignment.
+  String _convertMarkdownAlignmentTokenToSuperEditorAlignment(String alignmentToken) {
+    switch (alignmentToken) {
+      case ':---':
+        return 'left';
+      case ':---:':
+        return 'center';
+      case '---:':
+        return 'right';
+      case '-::-':
+        return 'justify';
+      // As we already check that the input matches the notation,
+      // we shouldn't reach this point.
+      default:
+        return 'left';
+    }
   }
 }
 
