@@ -40,31 +40,31 @@ void main() {
     });
   });
 
-  group("SuperEditor switching between multiple editors", () {
-    testWidgetsOnAllPlatforms("selected editor is visible after switching from a different editor", (tester) async {
-      await tester.pumpWidget(const _SwitchDocumentDemo());
+  group("SuperEditor > editor switching >", () {
+    testWidgetsOnAllPlatforms("can switch between editors", (tester) async {
+      await tester.pumpWidget(const _SwitchEditorsDemo());
 
-      // Ensure that the first documents content is visible.
-      expect(SuperEditorInspector.findWidgetForComponent<TextComponent>("Document1_Header"), isNotNull);
-      expect(SuperEditorInspector.findWidgetForComponent<TextComponent>("Document1_Para"), isNotNull);
+      // Ensure that the first editor content is visible.
+      expect(SuperEditorInspector.findWidgetForComponent<TextComponent>("Editor1_Header"), isNotNull);
+      expect(SuperEditorInspector.findWidgetForComponent<TextComponent>("Editor1_Para"), isNotNull);
 
-      // Switch to the second document.
-      await tester.tap(find.byKey(const ValueKey("Document2")));
+      // Switch to the second editor.
+      await tester.tap(find.byKey(const ValueKey("Editor2")));
       await tester.pump();
 
-      // Ensure that the second documents content is visible.
-      expect(SuperEditorInspector.findWidgetForComponent<TextComponent>("Document2_Header"), isNotNull);
-      expect(SuperEditorInspector.findWidgetForComponent<TextComponent>("Document2_Para"), isNotNull);
+      // Ensure that the second editor content is visible.
+      expect(SuperEditorInspector.findWidgetForComponent<TextComponent>("Editor2_Header"), isNotNull);
+      expect(SuperEditorInspector.findWidgetForComponent<TextComponent>("Editor2_Para"), isNotNull);
     });
 
     testWidgetsOnAllPlatforms("restores selection when switching back to a previously selected editor", (tester) async {
       const docSelection1 = DocumentSelection(
         base: DocumentPosition(
-          nodeId: "Document1_Header",
+          nodeId: "Editor1_Header",
           nodePosition: TextNodePosition(offset: 0),
         ),
         extent: DocumentPosition(
-          nodeId: "Document1_Para",
+          nodeId: "Editor1_Para",
           nodePosition: TextNodePosition(offset: 10),
         ),
       );
@@ -74,11 +74,11 @@ void main() {
 
       const docSelection2 = DocumentSelection(
         base: DocumentPosition(
-          nodeId: "Document2_Header",
+          nodeId: "Editor2_Header",
           nodePosition: TextNodePosition(offset: 0),
         ),
         extent: DocumentPosition(
-          nodeId: "Document2_Para",
+          nodeId: "Editor2_Para",
           nodePosition: TextNodePosition(offset: 5),
         ),
       );
@@ -86,25 +86,25 @@ void main() {
         initialSelection: docSelection2,
       );
 
-      await tester.pumpWidget(_SwitchDocumentDemo(
+      await tester.pumpWidget(_SwitchEditorsDemo(
         composer1: composer1,
         composer2: composer2,
       ));
 
-      // Switch to the second document.
-      await tester.tap(find.byKey(const ValueKey("Document2")));
+      // Switch to the second editor.
+      await tester.tap(find.byKey(const ValueKey("Editor2")));
       await tester.pump();
 
-      // Ensure that the original selection is maintained for the second document.
+      // Ensure that the original selection is maintained for the second editor.
       expect(
         SuperEditorInspector.findDocumentSelection(),
         docSelection2,
       );
 
-      await tester.tap(find.byKey(const ValueKey("Document1")));
+      await tester.tap(find.byKey(const ValueKey("Editor1")));
       await tester.pump();
 
-      // Ensure that the original selection is maintained for the first document.
+      // Ensure that the original selection is maintained for the first editor.
       expect(
         SuperEditorInspector.findDocumentSelection(),
         docSelection1,
@@ -112,17 +112,17 @@ void main() {
     });
 
     testWidgetsOnDesktop("the user can select content after switching to a different editor", (tester) async {
-      await tester.pumpWidget(const _SwitchDocumentDemo());
+      await tester.pumpWidget(const _SwitchEditorsDemo());
 
-      // Switch to the second document.
-      await tester.tap(find.byKey(const ValueKey("Document2")));
+      // Switch to the second editor.
+      await tester.tap(find.byKey(const ValueKey("Editor2")));
       await tester.pump();
 
       final document = SuperEditorInspector.findDocument()!;
-      final header = document.getNodeById("Document2_Header") as ParagraphNode;
-      final paragraph = document.getNodeById("Document2_Para") as ParagraphNode;
+      final header = document.getNodeById("Editor2_Header") as ParagraphNode;
+      final paragraph = document.getNodeById("Editor2_Para") as ParagraphNode;
 
-      // Change the selection on the second document.
+      // Change the selection on the second editor.
       await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
           nodeId: header.id,
@@ -147,14 +147,13 @@ void main() {
       );
     });
 
-    testWidgetsOnDesktop("the user can edit content in the selected editor after switching from a different editor",
-        (tester) async {
+    testWidgetsOnDesktop("the user can edit content after switching to a different editor", (tester) async {
       await tester.pumpWidget(
-        _SwitchDocumentDemo(
+        _SwitchEditorsDemo(
           composer2: MutableDocumentComposer(
             initialSelection: const DocumentSelection.collapsed(
               position: DocumentPosition(
-                nodeId: "Document2_Header",
+                nodeId: "Editor2_Header",
                 nodePosition: TextNodePosition(offset: "Document #2".length),
               ),
             ),
@@ -163,17 +162,17 @@ void main() {
       );
 
       // Enable the SuperEditor.
-      await tester.placeCaretInParagraph("Document1_Header", 0);
+      await tester.placeCaretInParagraph("Editor1_Header", 0);
 
-      // Switch to the second document.
-      await tester.tap(find.byKey(const ValueKey("Document2")));
+      // Switch to the second editor.
+      await tester.tap(find.byKey(const ValueKey("Editor2")));
       await tester.pump();
 
       await tester.pressBackspace();
 
       // Ensure that the text was edited upon pressing backspace.
       expect(
-        SuperEditorInspector.findTextInParagraph("Document2_Header").text,
+        SuperEditorInspector.findTextInParagraph("Editor2_Header").text,
         "Document #",
       );
 
@@ -181,7 +180,7 @@ void main() {
 
       // Ensure that the text was inserted into the paragraph.
       expect(
-        SuperEditorInspector.findTextInParagraph("Document2_Header").text,
+        SuperEditorInspector.findTextInParagraph("Editor2_Header").text,
         "Document #Edit",
       );
     });
@@ -233,12 +232,12 @@ Future<void> _buildTextScaleScaffold(
   );
 }
 
-/// Demo of an [SuperEditor] widget where the [DocumentEditor] changes.
+/// Demo of an [SuperEditor] widget where the [Editor] changes.
 ///
 /// This demo ensures that [SuperEditor] state resets where appropriate
 /// when its content is replaced.
-class _SwitchDocumentDemo extends StatefulWidget {
-  const _SwitchDocumentDemo({
+class _SwitchEditorsDemo extends StatefulWidget {
+  const _SwitchEditorsDemo({
     Key? key,
     this.composer1,
     this.composer2,
@@ -248,10 +247,10 @@ class _SwitchDocumentDemo extends StatefulWidget {
   final MutableDocumentComposer? composer2;
 
   @override
-  State<_SwitchDocumentDemo> createState() => _SwitchDocumentDemoState();
+  State<_SwitchEditorsDemo> createState() => _SwitchEditorsDemoState();
 }
 
-class _SwitchDocumentDemoState extends State<_SwitchDocumentDemo> {
+class _SwitchEditorsDemoState extends State<_SwitchEditorsDemo> {
   late MutableDocument _doc1;
   late MutableDocumentComposer _composer1;
   late Editor _docEditor1;
@@ -313,7 +312,7 @@ class _SwitchDocumentDemoState extends State<_SwitchDocumentDemo> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         TextButton(
-          key: const ValueKey("Document1"),
+          key: const ValueKey("Editor1"),
           onPressed: () {
             setState(() {
               _activeDocument = _doc1;
@@ -325,7 +324,7 @@ class _SwitchDocumentDemoState extends State<_SwitchDocumentDemo> {
         ),
         const SizedBox(width: 24),
         TextButton(
-          key: const ValueKey("Document2"),
+          key: const ValueKey("Editor2"),
           onPressed: () {
             setState(() {
               _activeDocument = _doc2;
@@ -344,14 +343,14 @@ MutableDocument _createDocument1() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: "Document1_Header",
+        id: "Editor1_Header",
         text: AttributedText('Document #1'),
         metadata: {
           'blockType': header1Attribution,
         },
       ),
       ParagraphNode(
-        id: "Document1_Para",
+        id: "Editor1_Para",
         text: AttributedText(
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
         ),
@@ -364,14 +363,14 @@ MutableDocument _createDocument2() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: "Document2_Header",
+        id: "Editor2_Header",
         text: AttributedText('Document #2'),
         metadata: {
           'blockType': header1Attribution,
         },
       ),
       ParagraphNode(
-        id: "Document2_Para",
+        id: "Editor2_Para",
         text: AttributedText(
           'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.',
         ),
