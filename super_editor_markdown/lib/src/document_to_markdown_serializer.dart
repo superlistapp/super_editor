@@ -405,7 +405,7 @@ class HeaderNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Parag
     final Attribution? blockType = node.getMetadataValue('blockType');
     final String? textAlign = node.getMetadataValue('textAlign');
 
-    // Left alignment is the default, so there is no need to add the alignment token.
+    // Add the alignment token, we exclude the left alignment because it's the default.
     if (markdownSyntax == MarkdownSyntax.superEditor && textAlign != null && textAlign != 'left') {
       final alignmentToken = _convertAlignmentToMarkdown(textAlign);
       if (alignmentToken != null) {
