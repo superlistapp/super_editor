@@ -1,5 +1,5 @@
-import 'package:super_editor/super_editor.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 void main() {
@@ -30,6 +30,67 @@ void main() {
 
         (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header6Attribution);
         expect(serializeDocumentToMarkdown(doc), '###### My Header');
+      });
+
+      test('header with left alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText('Header1'),
+            metadata: {
+              'textAlign': 'left',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+        // Even when using superEditor markdown syntax, which has support
+        // for text alignment, we don't add an alignment token when
+        // the paragraph is left-aligned.
+        // Paragraphs are left-aligned by default, so it isn't necessary
+        // to serialize the alignment token.
+        expect(serializeDocumentToMarkdown(doc), '# Header1');
+      });
+
+      test('header with center alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText('Header1'),
+            metadata: {
+              'textAlign': 'center',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+        expect(serializeDocumentToMarkdown(doc), ':---:\n# Header1');
+      });
+
+      test('header with right alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText('Header1'),
+            metadata: {
+              'textAlign': 'right',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+        expect(serializeDocumentToMarkdown(doc), '---:\n# Header1');
+      });
+
+      test('header with justify alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText('Header1'),
+            metadata: {
+              'textAlign': 'justify',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+        expect(serializeDocumentToMarkdown(doc), '-::-\n# Header1');
       });
 
       test('header with styles', () {
@@ -558,6 +619,26 @@ with multiple lines
             text: AttributedText('Example Doc'),
             metadata: {'blockType': header1Attribution},
           ),
+          ParagraphNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('Example Doc With Left Alignment'),
+            metadata: {'blockType': header1Attribution, 'textAlign': 'left'},
+          ),
+          ParagraphNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('Example Doc With Center Alignment'),
+            metadata: {'blockType': header1Attribution, 'textAlign': 'center'},
+          ),
+          ParagraphNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('Example Doc With Right Alignment'),
+            metadata: {'blockType': header1Attribution, 'textAlign': 'right'},
+          ),
+          ParagraphNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('Example Doc With Justify Alignment'),
+            metadata: {'blockType': header1Attribution, 'textAlign': 'justify'},
+          ),
           HorizontalRuleNode(id: Editor.createNodeId()),
           ParagraphNode(
             id: Editor.createNodeId(),
@@ -669,6 +750,38 @@ with multiple lines
 
         final header6Doc = deserializeMarkdownToDocument('###### Header 6');
         expect((header6Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header6Attribution);
+      });
+
+      test('header with left alignment', () {
+        final headerLeftAlignment1 = deserializeMarkdownToDocument(':---\n# Header 1');
+        final header = headerLeftAlignment1.nodes.first as ParagraphNode;
+        expect(header.getMetadataValue('blockType'), header1Attribution);
+        expect(header.getMetadataValue('textAlign'), 'left');
+        expect(header.text.text, 'Header 1');
+      });
+
+      test('header with center alignment', () {
+        final headerLeftAlignment1 = deserializeMarkdownToDocument(':---:\n# Header 1');
+        final header = headerLeftAlignment1.nodes.first as ParagraphNode;
+        expect(header.getMetadataValue('blockType'), header1Attribution);
+        expect(header.getMetadataValue('textAlign'), 'center');
+        expect(header.text.text, 'Header 1');
+      });
+
+      test('header with right alignment', () {
+        final headerLeftAlignment1 = deserializeMarkdownToDocument('---:\n# Header 1');
+        final header = headerLeftAlignment1.nodes.first as ParagraphNode;
+        expect(header.getMetadataValue('blockType'), header1Attribution);
+        expect(header.getMetadataValue('textAlign'), 'right');
+        expect(header.text.text, 'Header 1');
+      });
+
+      test('header with justify alignment', () {
+        final headerLeftAlignment1 = deserializeMarkdownToDocument('-::-\n# Header 1');
+        final header = headerLeftAlignment1.nodes.first as ParagraphNode;
+        expect(header.getMetadataValue('blockType'), header1Attribution);
+        expect(header.getMetadataValue('textAlign'), 'justify');
+        expect(header.text.text, 'Header 1');
       });
 
       test('blockquote', () {
@@ -885,7 +998,7 @@ with multiple lines
       test('example doc 1', () {
         final document = deserializeMarkdownToDocument(exampleMarkdownDoc1);
 
-        expect(document.nodes.length, 21);
+        expect(document.nodes.length, 26);
 
         expect(document.nodes[0], isA<ParagraphNode>());
         expect((document.nodes[0] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
@@ -916,7 +1029,25 @@ with multiple lines
 
         expect(document.nodes[19], isA<TaskNode>());
 
-        expect(document.nodes[20], isA<ParagraphNode>());
+        expect(document.nodes[20], isA<HorizontalRuleNode>());
+
+        expect(document.nodes[21], isA<ParagraphNode>());
+        expect((document.nodes[21] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
+        expect((document.nodes[21] as ParagraphNode).getMetadataValue('textAlign'), 'left');
+
+        expect(document.nodes[22], isA<ParagraphNode>());
+        expect((document.nodes[22] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
+        expect((document.nodes[22] as ParagraphNode).getMetadataValue('textAlign'), 'center');
+
+        expect(document.nodes[23], isA<ParagraphNode>());
+        expect((document.nodes[23] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
+        expect((document.nodes[23] as ParagraphNode).getMetadataValue('textAlign'), 'right');
+
+        expect(document.nodes[24], isA<ParagraphNode>());
+        expect((document.nodes[24] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
+        expect((document.nodes[24] as ParagraphNode).getMetadataValue('textAlign'), 'justify');
+
+        expect(document.nodes[25], isA<ParagraphNode>());
       });
 
       test('paragraph with strikethrough', () {
@@ -1151,6 +1282,17 @@ with multiple lines
 Another paragraph
 
 - [x] Completed task
+
+---
+
+:---
+# Example 1 With Left Alignment
+:---:
+# Example 1 With Center Alignment
+---:
+# Example 1 With Right Alignment
+-::-
+# Example 1 With Justify Alignment
 
 The end!
 ''';
