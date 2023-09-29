@@ -220,9 +220,9 @@ void main() {
       );
     });
 
-    group("doesn't scroll reader when content fits within the available space", () {
+    group("in absence of scrollable content", () {
       testWidgetsOnDesktop(
-        "attempts to scroll reader vertically in both directions using trackpad",
+        "doesn't scroll on scroll attempts through trackpad",
         (tester) async {
           const windowSize = Size(800, 600);
           tester.view.physicalSize = windowSize;
@@ -264,7 +264,7 @@ void main() {
       );
 
       testWidgetsOnDesktop(
-        "attempts to scroll reader vertically in both directions using scroll wheel",
+        "doesn't scroll on scroll attempts through scroll wheel",
         (tester) async {
           const windowSize = Size(800, 600);
           tester.view.physicalSize = windowSize;
