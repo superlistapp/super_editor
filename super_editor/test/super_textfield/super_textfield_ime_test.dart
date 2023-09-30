@@ -7,7 +7,6 @@ import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
-import '../super_editor/supereditor_test_tools.dart';
 import 'super_textfield_inspector.dart';
 import 'super_textfield_robot.dart';
 
@@ -241,7 +240,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(8);
 
-          await _pressEnterWithIme(tester);
+          await tester.pressEnterWithIme(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
@@ -256,7 +255,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(0);
 
-          await _pressEnterWithIme(tester);
+          await tester.pressEnterWithIme(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
@@ -271,7 +270,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(17);
 
-          await _pressEnterWithIme(tester);
+          await tester.pressEnterWithIme(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
@@ -302,7 +301,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(8);
 
-          await _pressNumpadEnterOnSuperTextField(tester);
+          await tester.pressNumpadEnterWithIme(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
@@ -333,7 +332,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(0);
 
-          await _pressNumpadEnterOnSuperTextField(tester);
+          await tester.pressNumpadEnterWithIme(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
@@ -364,7 +363,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(17);
 
-          await _pressNumpadEnterOnSuperTextField(tester);
+          await tester.pressNumpadEnterWithIme(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
@@ -618,43 +617,6 @@ void main() {
       expect(controller.text.text, 'This is a');
     });
   });
-}
-
-Future<void> _pressEnterWithIme(WidgetTester tester) async {
-  final handled = await tester.sendKeyEvent(LogicalKeyboardKey.enter, platform: testKeyEventPlatform);
-  if (handled) {
-    // The textfield handled the key event.
-    // It won't bubble up to the OS to generate text deltas or input actions.
-    return;
-  }
-
-  if (!tester.testTextInput.hasAnyClients) {
-    // There isn't any IME connections.
-    return;
-  }
-
-  // The ENTER key event wasn't handled by the textfield.
-  // The OS generates both a "\n" insertion and a new line action.
-  await tester.ime.typeText('\n', getter: imeClientGetter);
-  await tester.pump();
-  await tester.testTextInput.receiveAction(TextInputAction.newline);
-  await tester.pump();
-}
-
-Future<void> _pressNumpadEnterOnSuperTextField(WidgetTester tester) async {
-  final handled = await tester.sendKeyEvent(LogicalKeyboardKey.numpadEnter, platform: testKeyEventPlatform);
-  if (handled) {
-    // The textfield handled the key event.
-    // It won't bubble up to the OS to generate text deltas or input actions.
-    return;
-  }
-
-  // The ENTER key event wasn't handled by the textfield.
-  // The OS generates both a "\n" insertion and a new line action.
-  await tester.ime.typeText('\n', getter: imeClientGetter);
-  await tester.pump();
-  await tester.testTextInput.receiveAction(TextInputAction.newline);
-  await tester.pump();
 }
 
 // Based on experiments, the text is laid out as follows (at 320px wide):

@@ -748,21 +748,3 @@ class FakeSuperEditorScroller implements DocumentScroller {
   @override
   void detach() => throw UnimplementedError();
 }
-
-/// The platform to be used when simulating a keyboard event with `sendKeyEvent`,
-/// `sendKeyDownEvent` or `sendKeyUpEvent`.
-String get testKeyEventPlatform {
-  switch (defaultTargetPlatform) {
-    case TargetPlatform.android:
-      return "android";
-    case TargetPlatform.iOS:
-      return "ios";
-    case TargetPlatform.macOS:
-      return "macos";
-    case TargetPlatform.windows:
-      return "windows";
-    case TargetPlatform.fuchsia:
-    case TargetPlatform.linux:
-      return "linux";
-  }
-}
