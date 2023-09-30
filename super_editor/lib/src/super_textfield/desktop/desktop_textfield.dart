@@ -1308,13 +1308,11 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   void _onPerformAction(TextInputAction action) {
     switch (action) {
       case TextInputAction.newline:
-        // On mac desktop, we don't insert new lines via keyboard events.
-        // Because of that, pressing ENTER causes both a "\n" insertion delta
-        // and an onPerformAction call.
-        // We handle the "\n" insertion and ignore the text input action.
-        // If we handle the text input action instead of the "\n" insertion,
-        // pressing ENTER while the textfield has an expanded selection would cause
-        // a new line to be inserted instead of replacing the selection with a new line.
+        // Do nothing for IME newline actions.
+        //
+        // Mac: Key presses flow, unhandled, to the OS and turn into IME selectors. We handle newlines there.
+        // Windows/Linux: Newlines are inserted by SuperTextField key handlers, instead of IME actions.
+        // Android/iOS: This text field implementation is only for desktop, mobile is handled elsewhere.
         break;
       case TextInputAction.done:
         widget.focusNode.unfocus();

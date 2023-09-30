@@ -241,7 +241,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(8);
 
-          await _pressEnterOnSuperTextField(tester);
+          await _pressEnterWithIme(tester);
 
           expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
@@ -256,7 +256,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(0);
 
-          await _pressEnterOnSuperTextField(tester);
+          await _pressEnterWithIme(tester);
 
           expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
@@ -271,7 +271,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(17);
 
-          await _pressEnterOnSuperTextField(tester);
+          await _pressEnterWithIme(tester);
 
           expect(SuperTextFieldInspector.findText().text, "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
@@ -620,7 +620,7 @@ void main() {
   });
 }
 
-Future<void> _pressEnterOnSuperTextField(WidgetTester tester) async {
+Future<void> _pressEnterWithIme(WidgetTester tester) async {
   final handled = await tester.sendKeyEvent(LogicalKeyboardKey.enter, platform: testKeyEventPlatform);
   if (handled) {
     // The textfield handled the key event.
