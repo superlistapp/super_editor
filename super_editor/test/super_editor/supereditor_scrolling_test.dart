@@ -686,12 +686,11 @@ void main() {
         });
       });
 
-      group("in absence of scrollable content", () {
+      group("when all content fits in the viewport", () {
         testWidgetsOnDesktop(
-          "doesn't scroll on scroll attempts through trackpad",
+          "trackpad doesn't scroll content",
           (tester) async {
-            const windowSize = Size(800, 600);
-            tester.view.physicalSize = windowSize;
+            tester.view.physicalSize = const Size(800, 600);
 
             final isScrollingUp = _scrollDirectionVariant.currentValue == _ScrollDirection.up;
 
@@ -730,10 +729,9 @@ void main() {
         );
 
         testWidgetsOnDesktop(
-          "doesn't scroll on scroll attempts through scroll wheel",
+          "mouse scroll wheel doesn't scroll content",
           (tester) async {
-            const windowSize = Size(800, 600);
-            tester.view.physicalSize = windowSize;
+            tester.view.physicalSize = const Size(800, 600);
 
             final isScrollUp = _scrollDirectionVariant.currentValue == _ScrollDirection.up;
 
