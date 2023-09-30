@@ -950,8 +950,6 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   moveToLineStartWithHome,
   moveToLineEndWithEnd,
   doNothingWithEnterOnWeb,
-  enterToInsertNewTask,
-  enterToInsertBlockNewline,
   tabToIndentListItem,
   shiftTabToUnIndentListItem,
   deleteToStartOfLineWithCmdBackspaceOnMac,
