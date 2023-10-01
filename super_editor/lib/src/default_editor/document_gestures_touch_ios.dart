@@ -1387,10 +1387,129 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
   }
 }
 
-// TODO: should the magnifier be moved to its own layer? It seems a bit different than the handles.
+/// A [SuperEditorLayerBuilder], which builds a [IosMagnifierDocumentLayer],
+/// which displays iOS-style magnifier.
+class IosEditorMagnifierDocumentLayerBuilder implements SuperEditorLayerBuilder {
+  const IosEditorMagnifierDocumentLayerBuilder();
+
+  @override
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
+    if (defaultTargetPlatform != TargetPlatform.iOS) {
+      return const ContentLayerProxyWidget(child: SizedBox());
+    }
+
+    return const IosMagnifierDocumentLayer();
+  }
+}
+
+/// A [SuperReaderLayerBuilder], which builds a [IosMagnifierDocumentLayer],
+/// which displays iOS-style magnifier.
+class IosReaderMagnifierDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
+  const IosReaderMagnifierDocumentLayerBuilder();
+
+  @override
+  ContentLayerWidget build(BuildContext context, SuperReaderContext editContext) {
+    if (defaultTargetPlatform != TargetPlatform.iOS) {
+      return const ContentLayerProxyWidget(child: SizedBox());
+    }
+
+    return const IosMagnifierDocumentLayer();
+  }
+}
+
+/// A document layer that displays iOS-style magnifier.
+///
+/// The magnifier is displayed whenever [magnifierFocalPoint.value] is not `null`.
+/// The magnifier is positioned as a follower, following the given
+/// [magnifierFocalPoint]. Unlike the caret and handles, the magnifier requires
+/// a leader because the magnifier position is tied to the user's gesture
+/// behavior, rather than the document layout.
+class IosMagnifierDocumentLayer extends DocumentLayoutLayerStatefulWidget {
+  const IosMagnifierDocumentLayer({
+    super.key,
+    this.showDebugPaint = false,
+  });
+
+  final bool showDebugPaint;
+
+  @override
+  DocumentLayoutLayerState<IosMagnifierDocumentLayer, DocumentSelectionLayout> createState() =>
+      IosEditorMagnifierDocumentLayerState();
+}
+
+@visibleForTesting
+class IosEditorMagnifierDocumentLayerState
+    extends DocumentLayoutLayerState<IosMagnifierDocumentLayer, DocumentSelectionLayout>
+    with SingleTickerProviderStateMixin {
+  IosEditorControlsContext? _controlsContext;
+  late final OverlayEntry _magnifierOverlay;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _magnifierOverlay = OverlayEntry(builder: (_) => _buildMagnifier());
+    onNextFrame((timeStamp) {
+      Overlay.of(context).insert(_magnifierOverlay);
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _controlsContext = IosEditorControlsScope.rootOf(context);
+  }
+
+  @override
+  void dispose() {
+    _controlsContext = null;
+    _magnifierOverlay.remove();
+
+    super.dispose();
+  }
+
+  @override
+  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+    return null;
+  }
+
+  @override
+  Widget doBuild(BuildContext context, DocumentSelectionLayout? layoutData) {
+    return const SizedBox();
+  }
+
+  Widget _buildMagnifier() {
+    if (_controlsContext == null) {
+      return const SizedBox();
+    }
+
+    // Display a magnifier that tracks a focal point.
+    //
+    // When the user is dragging an overlay handle, we place a LayerLink
+    // target. This magnifier follows that target.
+    return Positioned.fill(
+      child: ValueListenableBuilder(
+        valueListenable: _controlsContext!.shouldShowMagnifier,
+        builder: (context, shouldShowMagnifier, child) {
+          if (!shouldShowMagnifier) {
+            return const SizedBox();
+          }
+
+          return child!;
+        },
+        child: Center(
+          child: IOSFollowingMagnifier.roundedRectangle(
+            layerLink: _controlsContext!.magnifierFocalPoint,
+            offsetFromFocalPoint: const Offset(0, -72),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// A [SuperEditorLayerBuilder], which builds a [IosEditorControlsDocumentLayer],
-/// which displays iOS-style caret, handles, and magnifier.
+/// which displays iOS-style caret and handles.
 class IosEditorControlsDocumentLayerBuilder implements SuperEditorLayerBuilder {
   const IosEditorControlsDocumentLayerBuilder({
     this.handleColor,
@@ -1419,7 +1538,7 @@ class IosEditorControlsDocumentLayerBuilder implements SuperEditorLayerBuilder {
 }
 
 /// A [SuperReaderLayerBuilder], which builds a [IosEditorControlsDocumentLayer],
-/// which displays iOS-style handles and magnifier.
+/// which displays iOS-style handles.
 class IosReaderControlsDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
   const IosReaderControlsDocumentLayerBuilder({
     this.handleColor,
@@ -1603,7 +1722,7 @@ class IosEditorControlsDocumentLayerState
           children: [
             if (layoutData != null) ...[
               _buildHandles(layoutData),
-              _buildMagnifier(),
+              // _buildMagnifier(),
             ],
           ],
         ),
@@ -1710,28 +1829,28 @@ class IosEditorControlsDocumentLayerState
     );
   }
 
-  Widget _buildMagnifier() {
-    // Display a magnifier that tracks a focal point.
-    //
-    // When the user is dragging an overlay handle, we place a LayerLink
-    // target. This magnifier follows that target.
-    return Positioned.fill(
-      child: ValueListenableBuilder(
-        valueListenable: IosEditorControlsScope.rootOf(context).shouldShowMagnifier,
-        builder: (context, shouldShowMagnifier, child) {
-          if (!shouldShowMagnifier) {
-            return const SizedBox();
-          }
-
-          return child!;
-        },
-        child: Center(
-          child: IOSFollowingMagnifier.roundedRectangle(
-            layerLink: IosEditorControlsScope.rootOf(context).magnifierFocalPoint,
-            offsetFromFocalPoint: const Offset(0, -72),
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _buildMagnifier() {
+  //   // Display a magnifier that tracks a focal point.
+  //   //
+  //   // When the user is dragging an overlay handle, we place a LayerLink
+  //   // target. This magnifier follows that target.
+  //   return Positioned.fill(
+  //     child: ValueListenableBuilder(
+  //       valueListenable: IosEditorControlsScope.rootOf(context).shouldShowMagnifier,
+  //       builder: (context, shouldShowMagnifier, child) {
+  //         if (!shouldShowMagnifier) {
+  //           return const SizedBox();
+  //         }
+  //
+  //         return child!;
+  //       },
+  //       child: Center(
+  //         child: IOSFollowingMagnifier.roundedRectangle(
+  //           layerLink: IosEditorControlsScope.rootOf(context).magnifierFocalPoint,
+  //           offsetFromFocalPoint: const Offset(0, -72),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }

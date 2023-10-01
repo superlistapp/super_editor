@@ -7,6 +7,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 
 /// A document layer that positions leader widgets at the user's selection bounds.
 ///
@@ -121,6 +122,12 @@ class _SelectionLeadersDocumentLayerState
     if (selectionLayout == null) {
       return const SizedBox();
     }
+
+    onNextFrame((_) {
+      print("Building selection link leaders:");
+      print(" - expanded selection link: ${widget.links.expandedSelectionBoundsLink}");
+      print(" - expanded selection rect: ${selectionLayout.expandedSelectionBounds}");
+    });
 
     return IgnorePointer(
       child: Stack(

@@ -25,6 +25,8 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
 
   FocusNode? _editorFocusNode;
 
+  final _selectionLayerLinks = SelectionLayerLinks();
+
   @override
   void initState() {
     super.initState();
@@ -81,11 +83,13 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
               overlayController: _overlayController,
               gestureMode: DocumentGestureMode.iOS,
               inputSource: TextInputSource.ime,
+              selectionLayerLinks: _selectionLayerLinks,
               iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
                 onCutPressed: _cut,
                 onCopyPressed: _copy,
                 onPastePressed: _paste,
-                focalPoint: _overlayController.toolbarTopAnchor!,
+                // focalPoint: _overlayController.toolbarTopAnchor!,
+                focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
               ),
               stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.all(16),

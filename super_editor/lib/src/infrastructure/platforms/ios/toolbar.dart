@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:overlord/follow_the_leader.dart';
 import 'package:overlord/overlord.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/colors.dart';
 
@@ -8,22 +10,21 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
     this.onCutPressed,
     this.onCopyPressed,
     this.onPastePressed,
-    required this.focalPoint,
+    this.focalPoint,
   }) : super(key: key);
 
   final VoidCallback? onCutPressed;
   final VoidCallback? onCopyPressed;
   final VoidCallback? onPastePressed;
 
-  /// The point where the toolbar should point to.
-  ///
-  /// Represented as global coordinates.
-  final Offset focalPoint;
+  /// Direction that the toolbar arrow should point.
+  final LeaderLink? focalPoint;
 
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
 
+    print("Toolbar - focal point: $focalPoint");
     return Theme(
       data: ThemeData(
         colorScheme: brightness == Brightness.light //
@@ -31,7 +32,9 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
             : const ColorScheme.dark(primary: Colors.white),
       ),
       child: CupertinoPopoverToolbar(
-        focalPoint: StationaryMenuFocalPoint(focalPoint),
+        // TODO: make the focal point required
+        focalPoint:
+            focalPoint != null ? LeaderMenuFocalPoint(link: focalPoint!) : const StationaryMenuFocalPoint(Offset.zero),
         elevation: 8.0,
         backgroundColor: brightness == Brightness.dark //
             ? iOSToolbarDarkBackgroundColor
@@ -67,6 +70,11 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
     required String title,
     required VoidCallback onPressed,
   }) {
+    // return CupertinoPopoverToolbarMenuItem(
+    //   label: title,
+    //   onPressed: onPressed,
+    // );
+
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(

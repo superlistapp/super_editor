@@ -14,6 +14,7 @@ class SuperReaderDemo extends StatefulWidget {
 class _SuperReaderDemoState extends State<SuperReaderDemo> {
   late final Document _document;
   final _selection = ValueNotifier<DocumentSelection?>(null);
+  final _selectionLayerLinks = SelectionLayerLinks();
   late MagnifierAndToolbarController _overlayController;
 
   @override
@@ -121,17 +122,24 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
       document: _document,
       selection: _selection,
       overlayController: _overlayController,
+      selectionLayerLinks: _selectionLayerLinks,
       androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
         onCopyPressed: _copy,
         onSelectAllPressed: _selectAll,
       ),
       iOSToolbarBuilder: (context) {
+        print("Building actual toolbar");
+        print(" - selectionLinks: ${_selectionLayerLinks.hashCode}");
+        print(" - expanded selection link: ${_selectionLayerLinks.expandedSelectionBoundsLink}");
         return IOSTextEditingFloatingToolbar(
           onCopyPressed: _copy,
-          // TODO: bring back an anchor Offset
-          // focalPoint: _overlayController.toolbarTopAnchor!,
-          focalPoint: Offset.zero,
+          focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
         );
+        // return IOSTextEditingFloatingToolbar(
+        //   onCopyPressed: _copy,
+        //   onCutPressed: () {},
+        //   focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
+        // );
       },
     );
   }

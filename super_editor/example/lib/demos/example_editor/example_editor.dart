@@ -428,6 +428,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
                 caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
               ),
               IosEditorControlsDocumentLayerBuilder(),
+              IosEditorMagnifierDocumentLayerBuilder(),
             ],
             selectionLayerLinks: _selectionLayerLinks,
             selectionStyle: isLight
@@ -465,15 +466,15 @@ class _ExampleEditorState extends State<ExampleEditor> {
             iOSToolbarBuilder: (_) => ListenableBuilder(
               listenable: _brightness,
               builder: (context, _) {
+                print(
+                    "Building editor toolbar with expanded selection link: ${_selectionLayerLinks.expandedSelectionBoundsLink}");
                 return Theme(
                   data: ThemeData(brightness: _brightness.value),
                   child: IOSTextEditingFloatingToolbar(
                     onCutPressed: _cut,
                     onCopyPressed: _copy,
                     onPastePressed: _paste,
-                    // TODO: bring back an anchor Offset
-                    // focalPoint: _overlayController.toolbarTopAnchor!,
-                    focalPoint: Offset.zero,
+                    focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
                   ),
                 );
               },

@@ -933,6 +933,7 @@ const defaultComponentBuilders = <ComponentBuilder>[
 const defaultSuperEditorDocumentOverlayBuilders = [
   DefaultCaretOverlayBuilder(),
   IosEditorControlsDocumentLayerBuilder(),
+  IosEditorMagnifierDocumentLayerBuilder(),
 ];
 
 /// Keyboard actions for the standard [SuperEditor].

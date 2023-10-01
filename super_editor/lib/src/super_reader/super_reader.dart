@@ -44,6 +44,7 @@ class SuperReader extends StatefulWidget {
     required this.document,
     this.documentLayoutKey,
     this.selection,
+    this.selectionLayerLinks,
     this.scrollController,
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
@@ -82,6 +83,14 @@ class SuperReader extends StatefulWidget {
   final GlobalKey? documentLayoutKey;
 
   final ValueNotifier<DocumentSelection?>? selection;
+
+  /// Leader links that connect leader widgets near the user's selection
+  /// to carets, handles, and other things that want to follow the selection.
+  ///
+  /// These links are always created and used within [SuperEditor]. By providing
+  /// an explicit [selectionLayerLinks], external widgets can also follow the
+  /// user's selection.
+  final SelectionLayerLinks? selectionLayerLinks;
 
   /// The [ScrollController] that governs this [SuperReader]'s scroll
   /// offset.
@@ -207,7 +216,7 @@ class SuperReaderState extends State<SuperReader> {
 
   // Leader links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
-  final _selectionLinks = SelectionLayerLinks();
+  late SelectionLayerLinks _selectionLinks;
 
   // GlobalKey for the iOS editor controls context so that the context data doesn't
   // continuously replace itself every time we rebuild. We want to retain the same
@@ -229,6 +238,8 @@ class SuperReaderState extends State<SuperReader> {
     _scrollController = widget.scrollController ?? ScrollController();
     _autoScrollController = AutoScrollController();
 
+    _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
+
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
     _createReaderContext();
@@ -246,6 +257,10 @@ class SuperReaderState extends State<SuperReader> {
 
     if (widget.scrollController != oldWidget.scrollController) {
       _scrollController = widget.scrollController ?? ScrollController();
+    }
+
+    if (widget.selectionLayerLinks != oldWidget.selectionLayerLinks) {
+      _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
     }
 
     if (widget.document != oldWidget.document ||
@@ -342,6 +357,7 @@ class SuperReaderState extends State<SuperReader> {
 
   @override
   Widget build(BuildContext context) {
+    print("Building SuperReader with expanded selection link: ${_selectionLinks.expandedSelectionBoundsLink}");
     return _buildGestureControlsContext(
       child: ReadOnlyDocumentKeyboardInteractor(
         // In a read-only document, we don't expect the software keyboard
@@ -362,15 +378,14 @@ class SuperReaderState extends State<SuperReader> {
             scroller: _scroller,
             presenter: _docLayoutPresenter!,
             componentBuilders: widget.componentBuilders,
-            underlays: [
+            underlays: const [], // TODO: pass widget underlays here
+            overlays: [
               // Layer that positions and sizes leader widgets at the bounds
               // of the users selection so that carets, handles, toolbars, and
               // other things can follow the selection.
               (context) => _SelectionLeadersDocumentLayerBuilder(
                     links: _selectionLinks,
                   ).build(context, _readerContext),
-            ],
-            overlays: [
               for (final overlayBuilder in widget.documentOverlayBuilders) //
                 (context) => overlayBuilder.build(context, _readerContext),
             ],
@@ -480,6 +495,7 @@ class SuperReaderState extends State<SuperReader> {
 /// layout in a [SuperReader].
 const defaultSuperReaderDocumentOverlayBuilders = [
   IosReaderControlsDocumentLayerBuilder(),
+  IosReaderMagnifierDocumentLayerBuilder(),
 ];
 
 /// A [ReadOnlyDocumentLayerBuilder] that builds a [SelectionLeadersDocumentLayer], which positions

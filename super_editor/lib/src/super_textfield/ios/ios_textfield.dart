@@ -596,7 +596,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
 Widget _defaultPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayController controller) {
   return IOSTextEditingFloatingToolbar(
-    focalPoint: controller.overlayController.toolbarTopAnchor!,
+    // TODO: bring back the focal point
+    // focalPoint: controller.overlayController.toolbarTopAnchor!,
     onCutPressed: () {
       final textController = controller.textController;
       final selection = textController.selection;

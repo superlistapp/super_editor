@@ -18,6 +18,7 @@ import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/in_the_lab/selected_text_colors_demo.dart';
+import 'package:example/demos/interaction_spot_checks/toolbar_following_content_in_layer.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
 import 'package:example/demos/sliver_example_editor.dart';
 import 'package:example/demos/styles/demo_doc_styles.dart';
@@ -356,6 +357,18 @@ final _menu = <_MenuGroup>[
         title: 'In CustomScrollView',
         pageBuilder: (context) {
           return ReadOnlyCustomScrollViewDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'Spot Checks',
+    items: [
+      _MenuItem(
+        icon: Icons.layers,
+        title: 'Toolbar Following Content Layer',
+        pageBuilder: (context) {
+          return ToolbarFollowingContentInLayer();
         },
       ),
     ],
