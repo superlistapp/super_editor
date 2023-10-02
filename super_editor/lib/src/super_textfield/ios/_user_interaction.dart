@@ -102,6 +102,8 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   Offset? _globalDragOffset;
   Offset? _dragOffset;
 
+  TextSelection? _selectionBeforeTap;
+
   @override
   void initState() {
     super.initState();
@@ -134,6 +136,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       return;
     }
 
+    _selectionBeforeTap = widget.textController.selection;
     _selectAtOffset(details.localPosition);
   }
 
@@ -152,19 +155,20 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       widget.focusNode.requestFocus();
     }
 
-    final previousSelection = widget.textController.selection;
     final exactTapTextPosition = _getTextPositionAtOffset(details.localPosition);
     final didTapOnExistingSelection = exactTapTextPosition != null &&
-        (previousSelection.isCollapsed
-            ? exactTapTextPosition == previousSelection.extent
-            : exactTapTextPosition.offset >= previousSelection.start &&
-                exactTapTextPosition.offset <= previousSelection.end);
+        _selectionBeforeTap != null &&
+        (_selectionBeforeTap!.isCollapsed
+            ? exactTapTextPosition == _selectionBeforeTap!.extent
+            : exactTapTextPosition.offset >= _selectionBeforeTap!.start &&
+                exactTapTextPosition.offset <= _selectionBeforeTap!.end);
 
     // Select the text that's nearest to where the user tapped.
     _selectAtOffset(details.localPosition);
 
-    final didCaretStayInSamePlace =
-        previousSelection == widget.textController.selection && previousSelection.isCollapsed;
+    final didCaretStayInSamePlace = _selectionBeforeTap != null &&
+        _selectionBeforeTap == widget.textController.selection &&
+        _selectionBeforeTap!.isCollapsed;
     if (didCaretStayInSamePlace || didTapOnExistingSelection) {
       // The user either tapped directly on the caret, or on an expanded selection,
       // or the user tapped in empty space but didn't move the caret, for example
@@ -178,13 +182,15 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       // Hide the toolbar.
       widget.editingOverlayController.hideToolbar();
     }
+
+    _selectionBeforeTap = null;
   }
 
   /// Places the caret in the field's text based on the given [localOffset],
   /// and displays the drag handle.
   void _selectAtOffset(Offset localOffset) {
     final tapTextPosition = _getTextPositionNearestToOffset(localOffset);
-    if (tapTextPosition == null) {
+    if (tapTextPosition == null || tapTextPosition.offset < 0) {
       // This situation indicates the user tapped in empty space
       widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.text.length);
       return;
@@ -363,7 +369,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
         onTap: () {
           _log.fine('Intercepting single tap');
           // This GestureDetector is here to prevent taps from going further
-          // up the tree. There must an issue with the custom gesture detector
+          // up the tree. There must be an issue with the custom gesture detector
           // used below that's allowing taps to bubble up even if handled.
           //
           // If this GestureDetector is placed any further down in this tree,
