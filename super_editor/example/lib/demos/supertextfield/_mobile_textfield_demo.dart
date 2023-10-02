@@ -44,7 +44,7 @@ class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {
 
     _textController = ImeAttributedTextEditingController(
       controller: AttributedTextEditingController(
-        text: widget.initialText,
+        text: widget.initialText.copyText(0),
       ),
     );
   }
@@ -66,14 +66,22 @@ class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {
     int? maxLines;
     switch (_sizeMode) {
       case _TextFieldSizeMode.singleLine:
+        _textController.text = widget.initialText.copyText(0);
         minLines = 1;
         maxLines = 1;
         break;
       case _TextFieldSizeMode.short:
+        _textController.text = widget.initialText.copyText(0);
         maxLines = 5;
         break;
       case _TextFieldSizeMode.tall:
+        _textController.text = widget.initialText.copyText(0);
         // no-op
+        break;
+      case _TextFieldSizeMode.empty:
+        _textController.text = AttributedText();
+        minLines = 1;
+        maxLines = 1;
         break;
     }
 
@@ -117,11 +125,14 @@ class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {
                 child: const Icon(Icons.bug_report),
               ),
               bottomNavigationBar: BottomNavigationBar(
+                type: BottomNavigationBarType.fixed,
                 currentIndex: _sizeMode == _TextFieldSizeMode.singleLine
                     ? 0
                     : _sizeMode == _TextFieldSizeMode.short
                         ? 1
-                        : 2,
+                        : _sizeMode == _TextFieldSizeMode.tall
+                            ? 2
+                            : 3,
                 items: const [
                   BottomNavigationBarItem(
                     icon: Icon(Icons.short_text),
@@ -135,6 +146,10 @@ class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {
                     icon: Icon(Icons.wrap_text_rounded),
                     label: 'Tall',
                   ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.short_text),
+                    label: 'Empty',
+                  ),
                 ],
                 onTap: (int newIndex) {
                   setState(() {
@@ -144,6 +159,8 @@ class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {
                       _sizeMode = _TextFieldSizeMode.short;
                     } else if (newIndex == 2) {
                       _sizeMode = _TextFieldSizeMode.tall;
+                    } else if (newIndex == 3) {
+                      _sizeMode = _TextFieldSizeMode.empty;
                     }
                   });
                 },
@@ -180,6 +197,7 @@ enum _TextFieldSizeMode {
   singleLine,
   short,
   tall,
+  empty,
 }
 
 class MobileTextFieldDemoConfig {

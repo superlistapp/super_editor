@@ -19,6 +19,8 @@ final _log = androidTextFieldLog;
 ///
 ///  * Tap: Place a collapsed text selection at the tapped location
 ///    in text.
+///  * Long-Press (over text): select surrounding word.
+///  * Long-Press (in empty space with a selection): show the toolbar.
 ///  * Double-Tap: Select the word surrounding the tapped location
 ///  * Triple-Tap: Select the paragraph surrounding the tapped location
 ///  * Drag: Move a collapsed selection wherever the user drags, while
@@ -208,6 +210,16 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     }
 
     widget.editingOverlayController.showHandles();
+  }
+
+  void _onLongPress() {
+    if (!widget.textController.selection.isValid) {
+      // There's no user selection. Don't show the toolbar when there's
+      // nothing to apply it to.
+      return;
+    }
+
+    widget.editingOverlayController.showToolbar();
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
@@ -426,6 +438,14 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
                 ..onTapUp = _onTapUp
                 ..onDoubleTapDown = _onDoubleTapDown
                 ..onTripleTapDown = _onTripleTapDown
+                ..gestureSettings = gestureSettings;
+            },
+          ),
+          LongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+            () => LongPressGestureRecognizer(),
+            (LongPressGestureRecognizer recognizer) {
+              recognizer
+                ..onLongPress = _onLongPress
                 ..gestureSettings = gestureSettings;
             },
           ),
