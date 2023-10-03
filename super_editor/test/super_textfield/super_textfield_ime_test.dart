@@ -240,7 +240,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(8);
 
-          await tester.pressEnterWithIme(getter: imeClientGetter);
+          await tester.pressEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
@@ -255,7 +255,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(0);
 
-          await tester.pressEnterWithIme(getter: imeClientGetter);
+          await tester.pressEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
@@ -270,7 +270,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(17);
 
-          await tester.pressEnterWithIme(getter: imeClientGetter);
+          await tester.pressEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
@@ -301,7 +301,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(8);
 
-          await tester.pressNumpadEnterWithIme(getter: imeClientGetter);
+          await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
@@ -332,7 +332,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(0);
 
-          await tester.pressNumpadEnterWithIme(getter: imeClientGetter);
+          await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
@@ -363,7 +363,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(17);
 
-          await tester.pressNumpadEnterWithIme(getter: imeClientGetter);
+          await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
