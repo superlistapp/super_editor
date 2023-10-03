@@ -319,7 +319,7 @@ Future<void> _runProcess({
   );
 
   await stdout.addStream(process.stdout);
-  await stdout.addStream(process.stderr);
+  await stderr.addStream(process.stderr);
 
   final exitCode = await process.exitCode;
 
