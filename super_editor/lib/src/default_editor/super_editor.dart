@@ -374,6 +374,10 @@ class SuperEditorState extends State<SuperEditor> {
       _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
     }
 
+    if (widget.composer != oldWidget.composer) {
+      _composer = widget.composer;
+    }
+
     if (widget.editor != oldWidget.editor) {
       for (final plugin in oldWidget.plugins) {
         plugin.detach(oldWidget.editor);
