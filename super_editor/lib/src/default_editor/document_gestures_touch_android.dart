@@ -20,6 +20,7 @@ import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_textfield/metrics.dart';
@@ -1306,14 +1307,17 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
                   // Build the caret
                   _buildCaret(),
                   // Build the drag handles (if desired)
-                  ..._buildHandles(),
+                  if (!isWeb) //
+                    ..._buildHandles(),
                   // Build the focal point for the magnifier
                   if (_isDraggingHandle) _buildMagnifierFocalPoint(),
                   // Build the magnifier (this needs to be done before building
                   // the handles so that the magnifier doesn't show the handles
-                  if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
+                  if (!isWeb && widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
                   // Build the editing toolbar
-                  if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
+                  if (!isWeb &&
+                      widget.editingController.shouldDisplayToolbar &&
+                      widget.editingController.isToolbarPositioned)
                     _buildToolbar(context),
                   // Build a UI that's useful for debugging, if desired.
                   if (widget.showDebugPaint)
