@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -8,6 +9,7 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -120,6 +122,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   final _magnifierFocalPointLink = LayerLink();
 
   late DragHandleAutoScroller _handleAutoScrolling;
+  Timer? _tapDownLongPressTimer;
+  Offset? _globalTapDownOffset;
+  bool _isLongPressInProgress = false;
+  DocumentSelection? _longPressInitialSelection;
   Offset? _globalStartDragOffset;
   Offset? _dragStartInDoc;
   Offset? _startDragPositionOffset;
@@ -496,9 +502,51 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       (scrollPosition as ScrollPositionWithSingleContext).goIdle();
       return;
     }
+
+    _globalTapDownOffset = details.globalPosition;
+    _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
+  }
+
+  // Runs when a tap down has lasted long enough to signify a long-press.
+  void _onLongPressDown() {
+    final interactorOffset = interactorBox.globalToLocal(_globalTapDownOffset!);
+    final docOffset = _interactorOffsetToDocOffset(interactorOffset);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    if (docPosition == null) {
+      return;
+    }
+
+    if (_isOverBaseHandle(interactorOffset) ||
+        _isOverExtentHandle(interactorOffset) ||
+        _isOverCollapsedHandle(interactorOffset)) {
+      // Don't do anything for long presses over the handles, because we want the user
+      // to be able to drag them without worrying about how long they've pressed.
+      _isLongPressInProgress = false;
+      return;
+    }
+
+    _globalDragOffset = _globalTapDownOffset;
+    _isLongPressInProgress = true;
+    _longPressInitialSelection = getWordSelection(docPosition: docPosition, docLayout: _docLayout);
+    _select(_longPressInitialSelection!);
+
+    _editingController.hideToolbar();
+    _editingController.showMagnifier();
+    _controlsOverlayEntry?.markNeedsBuild();
+
+    widget.focusNode.requestFocus();
   }
 
   void _onTapUp(TapUpDetails details) {
+    // Stop waiting for a long-press to start.
+    _globalTapDownOffset = null;
+    _tapDownLongPressTimer?.cancel();
+
+    // Cancel any on-going long-press.
+    _isLongPressInProgress = false;
+    _longPressInitialSelection = null;
+
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
       // touch down stopped the scrolling momentum. We don't want to take any further
@@ -727,6 +775,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onPanStart(DragStartDetails details) {
+    // Stop waiting for a long-press to start, if a long press isn't already in-progress.
+    _globalTapDownOffset = null;
+    _tapDownLongPressTimer?.cancel();
+
     // TODO: to help the user drag handles instead of scrolling, try checking touch
     //       placement during onTapDown, and then pick that up here. I think the little
     //       bit of slop might be the problem.
@@ -735,7 +787,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
-    if (selection.isCollapsed && _isOverCollapsedHandle(details.localPosition)) {
+    if (_isLongPressInProgress) {
+      _dragMode = DragMode.longPress;
+      _dragHandleType = null;
+    } else if (selection.isCollapsed && _isOverCollapsedHandle(details.localPosition)) {
       _dragMode = DragMode.collapsed;
       _dragHandleType = HandleType.collapsed;
     } else if (_isOverBaseHandle(details.localPosition)) {
@@ -755,11 +810,17 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final handleOffsetInInteractor = interactorBox.globalToLocal(details.globalPosition);
     _dragStartInDoc = _interactorOffsetToDocOffset(handleOffsetInInteractor);
 
-    _startDragPositionOffset = _docLayout
-        .getRectForPosition(
-          _dragHandleType! == HandleType.upstream ? selection.base : selection.extent,
-        )!
-        .center;
+    if (_dragHandleType != null) {
+      _startDragPositionOffset = _docLayout
+          .getRectForPosition(
+            _dragHandleType == HandleType.upstream ? selection.base : selection.extent,
+          )!
+          .center;
+    } else {
+      // User is long-press dragging, which is why there's no drag handle type.
+      // In this case, the start drag offset is wherever the user touched.
+      _startDragPositionOffset = _dragStartInDoc!;
+    }
 
     // We need to record the scroll offset at the beginning of
     // a drag for the case that this interactor is embedded
@@ -852,7 +913,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final dragScrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
     final docDragPosition = _docLayout
         .getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
-
     if (docDragPosition == null) {
       return;
     }
@@ -887,6 +947,58 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
           SelectionReason.userInteraction,
         ),
       ]);
+    } else if (_dragMode == DragMode.longPress) {
+      // In the case of long-press dragging, we select by word, and the base/extent
+      // of the selection depends on whether the user drags upstream or downstream
+      // from the originally selected word.
+      //
+      // Examples:
+      //  - one two th|ree four five
+      //  - one two [three] four five
+      //  - one [two three] four five
+      //  - one two [three four] five
+      final isOverNonTextNode = docDragPosition.nodePosition is! TextNodePosition;
+      if (isOverNonTextNode) {
+        // The user is dragging over content that isn't text, therefore it doesn't have
+        // a concept of "words". Select the whole node.
+        _select(_longPressInitialSelection!.expandTo(docDragPosition));
+        return;
+      }
+
+      final wordUnderFinger = getWordSelection(docPosition: docDragPosition, docLayout: _docLayout);
+      if (wordUnderFinger == null) {
+        // This shouldn't happen. If we've gotten here, the user is selecting over
+        // text content but we couldn't find a word selection. The best we can do
+        // is fizzle.
+        editorGesturesLog.warning("Long-press selecting. Couldn't find word at position: $docDragPosition");
+        return;
+      }
+
+      if (wordUnderFinger == _longPressInitialSelection) {
+        // The user is on the original word. Nothing more to do.
+        _select(_longPressInitialSelection!);
+        return;
+      }
+
+      // Figure out whether the newly selected word comes before or after the initially
+      // selected word.
+      final newWordDirection = widget.document.getAffinityForSelection(
+        DocumentSelection(
+          base: wordUnderFinger.start,
+          extent: _longPressInitialSelection!.start,
+        ),
+      );
+
+      late final DocumentSelection newSelection;
+      if (newWordDirection == TextAffinity.downstream) {
+        // The newly selected word comes before the initially selected word.
+        newSelection = DocumentSelection(base: wordUnderFinger.start, extent: _longPressInitialSelection!.end);
+      } else {
+        // The newly selected word comes after the initially selected word.
+        newSelection = DocumentSelection(base: _longPressInitialSelection!.start, extent: wordUnderFinger.end);
+      }
+
+      _select(newSelection);
     }
   }
 
@@ -921,6 +1033,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     scrollPosition.removeListener(_updateDragSelection);
     _dragMode = null;
 
+    // Cancel any on-going long-press.
+    _isLongPressInProgress = false;
+    _longPressInitialSelection = null;
+
     _editingController.hideMagnifier();
     if (!widget.selection.value!.isCollapsed) {
       _editingController.showToolbar();
@@ -939,6 +1055,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   void _updateDragSelection() {
     if (_dragStartInDoc == null) {
+      return;
+    }
+
+    if (_dragHandleType == null) {
+      // The user is probably doing a long-press drag. Nothing for us to do here.
       return;
     }
 
@@ -1164,17 +1285,21 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }) {
     final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.editor.execute([
-        ChangeSelectionRequest(
-          newSelection,
-          SelectionChangeType.expandSelection,
-          SelectionReason.userInteraction,
-        ),
-      ]);
+      _select(newSelection);
       return true;
     } else {
       return false;
     }
+  }
+
+  void _select(DocumentSelection newSelection) {
+    widget.editor.execute([
+      ChangeSelectionRequest(
+        newSelection,
+        SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
+      ),
+    ]);
   }
 
   void _selectParagraphAtCaret() {
@@ -1318,4 +1443,7 @@ enum DragMode {
   base,
   // Dragging the extent handle
   extent,
+  // Dragging after a long-press, which selects by the word
+  // around the selected word.
+  longPress,
 }
