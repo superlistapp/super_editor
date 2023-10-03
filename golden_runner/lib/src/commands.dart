@@ -318,8 +318,8 @@ Future<void> _runProcess({
     workingDirectory: workingDirectory,
   );
 
-  stdout.addStream(process.stdout);
-  stderr.addStream(process.stderr);
+  await stdout.addStream(process.stdout);
+  await stdout.addStream(process.stderr);
 
   final exitCode = await process.exitCode;
 
