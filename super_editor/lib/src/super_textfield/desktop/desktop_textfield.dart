@@ -1311,7 +1311,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
         // Do nothing for IME newline actions.
         //
         // Mac: Key presses flow, unhandled, to the OS and turn into IME selectors. We handle newlines there.
-        // Windows/Linux: Newlines are inserted by SuperTextField key handlers, instead of IME actions.
+        // Windows/Linux: Key presses flow, unhandled, to the OS and turn into text deltas. We handle newlines there.
         // Android/iOS: This text field implementation is only for desktop, mobile is handled elsewhere.
         break;
       case TextInputAction.done:
