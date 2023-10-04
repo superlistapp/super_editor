@@ -1787,10 +1787,6 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
 /// );
 /// ```
 const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
-  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageUpKeyPress,
-  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageDownKeyPress,
-  DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndHomeKeyPress,
-  DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndEndKeyPress,
   DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
@@ -1799,6 +1795,11 @@ const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
   // handlers, passing the key combo to the OS on Mac. Place all custom Mac key
   // combos above this handler.
   DefaultSuperTextFieldKeyboardHandlers.sendKeyEventToMacOs,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageUpKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageDownKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndHomeKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndEndKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
   DefaultSuperTextFieldKeyboardHandlers.moveToLineStartWithHome,
