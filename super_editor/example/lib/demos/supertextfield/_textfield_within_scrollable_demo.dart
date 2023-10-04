@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_text_field.dart';
 
-class TextFieldScrollableDemo extends StatefulWidget {
-  const TextFieldScrollableDemo({super.key});
+class TextFieldWithinScrollableDemo extends StatefulWidget {
+  const TextFieldWithinScrollableDemo({super.key});
 
   @override
-  State<TextFieldScrollableDemo> createState() => _TextFieldScrollableDemoState();
+  State<TextFieldWithinScrollableDemo> createState() => _TextFieldWithinScrollableDemoState();
 }
 
-class _TextFieldScrollableDemoState extends State<TextFieldScrollableDemo> {
+class _TextFieldWithinScrollableDemoState extends State<TextFieldWithinScrollableDemo> {
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(

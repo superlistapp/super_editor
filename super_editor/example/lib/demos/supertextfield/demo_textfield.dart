@@ -1,7 +1,7 @@
 import 'package:example/demos/supertextfield/_emojis_demo.dart';
 import 'package:example/demos/supertextfield/_expanding_multi_line_demo.dart';
 import 'package:example/demos/supertextfield/_interactive_demo.dart';
-import 'package:example/demos/supertextfield/_scrollable_with_textfield.dart';
+import 'package:example/demos/supertextfield/_textfield_within_scrollable_demo.dart';
 import 'package:example/demos/supertextfield/_single_line_demo.dart';
 import 'package:example/demos/supertextfield/_static_multi_line_demo.dart';
 import 'package:example/demos/supertextfield/_textfield_demo_screen.dart';
@@ -96,7 +96,7 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
           label: 'TextField Scrollable',
           onPressed: () {
             setState(() {
-              _demoBuilder = (_) => const TextFieldScrollableDemo();
+              _demoBuilder = (_) => const TextFieldWithinScrollableDemo();
             });
           },
         ),
