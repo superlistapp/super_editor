@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -9,20 +9,20 @@ import '../supereditor_test_tools.dart';
 
 void main() {
   group("SuperEditor mobile selection >", () {
-    group("iOS >", () {
+    group("Android >", () {
       group("long press >", () {
-        testWidgetsOnIos("selects word under finger", (tester) async {
+        testWidgetsOnAndroid("selects word under finger", (tester) async {
           await tester
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context) => const IOSTextEditingFloatingToolbar(focalPoint: Offset.zero))
+              .withAndroidToolbarBuilder((context) => const AndroidTextEditingFloatingToolbar())
               .pump();
 
           // Ensure that no overlay controls are visible.
-          expect(find.byType(IOSSelectionHandle), findsNothing);
-          expect(find.byType(IOSTextEditingFloatingToolbar), findsNothing);
-          expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsNothing);
+          expect(find.byType(AndroidSelectionHandle), findsNothing);
+          expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+          expect(find.byType(AndroidMagnifyingGlass), findsNothing);
 
           // Long press on the middle of "conse|ctetur"
           await tester.longPressInParagraph("1", 33);
@@ -45,59 +45,17 @@ void main() {
           );
 
           // Ensure the drag handles and toolbar are visible, but the magnifier isn't.
-          expect(find.byType(IOSSelectionHandle), findsExactly(2));
-          expect(find.byType(IOSTextEditingFloatingToolbar), findsOne);
-          expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsNothing);
+          expect(find.byType(AndroidSelectionHandle), findsExactly(2));
+          expect(find.byType(AndroidTextEditingFloatingToolbar), findsOne);
+          expect(find.byType(AndroidMagnifyingGlass), findsNothing);
         });
 
-        testWidgetsOnIos("over handle does nothing", (tester) async {
+        testWidgetsOnAndroid("selects by word when dragging upstream", (tester) async {
           await tester
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context) => const IOSTextEditingFloatingToolbar(focalPoint: Offset.zero))
-              .pump();
-
-          // Long press on the middle of "do|lor".
-          await tester.longPressInParagraph("1", 14);
-          await tester.pumpAndSettle();
-
-          // Ensure the word was selected.
-          const wordSelection = DocumentSelection(
-            base: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 12),
-            ),
-            extent: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 17),
-            ),
-          );
-
-          expect(SuperEditorInspector.findDocumentSelection(), isNotNull);
-          expect(SuperEditorInspector.findDocumentSelection(), wordSelection);
-
-          // Long-press near the upstream handle, but just before the selected word.
-          await tester.longPressInParagraph("1", 11);
-          await tester.pumpAndSettle();
-
-          // Ensure that the selection didn't change.
-          expect(SuperEditorInspector.findDocumentSelection(), wordSelection);
-
-          // Long-press near the downstream handle, but just after the selected word.
-          await tester.longPressInParagraph("1", 18);
-          await tester.pumpAndSettle();
-
-          // Ensure that the selection didn't change.
-          expect(SuperEditorInspector.findDocumentSelection(), wordSelection);
-        });
-
-        testWidgetsOnIos("selects by word when dragging upstream and then back downstream", (tester) async {
-          await tester
-              .createDocument()
-              // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
-              .withSingleParagraph()
-              .withiOSToolbarBuilder((context) => const IOSTextEditingFloatingToolbar(focalPoint: Offset.zero))
+              .withAndroidToolbarBuilder((context) => const AndroidTextEditingFloatingToolbar())
               .pump();
 
           // Long press on the middle of "do|lor".
@@ -117,10 +75,10 @@ void main() {
           );
           expect(SuperEditorInspector.findDocumentSelection(), wordSelection);
 
-          // Ensure the drag handles and magnifier are visible, but the toolbar isn't.
-          expect(find.byType(IOSSelectionHandle), findsExactly(2));
-          expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsOne);
-          expect(find.byType(IOSTextEditingFloatingToolbar), findsNothing);
+          // Ensure the toolbar is visible, but drag handles and magnifier aren't.
+          expect(find.byType(AndroidSelectionHandle), findsNothing);
+          expect(find.byType(AndroidTextEditingFloatingToolbar), findsOne);
+          expect(find.byType(AndroidMagnifyingGlass), findsNothing);
 
           // Drag upstream to the end of the previous word.
           // "Lorem ipsu|m dolor sit amet"
@@ -149,6 +107,11 @@ void main() {
               ),
             ),
           );
+
+          // Now that we've started dragging, ensure the magnifier is visible and the
+          // toolbar is hidden.
+          expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+          expect(find.byType(AndroidMagnifyingGlass), findsOne);
 
           // Drag back towards the original long-press offset.
           //
@@ -180,14 +143,21 @@ void main() {
 
           // Release the gesture so the test system doesn't complain.
           await gesture.up();
+          await tester.pump();
+
+          // Now that the drag is done, ensure the handles and toolbar are visible and
+          // the magnifier isn't.
+          expect(find.byType(AndroidSelectionHandle), findsExactly(2));
+          expect(find.byType(AndroidTextEditingFloatingToolbar), findsOne);
+          expect(find.byType(AndroidMagnifyingGlass), findsNothing);
         });
 
-        testWidgetsOnIos("selects by word when dragging downstream and then back upstream", (tester) async {
+        testWidgetsOnAndroid("selects by word when dragging downstream", (tester) async {
           await tester
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context) => const IOSTextEditingFloatingToolbar(focalPoint: Offset.zero))
+              .withAndroidToolbarBuilder((context) => const AndroidTextEditingFloatingToolbar())
               .pump();
 
           // Long press on the middle of "do|lor".
@@ -207,10 +177,10 @@ void main() {
           );
           expect(SuperEditorInspector.findDocumentSelection(), wordSelection);
 
-          // Ensure the drag handles and magnifier are visible, but the toolbar isn't.
-          expect(find.byType(IOSSelectionHandle), findsExactly(2));
-          expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsOne);
-          expect(find.byType(IOSTextEditingFloatingToolbar), findsNothing);
+          // Ensure the toolbar is visible, but drag handles and magnifier aren't.
+          expect(find.byType(AndroidSelectionHandle), findsNothing);
+          expect(find.byType(AndroidTextEditingFloatingToolbar), findsOne);
+          expect(find.byType(AndroidMagnifyingGlass), findsNothing);
 
           // Drag downstream to the beginning of the next word.
           // "Lorem ipsum dolor s|it amet"
@@ -240,6 +210,11 @@ void main() {
             ),
           );
 
+          // Now that we've started dragging, ensure the magnifier is visible and the
+          // toolbar is hidden.
+          expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+          expect(find.byType(AndroidMagnifyingGlass), findsOne);
+
           // Drag back towards the original long-press offset.
           //
           // We do this with manual distances because the attempt to look up character
@@ -251,25 +226,17 @@ void main() {
           }
 
           // Ensure that only the original word is selected.
-          expect(
-            SuperEditorInspector.findDocumentSelection(),
-            const DocumentSelection(
-              base: DocumentPosition(
-                nodeId: "1",
-                nodePosition: TextNodePosition(offset: 12),
-              ),
-              extent: DocumentPosition(
-                nodeId: "1",
-                // Note: when we move the selection back the other way, the word calculation
-                // decided to include the trailing space, which is why we pass a different
-                // selection here.
-                nodePosition: TextNodePosition(offset: 18),
-              ),
-            ),
-          );
+          expect(SuperEditorInspector.findDocumentSelection(), wordSelection);
 
           // Release the gesture so the test system doesn't complain.
           await gesture.up();
+          await tester.pump();
+
+          // Now that the drag is done, ensure the handles and toolbar are visible and
+          // the magnifier isn't.
+          expect(find.byType(AndroidSelectionHandle), findsExactly(2));
+          expect(find.byType(AndroidTextEditingFloatingToolbar), findsOne);
+          expect(find.byType(AndroidMagnifyingGlass), findsNothing);
         });
       });
     });
