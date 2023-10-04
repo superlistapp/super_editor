@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
+import 'package:super_editor/src/infrastructure/flutter/text_selection.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -159,7 +160,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     final didTapOnExistingSelection = exactTapTextPosition != null &&
         _selectionBeforeTap != null &&
         (_selectionBeforeTap!.isCollapsed
-            ? exactTapTextPosition == _selectionBeforeTap!.extent
+            ? exactTapTextPosition.offset == _selectionBeforeTap!.extent.offset
             : exactTapTextPosition.offset >= _selectionBeforeTap!.start &&
                 exactTapTextPosition.offset <= _selectionBeforeTap!.end);
 
@@ -167,7 +168,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     _selectAtOffset(details.localPosition);
 
     final didCaretStayInSamePlace = _selectionBeforeTap != null &&
-        _selectionBeforeTap == widget.textController.selection &&
+        _selectionBeforeTap?.hasSameBoundsAs(widget.textController.selection) == true &&
         _selectionBeforeTap!.isCollapsed;
     if (didCaretStayInSamePlace || didTapOnExistingSelection) {
       // The user either tapped directly on the caret, or on an expanded selection,
