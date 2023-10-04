@@ -1762,6 +1762,7 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.blockControlKeys,
   DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed,
 ];
 
@@ -2436,6 +2437,28 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// Halt execution of the current key event if the key pressed is one of
+  /// the functions keys (F1, F2, F3, etc.), or the Page Up/Down, Home/End key.
+  ///
+  /// Without this action in place pressing one of the above mentioned keys
+  /// would display an unknown '?' character in the textfield.
+  static TextFieldKeyboardHandlerResult blockControlKeys({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent.logicalKey == LogicalKeyboardKey.escape ||
+        keyEvent.logicalKey == LogicalKeyboardKey.pageUp ||
+        keyEvent.logicalKey == LogicalKeyboardKey.pageDown ||
+        keyEvent.logicalKey == LogicalKeyboardKey.home ||
+        keyEvent.logicalKey == LogicalKeyboardKey.end ||
+        (keyEvent.logicalKey.keyId >= LogicalKeyboardKey.f1.keyId &&
+            keyEvent.logicalKey.keyId <= LogicalKeyboardKey.f23.keyId)) {
+      return TextFieldKeyboardHandlerResult.blocked;
+    }
+
+    return TextFieldKeyboardHandlerResult.notHandled;
+  }
+
   DefaultSuperTextFieldKeyboardHandlers._();
 }
 
@@ -2826,6 +2849,12 @@ void _scrollToEndOfDocument({
   if (scrollable == null) {
     return;
   }
+
+  if (!scrollable.maxScrollExtent.isFinite) {
+    // Can't scroll to infinity, but we technically handled the task.
+    return;
+  }
+
   scrollable.animateTo(
     scrollable.maxScrollExtent,
     duration: const Duration(milliseconds: 150),
@@ -2857,6 +2886,7 @@ void _scrollPageDown({
   if (scrollable == null) {
     return;
   }
+
   scrollable.animateTo(
     min(scrollable.pixels + scrollable.viewportDimension, scrollable.maxScrollExtent),
     duration: const Duration(milliseconds: 150),
