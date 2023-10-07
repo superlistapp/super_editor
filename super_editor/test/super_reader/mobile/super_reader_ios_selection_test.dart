@@ -130,7 +130,7 @@ void main() {
           // We do this with manual distances because the attempt to look up character
           // offsets was producing unpredictable results.
           const dragIncrementCount = 10;
-          const upstreamDragDistance = -13.0;
+          const upstreamDragDistance = -130 / dragIncrementCount;
           for (int i = 0; i < dragIncrementCount; i += 1) {
             await gesture.moveBy(const Offset(upstreamDragDistance, 0));
             await tester.pump();
@@ -155,7 +155,7 @@ void main() {
           //
           // We do this with manual distances because the attempt to look up character
           // offsets was producing unpredictable results.
-          const downstreamDragDistance = 10.0;
+          const downstreamDragDistance = 100 / dragIncrementCount;
           for (int i = 0; i < dragIncrementCount; i += 1) {
             await gesture.moveBy(const Offset(downstreamDragDistance, 0));
             await tester.pump();
@@ -205,7 +205,7 @@ void main() {
           // We do this with manual distances because the attempt to look up character
           // offsets was producing unpredictable results.
           const dragIncrementCount = 10;
-          const downstreamDragDistance = 8.0;
+          const downstreamDragDistance = 80 / dragIncrementCount;
           for (int i = 0; i < dragIncrementCount; i += 1) {
             await gesture.moveBy(const Offset(downstreamDragDistance, 0));
             await tester.pump();
@@ -230,7 +230,7 @@ void main() {
           //
           // We do this with manual distances because the attempt to look up character
           // offsets was producing unpredictable results.
-          const upstreamDragDistance = -3.0;
+          const upstreamDragDistance = -40 / dragIncrementCount;
           for (int i = 0; i < dragIncrementCount; i += 1) {
             await gesture.moveBy(const Offset(upstreamDragDistance, 0));
             await tester.pump();

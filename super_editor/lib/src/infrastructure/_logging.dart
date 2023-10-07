@@ -7,6 +7,7 @@ class LogNames {
   static const editorPolicies = 'editor.policies';
   static const editorScrolling = 'editor.scrolling';
   static const editorGestures = 'editor.gestures';
+  static const editorLongPressSelection = 'editor.gestures.longPress';
   static const editorKeys = 'editor.keys';
   static const editorIme = 'editor.ime';
   static const editorImeConnection = 'editor.ime.connection';
@@ -49,6 +50,7 @@ final editorLog = logging.Logger(LogNames.editor);
 final editorPoliciesLog = logging.Logger(LogNames.editorPolicies);
 final editorScrollingLog = logging.Logger(LogNames.editorScrolling);
 final editorGesturesLog = logging.Logger(LogNames.editorGestures);
+final editorLongPressSelectionLog = logging.Logger(LogNames.editorLongPressSelection);
 final editorKeyLog = logging.Logger(LogNames.editorKeys);
 final editorImeLog = logging.Logger(LogNames.editorIme);
 final editorImeConnectionLog = logging.Logger(LogNames.editorImeConnection);
