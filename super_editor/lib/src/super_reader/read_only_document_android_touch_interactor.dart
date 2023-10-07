@@ -782,8 +782,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
           onHandleDragUpdate: _onHandleDragUpdate,
           onHandleDragEnd: _onHandleDragEnd,
           popoverToolbarBuilder: widget.popoverToolbarBuilder,
-          // TODO: provide real notifier
-          longPressMagnifierGlobalOffset: ValueNotifier<Offset?>(null),
+          longPressMagnifierGlobalOffset: _longPressMagnifierGlobalOffset,
           showDebugPaint: false,
         );
       });
