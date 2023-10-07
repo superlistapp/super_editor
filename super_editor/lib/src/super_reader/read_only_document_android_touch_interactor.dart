@@ -759,6 +759,9 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     _longPressStrategy = null;
     _longPressMagnifierGlobalOffset.value = null;
 
+    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    scrollPosition.removeListener(_updateDragSelection);
+
     _editingController
       ..allowHandles()
       ..hideMagnifier();

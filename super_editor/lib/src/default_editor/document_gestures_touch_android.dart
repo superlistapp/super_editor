@@ -833,6 +833,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _longPressStrategy = null;
     _longPressMagnifierGlobalOffset.value = null;
 
+    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    scrollPosition.removeListener(_updateDragSelection);
+
     _editingController
       ..allowHandles()
       ..hideMagnifier();
@@ -1365,8 +1368,6 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     _prevCaretOffset = widget.editingController.caretTop;
     widget.editingController.addListener(_onEditingControllerChange);
 
-    widget.longPressMagnifierGlobalOffset.addListener(_onLongPressDragChange);
-
     if (widget.editingController.shouldDisplayCollapsedHandle) {
       widget.editingController.startCollapsedHandleAutoHideCountdown();
     }
@@ -1380,16 +1381,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       oldWidget.editingController.removeListener(_onEditingControllerChange);
       widget.editingController.addListener(_onEditingControllerChange);
     }
-
-    if (widget.longPressMagnifierGlobalOffset != oldWidget.longPressMagnifierGlobalOffset) {
-      oldWidget.longPressMagnifierGlobalOffset.removeListener(_onLongPressDragChange);
-      widget.longPressMagnifierGlobalOffset.addListener(_onLongPressDragChange);
-    }
   }
 
   @override
   void dispose() {
-    widget.longPressMagnifierGlobalOffset.removeListener(_onLongPressDragChange);
     widget.editingController.removeListener(_onEditingControllerChange);
     _caretBlinkController.dispose();
     super.dispose();
@@ -1405,10 +1400,6 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
       _prevCaretOffset = widget.editingController.caretTop;
     }
-  }
-
-  void _onLongPressDragChange() {
-    // TODO
   }
 
   void _onCollapsedPanStart(DragStartDetails details) {

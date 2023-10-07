@@ -44,6 +44,13 @@ import 'package:super_editor/src/infrastructure/composable_text.dart';
 ///         edge of the word.
 ///
 class AndroidDocumentLongPressSelectionStrategy {
+  /// The default distance between the user's finger, the far boundary of
+  /// a word, when the user is dragging in the reverse direction, which
+  /// triggers a switch from per-word selection to per-character selection.
+  ///
+  /// This value was chosen experimentally.
+  static const _defaultBoundaryDistanceToSwitchToCharacterSelection = 24.0;
+
   AndroidDocumentLongPressSelectionStrategy({
     required Document document,
     required DocumentLayout documentLayout,
@@ -358,7 +365,9 @@ class AndroidDocumentLongPressSelectionStrategy {
           .getRectForSelection(longPressMostRecentUpstreamWordBoundaryPosition, _longPressInitialSelection!.start)!
           .left;
       final reverseDirectionDistance = fingerDocumentOffset.dx - upstreamSelectionX;
-      final startedMovingBackward = !_isSelectingByCharacter && isMovingBackward && reverseDirectionDistance > 24;
+      final startedMovingBackward = !_isSelectingByCharacter &&
+          isMovingBackward &&
+          reverseDirectionDistance > _defaultBoundaryDistanceToSwitchToCharacterSelection;
       longPressSelectionLog.finest(" - current doc drag position: $fingerDocumentPosition");
       longPressSelectionLog.finest(" - most recent drag position: $_longPressMostRecentTouchDocumentPosition");
       longPressSelectionLog.finest(" - is moving backward? $isMovingBackward");
@@ -396,7 +405,7 @@ class AndroidDocumentLongPressSelectionStrategy {
           nodeId: _longPressMostRecentBoundaryNodeId!,
           nodePosition: TextNodePosition(offset: _longPressMostRecentUpstreamWordBoundary!),
         );
-        late final DocumentPosition boundary = longPressMostRecentUpstreamWordBoundaryPosition;
+        final DocumentPosition boundary = longPressMostRecentUpstreamWordBoundaryPosition;
 
         final boundaryOffsetInDocument = _docLayout.getRectForPosition(boundary)!.center;
         _longPressCharacterSelectionXOffset = boundaryOffsetInDocument.dx - fingerDocumentOffset.dx;
@@ -540,7 +549,9 @@ class AndroidDocumentLongPressSelectionStrategy {
           .getRectForSelection(longPressMostRecentDownstreamWordBoundaryPosition, _longPressInitialSelection!.start)!
           .right;
       final reverseDirectionDistance = downstreamSelectionX - fingerDocumentOffset.dx;
-      final startedMovingBackward = !_isSelectingByCharacter && isMovingBackward && reverseDirectionDistance > 24;
+      final startedMovingBackward = !_isSelectingByCharacter &&
+          isMovingBackward &&
+          reverseDirectionDistance > _defaultBoundaryDistanceToSwitchToCharacterSelection;
       longPressSelectionLog.finest(" - current doc drag position: $fingerDocumentPosition");
       longPressSelectionLog.finest(" - most recent drag position: $_longPressMostRecentTouchDocumentPosition");
       longPressSelectionLog.finest(" - is moving backward? $isMovingBackward");
@@ -578,7 +589,7 @@ class AndroidDocumentLongPressSelectionStrategy {
           nodeId: _longPressMostRecentBoundaryNodeId!,
           nodePosition: TextNodePosition(offset: _longPressMostRecentDownstreamWordBoundary!),
         );
-        late final DocumentPosition boundary = longPressMostRecentDownstreamWordBoundaryPosition;
+        final DocumentPosition boundary = longPressMostRecentDownstreamWordBoundaryPosition;
 
         final boundaryOffsetInDocument = _docLayout.getRectForPosition(boundary)!.center;
         _longPressCharacterSelectionXOffset = boundaryOffsetInDocument.dx - fingerDocumentOffset.dx;
