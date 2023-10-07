@@ -8,8 +8,6 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
-import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
@@ -17,6 +15,7 @@ import 'package:super_editor/src/infrastructure/document_gestures_interaction_ov
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
@@ -113,10 +112,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   final _magnifierFocalPointLink = LayerLink();
 
   late DragHandleAutoScroller _handleAutoScrolling;
-  Timer? _tapDownLongPressTimer;
-  Offset? _globalTapDownOffset;
-  bool _isLongPressInProgress = false;
-  DocumentSelection? _longPressInitialSelection;
   Offset? _globalStartDragOffset;
   Offset? _dragStartInDoc;
   Offset? _startDragPositionOffset;
@@ -143,6 +138,11 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   // triple taps on iOS, we explicitly tell the overlay controls to
   // avoid handling gestures while we are `_waitingForMoreTaps`.
   bool _waitingForMoreTaps = false;
+
+  Timer? _tapDownLongPressTimer;
+  Offset? _globalTapDownOffset;
+  bool get _isLongPressInProgress => _longPressStrategy != null;
+  IosLongPressSelectionStrategy? _longPressStrategy;
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   late MagnifierAndToolbarController _overlayController;
@@ -440,23 +440,31 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   // Runs when a tap down has lasted long enough to signify a long-press.
   void _onLongPressDown() {
     final interactorOffset = interactorBox.globalToLocal(_globalTapDownOffset!);
-    final docOffset = _interactorOffsetToDocOffset(interactorOffset);
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    if (docPosition == null) {
+    final tapDownDocumentOffset = _interactorOffsetToDocOffset(interactorOffset);
+    final tapDownDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(tapDownDocumentOffset);
+    if (tapDownDocumentPosition == null) {
       return;
     }
 
     if (_isOverBaseHandle(interactorOffset) || _isOverExtentHandle(interactorOffset)) {
       // Don't do anything for long presses over the handles, because we want the user
       // to be able to drag them without worrying about how long they've pressed.
-      _isLongPressInProgress = false;
       return;
     }
 
     _globalDragOffset = _globalTapDownOffset;
-    _isLongPressInProgress = true;
-    _longPressInitialSelection = getWordSelection(docPosition: docPosition, docLayout: _docLayout);
-    _select(_longPressInitialSelection!);
+    _longPressStrategy = IosLongPressSelectionStrategy(
+      document: widget.document,
+      documentLayout: _docLayout,
+      select: _select,
+    );
+    final didLongPressSelectionStart = _longPressStrategy!.onLongPressStart(
+      tapDownDocumentOffset: tapDownDocumentOffset,
+    );
+    if (!didLongPressSelectionStart) {
+      _longPressStrategy = null;
+      return;
+    }
 
     _editingController.hideToolbar();
     _editingController.showMagnifier();
@@ -469,10 +477,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     // Stop waiting for a long-press to start.
     _globalTapDownOffset = null;
     _tapDownLongPressTimer?.cancel();
-
-    // Cancel any on-going long-press.
-    _isLongPressInProgress = false;
-    _longPressInitialSelection = null;
 
     final selection = widget.selection.value;
     if (selection != null &&
@@ -638,6 +642,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     if (_isLongPressInProgress) {
       _dragMode = DragMode.longPress;
       _dragHandleType = null;
+      _longPressStrategy!.onLongPressDragStart();
     } else if (_isOverBaseHandle(details.localPosition)) {
       _dragMode = DragMode.base;
       _dragHandleType = HandleType.upstream;
@@ -729,7 +734,17 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     _dragEndInInteractor = interactorBox.globalToLocal(details.globalPosition);
     final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!);
 
-    _updateSelectionForNewDragHandleLocation();
+    if (_isLongPressInProgress) {
+      final fingerDragDelta = _globalDragOffset! - _globalStartDragOffset!;
+      final scrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
+      final fingerDocumentOffset = _docLayout.getDocumentOffsetFromAncestorOffset(details.globalPosition);
+      final fingerDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(
+        _startDragPositionOffset! + fingerDragDelta - Offset(0, scrollDelta),
+      );
+      _longPressStrategy!.onLongPressDragUpdate(fingerDocumentOffset, fingerDocumentPosition);
+    } else {
+      _updateSelectionForNewDragHandleLocation();
+    }
 
     _handleAutoScrolling.updateAutoScrollHandleMonitoring(
       dragEndInViewport: dragEndInViewport,
@@ -758,58 +773,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       widget.selection.value = widget.selection.value!.copyWith(
         extent: docDragPosition,
       );
-    } else if (_dragMode == DragMode.longPress) {
-      // In the case of long-press dragging, we select by word, and the base/extent
-      // of the selection depends on whether the user drags upstream or downstream
-      // from the originally selected word.
-      //
-      // Examples:
-      //  - one two th|ree four five
-      //  - one two [three] four five
-      //  - one [two three] four five
-      //  - one two [three four] five
-      final isOverNonTextNode = docDragPosition.nodePosition is! TextNodePosition;
-      if (isOverNonTextNode) {
-        // The user is dragging over content that isn't text, therefore it doesn't have
-        // a concept of "words". Select the whole node.
-        _select(_longPressInitialSelection!.expandTo(docDragPosition));
-        return;
-      }
-
-      final wordUnderFinger = getWordSelection(docPosition: docDragPosition, docLayout: _docLayout);
-      if (wordUnderFinger == null) {
-        // This shouldn't happen. If we've gotten here, the user is selecting over
-        // text content but we couldn't find a word selection. The best we can do
-        // is fizzle.
-        editorGesturesLog.warning("Long-press selecting. Couldn't find word at position: $docDragPosition");
-        return;
-      }
-
-      if (wordUnderFinger == _longPressInitialSelection) {
-        // The user is on the original word. Nothing more to do.
-        _select(_longPressInitialSelection!);
-        return;
-      }
-
-      // Figure out whether the newly selected word comes before or after the initially
-      // selected word.
-      final newWordDirection = widget.document.getAffinityForSelection(
-        DocumentSelection(
-          base: wordUnderFinger.start,
-          extent: _longPressInitialSelection!.start,
-        ),
-      );
-
-      late final DocumentSelection newSelection;
-      if (newWordDirection == TextAffinity.downstream) {
-        // The newly selected word comes before the initially selected word.
-        newSelection = DocumentSelection(base: wordUnderFinger.start, extent: _longPressInitialSelection!.end);
-      } else {
-        // The newly selected word comes after the initially selected word.
-        newSelection = DocumentSelection(base: _longPressInitialSelection!.start, extent: wordUnderFinger.end);
-      }
-
-      _select(newSelection);
     }
   }
 
@@ -828,33 +791,48 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         }
       }
     } else {
-      // The user was dragging a handle. Stop any auto-scrolling that may have started.
-      _onHandleDragEnd();
+      // The user was dragging a selection change in some way, either with handles
+      // or with a long-press. Finish that interaction.
+      _onDragSelectionEnd();
     }
   }
 
   void _onPanCancel() {
     if (_dragMode != null) {
-      _onHandleDragEnd();
+      _onDragSelectionEnd();
     }
   }
 
-  void _onHandleDragEnd() {
+  void _onDragSelectionEnd() {
+    if (_dragMode == DragMode.longPress) {
+      _onLongPressEnd();
+    } else {
+      _onHandleDragEnd();
+    }
+
     _handleAutoScrolling.stopAutoScrollHandleMonitoring();
     scrollPosition.removeListener(_updateDragSelection);
+  }
+
+  void _onLongPressEnd() {
+    _longPressStrategy!.onLongPressEnd();
+    _longPressStrategy = null;
     _dragMode = null;
 
-    // Cancel any on-going long-press.
-    _isLongPressInProgress = false;
-    _longPressInitialSelection = null;
+    _updateOverlayControlsAfterFinishingDragSelection();
+  }
 
+  void _onHandleDragEnd() {
+    _dragMode = null;
+
+    _updateOverlayControlsAfterFinishingDragSelection();
+  }
+
+  void _updateOverlayControlsAfterFinishingDragSelection() {
     _editingController.hideMagnifier();
     if (!widget.selection.value!.isCollapsed) {
       _editingController.showToolbar();
       _positionToolbar();
-    } else {
-      // Read-only documents don't support collapsed selections.
-      widget.selection.value = null;
     }
 
     _controlsOverlayEntry!.markNeedsBuild();

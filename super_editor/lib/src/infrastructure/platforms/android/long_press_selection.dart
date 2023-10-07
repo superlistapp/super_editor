@@ -147,14 +147,13 @@ class AndroidDocumentLongPressSelectionStrategy {
   /// Clients should call this method when a long press gesture is initially
   /// recognized.
   ///
-  /// Returns `true` if a long-press selected started, or `false` if the user's
+  /// Returns `true` if a long-press selection started, or `false` if the user's
   /// press didn't occur over selectable content.
   bool onLongPressStart({
-    required Offset globalTapDownOffset,
+    required Offset tapDownDocumentOffset,
   }) {
     longPressSelectionLog.fine("Long press start");
-    final docOffset = _getDocOffsetFromGlobalOffset(globalTapDownOffset);
-    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(tapDownDocumentOffset);
     if (docPosition == null) {
       longPressSelectionLog.finer("No doc position where the user pressed");
       return false;
@@ -173,10 +172,6 @@ class AndroidDocumentLongPressSelectionStrategy {
         (_longPressInitialSelection!.end.nodePosition as TextNodePosition).offset;
 
     return true;
-  }
-
-  Offset _getDocOffsetFromGlobalOffset(Offset globalOffset) {
-    return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
   }
 
   /// Clients should call this method when an existing long-press gesture first
@@ -669,7 +664,6 @@ class AndroidDocumentLongPressSelectionStrategy {
 
   /// Clients should call this method when a long-press drag ends, or is cancelled.
   void onLongPressEnd() {
-    // Cancel any on-going long-press.
     longPressSelectionLog.fine("Long press end");
     _longPressInitialSelection = null;
     _longPressMostRecentUpstreamWordBoundary = null;

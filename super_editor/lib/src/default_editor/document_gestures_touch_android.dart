@@ -501,7 +501,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     );
 
     final didLongPressSelectionStart = _longPressStrategy!.onLongPressStart(
-      globalTapDownOffset: _globalTapDownOffset!,
+      tapDownDocumentOffset: _getDocumentOffsetFromGlobalOffset(_globalTapDownOffset!),
     );
     if (!didLongPressSelectionStart) {
       _longPressStrategy = null;
