@@ -449,7 +449,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   RenderBox get viewportBox =>
       (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
-  Offset _getDocOffsetFromGlobalOffset(Offset globalOffset) {
+  Offset _getDocumentOffsetFromGlobalOffset(Offset globalOffset) {
     return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
   }
 
@@ -497,7 +497,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _longPressStrategy = AndroidDocumentLongPressSelectionStrategy(
       document: widget.document,
       documentLayout: _docLayout,
-      scrollPosition: scrollPosition,
       select: _updateLongPressSelection,
     );
 
@@ -546,7 +545,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     editorGesturesLog.info("Tap down on document");
-    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
+    final docOffset = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -603,7 +602,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _onDoubleTapDown(TapDownDetails details) {
     editorGesturesLog.info("Double tap down on document");
-    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
+    final docOffset = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -686,7 +685,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _onTripleTapDown(TapDownDetails details) {
     editorGesturesLog.info("Triple tap down on document");
-    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
+    final docOffset = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -736,6 +735,18 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
+    _globalStartDragOffset = details.globalPosition;
+    _dragStartInDoc = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
+    // We need to record the scroll offset at the beginning of
+    // a drag for the case that this interactor is embedded
+    // within an ancestor Scrollable. We need to use this value
+    // to calculate a scroll delta on every scroll frame to
+    // account for the fact that this interactor is moving within
+    // the ancestor scrollable, despite the fact that the user's
+    // finger/mouse position hasn't changed.
+    _dragStartScrollOffset = scrollPosition.pixels;
+    _startDragPositionOffset = _dragStartInDoc!;
+
     _longPressStrategy!.onLongPressDragStart(details);
 
     // Tell the overlay where to put the magnifier.
@@ -753,7 +764,15 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _onPanUpdate(DragUpdateDetails details) {
     if (_isLongPressInProgress) {
-      _longPressStrategy!.onLongPressDragUpdate(details);
+      _globalDragOffset = details.globalPosition;
+
+      final fingerDragDelta = _globalDragOffset! - _globalStartDragOffset!;
+      final scrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
+      final fingerDocumentOffset = _docLayout.getDocumentOffsetFromAncestorOffset(details.globalPosition);
+      final fingerDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(
+        _startDragPositionOffset! + fingerDragDelta - Offset(0, scrollDelta),
+      );
+      _longPressStrategy!.onLongPressDragUpdate(fingerDocumentOffset, fingerDocumentPosition);
       return;
     }
 
@@ -863,7 +882,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     _globalStartDragOffset = globalOffset;
-    _dragStartInDoc = _getDocOffsetFromGlobalOffset(globalOffset);
+    _dragStartInDoc = _getDocumentOffsetFromGlobalOffset(globalOffset);
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
@@ -985,7 +1004,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // caching the value during the pan update) because the position
     // in the document is impacted by auto-scrolling behavior.
     // final scrollDeltaWhileDragging = _dragStartScrollOffset! - scrollPosition.pixels;
-    final dragEndInDoc = _getDocOffsetFromGlobalOffset(_globalDragOffset!);
+    final dragEndInDoc = _getDocumentOffsetFromGlobalOffset(_globalDragOffset!);
 
     final dragPosition = _docLayout.getDocumentPositionNearestToOffset(dragEndInDoc);
     editorGesturesLog.info("Selecting new position during drag: $dragPosition");

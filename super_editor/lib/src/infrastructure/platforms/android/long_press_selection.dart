@@ -47,23 +47,14 @@ class AndroidDocumentLongPressSelectionStrategy {
   AndroidDocumentLongPressSelectionStrategy({
     required Document document,
     required DocumentLayout documentLayout,
-    required ScrollPosition scrollPosition,
     required void Function(DocumentSelection) select,
   })  : _document = document,
         _docLayout = documentLayout,
-        _scrollPosition = scrollPosition,
         _select = select;
 
   final Document _document;
   final DocumentLayout _docLayout;
-  final ScrollPosition _scrollPosition;
   final void Function(DocumentSelection) _select;
-
-  Offset? _globalStartDragOffset;
-  Offset? _dragStartInDoc;
-  Offset? _startDragPositionOffset;
-  double? _dragStartScrollOffset;
-  Offset? _globalDragOffset;
 
   /// The word the user initially selects upon long-pressing.
   DocumentSelection? _longPressInitialSelection;
@@ -169,7 +160,6 @@ class AndroidDocumentLongPressSelectionStrategy {
       return false;
     }
 
-    _globalDragOffset = globalTapDownOffset;
     _longPressInitialSelection = getWordSelection(docPosition: docPosition, docLayout: _docLayout);
     _select(_longPressInitialSelection!);
 
@@ -185,44 +175,25 @@ class AndroidDocumentLongPressSelectionStrategy {
     return true;
   }
 
+  Offset _getDocOffsetFromGlobalOffset(Offset globalOffset) {
+    return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
+  }
+
   /// Clients should call this method when an existing long-press gesture first
   /// begins to pan.
   ///
   /// Upon long-press pan movements, clients should call [onLongPressDragUpdate].
   void onLongPressDragStart(DragStartDetails details) {
-    _globalStartDragOffset = details.globalPosition;
-    _dragStartInDoc = _getDocOffsetFromGlobalOffset(details.globalPosition);
-
-    // User is long-press dragging. The start drag offset is wherever the user touched.
-    _startDragPositionOffset = _dragStartInDoc!;
-
-    // We need to record the scroll offset at the beginning of
-    // a drag for the case that this interactor is embedded
-    // within an ancestor Scrollable. We need to use this value
-    // to calculate a scroll delta on every scroll frame to
-    // account for the fact that this interactor is moving within
-    // the ancestor scrollable, despite the fact that the user's
-    // finger/mouse position hasn't changed.
-    _dragStartScrollOffset = _scrollPosition.pixels;
-  }
-
-  Offset _getDocOffsetFromGlobalOffset(Offset globalOffset) {
-    return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
+    longPressSelectionLog.fine("Long press drag start");
   }
 
   /// Clients should call this method whenever a long-press gesture pans, after
   /// initially calling [onLongPressStart].
-  void onLongPressDragUpdate(DragUpdateDetails details) {
-    longPressSelectionLog.finer("----------------------------------------------");
-    longPressSelectionLog.finer("Long press drag update - ${details.globalPosition}");
-    _globalDragOffset = details.globalPosition;
-
-    final fingerDragDelta = _globalDragOffset! - _globalStartDragOffset!;
-    final scrollDelta = _dragStartScrollOffset! - _scrollPosition.pixels;
-    final fingerDocumentOffset = _docLayout.getDocumentOffsetFromAncestorOffset(details.globalPosition);
-    final fingerDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(
-      _startDragPositionOffset! + fingerDragDelta - Offset(0, scrollDelta),
-    );
+  void onLongPressDragUpdate(Offset fingerDocumentOffset, DocumentPosition? fingerDocumentPosition) {
+    longPressSelectionLog.finer("--------------------------------------------");
+    longPressSelectionLog.fine("Long press drag update");
+    longPressSelectionLog.finer("Finger offset: $fingerDocumentOffset");
+    longPressSelectionLog.finer("Finger position: $fingerDocumentPosition");
     if (fingerDocumentPosition == null) {
       return;
     }
@@ -247,14 +218,13 @@ class AndroidDocumentLongPressSelectionStrategy {
         _document.doesSelectionContainPosition(_longPressInitialSelection!, focalPointDocumentPosition);
     if (fingerIsInInitialWord) {
       longPressSelectionLog.finer("Dragging in the initial word.");
-      _onLongPressFingerIsInInitialWord(details);
+      _onLongPressFingerIsInInitialWord(fingerDocumentOffset);
       return;
     }
 
     final componentUnderFinger = _docLayout.getComponentByNodeId(fingerDocumentPosition.nodeId);
-    final textComponent = componentUnderFinger is TextComponentState
-        ? componentUnderFinger
-        : (componentUnderFinger as ProxyTextComposable) as TextComponentState;
+    final textComponent =
+        componentUnderFinger is TextComponentState ? componentUnderFinger : componentUnderFinger as ProxyTextComposable;
     final fingerTextOffset = (fingerDocumentPosition.nodePosition as TextNodePosition).offset;
     final initialSelectionStartOffset = (_longPressInitialSelection!.base.nodePosition as TextNodePosition).offset;
     final initialSelectionEndOffset = (_longPressInitialSelection!.end.nodePosition as TextNodePosition).offset;
@@ -277,24 +247,16 @@ class AndroidDocumentLongPressSelectionStrategy {
             TextAffinity.downstream;
     if (fingerIsUpstream) {
       _onLongPressDragUpstreamOfInitialWord(
-        details,
-        docDragOffset: fingerDocumentOffset,
+        fingerDocumentOffset: fingerDocumentOffset,
         fingerDocumentPosition: fingerDocumentPosition,
         focalPointDocumentPosition: focalPointDocumentPosition,
-        docDragDelta: fingerDragDelta,
-        dragScrollDelta: scrollDelta,
       );
-      return;
     } else {
       _onLongPressDragDownstreamOfInitialWord(
-        details,
-        docDragOffset: fingerDocumentOffset,
+        fingerDocumentOffset: fingerDocumentOffset,
         fingerDocumentPosition: fingerDocumentPosition,
         focalPointDocumentPosition: focalPointDocumentPosition,
-        docDragDelta: fingerDragDelta,
-        dragScrollDelta: scrollDelta,
       );
-      return;
     }
   }
 
@@ -309,7 +271,7 @@ class AndroidDocumentLongPressSelectionStrategy {
     _longPressCharacterSelectionXOffset = 0;
   }
 
-  void _onLongPressFingerIsInInitialWord(DragUpdateDetails details) {
+  void _onLongPressFingerIsInInitialWord(Offset fingerOffsetInDocument) {
     // The initial word always remains selected. The entire word is the basis for
     // selection. Whenever the user presses over the initial word, the user isn't
     // selecting in on particular direction or the other.
@@ -323,9 +285,8 @@ class AndroidDocumentLongPressSelectionStrategy {
 
     final initialWordRect =
         _docLayout.getRectForSelection(_longPressInitialSelection!.base, _longPressInitialSelection!.extent)!;
-    final touchOffsetInDocument = _docLayout.getDocumentOffsetFromAncestorOffset(details.globalPosition);
-    final distanceToUpstream = (touchOffsetInDocument.dx - initialWordRect.left).abs();
-    final distanceToDownstream = (touchOffsetInDocument.dx - initialWordRect.right).abs();
+    final distanceToUpstream = (fingerOffsetInDocument.dx - initialWordRect.left).abs();
+    final distanceToDownstream = (fingerOffsetInDocument.dx - initialWordRect.right).abs();
 
     if (distanceToDownstream <= distanceToUpstream) {
       // The user's finger is closer to the downstream side than the upstream side.
@@ -346,13 +307,10 @@ class AndroidDocumentLongPressSelectionStrategy {
     }
   }
 
-  void _onLongPressDragUpstreamOfInitialWord(
-    DragUpdateDetails details, {
-    required Offset docDragOffset,
+  void _onLongPressDragUpstreamOfInitialWord({
+    required Offset fingerDocumentOffset,
     required DocumentPosition fingerDocumentPosition,
     required DocumentPosition focalPointDocumentPosition,
-    required Offset docDragDelta,
-    required double dragScrollDelta,
   }) {
     longPressSelectionLog.finest("Dragging upstream from initial word.");
 
@@ -404,7 +362,7 @@ class AndroidDocumentLongPressSelectionStrategy {
       final upstreamSelectionX = _docLayout
           .getRectForSelection(longPressMostRecentUpstreamWordBoundaryPosition, _longPressInitialSelection!.start)!
           .left;
-      final reverseDirectionDistance = docDragOffset.dx - upstreamSelectionX;
+      final reverseDirectionDistance = fingerDocumentOffset.dx - upstreamSelectionX;
       final startedMovingBackward = !_isSelectingByCharacter && isMovingBackward && reverseDirectionDistance > 24;
       longPressSelectionLog.finest(" - current doc drag position: $fingerDocumentPosition");
       longPressSelectionLog.finest(" - most recent drag position: $_longPressMostRecentTouchDocumentPosition");
@@ -446,18 +404,15 @@ class AndroidDocumentLongPressSelectionStrategy {
         late final DocumentPosition boundary = longPressMostRecentUpstreamWordBoundaryPosition;
 
         final boundaryOffsetInDocument = _docLayout.getRectForPosition(boundary)!.center;
-        final boundaryOffsetGlobal = _docLayout.getAncestorOffsetFromDocumentOffset(boundaryOffsetInDocument);
-        _longPressCharacterSelectionXOffset = boundaryOffsetGlobal.dx - details.globalPosition.dx;
+        _longPressCharacterSelectionXOffset = boundaryOffsetInDocument.dx - fingerDocumentOffset.dx;
 
         longPressSelectionLog.finest(" - Upstream boundary position: $boundary");
         longPressSelectionLog.finest(" - Upstream boundary offset in document: $boundaryOffsetInDocument");
-        longPressSelectionLog.finest(" - Upstream boundary global offset: $boundaryOffsetGlobal");
-        longPressSelectionLog.finest(" - Touch global offset: ${details.globalPosition}");
+        longPressSelectionLog.finest(" - Touch document offset: $fingerDocumentOffset");
         longPressSelectionLog.finest(" - Per-character selection x-offset: $_longPressCharacterSelectionXOffset");
 
         // Calculate an updated focal point now that we've started selecting by character.
-        final focalPointDocumentOffset = _docLayout.getDocumentOffsetFromAncestorOffset(
-            details.globalPosition + Offset(_longPressCharacterSelectionXOffset, 0));
+        final focalPointDocumentOffset = fingerDocumentOffset + Offset(_longPressCharacterSelectionXOffset, 0);
         focalPointDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(focalPointDocumentOffset)!;
         focalPointTextOffset = (focalPointDocumentPosition.nodePosition as TextNodePosition).offset;
         longPressSelectionLog.finest("Updated the focal point because we just started selecting by character");
@@ -534,13 +489,10 @@ class AndroidDocumentLongPressSelectionStrategy {
     _select(newSelection);
   }
 
-  void _onLongPressDragDownstreamOfInitialWord(
-    DragUpdateDetails details, {
-    required Offset docDragOffset,
+  void _onLongPressDragDownstreamOfInitialWord({
+    required Offset fingerDocumentOffset,
     required DocumentPosition fingerDocumentPosition,
     required DocumentPosition focalPointDocumentPosition,
-    required Offset docDragDelta,
-    required double dragScrollDelta,
   }) {
     longPressSelectionLog.finest("Dragging downstream from initial word.");
 
@@ -592,7 +544,7 @@ class AndroidDocumentLongPressSelectionStrategy {
       final downstreamSelectionX = _docLayout
           .getRectForSelection(longPressMostRecentDownstreamWordBoundaryPosition, _longPressInitialSelection!.start)!
           .right;
-      final reverseDirectionDistance = downstreamSelectionX - docDragOffset.dx;
+      final reverseDirectionDistance = downstreamSelectionX - fingerDocumentOffset.dx;
       final startedMovingBackward = !_isSelectingByCharacter && isMovingBackward && reverseDirectionDistance > 24;
       longPressSelectionLog.finest(" - current doc drag position: $fingerDocumentPosition");
       longPressSelectionLog.finest(" - most recent drag position: $_longPressMostRecentTouchDocumentPosition");
@@ -634,18 +586,15 @@ class AndroidDocumentLongPressSelectionStrategy {
         late final DocumentPosition boundary = longPressMostRecentDownstreamWordBoundaryPosition;
 
         final boundaryOffsetInDocument = _docLayout.getRectForPosition(boundary)!.center;
-        final boundaryOffsetGlobal = _docLayout.getAncestorOffsetFromDocumentOffset(boundaryOffsetInDocument);
-        _longPressCharacterSelectionXOffset = boundaryOffsetGlobal.dx - details.globalPosition.dx;
+        _longPressCharacterSelectionXOffset = boundaryOffsetInDocument.dx - fingerDocumentOffset.dx;
 
         longPressSelectionLog.finest(" - Downstream boundary position: $boundary");
         longPressSelectionLog.finest(" - Downstream boundary offset in document: $boundaryOffsetInDocument");
-        longPressSelectionLog.finest(" - Downstream boundary global offset: $boundaryOffsetGlobal");
-        longPressSelectionLog.finest(" - Touch global offset: ${details.globalPosition}");
+        longPressSelectionLog.finest(" - Touch document offset: $fingerDocumentOffset");
         longPressSelectionLog.finest(" - Per-character selection x-offset: $_longPressCharacterSelectionXOffset");
 
         // Calculate an updated focal point now that we've started selecting by character.
-        final focalPointDocumentOffset = _docLayout.getDocumentOffsetFromAncestorOffset(
-            details.globalPosition + Offset(_longPressCharacterSelectionXOffset, 0));
+        final focalPointDocumentOffset = fingerDocumentOffset + Offset(_longPressCharacterSelectionXOffset, 0);
         focalPointDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(focalPointDocumentOffset)!;
         focalPointTextOffset = (focalPointDocumentPosition.nodePosition as TextNodePosition).offset;
         longPressSelectionLog.finest("Updated the focal point because we just started selecting by character");
@@ -721,7 +670,7 @@ class AndroidDocumentLongPressSelectionStrategy {
   /// Clients should call this method when a long-press drag ends, or is cancelled.
   void onLongPressEnd() {
     // Cancel any on-going long-press.
-    // _longPressMagnifierGlobalOffset.value = null;
+    longPressSelectionLog.fine("Long press end");
     _longPressInitialSelection = null;
     _longPressMostRecentUpstreamWordBoundary = null;
     _longPressMostRecentDownstreamWordBoundary = null;

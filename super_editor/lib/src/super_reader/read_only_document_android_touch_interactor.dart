@@ -426,6 +426,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   RenderBox get viewportBox =>
       (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
+  Offset _getDocumentOffsetFromGlobalOffset(Offset globalOffset) {
+    return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
+  }
+
   /// Converts the given [interactorOffset] from the [DocumentInteractor]'s coordinate
   /// space to the [DocumentLayout]'s coordinate space.
   Offset _interactorOffsetToDocOffset(Offset interactorOffset) {
@@ -477,7 +481,6 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     _longPressStrategy = AndroidDocumentLongPressSelectionStrategy(
       document: widget.document,
       documentLayout: _docLayout,
-      scrollPosition: scrollPosition,
       select: _updateLongPressSelection,
     );
 
@@ -659,6 +662,18 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
+    _globalStartDragOffset = details.globalPosition;
+    _dragStartInDoc = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
+    // We need to record the scroll offset at the beginning of
+    // a drag for the case that this interactor is embedded
+    // within an ancestor Scrollable. We need to use this value
+    // to calculate a scroll delta on every scroll frame to
+    // account for the fact that this interactor is moving within
+    // the ancestor scrollable, despite the fact that the user's
+    // finger/mouse position hasn't changed.
+    _dragStartScrollOffset = scrollPosition.pixels;
+    _startDragPositionOffset = _dragStartInDoc!;
+
     _longPressStrategy!.onLongPressDragStart(details);
 
     // Tell the overlay where to put the magnifier.
@@ -676,7 +691,15 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
   void _onPanUpdate(DragUpdateDetails details) {
     if (_isLongPressInProgress) {
-      _longPressStrategy!.onLongPressDragUpdate(details);
+      _globalDragOffset = details.globalPosition;
+
+      final fingerDragDelta = _globalDragOffset! - _globalStartDragOffset!;
+      final scrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
+      final fingerDocumentOffset = _docLayout.getDocumentOffsetFromAncestorOffset(details.globalPosition);
+      final fingerDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(
+        _startDragPositionOffset! + fingerDragDelta - Offset(0, scrollDelta),
+      );
+      _longPressStrategy!.onLongPressDragUpdate(fingerDocumentOffset, fingerDocumentPosition);
       return;
     }
 
