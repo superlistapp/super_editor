@@ -11,7 +11,7 @@ void main() {
   initLoggers(Level.FINEST, {
     // editorScrollingLog,
     // editorGesturesLog,
-    editorLongPressSelectionLog,
+    longPressSelectionLog,
     // editorImeLog,
     // editorImeDeltasLog,
     // editorKeyLog,

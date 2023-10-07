@@ -7,7 +7,6 @@ class LogNames {
   static const editorPolicies = 'editor.policies';
   static const editorScrolling = 'editor.scrolling';
   static const editorGestures = 'editor.gestures';
-  static const editorLongPressSelection = 'editor.gestures.longPress';
   static const editorKeys = 'editor.keys';
   static const editorIme = 'editor.ime';
   static const editorImeConnection = 'editor.ime.connection';
@@ -41,6 +40,7 @@ class LogNames {
   static const iosTextField = 'textfield.ios';
 
   static const infrastructure = 'infrastructure';
+  static const longPressSelection = 'infrastructure.gestures.longPress';
   static const scheduler = 'infrastructure.scheduler';
   static const contentLayers = 'infrastructure.content_layers';
   static const attributions = 'infrastructure.attributions';
@@ -50,7 +50,6 @@ final editorLog = logging.Logger(LogNames.editor);
 final editorPoliciesLog = logging.Logger(LogNames.editorPolicies);
 final editorScrollingLog = logging.Logger(LogNames.editorScrolling);
 final editorGesturesLog = logging.Logger(LogNames.editorGestures);
-final editorLongPressSelectionLog = logging.Logger(LogNames.editorLongPressSelection);
 final editorKeyLog = logging.Logger(LogNames.editorKeys);
 final editorImeLog = logging.Logger(LogNames.editorIme);
 final editorImeConnectionLog = logging.Logger(LogNames.editorImeConnection);
@@ -83,6 +82,7 @@ final iosTextFieldLog = logging.Logger(LogNames.iosTextField);
 
 final docGesturesLog = logging.Logger(LogNames.documentGestures);
 final infrastructureLog = logging.Logger(LogNames.infrastructure);
+final longPressSelectionLog = logging.Logger(LogNames.longPressSelection);
 final schedulerLog = logging.Logger(LogNames.scheduler);
 final contentLayersLog = logging.Logger(LogNames.contentLayers);
 final attributionsLog = logging.Logger(LogNames.attributions);
