@@ -46,8 +46,8 @@ void main() {
           );
 
           // Ensure the drag handles and toolbar are visible, but the magnifier isn't.
-          expect(find.byType(IOSSelectionHandle), findsExactly(2));
-          expect(find.byType(IOSTextEditingFloatingToolbar), findsOne);
+          expect(find.byType(IOSSelectionHandle), findsNWidgets(2));
+          expect(find.byType(IOSTextEditingFloatingToolbar), findsOneWidget);
           expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsNothing);
         });
 
@@ -119,8 +119,8 @@ void main() {
           expect(SuperReaderInspector.findDocumentSelection(), wordSelection);
 
           // Ensure the drag handles and magnifier are visible, but the toolbar isn't.
-          expect(find.byType(IOSSelectionHandle), findsExactly(2));
-          expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsOne);
+          expect(find.byType(IOSSelectionHandle), findsNWidgets(2));
+          expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsOneWidget);
           expect(find.byType(IOSTextEditingFloatingToolbar), findsNothing);
 
           // Drag upstream to the end of the previous word.
@@ -194,8 +194,8 @@ void main() {
           expect(SuperReaderInspector.findDocumentSelection(), wordSelection);
 
           // Ensure the drag handles and magnifier are visible, but the toolbar isn't.
-          expect(find.byType(IOSSelectionHandle), findsExactly(2));
-          expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsOne);
+          expect(find.byType(IOSSelectionHandle), findsNWidgets(2));
+          expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsOneWidget);
           expect(find.byType(IOSTextEditingFloatingToolbar), findsNothing);
 
           // Drag downstream to the beginning of the next word.
