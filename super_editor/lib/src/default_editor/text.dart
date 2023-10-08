@@ -571,6 +571,9 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
           : null;
       if (characterBox != null) {
         final rect = characterBox.toRect();
+        // Use the right side of the character because this is the character that appears
+        // BEFORE the position we want, which means the position we want is just after
+        // this character box.
         return Rect.fromLTWH(rect.right, rect.top, 0, rect.height);
       }
 

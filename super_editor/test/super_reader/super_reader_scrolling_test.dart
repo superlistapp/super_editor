@@ -6,6 +6,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_reader_test.dart';
 
 import 'reader_test_tools.dart';
+import 'test_documents.dart';
 
 void main() {
   group("SuperReader scrolling", () {
@@ -218,5 +219,108 @@ void main() {
         isTrue,
       );
     });
+
+    group("when all content fits in the viewport", () {
+      testWidgetsOnDesktop(
+        "trackpad doesn't scroll content",
+        (tester) async {
+          tester.view.physicalSize = const Size(800, 600);
+
+          final isScrollUp = _scrollDirectionVariant.currentValue == _ScrollDirection.up;
+
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                paragraphThenHrThenParagraphDoc()
+                  ..insertNodeAt(
+                    0,
+                    ParagraphNode(
+                      id: Editor.createNodeId(),
+                      text: AttributedText('Document #1'),
+                      metadata: {
+                        'blockType': header1Attribution,
+                      },
+                    ),
+                  ),
+              )
+              .pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          // Perform a fling on the reader to attemp scrolling.
+          await tester.trackpadFling(
+            find.byType(SuperReader),
+            Offset(0.0, isScrollUp ? 100 : -100),
+            300,
+          );
+
+          await tester.pump();
+
+          // Ensure SuperReader is not scrolling.
+          expect(scrollState.position.activity?.isScrolling, false);
+        },
+        variant: _scrollDirectionVariant,
+      );
+
+      testWidgetsOnDesktop(
+        "mouse scroll wheel doesn't scroll content",
+        (tester) async {
+          tester.view.physicalSize = const Size(800, 600);
+
+          final isScrollUp = _scrollDirectionVariant.currentValue == _ScrollDirection.up;
+
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                paragraphThenHrThenParagraphDoc()
+                  ..insertNodeAt(
+                    0,
+                    ParagraphNode(
+                      id: Editor.createNodeId(),
+                      text: AttributedText('Document #1'),
+                      metadata: {
+                        'blockType': header1Attribution,
+                      },
+                    ),
+                  ),
+              )
+              .pump();
+
+          final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+          final Offset scrollEventLocation = tester.getCenter(find.byType(SuperReader));
+          final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
+
+          // Send initial pointer event to set the location for subsequent pointer scroll events.
+          await tester.sendEventToBinding(testPointer.hover(scrollEventLocation));
+
+          // Send pointer scroll event to start scrolling.
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              Offset(
+                0.0,
+                isScrollUp ? 100 : -100.0,
+              ),
+            ),
+          );
+
+          await tester.pump();
+
+          // Ensure SuperReader is not scrolling.
+          expect(scrollState.position.activity!.isScrolling, false);
+        },
+        variant: _scrollDirectionVariant,
+      );
+    });
   });
+}
+
+final _scrollDirectionVariant = ValueVariant<_ScrollDirection>({
+  _ScrollDirection.up,
+  _ScrollDirection.down,
+});
+
+enum _ScrollDirection {
+  up,
+  down;
 }

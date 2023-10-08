@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
@@ -13,6 +14,7 @@ import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_textfield/metrics.dart';
@@ -92,6 +94,11 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   HandleType? _dragHandleType;
 
   final _magnifierOffset = ValueNotifier<Offset?>(null);
+
+  Timer? _tapDownLongPressTimer;
+  Offset? _globalTapDownOffset;
+  bool get _isLongPressInProgress => _longPressStrategy != null;
+  IosLongPressSelectionStrategy? _longPressStrategy;
 
   @override
   void initState() {
@@ -299,7 +306,54 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     );
   }
 
+  void _onTapDown(TapDownDetails details) {
+    _globalTapDownOffset = details.globalPosition;
+    _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
+  }
+
+  // Runs when a tap down has lasted long enough to signify a long-press.
+  void _onLongPressDown() {
+    final interactorOffset = interactorBox.globalToLocal(_globalTapDownOffset!);
+    final tapDownDocumentOffset = _interactorOffsetToDocumentOffset(interactorOffset);
+    final tapDownDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(tapDownDocumentOffset);
+    if (tapDownDocumentPosition == null) {
+      return;
+    }
+
+    if (_isOverBaseHandle(interactorOffset) || _isOverExtentHandle(interactorOffset)) {
+      // Don't do anything for long presses over the handles, because we want the user
+      // to be able to drag them without worrying about how long they've pressed.
+      return;
+    }
+
+    _globalDragOffset = _globalTapDownOffset;
+    _longPressStrategy = IosLongPressSelectionStrategy(
+      document: widget.document,
+      documentLayout: _docLayout,
+      select: _select,
+    );
+    final didLongPressSelectionStart = _longPressStrategy!.onLongPressStart(
+      tapDownDocumentOffset: tapDownDocumentOffset,
+    );
+    if (!didLongPressSelectionStart) {
+      _longPressStrategy = null;
+      return;
+    }
+
+    _controlsContext!
+      ..shouldShowToolbar.value = false
+      ..shouldShowMagnifier.value = true;
+
+    widget.focusNode.requestFocus();
+  }
+
   void _onTapUp(TapUpDetails details) {
+    // Stop waiting for a long-press to start.
+    _globalTapDownOffset = null;
+    _tapDownLongPressTimer?.cancel();
+    _controlsContext!.shouldShowMagnifier.value = false;
+
     final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
@@ -444,6 +498,10 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   }
 
   void _onPanStart(DragStartDetails details) {
+    // Stop waiting for a long-press to start, if a long press isn't already in-progress.
+    _globalTapDownOffset = null;
+    _tapDownLongPressTimer?.cancel();
+
     // TODO: to help the user drag handles instead of scrolling, try checking touch
     //       placement during onTapDown, and then pick that up here. I think the little
     //       bit of slop might be the problem.
@@ -452,7 +510,11 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
-    if (_isOverBaseHandle(details.localPosition)) {
+    if (_isLongPressInProgress) {
+      _dragMode = DragMode.longPress;
+      _dragHandleType = null;
+      _longPressStrategy!.onLongPressDragStart();
+    } else if (_isOverBaseHandle(details.localPosition)) {
       _dragMode = DragMode.base;
       _dragHandleType = HandleType.upstream;
     } else if (_isOverExtentHandle(details.localPosition)) {
@@ -469,11 +531,17 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     final handleOffsetInInteractor = interactorBox.globalToLocal(details.globalPosition);
     _dragStartInDoc = _interactorOffsetToDocumentOffset(handleOffsetInInteractor);
 
-    _startDragPositionOffset = _docLayout
-        .getRectForPosition(
-          _dragHandleType! == HandleType.upstream ? selection.base : selection.extent,
-        )!
-        .center;
+    if (_dragHandleType != null) {
+      _startDragPositionOffset = _docLayout
+          .getRectForPosition(
+            _dragHandleType! == HandleType.upstream ? selection.base : selection.extent,
+          )!
+          .center;
+    } else {
+      // User is long-press dragging, which is why there's no drag handle type.
+      // In this case, the start drag offset is wherever the user touched.
+      _startDragPositionOffset = _dragStartInDoc!;
+    }
 
     // We need to record the scroll offset at the beginning of
     // a drag for the case that this interactor is embedded
@@ -535,7 +603,17 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     _dragEndInInteractor = interactorBox.globalToLocal(details.globalPosition);
     final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!);
 
-    _updateSelectionForNewDragHandleLocation();
+    if (_isLongPressInProgress) {
+      final fingerDragDelta = _globalDragOffset! - _globalStartDragOffset!;
+      final scrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
+      final fingerDocumentOffset = _docLayout.getDocumentOffsetFromAncestorOffset(details.globalPosition);
+      final fingerDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(
+        _startDragPositionOffset! + fingerDragDelta - Offset(0, scrollDelta),
+      );
+      _longPressStrategy!.onLongPressDragUpdate(fingerDocumentOffset, fingerDocumentPosition);
+    } else {
+      _updateSelectionForNewDragHandleLocation();
+    }
 
     _handleAutoScrolling.updateAutoScrollHandleMonitoring(
       dragEndInViewport: dragEndInViewport,
@@ -584,8 +662,9 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         }
       }
     } else {
-      // The user was dragging a handle. Stop any auto-scrolling that may have started.
-      _onHandleDragEnd();
+      // The user was dragging a selection change in some way, either with handles
+      // or with a long-press. Finish that interaction.
+      _onDragSelectionEnd();
     }
   }
 
@@ -593,15 +672,37 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     _magnifierOffset.value = null;
 
     if (_dragMode != null) {
+      _onDragSelectionEnd();
+    }
+  }
+
+  void _onDragSelectionEnd() {
+    if (_dragMode == DragMode.longPress) {
+      _onLongPressEnd();
+    } else {
       _onHandleDragEnd();
     }
+
+    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    scrollPosition.removeListener(_onAutoScrollChange);
+  }
+
+  void _onLongPressEnd() {
+    _longPressStrategy!.onLongPressEnd();
+    _longPressStrategy = null;
+    _dragMode = null;
+
+    _updateOverlayControlsAfterFinishingDragSelection();
   }
 
   void _onHandleDragEnd() {
     _handleAutoScrolling.stopAutoScrollHandleMonitoring();
-    scrollPosition.removeListener(_onAutoScrollChange);
     _dragMode = null;
 
+    _updateOverlayControlsAfterFinishingDragSelection();
+  }
+
+  void _updateOverlayControlsAfterFinishingDragSelection() {
     _controlsContext!.shouldShowMagnifier.value = false;
     if (!widget.selection.value!.isCollapsed) {
       _controlsContext!.shouldShowToolbar.value = true;
@@ -658,6 +759,10 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     //       instead be centered across the full width of the document.
     toolbarTopAnchor = selectionRect.topCenter - const Offset(0, gapBetweenToolbarAndContent);
     toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, gapBetweenToolbarAndContent);
+  }
+
+  void _select(DocumentSelection newSelection) {
+    widget.selection.value = newSelection;
   }
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
@@ -752,6 +857,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
           () => TapSequenceGestureRecognizer(),
           (TapSequenceGestureRecognizer recognizer) {
             recognizer
+              ..onTapDown = _onTapDown
               ..onTapUp = _onTapUp
               ..onDoubleTapUp = _onDoubleTapUp
               ..onTripleTapUp = _onTripleTapUp

@@ -44,6 +44,35 @@ extension SuperEditorRobot on WidgetTester {
     await _tapInParagraph(nodeId, offset, affinity, 1, superEditorFinder);
   }
 
+  /// Simulates a long-press at the given text [offset] within the paragraph
+  /// with the given [nodeId].
+  Future<void> longPressInParagraph(
+    String nodeId,
+    int offset, {
+    TextAffinity affinity = TextAffinity.downstream,
+    Finder? superEditorFinder,
+  }) async {
+    final gesture = await _pressDownInParagraph(nodeId, offset, affinity, 1, superEditorFinder);
+    await pump(kLongPressTimeout + kPressTimeout);
+
+    await gesture.up();
+    await pump();
+  }
+
+  /// Simulates a long-press down at the given text [offset] within the paragraph
+  /// with the given [nodeId], and returns the [TestGesture] so that a test can
+  /// decide to drag it, or release.
+  Future<TestGesture> longPressDownInParagraph(
+    String nodeId,
+    int offset, {
+    TextAffinity affinity = TextAffinity.downstream,
+    Finder? superEditorFinder,
+  }) async {
+    final gesture = await _pressDownInParagraph(nodeId, offset, affinity, 1, superEditorFinder);
+    await pump(kLongPressTimeout + kPressTimeout);
+    return gesture;
+  }
+
   /// Simulates a double tap at the given [offset] within the paragraph with the given
   /// [nodeId].
   Future<void> doubleTapInParagraph(
@@ -74,41 +103,9 @@ extension SuperEditorRobot on WidgetTester {
     int tapCount, [
     Finder? superEditorFinder,
   ]) async {
-    late final Finder layoutFinder;
-    if (superEditorFinder != null) {
-      layoutFinder = find.descendant(of: superEditorFinder, matching: find.byType(SingleColumnDocumentLayout));
-    } else {
-      layoutFinder = find.byType(SingleColumnDocumentLayout);
-    }
-    final documentLayoutElement = layoutFinder.evaluate().single as StatefulElement;
-    final documentLayout = documentLayoutElement.state as DocumentLayout;
-
-    // Collect the various text UI artifacts needed to find the
-    // desired caret offset.
-    final componentState = documentLayout.getComponentByNodeId(nodeId) as State;
-    late final GlobalKey textComponentKey;
-    if (componentState is ProxyDocumentComponent) {
-      textComponentKey = componentState.childDocumentComponentKey;
-    } else {
-      textComponentKey = componentState.widget.key as GlobalKey;
-    }
-
-    final textLayout = (textComponentKey.currentState as TextComponentState).textLayout;
-    final textRenderBox = textComponentKey.currentContext!.findRenderObject() as RenderBox;
-
     // Calculate the global tap position based on the TextLayout and desired
     // TextPosition.
-    final position = TextPosition(offset: offset, affinity: affinity);
-    // For the local tap offset, we add a small vertical adjustment downward. This
-    // prevents flaky edge effects, which might occur if we try to tap exactly at the
-    // top of the line. In general, we could use the caret height to choose a vertical
-    // offset, but the caret height is null when the text is empty. So we use a
-    // hard-coded value, instead. We also adjust the horizontal offset by a pixel left
-    // or right depending on the requested affinity. Without this the resulting selection
-    // may contain an incorrect affinity if the gesture did not occur at a line break.
-    final localTapOffset =
-        textLayout.getOffsetForCaret(position) + Offset(affinity == TextAffinity.upstream ? -1 : 1, 5);
-    final globalTapOffset = localTapOffset + textRenderBox.localToGlobal(Offset.zero);
+    final globalTapOffset = _findGlobalOffsetForTextPosition(nodeId, offset, affinity, superEditorFinder);
 
     // TODO: check that the tap offset is visible within the viewport. Add option to
     // auto-scroll, or throw exception when it's not tappable.
@@ -123,6 +120,23 @@ extension SuperEditorRobot on WidgetTester {
     await pump(kTapTimeout);
 
     await pumpAndSettle();
+  }
+
+  Future<TestGesture> _pressDownInParagraph(
+    String nodeId,
+    int offset,
+    TextAffinity affinity,
+    int tapCount, [
+    Finder? superEditorFinder,
+  ]) async {
+    // Calculate the global tap position based on the TextLayout and desired
+    // TextPosition.
+    final globalTapOffset = _findGlobalOffsetForTextPosition(nodeId, offset, affinity, superEditorFinder);
+
+    // TODO: check that the tap offset is visible within the viewport. Add option to
+    // auto-scroll, or throw exception when it's not tappable.
+
+    return await startGesture(globalTapOffset);
   }
 
   /// Taps at the center of the content at the given [position] within a [SuperEditor].
@@ -274,6 +288,43 @@ extension SuperEditorRobot on WidgetTester {
     await _updateFloatingCursor(action: "FloatingCursorDragState.end", offset: Offset.zero);
   }
 
+  Offset _findGlobalOffsetForTextPosition(
+    String nodeId,
+    int offset,
+    TextAffinity affinity, [
+    Finder? superEditorFinder,
+  ]) {
+    final textComponentKey = _findComponentKeyForTextNode(nodeId, superEditorFinder);
+    final textRenderBox = textComponentKey.currentContext!.findRenderObject() as RenderBox;
+
+    final localTapOffset = _findLocalOffsetForTextPosition(nodeId, offset, affinity, superEditorFinder);
+    return localTapOffset + textRenderBox.localToGlobal(Offset.zero);
+  }
+
+  Offset _findLocalOffsetForTextPosition(
+    String nodeId,
+    int offset,
+    TextAffinity affinity, [
+    Finder? superEditorFinder,
+  ]) {
+    final textComponentKey = _findComponentKeyForTextNode(nodeId, superEditorFinder);
+    final textLayout = (textComponentKey.currentState as TextComponentState).textLayout;
+
+    // Calculate the global tap position based on the TextLayout and desired
+    // TextPosition.
+    final position = TextPosition(offset: offset, affinity: affinity);
+    // For the local tap offset, we add a small vertical adjustment downward. This
+    // prevents flaky edge effects, which might occur if we try to tap exactly at the
+    // top of the line. In general, we could use the caret height to choose a vertical
+    // offset, but the caret height is null when the text is empty. So we use a
+    // hard-coded value, instead. We also adjust the horizontal offset by a pixel left
+    // or right depending on the requested affinity. Without this the resulting selection
+    // may contain an incorrect affinity if the gesture did not occur at a line break.
+    return textLayout.getOffsetForCaret(position) + Offset(affinity == TextAffinity.upstream ? -1 : 1, 5);
+  }
+
+  /// Finds and returns the [DocumentLayout] within the only [SuperEditor] in the
+  /// widget tree, or within the [SuperEditor] found via the optional [superEditorFinder].
   DocumentLayout _findDocumentLayout([Finder? superEditorFinder]) {
     late final Finder layoutFinder;
     if (superEditorFinder != null) {
@@ -283,6 +334,21 @@ extension SuperEditorRobot on WidgetTester {
     }
     final documentLayoutElement = layoutFinder.evaluate().single as StatefulElement;
     return documentLayoutElement.state as DocumentLayout;
+  }
+
+  /// Finds the [GlobalKey] that's attached to the [TextComponent], which presents the
+  /// given [nodeId].
+  ///
+  /// The given [nodeId] must refer to a [TextNode] or subclass.
+  GlobalKey _findComponentKeyForTextNode(String nodeId, [Finder? superEditorFinder]) {
+    final documentLayout = _findDocumentLayout(superEditorFinder);
+
+    final componentState = documentLayout.getComponentByNodeId(nodeId) as State;
+    if (componentState is ProxyDocumentComponent) {
+      return componentState.childDocumentComponentKey;
+    } else {
+      return componentState.widget.key as GlobalKey;
+    }
   }
 
   Future<void> _updateFloatingCursor({required String action, required Offset offset}) async {

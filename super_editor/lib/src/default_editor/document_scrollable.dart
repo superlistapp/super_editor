@@ -373,6 +373,11 @@ class AutoScrollController with ChangeNotifier {
     }
 
     final scrollPosition = _getScrollPosition!();
+
+    if (scrollPosition.maxScrollExtent == 0) {
+      return;
+    }
+
     scrollPosition.jumpTo(
       (scrollPosition.pixels + delta).clamp(0.0, scrollPosition.maxScrollExtent),
     );
@@ -388,7 +393,9 @@ class AutoScrollController with ChangeNotifier {
     }
 
     if (pos is ScrollPositionWithSingleContext) {
-      pos.goBallistic(pixelsPerSecond);
+      if (pos.maxScrollExtent > 0) {
+        pos.goBallistic(pixelsPerSecond);
+      }
       pos.context.setIgnorePointer(false);
     }
   }

@@ -33,7 +33,9 @@ DocumentSelection? getWordSelection({
     return null;
   }
 
-  final TextSelection wordTextSelection = (component as TextComposable).getWordSelectionAt(nodePosition);
+  // Create a new TextNodePosition to ensure that we're searching with downstream affinity, for consistent results.
+  final searchPosition = TextNodePosition(offset: nodePosition.offset);
+  final TextSelection wordTextSelection = (component as TextComposable).getWordSelectionAt(searchPosition);
   final wordNodeSelection = TextNodeSelection.fromTextSelection(wordTextSelection);
 
   _log.log('getWordSelection', ' - word selection: $wordNodeSelection');

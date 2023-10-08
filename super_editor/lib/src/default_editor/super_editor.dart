@@ -388,6 +388,10 @@ class SuperEditorState extends State<SuperEditor> {
       _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
     }
 
+    if (widget.composer != oldWidget.composer) {
+      _composer = widget.composer;
+    }
+
     // TODO: update the platform gesture controls controller
 
     if (widget.editor != oldWidget.editor) {
