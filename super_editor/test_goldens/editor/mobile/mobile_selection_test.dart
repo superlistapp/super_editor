@@ -25,7 +25,7 @@ void main() {
 
         await tester.placeCaretInParagraph(nodeId, 15);
 
-        await screenMatchesGolden(tester, "goldens/supereditor_android_collapsed_handle_color.png");
+        await screenMatchesGolden(tester, "goldens/supereditor_android_collapsed_handle_color");
       });
 
       testGoldensOnAndroid("with selection change colors", (tester) async {
