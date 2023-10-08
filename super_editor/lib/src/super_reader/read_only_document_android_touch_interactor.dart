@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -13,6 +15,7 @@ import 'package:super_editor/src/infrastructure/document_gestures_interaction_ov
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
@@ -121,6 +124,12 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   late MagnifierAndToolbarController _overlayController;
+
+  Timer? _tapDownLongPressTimer;
+  Offset? _globalTapDownOffset;
+  bool get _isLongPressInProgress => _longPressStrategy != null;
+  AndroidDocumentLongPressSelectionStrategy? _longPressStrategy;
+  final _longPressMagnifierGlobalOffset = ValueNotifier<Offset?>(null);
 
   @override
   void initState() {
@@ -417,6 +426,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   RenderBox get viewportBox =>
       (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
+  Offset _getDocumentOffsetFromGlobalOffset(Offset globalOffset) {
+    return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
+  }
+
   /// Converts the given [interactorOffset] from the [DocumentInteractor]'s coordinate
   /// space to the [DocumentLayout]'s coordinate space.
   Offset _interactorOffsetToDocOffset(Offset interactorOffset) {
@@ -457,9 +470,57 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     if (position is ScrollPositionWithSingleContext) {
       position.goIdle();
     }
+
+    _globalTapDownOffset = details.globalPosition;
+    _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
+  }
+
+  // Runs when a tap down has lasted long enough to signify a long-press.
+  void _onLongPressDown() {
+    _longPressStrategy = AndroidDocumentLongPressSelectionStrategy(
+      document: widget.document,
+      documentLayout: _docLayout,
+      select: _updateLongPressSelection,
+    );
+
+    final didLongPressSelectionStart = _longPressStrategy!.onLongPressStart(
+      tapDownDocumentOffset: _getDocumentOffsetFromGlobalOffset(_globalTapDownOffset!),
+    );
+    if (!didLongPressSelectionStart) {
+      _longPressStrategy = null;
+      return;
+    }
+
+    // A long-press selection is in progress. Initially show the toolbar, but nothing else.
+    _editingController
+      ..disallowHandles()
+      ..hideMagnifier()
+      ..showToolbar();
+    _positionToolbar();
+    _controlsOverlayEntry?.markNeedsBuild();
+
+    widget.focusNode.requestFocus();
   }
 
   void _onTapUp(TapUpDetails details) {
+    // Stop waiting for a long-press to start.
+    _globalTapDownOffset = null;
+    _tapDownLongPressTimer?.cancel();
+
+    // Cancel any on-going long-press.
+    if (_isLongPressInProgress) {
+      _longPressStrategy = null;
+      _longPressMagnifierGlobalOffset.value = null;
+
+      // We hide the selection handles when long-press dragging, despite having
+      // an expanded selection. Allow the handles to come back.
+      _editingController.allowHandles();
+      _controlsOverlayEntry?.markNeedsBuild();
+
+      return;
+    }
+
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
       // touch down stopped the scrolling momentum. We don't want to take any further
@@ -591,16 +652,124 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     widget.focusNode.requestFocus();
   }
 
+  void _onPanStart(DragStartDetails details) {
+    // Stop waiting for a long-press to start, if a long press isn't already in-progress.
+    _globalTapDownOffset = null;
+    _tapDownLongPressTimer?.cancel();
+
+    if (!_isLongPressInProgress) {
+      // We only care about starting a pan if we're long-press dragging.
+      return;
+    }
+
+    _globalStartDragOffset = details.globalPosition;
+    _dragStartInDoc = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
+    // We need to record the scroll offset at the beginning of
+    // a drag for the case that this interactor is embedded
+    // within an ancestor Scrollable. We need to use this value
+    // to calculate a scroll delta on every scroll frame to
+    // account for the fact that this interactor is moving within
+    // the ancestor scrollable, despite the fact that the user's
+    // finger/mouse position hasn't changed.
+    _dragStartScrollOffset = scrollPosition.pixels;
+    _startDragPositionOffset = _dragStartInDoc!;
+
+    _longPressStrategy!.onLongPressDragStart(details);
+
+    // Tell the overlay where to put the magnifier.
+    _longPressMagnifierGlobalOffset.value = details.globalPosition;
+
+    _handleAutoScrolling.startAutoScrollHandleMonitoring();
+
+    scrollPosition.addListener(_updateDragSelection);
+
+    _editingController
+      ..hideToolbar()
+      ..showMagnifier();
+    _controlsOverlayEntry!.markNeedsBuild();
+  }
+
   void _onPanUpdate(DragUpdateDetails details) {
+    if (_isLongPressInProgress) {
+      _globalDragOffset = details.globalPosition;
+
+      final fingerDragDelta = _globalDragOffset! - _globalStartDragOffset!;
+      final scrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
+      final fingerDocumentOffset = _docLayout.getDocumentOffsetFromAncestorOffset(details.globalPosition);
+      final fingerDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(
+        _startDragPositionOffset! + fingerDragDelta - Offset(0, scrollDelta),
+      );
+      _longPressStrategy!.onLongPressDragUpdate(fingerDocumentOffset, fingerDocumentPosition);
+      return;
+    }
+
     scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
   }
 
+  void _updateLongPressSelection(DocumentSelection newSelection) {
+    if (newSelection != widget.selection.value) {
+      widget.selection.value = newSelection;
+      HapticFeedback.lightImpact();
+    }
+
+    // Note: this needs to happen even when the selection doesn't change, in case
+    // some controls, like a magnifier, need to follower the user's finger.
+    _updateOverlayControlsOnLongPressDrag();
+  }
+
+  void _updateOverlayControlsOnLongPressDrag() {
+    if (_controlsOverlayEntry == null) {
+      return;
+    }
+
+    final extentDocumentOffset = _docLayout.getRectForPosition(widget.selection.value!.extent)!.center;
+    final extentGlobalOffset = _docLayout.getAncestorOffsetFromDocumentOffset(extentDocumentOffset);
+    final extentInteractorOffset = (context.findRenderObject() as RenderBox).globalToLocal(extentGlobalOffset);
+    final extentViewportOffset = _interactorOffsetInViewport(extentInteractorOffset);
+    _handleAutoScrolling.updateAutoScrollHandleMonitoring(dragEndInViewport: extentViewportOffset);
+
+    _longPressMagnifierGlobalOffset.value = extentGlobalOffset;
+    _controlsOverlayEntry!.markNeedsBuild();
+  }
+
   void _onPanEnd(DragEndDetails details) {
+    if (_isLongPressInProgress) {
+      _onLongPressEnd();
+      return;
+    }
+
     final pos = scrollPosition;
     if (pos is ScrollPositionWithSingleContext) {
       pos.goBallistic(-details.velocity.pixelsPerSecond.dy);
       pos.context.setIgnorePointer(false);
     }
+  }
+
+  void _onPanCancel() {
+    if (_isLongPressInProgress) {
+      _onLongPressEnd();
+      return;
+    }
+  }
+
+  void _onLongPressEnd() {
+    _longPressStrategy!.onLongPressEnd();
+
+    // Cancel any on-going long-press.
+    _longPressStrategy = null;
+    _longPressMagnifierGlobalOffset.value = null;
+
+    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    scrollPosition.removeListener(_updateDragSelection);
+
+    _editingController
+      ..allowHandles()
+      ..hideMagnifier();
+    if (!widget.selection.value!.isCollapsed) {
+      _editingController.showToolbar();
+      _positionToolbar();
+    }
+    _controlsOverlayEntry!.markNeedsBuild();
   }
 
   void _showEditingControlsOverlay() {
@@ -616,6 +785,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
           onHandleDragUpdate: _onHandleDragUpdate,
           onHandleDragEnd: _onHandleDragEnd,
           popoverToolbarBuilder: widget.popoverToolbarBuilder,
+          longPressMagnifierGlobalOffset: _longPressMagnifierGlobalOffset,
           showDebugPaint: false,
         );
       });
@@ -883,8 +1053,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
           () => PanGestureRecognizer(),
           (PanGestureRecognizer recognizer) {
             recognizer
+              ..onStart = _onPanStart
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
+              ..onCancel = _onPanCancel
               ..gestureSettings = gestureSettings;
           },
         ),

@@ -92,6 +92,8 @@ class TestDocumentConfigurator {
   ScrollController? _scrollController;
   FocusNode? _focusNode;
   DocumentSelection? _selection;
+  WidgetBuilder? _androidToolbarBuilder;
+  WidgetBuilder? _iOSToolbarBuilder;
 
   /// Configures the [SuperReader] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -174,6 +176,18 @@ class TestDocumentConfigurator {
     }
   }
 
+  /// Configures the [SuperEditor] to use the given [builder] as its android toolbar builder.
+  TestDocumentConfigurator withAndroidToolbarBuilder(WidgetBuilder? builder) {
+    _androidToolbarBuilder = builder;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use the given [builder] as its iOS toolbar builder.
+  TestDocumentConfigurator withiOSToolbarBuilder(WidgetBuilder? builder) {
+    _iOSToolbarBuilder = builder;
+    return this;
+  }
+
   /// Configures the [ThemeData] used for the [MaterialApp] that wraps
   /// the [SuperReader].
   TestDocumentConfigurator useAppTheme(ThemeData theme) {
@@ -234,6 +248,8 @@ class TestDocumentConfigurator {
         ],
         autofocus: _autoFocus,
         scrollController: _scrollController,
+        androidToolbarBuilder: _androidToolbarBuilder,
+        iOSToolbarBuilder: _iOSToolbarBuilder,
       ),
     );
 

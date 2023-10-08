@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -16,6 +18,7 @@ import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
@@ -129,6 +132,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
   SelectionHandleType? _selectionType;
+
+  Timer? _tapDownLongPressTimer;
+  Offset? _globalTapDownOffset;
+  bool get _isLongPressInProgress => _longPressStrategy != null;
+  AndroidDocumentLongPressSelectionStrategy? _longPressStrategy;
+  final _longPressMagnifierGlobalOffset = ValueNotifier<Offset?>(null);
 
   @override
   void initState() {
@@ -440,7 +449,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   RenderBox get viewportBox =>
       (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
-  Offset _getDocOffsetFromGlobalOffset(Offset globalOffset) {
+  Offset _getDocumentOffsetFromGlobalOffset(Offset globalOffset) {
     return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
   }
 
@@ -477,9 +486,57 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (position is ScrollPositionWithSingleContext) {
       position.goIdle();
     }
+
+    _globalTapDownOffset = details.globalPosition;
+    _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
+  }
+
+  // Runs when a tap down has lasted long enough to signify a long-press.
+  void _onLongPressDown() {
+    _longPressStrategy = AndroidDocumentLongPressSelectionStrategy(
+      document: widget.document,
+      documentLayout: _docLayout,
+      select: _updateLongPressSelection,
+    );
+
+    final didLongPressSelectionStart = _longPressStrategy!.onLongPressStart(
+      tapDownDocumentOffset: _getDocumentOffsetFromGlobalOffset(_globalTapDownOffset!),
+    );
+    if (!didLongPressSelectionStart) {
+      _longPressStrategy = null;
+      return;
+    }
+
+    // A long-press selection is in progress. Initially show the toolbar, but nothing else.
+    _editingController
+      ..disallowHandles()
+      ..hideMagnifier()
+      ..showToolbar();
+    _positionToolbar();
+    _controlsOverlayEntry?.markNeedsBuild();
+
+    widget.focusNode.requestFocus();
   }
 
   void _onTapUp(TapUpDetails details) {
+    // Stop waiting for a long-press to start.
+    _globalTapDownOffset = null;
+    _tapDownLongPressTimer?.cancel();
+
+    // Cancel any on-going long-press.
+    if (_isLongPressInProgress) {
+      _longPressStrategy = null;
+      _longPressMagnifierGlobalOffset.value = null;
+
+      // We hide the selection handles when long-press dragging, despite having
+      // an expanded selection. Allow the handles to come back.
+      _editingController.allowHandles();
+      _controlsOverlayEntry?.markNeedsBuild();
+
+      return;
+    }
+
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
       // touch down stopped the scrolling momentum. We don't want to take any further
@@ -488,7 +545,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     editorGesturesLog.info("Tap down on document");
-    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
+    final docOffset = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -545,7 +602,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _onDoubleTapDown(TapDownDetails details) {
     editorGesturesLog.info("Double tap down on document");
-    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
+    final docOffset = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -628,7 +685,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _onTripleTapDown(TapDownDetails details) {
     editorGesturesLog.info("Triple tap down on document");
-    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
+    final docOffset = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -668,16 +725,125 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     widget.focusNode.requestFocus();
   }
 
+  void _onPanStart(DragStartDetails details) {
+    // Stop waiting for a long-press to start, if a long press isn't already in-progress.
+    _globalTapDownOffset = null;
+    _tapDownLongPressTimer?.cancel();
+
+    if (!_isLongPressInProgress) {
+      // We only care about starting a pan if we're long-press dragging.
+      return;
+    }
+
+    _globalStartDragOffset = details.globalPosition;
+    _dragStartInDoc = _getDocumentOffsetFromGlobalOffset(details.globalPosition);
+    // We need to record the scroll offset at the beginning of
+    // a drag for the case that this interactor is embedded
+    // within an ancestor Scrollable. We need to use this value
+    // to calculate a scroll delta on every scroll frame to
+    // account for the fact that this interactor is moving within
+    // the ancestor scrollable, despite the fact that the user's
+    // finger/mouse position hasn't changed.
+    _dragStartScrollOffset = scrollPosition.pixels;
+    _startDragPositionOffset = _dragStartInDoc!;
+
+    _longPressStrategy!.onLongPressDragStart(details);
+
+    // Tell the overlay where to put the magnifier.
+    _longPressMagnifierGlobalOffset.value = details.globalPosition;
+
+    _handleAutoScrolling.startAutoScrollHandleMonitoring();
+
+    scrollPosition.addListener(_updateDragSelection);
+
+    _editingController
+      ..hideToolbar()
+      ..showMagnifier();
+    _controlsOverlayEntry!.markNeedsBuild();
+  }
+
   void _onPanUpdate(DragUpdateDetails details) {
+    if (_isLongPressInProgress) {
+      _globalDragOffset = details.globalPosition;
+
+      final fingerDragDelta = _globalDragOffset! - _globalStartDragOffset!;
+      final scrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
+      final fingerDocumentOffset = _docLayout.getDocumentOffsetFromAncestorOffset(details.globalPosition);
+      final fingerDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(
+        _startDragPositionOffset! + fingerDragDelta - Offset(0, scrollDelta),
+      );
+      _longPressStrategy!.onLongPressDragUpdate(fingerDocumentOffset, fingerDocumentPosition);
+      return;
+    }
+
+    // The user is trying to scroll the document. Change the scroll offset.
     scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
   }
 
+  void _updateLongPressSelection(DocumentSelection newSelection) {
+    if (newSelection != widget.selection.value) {
+      _select(newSelection);
+      HapticFeedback.lightImpact();
+    }
+
+    // Note: this needs to happen even when the selection doesn't change, in case
+    // some controls, like a magnifier, need to follower the user's finger.
+    _updateOverlayControlsOnLongPressDrag();
+  }
+
+  void _updateOverlayControlsOnLongPressDrag() {
+    if (_controlsOverlayEntry == null) {
+      return;
+    }
+
+    final extentDocumentOffset = _docLayout.getRectForPosition(widget.selection.value!.extent)!.center;
+    final extentGlobalOffset = _docLayout.getAncestorOffsetFromDocumentOffset(extentDocumentOffset);
+    final extentInteractorOffset = (context.findRenderObject() as RenderBox).globalToLocal(extentGlobalOffset);
+    final extentViewportOffset = _interactorOffsetInViewport(extentInteractorOffset);
+    _handleAutoScrolling.updateAutoScrollHandleMonitoring(dragEndInViewport: extentViewportOffset);
+
+    _longPressMagnifierGlobalOffset.value = extentGlobalOffset;
+    _controlsOverlayEntry!.markNeedsBuild();
+  }
+
   void _onPanEnd(DragEndDetails details) {
+    if (_isLongPressInProgress) {
+      _onLongPressEnd();
+      return;
+    }
+
     final pos = scrollPosition;
     if (pos is ScrollPositionWithSingleContext) {
       pos.goBallistic(-details.velocity.pixelsPerSecond.dy);
       pos.context.setIgnorePointer(false);
     }
+  }
+
+  void _onPanCancel() {
+    if (_isLongPressInProgress) {
+      _onLongPressEnd();
+      return;
+    }
+  }
+
+  void _onLongPressEnd() {
+    _longPressStrategy!.onLongPressEnd();
+
+    // Cancel any on-going long-press.
+    _longPressStrategy = null;
+    _longPressMagnifierGlobalOffset.value = null;
+
+    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    scrollPosition.removeListener(_updateDragSelection);
+
+    _editingController
+      ..allowHandles()
+      ..hideMagnifier();
+    if (!widget.selection.value!.isCollapsed) {
+      _editingController.showToolbar();
+      _positionToolbar();
+    }
+    _controlsOverlayEntry!.markNeedsBuild();
   }
 
   void _showEditingControlsOverlay() {
@@ -693,6 +859,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           onHandleDragUpdate: _onHandleDragUpdate,
           onHandleDragEnd: _onHandleDragEnd,
           popoverToolbarBuilder: widget.popoverToolbarBuilder,
+          longPressMagnifierGlobalOffset: _longPressMagnifierGlobalOffset,
           showDebugPaint: false,
         );
       });
@@ -718,7 +885,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     _globalStartDragOffset = globalOffset;
-    _dragStartInDoc = _getDocOffsetFromGlobalOffset(globalOffset);
+    _dragStartInDoc = _getDocumentOffsetFromGlobalOffset(globalOffset);
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
@@ -831,11 +998,16 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
+    if (_selectionType == null) {
+      // The user is probably doing a long-press drag. Nothing for us to do here.
+      return;
+    }
+
     // We have to re-calculate the drag end in the doc (instead of
     // caching the value during the pan update) because the position
     // in the document is impacted by auto-scrolling behavior.
     // final scrollDeltaWhileDragging = _dragStartScrollOffset! - scrollPosition.pixels;
-    final dragEndInDoc = _getDocOffsetFromGlobalOffset(_globalDragOffset!);
+    final dragEndInDoc = _getDocumentOffsetFromGlobalOffset(_globalDragOffset!);
 
     final dragPosition = _docLayout.getDocumentPositionNearestToOffset(dragEndInDoc);
     editorGesturesLog.info("Selecting new position during drag: $dragPosition");
@@ -1042,6 +1214,16 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     ]);
   }
 
+  void _select(DocumentSelection newSelection) {
+    widget.editor.execute([
+      ChangeSelectionRequest(
+        newSelection,
+        SelectionChangeType.expandSelection,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+  }
+
   void _clearSelection() {
     editorGesturesLog.fine("Clearing document selection");
     widget.editor.execute([
@@ -1086,8 +1268,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           () => PanGestureRecognizer(),
           (PanGestureRecognizer recognizer) {
             recognizer
+              ..onStart = _onPanStart
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
+              ..onCancel = _onPanCancel
               ..gestureSettings = gestureSettings;
           },
         ),
@@ -1109,6 +1293,7 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
     this.onHandleDragEnd,
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
+    required this.longPressMagnifierGlobalOffset,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -1141,6 +1326,8 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
   ///
   /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
   final WidgetBuilder popoverToolbarBuilder;
+
+  final ValueNotifier<Offset?> longPressMagnifierGlobalOffset;
 
   final bool showDebugPaint;
 
@@ -1308,7 +1495,8 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
                   // Build the drag handles (if desired)
                   ..._buildHandles(),
                   // Build the focal point for the magnifier
-                  if (_isDraggingHandle) _buildMagnifierFocalPoint(),
+                  if (_isDraggingHandle || widget.longPressMagnifierGlobalOffset.value != null)
+                    _buildMagnifierFocalPoint(),
                   // Build the magnifier (this needs to be done before building
                   // the handles so that the magnifier doesn't show the handles
                   if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
@@ -1464,13 +1652,27 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   }
 
   Widget _buildMagnifierFocalPoint() {
+    late Offset magnifierOffset;
+    if (widget.longPressMagnifierGlobalOffset.value != null) {
+      // The user is long-pressing, the magnifier should go at the selection
+      // extent.
+      magnifierOffset = widget.longPressMagnifierGlobalOffset.value!;
+    } else {
+      // The user is dragging a handle. The magnifier should go wherever the user
+      // places his finger.
+      //
+      // Also, pull the magnifier up a little bit because the Android drag handles
+      // sit below the content they refer to.
+      magnifierOffset = _localDragOffset! - const Offset(0, 20);
+    }
+
     // When the user is dragging a handle in this overlay, we
     // are responsible for positioning the focal point for the
     // magnifier to follow. We do that here.
     return Positioned(
-      left: _localDragOffset!.dx,
+      left: magnifierOffset.dx,
       // TODO: select focal position based on type of content
-      top: _localDragOffset!.dy - 20,
+      top: magnifierOffset.dy,
       child: CompositedTransformTarget(
         link: widget.editingController.magnifierFocalPointLink,
         child: const SizedBox(width: 1, height: 1),
