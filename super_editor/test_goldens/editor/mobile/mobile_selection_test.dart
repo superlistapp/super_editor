@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/super_editor.dart';
@@ -24,10 +25,7 @@ void main() {
 
         await tester.placeCaretInParagraph(nodeId, 15);
 
-        await expectLater(
-          find.byType(MaterialApp),
-          matchesGoldenFile("goldens/supereditor_android_collapsed_handle_color.png"),
-        );
+        await screenMatchesGolden(tester, "goldens/supereditor_android_collapsed_handle_color.png");
       });
 
       testGoldensOnAndroid("with selection change colors", (tester) async {
