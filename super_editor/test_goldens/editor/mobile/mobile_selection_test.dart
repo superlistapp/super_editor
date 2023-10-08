@@ -25,6 +25,7 @@ void main() {
 
         await tester.placeCaretInParagraph(nodeId, 15);
 
+        await tester.pumpAndSettle();
         await screenMatchesGolden(tester, "goldens/supereditor_android_collapsed_handle_color");
       });
 
