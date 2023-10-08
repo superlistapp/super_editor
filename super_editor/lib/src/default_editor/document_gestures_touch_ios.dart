@@ -552,6 +552,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
+    _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalTapDownOffset!));
     _controlsContext!
       ..shouldShowToolbar.value = false
       ..shouldShowMagnifier.value = true;
@@ -1622,6 +1623,7 @@ class IosEditorMagnifierDocumentLayerState
             return const SizedBox();
           }
 
+          print("Showing magnifier, following focal point: ${_controlsContext!.magnifierFocalPoint}");
           return child!;
         },
         child: Center(

@@ -341,6 +341,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
+    _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalTapDownOffset!));
     _controlsContext!
       ..shouldShowToolbar.value = false
       ..shouldShowMagnifier.value = true;
