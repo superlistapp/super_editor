@@ -555,8 +555,40 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       baseOffset: baseNodePosition.offset,
       extentOffset: extentNodePosition.offset,
     );
-    final boxes = textLayout.getBoxesForSelection(selection);
 
+    if (selection.isCollapsed) {
+      // A collapsed selection reports no boxes, but we want to return a rect at the
+      // selection's x-offset, and with a height that matches the text. Try to calculate
+      // a selection rectangle based on the character that's either after, or before, the
+      // collapsed selection position.
+      TextBox? characterBox = textLayout.getCharacterBox(selection.extent);
+      if (characterBox != null) {
+        final rect = characterBox.toRect();
+        return Rect.fromLTWH(rect.left, rect.top, 0, rect.height);
+      }
+
+      // We didn't find a character at the given offset. That offset might be at the end
+      // of the text. Try looking one character upstream.
+      characterBox = selection.extent.offset > 0
+          ? textLayout.getCharacterBox(TextPosition(offset: selection.extent.offset - 1))
+          : null;
+      if (characterBox != null) {
+        final rect = characterBox.toRect();
+        // Use the right side of the character because this is the character that appears
+        // BEFORE the position we want, which means the position we want is just after
+        // this character box.
+        return Rect.fromLTWH(rect.right, rect.top, 0, rect.height);
+      }
+
+      // We couldn't find a character box, which means the text is empty. Return
+      // the caret height, or the estimated line height.
+      final caretHeight = textLayout.getHeightForCaret(selection.extent);
+      return caretHeight != null
+          ? Rect.fromLTWH(0, 0, 0, caretHeight)
+          : Rect.fromLTWH(0, 0, 0, textLayout.estimatedLineHeight);
+    }
+
+    final boxes = textLayout.getBoxesForSelection(selection);
     Rect boundingBox = boxes.isNotEmpty ? boxes.first.toRect() : Rect.zero;
     for (int i = 1; i < boxes.length; ++i) {
       boundingBox = boundingBox.expandToInclude(boxes[i].toRect());

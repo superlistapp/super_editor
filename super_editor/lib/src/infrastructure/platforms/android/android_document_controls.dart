@@ -68,8 +68,21 @@ class AndroidDocumentGestureEditingController extends GestureEditingController {
     notifyListeners();
   }
 
+  void allowHandles() => _allowedToShowHandles = true;
+
+  void disallowHandles() => _allowedToShowHandles = false;
+
+  /// Whether or not the overlay is allowed to show handles, regardless of selection.
+  ///
+  /// When this is `false`, the handles should be hidden, even if there's a selection,
+  /// and the handles have valid visual offsets.
+  ///
+  /// When this is `true`, the handles MAY be shown, assuming all other necessary
+  /// conditions are met, e.g., there's a selection.
+  bool _allowedToShowHandles = true;
+
   /// Whether a collapsed handle should be displayed.
-  bool get shouldDisplayCollapsedHandle => _collapsedHandleOffset != null;
+  bool get shouldDisplayCollapsedHandle => _allowedToShowHandles && _collapsedHandleOffset != null;
 
   /// The offset of the collapsed handle focal point, within the coordinate space
   /// of the document layout, or `null` if no collapsed handle should be displayed.
@@ -83,7 +96,8 @@ class AndroidDocumentGestureEditingController extends GestureEditingController {
   }
 
   /// Whether the expanded handles (base + extent) should be displayed.
-  bool get shouldDisplayExpandedHandles => _upstreamHandleOffset != null && _downstreamHandleOffset != null;
+  bool get shouldDisplayExpandedHandles =>
+      _allowedToShowHandles && _upstreamHandleOffset != null && _downstreamHandleOffset != null;
 
   /// The offset of the upstream handle focal point, within the coordinate space
   /// of the document layout, or `null` if no upstream handle should be displayed.
