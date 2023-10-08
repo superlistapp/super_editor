@@ -68,11 +68,6 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   /// For the list of selectors, see [MacOsSelectors].
   final void Function(String selectorName) onPerformSelector;
 
-  /// Whether the floating cursor is being displayed.
-  ///
-  /// This value is updated on [updateFloatingCursor].
-  bool _isFloatingCursorVisible = false;
-
   void _onContentChange() {
     if (!attached) {
       return;
@@ -191,18 +186,6 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       return;
     }
 
-    if (_isFloatingCursorVisible && textEditingDeltas.every((e) => e is TextEditingDeltaNonTextUpdate)) {
-      // On iOS, dragging the floating cursor generates non-text deltas to update the selection.
-      //
-      // When dragging the floating cursor between paragraphs, we receive a non-text delta for the previously
-      // selected paragraph when our selection already changed to another paragraph. If the previously selected
-      // paragraph is bigger than the newly selected paragraph, a mapping error occurs, because we try
-      // to select an offset bigger than the paragraph's length.
-      //
-      // As we already change the selection when the floating cursor moves, we ignore these deltas.
-      return;
-    }
-
     editorImeLog.fine("Received edit deltas from platform: ${textEditingDeltas.length} deltas");
     for (final delta in textEditingDeltas) {
       editorImeLog.fine("$delta");
@@ -293,14 +276,10 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   void updateFloatingCursor(RawFloatingCursorPoint point) {
     switch (point.state) {
       case FloatingCursorDragState.Start:
-        _isFloatingCursorVisible = true;
-        _floatingCursorController?.offset = point.offset;
-        break;
       case FloatingCursorDragState.Update:
         _floatingCursorController?.offset = point.offset;
         break;
       case FloatingCursorDragState.End:
-        _isFloatingCursorVisible = false;
         _floatingCursorController?.offset = null;
         break;
     }
