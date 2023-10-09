@@ -62,7 +62,6 @@ export 'src/infrastructure/attribution_layout_bounds.dart';
 export 'src/infrastructure/composable_text.dart';
 export 'src/infrastructure/content_layers.dart';
 export 'src/infrastructure/documents/document_layers.dart';
-export 'src/infrastructure/content_layers.dart';
 export 'src/infrastructure/documents/document_scroller.dart';
 export 'src/infrastructure/documents/selection_leader_document_layer.dart';
 export 'src/infrastructure/focus.dart';

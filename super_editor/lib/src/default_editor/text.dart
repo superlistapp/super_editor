@@ -312,6 +312,18 @@ class TextNodePosition extends TextPosition implements NodePosition {
     TextAffinity affinity = TextAffinity.downstream,
   }) : super(offset: offset, affinity: affinity);
 
+  @override
+  bool isEquivalentTo(NodePosition other) {
+    if (other is! TextNodePosition) {
+      return false;
+    }
+
+    // Equivalency is determined by text offset. Affinity is ignored, because
+    // affinity doesn't alter the actual location in the text that a
+    // TextNodePosition refers to.
+    return offset == other.offset;
+  }
+
   TextNodePosition copyWith({
     int? offset,
     TextAffinity? affinity,

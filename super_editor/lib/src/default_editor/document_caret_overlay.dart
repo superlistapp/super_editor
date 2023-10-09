@@ -121,7 +121,6 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
       return;
     }
 
-    _blinkController.startBlinking();
     _blinkController.jumpToOpaque();
   }
 

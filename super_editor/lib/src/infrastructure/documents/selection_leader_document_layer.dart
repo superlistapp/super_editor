@@ -123,12 +123,6 @@ class _SelectionLeadersDocumentLayerState
       return const SizedBox();
     }
 
-    onNextFrame((_) {
-      print("Building selection link leaders:");
-      print(" - expanded selection link: ${widget.links.expandedSelectionBoundsLink}");
-      print(" - expanded selection rect: ${selectionLayout.expandedSelectionBounds}");
-    });
-
     return IgnorePointer(
       child: Stack(
         children: [

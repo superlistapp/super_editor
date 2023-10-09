@@ -24,7 +24,6 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
 
-    print("Toolbar - focal point: $focalPoint");
     return Theme(
       data: ThemeData(
         colorScheme: brightness == Brightness.light //

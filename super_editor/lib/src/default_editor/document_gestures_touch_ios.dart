@@ -116,6 +116,15 @@ class IosEditorControlsContext {
   IosEditorControlsContext({
     required this.floatingCursorController,
   });
+  final shouldCaretBlink = ValueNotifier<bool>(false);
+
+  // TODO: switch the iOS IME to depend on the context, and to directly update the
+  //       floatingCursor status, rather than use the iOS touch interactor as a middle-man
+  final FloatingCursorController floatingCursorController;
+
+  /// The status of the floating cursor, used to render a floating cursor to the
+  /// screen.
+  final floatingCursor = FloatingCursorStatus();
 
   /// Link to a location where a magnifier should be displayed.
   final magnifierFocalPoint = LeaderLink();
@@ -127,14 +136,6 @@ class IosEditorControlsContext {
 
   /// Link to a location where a toolbar should be displayed.
   final toolbarFocalPoint = LeaderLink();
-
-  // TODO: switch the iOS IME to depend on the context, and to directly update the
-  //       floatingCursor status, rather than use the iOS touch interactor as a middle-man
-  final FloatingCursorController floatingCursorController;
-
-  /// The status of the floating cursor, used to render a floating cursor to the
-  /// screen.
-  final floatingCursor = FloatingCursorStatus();
 }
 
 /// The current status of an iOS floating cursor.
@@ -504,6 +505,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     _globalTapDownOffset = details.globalPosition;
     _tapDownLongPressTimer?.cancel();
     _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
+
+    // Stop the caret from blinking, in case this tap down turns into a long-press drag,
+    // or a caret drag.
+    _controlsContext!.shouldCaretBlink.value = false;
   }
 
   // Runs when a tap down has lasted long enough to signify a long-press.
@@ -549,7 +554,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     // Stop waiting for a long-press to start.
     _globalTapDownOffset = null;
     _tapDownLongPressTimer?.cancel();
-    _controlsContext!.shouldShowMagnifier.value = false;
 
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
@@ -558,13 +562,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
+    _controlsContext!.shouldCaretBlink.value = true;
+
     final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
         (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
-      // _controlsContext!.editingController.toggleToolbar();
       _controlsContext!.toggleToolbar();
-      // _positionToolbar();
       return;
     }
 
@@ -589,7 +593,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         widget.document.doesSelectionContainPosition(selection, docPosition)) {
       // The user tapped on an expanded selection. Toggle the toolbar.
       _controlsContext!.toggleToolbar();
-      // _positionToolbar();
       return;
     }
 
@@ -800,6 +803,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
+    _controlsContext!.shouldCaretBlink.value = false;
     _controlsContext!.shouldShowToolbar.value = false;
     _controlsContext!.shouldShowMagnifier.value = true;
 
@@ -992,6 +996,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _onHandleDragEnd();
     }
 
+    _controlsContext!.shouldCaretBlink.value = true;
     _handleAutoScrolling.stopAutoScrollHandleMonitoring();
     scrollPosition.removeListener(_onAutoScrollChange);
   }
@@ -1784,10 +1789,16 @@ class IosEditorControlsDocumentLayerState
     super.didChangeDependencies();
 
     if (_controlsContext != null) {
-      _controlsContext!.floatingCursor.isActive.removeListener(_onFloatingCursorActivationChange);
+      _controlsContext!
+        ..shouldCaretBlink.removeListener(_onBlinkModeChange)
+        ..floatingCursor.isActive.removeListener(_onFloatingCursorActivationChange);
     }
+
     _controlsContext = IosEditorControlsScope.rootOf(context)
+      ..shouldCaretBlink.addListener(_onBlinkModeChange)
       ..floatingCursor.isActive.addListener(_onFloatingCursorActivationChange);
+
+    _onBlinkModeChange();
   }
 
   @override
@@ -1803,7 +1814,6 @@ class IosEditorControlsDocumentLayerState
   @override
   void dispose() {
     widget.selection.removeListener(_onSelectionChange);
-    _caretBlinkController.dispose();
     super.dispose();
   }
 
@@ -1814,6 +1824,14 @@ class IosEditorControlsDocumentLayerState
     setState(() {
       // Schedule a new layout computation because the caret and/or handles need to move.
     });
+  }
+
+  void _onBlinkModeChange() {
+    if (_controlsContext!.shouldCaretBlink.value) {
+      _caretBlinkController.startBlinking();
+    } else {
+      _caretBlinkController.stopBlinking();
+    }
   }
 
   void _onFloatingCursorActivationChange() {
@@ -1859,7 +1877,6 @@ class IosEditorControlsDocumentLayerState
           children: [
             if (layoutData != null) ...[
               _buildHandles(layoutData),
-              // _buildMagnifier(),
             ],
           ],
         ),
@@ -1965,29 +1982,4 @@ class IosEditorControlsDocumentLayerState
       ),
     );
   }
-
-  // Widget _buildMagnifier() {
-  //   // Display a magnifier that tracks a focal point.
-  //   //
-  //   // When the user is dragging an overlay handle, we place a LayerLink
-  //   // target. This magnifier follows that target.
-  //   return Positioned.fill(
-  //     child: ValueListenableBuilder(
-  //       valueListenable: IosEditorControlsScope.rootOf(context).shouldShowMagnifier,
-  //       builder: (context, shouldShowMagnifier, child) {
-  //         if (!shouldShowMagnifier) {
-  //           return const SizedBox();
-  //         }
-  //
-  //         return child!;
-  //       },
-  //       child: Center(
-  //         child: IOSFollowingMagnifier.roundedRectangle(
-  //           layerLink: IosEditorControlsScope.rootOf(context).magnifierFocalPoint,
-  //           offsetFromFocalPoint: const Offset(0, -72),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 }
