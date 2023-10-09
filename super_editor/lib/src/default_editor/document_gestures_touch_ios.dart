@@ -122,10 +122,6 @@ class IosEditorControlsContext {
   //       floatingCursor status, rather than use the iOS touch interactor as a middle-man
   final FloatingCursorController floatingCursorController;
 
-  /// The status of the floating cursor, used to render a floating cursor to the
-  /// screen.
-  final floatingCursor = FloatingCursorStatus();
-
   /// Link to a location where a magnifier should be displayed.
   final magnifierFocalPoint = LeaderLink();
 
@@ -136,20 +132,6 @@ class IosEditorControlsContext {
 
   /// Link to a location where a toolbar should be displayed.
   final toolbarFocalPoint = LeaderLink();
-}
-
-/// The current status of an iOS floating cursor.
-class FloatingCursorStatus {
-  /// Whether the user is currently interacting with the floating cursor via the
-  /// software keyboard.
-  final isActive = ValueNotifier<bool>(false);
-
-  /// Whether the floating cursor is currently near text, which impacts whether
-  /// or not a standard gray caret should be displayed.
-  final isNearText = ValueNotifier<bool>(false);
-
-  /// The offset, width, and height of the active floating cursor.
-  final cursorGeometryInViewport = ValueNotifier<Rect?>(null);
 }
 
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
@@ -252,8 +234,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   Offset? _initialFloatingCursorOffsetInViewport;
   final _floatingCursorOffset = ValueNotifier<Offset?>(null);
   double _floatingCursorHeight = FloatingCursorPolicies.defaultFloatingCursorHeight;
-  final _isShowingFloatingCursor = ValueNotifier<bool>(false);
-  final _isFloatingCursorOverOrNearText = ValueNotifier<bool>(false);
+  // final _isShowingFloatingCursor = ValueNotifier<bool>(false);
+  // final _isFloatingCursorOverOrNearText = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -1130,27 +1112,40 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onFloatingCursorStart() {
-    _controlsContext!.floatingCursor.isActive.value = true;
+    if (widget.selection.value == null) {
+      // The floating cursor doesn't mean anything when nothing is selected.
+      return;
+    }
 
     _handleAutoScrolling.startAutoScrollHandleMonitoring();
+
+    final initialSelectionExtent = widget.selection.value!.extent;
+    final nearestPositionRect = _docLayout.getRectForPosition(initialSelectionExtent)!;
+    final verticalCenterOfCaret = nearestPositionRect.center;
+    _initialFloatingCursorOffset ??= verticalCenterOfCaret + const Offset(-1, 0);
+    _initialFloatingCursorOffsetInViewport = _documentOffsetToViewportOffset(_initialFloatingCursorOffset!);
+
+    _controlsContext!.shouldCaretBlink.value = false;
+    _controlsContext!.shouldShowToolbar.value = false;
+    _controlsContext!.shouldShowMagnifier.value = false;
   }
 
   void _onFloatingCursorMove(Offset? offset) {
     if (offset == null) {
-      if (_floatingCursorOffset.value != null) {
-        _isShowingFloatingCursor.value = false;
-
-        _isFloatingCursorOverOrNearText.value = false;
-        _initialFloatingCursorOffset = null;
-        _controlsContext!.floatingCursor.isActive.value = false;
-        _controlsContext!.floatingCursor.isNearText.value = false;
-        _controlsContext!.floatingCursor.cursorGeometryInViewport.value = null;
-        _floatingCursorOffset.value = null;
-        _floatingCursorHeight = FloatingCursorPolicies.defaultFloatingCursorHeight;
-      }
-
       return;
     }
+    // if (offset == null) {
+    //   if (_floatingCursorOffset.value != null) {
+    //     _initialFloatingCursorOffset = null;
+    //     _controlsContext!.floatingCursor.isActive.value = false;
+    //     _controlsContext!.floatingCursor.isNearText.value = false;
+    //     _controlsContext!.floatingCursor.cursorGeometryInViewport.value = null;
+    //     _floatingCursorOffset.value = null;
+    //     _floatingCursorHeight = FloatingCursorPolicies.defaultFloatingCursorHeight;
+    //   }
+    //
+    //   return;
+    // }
 
     if (widget.selection.value == null) {
       // The floating cursor doesn't mean anything when nothing is selected.
@@ -1170,26 +1165,25 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       onNextFrame((_) => _onFloatingCursorMove(offset));
     }
 
-    if (_floatingCursorOffset.value == null) {
-      // The floating cursor just started.
-      _isShowingFloatingCursor.value = true;
-
-      final initialSelectionExtent = widget.selection.value!.extent;
-      final nearestPositionRect = _docLayout.getRectForPosition(initialSelectionExtent)!;
-      final verticalCenterOfCaret = nearestPositionRect.center;
-      _initialFloatingCursorOffset ??= verticalCenterOfCaret + const Offset(-1, 0);
-      _initialFloatingCursorOffsetInViewport = _documentOffsetToViewportOffset(_initialFloatingCursorOffset!);
-
-      _controlsContext!.shouldShowToolbar.value = false;
-      _controlsContext!.shouldShowMagnifier.value = false;
-    }
+    // if (_floatingCursorOffset.value == null) {
+    //   // The floating cursor just started.
+    //   final initialSelectionExtent = widget.selection.value!.extent;
+    //   final nearestPositionRect = _docLayout.getRectForPosition(initialSelectionExtent)!;
+    //   final verticalCenterOfCaret = nearestPositionRect.center;
+    //   _initialFloatingCursorOffset ??= verticalCenterOfCaret + const Offset(-1, 0);
+    //   _initialFloatingCursorOffsetInViewport = _documentOffsetToViewportOffset(_initialFloatingCursorOffset!);
+    //
+    //   _controlsContext!.shouldShowToolbar.value = false;
+    //   _controlsContext!.shouldShowMagnifier.value = false;
+    // }
 
     final cursorViewportOffsetRaw = _initialFloatingCursorOffsetInViewport! + offset;
     final viewportHeight = (context.findRenderObject() as RenderBox).size.height;
     final cursorViewportOffset =
         Offset(cursorViewportOffsetRaw.dx, cursorViewportOffsetRaw.dy.clamp(0, viewportHeight));
     _initialFloatingCursorOffset = _initialFloatingCursorOffset! + (cursorViewportOffset - cursorViewportOffsetRaw);
-    IosEditorControlsScope.rootOf(context).floatingCursor.cursorGeometryInViewport.value = Rect.fromLTWH(
+
+    _controlsContext!.floatingCursorController.cursorGeometryInViewport.value = Rect.fromLTWH(
       cursorViewportOffsetRaw.dx,
       cursorViewportOffsetRaw.dy - (_floatingCursorHeight / 2),
       FloatingCursorPolicies.defaultFloatingCursorWidth,
@@ -1206,15 +1200,21 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onFloatingCursorStop() {
-    _controlsContext!.floatingCursor.isActive.value = false;
-
     _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+
+    _controlsContext!.shouldCaretBlink.value = true;
+    _controlsContext!.floatingCursorController.isActive.value = false;
+    _controlsContext!.floatingCursorController.isNearText.value = false;
+    _controlsContext!.floatingCursorController.cursorGeometryInViewport.value = null;
+    _initialFloatingCursorOffset = null;
+    _floatingCursorOffset.value = null;
+    _floatingCursorHeight = FloatingCursorPolicies.defaultFloatingCursorHeight;
   }
 
   /// Inspects the viewport position of the floating cursor, finds the nearest position
   /// in the document, and moves the selection to that position.
   void _updateFloatingCursorSelection() {
-    final floatingCursorRectInViewport = _controlsContext!.floatingCursor.cursorGeometryInViewport.value;
+    final floatingCursorRectInViewport = _controlsContext!.floatingCursorController.cursorGeometryInViewport.value;
     if (floatingCursorRectInViewport == null) {
       return;
     }
@@ -1229,15 +1229,15 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _floatingCursorHeight = nearestPositionRect.height;
 
       final distance = _floatingCursorOffset.value! - nearestPositionRect.topLeft + const Offset(1.0, 0.0);
-      _controlsContext!.floatingCursor.isNearText.value =
+      _controlsContext!.floatingCursorController.isNearText.value =
           distance.dx.abs() <= FloatingCursorPolicies.maximumDistanceToBeNearText;
     } else {
       final nearestComponent = _docLayout.getComponentByNodeId(nearestDocumentPosition.nodeId)!;
       _floatingCursorHeight = (nearestComponent.context.findRenderObject() as RenderBox).size.height;
-      _controlsContext!.floatingCursor.isNearText.value = false;
+      _controlsContext!.floatingCursorController.isNearText.value = false;
     }
 
-    _controlsContext!.floatingCursor.cursorGeometryInViewport.value = Rect.fromCenter(
+    _controlsContext!.floatingCursorController.cursorGeometryInViewport.value = Rect.fromCenter(
       center: floatingCursorRectInViewport.center,
       width: floatingCursorRectInViewport.width,
       height: _floatingCursorHeight,
@@ -1489,7 +1489,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
 
   Widget _buildFloatingCursor() {
     return ValueListenableBuilder<Rect?>(
-      valueListenable: IosEditorControlsScope.rootOf(context).floatingCursor.cursorGeometryInViewport,
+      valueListenable: IosEditorControlsScope.rootOf(context).floatingCursorController.cursorGeometryInViewport,
       builder: (context, floatingCursorRect, child) {
         if (floatingCursorRect == null) {
           return const SizedBox();
@@ -1792,12 +1792,12 @@ class IosEditorControlsDocumentLayerState
     if (_controlsContext != null) {
       _controlsContext!
         ..shouldCaretBlink.removeListener(_onBlinkModeChange)
-        ..floatingCursor.isActive.removeListener(_onFloatingCursorActivationChange);
+        ..floatingCursorController.isActive.removeListener(_onFloatingCursorActivationChange);
     }
 
     _controlsContext = IosEditorControlsScope.rootOf(context)
       ..shouldCaretBlink.addListener(_onBlinkModeChange)
-      ..floatingCursor.isActive.addListener(_onFloatingCursorActivationChange);
+      ..floatingCursorController.isActive.addListener(_onFloatingCursorActivationChange);
 
     _onBlinkModeChange();
   }
@@ -1836,7 +1836,7 @@ class IosEditorControlsDocumentLayerState
   }
 
   void _onFloatingCursorActivationChange() {
-    if (_controlsContext!.floatingCursor.isActive.value) {
+    if (_controlsContext!.floatingCursorController.isActive.value) {
       _caretBlinkController.stopBlinking();
     } else {
       _caretBlinkController.startBlinking();
@@ -1893,7 +1893,7 @@ class IosEditorControlsDocumentLayerState
     // changes this state or when it changes its visibility,
     // this widget is rebuilt.
     return ValueListenableBuilder<bool>(
-      valueListenable: IosEditorControlsScope.rootOf(context).floatingCursor.isNearText,
+      valueListenable: _controlsContext!.floatingCursorController.isNearText,
       builder: (context, isNearText, _) {
         if (isNearText) {
           return const SizedBox.shrink();
@@ -1932,7 +1932,7 @@ class IosEditorControlsDocumentLayerState
       left: caret.left,
       top: caret.top,
       child: ValueListenableBuilder<bool>(
-        valueListenable: IosEditorControlsScope.rootOf(context).floatingCursor.isActive,
+        valueListenable: IosEditorControlsScope.rootOf(context).floatingCursorController.isActive,
         builder: (context, isShowingFloatingCursor, child) {
           return IOSCollapsedHandle(
             controller: _caretBlinkController,

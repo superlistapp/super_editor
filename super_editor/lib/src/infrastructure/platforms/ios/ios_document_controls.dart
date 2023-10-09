@@ -282,8 +282,20 @@ class IosDocumentGestureEditingController extends GestureEditingController {
 }
 
 class FloatingCursorController {
+  /// Whether the user is currently interacting with the floating cursor via the
+  /// software keyboard.
+  final isActive = ValueNotifier<bool>(false);
+
+  /// Whether the floating cursor is currently near text, which impacts whether
+  /// or not a standard gray caret should be displayed.
+  final isNearText = ValueNotifier<bool>(false);
+
+  /// The offset, width, and height of the active floating cursor.
+  final cursorGeometryInViewport = ValueNotifier<Rect?>(null);
+
   /// Report that the user has activated the floating cursor.
   void onStart() {
+    isActive.value = true;
     for (final listener in _listeners) {
       listener.onStart();
     }
@@ -306,6 +318,7 @@ class FloatingCursorController {
 
   /// Report that the user has deactivated the floating cursor.
   void onStop() {
+    isActive.value = false;
     for (final listener in _listeners) {
       listener.onStop();
     }
