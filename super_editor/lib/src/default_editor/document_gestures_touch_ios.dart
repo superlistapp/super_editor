@@ -1369,11 +1369,15 @@ enum DragMode {
 class IosToolbarOverlayManager extends StatefulWidget {
   const IosToolbarOverlayManager({
     super.key,
+    required this.toolbarFocalPoint,
     required this.popoverToolbarBuilder,
     required this.createOverlayControlsClipper,
-    this.toolbarFocalPoint,
     this.child,
   });
+
+  /// Focal point, which determines where the toolbar is positioned, and where it
+  /// points.
+  final LeaderLink toolbarFocalPoint;
 
   final WidgetBuilder popoverToolbarBuilder;
 
@@ -1385,14 +1389,6 @@ class IosToolbarOverlayManager extends StatefulWidget {
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
-
-  /// Focal point, which determines where the toolbar is positioned, and where it
-  /// points.
-  ///
-  /// By default, the focal point is obtained from an ancestor [IosEditorControlsScope].
-  /// If [toolbarFocalPoint] is non-null, then [toolbarFocalPoint] is used instead of
-  /// the ancestor value.
-  final LeaderLink? toolbarFocalPoint;
 
   final Widget? child;
 
@@ -1432,7 +1428,7 @@ class _IosToolbarOverlayManagerState extends State<IosToolbarOverlayManager> {
     _toolbarOverlayEntry = OverlayEntry(builder: (overlayContext) {
       return IosEditingToolbarOverlay(
         shouldShowToolbar: _controlsContext!.shouldShowToolbar,
-        toolbarFocalPoint: widget.toolbarFocalPoint ?? IosEditorControlsScope.rootOf(context).toolbarFocalPoint,
+        toolbarFocalPoint: widget.toolbarFocalPoint,
         popoverToolbarBuilder: widget.popoverToolbarBuilder,
         createOverlayControlsClipper: widget.createOverlayControlsClipper,
         showDebugPaint: false,

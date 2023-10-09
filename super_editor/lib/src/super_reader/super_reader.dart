@@ -452,6 +452,7 @@ class SuperReaderState extends State<SuperReader> {
     switch (_gestureMode) {
       case DocumentGestureMode.iOS:
         return IosToolbarOverlayManager(
+          toolbarFocalPoint: IosEditorControlsScope.rootOf(context).toolbarFocalPoint,
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           child: child,
