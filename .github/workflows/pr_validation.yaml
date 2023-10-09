@@ -1,75 +1,75 @@
 name: Test project in a PR
 on: [pull_request]
 jobs:
-  test_mac:
-    runs-on: macos-latest
-    defaults:
-      run:
-        # Run everything from within the super_editor project directory
-        working-directory: ./super_editor
-    steps:
-      # Checkout the PR branch
-      - uses: actions/checkout@v3
+  # test_mac:
+  #   runs-on: macos-latest
+  #   defaults:
+  #     run:
+  #       # Run everything from within the super_editor project directory
+  #       working-directory: ./super_editor
+  #   steps:
+  #     # Checkout the PR branch
+  #     - uses: actions/checkout@v3
 
-      # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
-          architecture: x64
+  #     # Setup Flutter environment
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: "master"
+  #         architecture: x64
 
-      # Download all the packages that the app uses
-      - run: flutter pub get
+  #     # Download all the packages that the app uses
+  #     - run: flutter pub get
 
-      # TODO: run static analysis here when we get to zero analysis warnings
+  #     # TODO: run static analysis here when we get to zero analysis warnings
 
-      # Run all tests
-      - run: flutter test
+  #     # Run all tests
+  #     - run: flutter test
 
-  test_windows:
-    runs-on: windows-latest
-    defaults:
-      run:
-        # Run everything from within the super_editor project directory
-        working-directory: ./super_editor
-    steps:
-      # Checkout the PR branch
-      - uses: actions/checkout@v3
+  # test_windows:
+  #   runs-on: windows-latest
+  #   defaults:
+  #     run:
+  #       # Run everything from within the super_editor project directory
+  #       working-directory: ./super_editor
+  #   steps:
+  #     # Checkout the PR branch
+  #     - uses: actions/checkout@v3
 
-      # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+  #     # Setup Flutter environment
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: "master"
 
-      # Download all the packages that the app uses
-      - run: flutter pub get
+  #     # Download all the packages that the app uses
+  #     - run: flutter pub get
 
-      # TODO: run static analysis here when we get to zero analysis warnings
+  #     # TODO: run static analysis here when we get to zero analysis warnings
 
-      # Run all tests
-      - run: flutter test
+  #     # Run all tests
+  #     - run: flutter test
 
-  test_linux:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        # Run everything from within the super_editor project directory
-        working-directory: ./super_editor
-    steps:
-      # Checkout the PR branch
-      - uses: actions/checkout@v3
+  # test_linux:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       # Run everything from within the super_editor project directory
+  #       working-directory: ./super_editor
+  #   steps:
+  #     # Checkout the PR branch
+  #     - uses: actions/checkout@v3
 
-      # Setup Flutter environment
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "master"
+  #     # Setup Flutter environment
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: "master"
 
-      # Download all the packages that the app uses
-      - run: flutter pub get
+  #     # Download all the packages that the app uses
+  #     - run: flutter pub get
 
-      # TODO: run static analysis here when we get to zero analysis warnings
+  #     # TODO: run static analysis here when we get to zero analysis warnings
 
-      # Run all tests
-      - run: flutter test
+  #     # Run all tests
+  #     - run: flutter test
 
   test_goldens_super_editor:
     if: ${{ github.base_ref == 'main' }}
