@@ -1,8 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:overlord/follow_the_leader.dart';
-import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
+import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 
 /// An application overlay that displays an iOS-style toolbar.
@@ -10,7 +16,7 @@ class IosEditingToolbarOverlay extends StatefulWidget {
   const IosEditingToolbarOverlay({
     Key? key,
     required this.shouldShowToolbar,
-    required this.selectionLinks,
+    required this.toolbarFocalPoint,
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
@@ -18,7 +24,12 @@ class IosEditingToolbarOverlay extends StatefulWidget {
 
   final ValueListenable<bool> shouldShowToolbar;
 
-  final SelectionLayerLinks selectionLinks;
+  /// The focal point, which determines where the toolbar is positioned, and
+  /// where the toolbar points.
+  ///
+  /// In the case that the associated [Leader] has meaningful width and height,
+  /// the toolbar focuses on the center of the [Leader]'s bounding box.
+  final LeaderLink toolbarFocalPoint;
 
   /// Creates a clipper that applies to overlay controls, preventing
   /// the overlay controls from appearing outside the given clipping
@@ -89,13 +100,13 @@ class _IosEditingToolbarOverlayState extends State<IosEditingToolbarOverlay> wit
 
   Widget _buildToolbar() {
     return FollowerFadeOutBeyondBoundary(
-      link: widget.selectionLinks.expandedSelectionBoundsLink,
+      link: widget.toolbarFocalPoint,
       boundary: WidgetFollowerBoundary(
         boundaryKey: _boundsKey,
         devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
       ),
       child: Follower.withAligner(
-        link: widget.selectionLinks.expandedSelectionBoundsLink,
+        link: widget.toolbarFocalPoint,
         aligner: CupertinoPopoverToolbarAligner(_boundsKey),
         boundary: WidgetFollowerBoundary(
           boundaryKey: _boundsKey,
@@ -329,4 +340,151 @@ class FloatingCursorListener {
   void onMove(Offset? newOffset) => _onMove?.call(newOffset);
 
   void onStop() => _onStop?.call();
+}
+
+/// A document layer that positions a leader widget around the user's selection,
+/// as a focal point for an iOS-style toolbar display.
+///
+/// By default, the toolbar focal point [LeaderLink] is obtained from an ancestor
+/// [IosEditorControlsScope].
+class IosToolbarFocalPointDocumentLayer extends DocumentLayoutLayerStatefulWidget {
+  const IosToolbarFocalPointDocumentLayer({
+    Key? key,
+    required this.document,
+    required this.selection,
+    this.toolbarFocalPointLink,
+    this.showDebugLeaderBounds = false,
+  }) : super(key: key);
+
+  /// The editor's [Document], which is used to find the start and end of
+  /// the user's expanded selection.
+  final Document document;
+
+  /// The current user's selection within a document.
+  final ValueListenable<DocumentSelection?> selection;
+
+  /// The [LeaderLink], which is attached to the toolbar focal point bounds.
+  ///
+  /// By default, this [LeaderLink] is obtained from an ancestor [IosEditorControlsScope].
+  /// If [toolbarFocalPointLink] is non-null, it's used instead of the ancestor value.
+  final LeaderLink? toolbarFocalPointLink;
+
+  /// Whether to paint colorful bounds around the leader widgets, for debugging purposes.
+  final bool showDebugLeaderBounds;
+
+  @override
+  DocumentLayoutLayerState<ContentLayerStatefulWidget, Rect> createState() => _IosToolbarFocalPointDocumentLayerState();
+}
+
+class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<IosToolbarFocalPointDocumentLayer, Rect>
+    with SingleTickerProviderStateMixin {
+  bool _wasSelectionExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.selection.addListener(_onSelectionChange);
+  }
+
+  @override
+  void didUpdateWidget(IosToolbarFocalPointDocumentLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.selection != oldWidget.selection) {
+      oldWidget.selection.removeListener(_onSelectionChange);
+      widget.selection.addListener(_onSelectionChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.selection.removeListener(_onSelectionChange);
+
+    super.dispose();
+  }
+
+  void _onSelectionChange() {
+    final selection = widget.selection.value;
+    _wasSelectionExpanded = !(selection?.isCollapsed == true);
+
+    if (selection == null && !_wasSelectionExpanded) {
+      // There's no selection now, and in the previous frame there either was no selection,
+      // or a collapsed selection. We don't need to worry about re-calculating or rebuilding
+      // our bounds.
+      return;
+    }
+    if (selection != null && selection.isCollapsed && !_wasSelectionExpanded) {
+      // The current selection is collapsed, and the selection in the previous frame was
+      // either null, or was also collapsed. We only need to position bounds when the selection
+      // is expanded, or goes from expanded to collapsed, or from collapsed to expanded.
+      return;
+    }
+
+    // The current selection is expanded, or we went from expanded in the previous frame
+    // to non-expanded in this frame. Either way, we need to recalculate the toolbar focal
+    // point bounds.
+    if (mounted && SchedulerBinding.instance.schedulerPhase != SchedulerPhase.persistentCallbacks) {
+      // The Flutter pipeline isn't running. Schedule a re-build to re-position the toolbar focal point.
+      setState(() {
+        // The selection bounds, and Leader build, will take place in methods that
+        // run in response to setState().
+      });
+    }
+  }
+
+  @override
+  Rect? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+    final documentSelection = widget.selection.value;
+    if (documentSelection == null) {
+      return null;
+    }
+
+    final selectedComponent = documentLayout.getComponentByNodeId(widget.selection.value!.extent.nodeId);
+    if (selectedComponent == null) {
+      // Assume that we're in a momentary transitive state where the document layout
+      // just gained or lost a component. We expect this method to run again in a moment
+      // to correct for this.
+      return null;
+    }
+
+    if (documentSelection.isCollapsed) {
+      return null;
+    }
+
+    return documentLayout.getRectForSelection(
+      documentSelection.base,
+      documentSelection.extent,
+    );
+  }
+
+  @override
+  Widget doBuild(BuildContext context, Rect? expandedSelectionBounds) {
+    if (expandedSelectionBounds == null) {
+      return const SizedBox();
+    }
+
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          Positioned.fromRect(
+            rect: expandedSelectionBounds,
+            child: Leader(
+              link: widget.toolbarFocalPointLink ?? IosEditorControlsScope.rootOf(context).toolbarFocalPoint,
+              child: widget.showDebugLeaderBounds
+                  ? DecoratedBox(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          width: 4,
+                          color: const Color(0xFFFF00FF),
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

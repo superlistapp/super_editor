@@ -427,6 +427,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
               DefaultCaretOverlayBuilder(
                 caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
               ),
+              SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
               IosEditorControlsDocumentLayerBuilder(),
               IosEditorMagnifierDocumentLayerBuilder(),
             ],

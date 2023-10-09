@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -11,7 +11,6 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
-import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
@@ -23,9 +22,9 @@ import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/floating_cursor.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_reader/reader_context.dart';
@@ -119,8 +118,6 @@ class IosEditorControlsContext {
   });
 
   /// Link to a location where a magnifier should be displayed.
-  ///
-  /// The magnifier is displayed whenever this link is non-null.
   // TODO: convert this to a LeaderLink
   final magnifierFocalPoint = LayerLink();
 
@@ -128,6 +125,9 @@ class IosEditorControlsContext {
 
   void toggleToolbar() => shouldShowToolbar.value = !shouldShowToolbar.value;
   final shouldShowToolbar = ValueNotifier<bool>(false);
+
+  /// Link to a location where a toolbar should be displayed.
+  final toolbarFocalPoint = LeaderLink();
 
   // TODO: switch the iOS IME to depend on the context, and to directly update the
   //       floatingCursor status, rather than use the iOS touch interactor as a middle-man
@@ -247,20 +247,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   Offset? _globalTapDownOffset;
   bool get _isLongPressInProgress => _longPressStrategy != null;
   IosLongPressSelectionStrategy? _longPressStrategy;
-
-  // Whether we're currently waiting to see if the user taps
-  // again on the document.
-  //
-  // We track this for the following reason: on iOS, there is
-  // no collapsed handle. Instead, the caret is the handle. This
-  // means that the caret must be draggable. But this creates an
-  // issue. If the user tries to double tap, first the user taps
-  // and places the caret and then the user taps again. But the
-  // 2nd tap gets consumed by the tappable caret, when instead the
-  // 2nd tap should hit the document again. To allow for double and
-  // triple taps on iOS, we explicitly tell the overlay controls to
-  // avoid handling gestures while we are `_waitingForMoreTaps`.
-  bool _waitingForMoreTaps = false;
 
   Offset? _initialFloatingCursorOffset;
   Offset? _initialFloatingCursorOffsetInViewport;
@@ -1384,13 +1370,11 @@ enum DragMode {
 class IosToolbarOverlayManager extends StatefulWidget {
   const IosToolbarOverlayManager({
     super.key,
-    required this.selectionLinks,
     required this.popoverToolbarBuilder,
     required this.createOverlayControlsClipper,
+    this.toolbarFocalPoint,
     this.child,
   });
-
-  final SelectionLayerLinks selectionLinks;
 
   final WidgetBuilder popoverToolbarBuilder;
 
@@ -1402,6 +1386,14 @@ class IosToolbarOverlayManager extends StatefulWidget {
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
+
+  /// Focal point, which determines where the toolbar is positioned, and where it
+  /// points.
+  ///
+  /// By default, the focal point is obtained from an ancestor [IosEditorControlsScope].
+  /// If [toolbarFocalPoint] is non-null, then [toolbarFocalPoint] is used instead of
+  /// the ancestor value.
+  final LeaderLink? toolbarFocalPoint;
 
   final Widget? child;
 
@@ -1441,7 +1433,7 @@ class _IosToolbarOverlayManagerState extends State<IosToolbarOverlayManager> {
     _toolbarOverlayEntry = OverlayEntry(builder: (overlayContext) {
       return IosEditingToolbarOverlay(
         shouldShowToolbar: _controlsContext!.shouldShowToolbar,
-        selectionLinks: widget.selectionLinks,
+        toolbarFocalPoint: widget.toolbarFocalPoint ?? IosEditorControlsScope.rootOf(context).toolbarFocalPoint,
         popoverToolbarBuilder: widget.popoverToolbarBuilder,
         createOverlayControlsClipper: widget.createOverlayControlsClipper,
         showDebugPaint: false,
@@ -1511,6 +1503,28 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
           ),
         );
       },
+    );
+  }
+}
+
+/// A [SuperEditorDocumentLayerBuilder] that builds a [IosToolbarFocalPointDocumentLayer], which
+/// positions a `Leader` widget around the document selection, as a focal point for an
+/// iOS floating toolbar.
+class SuperEditorIosToolbarFocalPointDocumentLayerBuilder implements SuperEditorLayerBuilder {
+  const SuperEditorIosToolbarFocalPointDocumentLayerBuilder({
+    // ignore: unused_element
+    this.showDebugLeaderBounds = false,
+  });
+
+  /// Whether to paint colorful bounds around the leader widget.
+  final bool showDebugLeaderBounds;
+
+  @override
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editorContext) {
+    return IosToolbarFocalPointDocumentLayer(
+      document: editorContext.document,
+      selection: editorContext.composer.selectionNotifier,
+      showDebugLeaderBounds: showDebugLeaderBounds,
     );
   }
 }
@@ -1623,7 +1637,6 @@ class IosEditorMagnifierDocumentLayerState
             return const SizedBox();
           }
 
-          print("Showing magnifier, following focal point: ${_controlsContext!.magnifierFocalPoint}");
           return child!;
         },
         child: Center(
@@ -1880,9 +1893,9 @@ class IosEditorControlsDocumentLayerState
 
         return Stack(
           children: [
-            if (widget.selection.value!.isCollapsed) //
+            if (layoutData.caret != null) //
               _buildCollapsedHandle(caret: layoutData.caret!),
-            if (!widget.selection.value!.isCollapsed) ...[
+            if (layoutData.upstream != null && layoutData.downstream != null) ...[
               _buildUpstreamHandle(
                 upstream: layoutData.upstream!,
                 debugColor: Colors.green,

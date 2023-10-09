@@ -48,6 +48,7 @@ class SuperReader extends StatefulWidget {
     this.scrollController,
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
+    this.documentUnderlayBuilders = const [],
     this.documentOverlayBuilders = defaultSuperReaderDocumentOverlayBuilders,
     List<ComponentBuilder>? componentBuilders,
     List<ReadOnlyDocumentKeyboardAction>? keyboardActions,
@@ -125,6 +126,10 @@ class SuperReader extends StatefulWidget {
   /// table styleable. To accomplish this, you add a custom style phase that
   /// knows how to interpret and apply table styles for your visual table component.
   final List<SingleColumnLayoutStylePhase> customStylePhases;
+
+  /// Layers that are displayed beneath the document layout, aligned
+  /// with the location and size of the document layout.
+  final List<ReadOnlyDocumentLayerBuilder> documentUnderlayBuilders;
 
   /// Layers that are displayed on top of the document layout, aligned
   /// with the location and size of the document layout.
@@ -357,42 +362,51 @@ class SuperReaderState extends State<SuperReader> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building SuperReader with expanded selection link: ${_selectionLinks.expandedSelectionBoundsLink}");
-    return _buildGestureControlsContext(
-      child: ReadOnlyDocumentKeyboardInteractor(
-        // In a read-only document, we don't expect the software keyboard
-        // to ever be open. Therefore, we only respond to key presses, such
-        // as arrow keys.
-        focusNode: _focusNode,
-        readerContext: _readerContext,
-        keyboardActions: widget.keyboardActions,
-        autofocus: widget.autofocus,
-        child: _buildPlatformSpecificViewportDecorations(
-          child: DocumentScaffold(
-            documentLayoutLink: _documentLayoutLink,
-            documentLayoutKey: _docLayoutKey,
-            gestureBuilder: _buildGestureInteractor,
-            scrollController: _scrollController,
-            autoScrollController: _autoScrollController,
-            // TODO: Finish integrating the DocumentScroller in SuperReader (https://github.com/superlistapp/super_editor/issues/1306)
-            scroller: _scroller,
-            presenter: _docLayoutPresenter!,
-            componentBuilders: widget.componentBuilders,
-            underlays: const [], // TODO: pass widget underlays here
-            overlays: [
-              // Layer that positions and sizes leader widgets at the bounds
-              // of the users selection so that carets, handles, toolbars, and
-              // other things can follow the selection.
-              (context) => _SelectionLeadersDocumentLayerBuilder(
-                    links: _selectionLinks,
-                  ).build(context, _readerContext),
-              for (final overlayBuilder in widget.documentOverlayBuilders) //
-                (context) => overlayBuilder.build(context, _readerContext),
-            ],
-            debugPaint: widget.debugPaint,
+    return _buildGestureControlsScope(
+      // We add a Builder immediately beneath the gesture controls scope so that
+      // all descendant widgets built within SuperReader can access that scope.
+      child: Builder(builder: (controlsScopeContext) {
+        return ReadOnlyDocumentKeyboardInteractor(
+          // In a read-only document, we don't expect the software keyboard
+          // to ever be open. Therefore, we only respond to key presses, such
+          // as arrow keys.
+          focusNode: _focusNode,
+          readerContext: _readerContext,
+          keyboardActions: widget.keyboardActions,
+          autofocus: widget.autofocus,
+          child: _buildPlatformSpecificViewportDecorations(
+            controlsScopeContext,
+            child: DocumentScaffold(
+              documentLayoutLink: _documentLayoutLink,
+              documentLayoutKey: _docLayoutKey,
+              gestureBuilder: _buildGestureInteractor,
+              scrollController: _scrollController,
+              autoScrollController: _autoScrollController,
+              // TODO: Finish integrating the DocumentScroller in SuperReader (https://github.com/superlistapp/super_editor/issues/1306)
+              scroller: _scroller,
+              presenter: _docLayoutPresenter!,
+              componentBuilders: widget.componentBuilders,
+              underlays: [
+                // Add any underlays that were provided by the client.
+                for (final underlayBuilder in widget.documentUnderlayBuilders) //
+                  (context) => underlayBuilder.build(context, _readerContext),
+              ],
+              overlays: [
+                // Layer that positions and sizes leader widgets at the bounds
+                // of the users selection so that carets, handles, toolbars, and
+                // other things can follow the selection.
+                (context) => _SelectionLeadersDocumentLayerBuilder(
+                      links: _selectionLinks,
+                    ).build(context, _readerContext),
+                // Add any overlays that were provided by the client.
+                for (final overlayBuilder in widget.documentOverlayBuilders) //
+                  (context) => overlayBuilder.build(context, _readerContext),
+              ],
+              debugPaint: widget.debugPaint,
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -403,7 +417,7 @@ class SuperReaderState extends State<SuperReader> {
   /// possible that a client app has wrapped [SuperEditor] with its own context
   /// [InheritedWidget], in which case the context is shared with widgets inside
   /// of [SuperEditor], and widgets outside of [SuperEditor].
-  Widget _buildGestureControlsContext({
+  Widget _buildGestureControlsScope({
     required Widget child,
   }) {
     switch (_gestureMode) {
@@ -431,13 +445,13 @@ class SuperReaderState extends State<SuperReader> {
 
   /// Builds any widgets that a platform wants to wrap around the editor viewport,
   /// e.g., reader toolbar.
-  Widget _buildPlatformSpecificViewportDecorations({
+  Widget _buildPlatformSpecificViewportDecorations(
+    BuildContext context, {
     required Widget child,
   }) {
     switch (_gestureMode) {
       case DocumentGestureMode.iOS:
         return IosToolbarOverlayManager(
-          selectionLinks: _selectionLinks,
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           child: child,
@@ -494,6 +508,9 @@ class SuperReaderState extends State<SuperReader> {
 /// Default list of document overlays that are displayed on top of the document
 /// layout in a [SuperReader].
 const defaultSuperReaderDocumentOverlayBuilders = [
+  // Adds a Leader around the document selection at a focal point for the
+  // iOS floating toolbar.
+  SuperReaderIosToolbarFocalPointDocumentLayerBuilder(),
   IosReaderControlsDocumentLayerBuilder(),
   IosReaderMagnifierDocumentLayerBuilder(),
 ];
@@ -521,6 +538,28 @@ class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuil
       document: readerContext.document,
       selection: readerContext.selection,
       links: links,
+      showDebugLeaderBounds: showDebugLeaderBounds,
+    );
+  }
+}
+
+/// A [ReadOnlyDocumentLayerBuilder] that builds a [IosToolbarFocalPointDocumentLayer], which
+/// positions a `Leader` widget around the document selection, as a focal point for an
+/// iOS floating toolbar.
+class SuperReaderIosToolbarFocalPointDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
+  const SuperReaderIosToolbarFocalPointDocumentLayerBuilder({
+    // ignore: unused_element
+    this.showDebugLeaderBounds = false,
+  });
+
+  /// Whether to paint colorful bounds around the leader widget.
+  final bool showDebugLeaderBounds;
+
+  @override
+  ContentLayerWidget build(BuildContext context, SuperReaderContext readerContext) {
+    return IosToolbarFocalPointDocumentLayer(
+      document: readerContext.document,
+      selection: readerContext.selection,
       showDebugLeaderBounds: showDebugLeaderBounds,
     );
   }

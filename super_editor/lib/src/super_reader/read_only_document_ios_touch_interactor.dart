@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
@@ -17,7 +16,6 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
-import 'package:super_editor/src/super_textfield/metrics.dart';
 
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
 /// drag to scroll, double and triple tap to select content, and drag
@@ -111,14 +109,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       getViewportBox: () => viewportBox,
     );
 
-    // I added this listener directly to our ScrollController because the listener we added
-    // to the ScrollPosition wasn't triggering once the user makes an initial selection. I'm
-    // not sure why that happened. It's as if the ScrollPosition was replaced, but I don't
-    // know why the ScrollPosition would be replaced. In the meantime, adding this listener
-    // keeps the toolbar positioning logic working.
-    // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
-    widget.scrollController.addListener(_onScrollChange);
-
     widget.document.addListener(_onDocumentChange);
 
     widget.selection.addListener(_onSelectionChange);
@@ -151,8 +141,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       }
 
       setState(() {
-        _activeScrollPosition?.removeListener(_onScrollChange);
-        newScrollPosition.addListener(_onScrollChange);
         _activeScrollPosition = newScrollPosition;
       });
     });
@@ -165,11 +153,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     if (widget.document != oldWidget.document) {
       oldWidget.document.removeListener(_onDocumentChange);
       widget.document.addListener(_onDocumentChange);
-    }
-
-    if (widget.scrollController != oldWidget.scrollController) {
-      widget.scrollController.removeListener(_onScrollChange);
-      widget.scrollController.addListener(_onScrollChange);
     }
 
     if (widget.selection != oldWidget.selection) {
@@ -189,9 +172,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
 
     widget.document.removeListener(_onDocumentChange);
     widget.selection.removeListener(_onSelectionChange);
-
-    widget.scrollController.removeListener(_onScrollChange);
-    _activeScrollPosition?.removeListener(_onScrollChange);
 
     _handleAutoScrolling.dispose();
 
@@ -248,10 +228,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     if (newSelection == null) {
       _controlsContext!.shouldShowToolbar.value = false;
     }
-  }
-
-  void _onScrollChange() {
-    _positionToolbar();
   }
 
   /// Returns the layout for the current document, which answers questions
@@ -360,7 +336,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         !selection.isCollapsed &&
         (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
       _controlsContext!.toggleToolbar();
-      _positionToolbar();
       return;
     }
 
@@ -385,7 +360,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         widget.document.doesSelectionContainPosition(selection, docPosition)) {
       // The user tapped on an expanded selection. Toggle the toolbar.
       _controlsContext!.toggleToolbar();
-      _positionToolbar();
       return;
     }
 
@@ -444,7 +418,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       _controlsContext!.shouldShowToolbar.value = false;
     } else {
       _controlsContext!.shouldShowToolbar.value = true;
-      _positionToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -487,7 +460,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       _controlsContext!.shouldShowToolbar.value = false;
     } else {
       _controlsContext!.shouldShowToolbar.value = true;
-      _positionToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -593,7 +565,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     // scroll the document. Scroll it, accordingly.
     if (_dragMode == null) {
       scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
-      _positionToolbar();
       return;
     }
 
@@ -657,9 +628,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         if (_activeScrollPosition != scrollPosition) {
           // We add the scroll change listener again, because going ballistic
           // seems to switch out the scroll position.
-          _activeScrollPosition?.removeListener(_onScrollChange);
           _activeScrollPosition = scrollPosition;
-          scrollPosition.addListener(_onScrollChange);
         }
       }
     } else {
@@ -707,59 +676,10 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     _controlsContext!.shouldShowMagnifier.value = false;
     if (!widget.selection.value!.isCollapsed) {
       _controlsContext!.shouldShowToolbar.value = true;
-      _positionToolbar();
     } else {
       // Read-only documents don't support collapsed selections.
       widget.selection.value = null;
     }
-  }
-
-  // TODO: can we get rid of this?
-  void _positionToolbar() {
-    if (_controlsContext!.shouldShowToolbar.value == false) {
-      return;
-    }
-
-    final selection = widget.selection.value!;
-    if (selection.isCollapsed) {
-      readerGesturesLog.warning(
-          "Tried to position toolbar for a collapsed selection in a read-only interactor. Collapsed selections shouldn't exist.");
-      return;
-    }
-
-    late Rect selectionRect;
-    Offset toolbarTopAnchor;
-    Offset toolbarBottomAnchor;
-
-    final baseRectInDoc = _docLayout.getRectForPosition(selection.base)!;
-    final extentRectInDoc = _docLayout.getRectForPosition(selection.extent)!;
-    final selectionRectInDoc = Rect.fromPoints(
-      Offset(
-        min(baseRectInDoc.left, extentRectInDoc.left),
-        min(baseRectInDoc.top, extentRectInDoc.top),
-      ),
-      Offset(
-        max(baseRectInDoc.right, extentRectInDoc.right),
-        max(baseRectInDoc.bottom, extentRectInDoc.bottom),
-      ),
-    );
-    selectionRect = Rect.fromPoints(
-      _docLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.topLeft),
-      _docLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.bottomRight),
-    );
-
-    // TODO: fix the horizontal placement
-    //       The logic to position the toolbar horizontally is wrong.
-    //       The toolbar should appear horizontally centered between the
-    //       left-most and right-most edge of the selection. However, the
-    //       left-most and right-most edge of the selection may not match
-    //       the handle locations. Consider the situation where multiple
-    //       lines/blocks of content are selected, but both handles sit near
-    //       the left side of the screen. This logic will position the
-    //       toolbar near the left side of the content, when the toolbar should
-    //       instead be centered across the full width of the document.
-    toolbarTopAnchor = selectionRect.topCenter - const Offset(0, gapBetweenToolbarAndContent);
-    toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, gapBetweenToolbarAndContent);
   }
 
   void _select(DocumentSelection newSelection) {
@@ -842,10 +762,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         scheduleBuildAfterBuild();
       } else {
         if (scrollPosition != _activeScrollPosition) {
-          _activeScrollPosition?.removeListener(_onScrollChange);
-
           _activeScrollPosition = scrollPosition;
-          _activeScrollPosition?.addListener(_onScrollChange);
         }
       }
     }
