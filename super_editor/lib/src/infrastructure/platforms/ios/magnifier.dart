@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/magnifier.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/outer_box_shadow.dart';
 
@@ -6,38 +7,37 @@ import 'package:super_editor/src/super_textfield/infrastructure/outer_box_shadow
 class IOSFollowingMagnifier extends StatelessWidget {
   const IOSFollowingMagnifier.roundedRectangle({
     Key? key,
-    required this.layerLink,
+    required this.leaderLink,
     this.offsetFromFocalPoint = Offset.zero,
   }) : magnifierBuilder = _roundedRectangleMagnifierBuilder;
 
   const IOSFollowingMagnifier.circle({
     Key? key,
-    required this.layerLink,
+    required this.leaderLink,
     this.offsetFromFocalPoint = Offset.zero,
   }) : magnifierBuilder = _circleMagnifierBuilder;
 
   const IOSFollowingMagnifier({
     Key? key,
-    required this.layerLink,
+    required this.leaderLink,
     this.offsetFromFocalPoint = Offset.zero,
     required this.magnifierBuilder,
   }) : super(key: key);
 
-  final LayerLink layerLink;
+  final LeaderLink leaderLink;
   final Offset offsetFromFocalPoint;
   final MagnifierBuilder magnifierBuilder;
 
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformFollower(
-      link: layerLink,
+    return Follower.withOffset(
+      link: leaderLink,
+      leaderAnchor: Alignment.topCenter,
+      followerAnchor: Alignment.bottomCenter,
       offset: offsetFromFocalPoint,
-      child: FractionalTranslation(
-        translation: const Offset(-0.5, -0.5),
-        child: magnifierBuilder(
-          context,
-          offsetFromFocalPoint,
-        ),
+      child: magnifierBuilder(
+        context,
+        offsetFromFocalPoint,
       ),
     );
   }

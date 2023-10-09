@@ -118,8 +118,7 @@ class IosEditorControlsContext {
   });
 
   /// Link to a location where a magnifier should be displayed.
-  // TODO: convert this to a LeaderLink
-  final magnifierFocalPoint = LayerLink();
+  final magnifierFocalPoint = LeaderLink();
 
   final shouldShowMagnifier = ValueNotifier<bool>(false);
 
@@ -1343,7 +1342,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         return Positioned(
           left: magnifierOffset.dx,
           top: magnifierOffset.dy,
-          child: CompositedTransformTarget(
+          child: Leader(
             link: _controlsContext!.magnifierFocalPoint,
             child: const SizedBox(width: 1, height: 1),
           ),
@@ -1641,7 +1640,7 @@ class IosEditorMagnifierDocumentLayerState
         },
         child: Center(
           child: IOSFollowingMagnifier.roundedRectangle(
-            layerLink: _controlsContext!.magnifierFocalPoint,
+            leaderLink: _controlsContext!.magnifierFocalPoint,
             offsetFromFocalPoint: const Offset(0, -72),
           ),
         ),

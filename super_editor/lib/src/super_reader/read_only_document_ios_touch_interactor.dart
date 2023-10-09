@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -822,7 +823,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         return Positioned(
           left: magnifierOffset.dx,
           top: magnifierOffset.dy,
-          child: CompositedTransformTarget(
+          child: Leader(
             link: _controlsContext!.magnifierFocalPoint,
             child: const SizedBox(width: 1, height: 1),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_selection.dart';
@@ -447,7 +448,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     return Positioned(
       left: _dragOffset!.dx,
       top: _dragOffset!.dy,
-      child: CompositedTransformTarget(
+      child: Leader(
         link: widget.editingOverlayController.magnifierFocalPoint,
         child: widget.showDebugPaint
             ? FractionalTranslation(
