@@ -64,7 +64,7 @@ class DocumentSelection extends DocumentRange {
   ///
   /// A [DocumentSelection] is "collapsed" when its [base] and [extent] are
   /// equivalent. Otherwise, the [DocumentSelection] is "expanded".
-  bool get isCollapsed => base.nodePosition.isEquivalentTo(extent.nodePosition);
+  bool get isCollapsed => base.nodeId == extent.nodeId && base.nodePosition.isEquivalentTo(extent.nodePosition);
 
   @override
   String toString() {
