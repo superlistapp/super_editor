@@ -23,9 +23,8 @@ void main() {
             .pump();
         final nodeId = testContext.findEditContext().document.nodes.first.id;
 
-        //await tester.placeCaretInParagraph(nodeId, 15);
+        await tester.placeCaretInParagraph(nodeId, 15);
 
-        await tester.pumpAndSettle();
         await screenMatchesGolden(tester, "supereditor_android_collapsed_handle_color");
       });
 
