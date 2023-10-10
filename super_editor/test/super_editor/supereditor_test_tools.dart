@@ -712,6 +712,9 @@ class FakeDocumentLayout with Mock implements DocumentLayout {}
 /// tree with a real `Scrollable`.
 class FakeSuperEditorScroller implements DocumentScroller {
   @override
+  void dispose() {}
+
+  @override
   double get viewportDimension => throw UnimplementedError();
 
   @override
@@ -737,4 +740,10 @@ class FakeSuperEditorScroller implements DocumentScroller {
 
   @override
   void detach() => throw UnimplementedError();
+
+  @override
+  void addScrollChangeListener(ui.VoidCallback listener) => throw UnimplementedError();
+
+  @override
+  void removeScrollChangeListener(ui.VoidCallback listener) => throw UnimplementedError();
 }

@@ -13,6 +13,7 @@ import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_editor/super_editor.dart';
 
 import '../document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_delta_editing.dart';
@@ -123,6 +124,9 @@ class SuperEditorImeInteractor extends StatefulWidget {
   /// The floating cursor is an iOS-only feature. Flutter reports floating cursor
   /// messages through the IME API, which is why this controller is offered as
   /// a property on this IME interactor.
+  ///
+  /// If no [floatingCursorController] is provided, this widget attempts to obtain
+  /// one from an ancestor [IosEditorControlsScope]
   final FloatingCursorController? floatingCursorController;
 
   /// Handlers for all Mac OS "selectors" reported by the IME.
@@ -173,11 +177,20 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _documentImeClient.floatingCursorController =
+        widget.floatingCursorController ?? IosEditorControlsScope.maybeRootOf(context)?.floatingCursorController;
+  }
+
+  @override
   void didUpdateWidget(SuperEditorImeInteractor oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.editContext != oldWidget.editContext) {
       _setupImeConnection();
+      _documentImeClient.floatingCursorController =
+          widget.floatingCursorController ?? IosEditorControlsScope.maybeRootOf(context)?.floatingCursorController;
       _imeConnection.notifyListeners();
     }
 
@@ -222,17 +235,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     _createDocumentImeClient();
   }
 
-  void _createDocumentImeClient() {
-    _documentImeClient = DocumentImeInputClient(
-      selection: widget.editContext.composer.selectionNotifier,
-      composingRegion: widget.editContext.composer.composingRegion,
-      textDeltasDocumentEditor: _textDeltasDocumentEditor,
-      imeConnection: _imeConnection,
-      floatingCursorController: widget.floatingCursorController,
-      onPerformSelector: _onPerformSelector,
-    );
-  }
-
   void _createTextDeltasDocumentEditor() {
     _textDeltasDocumentEditor = TextDeltasDocumentEditor(
       editor: widget.editContext.editor,
@@ -243,6 +245,16 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       composingRegion: widget.editContext.composer.composingRegion,
       commonOps: widget.editContext.commonOps,
       onPerformAction: (action) => _imeClient.performAction(action),
+    );
+  }
+
+  void _createDocumentImeClient() {
+    _documentImeClient = DocumentImeInputClient(
+      selection: widget.editContext.composer.selectionNotifier,
+      composingRegion: widget.editContext.composer.composingRegion,
+      textDeltasDocumentEditor: _textDeltasDocumentEditor,
+      imeConnection: _imeConnection,
+      onPerformSelector: _onPerformSelector,
     );
   }
 

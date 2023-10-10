@@ -14,6 +14,7 @@ void main() {
     // longPressSelectionLog,
     // editorImeLog,
     // editorImeDeltasLog,
+    // editorIosFloatingCursorLog,
     // editorKeyLog,
     // editorOpsLog,
     // editorLayoutLog,

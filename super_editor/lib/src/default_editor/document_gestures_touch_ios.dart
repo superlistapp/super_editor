@@ -19,6 +19,7 @@ import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
+import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/floating_cursor.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
@@ -26,6 +27,7 @@ import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selecti
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_reader/reader_context.dart';
 import 'package:super_editor/src/super_reader/super_reader.dart';
@@ -230,13 +232,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   bool get _isLongPressInProgress => _longPressStrategy != null;
   IosLongPressSelectionStrategy? _longPressStrategy;
 
-  Offset? _initialFloatingCursorOffset;
-  Offset? _initialFloatingCursorOffsetInViewport;
-  final _floatingCursorOffset = ValueNotifier<Offset?>(null);
-  double _floatingCursorHeight = FloatingCursorPolicies.defaultFloatingCursorHeight;
-  // final _isShowingFloatingCursor = ValueNotifier<bool>(false);
-  // final _isFloatingCursorOverOrNearText = ValueNotifier<bool>(false);
-
   @override
   void initState() {
     super.initState();
@@ -254,7 +249,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     _floatingCursorListener = FloatingCursorListener(
       onStart: _onFloatingCursorStart,
-      onMove: _onFloatingCursorMove,
       onStop: _onFloatingCursorStop,
     );
 
@@ -267,9 +261,12 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     if (_controlsContext != null) {
       _controlsContext!.floatingCursorController.removeListener(_floatingCursorListener);
+      _controlsContext!.floatingCursorController.cursorGeometryInViewport
+          .removeListener(_onFloatingCursorGeometryChange);
     }
     _controlsContext = IosEditorControlsScope.rootOf(context);
     _controlsContext!.floatingCursorController.addListener(_floatingCursorListener);
+    _controlsContext!.floatingCursorController.cursorGeometryInViewport.addListener(_onFloatingCursorGeometryChange);
 
     _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
 
@@ -286,8 +283,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       }
 
       setState(() {
-        _activeScrollPosition?.removeListener(_onScrollChange);
-        newScrollPosition.addListener(_onScrollChange);
         _activeScrollPosition = newScrollPosition;
       });
     });
@@ -317,7 +312,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     widget.document.removeListener(_onDocumentChange);
 
     _teardownScrollController();
-    _activeScrollPosition?.removeListener(_onScrollChange);
 
     _handleAutoScrolling.dispose();
 
@@ -335,14 +329,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _configureScrollController() {
-    // I added this listener directly to our ScrollController because the listener we added
-    // to the ScrollPosition wasn't triggering once the user makes an initial selection. I'm
-    // not sure why that happened. It's as if the ScrollPosition was replaced, but I don't
-    // know why the ScrollPosition would be replaced. In the meantime, adding this listener
-    // keeps the toolbar positioning logic working.
-    // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
-    widget.scrollController.addListener(_onScrollChange);
-
     onNextFrame((_) => scrollPosition.isScrollingNotifier.addListener(_onScrollActivityChange));
   }
 
@@ -397,10 +383,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       // the extent is still visible.
       _ensureSelectionExtentIsVisible();
     });
-  }
-
-  void _onScrollChange() {
-    _updateFloatingCursorSelection();
   }
 
   /// Returns the layout for the current document, which answers questions
@@ -952,9 +934,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         if (_activeScrollPosition != scrollPosition) {
           // We add the scroll change listener again, because going ballistic
           // seems to switch out the scroll position.
-          _activeScrollPosition?.removeListener(_onScrollChange);
           _activeScrollPosition = scrollPosition;
-          scrollPosition.addListener(_onScrollChange);
         }
       }
     } else {
@@ -1118,130 +1098,21 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     _handleAutoScrolling.startAutoScrollHandleMonitoring();
-
-    final initialSelectionExtent = widget.selection.value!.extent;
-    final nearestPositionRect = _docLayout.getRectForPosition(initialSelectionExtent)!;
-    final verticalCenterOfCaret = nearestPositionRect.center;
-    _initialFloatingCursorOffset ??= verticalCenterOfCaret + const Offset(-1, 0);
-    _initialFloatingCursorOffsetInViewport = _documentOffsetToViewportOffset(_initialFloatingCursorOffset!);
-
-    _controlsContext!.shouldCaretBlink.value = false;
-    _controlsContext!.shouldShowToolbar.value = false;
-    _controlsContext!.shouldShowMagnifier.value = false;
   }
 
-  void _onFloatingCursorMove(Offset? offset) {
-    if (offset == null) {
+  void _onFloatingCursorGeometryChange() {
+    final cursorGeometry = _controlsContext!.floatingCursorController.cursorGeometryInViewport.value;
+    if (cursorGeometry == null) {
       return;
     }
-    // if (offset == null) {
-    //   if (_floatingCursorOffset.value != null) {
-    //     _initialFloatingCursorOffset = null;
-    //     _controlsContext!.floatingCursor.isActive.value = false;
-    //     _controlsContext!.floatingCursor.isNearText.value = false;
-    //     _controlsContext!.floatingCursor.cursorGeometryInViewport.value = null;
-    //     _floatingCursorOffset.value = null;
-    //     _floatingCursorHeight = FloatingCursorPolicies.defaultFloatingCursorHeight;
-    //   }
-    //
-    //   return;
-    // }
-
-    if (widget.selection.value == null) {
-      // The floating cursor doesn't mean anything when nothing is selected.
-      return;
-    }
-
-    if (!widget.selection.value!.isCollapsed) {
-      // The selection is expanded. First we need to collapse it, then
-      // we can start showing the floating cursor.
-      widget.editor.execute([
-        ChangeSelectionRequest(
-          widget.selection.value!.collapseDownstream(widget.document),
-          SelectionChangeType.expandSelection,
-          SelectionReason.userInteraction,
-        ),
-      ]);
-      onNextFrame((_) => _onFloatingCursorMove(offset));
-    }
-
-    // if (_floatingCursorOffset.value == null) {
-    //   // The floating cursor just started.
-    //   final initialSelectionExtent = widget.selection.value!.extent;
-    //   final nearestPositionRect = _docLayout.getRectForPosition(initialSelectionExtent)!;
-    //   final verticalCenterOfCaret = nearestPositionRect.center;
-    //   _initialFloatingCursorOffset ??= verticalCenterOfCaret + const Offset(-1, 0);
-    //   _initialFloatingCursorOffsetInViewport = _documentOffsetToViewportOffset(_initialFloatingCursorOffset!);
-    //
-    //   _controlsContext!.shouldShowToolbar.value = false;
-    //   _controlsContext!.shouldShowMagnifier.value = false;
-    // }
-
-    final cursorViewportOffsetRaw = _initialFloatingCursorOffsetInViewport! + offset;
-    final viewportHeight = (context.findRenderObject() as RenderBox).size.height;
-    final cursorViewportOffset =
-        Offset(cursorViewportOffsetRaw.dx, cursorViewportOffsetRaw.dy.clamp(0, viewportHeight));
-    _initialFloatingCursorOffset = _initialFloatingCursorOffset! + (cursorViewportOffset - cursorViewportOffsetRaw);
-
-    _controlsContext!.floatingCursorController.cursorGeometryInViewport.value = Rect.fromLTWH(
-      cursorViewportOffsetRaw.dx,
-      cursorViewportOffsetRaw.dy - (_floatingCursorHeight / 2),
-      FloatingCursorPolicies.defaultFloatingCursorWidth,
-      _floatingCursorHeight,
-    );
-
-    _floatingCursorOffset.value = _initialFloatingCursorOffset! + offset;
-
-    _updateFloatingCursorSelection();
 
     _handleAutoScrolling.updateAutoScrollHandleMonitoring(
-      dragEndInViewport: cursorViewportOffset,
+      dragEndInViewport: cursorGeometry.center,
     );
   }
 
   void _onFloatingCursorStop() {
     _handleAutoScrolling.stopAutoScrollHandleMonitoring();
-
-    _controlsContext!.shouldCaretBlink.value = true;
-    _controlsContext!.floatingCursorController.isActive.value = false;
-    _controlsContext!.floatingCursorController.isNearText.value = false;
-    _controlsContext!.floatingCursorController.cursorGeometryInViewport.value = null;
-    _initialFloatingCursorOffset = null;
-    _floatingCursorOffset.value = null;
-    _floatingCursorHeight = FloatingCursorPolicies.defaultFloatingCursorHeight;
-  }
-
-  /// Inspects the viewport position of the floating cursor, finds the nearest position
-  /// in the document, and moves the selection to that position.
-  void _updateFloatingCursorSelection() {
-    final floatingCursorRectInViewport = _controlsContext!.floatingCursorController.cursorGeometryInViewport.value;
-    if (floatingCursorRectInViewport == null) {
-      return;
-    }
-
-    final nearestDocumentPosition = _docLayout
-        .getDocumentPositionNearestToOffset(_viewportOffsetToDocumentOffset(floatingCursorRectInViewport.center))!;
-
-    _selectPosition(nearestDocumentPosition);
-
-    if (nearestDocumentPosition.nodePosition is TextNodePosition) {
-      final nearestPositionRect = _docLayout.getRectForPosition(nearestDocumentPosition)!;
-      _floatingCursorHeight = nearestPositionRect.height;
-
-      final distance = _floatingCursorOffset.value! - nearestPositionRect.topLeft + const Offset(1.0, 0.0);
-      _controlsContext!.floatingCursorController.isNearText.value =
-          distance.dx.abs() <= FloatingCursorPolicies.maximumDistanceToBeNearText;
-    } else {
-      final nearestComponent = _docLayout.getComponentByNodeId(nearestDocumentPosition.nodeId)!;
-      _floatingCursorHeight = (nearestComponent.context.findRenderObject() as RenderBox).size.height;
-      _controlsContext!.floatingCursorController.isNearText.value = false;
-    }
-
-    _controlsContext!.floatingCursorController.cursorGeometryInViewport.value = Rect.fromCenter(
-      center: floatingCursorRectInViewport.center,
-      width: floatingCursorRectInViewport.width,
-      height: _floatingCursorHeight,
-    );
   }
 
   void _selectPosition(DocumentPosition position) {
@@ -1285,10 +1156,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         scheduleBuildAfterBuild();
       } else {
         if (scrollPosition != _activeScrollPosition) {
-          _activeScrollPosition?.removeListener(_onScrollChange);
-
           _activeScrollPosition = scrollPosition;
-          _activeScrollPosition?.addListener(_onScrollChange);
         }
       }
     }
@@ -1461,15 +1329,32 @@ class _IosToolbarOverlayManagerState extends State<IosToolbarOverlayManager> {
 
 /// Displays an iOS floating cursor for a document editor experience.
 ///
+/// An [EditorFloatingCursor] also tracks the floating cursor focal point, sets the
+/// floating cursor geometry on an ancestor [IosEditorControlsContext], as well as
+/// toggling the magnifier and toolbar, and updates the [Editor]s [DocumentSelection]
+/// as the user moves the floating cursor, or scrolls the document.
+///
 /// [EditorFloatingCursor] should wrap the editor's viewport (not the full document layout),
 /// because the floating cursor moves around the visible area of the UI, it's position
 /// is not tied directly to the document layout.
+///
+/// [EditorFloatingCursor] must be a descendant of an ancestor [IosEditorControlsScope].
 class EditorFloatingCursor extends StatefulWidget {
   const EditorFloatingCursor({
     super.key,
+    required this.editor,
+    required this.document,
+    required this.getDocumentLayout,
+    required this.selection,
+    required this.scrollChangeSignal,
     required this.child,
   });
 
+  final Editor editor;
+  final Document document;
+  final DocumentLayoutResolver getDocumentLayout;
+  final ValueListenable<DocumentSelection?> selection;
+  final SignalNotifier scrollChangeSignal;
   final Widget child;
 
   @override
@@ -1477,6 +1362,214 @@ class EditorFloatingCursor extends StatefulWidget {
 }
 
 class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
+  IosEditorControlsContext? _controlsContext;
+  late FloatingCursorListener _floatingCursorListener;
+
+  Offset? _initialFloatingCursorOffsetInViewport;
+  Offset? _floatingCursorFocalPointInViewport;
+  Offset? _floatingCursorFocalPointInDocument;
+  double _floatingCursorHeight = FloatingCursorPolicies.defaultFloatingCursorHeight;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _floatingCursorListener = FloatingCursorListener(
+      onStart: _onFloatingCursorStart,
+      onMove: _onFloatingCursorMove,
+      onStop: _onFloatingCursorStop,
+    );
+
+    widget.scrollChangeSignal.addListener(_onScrollChange);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_controlsContext != null) {
+      _controlsContext!.floatingCursorController.removeListener(_floatingCursorListener);
+    }
+    _controlsContext = IosEditorControlsScope.rootOf(context);
+    _controlsContext!.floatingCursorController.addListener(_floatingCursorListener);
+  }
+
+  @override
+  void didUpdateWidget(EditorFloatingCursor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.scrollChangeSignal != oldWidget.scrollChangeSignal) {
+      oldWidget.scrollChangeSignal.removeListener(_onScrollChange);
+      widget.scrollChangeSignal.addListener(_onScrollChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.scrollChangeSignal.removeListener(_onScrollChange);
+
+    super.dispose();
+  }
+
+  /// Returns the layout for the current document, which answers questions
+  /// about the locations and sizes of visual components within the layout.
+  DocumentLayout get _docLayout => widget.getDocumentLayout();
+
+  /// Returns the `RenderBox` for the scrolling viewport.
+  ///
+  /// This widget expects to wrap the viewport, so this widget's box is the same
+  /// place and size as the actual viewport.
+  RenderBox get viewportBox => context.findRenderObject() as RenderBox;
+
+  Offset _documentOffsetToViewportOffset(Offset documentOffset) {
+    final globalOffset = _docLayout.getGlobalOffsetFromDocumentOffset(documentOffset);
+    return viewportBox.globalToLocal(globalOffset);
+  }
+
+  Offset _viewportOffsetToDocumentOffset(Offset viewportOffset) {
+    final globalOffset = viewportBox.localToGlobal(viewportOffset);
+    return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
+  }
+
+  void _onFloatingCursorStart() {
+    editorIosFloatingCursorLog.fine("Floating cursor started.");
+    if (widget.selection.value == null) {
+      // The floating cursor doesn't mean anything when nothing is selected.
+      return;
+    }
+
+    final initialSelectionExtent = widget.selection.value!.extent;
+    final nearestPositionRect = _docLayout.getRectForPosition(initialSelectionExtent)!;
+    final verticalCenterOfCaret = nearestPositionRect.center;
+    final initialFloatingCursorOffsetInDocument = verticalCenterOfCaret + const Offset(-1, 0);
+    _initialFloatingCursorOffsetInViewport = _documentOffsetToViewportOffset(initialFloatingCursorOffsetInDocument);
+    _floatingCursorFocalPointInViewport = _initialFloatingCursorOffsetInViewport!;
+    _floatingCursorFocalPointInDocument = _viewportOffsetToDocumentOffset(_floatingCursorFocalPointInViewport!);
+
+    _controlsContext!.shouldShowToolbar.value = false;
+    _controlsContext!.shouldShowMagnifier.value = false;
+
+    _updateFloatingCursorGeometryForCurrentFloatingCursorFocalPoint();
+  }
+
+  void _onFloatingCursorMove(Offset? offset) {
+    editorIosFloatingCursorLog.finer("Floating cursor moved: $offset");
+    if (offset == null) {
+      return;
+    }
+
+    if (widget.selection.value == null) {
+      // The floating cursor doesn't mean anything when nothing is selected.
+      return;
+    }
+    if (!widget.selection.value!.isCollapsed) {
+      // This shouldn't happen. An expanded selection should be collapsed for
+      // we get to movement methods.
+      editorIosFloatingCursorLog
+          .shout("Floating cursor move reported with an expanded selection. The selection should be collapsed!");
+    }
+
+    // Update our floating cursor focal point trackers.
+    final cursorViewportFocalPointUnbounded = _initialFloatingCursorOffsetInViewport! + offset;
+    editorIosFloatingCursorLog.finer(" - unbounded cursor focal point: $cursorViewportFocalPointUnbounded");
+
+    final viewportHeight = (context.findRenderObject() as RenderBox).size.height;
+    _floatingCursorFocalPointInViewport =
+        Offset(cursorViewportFocalPointUnbounded.dx, cursorViewportFocalPointUnbounded.dy.clamp(0, viewportHeight));
+    editorIosFloatingCursorLog.finer(" - bounded cursor focal point: $_floatingCursorFocalPointInViewport");
+
+    _floatingCursorFocalPointInDocument = _viewportOffsetToDocumentOffset(_floatingCursorFocalPointInViewport!);
+    editorIosFloatingCursorLog.finer(" - floating cursor offset in document: $_floatingCursorFocalPointInDocument");
+
+    // Calculate an updated floating cursor rectangle and document selection.
+    _updateFloatingCursorGeometryForCurrentFloatingCursorFocalPoint();
+    _selectPositionUnderFloatingCursor();
+  }
+
+  void _onScrollChange() {
+    if (!_controlsContext!.floatingCursorController.isActive.value) {
+      return;
+    }
+
+    _updateFloatingCursorGeometryForCurrentFloatingCursorFocalPoint();
+    _selectPositionUnderFloatingCursor();
+  }
+
+  /// Updates the offset and height of the floating cursor, based on the current
+  /// floating cursor focal point.
+  ///
+  /// If anything impacted the focal point, such as user movement, or scroll changes,
+  /// those changes must be made to the focal point before calling this method. This
+  /// method doesn't update or alter the focal point.
+  void _updateFloatingCursorGeometryForCurrentFloatingCursorFocalPoint() {
+    final focalPointInDocument = _viewportOffsetToDocumentOffset(_floatingCursorFocalPointInViewport!);
+    final nearestDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(focalPointInDocument)!;
+    editorIosFloatingCursorLog.finer(" - nearest position to floating cursor: $nearestDocumentPosition");
+
+    if (nearestDocumentPosition.nodePosition is TextNodePosition) {
+      final nearestPositionRect = _docLayout.getRectForPosition(nearestDocumentPosition)!;
+      _floatingCursorHeight = nearestPositionRect.height;
+
+      final distance = _floatingCursorFocalPointInDocument! - nearestPositionRect.topLeft + const Offset(1.0, 0.0);
+      _controlsContext!.floatingCursorController.isNearText.value =
+          distance.dx.abs() <= FloatingCursorPolicies.maximumDistanceToBeNearText;
+    } else {
+      final nearestComponent = _docLayout.getComponentByNodeId(nearestDocumentPosition.nodeId)!;
+      _floatingCursorHeight = (nearestComponent.context.findRenderObject() as RenderBox).size.height;
+      _controlsContext!.floatingCursorController.isNearText.value = false;
+    }
+
+    _controlsContext!.floatingCursorController.cursorGeometryInViewport.value = Rect.fromLTWH(
+      _floatingCursorFocalPointInViewport!.dx,
+      _floatingCursorFocalPointInViewport!.dy - (_floatingCursorHeight / 2),
+      FloatingCursorPolicies.defaultFloatingCursorWidth,
+      _floatingCursorHeight,
+    );
+    editorIosFloatingCursorLog.finer(
+        "Set floating cursor geometry to: ${_controlsContext!.floatingCursorController.cursorGeometryInViewport.value}");
+  }
+
+  /// Inspects the viewport focal point offset of the floating cursor, finds the nearest position
+  /// in the document, and moves the selection to that position.
+  void _selectPositionUnderFloatingCursor() {
+    editorIosFloatingCursorLog.finer("Updating document selection based on floating cursor focal point.");
+    final controlsContext = IosEditorControlsScope.rootOf(context);
+
+    final floatingCursorRectInViewport = controlsContext.floatingCursorController.cursorGeometryInViewport.value;
+    if (floatingCursorRectInViewport == null) {
+      editorIosFloatingCursorLog.finer(" - the floating cursor rect is null. Not selecting anything.");
+      return;
+    }
+
+    final nearestDocumentPosition = _docLayout
+        .getDocumentPositionNearestToOffset(_viewportOffsetToDocumentOffset(floatingCursorRectInViewport.center))!;
+
+    editorIosFloatingCursorLog.finer(" - selecting nearest position: $nearestDocumentPosition");
+    _selectPosition(nearestDocumentPosition);
+  }
+
+  void _selectPosition(DocumentPosition position) {
+    widget.editor.execute([
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: position,
+        ),
+        SelectionChangeType.placeCaret,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+  }
+
+  void _onFloatingCursorStop() {
+    editorIosFloatingCursorLog.fine("Floating cursor stopped.");
+    _controlsContext!.floatingCursorController.isNearText.value = false;
+    _controlsContext!.floatingCursorController.cursorGeometryInViewport.value = null;
+
+    _floatingCursorFocalPointInDocument = null;
+    _floatingCursorFocalPointInViewport = null;
+    _floatingCursorHeight = FloatingCursorPolicies.defaultFloatingCursorHeight;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -1886,41 +1979,26 @@ class IosEditorControlsDocumentLayerState
   }
 
   Widget _buildHandles(DocumentSelectionLayout layoutData) {
-    // When the floating cursor is over text or near text,
-    // we don't show the drag handles.
-    //
-    // Every time the floating cursor moves to a position which
-    // changes this state or when it changes its visibility,
-    // this widget is rebuilt.
-    return ValueListenableBuilder<bool>(
-      valueListenable: _controlsContext!.floatingCursorController.isNearText,
-      builder: (context, isNearText, _) {
-        if (isNearText) {
-          return const SizedBox.shrink();
-        }
+    if (widget.selection.value == null) {
+      editorGesturesLog.finer("Not building overlay handles because there's no selection.");
+      return const SizedBox.shrink();
+    }
 
-        if (widget.selection.value == null) {
-          editorGesturesLog.finer('Not building overlay handles because they aren\'t desired');
-          return const SizedBox.shrink();
-        }
-
-        return Stack(
-          children: [
-            if (layoutData.caret != null) //
-              _buildCollapsedHandle(caret: layoutData.caret!),
-            if (layoutData.upstream != null && layoutData.downstream != null) ...[
-              _buildUpstreamHandle(
-                upstream: layoutData.upstream!,
-                debugColor: Colors.green,
-              ),
-              _buildDownstreamHandle(
-                downstream: layoutData.downstream!,
-                debugColor: Colors.red,
-              ),
-            ],
-          ],
-        );
-      },
+    return Stack(
+      children: [
+        if (layoutData.caret != null) //
+          _buildCollapsedHandle(caret: layoutData.caret!),
+        if (layoutData.upstream != null && layoutData.downstream != null) ...[
+          _buildUpstreamHandle(
+            upstream: layoutData.upstream!,
+            debugColor: Colors.green,
+          ),
+          _buildDownstreamHandle(
+            downstream: layoutData.downstream!,
+            debugColor: Colors.red,
+          ),
+        ],
+      ],
     );
   }
 
@@ -1931,9 +2009,19 @@ class IosEditorControlsDocumentLayerState
       key: _collapsedHandleKey,
       left: caret.left,
       top: caret.top,
-      child: ValueListenableBuilder<bool>(
-        valueListenable: IosEditorControlsScope.rootOf(context).floatingCursorController.isActive,
-        builder: (context, isShowingFloatingCursor, child) {
+      child: MultiListenableBuilder(
+        listenables: {
+          _controlsContext!.floatingCursorController.isActive,
+          _controlsContext!.floatingCursorController.isNearText,
+        },
+        builder: (context) {
+          final isShowingFloatingCursor = _controlsContext!.floatingCursorController.isActive.value;
+          if (isShowingFloatingCursor && _controlsContext!.floatingCursorController.isNearText.value) {
+            // The floating cursor is active and it's near some text. We don't want to
+            // paint a collapsed handle/caret.
+            return const SizedBox();
+          }
+
           return IOSCollapsedHandle(
             controller: _caretBlinkController,
             color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,

@@ -25,6 +25,7 @@ import 'package:super_editor/src/infrastructure/documents/selection_leader_docum
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
+import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -225,8 +226,6 @@ class SuperEditor extends StatefulWidget {
   /// when a user taps on a link.
   final SuperEditorContentTapDelegateFactory? contentTapDelegateFactory;
 
-  // final ValueNotifier<LayerLink?>? magnifierFocalPoint;
-
   /// Color of the text selection drag handles on Android.
   final Color? androidHandleColor;
 
@@ -323,9 +322,12 @@ class SuperEditorState extends State<SuperEditor> {
 
   late DocumentComposer _composer;
 
-  late DocumentScroller _scroller;
+  DocumentScroller? _scroller;
   late ScrollController _scrollController;
   late AutoScrollController _autoScrollController;
+  // Signal that's notified every time the scroll offset changes for SuperEditor,
+  // including the cases where SuperEditor controls an ancestor Scrollable.
+  final _scrollChangeSignal = SignalNotifier();
 
   @visibleForTesting
   late SuperEditorContext editContext;
@@ -439,14 +441,17 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   void _createEditContext() {
-    _scroller = DocumentScroller();
+    if (_scroller != null) {
+      _scroller!.dispose();
+    }
+    _scroller = DocumentScroller()..addScrollChangeListener(_scrollChangeSignal.notifyListeners);
 
     editContext = SuperEditorContext(
       editor: widget.editor,
       document: widget.document,
       composer: _composer,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-      scroller: _scroller,
+      scroller: _scroller!,
       commonOps: CommonEditorOperations(
         editor: widget.editor,
         document: widget.document,
@@ -665,7 +670,6 @@ class SuperEditorState extends State<SuperEditor> {
             ..._keyboardActions,
           ],
           selectorHandlers: widget.selectorHandlers ?? defaultEditorSelectorHandlers,
-          floatingCursorController: _floatingCursorController,
           child: child,
         );
     }
@@ -684,6 +688,11 @@ class SuperEditorState extends State<SuperEditor> {
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           child: EditorFloatingCursor(
+            editor: widget.editor,
+            document: widget.document,
+            getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+            selection: widget.composer.selectionNotifier,
+            scrollChangeSignal: _scrollChangeSignal,
             child: child,
           ),
         );
