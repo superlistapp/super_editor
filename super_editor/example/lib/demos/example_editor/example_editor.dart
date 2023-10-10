@@ -495,19 +495,17 @@ class _ExampleEditorState extends State<ExampleEditor> {
     );
   }
 
-  Widget _buildIosFloatingToolbar(BuildContext context) {
+  Widget _buildIosFloatingToolbar(BuildContext context, LeaderLink focalPoint) {
     return ListenableBuilder(
       listenable: _brightness,
       builder: (context, _) {
-        print(
-            "Building editor toolbar with expanded selection link: ${_selectionLayerLinks.expandedSelectionBoundsLink}");
         return Theme(
           data: ThemeData(brightness: _brightness.value),
           child: IOSTextEditingFloatingToolbar(
+            focalPoint: focalPoint,
             onCutPressed: _cut,
             onCopyPressed: _copy,
             onPastePressed: _paste,
-            focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
           ),
         );
       },

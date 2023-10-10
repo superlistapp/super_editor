@@ -123,12 +123,12 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     );
   }
 
-  Widget _buildIosToolbar(BuildContext context) {
+  Widget _buildIosToolbar(BuildContext context, LeaderLink focalPoint) {
     return IOSTextEditingFloatingToolbar(
+      focalPoint: focalPoint,
       onCutPressed: _cut,
       onCopyPressed: _copy,
       onPastePressed: _paste,
-      focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
     );
   }
 

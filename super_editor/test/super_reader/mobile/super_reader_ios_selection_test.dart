@@ -1,7 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:follow_the_leader/follow_the_leader.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
@@ -18,7 +16,7 @@ void main() {
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context) => IOSTextEditingFloatingToolbar(focalPoint: LeaderLink()))
+              .withiOSToolbarBuilder((context, focalPoint) => IOSTextEditingFloatingToolbar(focalPoint: focalPoint))
               .pump();
 
           // Ensure that no overlay controls are visible.
@@ -57,7 +55,7 @@ void main() {
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context) => IOSTextEditingFloatingToolbar(focalPoint: LeaderLink()))
+              .withiOSToolbarBuilder((context, focalPoint) => IOSTextEditingFloatingToolbar(focalPoint: focalPoint))
               .pump();
 
           // Long press on the middle of "do|lor".
@@ -99,7 +97,7 @@ void main() {
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context) => IOSTextEditingFloatingToolbar(focalPoint: LeaderLink()))
+              .withiOSToolbarBuilder((context, focalPoint) => IOSTextEditingFloatingToolbar(focalPoint: focalPoint))
               .pump();
 
           // Long press on the middle of "do|lor".
@@ -174,7 +172,7 @@ void main() {
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context) => IOSTextEditingFloatingToolbar(focalPoint: LeaderLink()))
+              .withiOSToolbarBuilder((context, focalPoint) => IOSTextEditingFloatingToolbar(focalPoint: focalPoint))
               .pump();
 
           // Long press on the middle of "do|lor".

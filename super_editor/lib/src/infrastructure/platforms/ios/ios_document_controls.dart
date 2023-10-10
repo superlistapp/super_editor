@@ -44,15 +44,7 @@ class IosEditingToolbarOverlay extends StatefulWidget {
   /// selected text.
   ///
   /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
-  final WidgetBuilder popoverToolbarBuilder;
-
-  /// Disables all gesture interaction for these editing controls,
-  /// allowing gestures to pass through these controls to whatever
-  /// content currently sits beneath them.
-  ///
-  /// While this is `true`, the user can't tap or drag on selection
-  /// handles or other controls.
-  // final bool disableGestureHandling;
+  final Widget Function(BuildContext, LeaderLink focalPoint) popoverToolbarBuilder;
 
   final bool showDebugPaint;
 
@@ -112,7 +104,7 @@ class _IosEditingToolbarOverlayState extends State<IosEditingToolbarOverlay> wit
           boundaryKey: _boundsKey,
           devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
         ),
-        child: widget.popoverToolbarBuilder(context),
+        child: widget.popoverToolbarBuilder(context, widget.toolbarFocalPoint),
       ),
     );
   }

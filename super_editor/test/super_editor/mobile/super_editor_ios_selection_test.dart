@@ -1,7 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:follow_the_leader/follow_the_leader.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
@@ -200,7 +198,7 @@ Future<void> _pumpAppWithLongText(WidgetTester tester) async {
       .createDocument()
       // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
       .withSingleParagraph()
-      .withiOSToolbarBuilder((context) => IOSTextEditingFloatingToolbar(focalPoint: LeaderLink()))
+      .withiOSToolbarBuilder((context, focalPoint) => IOSTextEditingFloatingToolbar(focalPoint: focalPoint))
       .pump();
 }
 

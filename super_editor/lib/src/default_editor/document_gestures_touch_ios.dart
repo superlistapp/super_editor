@@ -40,14 +40,14 @@ import 'selection_upstream_downstream.dart';
 /// An [InheritedWidget] that provides shared access to a [IosEditorControlsController],
 /// which coordinates the state of iOS controls like the caret, handles, magnifier, etc.
 ///
-/// This widget and its associated context exist so that [SuperEditor] has maximum freedom
+/// This widget and its associated controller exist so that [SuperEditor] has maximum freedom
 /// in terms of where to implement iOS gestures vs carets vs the floating cursor vs the
 /// magnifier vs the toolbar. Each of these responsibilities have some unique differences,
 /// which make them difficult or impossible to implement within a single widget. By sharing
-/// a controls context, a group of independent widgets can work together to cover those variosu
+/// a controller, a group of independent widgets can work together to cover those various
 /// responsibilities.
 ///
-/// Centralizing a context in an [InheritedWidget] also allows [SuperEditor] to share that
+/// Centralizing a controller in an [InheritedWidget] also allows [SuperEditor] to share that
 /// control with application code outside of [SuperEditor], by placing an [IosEditorControlsScope]
 /// above the [SuperEditor] in the widget tree. For this reason, [SuperEditor] should access
 /// the [IosEditorControlsScope] through [rootOf].
@@ -132,26 +132,41 @@ class IosEditorControlsController {
   /// Color of the text selection drag handles on iOS.
   final Color? handleColor;
 
+  /// Whether the caret (collapsed handle) should blink right now.
   final shouldCaretBlink = ValueNotifier<bool>(false);
 
+  /// Controls the iOS floating cursor.
   late final FloatingCursorController floatingCursorController;
 
+  /// Whether the iOS magnifier should be displayed right now.
   final shouldShowMagnifier = ValueNotifier<bool>(false);
 
-  /// Link to a location where a magnifier should be displayed.
+  /// Link to a location where a magnifier should be focused.
   final magnifierFocalPoint = LeaderLink();
 
+  /// (Optional) Builder to create the visual representation of the magnifier.
+  ///
+  /// If [magnifierBuilder] is `null`, a default iOS magnifier is displayed.
   final Widget Function(BuildContext, LeaderLink focalPoint)? magnifierBuilder;
 
+  /// Whether the iOS floating toolbar should be displayed right now.
   final shouldShowToolbar = ValueNotifier<bool>(false);
 
+  /// Toggles [shouldShowToolbar].
   void toggleToolbar() => shouldShowToolbar.value = !shouldShowToolbar.value;
 
-  /// Link to a location where a toolbar should be displayed.
+  /// Link to a location where a toolbar should be focused.
+  ///
+  /// This link probably points to a rectangle, such as a bounding rectangle
+  /// around the user's selection. Therefore, the toolbar builder shouldn't
+  /// assume that this focal point is a single pixel.
   final toolbarFocalPoint = LeaderLink();
 
-  /// Builder that creates a floating toolbar when running on iOS.
-  final WidgetBuilder? toolbarBuilder;
+  /// (Optional) Builder to create the visual representation of the floating
+  /// toolbar.
+  ///
+  /// If [toolbarBuilder] is `null`, a default iOS toolbar is displayed.
+  final Widget Function(BuildContext, LeaderLink focalPoint)? toolbarBuilder;
 }
 
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
@@ -1271,7 +1286,7 @@ class IosToolbarOverlayManager extends StatefulWidget {
   /// points.
   final LeaderLink toolbarFocalPoint;
 
-  final WidgetBuilder popoverToolbarBuilder;
+  final Widget Function(BuildContext, LeaderLink focalPoint) popoverToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, preventing
   /// the overlay controls from appearing outside the given clipping

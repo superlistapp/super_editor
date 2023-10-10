@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/test/super_reader_test/super_reader_inspector.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
@@ -93,7 +94,7 @@ class TestDocumentConfigurator {
   FocusNode? _focusNode;
   DocumentSelection? _selection;
   WidgetBuilder? _androidToolbarBuilder;
-  WidgetBuilder? _iOSToolbarBuilder;
+  Widget Function(BuildContext, LeaderLink)? _iOSToolbarBuilder;
 
   /// Configures the [SuperReader] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -183,7 +184,7 @@ class TestDocumentConfigurator {
   }
 
   /// Configures the [SuperEditor] to use the given [builder] as its iOS toolbar builder.
-  TestDocumentConfigurator withiOSToolbarBuilder(WidgetBuilder? builder) {
+  TestDocumentConfigurator withiOSToolbarBuilder(Widget Function(BuildContext, LeaderLink)? builder) {
     _iOSToolbarBuilder = builder;
     return this;
   }
@@ -235,21 +236,25 @@ class TestDocumentConfigurator {
     );
 
     final superDocument = _buildContent(
-      SuperReader(
-        focusNode: testContext.focusNode,
-        document: documentContext.document,
-        documentLayoutKey: layoutKey,
-        selection: documentContext.selection,
-        gestureMode: _gestureMode ?? _defaultGestureMode,
-        stylesheet: _stylesheet,
-        componentBuilders: [
-          ..._addedComponents,
-          ...(_componentBuilders ?? defaultComponentBuilders),
-        ],
-        autofocus: _autoFocus,
-        scrollController: _scrollController,
-        androidToolbarBuilder: _androidToolbarBuilder,
-        iOSToolbarBuilder: _iOSToolbarBuilder,
+      IosEditorControlsScope(
+        controller: IosEditorControlsController(
+          toolbarBuilder: _iOSToolbarBuilder,
+        ),
+        child: SuperReader(
+          focusNode: testContext.focusNode,
+          document: documentContext.document,
+          documentLayoutKey: layoutKey,
+          selection: documentContext.selection,
+          gestureMode: _gestureMode ?? _defaultGestureMode,
+          stylesheet: _stylesheet,
+          componentBuilders: [
+            ..._addedComponents,
+            ...(_componentBuilders ?? defaultComponentBuilders),
+          ],
+          autofocus: _autoFocus,
+          scrollController: _scrollController,
+          androidToolbarBuilder: _androidToolbarBuilder,
+        ),
       ),
     );
 

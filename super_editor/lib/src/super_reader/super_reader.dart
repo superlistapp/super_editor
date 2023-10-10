@@ -1,6 +1,8 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
@@ -29,6 +31,7 @@ import 'package:super_editor/src/infrastructure/documents/document_scroller.dart
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
 import 'read_only_document_android_touch_interactor.dart';
@@ -55,13 +58,12 @@ class SuperReader extends StatefulWidget {
     SelectionStyles? selectionStyle,
     this.gestureMode,
     this.contentTapDelegateFactory = superReaderLaunchLinkTapHandlerFactory,
+    this.autofocus = false,
+    this.overlayController,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
-    this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
-    this.autofocus = false,
-    this.overlayController,
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? readOnlyDefaultStylesheet,
         selectionStyles = selectionStyle ?? readOnlyDefaultSelectionStyle,
@@ -99,9 +101,6 @@ class SuperReader extends StatefulWidget {
   /// [scrollController] is not used if this [SuperReader] has an ancestor
   /// [Scrollable].
   final ScrollController? scrollController;
-
-  /// Shows, hides, and positions a floating toolbar and magnifier.
-  final MagnifierAndToolbarController? overlayController;
 
   /// Style rules applied through the document presentation.
   final Stylesheet stylesheet;
@@ -158,6 +157,9 @@ class SuperReader extends StatefulWidget {
   /// when a user taps on a link.
   final SuperReaderContentTapDelegateFactory? contentTapDelegateFactory;
 
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
+
   /// Color of the text selection drag handles on Android.
   final Color? androidHandleColor;
 
@@ -166,9 +168,6 @@ class SuperReader extends StatefulWidget {
 
   /// Color of the text selection drag handles on iOS.
   final Color? iOSHandleColor;
-
-  /// Builder that creates a floating toolbar when running on iOS.
-  final WidgetBuilder? iOSToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, like drag
   /// handles, magnifiers, and popover toolbars, preventing the overlay
@@ -450,7 +449,7 @@ class SuperReaderState extends State<SuperReader> {
       case DocumentGestureMode.iOS:
         return IosToolbarOverlayManager(
           toolbarFocalPoint: IosEditorControlsScope.rootOf(context).toolbarFocalPoint,
-          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
+          popoverToolbarBuilder: IosEditorControlsScope.rootOf(context).toolbarBuilder ?? _buildDefaultToolbar,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           child: child,
         );
@@ -500,6 +499,86 @@ class SuperReaderState extends State<SuperReader> {
           showDebugPaint: widget.debugPaint.gestures,
         );
     }
+  }
+
+  Widget _buildDefaultToolbar(BuildContext context, LeaderLink focalPoint) {
+    return IOSTextEditingFloatingToolbar(
+      focalPoint: focalPoint,
+      onCopyPressed: _copy,
+    );
+  }
+
+  /// Copies selected content to the OS clipboard.
+  void _copy() {
+    if (_selection.value == null) {
+      return;
+    }
+
+    final textToCopy = _textInSelection(
+      document: widget.document,
+      documentSelection: _selection.value!,
+    );
+    // TODO: figure out a general approach for asynchronous behaviors that
+    //       need to be carried out in response to user input.
+    Clipboard.setData(ClipboardData(text: textToCopy));
+  }
+
+  /// Given a [DocumentSelection], which might span text and non-text content, extracts
+  /// all text from that selection as an un-styled `String`.
+  String _textInSelection({
+    required Document document,
+    required DocumentSelection documentSelection,
+  }) {
+    final selectedNodes = document.getNodesInside(
+      documentSelection.base,
+      documentSelection.extent,
+    );
+
+    final buffer = StringBuffer();
+    for (int i = 0; i < selectedNodes.length; ++i) {
+      final selectedNode = selectedNodes[i];
+      dynamic nodeSelection;
+
+      if (i == 0) {
+        // This is the first node and it may be partially selected.
+        final baseSelectionPosition = selectedNode.id == documentSelection.base.nodeId
+            ? documentSelection.base.nodePosition
+            : documentSelection.extent.nodePosition;
+
+        final extentSelectionPosition =
+            selectedNodes.length > 1 ? selectedNode.endPosition : documentSelection.extent.nodePosition;
+
+        nodeSelection = selectedNode.computeSelection(
+          base: baseSelectionPosition,
+          extent: extentSelectionPosition,
+        );
+      } else if (i == selectedNodes.length - 1) {
+        // This is the last node and it may be partially selected.
+        final nodePosition = selectedNode.id == documentSelection.base.nodeId
+            ? documentSelection.base.nodePosition
+            : documentSelection.extent.nodePosition;
+
+        nodeSelection = selectedNode.computeSelection(
+          base: selectedNode.beginningPosition,
+          extent: nodePosition,
+        );
+      } else {
+        // This node is fully selected. Copy the whole thing.
+        nodeSelection = selectedNode.computeSelection(
+          base: selectedNode.beginningPosition,
+          extent: selectedNode.endPosition,
+        );
+      }
+
+      final nodeContent = selectedNode.copyContent(nodeSelection);
+      if (nodeContent != null) {
+        buffer.write(nodeContent);
+        if (i < selectedNodes.length - 1) {
+          buffer.writeln();
+        }
+      }
+    }
+    return buffer.toString();
   }
 }
 

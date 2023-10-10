@@ -16,12 +16,22 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   final _selection = ValueNotifier<DocumentSelection?>(null);
   final _selectionLayerLinks = SelectionLayerLinks();
   late MagnifierAndToolbarController _overlayController;
+  late final IosEditorControlsController _iosEditorControlsController;
 
   @override
   void initState() {
     super.initState();
     _document = createInitialDocument();
     _overlayController = MagnifierAndToolbarController();
+    _iosEditorControlsController = IosEditorControlsController(
+      toolbarBuilder: _buildToolbar,
+    );
+  }
+
+  @override
+  void dispose() {
+    _iosEditorControlsController.dispose();
+    super.dispose();
   }
 
   void _copy() {
@@ -118,29 +128,25 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return SuperReader(
-      document: _document,
-      selection: _selection,
-      overlayController: _overlayController,
-      selectionLayerLinks: _selectionLayerLinks,
-      androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-        onCopyPressed: _copy,
-        onSelectAllPressed: _selectAll,
-      ),
-      iOSToolbarBuilder: (context) {
-        print("Building actual toolbar");
-        print(" - selectionLinks: ${_selectionLayerLinks.hashCode}");
-        print(" - expanded selection link: ${_selectionLayerLinks.expandedSelectionBoundsLink}");
-        return IOSTextEditingFloatingToolbar(
+    return IosEditorControlsScope(
+      controller: _iosEditorControlsController,
+      child: SuperReader(
+        document: _document,
+        selection: _selection,
+        overlayController: _overlayController,
+        selectionLayerLinks: _selectionLayerLinks,
+        androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
           onCopyPressed: _copy,
-          focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
-        );
-        // return IOSTextEditingFloatingToolbar(
-        //   onCopyPressed: _copy,
-        //   onCutPressed: () {},
-        //   focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
-        // );
-      },
+          onSelectAllPressed: _selectAll,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToolbar(context, focalPoint) {
+    return IOSTextEditingFloatingToolbar(
+      focalPoint: focalPoint,
+      onCopyPressed: _copy,
     );
   }
 }

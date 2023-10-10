@@ -676,7 +676,7 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.iOS:
         return IosToolbarOverlayManager(
           toolbarFocalPoint: IosEditorControlsScope.rootOf(context).toolbarFocalPoint,
-          popoverToolbarBuilder: IosEditorControlsScope.rootOf(context).toolbarBuilder ?? (_) => const SizedBox(),
+          popoverToolbarBuilder: IosEditorControlsScope.rootOf(context).toolbarBuilder ?? (_, __) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           child: EditorFloatingCursor(
             editor: widget.editor,
