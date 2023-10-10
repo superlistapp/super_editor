@@ -114,16 +114,14 @@ class SuperEditor extends StatefulWidget {
     this.selectorHandlers,
     this.gestureMode,
     this.contentTapDelegateFactory = superEditorLaunchLinkTapHandlerFactory,
-    this.androidHandleColor,
-    this.androidToolbarBuilder,
-    this.iOSHandleColor,
-    this.iOSToolbarBuilder,
-    this.createOverlayControlsClipper,
     this.selectionLayerLinks,
     this.documentUnderlayBuilders = const [],
     this.documentOverlayBuilders = defaultSuperEditorDocumentOverlayBuilders,
     this.autofocus = false,
     this.overlayController,
+    this.androidHandleColor,
+    this.androidToolbarBuilder,
+    this.createOverlayControlsClipper,
     this.plugins = const {},
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? defaultStylesheet,
@@ -145,9 +143,6 @@ class SuperEditor extends StatefulWidget {
   /// `scrollController` is not used if this `SuperEditor` has an ancestor
   /// `Scrollable`.
   final ScrollController? scrollController;
-
-  /// Shows, hides, and positions a floating toolbar and magnifier.
-  final MagnifierAndToolbarController? overlayController;
 
   /// [GlobalKey] that's bound to the [DocumentLayout] within
   /// this `SuperEditor`.
@@ -226,27 +221,6 @@ class SuperEditor extends StatefulWidget {
   /// when a user taps on a link.
   final SuperEditorContentTapDelegateFactory? contentTapDelegateFactory;
 
-  /// Color of the text selection drag handles on Android.
-  final Color? androidHandleColor;
-
-  /// Builder that creates a floating toolbar when running on Android.
-  final WidgetBuilder? androidToolbarBuilder;
-
-  /// Color of the text selection drag handles on iOS.
-  final Color? iOSHandleColor;
-
-  /// Builder that creates a floating toolbar when running on iOS.
-  final WidgetBuilder? iOSToolbarBuilder;
-
-  /// Creates a clipper that applies to overlay controls, like drag
-  /// handles, magnifiers, and popover toolbars, preventing the overlay
-  /// controls from appearing outside the given clipping region.
-  ///
-  /// If no clipper factory method is provided, then the overlay controls
-  /// will be allowed to appear anywhere in the overlay in which they sit
-  /// (probably the entire screen).
-  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
-
   /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.
   ///
@@ -292,6 +266,24 @@ class SuperEditor extends StatefulWidget {
   /// The IME reports selectors as unique `String`s, therefore selector handlers are
   /// defined as a mapping from selector names to handler functions.
   final Map<String, SuperEditorSelectorHandler>? selectorHandlers;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
+
+  /// Color of the text selection drag handles on Android.
+  final Color? androidHandleColor;
+
+  /// Builder that creates a floating toolbar when running on Android.
+  final WidgetBuilder? androidToolbarBuilder;
+
+  /// Creates a clipper that applies to overlay controls, like drag
+  /// handles, magnifiers, and popover toolbars, preventing the overlay
+  /// controls from appearing outside the given clipping region.
+  ///
+  /// If no clipper factory method is provided, then the overlay controls
+  /// will be allowed to appear anywhere in the overlay in which they sit
+  /// (probably the entire screen).
+  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
   /// Plugins that add sets of behaviors to the editing experience.
   final Set<SuperEditorPlugin> plugins;
@@ -339,9 +331,7 @@ class SuperEditorState extends State<SuperEditor> {
   // controls because they're shared throughout a number of disconnected widgets.
   final _iosEditorControlsContextKey = GlobalKey();
   final _floatingCursorController = FloatingCursorController();
-  late final _iosEditorControlsContextData = IosEditorControlsContext(
-    floatingCursorController: _floatingCursorController,
-  );
+  late final IosEditorControlsContext _iosEditorControlsContext;
 
   // Leader links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
@@ -368,6 +358,10 @@ class SuperEditorState extends State<SuperEditor> {
     widget.editor.context.put(
       Editor.layoutKey,
       DocumentLayoutEditable(() => _docLayoutKey.currentState as DocumentLayout),
+    );
+
+    _iosEditorControlsContext = IosEditorControlsContext(
+      floatingCursorController: _floatingCursorController,
     );
 
     _createEditContext();
@@ -428,6 +422,8 @@ class SuperEditorState extends State<SuperEditor> {
   @override
   void dispose() {
     _contentTapDelegate?.dispose();
+
+    _iosEditorControlsContext.dispose();
 
     widget.editor.context.remove(Editor.layoutKey);
 
@@ -626,7 +622,7 @@ class SuperEditorState extends State<SuperEditor> {
       default:
         return IosEditorControlsScope(
           key: _iosEditorControlsContextKey,
-          controlsContext: _iosEditorControlsContextData,
+          controlsContext: _iosEditorControlsContext,
           child: child,
         );
     }
@@ -685,7 +681,7 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.iOS:
         return IosToolbarOverlayManager(
           toolbarFocalPoint: IosEditorControlsScope.rootOf(context).toolbarFocalPoint,
-          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
+          popoverToolbarBuilder: IosEditorControlsScope.rootOf(context).toolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           child: EditorFloatingCursor(
             editor: widget.editor,

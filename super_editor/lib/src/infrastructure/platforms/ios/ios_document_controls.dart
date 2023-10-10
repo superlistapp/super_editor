@@ -282,6 +282,13 @@ class IosDocumentGestureEditingController extends GestureEditingController {
 }
 
 class FloatingCursorController {
+  void dispose() {
+    isActive.dispose();
+    isNearText.dispose();
+    cursorGeometryInViewport.dispose();
+    _listeners.clear();
+  }
+
   /// Whether the user is currently interacting with the floating cursor via the
   /// software keyboard.
   final isActive = ValueNotifier<bool>(false);

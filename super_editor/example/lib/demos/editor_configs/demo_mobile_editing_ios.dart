@@ -21,11 +21,14 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
   late MutableDocumentComposer _composer;
   late Editor _docEditor;
   late CommonEditorOperations _docOps;
-  late MagnifierAndToolbarController _overlayController;
 
   FocusNode? _editorFocusNode;
 
   final _selectionLayerLinks = SelectionLayerLinks();
+
+  // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
+  late MagnifierAndToolbarController _overlayController;
+  late final IosEditorControlsContext _iosEditorControlsContext;
 
   @override
   void initState() {
@@ -40,11 +43,19 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
       documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
     );
     _editorFocusNode = FocusNode();
+
+    // TODO: get rid of the overlay controller
     _overlayController = MagnifierAndToolbarController();
+    _iosEditorControlsContext = IosEditorControlsContext(
+      toolbarBuilder: _buildIosToolbar,
+      floatingCursorController: FloatingCursorController(),
+    );
   }
 
   @override
   void dispose() {
+    _iosEditorControlsContext.dispose();
+
     _editorFocusNode!.dispose();
     _composer.dispose();
     _doc.removeListener(_onDocumentChange);
@@ -55,17 +66,23 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
 
   void _cut() {
     _docOps.cut();
+    // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
+    _iosEditorControlsContext.shouldShowToolbar.value = false;
   }
 
   void _copy() {
     _docOps.copy();
+    // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
+    _iosEditorControlsContext.shouldShowToolbar.value = false;
   }
 
   void _paste() {
     _docOps.paste();
+    // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
+    _iosEditorControlsContext.shouldShowToolbar.value = false;
   }
 
   @override
@@ -80,20 +97,13 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
               editor: _docEditor,
               document: _doc,
               composer: _composer,
-              overlayController: _overlayController,
               gestureMode: DocumentGestureMode.iOS,
               inputSource: TextInputSource.ime,
               selectionLayerLinks: _selectionLayerLinks,
-              iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-                onCutPressed: _cut,
-                onCopyPressed: _copy,
-                onPastePressed: _paste,
-                // focalPoint: _overlayController.toolbarTopAnchor!,
-                focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
-              ),
               stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.all(16),
               ),
+              overlayController: _overlayController,
               createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),
           ),
@@ -106,6 +116,15 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildIosToolbar(BuildContext context) {
+    return IOSTextEditingFloatingToolbar(
+      onCutPressed: _cut,
+      onCopyPressed: _copy,
+      onPastePressed: _paste,
+      focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
     );
   }
 

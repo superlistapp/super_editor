@@ -74,6 +74,7 @@ export 'src/infrastructure/platforms/android/toolbar.dart';
 export 'src/infrastructure/platforms/ios/ios_document_controls.dart';
 export 'src/infrastructure/platforms/ios/floating_cursor.dart';
 export 'src/infrastructure/platforms/ios/toolbar.dart';
+export 'src/infrastructure/platforms/ios/magnifier.dart';
 export 'src/infrastructure/platforms/mobile_documents.dart';
 export 'src/infrastructure/scrolling_diagnostics/scrolling_diagnostics.dart';
 export 'src/infrastructure/signal_notifier.dart';

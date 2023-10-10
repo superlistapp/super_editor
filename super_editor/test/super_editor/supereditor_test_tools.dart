@@ -393,36 +393,40 @@ class TestSuperEditorConfigurator {
   /// Builds a [SuperEditor] widget based on the configuration of the given
   /// [testDocumentContext], as well as other configurations in this class.
   Widget _buildSuperEditor(TestDocumentContext testDocumentContext) {
-    return SuperEditor(
-      key: _config.key,
-      focusNode: testDocumentContext.focusNode,
-      editor: testDocumentContext.editor,
-      document: testDocumentContext.document,
-      composer: testDocumentContext.composer,
-      documentLayoutKey: testDocumentContext.layoutKey,
-      inputSource: _config.inputSource,
-      selectionPolicies: _config.selectionPolicies ?? const SuperEditorSelectionPolicies(),
-      softwareKeyboardController: _config.softwareKeyboardController,
-      imePolicies: _config.imePolicies ?? const SuperEditorImePolicies(),
-      imeConfiguration: _config.imeConfiguration,
-      imeOverrides: _config.imeOverrides,
-      keyboardActions: [
-        ..._config.prependedKeyboardActions,
-        ...(_config.inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions),
-        ..._config.appendedKeyboardActions,
-      ],
-      selectorHandlers: _config.selectorHandlers,
-      gestureMode: _config.gestureMode,
-      androidToolbarBuilder: _config.androidToolbarBuilder,
-      iOSToolbarBuilder: _config.iOSToolbarBuilder,
-      stylesheet: _config.stylesheet,
-      componentBuilders: [
-        ..._config.addedComponents,
-        ...(_config.componentBuilders ?? defaultComponentBuilders),
-      ],
-      autofocus: _config.autoFocus,
-      scrollController: _config.scrollController,
-      plugins: _config.plugins,
+    return IosEditorControlsScope(
+      controlsContext: IosEditorControlsContext(
+        toolbarBuilder: _config.iOSToolbarBuilder,
+      ),
+      child: SuperEditor(
+        key: _config.key,
+        focusNode: testDocumentContext.focusNode,
+        editor: testDocumentContext.editor,
+        document: testDocumentContext.document,
+        composer: testDocumentContext.composer,
+        documentLayoutKey: testDocumentContext.layoutKey,
+        inputSource: _config.inputSource,
+        selectionPolicies: _config.selectionPolicies ?? const SuperEditorSelectionPolicies(),
+        softwareKeyboardController: _config.softwareKeyboardController,
+        imePolicies: _config.imePolicies ?? const SuperEditorImePolicies(),
+        imeConfiguration: _config.imeConfiguration,
+        imeOverrides: _config.imeOverrides,
+        keyboardActions: [
+          ..._config.prependedKeyboardActions,
+          ...(_config.inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions),
+          ..._config.appendedKeyboardActions,
+        ],
+        selectorHandlers: _config.selectorHandlers,
+        gestureMode: _config.gestureMode,
+        androidToolbarBuilder: _config.androidToolbarBuilder,
+        stylesheet: _config.stylesheet,
+        componentBuilders: [
+          ..._config.addedComponents,
+          ...(_config.componentBuilders ?? defaultComponentBuilders),
+        ],
+        autofocus: _config.autoFocus,
+        scrollController: _config.scrollController,
+        plugins: _config.plugins,
+      ),
     );
   }
 }

@@ -75,8 +75,8 @@ class IosEditorControlsScope extends InheritedWidget {
 
       root = element;
 
-      // Stop visiting.
-      return false;
+      // Keep visiting, to ensure we get the root scope.
+      return true;
     });
 
     if (root == null) {
@@ -116,24 +116,42 @@ class IosEditorControlsScope extends InheritedWidget {
 /// the caret, handles, floating cursor, magnifier, and toolbar.
 class IosEditorControlsContext {
   IosEditorControlsContext({
-    required this.floatingCursorController,
-  });
+    this.handleColor,
+    FloatingCursorController? floatingCursorController,
+    this.magnifierBuilder,
+    this.toolbarBuilder,
+  }) : floatingCursorController = floatingCursorController ?? FloatingCursorController();
+
+  void dispose() {
+    floatingCursorController.dispose();
+    shouldCaretBlink.dispose();
+    shouldShowMagnifier.dispose();
+    shouldShowToolbar.dispose();
+  }
+
+  /// Color of the text selection drag handles on iOS.
+  final Color? handleColor;
+
   final shouldCaretBlink = ValueNotifier<bool>(false);
 
-  // TODO: switch the iOS IME to depend on the context, and to directly update the
-  //       floatingCursor status, rather than use the iOS touch interactor as a middle-man
-  final FloatingCursorController floatingCursorController;
+  late final FloatingCursorController floatingCursorController;
+
+  final shouldShowMagnifier = ValueNotifier<bool>(false);
 
   /// Link to a location where a magnifier should be displayed.
   final magnifierFocalPoint = LeaderLink();
 
-  final shouldShowMagnifier = ValueNotifier<bool>(false);
+  final Widget Function(LeaderLink focalPoint)? magnifierBuilder;
+
+  final shouldShowToolbar = ValueNotifier<bool>(false);
 
   void toggleToolbar() => shouldShowToolbar.value = !shouldShowToolbar.value;
-  final shouldShowToolbar = ValueNotifier<bool>(false);
 
   /// Link to a location where a toolbar should be displayed.
   final toolbarFocalPoint = LeaderLink();
+
+  /// Builder that creates a floating toolbar when running on iOS.
+  final WidgetBuilder? toolbarBuilder;
 }
 
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
@@ -1721,24 +1739,28 @@ class IosEditorMagnifierDocumentLayerState
 
     // Display a magnifier that tracks a focal point.
     //
-    // When the user is dragging an overlay handle, we place a LayerLink
-    // target. This magnifier follows that target.
-    return Positioned.fill(
-      child: ValueListenableBuilder(
-        valueListenable: _controlsContext!.shouldShowMagnifier,
-        builder: (context, shouldShowMagnifier, child) {
-          if (!shouldShowMagnifier) {
-            return const SizedBox();
-          }
+    // When the user is dragging an overlay handle, SuperEditor positions a Leader with
+    // a LeaderLink. This magnifier follows that Leader via the LeaderLink.
+    return ValueListenableBuilder(
+      valueListenable: _controlsContext!.shouldShowMagnifier,
+      builder: (context, shouldShowMagnifier, child) {
+        if (!shouldShowMagnifier) {
+          return const SizedBox();
+        }
 
-          return child!;
-        },
-        child: Center(
-          child: IOSFollowingMagnifier.roundedRectangle(
-            leaderLink: _controlsContext!.magnifierFocalPoint,
-            offsetFromFocalPoint: const Offset(0, -72),
-          ),
-        ),
+        return child!;
+      },
+      child: _controlsContext!.magnifierBuilder != null //
+          ? _controlsContext!.magnifierBuilder!(_controlsContext!.magnifierFocalPoint)
+          : _buildDefaultMagnifier(_controlsContext!.magnifierFocalPoint),
+    );
+  }
+
+  Widget _buildDefaultMagnifier(LeaderLink magnifierFocalPoint) {
+    return Center(
+      child: IOSFollowingMagnifier.roundedRectangle(
+        leaderLink: magnifierFocalPoint,
+        offsetFromFocalPoint: const Offset(0, -72),
       ),
     );
   }
@@ -1768,7 +1790,8 @@ class IosEditorControlsDocumentLayerBuilder implements SuperEditorLayerBuilder {
           ChangeSelectionRequest(newSelection, changeType, reason),
         ]);
       },
-      handleColor: handleColor ?? Theme.of(context).primaryColor,
+      handleColor:
+          handleColor ?? IosEditorControlsScope.maybeRootOf(context)?.handleColor ?? Theme.of(context).primaryColor,
     );
   }
 }

@@ -556,19 +556,23 @@ Future<void> _pumpEditorWithUnselectableHrsAndFakeToolbar(
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: SuperEditor(
-          editor: editor,
-          document: document,
-          composer: composer,
-          gestureMode: debugDefaultTargetPlatformOverride == TargetPlatform.android
-              ? DocumentGestureMode.android
-              : DocumentGestureMode.iOS,
-          androidToolbarBuilder: (_) => SizedBox(key: toolbarKey),
-          iOSToolbarBuilder: (_) => SizedBox(key: toolbarKey),
-          componentBuilders: [
-            const _UnselectableHrComponentBuilder(),
-            ...defaultComponentBuilders,
-          ],
+        body: IosEditorControlsScope(
+          controlsContext: IosEditorControlsContext(
+            toolbarBuilder: (_) => SizedBox(key: toolbarKey),
+          ),
+          child: SuperEditor(
+            editor: editor,
+            document: document,
+            composer: composer,
+            gestureMode: debugDefaultTargetPlatformOverride == TargetPlatform.android
+                ? DocumentGestureMode.android
+                : DocumentGestureMode.iOS,
+            androidToolbarBuilder: (_) => SizedBox(key: toolbarKey),
+            componentBuilders: const [
+              _UnselectableHrComponentBuilder(),
+              ...defaultComponentBuilders,
+            ],
+          ),
         ),
       ),
     ),
