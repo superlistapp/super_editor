@@ -330,8 +330,7 @@ class SuperEditorState extends State<SuperEditor> {
   // continuously replace itself every time we rebuild. We want to retain the same
   // controls because they're shared throughout a number of disconnected widgets.
   final _iosEditorControlsContextKey = GlobalKey();
-  final _floatingCursorController = FloatingCursorController();
-  late final IosEditorControlsContext _iosEditorControlsContext;
+  final _iosEditorControlsController = IosEditorControlsController();
 
   // Leader links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
@@ -358,10 +357,6 @@ class SuperEditorState extends State<SuperEditor> {
     widget.editor.context.put(
       Editor.layoutKey,
       DocumentLayoutEditable(() => _docLayoutKey.currentState as DocumentLayout),
-    );
-
-    _iosEditorControlsContext = IosEditorControlsContext(
-      floatingCursorController: _floatingCursorController,
     );
 
     _createEditContext();
@@ -423,7 +418,7 @@ class SuperEditorState extends State<SuperEditor> {
   void dispose() {
     _contentTapDelegate?.dispose();
 
-    _iosEditorControlsContext.dispose();
+    _iosEditorControlsController.dispose();
 
     widget.editor.context.remove(Editor.layoutKey);
 
@@ -622,7 +617,7 @@ class SuperEditorState extends State<SuperEditor> {
       default:
         return IosEditorControlsScope(
           key: _iosEditorControlsContextKey,
-          controlsContext: _iosEditorControlsContext,
+          controller: _iosEditorControlsController,
           child: child,
         );
     }

@@ -227,10 +227,7 @@ class SuperReaderState extends State<SuperReader> {
   // continuously replace itself every time we rebuild. We want to retain the same
   // controls because they're shared throughout a number of disconnected widgets.
   final _iosEditorControlsContextKey = GlobalKey();
-  final _floatingCursorController = FloatingCursorController();
-  late final _iosEditorControlsContextData = IosEditorControlsContext(
-    floatingCursorController: _floatingCursorController,
-  );
+  final _iosEditorControlsController = IosEditorControlsController();
 
   @override
   void initState() {
@@ -437,7 +434,7 @@ class SuperReaderState extends State<SuperReader> {
       default:
         return IosEditorControlsScope(
           key: _iosEditorControlsContextKey,
-          controlsContext: _iosEditorControlsContextData,
+          controller: _iosEditorControlsController,
           child: child,
         );
     }

@@ -37,7 +37,7 @@ import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
 import 'selection_upstream_downstream.dart';
 
-/// An [InheritedWidget] that provides shared access to a [IosEditorControlsContext],
+/// An [InheritedWidget] that provides shared access to a [IosEditorControlsController],
 /// which coordinates the state of iOS controls like the caret, handles, magnifier, etc.
 ///
 /// This widget and its associated context exist so that [SuperEditor] has maximum freedom
@@ -53,8 +53,8 @@ import 'selection_upstream_downstream.dart';
 /// the [IosEditorControlsScope] through [rootOf].
 class IosEditorControlsScope extends InheritedWidget {
   /// Finds the highest [IosEditorControlsScope] in the widget tree, above the given
-  /// [context], and returns its associated [IosEditorControlsContext].
-  static IosEditorControlsContext rootOf(BuildContext context) {
+  /// [context], and returns its associated [IosEditorControlsController].
+  static IosEditorControlsController rootOf(BuildContext context) {
     final data = maybeRootOf(context);
 
     if (data == null) {
@@ -64,7 +64,7 @@ class IosEditorControlsScope extends InheritedWidget {
     return data;
   }
 
-  static IosEditorControlsContext? maybeRootOf(BuildContext context) {
+  static IosEditorControlsController? maybeRootOf(BuildContext context) {
     InheritedElement? root;
 
     context.visitAncestorElements((element) {
@@ -87,35 +87,35 @@ class IosEditorControlsScope extends InheritedWidget {
     context.dependOnInheritedElement(root!);
 
     // Return the current iOS controls data.
-    return (root!.widget as IosEditorControlsScope).controlsContext;
+    return (root!.widget as IosEditorControlsScope).controller;
   }
 
   /// Finds the nearest [IosEditorControlsScope] in the widget tree, above the given
-  /// [context], and returns its associated [IosEditorControlsContext].
-  static IosEditorControlsContext nearestOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<IosEditorControlsScope>()!.controlsContext;
+  /// [context], and returns its associated [IosEditorControlsController].
+  static IosEditorControlsController nearestOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<IosEditorControlsScope>()!.controller;
 
-  static IosEditorControlsContext? maybeNearestOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<IosEditorControlsScope>()?.controlsContext;
+  static IosEditorControlsController? maybeNearestOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<IosEditorControlsScope>()?.controller;
 
   const IosEditorControlsScope({
     super.key,
-    required this.controlsContext,
+    required this.controller,
     required super.child,
   });
 
-  final IosEditorControlsContext controlsContext;
+  final IosEditorControlsController controller;
 
   @override
   bool updateShouldNotify(IosEditorControlsScope oldWidget) {
-    return controlsContext != oldWidget.controlsContext;
+    return controller != oldWidget.controller;
   }
 }
 
-/// A context, which coordinates the state of various iOS editor controls, including
+/// A controller, which coordinates the state of various iOS editor controls, including
 /// the caret, handles, floating cursor, magnifier, and toolbar.
-class IosEditorControlsContext {
-  IosEditorControlsContext({
+class IosEditorControlsController {
+  IosEditorControlsController({
     this.handleColor,
     FloatingCursorController? floatingCursorController,
     this.magnifierBuilder,
@@ -141,7 +141,7 @@ class IosEditorControlsContext {
   /// Link to a location where a magnifier should be displayed.
   final magnifierFocalPoint = LeaderLink();
 
-  final Widget Function(LeaderLink focalPoint)? magnifierBuilder;
+  final Widget Function(BuildContext, LeaderLink focalPoint)? magnifierBuilder;
 
   final shouldShowToolbar = ValueNotifier<bool>(false);
 
@@ -229,7 +229,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
   ScrollPosition? _activeScrollPosition;
 
-  IosEditorControlsContext? _controlsContext;
+  IosEditorControlsController? _controlsContext;
   late FloatingCursorListener _floatingCursorListener;
 
   late DragHandleAutoScroller _handleAutoScrolling;
@@ -1289,7 +1289,7 @@ class IosToolbarOverlayManager extends StatefulWidget {
 }
 
 class _IosToolbarOverlayManagerState extends State<IosToolbarOverlayManager> {
-  IosEditorControlsContext? _controlsContext;
+  IosEditorControlsController? _controlsContext;
   OverlayEntry? _toolbarOverlayEntry;
 
   @override
@@ -1348,7 +1348,7 @@ class _IosToolbarOverlayManagerState extends State<IosToolbarOverlayManager> {
 /// Displays an iOS floating cursor for a document editor experience.
 ///
 /// An [EditorFloatingCursor] also tracks the floating cursor focal point, sets the
-/// floating cursor geometry on an ancestor [IosEditorControlsContext], as well as
+/// floating cursor geometry on an ancestor [IosEditorControlsController], as well as
 /// toggling the magnifier and toolbar, and updates the [Editor]s [DocumentSelection]
 /// as the user moves the floating cursor, or scrolls the document.
 ///
@@ -1380,7 +1380,7 @@ class EditorFloatingCursor extends StatefulWidget {
 }
 
 class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
-  IosEditorControlsContext? _controlsContext;
+  IosEditorControlsController? _controlsContext;
   late FloatingCursorListener _floatingCursorListener;
 
   Offset? _initialFloatingCursorOffsetInViewport;
@@ -1695,7 +1695,7 @@ class IosMagnifierDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 class IosEditorMagnifierDocumentLayerState
     extends DocumentLayoutLayerState<IosMagnifierDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
-  IosEditorControlsContext? _controlsContext;
+  IosEditorControlsController? _controlsContext;
   late final OverlayEntry _magnifierOverlay;
 
   @override
@@ -1751,12 +1751,12 @@ class IosEditorMagnifierDocumentLayerState
         return child!;
       },
       child: _controlsContext!.magnifierBuilder != null //
-          ? _controlsContext!.magnifierBuilder!(_controlsContext!.magnifierFocalPoint)
-          : _buildDefaultMagnifier(_controlsContext!.magnifierFocalPoint),
+          ? _controlsContext!.magnifierBuilder!(context, _controlsContext!.magnifierFocalPoint)
+          : _buildDefaultMagnifier(context, _controlsContext!.magnifierFocalPoint),
     );
   }
 
-  Widget _buildDefaultMagnifier(LeaderLink magnifierFocalPoint) {
+  Widget _buildDefaultMagnifier(BuildContext context, LeaderLink magnifierFocalPoint) {
     return Center(
       child: IOSFollowingMagnifier.roundedRectangle(
         leaderLink: magnifierFocalPoint,
@@ -1891,7 +1891,7 @@ class IosEditorControlsDocumentLayerState
 
   late BlinkController _caretBlinkController;
 
-  IosEditorControlsContext? _controlsContext;
+  IosEditorControlsController? _controlsContext;
 
   @override
   void initState() {

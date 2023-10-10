@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:example/demos/editor_configs/keyboard_overlay_clipper.dart';
 import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// Mobile iOS document editing demo.
@@ -28,7 +29,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
 
   // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
   late MagnifierAndToolbarController _overlayController;
-  late final IosEditorControlsContext _iosEditorControlsContext;
+  late final IosEditorControlsController _iosEditorControlsController;
 
   @override
   void initState() {
@@ -46,15 +47,15 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
 
     // TODO: get rid of the overlay controller
     _overlayController = MagnifierAndToolbarController();
-    _iosEditorControlsContext = IosEditorControlsContext(
+    _iosEditorControlsController = IosEditorControlsController(
       toolbarBuilder: _buildIosToolbar,
-      floatingCursorController: FloatingCursorController(),
+      magnifierBuilder: _buildIosMagnifier,
     );
   }
 
   @override
   void dispose() {
-    _iosEditorControlsContext.dispose();
+    _iosEditorControlsController.dispose();
 
     _editorFocusNode!.dispose();
     _composer.dispose();
@@ -68,21 +69,21 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     _docOps.cut();
     // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
-    _iosEditorControlsContext.shouldShowToolbar.value = false;
+    _iosEditorControlsController.shouldShowToolbar.value = false;
   }
 
   void _copy() {
     _docOps.copy();
     // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
-    _iosEditorControlsContext.shouldShowToolbar.value = false;
+    _iosEditorControlsController.shouldShowToolbar.value = false;
   }
 
   void _paste() {
     _docOps.paste();
     // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
-    _iosEditorControlsContext.shouldShowToolbar.value = false;
+    _iosEditorControlsController.shouldShowToolbar.value = false;
   }
 
   @override
@@ -91,20 +92,23 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
       child: Column(
         children: [
           Expanded(
-            child: SuperEditor(
-              focusNode: _editorFocusNode,
-              documentLayoutKey: _docLayoutKey,
-              editor: _docEditor,
-              document: _doc,
-              composer: _composer,
-              gestureMode: DocumentGestureMode.iOS,
-              inputSource: TextInputSource.ime,
-              selectionLayerLinks: _selectionLayerLinks,
-              stylesheet: defaultStylesheet.copyWith(
-                documentPadding: const EdgeInsets.all(16),
+            child: IosEditorControlsScope(
+              controller: _iosEditorControlsController,
+              child: SuperEditor(
+                focusNode: _editorFocusNode,
+                documentLayoutKey: _docLayoutKey,
+                editor: _docEditor,
+                document: _doc,
+                composer: _composer,
+                gestureMode: DocumentGestureMode.iOS,
+                inputSource: TextInputSource.ime,
+                selectionLayerLinks: _selectionLayerLinks,
+                stylesheet: defaultStylesheet.copyWith(
+                  documentPadding: const EdgeInsets.all(16),
+                ),
+                overlayController: _overlayController,
+                createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
               ),
-              overlayController: _overlayController,
-              createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),
           ),
           MultiListenableBuilder(
@@ -125,6 +129,15 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
       onCopyPressed: _copy,
       onPastePressed: _paste,
       focalPoint: _selectionLayerLinks.expandedSelectionBoundsLink,
+    );
+  }
+
+  Widget _buildIosMagnifier(BuildContext context, LeaderLink focalPoint) {
+    return Center(
+      child: IOSFollowingMagnifier.roundedRectangle(
+        leaderLink: focalPoint,
+        offsetFromFocalPoint: const Offset(0, -72),
+      ),
     );
   }
 

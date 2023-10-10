@@ -48,7 +48,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
   final _overlayController = MagnifierAndToolbarController() //
     ..screenPadding = const EdgeInsets.all(20.0);
 
-  late final IosEditorControlsContext _iosControlsContext;
+  late final IosEditorControlsController _iosControlsController;
 
   @override
   void initState() {
@@ -66,10 +66,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _editorFocusNode = FocusNode();
     _scrollController = ScrollController()..addListener(_hideOrShowToolbar);
 
-    _iosControlsContext = IosEditorControlsContext(
+    _iosControlsController = IosEditorControlsController(
       toolbarBuilder: _buildIosFloatingToolbar,
       magnifierBuilder: _buildIosMagnifier,
-      floatingCursorController: FloatingCursorController(),
     );
   }
 
@@ -79,7 +78,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       _textFormatBarOverlayEntry!.remove();
     }
 
-    _iosControlsContext.dispose();
+    _iosControlsController.dispose();
 
     _scrollController.dispose();
     _editorFocusNode.dispose();
@@ -247,21 +246,21 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _docOps.cut();
     // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
-    _iosControlsContext.shouldShowToolbar.value = false;
+    _iosControlsController.shouldShowToolbar.value = false;
   }
 
   void _copy() {
     _docOps.copy();
     // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
-    _iosControlsContext.shouldShowToolbar.value = false;
+    _iosControlsController.shouldShowToolbar.value = false;
   }
 
   void _paste() {
     _docOps.paste();
     // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
-    _iosControlsContext.shouldShowToolbar.value = false;
+    _iosControlsController.shouldShowToolbar.value = false;
   }
 
   void _selectAll() => _docOps.selectAll();
@@ -435,7 +434,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         child: KeyedSubtree(
           key: _viewportKey,
           child: IosEditorControlsScope(
-            controlsContext: _iosControlsContext,
+            controller: _iosControlsController,
             child: SuperEditor(
               editor: _docEditor,
               document: _doc,
@@ -515,7 +514,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     );
   }
 
-  Widget _buildIosMagnifier(LeaderLink focalPoint) {
+  Widget _buildIosMagnifier(BuildContext context, LeaderLink focalPoint) {
     return Center(
       child: IOSFollowingMagnifier.circle(
         leaderLink: focalPoint,
