@@ -48,7 +48,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
   final _overlayController = MagnifierAndToolbarController() //
     ..screenPadding = const EdgeInsets.all(20.0);
 
-  late final IosEditorControlsController _iosControlsController;
+  late final SuperEditorIosControlsController _iosControlsController;
 
   @override
   void initState() {
@@ -66,7 +66,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _editorFocusNode = FocusNode();
     _scrollController = ScrollController()..addListener(_hideOrShowToolbar);
 
-    _iosControlsController = IosEditorControlsController(
+    _iosControlsController = SuperEditorIosControlsController(
       toolbarBuilder: _buildIosFloatingToolbar,
       magnifierBuilder: _buildIosMagnifier,
     );
@@ -433,7 +433,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         config: _debugConfig ?? const SuperEditorDebugVisualsConfig(),
         child: KeyedSubtree(
           key: _viewportKey,
-          child: IosEditorControlsScope(
+          child: SuperEditorIosControlsScope(
             controller: _iosControlsController,
             child: SuperEditor(
               editor: _docEditor,
@@ -447,8 +447,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
                   caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
                 ),
                 SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
-                IosEditorControlsDocumentLayerBuilder(),
-                IosEditorMagnifierDocumentLayerBuilder(),
+                SuperEditorIosControlsDocumentLayerBuilder(),
+                SuperEditorIosMagnifierDocumentLayerBuilder(),
               ],
               selectionLayerLinks: _selectionLayerLinks,
               selectionStyle: isLight

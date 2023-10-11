@@ -330,8 +330,8 @@ class SuperEditorState extends State<SuperEditor> {
   // GlobalKey for the iOS editor controls context so that the context data doesn't
   // continuously replace itself every time we rebuild. We want to retain the same
   // controls because they're shared throughout a number of disconnected widgets.
-  final _iosEditorControlsContextKey = GlobalKey();
-  final _iosEditorControlsController = IosEditorControlsController();
+  final _iosControlsContextKey = GlobalKey();
+  final _iosControlsController = SuperEditorIosControlsController();
 
   // Leader links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
@@ -419,7 +419,7 @@ class SuperEditorState extends State<SuperEditor> {
   void dispose() {
     _contentTapDelegate?.dispose();
 
-    _iosEditorControlsController.dispose();
+    _iosControlsController.dispose();
 
     widget.editor.context.remove(Editor.layoutKey);
 
@@ -616,9 +616,9 @@ class SuperEditorState extends State<SuperEditor> {
       //   );
       case DocumentGestureMode.iOS:
       default:
-        return IosEditorControlsScope(
-          key: _iosEditorControlsContextKey,
-          controller: _iosEditorControlsController,
+        return SuperEditorIosControlsScope(
+          key: _iosControlsContextKey,
+          controller: _iosControlsController,
           child: child,
         );
     }
@@ -675,12 +675,12 @@ class SuperEditorState extends State<SuperEditor> {
   }) {
     switch (gestureMode) {
       case DocumentGestureMode.iOS:
-        return IosEditorToolbarOverlayManager(
+        return SuperEditorIosToolbarOverlayManager(
           defaultToolbarBuilder: (overlayContext, focalPoint) => defaultIosEditorToolbarBuilder(
             overlayContext,
             focalPoint,
             editContext.commonOps,
-            IosEditorControlsScope.rootOf(context),
+            SuperEditorIosControlsScope.rootOf(context),
           ),
           child: EditorFloatingCursor(
             editor: widget.editor,
@@ -750,7 +750,7 @@ Widget defaultIosEditorToolbarBuilder(
   BuildContext context,
   LeaderLink focalPoint,
   CommonEditorOperations editorOps,
-  IosEditorControlsController editorControlsController,
+  SuperEditorIosControlsController editorControlsController,
 ) {
   return DefaultIosEditorToolbar(
     focalPoint: focalPoint,
@@ -770,7 +770,7 @@ class DefaultIosEditorToolbar extends StatelessWidget {
 
   final LeaderLink focalPoint;
   final CommonEditorOperations editorOps;
-  final IosEditorControlsController editorControlsController;
+  final SuperEditorIosControlsController editorControlsController;
 
   @override
   Widget build(BuildContext context) {
@@ -1002,8 +1002,8 @@ const defaultSuperEditorDocumentOverlayBuilders = [
   // iOS floating toolbar.
   SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
   DefaultCaretOverlayBuilder(),
-  IosEditorControlsDocumentLayerBuilder(),
-  IosEditorMagnifierDocumentLayerBuilder(),
+  SuperEditorIosControlsDocumentLayerBuilder(),
+  SuperEditorIosMagnifierDocumentLayerBuilder(),
 ];
 
 /// Keyboard actions for the standard [SuperEditor].

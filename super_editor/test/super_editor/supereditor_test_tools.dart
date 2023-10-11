@@ -394,8 +394,8 @@ class TestSuperEditorConfigurator {
   /// Builds a [SuperEditor] widget based on the configuration of the given
   /// [testDocumentContext], as well as other configurations in this class.
   Widget _buildSuperEditor(TestDocumentContext testDocumentContext) {
-    return IosEditorControlsScope(
-      controller: IosEditorControlsController(
+    return SuperEditorIosControlsScope(
+      controller: SuperEditorIosControlsController(
         toolbarBuilder: _config.iOSToolbarBuilder,
       ),
       child: SuperEditor(

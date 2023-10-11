@@ -556,8 +556,8 @@ Future<void> _pumpEditorWithUnselectableHrsAndFakeToolbar(
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: IosEditorControlsScope(
-          controller: IosEditorControlsController(
+        body: SuperEditorIosControlsScope(
+          controller: SuperEditorIosControlsController(
             toolbarBuilder: (_, __) => SizedBox(key: toolbarKey),
           ),
           child: SuperEditor(

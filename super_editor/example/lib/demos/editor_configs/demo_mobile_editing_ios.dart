@@ -29,7 +29,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
 
   // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
   late MagnifierAndToolbarController _overlayController;
-  late final IosEditorControlsController _iosEditorControlsController;
+  late final SuperEditorIosControlsController _iosEditorControlsController;
 
   @override
   void initState() {
@@ -47,7 +47,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
 
     // TODO: get rid of the overlay controller
     _overlayController = MagnifierAndToolbarController();
-    _iosEditorControlsController = IosEditorControlsController(
+    _iosEditorControlsController = SuperEditorIosControlsController(
       toolbarBuilder: _buildIosToolbar,
       magnifierBuilder: _buildIosMagnifier,
     );
@@ -92,7 +92,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
       child: Column(
         children: [
           Expanded(
-            child: IosEditorControlsScope(
+            child: SuperEditorIosControlsScope(
               controller: _iosEditorControlsController,
               child: SuperEditor(
                 focusNode: _editorFocusNode,

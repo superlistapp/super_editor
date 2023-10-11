@@ -236,8 +236,8 @@ class TestDocumentConfigurator {
     );
 
     final superDocument = _buildContent(
-      IosReaderControlsScope(
-        controller: IosReaderControlsController(
+      SuperReaderIosControlsScope(
+        controller: SuperReaderIosControlsController(
           toolbarBuilder: _iOSToolbarBuilder,
         ),
         child: SuperReader(

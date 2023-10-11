@@ -367,7 +367,7 @@ class FloatingCursorListener {
 /// as a focal point for an iOS-style toolbar display.
 ///
 /// By default, the toolbar focal point [LeaderLink] is obtained from an ancestor
-/// [IosEditorControlsScope].
+/// [SuperEditorIosControlsScope].
 class IosToolbarFocalPointDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   const IosToolbarFocalPointDocumentLayer({
     Key? key,
@@ -386,7 +386,7 @@ class IosToolbarFocalPointDocumentLayer extends DocumentLayoutLayerStatefulWidge
 
   /// The [LeaderLink], which is attached to the toolbar focal point bounds.
   ///
-  /// By default, this [LeaderLink] is obtained from an ancestor [IosEditorControlsScope].
+  /// By default, this [LeaderLink] is obtained from an ancestor [SuperEditorIosControlsScope].
   /// If [toolbarFocalPointLink] is non-null, it's used instead of the ancestor value.
   final LeaderLink toolbarFocalPointLink;
 
@@ -554,12 +554,11 @@ class IosControlsDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 
   @override
   DocumentLayoutLayerState<IosControlsDocumentLayer, DocumentSelectionLayout> createState() =>
-      IosEditorControlsDocumentLayerState();
+      IosControlsDocumentLayerState();
 }
 
 @visibleForTesting
-class IosEditorControlsDocumentLayerState
-    extends DocumentLayoutLayerState<IosControlsDocumentLayer, DocumentSelectionLayout>
+class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosControlsDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
   /// The diameter of the small circle that appears on the top and bottom of
   /// expanded iOS text handles.
@@ -810,11 +809,11 @@ class IosMagnifierDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 
   @override
   DocumentLayoutLayerState<IosMagnifierDocumentLayer, DocumentSelectionLayout> createState() =>
-      IosEditorMagnifierDocumentLayerState();
+      IosMagnifierDocumentLayerState();
 }
 
 @visibleForTesting
-class IosEditorMagnifierDocumentLayerState
+class IosMagnifierDocumentLayerState
     extends DocumentLayoutLayerState<IosMagnifierDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
   late final OverlayEntry _magnifierOverlay;

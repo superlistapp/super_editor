@@ -126,7 +126,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
   /// a property on this IME interactor.
   ///
   /// If no [floatingCursorController] is provided, this widget attempts to obtain
-  /// one from an ancestor [IosEditorControlsScope]
+  /// one from an ancestor [SuperEditorIosControlsScope]
   final FloatingCursorController? floatingCursorController;
 
   /// Handlers for all Mac OS "selectors" reported by the IME.
@@ -180,7 +180,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   void didChangeDependencies() {
     super.didChangeDependencies();
     _documentImeClient.floatingCursorController =
-        widget.floatingCursorController ?? IosEditorControlsScope.maybeRootOf(context)?.floatingCursorController;
+        widget.floatingCursorController ?? SuperEditorIosControlsScope.maybeRootOf(context)?.floatingCursorController;
   }
 
   @override
@@ -190,7 +190,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     if (widget.editContext != oldWidget.editContext) {
       _setupImeConnection();
       _documentImeClient.floatingCursorController =
-          widget.floatingCursorController ?? IosEditorControlsScope.maybeRootOf(context)?.floatingCursorController;
+          widget.floatingCursorController ?? SuperEditorIosControlsScope.maybeRootOf(context)?.floatingCursorController;
       _imeConnection.notifyListeners();
     }
 

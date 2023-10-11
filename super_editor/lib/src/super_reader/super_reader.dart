@@ -128,11 +128,11 @@ class SuperReader extends StatefulWidget {
 
   /// Layers that are displayed beneath the document layout, aligned
   /// with the location and size of the document layout.
-  final List<ReadOnlyDocumentLayerBuilder> documentUnderlayBuilders;
+  final List<SuperReaderDocumentLayerBuilder> documentUnderlayBuilders;
 
   /// Layers that are displayed on top of the document layout, aligned
   /// with the location and size of the document layout.
-  final List<ReadOnlyDocumentLayerBuilder> documentOverlayBuilders;
+  final List<SuperReaderDocumentLayerBuilder> documentOverlayBuilders;
 
   /// Priority list of widget factories that create instances of
   /// each visual component displayed in the document layout, e.g.,
@@ -225,8 +225,8 @@ class SuperReaderState extends State<SuperReader> {
   // GlobalKey for the iOS editor controls context so that the context data doesn't
   // continuously replace itself every time we rebuild. We want to retain the same
   // controls because they're shared throughout a number of disconnected widgets.
-  final _iosReaderControlsContextKey = GlobalKey();
-  final _iosReaderControlsController = IosReaderControlsController();
+  final _iosControlsContextKey = GlobalKey();
+  final _iosControlsController = SuperReaderIosControlsController();
 
   @override
   void initState() {
@@ -431,9 +431,9 @@ class SuperReaderState extends State<SuperReader> {
       //   );
       case DocumentGestureMode.iOS:
       default:
-        return IosReaderControlsScope(
-          key: _iosReaderControlsContextKey,
-          controller: _iosReaderControlsController,
+        return SuperReaderIosControlsScope(
+          key: _iosControlsContextKey,
+          controller: _iosControlsController,
           child: child,
         );
     }
@@ -447,13 +447,13 @@ class SuperReaderState extends State<SuperReader> {
   }) {
     switch (_gestureMode) {
       case DocumentGestureMode.iOS:
-        return IosReaderToolbarOverlayManager(
+        return SuperReaderIosToolbarOverlayManager(
           defaultToolbarBuilder: (context, focalPoint) => defaultIosReaderToolbarBuilder(
             context,
             focalPoint,
             document,
             _selection,
-            IosEditorControlsScope.rootOf(context),
+            SuperEditorIosControlsScope.rootOf(context),
           ),
           child: child,
         );
@@ -492,7 +492,7 @@ class SuperReaderState extends State<SuperReader> {
           overlayController: widget.overlayController,
         );
       case DocumentGestureMode.iOS:
-        return ReadOnlyIOSDocumentTouchInteractor(
+        return SuperReaderIosDocumentTouchInteractor(
           focusNode: _focusNode,
           document: _readerContext.document,
           documentKey: _docLayoutKey,
@@ -512,7 +512,7 @@ Widget defaultIosReaderToolbarBuilder(
   LeaderLink focalPoint,
   Document document,
   ValueListenable<DocumentSelection?> selection,
-  IosEditorControlsController editorControlsController,
+  SuperEditorIosControlsController editorControlsController,
 ) {
   return DefaultIosReaderToolbar(
     focalPoint: focalPoint,
@@ -535,7 +535,7 @@ class DefaultIosReaderToolbar extends StatelessWidget {
   final LeaderLink focalPoint;
   final Document document;
   final ValueListenable<DocumentSelection?> selection;
-  final IosEditorControlsController editorControlsController;
+  final SuperEditorIosControlsController editorControlsController;
 
   @override
   Widget build(BuildContext context) {
@@ -627,14 +627,14 @@ const defaultSuperReaderDocumentOverlayBuilders = [
   // Adds a Leader around the document selection at a focal point for the
   // iOS floating toolbar.
   SuperReaderIosToolbarFocalPointDocumentLayerBuilder(),
-  IosReaderControlsDocumentLayerBuilder(),
-  IosReaderMagnifierDocumentLayerBuilder(),
+  SuperReaderIosControlsDocumentLayerBuilder(),
+  SuperReaderIosMagnifierDocumentLayerBuilder(),
 ];
 
-/// A [ReadOnlyDocumentLayerBuilder] that builds a [SelectionLeadersDocumentLayer], which positions
+/// A [SuperReaderDocumentLayerBuilder] that builds a [SelectionLeadersDocumentLayer], which positions
 /// leader widgets at the base and extent of the user's selection, so that other widgets
 /// can position themselves relative to the user's selection.
-class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
+class _SelectionLeadersDocumentLayerBuilder implements SuperReaderDocumentLayerBuilder {
   const _SelectionLeadersDocumentLayerBuilder({
     required this.links,
     // ignore: unused_element
@@ -659,10 +659,10 @@ class _SelectionLeadersDocumentLayerBuilder implements ReadOnlyDocumentLayerBuil
   }
 }
 
-/// A [ReadOnlyDocumentLayerBuilder] that builds a [IosToolbarFocalPointDocumentLayer], which
+/// A [SuperReaderDocumentLayerBuilder] that builds a [IosToolbarFocalPointDocumentLayer], which
 /// positions a `Leader` widget around the document selection, as a focal point for an
 /// iOS floating toolbar.
-class SuperReaderIosToolbarFocalPointDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
+class SuperReaderIosToolbarFocalPointDocumentLayerBuilder implements SuperReaderDocumentLayerBuilder {
   const SuperReaderIosToolbarFocalPointDocumentLayerBuilder({
     // ignore: unused_element
     this.showDebugLeaderBounds = false,
@@ -676,7 +676,7 @@ class SuperReaderIosToolbarFocalPointDocumentLayerBuilder implements ReadOnlyDoc
     return IosToolbarFocalPointDocumentLayer(
       document: readerContext.document,
       selection: readerContext.selection,
-      toolbarFocalPointLink: IosReaderControlsScope.rootOf(context).toolbarFocalPoint,
+      toolbarFocalPointLink: SuperReaderIosControlsScope.rootOf(context).toolbarFocalPoint,
       showDebugLeaderBounds: showDebugLeaderBounds,
     );
   }
@@ -684,7 +684,7 @@ class SuperReaderIosToolbarFocalPointDocumentLayerBuilder implements ReadOnlyDoc
 
 /// Builds widgets that are displayed at the same position and size as
 /// the document layout within a [SuperReader].
-abstract class ReadOnlyDocumentLayerBuilder {
+abstract class SuperReaderDocumentLayerBuilder {
   ContentLayerWidget build(BuildContext context, SuperReaderContext documentContext);
 }
 

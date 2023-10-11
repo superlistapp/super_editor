@@ -22,7 +22,7 @@ import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_reader/reader_context.dart';
 import 'package:super_editor/src/super_reader/super_reader.dart';
 
-/// An [InheritedWidget] that provides shared access to a [IosReaderControlsController],
+/// An [InheritedWidget] that provides shared access to a [SuperReaderIosControlsController],
 /// which coordinates the state of iOS controls like drag handles, magnifier, and toolbar.
 ///
 /// This widget and its associated controller exist so that [SuperReader] has maximum freedom
@@ -32,13 +32,13 @@ import 'package:super_editor/src/super_reader/super_reader.dart';
 /// independent widgets can work together to cover those various responsibilities.
 ///
 /// Centralizing a controller in an [InheritedWidget] also allows [SuperReader] to share that
-/// control with application code outside of [SuperReader], by placing an [IosReaderControlsScope]
+/// control with application code outside of [SuperReader], by placing an [SuperReaderIosControlsScope]
 /// above the [SuperReader] in the widget tree. For this reason, [SuperReader] should access
-/// the [IosReaderControlsScope] through [rootOf].
-class IosReaderControlsScope extends InheritedWidget {
-  /// Finds the highest [IosReaderControlsScope] in the widget tree, above the given
-  /// [context], and returns its associated [IosReaderControlsController].
-  static IosReaderControlsController rootOf(BuildContext context) {
+/// the [SuperReaderIosControlsScope] through [rootOf].
+class SuperReaderIosControlsScope extends InheritedWidget {
+  /// Finds the highest [SuperReaderIosControlsScope] in the widget tree, above the given
+  /// [context], and returns its associated [SuperReaderIosControlsController].
+  static SuperReaderIosControlsController rootOf(BuildContext context) {
     final data = maybeRootOf(context);
 
     if (data == null) {
@@ -48,11 +48,11 @@ class IosReaderControlsScope extends InheritedWidget {
     return data;
   }
 
-  static IosReaderControlsController? maybeRootOf(BuildContext context) {
+  static SuperReaderIosControlsController? maybeRootOf(BuildContext context) {
     InheritedElement? root;
 
     context.visitAncestorElements((element) {
-      if (element is! InheritedElement || element.widget is! IosReaderControlsScope) {
+      if (element is! InheritedElement || element.widget is! SuperReaderIosControlsScope) {
         // Keep visiting.
         return true;
       }
@@ -71,35 +71,35 @@ class IosReaderControlsScope extends InheritedWidget {
     context.dependOnInheritedElement(root!);
 
     // Return the current iOS controls data.
-    return (root!.widget as IosReaderControlsScope).controller;
+    return (root!.widget as SuperReaderIosControlsScope).controller;
   }
 
-  /// Finds the nearest [IosReaderControlsScope] in the widget tree, above the given
-  /// [context], and returns its associated [IosReaderControlsController].
-  static IosReaderControlsController nearestOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<IosReaderControlsScope>()!.controller;
+  /// Finds the nearest [SuperReaderIosControlsScope] in the widget tree, above the given
+  /// [context], and returns its associated [SuperReaderIosControlsController].
+  static SuperReaderIosControlsController nearestOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<SuperReaderIosControlsScope>()!.controller;
 
-  static IosReaderControlsController? maybeNearestOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<IosReaderControlsScope>()?.controller;
+  static SuperReaderIosControlsController? maybeNearestOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<SuperReaderIosControlsScope>()?.controller;
 
-  const IosReaderControlsScope({
+  const SuperReaderIosControlsScope({
     super.key,
     required this.controller,
     required super.child,
   });
 
-  final IosReaderControlsController controller;
+  final SuperReaderIosControlsController controller;
 
   @override
-  bool updateShouldNotify(IosReaderControlsScope oldWidget) {
+  bool updateShouldNotify(SuperReaderIosControlsScope oldWidget) {
     return controller != oldWidget.controller;
   }
 }
 
 /// A controller, which coordinates the state of various iOS reader controls, including
 /// drag handles, magnifier, and toolbar.
-class IosReaderControlsController {
-  IosReaderControlsController({
+class SuperReaderIosControlsController {
+  SuperReaderIosControlsController({
     this.handleColor,
     this.magnifierBuilder,
     this.toolbarBuilder,
@@ -162,8 +162,8 @@ class IosReaderControlsController {
 /// collapsed selections, i.e., caret display. When the user taps on
 /// a read-only document, nothing happens. The user must drag an expanded
 /// selection, or double/triple tap to select content.
-class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
-  const ReadOnlyIOSDocumentTouchInteractor({
+class SuperReaderIosDocumentTouchInteractor extends StatefulWidget {
+  const SuperReaderIosDocumentTouchInteractor({
     Key? key,
     required this.focusNode,
     required this.document,
@@ -202,10 +202,10 @@ class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
   final Widget? child;
 
   @override
-  State createState() => _ReadOnlyIOSDocumentTouchInteractorState();
+  State createState() => _SuperReaderIosDocumentTouchInteractorState();
 }
 
-class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocumentTouchInteractor>
+class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDocumentTouchInteractor>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   // The ScrollPosition attached to the _ancestorScrollable.
   ScrollPosition? _ancestorScrollPosition;
@@ -213,7 +213,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
   ScrollPosition? _activeScrollPosition;
 
-  IosReaderControlsController? _controlsContext;
+  SuperReaderIosControlsController? _controlsContext;
 
   late DragHandleAutoScroller _handleAutoScrolling;
   Offset? _globalStartDragOffset;
@@ -260,7 +260,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = IosReaderControlsScope.rootOf(context);
+    _controlsContext = SuperReaderIosControlsScope.rootOf(context);
 
     _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
 
@@ -283,7 +283,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   }
 
   @override
-  void didUpdateWidget(ReadOnlyIOSDocumentTouchInteractor oldWidget) {
+  void didUpdateWidget(SuperReaderIosDocumentTouchInteractor oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.document != oldWidget.document) {
@@ -969,9 +969,9 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
 }
 
 /// Adds and removes an iOS-style editor toolbar, as dictated by an ancestor
-/// [IosReaderControlsScope].
-class IosReaderToolbarOverlayManager extends StatefulWidget {
-  const IosReaderToolbarOverlayManager({
+/// [SuperReaderIosControlsScope].
+class SuperReaderIosToolbarOverlayManager extends StatefulWidget {
+  const SuperReaderIosToolbarOverlayManager({
     super.key,
     this.defaultToolbarBuilder,
     this.child,
@@ -982,18 +982,18 @@ class IosReaderToolbarOverlayManager extends StatefulWidget {
   final Widget? child;
 
   @override
-  State<IosReaderToolbarOverlayManager> createState() => _IosReaderToolbarOverlayManagerState();
+  State<SuperReaderIosToolbarOverlayManager> createState() => _SuperReaderIosToolbarOverlayManagerState();
 }
 
-class _IosReaderToolbarOverlayManagerState extends State<IosReaderToolbarOverlayManager> {
-  IosReaderControlsController? _controlsContext;
+class _SuperReaderIosToolbarOverlayManagerState extends State<SuperReaderIosToolbarOverlayManager> {
+  SuperReaderIosControlsController? _controlsContext;
   OverlayEntry? _toolbarOverlayEntry;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = IosReaderControlsScope.rootOf(context);
+    _controlsContext = SuperReaderIosControlsScope.rootOf(context);
 
     // Add our overlay on the next frame. If we did it immediately, it would
     // cause a setState() to be called during didChangeDependencies, which is
@@ -1045,8 +1045,8 @@ class _IosReaderToolbarOverlayManagerState extends State<IosReaderToolbarOverlay
 
 /// A [SuperReaderLayerBuilder], which builds a [IosMagnifierDocumentLayer],
 /// which displays iOS-style magnifier.
-class IosReaderMagnifierDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
-  const IosReaderMagnifierDocumentLayerBuilder();
+class SuperReaderIosMagnifierDocumentLayerBuilder implements SuperReaderDocumentLayerBuilder {
+  const SuperReaderIosMagnifierDocumentLayerBuilder();
 
   @override
   ContentLayerWidget build(BuildContext context, SuperReaderContext editContext) {
@@ -1055,17 +1055,17 @@ class IosReaderMagnifierDocumentLayerBuilder implements ReadOnlyDocumentLayerBui
     }
 
     return IosMagnifierDocumentLayer(
-      focalPoint: IosReaderControlsScope.rootOf(context).magnifierFocalPoint,
-      shouldShowMagnifier: IosReaderControlsScope.rootOf(context).shouldShowMagnifier,
-      magnifierBuilder: IosReaderControlsScope.rootOf(context).magnifierBuilder,
+      focalPoint: SuperReaderIosControlsScope.rootOf(context).magnifierFocalPoint,
+      shouldShowMagnifier: SuperReaderIosControlsScope.rootOf(context).shouldShowMagnifier,
+      magnifierBuilder: SuperReaderIosControlsScope.rootOf(context).magnifierBuilder,
     );
   }
 }
 
 /// A [SuperReaderLayerBuilder], which builds a [IosControlsDocumentLayer],
 /// which displays iOS-style handles.
-class IosReaderControlsDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
-  const IosReaderControlsDocumentLayerBuilder({
+class SuperReaderIosControlsDocumentLayerBuilder implements SuperReaderDocumentLayerBuilder {
+  const SuperReaderIosControlsDocumentLayerBuilder({
     this.handleColor,
   });
 
