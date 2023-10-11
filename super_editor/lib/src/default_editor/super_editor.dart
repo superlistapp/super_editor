@@ -2,6 +2,7 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
@@ -23,7 +24,7 @@ import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
@@ -674,10 +675,13 @@ class SuperEditorState extends State<SuperEditor> {
   }) {
     switch (gestureMode) {
       case DocumentGestureMode.iOS:
-        return IosToolbarOverlayManager(
-          toolbarFocalPoint: IosEditorControlsScope.rootOf(context).toolbarFocalPoint,
-          popoverToolbarBuilder: IosEditorControlsScope.rootOf(context).toolbarBuilder ?? (_, __) => const SizedBox(),
-          createOverlayControlsClipper: widget.createOverlayControlsClipper,
+        return IosEditorToolbarOverlayManager(
+          defaultToolbarBuilder: (overlayContext, focalPoint) => defaultIosEditorToolbarBuilder(
+            overlayContext,
+            focalPoint,
+            editContext.commonOps,
+            IosEditorControlsScope.rootOf(context),
+          ),
           child: EditorFloatingCursor(
             editor: widget.editor,
             document: widget.document,
@@ -738,6 +742,59 @@ class SuperEditorState extends State<SuperEditor> {
           showDebugPaint: widget.debugPaint.gestures,
         );
     }
+  }
+}
+
+/// Builds a standard editor-style iOS floating toolbar.
+Widget defaultIosEditorToolbarBuilder(
+  BuildContext context,
+  LeaderLink focalPoint,
+  CommonEditorOperations editorOps,
+  IosEditorControlsController editorControlsController,
+) {
+  return DefaultIosEditorToolbar(
+    focalPoint: focalPoint,
+    editorOps: editorOps,
+    editorControlsController: editorControlsController,
+  );
+}
+
+/// An iOS floating toolbar, which includes standard buttons for an editor use-case.
+class DefaultIosEditorToolbar extends StatelessWidget {
+  const DefaultIosEditorToolbar({
+    super.key,
+    required this.focalPoint,
+    required this.editorOps,
+    required this.editorControlsController,
+  });
+
+  final LeaderLink focalPoint;
+  final CommonEditorOperations editorOps;
+  final IosEditorControlsController editorControlsController;
+
+  @override
+  Widget build(BuildContext context) {
+    return IOSTextEditingFloatingToolbar(
+      focalPoint: focalPoint,
+      onCutPressed: _cut,
+      onCopyPressed: _copy,
+      onPastePressed: _paste,
+    );
+  }
+
+  void _cut() {
+    editorOps.cut();
+    editorControlsController.shouldShowToolbar.value = false;
+  }
+
+  void _copy() {
+    editorOps.copy();
+    editorControlsController.shouldShowToolbar.value = false;
+  }
+
+  void _paste() {
+    editorOps.paste();
+    editorControlsController.shouldShowToolbar.value = false;
   }
 }
 

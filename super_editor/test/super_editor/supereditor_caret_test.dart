@@ -371,8 +371,7 @@ Offset _getIosCurrentCaretOffset(WidgetTester tester) {
   // final controls = tester.widget<IosEditingToolbarOverlay>(find.byType(IosEditingToolbarOverlay).last);
   // return controls.editingController.caretTop!;
 
-  final controls =
-      tester.state(find.byType(IosEditorControlsDocumentLayer).last) as IosEditorControlsDocumentLayerState;
+  final controls = tester.state(find.byType(IosControlsDocumentLayer).last) as IosEditorControlsDocumentLayerState;
   return controls.caret!.topCenter;
 }
 

@@ -4,16 +4,25 @@ import 'package:flutter/scheduler.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:overlord/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
+import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
+import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/touch_controls.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// An application overlay that displays an iOS-style toolbar.
-class IosEditingToolbarOverlay extends StatefulWidget {
-  const IosEditingToolbarOverlay({
+class IosFloatingToolbarOverlay extends StatefulWidget {
+  const IosFloatingToolbarOverlay({
     Key? key,
     required this.shouldShowToolbar,
     required this.toolbarFocalPoint,
@@ -49,10 +58,10 @@ class IosEditingToolbarOverlay extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  State createState() => _IosEditingToolbarOverlayState();
+  State createState() => _IosFloatingToolbarOverlayState();
 }
 
-class _IosEditingToolbarOverlayState extends State<IosEditingToolbarOverlay> with SingleTickerProviderStateMixin {
+class _IosFloatingToolbarOverlayState extends State<IosFloatingToolbarOverlay> with SingleTickerProviderStateMixin {
   final _boundsKey = GlobalKey();
 
   @override
@@ -364,7 +373,7 @@ class IosToolbarFocalPointDocumentLayer extends DocumentLayoutLayerStatefulWidge
     Key? key,
     required this.document,
     required this.selection,
-    this.toolbarFocalPointLink,
+    required this.toolbarFocalPointLink,
     this.showDebugLeaderBounds = false,
   }) : super(key: key);
 
@@ -379,7 +388,7 @@ class IosToolbarFocalPointDocumentLayer extends DocumentLayoutLayerStatefulWidge
   ///
   /// By default, this [LeaderLink] is obtained from an ancestor [IosEditorControlsScope].
   /// If [toolbarFocalPointLink] is non-null, it's used instead of the ancestor value.
-  final LeaderLink? toolbarFocalPointLink;
+  final LeaderLink toolbarFocalPointLink;
 
   /// Whether to paint colorful bounds around the leader widgets, for debugging purposes.
   final bool showDebugLeaderBounds;
@@ -482,7 +491,7 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
           Positioned.fromRect(
             rect: expandedSelectionBounds,
             child: Leader(
-              link: widget.toolbarFocalPointLink ?? IosEditorControlsScope.rootOf(context).toolbarFocalPoint,
+              link: widget.toolbarFocalPointLink,
               child: widget.showDebugLeaderBounds
                   ? DecoratedBox(
                       decoration: BoxDecoration(
@@ -496,6 +505,373 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A document layer that displays iOS-style caret, handles and a magnifier.
+///
+/// In this layer, the caret and handles are explicitly positioned based on
+/// the document layout. This layer positions the caret and handles directly,
+/// because their position is based on the document layout, rather than the
+/// user's gesture behavior.
+///
+/// A magnifier is displayed whenever [magnifierFocalPoint.value] is not `null`.
+/// The magnifier is positioned as a follower, following the given
+/// [magnifierFocalPoint]. Unlike the caret and handles, the magnifier requires
+/// a leader because the magnifier position is tied to the user's gesture
+/// behavior, rather than the document layout.
+class IosControlsDocumentLayer extends DocumentLayoutLayerStatefulWidget {
+  const IosControlsDocumentLayer({
+    super.key,
+    required this.document,
+    required this.documentLayout,
+    required this.selection,
+    required this.changeSelection,
+    required this.handleColor,
+    required this.shouldCaretBlink,
+    this.floatingCursorController,
+    this.showDebugPaint = false,
+  });
+
+  final Document document;
+
+  final DocumentLayout documentLayout;
+
+  final ValueListenable<DocumentSelection?> selection;
+
+  final void Function(DocumentSelection?, SelectionChangeType, String selectionReason) changeSelection;
+
+  /// Color the iOS-style text selection drag handles.
+  final Color handleColor;
+
+  final ValueListenable<bool> shouldCaretBlink;
+
+  final FloatingCursorController? floatingCursorController;
+
+  final bool showDebugPaint;
+
+  @override
+  DocumentLayoutLayerState<IosControlsDocumentLayer, DocumentSelectionLayout> createState() =>
+      IosEditorControlsDocumentLayerState();
+}
+
+@visibleForTesting
+class IosEditorControlsDocumentLayerState
+    extends DocumentLayoutLayerState<IosControlsDocumentLayer, DocumentSelectionLayout>
+    with SingleTickerProviderStateMixin {
+  /// The diameter of the small circle that appears on the top and bottom of
+  /// expanded iOS text handles.
+  static const ballDiameter = 8.0;
+
+  // These global keys are assigned to each draggable handle to
+  // prevent a strange dragging issue.
+  //
+  // Without these keys, if the user drags into the auto-scroll area
+  // for a period of time, we never receive a
+  // "pan end" or "pan cancel" callback. I have no idea why this is
+  // the case. These handles sit in an Overlay, so it's not as if they
+  // suffered some conflict within a ScrollView. I tried many adjustments
+  // to recover the end/cancel callbacks. Finally, I tried adding these
+  // global keys based on a hunch that perhaps the gesture detector was
+  // somehow getting switched out, or assigned to a different widget, and
+  // that was somehow disrupting the callback series. For now, these keys
+  // seem to solve the problem.
+  final _collapsedHandleKey = GlobalKey();
+  final _upstreamHandleKey = GlobalKey();
+  final _downstreamHandleKey = GlobalKey();
+
+  late BlinkController _caretBlinkController;
+
+  @override
+  void initState() {
+    super.initState();
+    _caretBlinkController = BlinkController(tickerProvider: this);
+
+    widget.selection.addListener(_onSelectionChange);
+    widget.shouldCaretBlink.addListener(_onBlinkModeChange);
+    widget.floatingCursorController?.isActive.addListener(_onFloatingCursorActivationChange);
+
+    _onBlinkModeChange();
+  }
+
+  @override
+  void didUpdateWidget(IosControlsDocumentLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.selection != oldWidget.selection) {
+      oldWidget.selection.removeListener(_onSelectionChange);
+      widget.selection.addListener(_onSelectionChange);
+    }
+
+    if (widget.shouldCaretBlink != oldWidget.shouldCaretBlink) {
+      oldWidget.shouldCaretBlink.removeListener(_onBlinkModeChange);
+      widget.shouldCaretBlink.addListener(_onBlinkModeChange);
+    }
+
+    if (widget.floatingCursorController != oldWidget.floatingCursorController) {
+      oldWidget.floatingCursorController?.isActive.removeListener(_onFloatingCursorActivationChange);
+      widget.floatingCursorController?.isActive.addListener(_onFloatingCursorActivationChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.selection.removeListener(_onSelectionChange);
+    widget.shouldCaretBlink.removeListener(_onBlinkModeChange);
+    widget.floatingCursorController?.isActive.removeListener(_onFloatingCursorActivationChange);
+
+    super.dispose();
+  }
+
+  @visibleForTesting
+  Rect? get caret => layoutData?.caret;
+
+  void _onSelectionChange() {
+    setState(() {
+      // Schedule a new layout computation because the caret and/or handles need to move.
+    });
+  }
+
+  void _onBlinkModeChange() {
+    if (widget.shouldCaretBlink.value) {
+      _caretBlinkController.startBlinking();
+    } else {
+      _caretBlinkController.stopBlinking();
+    }
+  }
+
+  void _onFloatingCursorActivationChange() {
+    if (widget.floatingCursorController?.isActive.value == true) {
+      _caretBlinkController.stopBlinking();
+    } else {
+      _caretBlinkController.startBlinking();
+    }
+  }
+
+  @override
+  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+    final selection = widget.selection.value;
+    if (selection == null) {
+      return null;
+    }
+
+    if (selection.isCollapsed) {
+      return DocumentSelectionLayout(
+        caret: documentLayout.getRectForPosition(selection.extent)!,
+      );
+    } else {
+      return DocumentSelectionLayout(
+        upstream: documentLayout.getRectForPosition(
+          widget.document.selectUpstreamPosition(selection.base, selection.extent),
+        )!,
+        downstream: documentLayout.getRectForPosition(
+          widget.document.selectDownstreamPosition(selection.base, selection.extent),
+        )!,
+        expandedSelectionBounds: documentLayout.getRectForSelection(
+          selection.base,
+          selection.extent,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget doBuild(BuildContext context, DocumentSelectionLayout? layoutData) {
+    return IgnorePointer(
+      child: SizedBox.expand(
+        child: Stack(
+          children: [
+            if (layoutData != null) ...[
+              _buildHandles(layoutData),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHandles(DocumentSelectionLayout layoutData) {
+    if (widget.selection.value == null) {
+      editorGesturesLog.finer("Not building overlay handles because there's no selection.");
+      return const SizedBox.shrink();
+    }
+
+    return Stack(
+      children: [
+        if (layoutData.caret != null) //
+          _buildCollapsedHandle(caret: layoutData.caret!),
+        if (layoutData.upstream != null && layoutData.downstream != null) ...[
+          _buildUpstreamHandle(
+            upstream: layoutData.upstream!,
+            debugColor: Colors.green,
+          ),
+          _buildDownstreamHandle(
+            downstream: layoutData.downstream!,
+            debugColor: Colors.red,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCollapsedHandle({
+    required Rect caret,
+  }) {
+    return Positioned(
+      key: _collapsedHandleKey,
+      left: caret.left,
+      top: caret.top,
+      child: MultiListenableBuilder(
+        listenables: {
+          if (widget.floatingCursorController != null) ...{
+            widget.floatingCursorController!.isActive,
+            widget.floatingCursorController!.isNearText,
+          }
+        },
+        builder: (context) {
+          final isShowingFloatingCursor = widget.floatingCursorController?.isActive.value == true;
+          if (isShowingFloatingCursor && widget.floatingCursorController?.isNearText.value == true) {
+            // The floating cursor is active and it's near some text. We don't want to
+            // paint a collapsed handle/caret.
+            return const SizedBox();
+          }
+
+          return IOSCollapsedHandle(
+            controller: _caretBlinkController,
+            color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
+            caretHeight: caret.height,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildUpstreamHandle({
+    required Rect upstream,
+    required Color debugColor,
+  }) {
+    return Positioned(
+      key: _upstreamHandleKey,
+      left: upstream.left,
+      top: upstream.top - ballDiameter,
+      child: FractionalTranslation(
+        translation: const Offset(-0.5, 0),
+        child: IOSSelectionHandle.upstream(
+          color: widget.handleColor,
+          handleType: HandleType.upstream,
+          caretHeight: upstream.height,
+          ballRadius: ballDiameter / 2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDownstreamHandle({
+    required Rect downstream,
+    required Color debugColor,
+  }) {
+    return Positioned(
+      key: _downstreamHandleKey,
+      left: downstream.left,
+      top: downstream.top,
+      child: FractionalTranslation(
+        translation: const Offset(-0.5, 0),
+        child: IOSSelectionHandle.downstream(
+          color: widget.handleColor,
+          handleType: HandleType.downstream,
+          caretHeight: downstream.height,
+          ballRadius: ballDiameter / 2,
+        ),
+      ),
+    );
+  }
+}
+
+/// A document layer that displays iOS-style magnifier.
+///
+/// Unlike the caret and handles, the magnifier requires a leader because the
+/// magnifier position is tied to the user's gesture behavior, rather than the
+/// document layout.
+class IosMagnifierDocumentLayer extends DocumentLayoutLayerStatefulWidget {
+  const IosMagnifierDocumentLayer({
+    super.key,
+    required this.focalPoint,
+    required this.shouldShowMagnifier,
+    this.magnifierBuilder,
+    this.showDebugPaint = false,
+  });
+
+  final LeaderLink focalPoint;
+  final ValueListenable<bool> shouldShowMagnifier;
+  final Widget Function(BuildContext, LeaderLink focalPoint)? magnifierBuilder;
+  final bool showDebugPaint;
+
+  @override
+  DocumentLayoutLayerState<IosMagnifierDocumentLayer, DocumentSelectionLayout> createState() =>
+      IosEditorMagnifierDocumentLayerState();
+}
+
+@visibleForTesting
+class IosEditorMagnifierDocumentLayerState
+    extends DocumentLayoutLayerState<IosMagnifierDocumentLayer, DocumentSelectionLayout>
+    with SingleTickerProviderStateMixin {
+  late final OverlayEntry _magnifierOverlay;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _magnifierOverlay = OverlayEntry(builder: (_) => _buildMagnifier());
+    onNextFrame((timeStamp) {
+      Overlay.of(context).insert(_magnifierOverlay);
+    });
+  }
+
+  @override
+  void dispose() {
+    _magnifierOverlay.remove();
+
+    super.dispose();
+  }
+
+  @override
+  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+    return null;
+  }
+
+  @override
+  Widget doBuild(BuildContext context, DocumentSelectionLayout? layoutData) {
+    return const SizedBox();
+  }
+
+  Widget _buildMagnifier() {
+    // Display a magnifier that tracks a focal point.
+    //
+    // When the user is dragging an overlay handle, SuperEditor and SuperReader
+    // position a Leader with a LeaderLink. This magnifier follows that Leader
+    // via the LeaderLink.
+    return ValueListenableBuilder(
+      valueListenable: widget.shouldShowMagnifier,
+      builder: (context, shouldShowMagnifier, child) {
+        if (!shouldShowMagnifier) {
+          return const SizedBox();
+        }
+
+        return child!;
+      },
+      child: widget.magnifierBuilder != null //
+          ? widget.magnifierBuilder!(context, widget.focalPoint)
+          : _buildDefaultMagnifier(context, widget.focalPoint),
+    );
+  }
+
+  Widget _buildDefaultMagnifier(BuildContext context, LeaderLink magnifierFocalPoint) {
+    return Center(
+      child: IOSFollowingMagnifier.roundedRectangle(
+        leaderLink: magnifierFocalPoint,
+        offsetFromFocalPoint: const Offset(0, -72),
       ),
     );
   }

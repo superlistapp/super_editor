@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
@@ -10,13 +10,148 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
+import 'package:super_editor/src/super_reader/reader_context.dart';
+import 'package:super_editor/src/super_reader/super_reader.dart';
+
+/// An [InheritedWidget] that provides shared access to a [IosReaderControlsController],
+/// which coordinates the state of iOS controls like drag handles, magnifier, and toolbar.
+///
+/// This widget and its associated controller exist so that [SuperReader] has maximum freedom
+/// in terms of where to implement iOS gestures vs handles vs the magnifier vs the toolbar.
+/// Each of these responsibilities have some unique differences, which make them difficult
+/// or impossible to implement within a single widget. By sharing a controller, a group of
+/// independent widgets can work together to cover those various responsibilities.
+///
+/// Centralizing a controller in an [InheritedWidget] also allows [SuperReader] to share that
+/// control with application code outside of [SuperReader], by placing an [IosReaderControlsScope]
+/// above the [SuperReader] in the widget tree. For this reason, [SuperReader] should access
+/// the [IosReaderControlsScope] through [rootOf].
+class IosReaderControlsScope extends InheritedWidget {
+  /// Finds the highest [IosReaderControlsScope] in the widget tree, above the given
+  /// [context], and returns its associated [IosReaderControlsController].
+  static IosReaderControlsController rootOf(BuildContext context) {
+    final data = maybeRootOf(context);
+
+    if (data == null) {
+      throw Exception("Tried to depend upon the root IosReaderControlsScope but no such ancestor widget exists.");
+    }
+
+    return data;
+  }
+
+  static IosReaderControlsController? maybeRootOf(BuildContext context) {
+    InheritedElement? root;
+
+    context.visitAncestorElements((element) {
+      if (element is! InheritedElement || element.widget is! IosReaderControlsScope) {
+        // Keep visiting.
+        return true;
+      }
+
+      root = element;
+
+      // Keep visiting, to ensure we get the root scope.
+      return true;
+    });
+
+    if (root == null) {
+      return null;
+    }
+
+    // Create build dependency on the iOS controls context.
+    context.dependOnInheritedElement(root!);
+
+    // Return the current iOS controls data.
+    return (root!.widget as IosReaderControlsScope).controller;
+  }
+
+  /// Finds the nearest [IosReaderControlsScope] in the widget tree, above the given
+  /// [context], and returns its associated [IosReaderControlsController].
+  static IosReaderControlsController nearestOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<IosReaderControlsScope>()!.controller;
+
+  static IosReaderControlsController? maybeNearestOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<IosReaderControlsScope>()?.controller;
+
+  const IosReaderControlsScope({
+    super.key,
+    required this.controller,
+    required super.child,
+  });
+
+  final IosReaderControlsController controller;
+
+  @override
+  bool updateShouldNotify(IosReaderControlsScope oldWidget) {
+    return controller != oldWidget.controller;
+  }
+}
+
+/// A controller, which coordinates the state of various iOS reader controls, including
+/// drag handles, magnifier, and toolbar.
+class IosReaderControlsController {
+  IosReaderControlsController({
+    this.handleColor,
+    this.magnifierBuilder,
+    this.toolbarBuilder,
+    this.createOverlayControlsClipper,
+  });
+
+  void dispose() {
+    shouldShowMagnifier.dispose();
+    shouldShowToolbar.dispose();
+  }
+
+  /// Color of the text selection drag handles on iOS.
+  final Color? handleColor;
+
+  /// Whether the iOS magnifier should be displayed right now.
+  final shouldShowMagnifier = ValueNotifier<bool>(false);
+
+  /// Link to a location where a magnifier should be focused.
+  final magnifierFocalPoint = LeaderLink();
+
+  /// (Optional) Builder to create the visual representation of the magnifier.
+  ///
+  /// If [magnifierBuilder] is `null`, a default iOS magnifier is displayed.
+  final Widget Function(BuildContext, LeaderLink focalPoint)? magnifierBuilder;
+
+  /// Whether the iOS floating toolbar should be displayed right now.
+  final shouldShowToolbar = ValueNotifier<bool>(false);
+
+  /// Toggles [shouldShowToolbar].
+  void toggleToolbar() => shouldShowToolbar.value = !shouldShowToolbar.value;
+
+  /// Link to a location where a toolbar should be focused.
+  ///
+  /// This link probably points to a rectangle, such as a bounding rectangle
+  /// around the user's selection. Therefore, the toolbar builder shouldn't
+  /// assume that this focal point is a single pixel.
+  final toolbarFocalPoint = LeaderLink();
+
+  /// (Optional) Builder to create the visual representation of the floating
+  /// toolbar.
+  ///
+  /// If [toolbarBuilder] is `null`, a default iOS toolbar is displayed.
+  final Widget Function(BuildContext, LeaderLink focalPoint)? toolbarBuilder;
+
+  /// Creates a clipper that restricts where the toolbar and magnifier can
+  /// appear in the overlay.
+  ///
+  /// If no clipper factory method is provided, then the overlay controls
+  /// will be allowed to appear anywhere in the overlay in which they sit
+  /// (probably the entire screen).
+  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
+}
 
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
 /// drag to scroll, double and triple tap to select content, and drag
@@ -78,7 +213,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
   ScrollPosition? _activeScrollPosition;
 
-  IosEditorControlsController? _controlsContext;
+  IosReaderControlsController? _controlsContext;
 
   late DragHandleAutoScroller _handleAutoScrolling;
   Offset? _globalStartDragOffset;
@@ -125,7 +260,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = IosEditorControlsScope.rootOf(context);
+    _controlsContext = IosReaderControlsScope.rootOf(context);
 
     _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
 
@@ -829,6 +964,128 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
           ),
         );
       },
+    );
+  }
+}
+
+/// Adds and removes an iOS-style editor toolbar, as dictated by an ancestor
+/// [IosReaderControlsScope].
+class IosReaderToolbarOverlayManager extends StatefulWidget {
+  const IosReaderToolbarOverlayManager({
+    super.key,
+    this.defaultToolbarBuilder,
+    this.child,
+  });
+
+  final Widget Function(BuildContext, LeaderLink)? defaultToolbarBuilder;
+
+  final Widget? child;
+
+  @override
+  State<IosReaderToolbarOverlayManager> createState() => _IosReaderToolbarOverlayManagerState();
+}
+
+class _IosReaderToolbarOverlayManagerState extends State<IosReaderToolbarOverlayManager> {
+  IosReaderControlsController? _controlsContext;
+  OverlayEntry? _toolbarOverlayEntry;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _controlsContext = IosReaderControlsScope.rootOf(context);
+
+    // Add our overlay on the next frame. If we did it immediately, it would
+    // cause a setState() to be called during didChangeDependencies, which is
+    // a framework violation.
+    onNextFrame((timeStamp) {
+      _addToolbarOverlay();
+    });
+  }
+
+  @override
+  void dispose() {
+    _removeToolbarOverlay();
+    super.dispose();
+  }
+
+  void _addToolbarOverlay() {
+    if (_toolbarOverlayEntry != null) {
+      return;
+    }
+
+    _toolbarOverlayEntry = OverlayEntry(builder: (overlayContext) {
+      return IosFloatingToolbarOverlay(
+        shouldShowToolbar: _controlsContext!.shouldShowToolbar,
+        toolbarFocalPoint: _controlsContext!.toolbarFocalPoint,
+        popoverToolbarBuilder:
+            _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __) => const SizedBox(),
+        createOverlayControlsClipper: _controlsContext!.createOverlayControlsClipper,
+        showDebugPaint: false,
+      );
+    });
+
+    Overlay.of(context).insert(_toolbarOverlayEntry!);
+  }
+
+  void _removeToolbarOverlay() {
+    if (_toolbarOverlayEntry == null) {
+      return;
+    }
+
+    _toolbarOverlayEntry!.remove();
+    _toolbarOverlayEntry = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child ?? const SizedBox();
+  }
+}
+
+/// A [SuperReaderLayerBuilder], which builds a [IosMagnifierDocumentLayer],
+/// which displays iOS-style magnifier.
+class IosReaderMagnifierDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
+  const IosReaderMagnifierDocumentLayerBuilder();
+
+  @override
+  ContentLayerWidget build(BuildContext context, SuperReaderContext editContext) {
+    if (defaultTargetPlatform != TargetPlatform.iOS) {
+      return const ContentLayerProxyWidget(child: SizedBox());
+    }
+
+    return IosMagnifierDocumentLayer(
+      focalPoint: IosReaderControlsScope.rootOf(context).magnifierFocalPoint,
+      shouldShowMagnifier: IosReaderControlsScope.rootOf(context).shouldShowMagnifier,
+      magnifierBuilder: IosReaderControlsScope.rootOf(context).magnifierBuilder,
+    );
+  }
+}
+
+/// A [SuperReaderLayerBuilder], which builds a [IosControlsDocumentLayer],
+/// which displays iOS-style handles.
+class IosReaderControlsDocumentLayerBuilder implements ReadOnlyDocumentLayerBuilder {
+  const IosReaderControlsDocumentLayerBuilder({
+    this.handleColor,
+  });
+
+  final Color? handleColor;
+
+  @override
+  ContentLayerWidget build(BuildContext context, SuperReaderContext readerContext) {
+    if (defaultTargetPlatform != TargetPlatform.iOS) {
+      return const ContentLayerProxyWidget(child: SizedBox());
+    }
+
+    return IosControlsDocumentLayer(
+      document: readerContext.document,
+      documentLayout: readerContext.documentLayout,
+      selection: readerContext.selection,
+      changeSelection: (newSelection, changeType, reason) {
+        readerContext.selection.value = newSelection;
+      },
+      handleColor: handleColor ?? Theme.of(context).primaryColor,
+      shouldCaretBlink: ValueNotifier<bool>(false),
     );
   }
 }

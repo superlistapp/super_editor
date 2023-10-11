@@ -225,8 +225,8 @@ class SuperReaderState extends State<SuperReader> {
   // GlobalKey for the iOS editor controls context so that the context data doesn't
   // continuously replace itself every time we rebuild. We want to retain the same
   // controls because they're shared throughout a number of disconnected widgets.
-  final _iosEditorControlsContextKey = GlobalKey();
-  final _iosEditorControlsController = IosEditorControlsController();
+  final _iosReaderControlsContextKey = GlobalKey();
+  final _iosReaderControlsController = IosReaderControlsController();
 
   @override
   void initState() {
@@ -431,9 +431,9 @@ class SuperReaderState extends State<SuperReader> {
       //   );
       case DocumentGestureMode.iOS:
       default:
-        return IosEditorControlsScope(
-          key: _iosEditorControlsContextKey,
-          controller: _iosEditorControlsController,
+        return IosReaderControlsScope(
+          key: _iosReaderControlsContextKey,
+          controller: _iosReaderControlsController,
           child: child,
         );
     }
@@ -447,10 +447,14 @@ class SuperReaderState extends State<SuperReader> {
   }) {
     switch (_gestureMode) {
       case DocumentGestureMode.iOS:
-        return IosToolbarOverlayManager(
-          toolbarFocalPoint: IosEditorControlsScope.rootOf(context).toolbarFocalPoint,
-          popoverToolbarBuilder: IosEditorControlsScope.rootOf(context).toolbarBuilder ?? _buildDefaultToolbar,
-          createOverlayControlsClipper: widget.createOverlayControlsClipper,
+        return IosReaderToolbarOverlayManager(
+          defaultToolbarBuilder: (context, focalPoint) => defaultIosReaderToolbarBuilder(
+            context,
+            focalPoint,
+            document,
+            _selection,
+            IosEditorControlsScope.rootOf(context),
+          ),
           child: child,
         );
       case DocumentGestureMode.mouse:
@@ -500,8 +504,41 @@ class SuperReaderState extends State<SuperReader> {
         );
     }
   }
+}
 
-  Widget _buildDefaultToolbar(BuildContext context, LeaderLink focalPoint) {
+/// Builds a standard reader-style iOS floating toolbar.
+Widget defaultIosReaderToolbarBuilder(
+  BuildContext context,
+  LeaderLink focalPoint,
+  Document document,
+  ValueListenable<DocumentSelection?> selection,
+  IosEditorControlsController editorControlsController,
+) {
+  return DefaultIosReaderToolbar(
+    focalPoint: focalPoint,
+    document: document,
+    selection: selection,
+    editorControlsController: editorControlsController,
+  );
+}
+
+/// An iOS floating toolbar, which includes standard buttons for a reader use-case.
+class DefaultIosReaderToolbar extends StatelessWidget {
+  const DefaultIosReaderToolbar({
+    super.key,
+    required this.focalPoint,
+    required this.document,
+    required this.selection,
+    required this.editorControlsController,
+  });
+
+  final LeaderLink focalPoint;
+  final Document document;
+  final ValueListenable<DocumentSelection?> selection;
+  final IosEditorControlsController editorControlsController;
+
+  @override
+  Widget build(BuildContext context) {
     return IOSTextEditingFloatingToolbar(
       focalPoint: focalPoint,
       onCopyPressed: _copy,
@@ -510,13 +547,15 @@ class SuperReaderState extends State<SuperReader> {
 
   /// Copies selected content to the OS clipboard.
   void _copy() {
-    if (_selection.value == null) {
+    editorControlsController.shouldShowToolbar.value = false;
+
+    if (selection.value == null) {
       return;
     }
 
     final textToCopy = _textInSelection(
-      document: widget.document,
-      documentSelection: _selection.value!,
+      document: document,
+      documentSelection: selection.value!,
     );
     // TODO: figure out a general approach for asynchronous behaviors that
     //       need to be carried out in response to user input.
@@ -637,6 +676,7 @@ class SuperReaderIosToolbarFocalPointDocumentLayerBuilder implements ReadOnlyDoc
     return IosToolbarFocalPointDocumentLayer(
       document: readerContext.document,
       selection: readerContext.selection,
+      toolbarFocalPointLink: IosReaderControlsScope.rootOf(context).toolbarFocalPoint,
       showDebugLeaderBounds: showDebugLeaderBounds,
     );
   }

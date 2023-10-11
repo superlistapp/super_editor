@@ -478,7 +478,7 @@ spans multiple lines.''',
       await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
 
       // Ensure the drag handle is displayed.
-      expect(find.byType(IosEditingToolbarOverlay), findsOneWidget);
+      expect(find.byType(IosFloatingToolbarOverlay), findsOneWidget);
     });
 
     testWidgetsOnDesktop('configures default gesture mode', (tester) async {
@@ -491,7 +491,7 @@ spans multiple lines.''',
 
       // Ensure no drag handle is displayed.
       expect(find.byType(AndroidSelectionHandle), findsNothing);
-      expect(find.byType(IosEditingToolbarOverlay), findsNothing);
+      expect(find.byType(IosFloatingToolbarOverlay), findsNothing);
     });
 
     group("interaction mode", () {

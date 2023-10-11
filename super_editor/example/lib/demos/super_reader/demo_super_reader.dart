@@ -16,21 +16,21 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   final _selection = ValueNotifier<DocumentSelection?>(null);
   final _selectionLayerLinks = SelectionLayerLinks();
   late MagnifierAndToolbarController _overlayController;
-  late final IosEditorControlsController _iosEditorControlsController;
+  late final IosReaderControlsController _iosReaderControlsController;
 
   @override
   void initState() {
     super.initState();
     _document = createInitialDocument();
     _overlayController = MagnifierAndToolbarController();
-    _iosEditorControlsController = IosEditorControlsController(
+    _iosReaderControlsController = IosReaderControlsController(
       toolbarBuilder: _buildToolbar,
     );
   }
 
   @override
   void dispose() {
-    _iosEditorControlsController.dispose();
+    _iosReaderControlsController.dispose();
     super.dispose();
   }
 
@@ -128,8 +128,8 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return IosEditorControlsScope(
-      controller: _iosEditorControlsController,
+    return IosReaderControlsScope(
+      controller: _iosReaderControlsController,
       child: SuperReader(
         document: _document,
         selection: _selection,

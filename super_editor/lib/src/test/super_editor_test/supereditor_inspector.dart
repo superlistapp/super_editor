@@ -95,7 +95,7 @@ class SuperEditorInspector {
       return androidControls.editingController.caretTop!;
     }
 
-    final iOSControls = (find.byType(IosEditorControlsDocumentLayer).evaluate().lastOrNull as StatefulElement?)?.state
+    final iOSControls = (find.byType(IosControlsDocumentLayer).evaluate().lastOrNull as StatefulElement?)?.state
         as IosEditorControlsDocumentLayerState?;
     // find.byType(IosEditingToolbarOverlay).evaluate().lastOrNull?.widget as IosEditingToolbarOverlay?;
     if (iOSControls != null && iOSControls.caret != null) {
