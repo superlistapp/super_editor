@@ -10,6 +10,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -274,13 +275,18 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
                     _buildHandles(),
                     // Build the floating cursor
                     _buildFloatingCursor(),
-                    // Build the editing toolbar
-                    if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
+                    // Build the editing toolbar.
+                    // We don't show toolbar on web because the browser already displays the native toolbar.
+                    if (!isWeb &&
+                        widget.editingController.shouldDisplayToolbar &&
+                        widget.editingController.isToolbarPositioned)
                       _buildToolbar(),
-                    // Build the focal point for the magnifier
-                    if (widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
-                    // Build the magnifier
-                    if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
+                    // Build the focal point for the magnifier.
+                    // Don't build the focal point on web because, on web, we defer to the native magnifier.
+                    if (!isWeb && widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
+                    // Build the magnifier.
+                    // We don't show magnifier on web because the browser already displays the native magnifier.
+                    if (!isWeb && widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
                     if (widget.showDebugPaint)
                       IgnorePointer(
                         child: Container(
