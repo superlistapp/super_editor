@@ -1306,15 +1306,18 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
                 children: [
                   // Build the caret
                   _buildCaret(),
-                  // Build the drag handles (if desired)
+                  // Build the drag handles (if desired).
+                  // We don't show handles on web because the browser already displays the native handles.
                   if (!isWeb) //
                     ..._buildHandles(),
                   // Build the focal point for the magnifier
                   if (_isDraggingHandle) _buildMagnifierFocalPoint(),
                   // Build the magnifier (this needs to be done before building
-                  // the handles so that the magnifier doesn't show the handles
+                  // the handles so that the magnifier doesn't show the handles.
+                  // We don't show magnifier on web because the browser already displays the native magnifier.
                   if (!isWeb && widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
-                  // Build the editing toolbar
+                  // Build the editing toolbar.
+                  // We don't show toolbar on web because the browser already displays the native toolbar.
                   if (!isWeb &&
                       widget.editingController.shouldDisplayToolbar &&
                       widget.editingController.isToolbarPositioned)
