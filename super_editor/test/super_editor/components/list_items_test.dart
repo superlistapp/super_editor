@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
@@ -172,6 +173,28 @@ void main() {
 
         // Ensure the caret is being displayed at the correct position.
         expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
+      });
+
+      testWidgetsOnDesktop('unindents with SHIFT + TAB', (tester) async {
+        await _pumpUnorderedListWithTextField(tester);
+
+        final doc = SuperEditorInspector.findDocument()!;
+        final listItemNode = doc.nodes.last as ListItemNode;
+
+        // Place caret at the last list item, which has two levels of indentation.
+        // For some reason, taping at the first character isn't displaying any caret,
+        // so we put the caret at the second character and then go back one position.
+        await tester.placeCaretInParagraph(listItemNode.id, 1);
+        await tester.pressLeftArrow();
+
+        // Ensure the list item has second level of indentation.
+        expect(listItemNode.indent, 1);
+
+        // Press SHIFT + TAB to trigger the list unindent command.
+        await _pressShiftTab(tester);
+
+        // Ensure the list item has first level of indentation.
+        expect(listItemNode.indent, 0);
       });
 
       testWidgetsOnAllPlatforms("inserts new item on ENTER at end of existing item", (tester) async {
@@ -459,6 +482,27 @@ void main() {
         expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
       });
 
+      testWidgetsOnDesktop('unindents with SHIFT + TAB', (tester) async {
+        await _pumpOrderedListWithTextField(tester);
+
+        final doc = SuperEditorInspector.findDocument()!;
+        final listItemNode = doc.nodes.last as ListItemNode;
+
+        // Place caret at the last list item, which has two levels of indentation.
+        // For some reason, taping at the first character isn't displaying any caret,
+        // so we put the caret at the second character and then go back one position.
+        await tester.placeCaretInParagraph(listItemNode.id, 1);
+        await tester.pressLeftArrow();
+
+        // Ensure the list item has second level of indentation.
+        expect(listItemNode.indent, 1);
+
+        // Press SHIFT + TAB to trigger the list unindent command.
+        await _pressShiftTab(tester);
+
+        // Ensure the list item has first level of indentation.
+        expect(listItemNode.indent, 0);
+      });
       testWidgetsOnAllPlatforms("inserts new item on ENTER at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
@@ -715,11 +759,13 @@ Future<TestDocumentContext> _pumpUnorderedListWithTextField(
       .createDocument()
       .fromMarkdown(markdown)
       .useStylesheet(styleSheet)
+      .withInputSource(TextInputSource.ime)
       .withCustomWidgetTreeBuilder(
         (superEditor) => MaterialApp(
           home: Scaffold(
             body: Column(
               children: [
+                const TextField(),
                 Expanded(child: superEditor),
                 const TextField(),
               ],
@@ -785,6 +831,14 @@ Future<TestDocumentContext> _pumpOrderedListWithTextField(
         ),
       )
       .pump();
+}
+
+Future<void> _pressShiftTab(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.tab);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.tab);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+  await tester.pumpAndSettle();
 }
 
 TextStyle _inlineTextStyler(Set<Attribution> attributions, TextStyle base) => base;
