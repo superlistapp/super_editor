@@ -16,7 +16,8 @@ void main() {
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context, focalPoint) => IOSTextEditingFloatingToolbar(focalPoint: focalPoint))
+              .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) =>
+                  IOSTextEditingFloatingToolbar(key: mobileToolbarKey, focalPoint: focalPoint))
               .pump();
 
           // Ensure that no overlay controls are visible.
@@ -55,7 +56,8 @@ void main() {
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context, focalPoint) => IOSTextEditingFloatingToolbar(focalPoint: focalPoint))
+              .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) =>
+                  IOSTextEditingFloatingToolbar(key: mobileToolbarKey, focalPoint: focalPoint))
               .pump();
 
           // Long press on the middle of "do|lor".
@@ -97,7 +99,8 @@ void main() {
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context, focalPoint) => IOSTextEditingFloatingToolbar(focalPoint: focalPoint))
+              .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) =>
+                  IOSTextEditingFloatingToolbar(key: mobileToolbarKey, focalPoint: focalPoint))
               .pump();
 
           // Long press on the middle of "do|lor".
@@ -172,7 +175,8 @@ void main() {
               .createDocument()
               // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
               .withSingleParagraph()
-              .withiOSToolbarBuilder((context, focalPoint) => IOSTextEditingFloatingToolbar(focalPoint: focalPoint))
+              .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) =>
+                  IOSTextEditingFloatingToolbar(key: mobileToolbarKey, focalPoint: focalPoint))
               .pump();
 
           // Long press on the middle of "do|lor".

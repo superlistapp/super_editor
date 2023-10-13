@@ -123,8 +123,9 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     );
   }
 
-  Widget _buildIosToolbar(BuildContext context, LeaderLink focalPoint) {
+  Widget _buildIosToolbar(BuildContext context, Key mobileToolbarKey, LeaderLink focalPoint) {
     return IOSTextEditingFloatingToolbar(
+      key: mobileToolbarKey,
       focalPoint: focalPoint,
       onCutPressed: _cut,
       onCopyPressed: _copy,
@@ -132,9 +133,10 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     );
   }
 
-  Widget _buildIosMagnifier(BuildContext context, LeaderLink focalPoint) {
+  Widget _buildIosMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint) {
     return Center(
       child: IOSFollowingMagnifier.roundedRectangle(
+        magnifierKey: magnifierKey,
         leaderLink: focalPoint,
         offsetFromFocalPoint: const Offset(0, -72),
       ),

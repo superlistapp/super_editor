@@ -27,6 +27,7 @@ import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
+import '../infrastructure/text_input.dart';
 import 'selection_upstream_downstream.dart';
 
 /// An [InheritedWidget] that provides shared access to a [SuperEditorIosControlsController],
@@ -140,7 +141,7 @@ class SuperEditorIosControlsController {
   /// (Optional) Builder to create the visual representation of the magnifier.
   ///
   /// If [magnifierBuilder] is `null`, a default iOS magnifier is displayed.
-  final Widget Function(BuildContext, LeaderLink focalPoint)? magnifierBuilder;
+  final DocumentMagnifierBuilder? magnifierBuilder;
 
   /// Whether the iOS floating toolbar should be displayed right now.
   final shouldShowToolbar = ValueNotifier<bool>(false);
@@ -159,7 +160,7 @@ class SuperEditorIosControlsController {
   /// toolbar.
   ///
   /// If [toolbarBuilder] is `null`, a default iOS toolbar is displayed.
-  final Widget Function(BuildContext, LeaderLink focalPoint)? toolbarBuilder;
+  final DocumentFloatingToolbarBuilder? toolbarBuilder;
 
   /// Creates a clipper that restricts where the toolbar and magnifier can
   /// appear in the overlay.
@@ -1281,17 +1282,21 @@ class SuperEditorIosToolbarOverlayManager extends StatefulWidget {
     this.child,
   });
 
-  final Widget Function(BuildContext, LeaderLink)? defaultToolbarBuilder;
+  final DocumentFloatingToolbarBuilder? defaultToolbarBuilder;
 
   final Widget? child;
 
   @override
-  State<SuperEditorIosToolbarOverlayManager> createState() => _SuperEditorIosToolbarOverlayManagerState();
+  State<SuperEditorIosToolbarOverlayManager> createState() => SuperEditorIosToolbarOverlayManagerState();
 }
 
-class _SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolbarOverlayManager> {
+@visibleForTesting
+class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolbarOverlayManager> {
   SuperEditorIosControlsController? _controlsContext;
   OverlayEntry? _toolbarOverlayEntry;
+
+  @visibleForTesting
+  bool get wantsToDisplayToolbar => _controlsContext!.shouldShowToolbar.value;
 
   @override
   void didChangeDependencies() {
@@ -1322,8 +1327,8 @@ class _SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosTool
       return IosFloatingToolbarOverlay(
         shouldShowToolbar: _controlsContext!.shouldShowToolbar,
         toolbarFocalPoint: _controlsContext!.toolbarFocalPoint,
-        popoverToolbarBuilder:
-            _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __) => const SizedBox(),
+        floatingToolbarBuilder:
+            _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
         createOverlayControlsClipper: _controlsContext!.createOverlayControlsClipper,
         showDebugPaint: false,
       );

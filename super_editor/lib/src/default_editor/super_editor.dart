@@ -676,8 +676,9 @@ class SuperEditorState extends State<SuperEditor> {
     switch (gestureMode) {
       case DocumentGestureMode.iOS:
         return SuperEditorIosToolbarOverlayManager(
-          defaultToolbarBuilder: (overlayContext, focalPoint) => defaultIosEditorToolbarBuilder(
+          defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultIosEditorToolbarBuilder(
             overlayContext,
+            mobileToolbarKey,
             focalPoint,
             editContext.commonOps,
             SuperEditorIosControlsScope.rootOf(context),
@@ -748,11 +749,18 @@ class SuperEditorState extends State<SuperEditor> {
 /// Builds a standard editor-style iOS floating toolbar.
 Widget defaultIosEditorToolbarBuilder(
   BuildContext context,
+  Key floatingToolbarKey,
   LeaderLink focalPoint,
   CommonEditorOperations editorOps,
   SuperEditorIosControlsController editorControlsController,
 ) {
+  if (isWeb) {
+    // On web, we defer to the browser's internal overlay controls for mobile.
+    return const SizedBox();
+  }
+
   return DefaultIosEditorToolbar(
+    floatingToolbarKey: floatingToolbarKey,
     focalPoint: focalPoint,
     editorOps: editorOps,
     editorControlsController: editorControlsController,
@@ -763,11 +771,13 @@ Widget defaultIosEditorToolbarBuilder(
 class DefaultIosEditorToolbar extends StatelessWidget {
   const DefaultIosEditorToolbar({
     super.key,
+    this.floatingToolbarKey,
     required this.focalPoint,
     required this.editorOps,
     required this.editorControlsController,
   });
 
+  final Key? floatingToolbarKey;
   final LeaderLink focalPoint;
   final CommonEditorOperations editorOps;
   final SuperEditorIosControlsController editorControlsController;
@@ -775,6 +785,7 @@ class DefaultIosEditorToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IOSTextEditingFloatingToolbar(
+      floatingToolbarKey: floatingToolbarKey,
       focalPoint: focalPoint,
       onCutPressed: _cut,
       onCopyPressed: _copy,

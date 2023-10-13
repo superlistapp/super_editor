@@ -495,13 +495,14 @@ class _ExampleEditorState extends State<ExampleEditor> {
     );
   }
 
-  Widget _buildIosFloatingToolbar(BuildContext context, LeaderLink focalPoint) {
+  Widget _buildIosFloatingToolbar(BuildContext context, Key mobileToolbarKey, LeaderLink focalPoint) {
     return ListenableBuilder(
       listenable: _brightness,
       builder: (context, _) {
         return Theme(
           data: ThemeData(brightness: _brightness.value),
           child: IOSTextEditingFloatingToolbar(
+            key: mobileToolbarKey,
             focalPoint: focalPoint,
             onCutPressed: _cut,
             onCopyPressed: _copy,
@@ -512,9 +513,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
     );
   }
 
-  Widget _buildIosMagnifier(BuildContext context, LeaderLink focalPoint) {
+  Widget _buildIosMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint) {
     return Center(
       child: IOSFollowingMagnifier.circle(
+        magnifierKey: magnifierKey,
         leaderLink: focalPoint,
         offsetFromFocalPoint: const Offset(0, -72),
       ),

@@ -198,7 +198,8 @@ Future<void> _pumpAppWithLongText(WidgetTester tester) async {
       .createDocument()
       // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
       .withSingleParagraph()
-      .withiOSToolbarBuilder((context, focalPoint) => IOSTextEditingFloatingToolbar(focalPoint: focalPoint))
+      .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) =>
+          IOSTextEditingFloatingToolbar(key: mobileToolbarKey, focalPoint: focalPoint))
       .pump();
 }
 

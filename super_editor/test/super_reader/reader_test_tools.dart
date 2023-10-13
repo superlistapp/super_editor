@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/test/super_reader_test/super_reader_inspector.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
@@ -94,7 +93,7 @@ class TestDocumentConfigurator {
   FocusNode? _focusNode;
   DocumentSelection? _selection;
   WidgetBuilder? _androidToolbarBuilder;
-  Widget Function(BuildContext, LeaderLink)? _iOSToolbarBuilder;
+  DocumentFloatingToolbarBuilder? _iOSToolbarBuilder;
 
   /// Configures the [SuperReader] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -184,7 +183,7 @@ class TestDocumentConfigurator {
   }
 
   /// Configures the [SuperEditor] to use the given [builder] as its iOS toolbar builder.
-  TestDocumentConfigurator withiOSToolbarBuilder(Widget Function(BuildContext, LeaderLink)? builder) {
+  TestDocumentConfigurator withiOSToolbarBuilder(DocumentFloatingToolbarBuilder? builder) {
     _iOSToolbarBuilder = builder;
     return this;
   }

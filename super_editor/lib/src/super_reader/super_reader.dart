@@ -448,8 +448,9 @@ class SuperReaderState extends State<SuperReader> {
     switch (_gestureMode) {
       case DocumentGestureMode.iOS:
         return SuperReaderIosToolbarOverlayManager(
-          defaultToolbarBuilder: (context, focalPoint) => defaultIosReaderToolbarBuilder(
+          defaultToolbarBuilder: (context, mobileToolbarKey, focalPoint) => defaultIosReaderToolbarBuilder(
             context,
+            mobileToolbarKey,
             focalPoint,
             document,
             _selection,
@@ -509,12 +510,14 @@ class SuperReaderState extends State<SuperReader> {
 /// Builds a standard reader-style iOS floating toolbar.
 Widget defaultIosReaderToolbarBuilder(
   BuildContext context,
+  Key floatingToolbarKey,
   LeaderLink focalPoint,
   Document document,
   ValueListenable<DocumentSelection?> selection,
   SuperEditorIosControlsController editorControlsController,
 ) {
   return DefaultIosReaderToolbar(
+    floatingToolbarKey: floatingToolbarKey,
     focalPoint: focalPoint,
     document: document,
     selection: selection,
@@ -526,12 +529,14 @@ Widget defaultIosReaderToolbarBuilder(
 class DefaultIosReaderToolbar extends StatelessWidget {
   const DefaultIosReaderToolbar({
     super.key,
+    this.floatingToolbarKey,
     required this.focalPoint,
     required this.document,
     required this.selection,
     required this.editorControlsController,
   });
 
+  final Key? floatingToolbarKey;
   final LeaderLink focalPoint;
   final Document document;
   final ValueListenable<DocumentSelection?> selection;
@@ -540,6 +545,7 @@ class DefaultIosReaderToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IOSTextEditingFloatingToolbar(
+      floatingToolbarKey: floatingToolbarKey,
       focalPoint: focalPoint,
       onCopyPressed: _copy,
     );

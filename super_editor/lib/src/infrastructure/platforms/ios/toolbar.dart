@@ -7,18 +7,21 @@ import 'package:super_editor/src/infrastructure/platforms/ios/colors.dart';
 class IOSTextEditingFloatingToolbar extends StatelessWidget {
   const IOSTextEditingFloatingToolbar({
     Key? key,
+    this.floatingToolbarKey,
+    this.focalPoint,
     this.onCutPressed,
     this.onCopyPressed,
     this.onPastePressed,
-    this.focalPoint,
   }) : super(key: key);
+
+  final Key? floatingToolbarKey;
+
+  /// Direction that the toolbar arrow should point.
+  final LeaderLink? focalPoint;
 
   final VoidCallback? onCutPressed;
   final VoidCallback? onCopyPressed;
   final VoidCallback? onPastePressed;
-
-  /// Direction that the toolbar arrow should point.
-  final LeaderLink? focalPoint;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +34,7 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
             : const ColorScheme.dark(primary: Colors.white),
       ),
       child: CupertinoPopoverToolbar(
+        key: floatingToolbarKey,
         // TODO: make the focal point required
         focalPoint:
             focalPoint != null ? LeaderMenuFocalPoint(link: focalPoint!) : const StationaryMenuFocalPoint(Offset.zero),

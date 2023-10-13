@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:mockito/mockito.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
@@ -246,7 +245,7 @@ class TestSuperEditorConfigurator {
   }
 
   /// Configures the [SuperEditor] to use the given [builder] as its iOS toolbar builder.
-  TestSuperEditorConfigurator withiOSToolbarBuilder(Widget Function(BuildContext, LeaderLink)? builder) {
+  TestSuperEditorConfigurator withiOSToolbarBuilder(DocumentFloatingToolbarBuilder? builder) {
     _config.iOSToolbarBuilder = builder;
     return this;
   }
@@ -459,7 +458,7 @@ class SuperEditorTestConfiguration {
   final appendedKeyboardActions = <DocumentKeyboardAction>[];
   final addedComponents = <ComponentBuilder>[];
   WidgetBuilder? androidToolbarBuilder;
-  Widget Function(BuildContext, LeaderLink)? iOSToolbarBuilder;
+  DocumentFloatingToolbarBuilder? iOSToolbarBuilder;
 
   DocumentSelection? selection;
 

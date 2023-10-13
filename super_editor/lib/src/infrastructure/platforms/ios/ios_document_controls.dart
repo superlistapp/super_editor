@@ -20,13 +20,27 @@ import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart'
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../../text_input.dart';
+
+class DocumentKeys {
+  static const mobileToolbar = ValueKey("document_mobile_toolbar");
+  static const magnifier = ValueKey("document_magnifier");
+  static const iOsCaret = ValueKey("document_ios_caret");
+  static const androidCaret = ValueKey("document_android_caret");
+  static const androidCaretHandle = ValueKey("document_android_caret_handle");
+  static const upstreamHandle = ValueKey("document_upstream_handle");
+  static const downstreamHandle = ValueKey("document_downstream_handle");
+
+  DocumentKeys._();
+}
+
 /// An application overlay that displays an iOS-style toolbar.
 class IosFloatingToolbarOverlay extends StatefulWidget {
   const IosFloatingToolbarOverlay({
     Key? key,
     required this.shouldShowToolbar,
     required this.toolbarFocalPoint,
-    required this.popoverToolbarBuilder,
+    required this.floatingToolbarBuilder,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
   }) : super(key: key);
@@ -49,11 +63,11 @@ class IosFloatingToolbarOverlay extends StatefulWidget {
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
-  /// Builder that constructs the popover toolbar that's displayed above
+  /// Builder that constructs the floating toolbar that's displayed above
   /// selected text.
   ///
   /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
-  final Widget Function(BuildContext, LeaderLink focalPoint) popoverToolbarBuilder;
+  final DocumentFloatingToolbarBuilder floatingToolbarBuilder;
 
   final bool showDebugPaint;
 
@@ -113,7 +127,7 @@ class _IosFloatingToolbarOverlayState extends State<IosFloatingToolbarOverlay> w
           boundaryKey: _boundsKey,
           devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
         ),
-        child: widget.popoverToolbarBuilder(context, widget.toolbarFocalPoint),
+        child: widget.floatingToolbarBuilder(context, DocumentKeys.mobileToolbar, widget.toolbarFocalPoint),
       ),
     );
   }
@@ -627,6 +641,18 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosControls
   @visibleForTesting
   Rect? get caret => layoutData?.caret;
 
+  @visibleForTesting
+  Color get caretColor => widget.handleColor;
+
+  @visibleForTesting
+  bool get isCaretDisplayed => layoutData?.caret != null;
+
+  @visibleForTesting
+  bool get isUpstreamHandleDisplayed => layoutData?.upstream != null;
+
+  @visibleForTesting
+  bool get isDownstreamHandleDisplayed => layoutData?.downstream != null;
+
   void _onSelectionChange() {
     setState(() {
       // Schedule a new layout computation because the caret and/or handles need to move.
@@ -738,6 +764,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosControls
           }
 
           return IOSCollapsedHandle(
+            key: DocumentKeys.iOsCaret,
             controller: _caretBlinkController,
             color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
             caretHeight: caret.height,
@@ -758,6 +785,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosControls
       child: FractionalTranslation(
         translation: const Offset(-0.5, 0),
         child: IOSSelectionHandle.upstream(
+          key: DocumentKeys.upstreamHandle,
           color: widget.handleColor,
           handleType: HandleType.upstream,
           caretHeight: upstream.height,
@@ -778,6 +806,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosControls
       child: FractionalTranslation(
         translation: const Offset(-0.5, 0),
         child: IOSSelectionHandle.downstream(
+          key: DocumentKeys.downstreamHandle,
           color: widget.handleColor,
           handleType: HandleType.downstream,
           caretHeight: downstream.height,
@@ -804,7 +833,7 @@ class IosMagnifierDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 
   final LeaderLink focalPoint;
   final ValueListenable<bool> shouldShowMagnifier;
-  final Widget Function(BuildContext, LeaderLink focalPoint)? magnifierBuilder;
+  final DocumentMagnifierBuilder? magnifierBuilder;
   final bool showDebugPaint;
 
   @override
@@ -817,6 +846,12 @@ class IosMagnifierDocumentLayerState
     extends DocumentLayoutLayerState<IosMagnifierDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
   late final OverlayEntry _magnifierOverlay;
+
+  /// Returns `true` if this overlay tried to build and display a magnifier, regardless
+  /// of whether the [widget.magnifierBuilder] actually built a magnifier widget with
+  /// the associated [DocumentKeys.magnifier] key.
+  @visibleForTesting
+  bool get wantsToDisplayMagnifier => widget.shouldShowMagnifier.value;
 
   @override
   void initState() {
@@ -861,17 +896,75 @@ class IosMagnifierDocumentLayerState
         return child!;
       },
       child: widget.magnifierBuilder != null //
-          ? widget.magnifierBuilder!(context, widget.focalPoint)
-          : _buildDefaultMagnifier(context, widget.focalPoint),
+          ? widget.magnifierBuilder!(context, DocumentKeys.magnifier, widget.focalPoint)
+          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, widget.focalPoint),
     );
   }
 
-  Widget _buildDefaultMagnifier(BuildContext context, LeaderLink magnifierFocalPoint) {
-    return Center(
-      child: IOSFollowingMagnifier.roundedRectangle(
-        leaderLink: magnifierFocalPoint,
-        offsetFromFocalPoint: const Offset(0, -72),
-      ),
+  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint) {
+    if (isWeb) {
+      // Defer to the browser to display overlay controls on mobile.
+      return const SizedBox();
+    }
+
+    return IOSFollowingMagnifier.roundedRectangle(
+      magnifierKey: magnifierKey,
+      leaderLink: magnifierFocalPoint,
+      offsetFromFocalPoint: const Offset(0, -72),
     );
   }
 }
+
+/// Builds a full-screen floating toolbar display, with the toolbar positioned near the
+/// [focalPoint], and with the toolbar attached to the given [mobileToolbarKey].
+///
+/// The [mobileToolbarKey] is used to find the toolbar in the widget tree for various purposes,
+/// e.g., within tests to verify the presence or absence of a toolbar. If your builder chooses
+/// not to build a toolbar, e.g., returns a `SizedBox()` instead of a toolbar, then the
+/// you shouldn't use the [mobileToolbarKey].
+///
+/// The [mobileToolbarKey] must be attached to the toolbar, not the top-level widget returned
+/// from this builder, because the [mobileToolbarKey] might be used to verify the size and location
+/// of the toolbar. For example:
+///
+/// ```dart
+/// Widget buildMagnifier(context, mobileToolbarKey, focalPoint) {
+///   return Follower(
+///     link: focalPoint,
+///     child: Toolbar(
+///       key: mobileToolbarKey,
+///       width: 100,
+///       height: 42,
+///       magnification: 1.5,
+///     ),
+///   );
+/// }
+/// ```
+typedef DocumentFloatingToolbarBuilder = Widget Function(BuildContext, Key mobileToolbarKey, LeaderLink focalPoint);
+
+/// Builds a full-screen magnifier display, with the magnifier following the given [focalPoint],
+/// and with the magnifier attached to the given [magnifierKey].
+///
+/// The [magnifierKey] is used to find the magnifier in the widget tree for various purposes,
+/// e.g., within tests to verify the presence or absence of a magnifier. If your builder chooses
+/// not to build a magnifier, e.g., returns a `SizedBox()` instead of a magnifier, then the
+/// you shouldn't use the [magnifierKey].
+///
+/// The [magnifierKey] must be attached to the magnifier, not the top-level widget returned
+/// from this builder, because the [magnifierKey] might be used to verify the size and location
+/// of the magnifier. For example:
+///
+/// ```dart
+/// Widget buildMagnifier(context, magnifierKey, focalPoint) {
+///   return Follower(
+///     link: focalPoint,
+///     child: Magnifier(
+///       key: magnifierKey,
+///       width: 100,
+///       height: 42,
+///       magnification: 1.5,
+///     ),
+///   );
+/// }
+/// ```
+typedef DocumentMagnifierBuilder = Widget Function(BuildContext, Key magnifierKey, LeaderLink focalPoint);

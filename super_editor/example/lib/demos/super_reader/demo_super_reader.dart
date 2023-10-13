@@ -143,8 +143,9 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
     );
   }
 
-  Widget _buildToolbar(context, focalPoint) {
+  Widget _buildToolbar(context, mobileToolbarKey, focalPoint) {
     return IOSTextEditingFloatingToolbar(
+      key: mobileToolbarKey,
       focalPoint: focalPoint,
       onCopyPressed: _copy,
     );

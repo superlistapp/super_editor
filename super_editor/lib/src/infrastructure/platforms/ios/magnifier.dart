@@ -7,23 +7,27 @@ import 'package:super_editor/src/super_textfield/infrastructure/outer_box_shadow
 class IOSFollowingMagnifier extends StatelessWidget {
   const IOSFollowingMagnifier.roundedRectangle({
     Key? key,
+    this.magnifierKey,
     required this.leaderLink,
     this.offsetFromFocalPoint = Offset.zero,
   }) : magnifierBuilder = _roundedRectangleMagnifierBuilder;
 
   const IOSFollowingMagnifier.circle({
     Key? key,
+    this.magnifierKey,
     required this.leaderLink,
     this.offsetFromFocalPoint = Offset.zero,
   }) : magnifierBuilder = _circleMagnifierBuilder;
 
   const IOSFollowingMagnifier({
     Key? key,
+    this.magnifierKey,
     required this.leaderLink,
     this.offsetFromFocalPoint = Offset.zero,
     required this.magnifierBuilder,
   }) : super(key: key);
 
+  final Key? magnifierKey;
   final LeaderLink leaderLink;
   final Offset offsetFromFocalPoint;
   final MagnifierBuilder magnifierBuilder;
@@ -38,19 +42,23 @@ class IOSFollowingMagnifier extends StatelessWidget {
       child: magnifierBuilder(
         context,
         offsetFromFocalPoint,
+        magnifierKey,
       ),
     );
   }
 }
 
-typedef MagnifierBuilder = Widget Function(BuildContext, Offset offsetFromFocalPoint);
+typedef MagnifierBuilder = Widget Function(BuildContext, Offset offsetFromFocalPoint, [Key? magnifierKey]);
 
-Widget _roundedRectangleMagnifierBuilder(BuildContext context, Offset offsetFromFocalPoint) =>
+Widget _roundedRectangleMagnifierBuilder(BuildContext context, Offset offsetFromFocalPoint, [Key? magnifierKey]) =>
     IOSRoundedRectangleMagnifyingGlass(
+      key: magnifierKey,
       offsetFromFocalPoint: offsetFromFocalPoint,
     );
 
-Widget _circleMagnifierBuilder(BuildContext context, Offset offsetFromFocalPoint) => IOSCircleMagnifyingGlass(
+Widget _circleMagnifierBuilder(BuildContext context, Offset offsetFromFocalPoint, [Key? magnifierKey]) =>
+    IOSCircleMagnifyingGlass(
+      key: magnifierKey,
       offsetFromFocalPoint: offsetFromFocalPoint,
     );
 
@@ -58,6 +66,7 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
   static const _magnification = 1.5;
 
   const IOSRoundedRectangleMagnifyingGlass({
+    super.key,
     this.offsetFromFocalPoint = Offset.zero,
   });
 
@@ -100,6 +109,7 @@ class IOSCircleMagnifyingGlass extends StatelessWidget {
   static const _magnification = 2.0;
 
   const IOSCircleMagnifyingGlass({
+    super.key,
     this.offsetFromFocalPoint = Offset.zero,
   });
 

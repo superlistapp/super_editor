@@ -123,7 +123,7 @@ class SuperReaderIosControlsController {
   /// (Optional) Builder to create the visual representation of the magnifier.
   ///
   /// If [magnifierBuilder] is `null`, a default iOS magnifier is displayed.
-  final Widget Function(BuildContext, LeaderLink focalPoint)? magnifierBuilder;
+  final DocumentMagnifierBuilder? magnifierBuilder;
 
   /// Whether the iOS floating toolbar should be displayed right now.
   final shouldShowToolbar = ValueNotifier<bool>(false);
@@ -142,7 +142,7 @@ class SuperReaderIosControlsController {
   /// toolbar.
   ///
   /// If [toolbarBuilder] is `null`, a default iOS toolbar is displayed.
-  final Widget Function(BuildContext, LeaderLink focalPoint)? toolbarBuilder;
+  final DocumentFloatingToolbarBuilder? toolbarBuilder;
 
   /// Creates a clipper that restricts where the toolbar and magnifier can
   /// appear in the overlay.
@@ -977,7 +977,7 @@ class SuperReaderIosToolbarOverlayManager extends StatefulWidget {
     this.child,
   });
 
-  final Widget Function(BuildContext, LeaderLink)? defaultToolbarBuilder;
+  final DocumentFloatingToolbarBuilder? defaultToolbarBuilder;
 
   final Widget? child;
 
@@ -1018,8 +1018,8 @@ class _SuperReaderIosToolbarOverlayManagerState extends State<SuperReaderIosTool
       return IosFloatingToolbarOverlay(
         shouldShowToolbar: _controlsContext!.shouldShowToolbar,
         toolbarFocalPoint: _controlsContext!.toolbarFocalPoint,
-        popoverToolbarBuilder:
-            _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __) => const SizedBox(),
+        floatingToolbarBuilder:
+            _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
         createOverlayControlsClipper: _controlsContext!.createOverlayControlsClipper,
         showDebugPaint: false,
       );

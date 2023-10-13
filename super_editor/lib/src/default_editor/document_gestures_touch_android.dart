@@ -23,6 +23,7 @@ import 'package:super_editor/src/infrastructure/platforms/android/long_press_sel
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_textfield/metrics.dart';
@@ -1493,16 +1494,22 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
                 children: [
                   // Build the caret
                   _buildCaret(),
-                  // Build the drag handles (if desired)
-                  ..._buildHandles(),
+                  // Build the drag handles (if desired).
+                  // We don't show handles on web because the browser already displays the native handles.
+                  if (!isWeb) //
+                    ..._buildHandles(),
                   // Build the focal point for the magnifier
                   if (_isDraggingHandle || widget.longPressMagnifierGlobalOffset.value != null)
                     _buildMagnifierFocalPoint(),
                   // Build the magnifier (this needs to be done before building
-                  // the handles so that the magnifier doesn't show the handles
-                  if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
-                  // Build the editing toolbar
-                  if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
+                  // the handles so that the magnifier doesn't show the handles.
+                  // We don't show magnifier on web because the browser already displays the native magnifier.
+                  if (!isWeb && widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
+                  // Build the editing toolbar.
+                  // We don't show toolbar on web because the browser already displays the native toolbar.
+                  if (!isWeb &&
+                      widget.editingController.shouldDisplayToolbar &&
+                      widget.editingController.isToolbarPositioned)
                     _buildToolbar(context),
                   // Build a UI that's useful for debugging, if desired.
                   if (widget.showDebugPaint)
