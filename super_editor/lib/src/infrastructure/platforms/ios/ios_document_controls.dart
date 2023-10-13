@@ -520,18 +520,11 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
   }
 }
 
-/// A document layer that displays iOS-style caret, handles and a magnifier.
+/// A document layer that displays an iOS-style caret and handles.
 ///
-/// In this layer, the caret and handles are explicitly positioned based on
-/// the document layout. This layer positions the caret and handles directly,
-/// because their position is based on the document layout, rather than the
-/// user's gesture behavior.
-///
-/// A magnifier is displayed whenever [magnifierFocalPoint.value] is not `null`.
-/// The magnifier is positioned as a follower, following the given
-/// [magnifierFocalPoint]. Unlike the caret and handles, the magnifier requires
-/// a leader because the magnifier position is tied to the user's gesture
-/// behavior, rather than the document layout.
+/// This layer positions the caret and handles directly, rather than using
+/// `Leader`s and `Follower`s, because their position is based on the document
+/// layout, rather than the user's gesture behavior.
 class IosControlsDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   const IosControlsDocumentLayer({
     super.key,
@@ -556,8 +549,12 @@ class IosControlsDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   /// Color the iOS-style text selection drag handles.
   final Color handleColor;
 
+  /// Whether the caret should blink, whenever the caret is visible.
   final ValueListenable<bool> shouldCaretBlink;
 
+  /// Floating cursor state, used to determine when the floating cursor is active,
+  /// during which the regular caret is either hidden, or is displayed as a gray
+  /// caret when the floating cursor is far away from its nearest text.
   final FloatingCursorController? floatingCursorController;
 
   final bool showDebugPaint;

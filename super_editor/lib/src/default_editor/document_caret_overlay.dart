@@ -101,15 +101,15 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
   }
 
   void _startOrStopBlinking() {
-    if (widget.composer.selection == null && !_blinkController.isBlinking) {
+    final wantsToBlink = widget.composer.selection != null && widget.composer.selection!.isCollapsed;
+    if (wantsToBlink && _blinkController.isBlinking) {
+      return;
+    }
+    if (!wantsToBlink && !_blinkController.isBlinking) {
       return;
     }
 
-    if (widget.composer.selection != null && _blinkController.isBlinking) {
-      return;
-    }
-
-    widget.composer.selection != null //
+    wantsToBlink //
         ? _blinkController.startBlinking()
         : _blinkController.stopBlinking();
   }
@@ -122,6 +122,7 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
     }
 
     _blinkController.jumpToOpaque();
+    _startOrStopBlinking();
   }
 
   @override

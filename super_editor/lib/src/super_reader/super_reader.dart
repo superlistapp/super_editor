@@ -640,6 +640,7 @@ const defaultSuperReaderDocumentOverlayBuilders = [
   // Adds a Leader around the document selection at a focal point for the
   // iOS floating toolbar.
   SuperReaderIosToolbarFocalPointDocumentLayerBuilder(),
+  // Displays caret and drag handles, specifically for iOS.
   SuperReaderIosControlsDocumentLayerBuilder(),
 ];
 
