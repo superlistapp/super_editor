@@ -368,7 +368,7 @@ class SuperEditorInspector {
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.fuchsia:
-        return _FindsNothing();
+        return FindsNothing();
     }
   }
 
@@ -382,21 +382,9 @@ class SuperEditorInspector {
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.fuchsia:
-        return _FindsNothing();
+        return FindsNothing();
     }
   }
-
-  // TODO: wants mobile caret drag handle to be visible
-  // static bool wantsMobileCaretDragHandleToBeVisible([Finder? superEditorFinder]) {
-  //   // TODO: add Android support
-  //   final iOsControlsLayer = find.state<IosControlsDocumentLayerState>(superEditorFinder);
-  //   if (iOsControlsLayer == null) {
-  //     throw Exception(
-  //         "Tried to verify that SuperEditor wants mobile mobile caret to be visible, but couldn't find the iOS controls layer widget.");
-  //   }
-  //
-  //   return iOsControlsLayer.wantsToDisplayToolbar;
-  // }
 
   static Finder findMobileCaretDragHandle([Finder? superEditorFinder]) {
     switch (defaultTargetPlatform) {
@@ -408,11 +396,9 @@ class SuperEditorInspector {
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.fuchsia:
-        return _FindsNothing();
+        return FindsNothing();
     }
   }
-
-  // TODO: wants mobile expanded drag handles to be visible
 
   static Finder findMobileExpandedDragHandles([Finder? superEditorFinder]) {
     switch (defaultTargetPlatform) {
@@ -425,7 +411,7 @@ class SuperEditorInspector {
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.fuchsia:
-        return _FindsNothing();
+        return FindsNothing();
     }
   }
 
@@ -438,7 +424,7 @@ class SuperEditorInspector {
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.fuchsia:
-        return _FindsNothing();
+        return FindsNothing();
     }
   }
 
@@ -451,14 +437,9 @@ class SuperEditorInspector {
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.fuchsia:
-        return _FindsNothing();
+        return FindsNothing();
     }
   }
 
   SuperEditorInspector._();
-}
-
-class _FindsNothing extends Finder {
-  @override
-  String get description => "Finder that matches nothing so that a Finder may be returned in defunct situations";
 }

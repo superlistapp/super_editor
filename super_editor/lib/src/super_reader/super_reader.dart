@@ -11,7 +11,6 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blockquote.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
@@ -34,6 +33,7 @@ import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_contr
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
+import '../infrastructure/text_input.dart';
 import 'read_only_document_android_touch_interactor.dart';
 import 'read_only_document_ios_touch_interactor.dart';
 import 'read_only_document_keyboard_interactor.dart';
@@ -448,13 +448,13 @@ class SuperReaderState extends State<SuperReader> {
     switch (_gestureMode) {
       case DocumentGestureMode.iOS:
         return SuperReaderIosToolbarOverlayManager(
-          defaultToolbarBuilder: (context, mobileToolbarKey, focalPoint) => defaultIosReaderToolbarBuilder(
-            context,
+          defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultIosReaderToolbarBuilder(
+            overlayContext,
             mobileToolbarKey,
             focalPoint,
             document,
             _selection,
-            SuperEditorIosControlsScope.rootOf(context),
+            SuperReaderIosControlsScope.rootOf(context),
           ),
           child: child,
         );
@@ -514,8 +514,13 @@ Widget defaultIosReaderToolbarBuilder(
   LeaderLink focalPoint,
   Document document,
   ValueListenable<DocumentSelection?> selection,
-  SuperEditorIosControlsController editorControlsController,
+  SuperReaderIosControlsController editorControlsController,
 ) {
+  if (isWeb) {
+    // On web, we defer to the browser's internal overlay controls for mobile.
+    return const SizedBox();
+  }
+
   return DefaultIosReaderToolbar(
     floatingToolbarKey: floatingToolbarKey,
     focalPoint: focalPoint,
@@ -540,7 +545,7 @@ class DefaultIosReaderToolbar extends StatelessWidget {
   final LeaderLink focalPoint;
   final Document document;
   final ValueListenable<DocumentSelection?> selection;
-  final SuperEditorIosControlsController editorControlsController;
+  final SuperReaderIosControlsController editorControlsController;
 
   @override
   Widget build(BuildContext context) {

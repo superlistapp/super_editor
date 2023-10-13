@@ -982,12 +982,16 @@ class SuperReaderIosToolbarOverlayManager extends StatefulWidget {
   final Widget? child;
 
   @override
-  State<SuperReaderIosToolbarOverlayManager> createState() => _SuperReaderIosToolbarOverlayManagerState();
+  State<SuperReaderIosToolbarOverlayManager> createState() => SuperReaderIosToolbarOverlayManagerState();
 }
 
-class _SuperReaderIosToolbarOverlayManagerState extends State<SuperReaderIosToolbarOverlayManager> {
+@visibleForTesting
+class SuperReaderIosToolbarOverlayManagerState extends State<SuperReaderIosToolbarOverlayManager> {
   SuperReaderIosControlsController? _controlsContext;
   OverlayEntry? _toolbarOverlayEntry;
+
+  @visibleForTesting
+  bool get wantsToDisplayToolbar => _controlsContext!.shouldShowToolbar.value;
 
   @override
   void didChangeDependencies() {

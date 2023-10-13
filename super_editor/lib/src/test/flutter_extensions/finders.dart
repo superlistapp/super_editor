@@ -31,3 +31,8 @@ extension Finders on CommonFinders {
     return foundElement.state as StateType;
   }
 }
+
+class FindsNothing extends Finder {
+  @override
+  String get description => "Finder that matches nothing so that a Finder may be returned in defunct situations";
+}
