@@ -1015,7 +1015,7 @@ const defaultSuperEditorDocumentOverlayBuilders = [
   // iOS floating toolbar.
   SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
   // Displays caret and drag handles, specifically for iOS.
-  SuperEditorIosControlsDocumentLayerBuilder(),
+  SuperEditorIosHandlesDocumentLayerBuilder(),
   // Displays caret for typical desktop use-cases.
   DefaultCaretOverlayBuilder(),
 ];

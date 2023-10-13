@@ -1155,10 +1155,10 @@ class SuperReaderIosMagnifierOverlayManagerState extends State<SuperReaderIosMag
   }
 }
 
-/// A [SuperReaderLayerBuilder], which builds a [IosControlsDocumentLayer],
+/// A [SuperReaderLayerBuilder], which builds a [IosHandlesDocumentLayer],
 /// which displays iOS-style handles.
-class SuperReaderIosControlsDocumentLayerBuilder implements SuperReaderDocumentLayerBuilder {
-  const SuperReaderIosControlsDocumentLayerBuilder({
+class SuperReaderIosHandlesDocumentLayerBuilder implements SuperReaderDocumentLayerBuilder {
+  const SuperReaderIosHandlesDocumentLayerBuilder({
     this.handleColor,
   });
 
@@ -1170,7 +1170,7 @@ class SuperReaderIosControlsDocumentLayerBuilder implements SuperReaderDocumentL
       return const ContentLayerProxyWidget(child: SizedBox());
     }
 
-    return IosControlsDocumentLayer(
+    return IosHandlesDocumentLayer(
       document: readerContext.document,
       documentLayout: readerContext.documentLayout,
       selection: readerContext.selection,

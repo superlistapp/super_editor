@@ -1755,10 +1755,10 @@ class SuperEditorIosToolbarFocalPointDocumentLayerBuilder implements SuperEditor
   }
 }
 
-/// A [SuperEditorLayerBuilder], which builds a [IosControlsDocumentLayer],
+/// A [SuperEditorLayerBuilder], which builds a [IosHandlesDocumentLayer],
 /// which displays iOS-style caret and handles.
-class SuperEditorIosControlsDocumentLayerBuilder implements SuperEditorLayerBuilder {
-  const SuperEditorIosControlsDocumentLayerBuilder({
+class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuilder {
+  const SuperEditorIosHandlesDocumentLayerBuilder({
     this.handleColor,
   });
 
@@ -1770,7 +1770,7 @@ class SuperEditorIosControlsDocumentLayerBuilder implements SuperEditorLayerBuil
       return const ContentLayerProxyWidget(child: SizedBox());
     }
 
-    return IosControlsDocumentLayer(
+    return IosHandlesDocumentLayer(
       document: editContext.document,
       documentLayout: editContext.documentLayout,
       selection: editContext.composer.selectionNotifier,

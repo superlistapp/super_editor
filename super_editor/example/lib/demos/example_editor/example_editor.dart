@@ -443,7 +443,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
                   caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
                 ),
                 SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
-                SuperEditorIosControlsDocumentLayerBuilder(),
+                SuperEditorIosHandlesDocumentLayerBuilder(),
               ],
               selectionLayerLinks: _selectionLayerLinks,
               selectionStyle: isLight

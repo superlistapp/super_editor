@@ -525,8 +525,8 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
 /// This layer positions the caret and handles directly, rather than using
 /// `Leader`s and `Follower`s, because their position is based on the document
 /// layout, rather than the user's gesture behavior.
-class IosControlsDocumentLayer extends DocumentLayoutLayerStatefulWidget {
-  const IosControlsDocumentLayer({
+class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
+  const IosHandlesDocumentLayer({
     super.key,
     required this.document,
     required this.documentLayout,
@@ -560,12 +560,12 @@ class IosControlsDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   final bool showDebugPaint;
 
   @override
-  DocumentLayoutLayerState<IosControlsDocumentLayer, DocumentSelectionLayout> createState() =>
+  DocumentLayoutLayerState<IosHandlesDocumentLayer, DocumentSelectionLayout> createState() =>
       IosControlsDocumentLayerState();
 }
 
 @visibleForTesting
-class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosControlsDocumentLayer, DocumentSelectionLayout>
+class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
   /// The diameter of the small circle that appears on the top and bottom of
   /// expanded iOS text handles.
@@ -603,7 +603,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosControls
   }
 
   @override
-  void didUpdateWidget(IosControlsDocumentLayer oldWidget) {
+  void didUpdateWidget(IosHandlesDocumentLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.selection != oldWidget.selection) {
