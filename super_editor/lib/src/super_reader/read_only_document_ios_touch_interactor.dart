@@ -17,10 +17,13 @@ import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selection.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_reader/reader_context.dart';
 import 'package:super_editor/src/super_reader/super_reader.dart';
+
+import '../infrastructure/text_input.dart';
 
 /// An [InheritedWidget] that provides shared access to a [SuperReaderIosControlsController],
 /// which coordinates the state of iOS controls like drag handles, magnifier, and toolbar.
@@ -1047,21 +1050,107 @@ class SuperReaderIosToolbarOverlayManagerState extends State<SuperReaderIosToolb
   }
 }
 
-/// A [SuperReaderLayerBuilder], which builds a [IosMagnifierDocumentLayer],
-/// which displays iOS-style magnifier.
-class SuperReaderIosMagnifierDocumentLayerBuilder implements SuperReaderDocumentLayerBuilder {
-  const SuperReaderIosMagnifierDocumentLayerBuilder();
+/// Adds and removes an iOS-style editor magnifier, as dictated by an ancestor
+/// [SuperReaderIosControlsScope].
+class SuperReaderIosMagnifierOverlayManager extends StatefulWidget {
+  const SuperReaderIosMagnifierOverlayManager({
+    super.key,
+    this.child,
+  });
+
+  final Widget? child;
 
   @override
-  ContentLayerWidget build(BuildContext context, SuperReaderContext editContext) {
-    if (defaultTargetPlatform != TargetPlatform.iOS) {
-      return const ContentLayerProxyWidget(child: SizedBox());
+  State<SuperReaderIosMagnifierOverlayManager> createState() => SuperReaderIosMagnifierOverlayManagerState();
+}
+
+@visibleForTesting
+class SuperReaderIosMagnifierOverlayManagerState extends State<SuperReaderIosMagnifierOverlayManager> {
+  SuperReaderIosControlsController? _controlsContext;
+  OverlayEntry? _magnifierOverlayEntry;
+
+  @visibleForTesting
+  bool get wantsToDisplayMagnifier => _controlsContext!.shouldShowMagnifier.value;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Add our overlay on the next frame. If we did it immediately, it would
+    // cause a setState() to be called during initState(), which is
+    // a framework violation.
+    onNextFrame((timeStamp) {
+      _addMagnifierOverlay();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _controlsContext = SuperReaderIosControlsScope.rootOf(context);
+  }
+
+  @override
+  void dispose() {
+    _removeMagnifierOverlay();
+    super.dispose();
+  }
+
+  void _addMagnifierOverlay() {
+    if (_magnifierOverlayEntry != null) {
+      return;
     }
 
-    return IosMagnifierDocumentLayer(
-      focalPoint: SuperReaderIosControlsScope.rootOf(context).magnifierFocalPoint,
-      shouldShowMagnifier: SuperReaderIosControlsScope.rootOf(context).shouldShowMagnifier,
-      magnifierBuilder: SuperReaderIosControlsScope.rootOf(context).magnifierBuilder,
+    _magnifierOverlayEntry = OverlayEntry(builder: (_) => _buildMagnifier());
+    Overlay.of(context).insert(_magnifierOverlayEntry!);
+  }
+
+  void _removeMagnifierOverlay() {
+    if (_magnifierOverlayEntry == null) {
+      return;
+    }
+
+    _magnifierOverlayEntry!.remove();
+    _magnifierOverlayEntry = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child ?? const SizedBox();
+  }
+
+  Widget _buildMagnifier() {
+    // Display a magnifier that tracks a focal point.
+    //
+    // When the user is dragging an overlay handle, SuperEditor
+    // position a Leader with a LeaderLink. This magnifier follows that Leader
+    // via the LeaderLink.
+    return ValueListenableBuilder(
+      valueListenable: _controlsContext!.shouldShowMagnifier,
+      builder: (context, shouldShowMagnifier, child) {
+        if (!shouldShowMagnifier) {
+          return const SizedBox();
+        }
+
+        return child!;
+      },
+      child: _controlsContext!.magnifierBuilder != null //
+          ? _controlsContext!.magnifierBuilder!(context, DocumentKeys.magnifier, _controlsContext!.magnifierFocalPoint)
+          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, _controlsContext!.magnifierFocalPoint),
+    );
+  }
+
+  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint) {
+    if (isWeb) {
+      // Defer to the browser to display overlay controls on mobile.
+      return const SizedBox();
+    }
+
+    return IOSFollowingMagnifier.roundedRectangle(
+      magnifierKey: magnifierKey,
+      leaderLink: magnifierFocalPoint,
+      offsetFromFocalPoint: const Offset(0, -72),
     );
   }
 }

@@ -216,7 +216,7 @@ class SuperReaderInspector {
   ///    is `false`.
   static bool wantsMobileMagnifierToBeVisible([Finder? superReaderFinder]) {
     // TODO: add Android support
-    final magnifierManager = find.state<IosMagnifierDocumentLayerState>(superReaderFinder);
+    final magnifierManager = find.state<SuperReaderIosMagnifierOverlayManagerState>(superReaderFinder);
     if (magnifierManager == null) {
       throw Exception(
           "Tried to verify that SuperReader wants mobile magnifier to be visible, but couldn't find the magnifier manager widget.");

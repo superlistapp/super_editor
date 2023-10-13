@@ -456,7 +456,9 @@ class SuperReaderState extends State<SuperReader> {
             _selection,
             SuperReaderIosControlsScope.rootOf(context),
           ),
-          child: child,
+          child: SuperReaderIosMagnifierOverlayManager(
+            child: child,
+          ),
         );
       case DocumentGestureMode.mouse:
       case DocumentGestureMode.android:
@@ -639,7 +641,6 @@ const defaultSuperReaderDocumentOverlayBuilders = [
   // iOS floating toolbar.
   SuperReaderIosToolbarFocalPointDocumentLayerBuilder(),
   SuperReaderIosControlsDocumentLayerBuilder(),
-  SuperReaderIosMagnifierDocumentLayerBuilder(),
 ];
 
 /// A [SuperReaderDocumentLayerBuilder] that builds a [SelectionLeadersDocumentLayer], which positions

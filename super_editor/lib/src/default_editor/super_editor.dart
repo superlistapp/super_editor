@@ -683,13 +683,15 @@ class SuperEditorState extends State<SuperEditor> {
             editContext.commonOps,
             SuperEditorIosControlsScope.rootOf(context),
           ),
-          child: EditorFloatingCursor(
-            editor: widget.editor,
-            document: widget.document,
-            getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-            selection: widget.composer.selectionNotifier,
-            scrollChangeSignal: _scrollChangeSignal,
-            child: child,
+          child: SuperEditorIosMagnifierOverlayManager(
+            child: EditorFloatingCursor(
+              editor: widget.editor,
+              document: widget.document,
+              getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+              selection: widget.composer.selectionNotifier,
+              scrollChangeSignal: _scrollChangeSignal,
+              child: child,
+            ),
           ),
         );
       case DocumentGestureMode.mouse:
@@ -1014,7 +1016,6 @@ const defaultSuperEditorDocumentOverlayBuilders = [
   SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
   DefaultCaretOverlayBuilder(),
   SuperEditorIosControlsDocumentLayerBuilder(),
-  SuperEditorIosMagnifierDocumentLayerBuilder(),
 ];
 
 /// Keyboard actions for the standard [SuperEditor].

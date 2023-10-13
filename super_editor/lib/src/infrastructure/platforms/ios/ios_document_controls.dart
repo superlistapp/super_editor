@@ -12,15 +12,11 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
-import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
-
-import '../../text_input.dart';
 
 class DocumentKeys {
   static const mobileToolbar = ValueKey("document_mobile_toolbar");
@@ -813,104 +809,6 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosControls
           ballRadius: ballDiameter / 2,
         ),
       ),
-    );
-  }
-}
-
-/// A document layer that displays iOS-style magnifier.
-///
-/// Unlike the caret and handles, the magnifier requires a leader because the
-/// magnifier position is tied to the user's gesture behavior, rather than the
-/// document layout.
-class IosMagnifierDocumentLayer extends DocumentLayoutLayerStatefulWidget {
-  const IosMagnifierDocumentLayer({
-    super.key,
-    required this.focalPoint,
-    required this.shouldShowMagnifier,
-    this.magnifierBuilder,
-    this.showDebugPaint = false,
-  });
-
-  final LeaderLink focalPoint;
-  final ValueListenable<bool> shouldShowMagnifier;
-  final DocumentMagnifierBuilder? magnifierBuilder;
-  final bool showDebugPaint;
-
-  @override
-  DocumentLayoutLayerState<IosMagnifierDocumentLayer, DocumentSelectionLayout> createState() =>
-      IosMagnifierDocumentLayerState();
-}
-
-@visibleForTesting
-class IosMagnifierDocumentLayerState
-    extends DocumentLayoutLayerState<IosMagnifierDocumentLayer, DocumentSelectionLayout>
-    with SingleTickerProviderStateMixin {
-  late final OverlayEntry _magnifierOverlay;
-
-  /// Returns `true` if this overlay tried to build and display a magnifier, regardless
-  /// of whether the [widget.magnifierBuilder] actually built a magnifier widget with
-  /// the associated [DocumentKeys.magnifier] key.
-  @visibleForTesting
-  bool get wantsToDisplayMagnifier => widget.shouldShowMagnifier.value;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _magnifierOverlay = OverlayEntry(builder: (_) => _buildMagnifier());
-    onNextFrame((timeStamp) {
-      Overlay.of(context).insert(_magnifierOverlay);
-    });
-  }
-
-  @override
-  void dispose() {
-    _magnifierOverlay.remove();
-
-    super.dispose();
-  }
-
-  @override
-  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
-    return null;
-  }
-
-  @override
-  Widget doBuild(BuildContext context, DocumentSelectionLayout? layoutData) {
-    return const SizedBox();
-  }
-
-  Widget _buildMagnifier() {
-    // Display a magnifier that tracks a focal point.
-    //
-    // When the user is dragging an overlay handle, SuperEditor and SuperReader
-    // position a Leader with a LeaderLink. This magnifier follows that Leader
-    // via the LeaderLink.
-    return ValueListenableBuilder(
-      valueListenable: widget.shouldShowMagnifier,
-      builder: (context, shouldShowMagnifier, child) {
-        if (!shouldShowMagnifier) {
-          return const SizedBox();
-        }
-
-        return child!;
-      },
-      child: widget.magnifierBuilder != null //
-          ? widget.magnifierBuilder!(context, DocumentKeys.magnifier, widget.focalPoint)
-          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, widget.focalPoint),
-    );
-  }
-
-  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint) {
-    if (isWeb) {
-      // Defer to the browser to display overlay controls on mobile.
-      return const SizedBox();
-    }
-
-    return IOSFollowingMagnifier.roundedRectangle(
-      magnifierKey: magnifierKey,
-      leaderLink: magnifierFocalPoint,
-      offsetFromFocalPoint: const Offset(0, -72),
     );
   }
 }

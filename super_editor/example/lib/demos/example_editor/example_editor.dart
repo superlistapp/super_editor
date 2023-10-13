@@ -1,7 +1,6 @@
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '_example_document.dart';
@@ -66,10 +65,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _editorFocusNode = FocusNode();
     _scrollController = ScrollController()..addListener(_hideOrShowToolbar);
 
-    _iosControlsController = SuperEditorIosControlsController(
-      toolbarBuilder: _buildIosFloatingToolbar,
-      magnifierBuilder: _buildIosMagnifier,
-    );
+    _iosControlsController = SuperEditorIosControlsController();
   }
 
   @override
@@ -448,7 +444,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
                 ),
                 SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
                 SuperEditorIosControlsDocumentLayerBuilder(),
-                SuperEditorIosMagnifierDocumentLayerBuilder(),
               ],
               selectionLayerLinks: _selectionLayerLinks,
               selectionStyle: isLight
@@ -492,34 +487,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildIosFloatingToolbar(BuildContext context, Key mobileToolbarKey, LeaderLink focalPoint) {
-    return ListenableBuilder(
-      listenable: _brightness,
-      builder: (context, _) {
-        return Theme(
-          data: ThemeData(brightness: _brightness.value),
-          child: IOSTextEditingFloatingToolbar(
-            key: mobileToolbarKey,
-            focalPoint: focalPoint,
-            onCutPressed: _cut,
-            onCopyPressed: _copy,
-            onPastePressed: _paste,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildIosMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint) {
-    return Center(
-      child: IOSFollowingMagnifier.circle(
-        magnifierKey: magnifierKey,
-        leaderLink: focalPoint,
-        offsetFromFocalPoint: const Offset(0, -72),
-      ),
     );
   }
 
