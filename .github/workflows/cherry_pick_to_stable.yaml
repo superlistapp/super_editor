@@ -6,6 +6,7 @@
 #
 # Sometimes, a change to "main" shouldn't be merged to "stable". In that case, tag the original PR
 # with a "no-cherry-pick" label, and this action won't cherry pick that merge.
+name: Cherry pick to stable
 on:
   pull_request:
     branches:
@@ -23,7 +24,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Cherry pick into release-v2.0
+      - name: Cherry pick into stable
         uses: carloscastrojumo/github-cherry-pick-action@v1.0.9
         with:
           branch: stable
