@@ -28,9 +28,9 @@ jobs:
         uses: carloscastrojumo/github-cherry-pick-action@v1.0.9
         with:
           branch: stable
-          cherry-pick-branch: cherry-pick_${inputs.branch}_${commitSha}
-          title: 'Cherry Pick: {old_title}'
-          body: 'Cherry Pick: Original PR - #{old_pull_request_id}'
+          cherry-pick-branch: cherry-pick_${{ inputs.branch }}_${{ commitSha }}
+          title: 'Cherry Pick: ${{ old_title }}'
+          body: 'Cherry Pick: Original PR - #${{ old_pull_request_id }}'
           labels: |
             cherry-pick
           reviewers: |
