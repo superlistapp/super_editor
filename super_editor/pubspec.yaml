@@ -25,7 +25,7 @@ dependencies:
   characters: ^1.2.0
   collection: ^1.15.0
   follow_the_leader: ^0.0.4+3
-  http: ">=0.13.1 <2.0.0"
+  http: ">=1.0.0 <2.0.0"
   linkify: ^5.0.0
   logging: ^1.0.1
   super_text_layout: ^0.1.7
