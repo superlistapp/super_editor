@@ -24,31 +24,30 @@ export 'infrastructure/text_scrollview.dart';
 export 'input_method_engine/_ime_text_editing_controller.dart';
 export 'ios/ios_textfield.dart';
 export 'styles.dart';
+export 'super_textfield_context.dart';
 
 /// Custom text field implementations that offer greater control than traditional
 /// Flutter text fields.
 ///
 /// For example, the custom text fields in this package use [AttributedText]
-/// instead of regular `String`s or `InlineSpan`s, which makes it easier style
-/// text and add other text metadata.
+/// instead of regular `String`s or `InlineSpan`s, which makes it easier to style
+/// text and edit other text metadata.
 
 /// Text field that supports styled text.
 ///
 /// [SuperTextField] adapts to the expectations of the current platform, or
 /// conforms to a specified [configuration].
 ///
-///  - desktop uses physical keyboard handlers with a blinking cursor and
-///    mouse gestures
-///  - Android uses IME text input with draggable handles in the Android style
-///  - iOS uses IME text input with draggable handles in the iOS style
+///  - desktop uses a blinking cursor and mouse gestures
+///  - Android uses draggable handles in the Android style
+///  - iOS uses draggable handles in the iOS style
 ///
 /// [SuperTextField] is built on top of platform-specific text field implementations,
 /// which may offer additional customization beyond that of [SuperTextField]:
 ///
-///  - [SuperDesktopTextField], which uses physical keyboard handlers and mouse
-///    gestures
-///  - [SuperAndroidTextField], which uses IME text input with Android-style handles
-///  - [SuperIOSTextField], which uses IME text input with iOS-style handles
+///  - [SuperDesktopTextField], configured for a typical desktop experience.
+///  - [SuperAndroidTextField], configured for a typical Android experience.
+///  - [SuperIOSTextField], configured for a typical iOS experience.
 class SuperTextField extends StatefulWidget {
   const SuperTextField({
     Key? key,
