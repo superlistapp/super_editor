@@ -1,0 +1,38 @@
+# In general, whenever a change is merged to "main" we want to replicate that change on "stable".
+# This GitHub action watches for merges to "main", creates a new branch off of "stable", cherry
+# picks the latest commit from "main" to the new branch, and then puts up a PR with the cherry
+# pick. At that point, a reviewer waits until all tests pass, and then merges in the cherry pick
+# PR.
+#
+# Sometimes, a change to "main" shouldn't be merged to "stable". In that case, tag the original PR
+# with a "no-cherry-pick" label, and this action won't cherry pick that merge.
+on:
+  pull_request:
+    branches:
+      - main
+    types: ["closed"]
+
+jobs:
+  cherry-pick-to-stable:
+    runs-on: ubuntu-latest
+    name: Cherry pick from main to stable
+    # Only cherry pick merged PRs. Don't merge PRs marked with "no-cherry-pick" label.
+    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'no-cherry-pick') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Cherry pick into release-v2.0
+        uses: carloscastrojumo/github-cherry-pick-action@v1.0.9
+        with:
+          branch: stable
+          cherry-pick-branch: cherry-pick_${inputs.branch}_${commitSha}
+          title: 'Cherry Pick: {old_title}'
+          body: 'Cherry Pick: {old_title}\n\nOriginal PR: #{old_pull_request_id}'
+          labels: |
+            cherry-pick
+          reviewers: |
+            matthew-carroll
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
