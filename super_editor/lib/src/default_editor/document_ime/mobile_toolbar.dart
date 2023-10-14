@@ -18,7 +18,7 @@ import '../attributions.dart';
 ///
 /// This toolbar is intended to be placed just above the keyboard on a
 /// mobile device.
-class KeyboardEditingToolbar extends StatelessWidget {
+class KeyboardEditingToolbar extends StatefulWidget {
   KeyboardEditingToolbar({
     Key? key,
     required this.editor,
@@ -44,141 +44,193 @@ class KeyboardEditingToolbar extends StatelessWidget {
   late final KeyboardEditingToolbarOperations _toolbarOps;
 
   @override
+  State<KeyboardEditingToolbar> createState() => _KeyboardEditingToolbarState();
+}
+
+class _KeyboardEditingToolbarState extends State<KeyboardEditingToolbar> {
+  final _portalController = OverlayPortalController();
+
+  @override
+  void initState() {
+    super.initState();
+    _portalController.show();
+  }
+
+  @override
+  void dispose() {
+    if (_portalController.isShowing) {
+      _portalController.hide();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final selection = composer.selection;
+    return OverlayPortal(
+      controller: _portalController,
+      overlayChildBuilder: _buildToolbar,
+    );
+  }
+
+  Widget _buildToolbar(BuildContext context) {
+    MediaQuery.viewInsetsOf(context);
+    MediaQuery.paddingOf(context);
+    MediaQuery.of(context);
+    final keyboardHeight =
+        EdgeInsets.fromViewPadding(View.of(context).viewInsets, View.of(context).devicePixelRatio).bottom;
+    print("Keyboard height: $keyboardHeight");
+
+    final scaffoldBottom = MediaQuery.of(Scaffold.of(context).context).viewInsets.bottom;
+    print("Scaffold bottom: $scaffoldBottom");
+
+    final selection = widget.composer.selection;
 
     if (selection == null) {
       return const SizedBox();
     }
 
-    final brightness = this.brightness ?? MediaQuery.of(context).platformBrightness;
+    final brightness = widget.brightness ?? MediaQuery.of(context).platformBrightness;
 
-    return Theme(
-      data: Theme.of(context).copyWith(
-        brightness: brightness,
-        disabledColor: brightness == Brightness.light ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.5),
-      ),
-      child: IconTheme(
-        data: IconThemeData(
-          color: brightness == Brightness.light ? Colors.black : Colors.white,
-        ),
-        child: Material(
-          child: Container(
-            width: double.infinity,
-            height: 48,
-            color: brightness == Brightness.light ? const Color(0xFFDDDDDD) : const Color(0xFF222222),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: ListenableBuilder(
-                        listenable: composer,
-                        builder: (context, _) {
-                          final selectedNode = document.getNodeById(selection.extent.nodeId);
-                          final isSingleNodeSelected = selection.extent.nodeId == selection.base.nodeId;
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardHeight),
+      child: Column(
+        children: [
+          const Spacer(),
+          Theme(
+            data: Theme.of(context).copyWith(
+              brightness: brightness,
+              disabledColor:
+                  brightness == Brightness.light ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.5),
+            ),
+            child: IconTheme(
+              data: IconThemeData(
+                color: brightness == Brightness.light ? Colors.black : Colors.white,
+              ),
+              child: Material(
+                child: Container(
+                  width: double.infinity,
+                  height: 48,
+                  color: brightness == Brightness.light ? const Color(0xFFDDDDDD) : const Color(0xFF222222),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: ListenableBuilder(
+                              listenable: widget.composer,
+                              builder: (context, _) {
+                                final selectedNode = widget.document.getNodeById(selection.extent.nodeId);
+                                final isSingleNodeSelected = selection.extent.nodeId == selection.base.nodeId;
 
-                          return Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                onPressed: selectedNode is TextNode ? _toolbarOps.toggleBold : null,
-                                icon: const Icon(Icons.format_bold),
-                                color: _toolbarOps.isBoldActive ? Theme.of(context).primaryColor : null,
-                              ),
-                              IconButton(
-                                onPressed: selectedNode is TextNode ? _toolbarOps.toggleItalics : null,
-                                icon: const Icon(Icons.format_italic),
-                                color: _toolbarOps.isItalicsActive ? Theme.of(context).primaryColor : null,
-                              ),
-                              IconButton(
-                                onPressed: selectedNode is TextNode ? _toolbarOps.toggleUnderline : null,
-                                icon: const Icon(Icons.format_underline),
-                                color: _toolbarOps.isUnderlineActive ? Theme.of(context).primaryColor : null,
-                              ),
-                              IconButton(
-                                onPressed: selectedNode is TextNode ? _toolbarOps.toggleStrikethrough : null,
-                                icon: const Icon(Icons.strikethrough_s),
-                                color: _toolbarOps.isStrikethroughActive ? Theme.of(context).primaryColor : null,
-                              ),
-                              IconButton(
-                                onPressed: isSingleNodeSelected &&
-                                        (selectedNode is TextNode &&
-                                            selectedNode.getMetadataValue('blockType') != header1Attribution)
-                                    ? _toolbarOps.convertToHeader1
-                                    : null,
-                                icon: const Icon(Icons.title),
-                              ),
-                              IconButton(
-                                onPressed: isSingleNodeSelected &&
-                                        (selectedNode is TextNode &&
-                                            selectedNode.getMetadataValue('blockType') != header2Attribution)
-                                    ? _toolbarOps.convertToHeader2
-                                    : null,
-                                icon: const Icon(Icons.title),
-                                iconSize: 18,
-                              ),
-                              IconButton(
-                                onPressed: isSingleNodeSelected &&
-                                        ((selectedNode is ParagraphNode &&
-                                                selectedNode.hasMetadataValue('blockType')) ||
-                                            (selectedNode is TextNode && selectedNode is! ParagraphNode))
-                                    ? _toolbarOps.convertToParagraph
-                                    : null,
-                                icon: const Icon(Icons.wrap_text),
-                              ),
-                              IconButton(
-                                onPressed: isSingleNodeSelected &&
-                                        (selectedNode is TextNode && selectedNode is! ListItemNode ||
-                                            (selectedNode is ListItemNode && selectedNode.type != ListItemType.ordered))
-                                    ? _toolbarOps.convertToOrderedListItem
-                                    : null,
-                                icon: const Icon(Icons.looks_one_rounded),
-                              ),
-                              IconButton(
-                                onPressed: isSingleNodeSelected &&
-                                        (selectedNode is TextNode && selectedNode is! ListItemNode ||
-                                            (selectedNode is ListItemNode &&
-                                                selectedNode.type != ListItemType.unordered))
-                                    ? _toolbarOps.convertToUnorderedListItem
-                                    : null,
-                                icon: const Icon(Icons.list),
-                              ),
-                              IconButton(
-                                onPressed: isSingleNodeSelected &&
-                                        selectedNode is TextNode &&
-                                        (selectedNode is! ParagraphNode ||
-                                            selectedNode.getMetadataValue('blockType') != blockquoteAttribution)
-                                    ? _toolbarOps.convertToBlockquote
-                                    : null,
-                                icon: const Icon(Icons.format_quote),
-                              ),
-                              IconButton(
-                                onPressed: isSingleNodeSelected &&
-                                        selectedNode is ParagraphNode &&
-                                        selectedNode.text.text.isEmpty
-                                    ? _toolbarOps.convertToHr
-                                    : null,
-                                icon: const Icon(Icons.horizontal_rule),
-                              ),
-                            ],
-                          );
-                        }),
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      onPressed: selectedNode is TextNode ? widget._toolbarOps.toggleBold : null,
+                                      icon: const Icon(Icons.format_bold),
+                                      color: widget._toolbarOps.isBoldActive ? Theme.of(context).primaryColor : null,
+                                    ),
+                                    IconButton(
+                                      onPressed: selectedNode is TextNode ? widget._toolbarOps.toggleItalics : null,
+                                      icon: const Icon(Icons.format_italic),
+                                      color: widget._toolbarOps.isItalicsActive ? Theme.of(context).primaryColor : null,
+                                    ),
+                                    IconButton(
+                                      onPressed: selectedNode is TextNode ? widget._toolbarOps.toggleUnderline : null,
+                                      icon: const Icon(Icons.format_underline),
+                                      color:
+                                          widget._toolbarOps.isUnderlineActive ? Theme.of(context).primaryColor : null,
+                                    ),
+                                    IconButton(
+                                      onPressed:
+                                          selectedNode is TextNode ? widget._toolbarOps.toggleStrikethrough : null,
+                                      icon: const Icon(Icons.strikethrough_s),
+                                      color: widget._toolbarOps.isStrikethroughActive
+                                          ? Theme.of(context).primaryColor
+                                          : null,
+                                    ),
+                                    IconButton(
+                                      onPressed: isSingleNodeSelected &&
+                                              (selectedNode is TextNode &&
+                                                  selectedNode.getMetadataValue('blockType') != header1Attribution)
+                                          ? widget._toolbarOps.convertToHeader1
+                                          : null,
+                                      icon: const Icon(Icons.title),
+                                    ),
+                                    IconButton(
+                                      onPressed: isSingleNodeSelected &&
+                                              (selectedNode is TextNode &&
+                                                  selectedNode.getMetadataValue('blockType') != header2Attribution)
+                                          ? widget._toolbarOps.convertToHeader2
+                                          : null,
+                                      icon: const Icon(Icons.title),
+                                      iconSize: 18,
+                                    ),
+                                    IconButton(
+                                      onPressed: isSingleNodeSelected &&
+                                              ((selectedNode is ParagraphNode &&
+                                                      selectedNode.hasMetadataValue('blockType')) ||
+                                                  (selectedNode is TextNode && selectedNode is! ParagraphNode))
+                                          ? widget._toolbarOps.convertToParagraph
+                                          : null,
+                                      icon: const Icon(Icons.wrap_text),
+                                    ),
+                                    IconButton(
+                                      onPressed: isSingleNodeSelected &&
+                                              (selectedNode is TextNode && selectedNode is! ListItemNode ||
+                                                  (selectedNode is ListItemNode &&
+                                                      selectedNode.type != ListItemType.ordered))
+                                          ? widget._toolbarOps.convertToOrderedListItem
+                                          : null,
+                                      icon: const Icon(Icons.looks_one_rounded),
+                                    ),
+                                    IconButton(
+                                      onPressed: isSingleNodeSelected &&
+                                              (selectedNode is TextNode && selectedNode is! ListItemNode ||
+                                                  (selectedNode is ListItemNode &&
+                                                      selectedNode.type != ListItemType.unordered))
+                                          ? widget._toolbarOps.convertToUnorderedListItem
+                                          : null,
+                                      icon: const Icon(Icons.list),
+                                    ),
+                                    IconButton(
+                                      onPressed: isSingleNodeSelected &&
+                                              selectedNode is TextNode &&
+                                              (selectedNode is! ParagraphNode ||
+                                                  selectedNode.getMetadataValue('blockType') != blockquoteAttribution)
+                                          ? widget._toolbarOps.convertToBlockquote
+                                          : null,
+                                      icon: const Icon(Icons.format_quote),
+                                    ),
+                                    IconButton(
+                                      onPressed: isSingleNodeSelected &&
+                                              selectedNode is ParagraphNode &&
+                                              selectedNode.text.text.isEmpty
+                                          ? widget._toolbarOps.convertToHr
+                                          : null,
+                                      icon: const Icon(Icons.horizontal_rule),
+                                    ),
+                                  ],
+                                );
+                              }),
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 32,
+                        color: const Color(0xFFCCCCCC),
+                      ),
+                      IconButton(
+                        onPressed: widget._toolbarOps.closeKeyboard,
+                        icon: const Icon(Icons.keyboard_hide),
+                      ),
+                    ],
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 32,
-                  color: const Color(0xFFCCCCCC),
-                ),
-                IconButton(
-                  onPressed: _toolbarOps.closeKeyboard,
-                  icon: const Icon(Icons.keyboard_hide),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
