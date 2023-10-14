@@ -225,6 +225,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   @override
   void dispose() {
+    _textFieldScroller.detach();
     _scrollController.dispose();
     _focusNode.removeListener(_updateSelectionOnFocusChange);
     if (widget.focusNode == null) {
