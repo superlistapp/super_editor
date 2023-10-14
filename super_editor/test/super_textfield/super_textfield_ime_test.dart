@@ -605,8 +605,7 @@ void main() {
             inputSource: TextInputSource.ime,
             selectorHandlers: {
               MacOsSelectors.moveRight: ({
-                required AttributedTextEditingController controller,
-                required textLayout,
+                required SuperTextFieldContext textFieldContext,
               }) {
                 customHandlerCalled = true;
               }
