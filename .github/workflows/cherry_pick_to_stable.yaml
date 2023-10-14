@@ -20,7 +20,7 @@ jobs:
     if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'no-cherry-pick') }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Cherry pick into release-v2.0
@@ -29,7 +29,7 @@ jobs:
           branch: stable
           cherry-pick-branch: cherry-pick_${inputs.branch}_${commitSha}
           title: 'Cherry Pick: {old_title}'
-          body: 'Cherry Pick: {old_title}\n\nOriginal PR: #{old_pull_request_id}'
+          body: 'Cherry Pick: Original PR - #{old_pull_request_id}'
           labels: |
             cherry-pick
           reviewers: |
