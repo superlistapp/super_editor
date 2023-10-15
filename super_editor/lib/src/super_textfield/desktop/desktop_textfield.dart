@@ -1750,6 +1750,8 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.scrollOnPageDownKeyPress,
   DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndHomeKeyPress,
   DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndEndKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnHomeOnMacOrWeb,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnEndOnMacOrWeb,
   DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
@@ -1800,6 +1802,8 @@ const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.scrollOnPageDownKeyPress,
   DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndHomeKeyPress,
   DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndEndKeyPress,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnHomeOnMacOrWeb,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnEndOnMacOrWeb,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
@@ -2406,6 +2410,106 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     if (!isMacOrIos && !keyEvent.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (ancestorScrollable == null && textFieldScroller.maxScrollExtent == 0) {
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    if (textFieldScroller.scrollOffset < textFieldScroller.maxScrollExtent) {
+      textFieldScroller.animateTo(
+        textFieldScroller.maxScrollExtent,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.decelerate,
+      );
+
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    if (ancestorScrollable == null) {
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    if (!ancestorScrollable.maxScrollExtent.isFinite) {
+      // Can't scroll to infinity, but we technically handled the task.
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    ancestorScrollable.animateTo(
+      ancestorScrollable.maxScrollExtent,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult scrollOnHomeOnMacOrWeb({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final TextFieldScroller textFieldScroller = textFieldContext.scroller;
+    final ScrollPosition? ancestorScrollable =
+        _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.home) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (defaultTargetPlatform != TargetPlatform.macOS && !kIsWeb) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (ancestorScrollable == null && textFieldScroller.maxScrollExtent == 0) {
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    if (textFieldScroller.scrollOffset > 0) {
+      textFieldScroller.animateTo(
+        textFieldScroller.minScrollExtent,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.decelerate,
+      );
+
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    if (ancestorScrollable == null) {
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    ancestorScrollable.animateTo(
+      ancestorScrollable.minScrollExtent,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult scrollOnEndOnMacOrWeb({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final TextFieldScroller textFieldScroller = textFieldContext.scroller;
+
+    final ScrollPosition? ancestorScrollable =
+        _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.end) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (defaultTargetPlatform != TargetPlatform.macOS && !kIsWeb) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
