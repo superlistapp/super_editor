@@ -33,7 +33,7 @@ These platforms probably work, but our verification on these platforms is spotty
 ## Run the example implementation
 
 Super Editor comes with an example implementation to showcase the core functionality. It also exposes example UI elements on how to interact with the Editor.
-It currently supports MacOS and Web and will be expanded along the way, as we will support more platforms. You can run the example editor from the example directory:
+The example app should build and run on any platform. You can run the example editor from the example directory:
 
 ```bash
 cd example
@@ -52,9 +52,9 @@ class _MyAppState extends State<MyApp> {
     void build(context) {
         // Display a visual, editable document.
         //
-        // A SuperEditor does not include any app bar controls or popup
-        // controls. If you want such controls, you need to implement
-        // them yourself.
+        // SuperEditor includes default magnifiers and popover toolbars for
+        // iOS and Android, but does not include any popovers on desktop.
+        // You can add your own, if desired.
         //
         // The standard editor displays and styles headers, paragraphs,
         // ordered and unordered lists, images, and horizontal rules. 
@@ -67,7 +67,9 @@ class _MyAppState extends State<MyApp> {
 }
 ```
 
-A `SuperEditor` widget requires a `DocumentEditor`, which is a pure-Dart class that's responsible for applying changes to a `Document`. A `DocumentEditor`, in turn, requires a reference to the `Document` that it will alter. Specifically, a `DocumentEditor` requires a `MutableDocument`.
+A `SuperEditor` widget requires an `Editor`, which is a pure-Dart class that's responsible for 
+applying changes to a `Document`. An `Editor`, in turn, requires a reference to the `Document` that 
+it will alter. Specifically, a `Editor` requires a `MutableDocument`.
 
 ```dart
 // A MutableDocument is an in-memory Document. Create the starting
@@ -91,11 +93,16 @@ final myDoc = MutableDocument(
   ],
 );
 
-// With a MutableDocument, create a DocumentEditor, which knows how
-// to apply changes to the MutableDocument.
-final docEditor = DocumentEditor(document: myDoc);
+// A DocumentComposer holds the user's selection. Your editor will likely want
+// to observe, and possibly change the user's selection. Therefore, you should
+// hold onto your own DocumentComposer and pass it to your Editor.
+final myComposer = MutableDocumentComposer();
 
-// Next: pass the docEditor to your Editor widget.
+// With a MutableDocument, create an Editor, which knows how to apply changes 
+// to the MutableDocument.
+final editor = createDefaultDocumentEditor(document: myDoc, composer: myComposer);
+
+// Next: pass the editor to your SuperEditor widget.
 ```
 
 The `SuperEditor` widget can be customized.
@@ -103,7 +110,7 @@ The `SuperEditor` widget can be customized.
 ```dart
 class _MyAppState extends State<MyApp> {
     void build(context) {
-        return SuperEditor.custom(
+        return SuperEditor(
             editor: _myDocumentEditor,
             selectionStyle: /** INSERT CUSTOMIZATION **/ null,
             stylesheet: defaultStylesheet.copyWith(
@@ -134,6 +141,7 @@ class _MyAppState extends State<MyApp> {
 }
 ```
 
-If your app requires deeper customization than `SuperEditor` provides, you can construct your own version of the `SuperEditor` widget by using lower level tools within the `super_editor` package.
+If your app requires deeper customization than `SuperEditor` provides, you can construct your own 
+version of the `SuperEditor` widget by using lower level tools within the `super_editor` package.
 
 See the wiki for more information about how to customize an editor experience.
