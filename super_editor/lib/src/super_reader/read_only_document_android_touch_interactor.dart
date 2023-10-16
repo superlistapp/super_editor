@@ -13,11 +13,13 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
+import 'package:super_editor/src/infrastructure/flutter/overlay_with_groups.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_textfield/metrics.dart';
 
@@ -107,9 +109,11 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
   ScrollPosition? _activeScrollPosition;
 
-  // OverlayEntry that displays editing controls, e.g.,
-  // drag handles, magnifier, and toolbar.
-  OverlayEntry? _controlsOverlayEntry;
+  // Overlay controller that displays editing controls, e.g., drag handles,
+  // magnifier, and toolbar.
+  final _overlayPortalController =
+      GroupedOverlayPortalController(displayPriority: OverlayGroupPriority.editingControls);
+  final _overlayPortalRebuildSignal = SignalNotifier();
   late AndroidDocumentGestureEditingController _editingController;
   final _magnifierFocalPointLink = LayerLink();
 
@@ -498,7 +502,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       ..hideMagnifier()
       ..showToolbar();
     _positionToolbar();
-    _controlsOverlayEntry?.markNeedsBuild();
+    _overlayPortalRebuildSignal.notifyListeners();
 
     widget.focusNode.requestFocus();
   }
@@ -516,7 +520,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       // We hide the selection handles when long-press dragging, despite having
       // an expanded selection. Allow the handles to come back.
       _editingController.allowHandles();
-      _controlsOverlayEntry?.markNeedsBuild();
+      _overlayPortalRebuildSignal.notifyListeners();
 
       return;
     }
@@ -686,7 +690,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     _editingController
       ..hideToolbar()
       ..showMagnifier();
-    _controlsOverlayEntry!.markNeedsBuild();
+    _overlayPortalRebuildSignal.notifyListeners();
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -718,10 +722,6 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   }
 
   void _updateOverlayControlsOnLongPressDrag() {
-    if (_controlsOverlayEntry == null) {
-      return;
-    }
-
     final extentDocumentOffset = _docLayout.getRectForPosition(widget.selection.value!.extent)!.center;
     final extentGlobalOffset = _docLayout.getAncestorOffsetFromDocumentOffset(extentDocumentOffset);
     final extentInteractorOffset = (context.findRenderObject() as RenderBox).globalToLocal(extentGlobalOffset);
@@ -729,7 +729,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     _handleAutoScrolling.updateAutoScrollHandleMonitoring(dragEndInViewport: extentViewportOffset);
 
     _longPressMagnifierGlobalOffset.value = extentGlobalOffset;
-    _controlsOverlayEntry!.markNeedsBuild();
+    _overlayPortalRebuildSignal.notifyListeners();
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -769,29 +769,15 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       _editingController.showToolbar();
       _positionToolbar();
     }
-    _controlsOverlayEntry!.markNeedsBuild();
+    _overlayPortalRebuildSignal.notifyListeners();
   }
 
   void _showEditingControlsOverlay() {
-    if (_controlsOverlayEntry == null) {
-      _controlsOverlayEntry = OverlayEntry(builder: (overlayContext) {
-        return AndroidDocumentTouchEditingControls(
-          editingController: _editingController,
-          documentKey: widget.documentKey,
-          documentLayout: _docLayout,
-          createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          handleColor: widget.handleColor,
-          onHandleDragStart: _onHandleDragStart,
-          onHandleDragUpdate: _onHandleDragUpdate,
-          onHandleDragEnd: _onHandleDragEnd,
-          popoverToolbarBuilder: widget.popoverToolbarBuilder,
-          longPressMagnifierGlobalOffset: _longPressMagnifierGlobalOffset,
-          showDebugPaint: false,
-        );
-      });
+    _overlayPortalController.show();
+  }
 
-      Overlay.of(context).insert(_controlsOverlayEntry!);
-    }
+  void _removeEditingOverlayControls() {
+    _overlayPortalController.hide();
   }
 
   void _onHandleDragStart(HandleType handleType, Offset globalOffset) {
@@ -1009,13 +995,6 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     );
   }
 
-  void _removeEditingOverlayControls() {
-    if (_controlsOverlayEntry != null) {
-      _controlsOverlayEntry!.remove();
-      _controlsOverlayEntry = null;
-    }
-  }
-
   ScrollableState? _findAncestorScrollable(BuildContext context) {
     final ancestorScrollable = Scrollable.maybeOf(context);
     if (ancestorScrollable == null) {
@@ -1035,33 +1014,57 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   @override
   Widget build(BuildContext context) {
     final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
-    return RawGestureDetector(
-      behavior: HitTestBehavior.translucent,
-      gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-          () => TapSequenceGestureRecognizer(),
-          (TapSequenceGestureRecognizer recognizer) {
-            recognizer
-              ..onTapDown = _onTapDown
-              ..onTapUp = _onTapUp
-              ..onDoubleTapDown = _onDoubleTapDown
-              ..onTripleTapDown = _onTripleTapDown
-              ..gestureSettings = gestureSettings;
-          },
-        ),
-        PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-          () => PanGestureRecognizer(),
-          (PanGestureRecognizer recognizer) {
-            recognizer
-              ..onStart = _onPanStart
-              ..onUpdate = _onPanUpdate
-              ..onEnd = _onPanEnd
-              ..onCancel = _onPanCancel
-              ..gestureSettings = gestureSettings;
-          },
-        ),
-      },
-      child: widget.child,
+    return OverlayPortal(
+      controller: _overlayPortalController,
+      overlayChildBuilder: _buildControlsOverlay,
+      child: RawGestureDetector(
+        behavior: HitTestBehavior.translucent,
+        gestures: <Type, GestureRecognizerFactory>{
+          TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+            () => TapSequenceGestureRecognizer(),
+            (TapSequenceGestureRecognizer recognizer) {
+              recognizer
+                ..onTapDown = _onTapDown
+                ..onTapUp = _onTapUp
+                ..onDoubleTapDown = _onDoubleTapDown
+                ..onTripleTapDown = _onTripleTapDown
+                ..gestureSettings = gestureSettings;
+            },
+          ),
+          PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+            () => PanGestureRecognizer(),
+            (PanGestureRecognizer recognizer) {
+              recognizer
+                ..onStart = _onPanStart
+                ..onUpdate = _onPanUpdate
+                ..onEnd = _onPanEnd
+                ..onCancel = _onPanCancel
+                ..gestureSettings = gestureSettings;
+            },
+          ),
+        },
+        child: widget.child,
+      ),
     );
+  }
+
+  Widget _buildControlsOverlay(BuildContext context) {
+    return ListenableBuilder(
+        listenable: _overlayPortalRebuildSignal,
+        builder: (context, child) {
+          return AndroidDocumentTouchEditingControls(
+            editingController: _editingController,
+            documentKey: widget.documentKey,
+            documentLayout: _docLayout,
+            createOverlayControlsClipper: widget.createOverlayControlsClipper,
+            handleColor: widget.handleColor,
+            onHandleDragStart: _onHandleDragStart,
+            onHandleDragUpdate: _onHandleDragUpdate,
+            onHandleDragEnd: _onHandleDragEnd,
+            popoverToolbarBuilder: widget.popoverToolbarBuilder,
+            longPressMagnifierGlobalOffset: _longPressMagnifierGlobalOffset,
+            showDebugPaint: false,
+          );
+        });
   }
 }

@@ -121,8 +121,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
   ScrollPosition? _activeScrollPosition;
 
-  // OverlayEntry that displays editing controls, e.g.,
-  // drag handles, magnifier, and toolbar.
+  // Overlay controller that displays editing controls, e.g., drag handles,
+  // magnifier, and toolbar.
   final _overlayPortalController =
       GroupedOverlayPortalController(displayPriority: OverlayGroupPriority.editingControls);
   final _overlayPortalRebuildSignal = SignalNotifier();
