@@ -15,7 +15,7 @@ import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
-import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/overlay_with_groups.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
@@ -537,7 +537,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       // We hide the selection handles when long-press dragging, despite having
       // an expanded selection. Allow the handles to come back.
       _editingController.allowHandles();
-      // _controlsOverlayEntry?.markNeedsBuild();
       _overlayPortalRebuildSignal.notifyListeners();
 
       return;
@@ -849,12 +848,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _showEditingControlsOverlay() {
-    print("Android gestures - showing overlay");
     _overlayPortalController.show();
   }
 
   void _removeEditingOverlayControls() {
-    print("Android gestures - hiding overlay");
     _overlayPortalController.hide();
   }
 

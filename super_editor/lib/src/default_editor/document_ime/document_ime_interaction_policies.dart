@@ -5,7 +5,6 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 
 /// Widget that opens and closes an [imeConnection] based on the [focusNode] gaining

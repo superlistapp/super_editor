@@ -9,7 +9,6 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/overlay_with_groups.dart';
 
@@ -19,15 +18,11 @@ import '../attributions.dart';
 /// [Overlay], and is mounted just above the software keyboard.
 ///
 /// Despite displaying the toolbar in the application [Overlay], [KeyboardEditingToolbar]
-/// also inserts some blank space into the current subtree, which takes up the same amount
-/// of height as the
+/// also (optionally) inserts some blank space into the current subtree, which takes up
+/// the same amount of height as the toolbar that appears in the [Overlay].
 ///
-/// Provides document editing capabilities, like converting
-/// paragraphs to blockquotes and list items, and inserting horizontal
-/// rules.
-///
-/// This toolbar is intended to be placed just above the keyboard on a
-/// mobile device.
+/// Provides document editing capabilities, like converting paragraphs to blockquotes
+/// and list items, and inserting horizontal rules.
 class KeyboardEditingToolbar extends StatefulWidget {
   const KeyboardEditingToolbar({
     Key? key,
@@ -49,6 +44,9 @@ class KeyboardEditingToolbar extends StatefulWidget {
 
   /// Whether this widget should take up empty space in the current subtree that
   /// matches the space taken up by the toolbar in the application [Overlay].
+  ///
+  /// If `true`, space is taken up that's equivalent to the toolbar height. If
+  /// `false`, no space is taken up by this widget at all.
   ///
   /// Taking up empty space is useful when this widget is positioned at the same
   /// location on the screen as the toolbar that's in the overlay. By adding extra
@@ -79,7 +77,6 @@ class _KeyboardEditingToolbarState extends State<KeyboardEditingToolbar> with Wi
     );
 
     WidgetsBinding.instance.runAsSoonAsPossible(() {
-      print("Mobile toolbar - showing overlay");
       _portalController.show();
     });
   }
@@ -99,7 +96,6 @@ class _KeyboardEditingToolbarState extends State<KeyboardEditingToolbar> with Wi
   @override
   void dispose() {
     if (_portalController.isShowing) {
-      print("Mobile toolbar - hiding overlay");
       _portalController.hide();
     }
     super.dispose();
@@ -125,7 +121,7 @@ class _KeyboardEditingToolbarState extends State<KeyboardEditingToolbar> with Wi
       overlayChildBuilder: _buildToolbarOverlay,
       // Take up empty space that's as tall as the toolbar so that other content
       // doesn't layout behind it.
-      child: SizedBox(height: _toolbarHeight),
+      child: SizedBox(height: widget.takeUpSameSpaceAsToolbar ? _toolbarHeight : 0),
     );
   }
 
