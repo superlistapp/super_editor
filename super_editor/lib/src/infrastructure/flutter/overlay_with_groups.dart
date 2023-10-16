@@ -1,64 +1,88 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 
-class OverlayWithGroups {
-  static OverlayWithGroups get instance => _instance;
-  static final _instance = OverlayWithGroups._();
+/// An [OverlayPortalController], which re-orders itself with all other [GroupedOverlayPortalController]s
+/// such that each controller's [displayPriority] is honored by their z-indices.
+///
+/// For example, regardless of when they're shown, if there three [GroupedOverlayPortalController]s
+/// with priorities of `10`, `100`, and `1`, those overlays will be displayed in the order of
+/// `1`, `10`, `100`. In other words, the overlay with priority of `100` appears in front of
+/// the one with `10`, which appears in front of the one with `1`. Z-index re-ordering occurs
+/// every time a [GroupedOverlayPortalController] is [show]n.
+///
+/// Priority is based on an [OverlayGroupPriority]. There are some priority levels that are already
+/// defined for common use-cases, so that those use-cases remain consistent across apps.
+class GroupedOverlayPortalController extends OverlayPortalController {
+  static final _visibleControllers =
+      PriorityQueue<GroupedOverlayPortalController>((a, b) => a.displayPriority.compareTo(b.displayPriority));
 
-  OverlayWithGroups._();
+  static bool _isReworkingOrder = false;
 
-  final _entries = PriorityQueue<GroupedOverlayEntry>((a, b) => a.displayPriority.compareTo(b.displayPriority));
-
-  /// Inserts the given [entry] into the app [Overlay] at a z-index determined
-  /// by its [entry.displayPriority] as compared to other [GroupedOverlayEntry]s
-  /// in the app [Overlay].
-  ///
-  /// Display priority only applies to [GroupedOverlayEntry]s. The z-index of
-  /// any [GroupedOverlayEntry] as compared to traditional [OverlayEntry]s is
-  /// undefined.
-  void insert(BuildContext context, GroupedOverlayEntry entry) {
-    if (_entries.contains(entry)) {
+  static void _show(GroupedOverlayPortalController controller) {
+    if (_isReworkingOrder) {
       return;
     }
 
-    _entries.add(entry);
-    entry._onInsertion(this);
+    if (controller.isShowing) {
+      return;
+    }
 
-    Overlay.of(context).rearrange(_entries.toList());
+    if (!_visibleControllers.contains(controller)) {
+      _visibleControllers.add(controller);
+    }
+
+    _isReworkingOrder = true;
+
+    // When calling `show()` on an `OverlayPortalController` that's already visible, its
+    // overlay becomes the top overlay in the stack. Therefore, by calling `show()` on all
+    // of our controllers, from low priority to high priority, we ensure the desired painting order.
+    for (final visiblePortal in _visibleControllers.toList()) {
+      visiblePortal.show();
+    }
+
+    _isReworkingOrder = false;
   }
 
-  /// Called by a [GroupedOverlayEntry] when it removes itself from the app
-  /// [Overlay], so that [GroupedOverlay] can update its internal accounting
-  /// of added entries.
-  void _onRemoved(GroupedOverlayEntry entry) {
-    _entries.remove(entry);
-  }
-}
+  static void _hide(GroupedOverlayPortalController controller) {
+    if (_isReworkingOrder) {
+      return;
+    }
 
-class GroupedOverlayEntry extends OverlayEntry {
-  GroupedOverlayEntry({
+    _isReworkingOrder = true;
+
+    _visibleControllers.remove(controller);
+    controller.hide();
+
+    _isReworkingOrder = false;
+  }
+
+  GroupedOverlayPortalController({
     required this.displayPriority,
-    required super.builder,
-    super.opaque = false,
-    super.maintainState = false,
+    super.debugLabel,
   });
 
-  /// Relative display priority which determines the z-index of this [GroupedOverlayEntry]
-  /// relative to other [GroupedOverlayEntry]s in the app [Overlay].
+  /// Relative display priority which determines the z-index of this [GroupedOverlayPortalController]
+  /// relative to other [GroupedOverlayPortalController]s in the app [Overlay].
   final OverlayGroupPriority displayPriority;
 
-  OverlayWithGroups? _overlay;
+  @override
+  void show() {
+    if (!_isReworkingOrder) {
+      _show(this);
+      return;
+    }
 
-  void _onInsertion(OverlayWithGroups overlay) => _overlay = overlay;
+    super.show();
+  }
 
   @override
-  void remove() {
-    super.remove();
-
-    if (_overlay != null) {
-      _overlay!._onRemoved(this);
-      _overlay = null;
+  void hide() {
+    if (!_isReworkingOrder) {
+      _hide(this);
+      return;
     }
+
+    super.hide();
   }
 }
 
@@ -73,9 +97,9 @@ class OverlayGroupPriority implements Comparable<OverlayGroupPriority> {
 
   const OverlayGroupPriority(this.priority);
 
-  /// Relative priority for display z-index - higher priority means higher
-  /// z-index, e.g., a priority of `1000` will appear in front of a priority
-  /// of `10`.
+  /// Relative priority for display z-index - higher priority means higher on the
+  /// z-index stack, e.g., a priority of `1000` will appear in front of a priority
+  /// of `10`, which will appear in front of a priority of `1`.
   final int priority;
 
   @override

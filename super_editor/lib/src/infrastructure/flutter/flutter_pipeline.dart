@@ -1,8 +1,20 @@
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 
 /// Extensions on [State] that provide concise, convenient control over
 /// common Flutter pipeline scheduling needs.
 extension Frames on State {
+  /// Runs the given [stateChange] (which might call `setState()`) as early as
+  /// possible.
+  ///
+  /// Given that [stateChange] might call `setState()`, it can't be run during
+  /// Flutter's build phase. If Flutter is currently in the middle of the build
+  /// phase, another frame is scheduled, and [stateChange] is run after the
+  /// current build phase completes. Otherwise, [stateChange] is run immediately.
+  void runStateChangeAsSoonAsPossible(VoidCallback stateChange) {
+    WidgetsBinding.instance.runAsSoonAsPossible(stateChange);
+  }
+
   /// Runs the given [work] in a post-frame callback, but only if the [State]
   /// is still `mounted`.
   void onNextFrame(void Function(Duration timeStamp) work) {
@@ -28,7 +40,7 @@ extension Frames on State {
   /// toolbar, which follow the user's selection.
   ///
   /// Developers should be very careful when using this method because it can
-  /// easily cause infinite rebuilds. It must only called in conditionals that
+  /// easily cause infinite rebuilds. It must only be called in conditionals that
   /// won't be triggered on every frame. Otherwise, every frame will schedule
   /// another frame and the pipeline will never go idle.
   ///
