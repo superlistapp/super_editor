@@ -10,7 +10,7 @@ import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
-import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
 import 'reader_context.dart';
