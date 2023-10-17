@@ -155,6 +155,13 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] with the given selection [styles], which dictate the color of the
+  /// primary user's selection, and related selection details.
+  TestSuperEditorConfigurator withSelectionStyles(SelectionStyles? styles) {
+    _config.selectionStyles = styles;
+    return this;
+  }
+
   /// Configures the [SuperEditor]'s [SoftwareKeyboardController].
   TestSuperEditorConfigurator withSoftwareKeyboardController(SoftwareKeyboardController controller) {
     _config.softwareKeyboardController = controller;
@@ -406,6 +413,7 @@ class TestSuperEditorConfigurator {
         documentLayoutKey: testDocumentContext.layoutKey,
         inputSource: _config.inputSource,
         selectionPolicies: _config.selectionPolicies ?? const SuperEditorSelectionPolicies(),
+        selectionStyle: _config.selectionStyles,
         softwareKeyboardController: _config.softwareKeyboardController,
         imePolicies: _config.imePolicies ?? const SuperEditorImePolicies(),
         imeConfiguration: _config.imeConfiguration,
@@ -449,6 +457,7 @@ class SuperEditorTestConfiguration {
   DocumentGestureMode? gestureMode;
   TextInputSource? inputSource;
   SuperEditorSelectionPolicies? selectionPolicies;
+  SelectionStyles? selectionStyles;
   SoftwareKeyboardController? softwareKeyboardController;
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;

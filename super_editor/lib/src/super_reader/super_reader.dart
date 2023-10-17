@@ -315,6 +315,7 @@ class SuperReaderState extends State<SuperReader> {
       document: widget.document,
       selection: _selection,
       selectionStyles: widget.selectionStyles,
+      selectedTextColorStrategy: widget.stylesheet.selectedTextColorStrategy,
     );
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(

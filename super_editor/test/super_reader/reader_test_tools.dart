@@ -83,6 +83,7 @@ class TestDocumentConfigurator {
   final MutableDocument? _document;
   DocumentGestureMode? _gestureMode;
   ThemeData? _appTheme;
+  SelectionStyles? _selectionStyles;
   Stylesheet? _stylesheet;
   final _addedComponents = <ComponentBuilder>[];
   bool _autoFocus = false;
@@ -195,6 +196,13 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Configures the [SuperReader] with the given selection [styles], which dictate the color of the
+  /// primary user's selection, and related selection details.
+  TestDocumentConfigurator withSelectionStyles(SelectionStyles? styles) {
+    _selectionStyles = styles;
+    return this;
+  }
+
   /// Configures the [SuperReader] to use the given [stylesheet].
   TestDocumentConfigurator useStylesheet(Stylesheet stylesheet) {
     _stylesheet = stylesheet;
@@ -244,6 +252,7 @@ class TestDocumentConfigurator {
           document: documentContext.document,
           documentLayoutKey: layoutKey,
           selection: documentContext.selection,
+          selectionStyle: _selectionStyles,
           gestureMode: _gestureMode ?? _defaultGestureMode,
           stylesheet: _stylesheet,
           componentBuilders: [

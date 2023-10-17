@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
@@ -101,24 +102,30 @@ void main() {
     });
 
     group('unordered list', () {
-      testWidgetsOnArbitraryDesktop('updates caret position when indenting', (tester) async {
-        await _pumpUnorderedList(tester);
+      testWidgetsOnDesktop('updates caret position when indenting', (tester) async {
+        await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemId = doc.nodes.first.id;
+        final listItemNode = doc.nodes.first as ListItemNode;
 
         // Place caret at the first list item, which has one level of indentation.
-        await tester.placeCaretInParagraph(listItemId, 0);
+        await tester.placeCaretInParagraph(listItemNode.id, 0);
+
+        // Ensure the list item has first level of indentation.
+        expect(listItemNode.indent, 0);
 
         final caretOffsetBeforeIndent = SuperEditorInspector.findCaretOffsetInDocument();
 
         // Press tab to trigger the list indent command.
         await tester.pressTab();
 
+        // Ensure the list item has second level of indentation.
+        expect(listItemNode.indent, 1);
+
         // Compute the offset at which the caret should be displayed.
         final computedOffsetAfterIndent = SuperEditorInspector.calculateOffsetForCaret(
           DocumentPosition(
-            nodeId: listItemId,
+            nodeId: listItemNode.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         );
@@ -130,27 +137,33 @@ void main() {
         expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterIndent));
       });
 
-      testWidgetsOnArbitraryDesktop('updates caret position when unindenting', (tester) async {
-        await _pumpUnorderedList(tester);
+      testWidgetsOnDesktop('updates caret position when unindenting', (tester) async {
+        await _pumpUnorderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemId = doc.nodes.last.id;
+        final listItemNode = doc.nodes.last as ListItemNode;
 
         // Place caret at the last list item, which has two levels of indentation.
         // For some reason, taping at the first character isn't displaying any caret,
         // so we put the caret at the second character and then go back one position.
-        await tester.placeCaretInParagraph(listItemId, 1);
+        await tester.placeCaretInParagraph(listItemNode.id, 1);
         await tester.pressLeftArrow();
+
+        // Ensure the list item has second level of indentation.
+        expect(listItemNode.indent, 1);
 
         final caretOffsetBeforeUnindent = SuperEditorInspector.findCaretOffsetInDocument();
 
         // Press backspace to trigger the list unindent command.
         await tester.pressBackspace();
 
+        // Ensure the list item has first level of indentation.
+        expect(listItemNode.indent, 0);
+
         // Compute the offset at which the caret should be displayed.
         final computedOffsetAfterUnindent = SuperEditorInspector.calculateOffsetForCaret(
           DocumentPosition(
-            nodeId: listItemId,
+            nodeId: listItemNode.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         );
@@ -160,6 +173,28 @@ void main() {
 
         // Ensure the caret is being displayed at the correct position.
         expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
+      });
+
+      testWidgetsOnDesktop('unindents with SHIFT + TAB', (tester) async {
+        await _pumpUnorderedListWithTextField(tester);
+
+        final doc = SuperEditorInspector.findDocument()!;
+        final listItemNode = doc.nodes.last as ListItemNode;
+
+        // Place caret at the last list item, which has two levels of indentation.
+        // For some reason, taping at the first character isn't displaying any caret,
+        // so we put the caret at the second character and then go back one position.
+        await tester.placeCaretInParagraph(listItemNode.id, 1);
+        await tester.pressLeftArrow();
+
+        // Ensure the list item has second level of indentation.
+        expect(listItemNode.indent, 1);
+
+        // Press SHIFT + TAB to trigger the list unindent command.
+        await _pressShiftTab(tester);
+
+        // Ensure the list item has first level of indentation.
+        expect(listItemNode.indent, 0);
       });
 
       testWidgetsOnAllPlatforms("inserts new item on ENTER at end of existing item", (tester) async {
@@ -377,23 +412,29 @@ void main() {
 
     group('ordered list', () {
       testWidgetsOnArbitraryDesktop('updates caret position when indenting', (tester) async {
-        await _pumpOrderedList(tester);
+        await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemId = doc.nodes.first.id;
+        final listItemNode = doc.nodes.first as ListItemNode;
 
         // Place caret at the first list item, which has one level of indentation.
-        await tester.placeCaretInParagraph(listItemId, 0);
+        await tester.placeCaretInParagraph(listItemNode.id, 0);
+
+        // Ensure the list item has first level of indentation.
+        expect(listItemNode.indent, 0);
 
         final caretOffsetBeforeIndent = SuperEditorInspector.findCaretOffsetInDocument();
 
         // Press tab to trigger the list indent command.
         await tester.pressTab();
 
+        // Ensure the list item has second level of indentation.
+        expect(listItemNode.indent, 1);
+
         // Compute the offset at which the caret should be displayed.
         final computedOffsetAfterIndent = SuperEditorInspector.calculateOffsetForCaret(
           DocumentPosition(
-            nodeId: listItemId,
+            nodeId: listItemNode.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         );
@@ -406,25 +447,31 @@ void main() {
       });
 
       testWidgetsOnArbitraryDesktop('updates caret position when unindenting', (tester) async {
-        await _pumpOrderedList(tester);
+        await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemId = doc.nodes.last.id;
+        final listItemNode = doc.nodes.last as ListItemNode;
 
         // Place caret at the last list item, which has two levels of indentation.
         // For some reason, taping at the first character isn't displaying any caret,
         // so we put the caret at the second character and then go back one position.
-        await tester.placeCaretInParagraph(listItemId, 1);
+        await tester.placeCaretInParagraph(listItemNode.id, 1);
         await tester.pressLeftArrow();
+
+        // Ensure the list item has second level of indentation.
+        expect(listItemNode.indent, 1);
 
         final caretOffsetBeforeUnindent = SuperEditorInspector.findCaretOffsetInDocument();
 
         // Press backspace to trigger the list unindent command.
         await tester.pressBackspace();
 
+        // Ensure the list item has first level of indentation.
+        expect(listItemNode.indent, 0);
+
         // Compute the offset at which the caret should be displayed.
         final computedOffsetAfterUnindent = SuperEditorInspector.calculateOffsetForCaret(DocumentPosition(
-          nodeId: listItemId,
+          nodeId: listItemNode.id,
           nodePosition: const TextNodePosition(offset: 0),
         ));
 
@@ -435,6 +482,27 @@ void main() {
         expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
       });
 
+      testWidgetsOnDesktop('unindents with SHIFT + TAB', (tester) async {
+        await _pumpOrderedListWithTextField(tester);
+
+        final doc = SuperEditorInspector.findDocument()!;
+        final listItemNode = doc.nodes.last as ListItemNode;
+
+        // Place caret at the last list item, which has two levels of indentation.
+        // For some reason, taping at the first character isn't displaying any caret,
+        // so we put the caret at the second character and then go back one position.
+        await tester.placeCaretInParagraph(listItemNode.id, 1);
+        await tester.pressLeftArrow();
+
+        // Ensure the list item has second level of indentation.
+        expect(listItemNode.indent, 1);
+
+        // Press SHIFT + TAB to trigger the list unindent command.
+        await _pressShiftTab(tester);
+
+        // Ensure the list item has first level of indentation.
+        expect(listItemNode.indent, 0);
+      });
       testWidgetsOnAllPlatforms("inserts new item on ENTER at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
@@ -672,6 +740,42 @@ Future<TestDocumentContext> _pumpUnorderedList(
       .pump();
 }
 
+/// Pumps a [SuperEditor] containing 4 unordered list items and a [TextField] below it.
+///
+/// The first two items have one level of indentation.
+///
+/// The last two items have two levels of indentation.
+Future<TestDocumentContext> _pumpUnorderedListWithTextField(
+  WidgetTester tester, {
+  Stylesheet? styleSheet,
+}) async {
+  const markdown = '''
+ * list item 1
+ * list item 2
+   * list item 2.1
+   * list item 2.2''';
+
+  return await tester //
+      .createDocument()
+      .fromMarkdown(markdown)
+      .useStylesheet(styleSheet)
+      .withInputSource(TextInputSource.ime)
+      .withCustomWidgetTreeBuilder(
+        (superEditor) => MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                const TextField(),
+                Expanded(child: superEditor),
+                const TextField(),
+              ],
+            ),
+          ),
+        ),
+      )
+      .pump();
+}
+
 /// Pumps a [SuperEditor] containing 4 ordered list items.
 ///
 /// The first two items have one level of indentation.
@@ -692,6 +796,49 @@ Future<TestDocumentContext> _pumpOrderedList(
       .fromMarkdown(markdown)
       .useStylesheet(styleSheet)
       .pump();
+}
+
+/// Pumps a [SuperEditor] containing 4 ordered list items and a [TextField] below it.
+///
+/// The first two items have one level of indentation.
+///
+/// The last two items have two levels of indentation.
+Future<TestDocumentContext> _pumpOrderedListWithTextField(
+  WidgetTester tester, {
+  Stylesheet? styleSheet,
+}) async {
+  const markdown = '''
+ 1. list item 1
+ 1. list item 2
+    1. list item 2.1
+    1. list item 2.2''';
+
+  return await tester //
+      .createDocument()
+      .fromMarkdown(markdown)
+      .useStylesheet(styleSheet)
+      .withInputSource(TextInputSource.ime)
+      .withCustomWidgetTreeBuilder(
+        (superEditor) => MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                Expanded(child: superEditor),
+                const TextField(),
+              ],
+            ),
+          ),
+        ),
+      )
+      .pump();
+}
+
+Future<void> _pressShiftTab(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.tab);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.tab);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+  await tester.pumpAndSettle();
 }
 
 TextStyle _inlineTextStyler(Set<Attribution> attributions, TextStyle base) => base;

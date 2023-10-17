@@ -1,0 +1,57 @@
+# In general, whenever a change is merged to "main" we want to replicate that change on "stable".
+# This GitHub action watches for merges to "main", creates a new branch off of "stable", cherry
+# picks the latest commit from "main" to the new branch, and then puts up a PR with the cherry
+# pick. At that point, a reviewer waits until all tests pass, and then merges in the cherry pick
+# PR.
+#
+# Sometimes, a change to "main" shouldn't be merged to "stable". In that case, tag the original PR
+# with a "no-cherry-pick" label, and this action won't cherry pick that merge.
+name: Cherry pick to stable
+on:
+  pull_request:
+    branches:
+      - main
+    types: ["closed"]
+
+jobs:
+  cherry-pick-to-stable:
+    runs-on: ubuntu-latest
+    name: Cherry pick from main to stable
+
+    # Only cherry pick merged PRs. Don't merge PRs marked with "no-cherry-pick" label.
+    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'no-cherry-pick') }}
+
+    # These ENV variables can be accessed directly when they're used in shell commands, e.g.:
+    #
+    #     echo "My name is $NAME"
+    # 
+    # When referencing ENV variables in declarative YAML, they must be accessed via "env.", e.g.:
+    #
+    #     someProperty: "My name is ${{ env.NAME }}"
+    #
+    # GitHub pull request data: https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
+    env:
+      CHERRY_PICK_BRANCH_NAME: "cherry-pick_${{ github.event.pull_request.head.ref }}_${{ github.event.pull_request.merge_commit_sha }}"
+      CHERRY_PICK_PR_TITLE: "Cherry Pick: ${{ github.event.pull_request.title }}"
+      CHERRY_PICK_PR_BODY: "Cherry Pick: Original PR - #${{ github.event.pull_request.number }}"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0    
+
+      - name: Cherry pick into stable
+        uses: carloscastrojumo/github-cherry-pick-action@v1.0.9
+        with:
+          branch: stable
+          cherry-pick-branch: "${{ env.CHERRY_PICK_BRANCH_NAME }}"
+          title: "${{ env.CHERRY_PICK_PR_TITLE }}"
+          body: "${{ env.CHERRY_PICK_PR_BODY }}"
+          labels: |
+            cherry-pick
+          reviewers: |
+            matthew-carroll
+            "${{ gitHub.event.pull_request.user.login }}"
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

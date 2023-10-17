@@ -7,7 +7,6 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
-import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 
 /// A document layer that positions leader widgets at the user's selection bounds.
 ///

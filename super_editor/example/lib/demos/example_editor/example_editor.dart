@@ -37,10 +37,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   SuperEditorDebugVisualsConfig? _debugConfig;
 
-  OverlayEntry? _textFormatBarOverlayEntry;
+  final _textFormatBarOverlayController = OverlayPortalController();
   final _textSelectionAnchor = ValueNotifier<Offset?>(null);
 
-  OverlayEntry? _imageFormatBarOverlayEntry;
+  final _imageFormatBarOverlayController = OverlayPortalController();
   final _imageSelectionAnchor = ValueNotifier<Offset?>(null);
 
   // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
@@ -70,12 +70,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   void dispose() {
-    if (_textFormatBarOverlayEntry != null) {
-      _textFormatBarOverlayEntry!.remove();
-    }
-
     _iosControlsController.dispose();
-
     _scrollController.dispose();
     _editorFocusNode.dispose();
     _composer.dispose();
@@ -146,35 +141,13 @@ class _ExampleEditorState extends State<ExampleEditor> {
   }
 
   void _showEditorToolbar() {
-    if (_textFormatBarOverlayEntry == null) {
-      // Create an overlay entry to build the editor toolbar.
-      // TODO: add an overlay to the Editor widget to avoid using the
-      //       application overlay
-      _textFormatBarOverlayEntry ??= OverlayEntry(builder: (context) {
-        return EditorToolbar(
-          editorViewportKey: _viewportKey,
-          anchor: _selectionLayerLinks.expandedSelectionBoundsLink,
-          editorFocusNode: _editorFocusNode,
-          editor: _docEditor,
-          document: _doc,
-          composer: _composer,
-          closeToolbar: _hideEditorToolbar,
-        );
-      });
-
-      // Display the toolbar in the application overlay.
-      final overlay = Overlay.of(context);
-      overlay.insert(_textFormatBarOverlayEntry!);
-    }
+    _textFormatBarOverlayController.show();
 
     // Schedule a callback after this frame to locate the selection
     // bounds on the screen and display the toolbar near the selected
     // text.
+    // TODO: switch this to use a Leader and Follower
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (_textFormatBarOverlayEntry == null) {
-        return;
-      }
-
       final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
           .getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
       final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
@@ -192,22 +165,14 @@ class _ExampleEditorState extends State<ExampleEditor> {
     // the bar doesn't momentarily "flash" at its old anchor position.
     _textSelectionAnchor.value = null;
 
-    if (_textFormatBarOverlayEntry != null) {
-      // Remove the toolbar overlay and null-out the entry.
-      // We null out the entry because we can't query whether
-      // or not the entry exists in the overlay, so in our
-      // case, null implies the entry is not in the overlay,
-      // and non-null implies the entry is in the overlay.
-      _textFormatBarOverlayEntry!.remove();
-      _textFormatBarOverlayEntry = null;
+    _textFormatBarOverlayController.hide();
 
-      // Ensure that focus returns to the editor.
-      //
-      // I tried explicitly unfocus()'ing the URL textfield
-      // in the toolbar but it didn't return focus to the
-      // editor. I'm not sure why.
-      _editorFocusNode.requestFocus();
-    }
+    // Ensure that focus returns to the editor.
+    //
+    // I tried explicitly unfocus()'ing the URL textfield
+    // in the toolbar but it didn't return focus to the
+    // editor. I'm not sure why.
+    _editorFocusNode.requestFocus();
   }
 
   DocumentGestureMode get _gestureMode {
@@ -262,37 +227,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
   void _selectAll() => _docOps.selectAll();
 
   void _showImageToolbar() {
-    if (_imageFormatBarOverlayEntry == null) {
-      // Create an overlay entry to build the image toolbar.
-      _imageFormatBarOverlayEntry ??= OverlayEntry(builder: (context) {
-        return ImageFormatToolbar(
-          anchor: _imageSelectionAnchor,
-          composer: _composer,
-          setWidth: (nodeId, width) {
-            final node = _doc.getNodeById(nodeId)!;
-            final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
-            SingleColumnLayoutComponentStyles(
-              width: width,
-              padding: currentStyles.padding,
-            ).applyTo(node);
-          },
-          closeToolbar: _hideImageToolbar,
-        );
-      });
-
-      // Display the toolbar in the application overlay.
-      final overlay = Overlay.of(context);
-      overlay.insert(_imageFormatBarOverlayEntry!);
-    }
-
     // Schedule a callback after this frame to locate the selection
     // bounds on the screen and display the toolbar near the selected
     // text.
+    // TODO: switch to a Leader and Follower for this
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (_imageFormatBarOverlayEntry == null) {
-        return;
-      }
-
       final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
           .getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
       final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
@@ -303,6 +242,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
       _imageSelectionAnchor.value = overlayBoundingBox.center;
     });
+
+    _imageFormatBarOverlayController.show();
   }
 
   void _hideImageToolbar() {
@@ -310,38 +251,40 @@ class _ExampleEditorState extends State<ExampleEditor> {
     // it doesn't momentarily "flash" at its old anchor position.
     _imageSelectionAnchor.value = null;
 
-    if (_imageFormatBarOverlayEntry != null) {
-      // Remove the image toolbar overlay and null-out the entry.
-      // We null out the entry because we can't query whether
-      // or not the entry exists in the overlay, so in our
-      // case, null implies the entry is not in the overlay,
-      // and non-null implies the entry is in the overlay.
-      _imageFormatBarOverlayEntry!.remove();
-      _imageFormatBarOverlayEntry = null;
+    _imageFormatBarOverlayController.hide();
 
-      // Ensure that focus returns to the editor.
-      _editorFocusNode.requestFocus();
-    }
+    // Ensure that focus returns to the editor.
+    _editorFocusNode.requestFocus();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _brightness,
-      builder: (context, _) {
+    return ValueListenableBuilder(
+      valueListenable: _brightness,
+      builder: (context, brightness, child) {
         return Theme(
-          data: ThemeData(brightness: _brightness.value),
-          child: Builder(
-            builder: (themedContext) {
-              // This builder captures the new theme
-              return Stack(
+          data: ThemeData(brightness: brightness),
+          child: child!,
+        );
+      },
+      child: Builder(
+        // This builder captures the new theme
+        builder: (themedContext) {
+          return OverlayPortal(
+            controller: _textFormatBarOverlayController,
+            overlayChildBuilder: _buildFloatingToolbar,
+            child: OverlayPortal(
+              controller: _imageFormatBarOverlayController,
+              overlayChildBuilder: _buildImageToolbar,
+              child: Stack(
                 children: [
                   Column(
                     children: [
                       Expanded(
                         child: _buildEditor(themedContext),
                       ),
-                      if (_isMobile) _buildMountedToolbar(),
+                      if (_isMobile) //
+                        _buildMountedToolbar(),
                     ],
                   ),
                   Align(
@@ -358,11 +301,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
                     ),
                   ),
                 ],
-              );
-            },
-          ),
-        );
-      },
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -510,6 +453,39 @@ class _ExampleEditorState extends State<ExampleEditor> {
           commonOps: _docOps,
         );
       },
+    );
+  }
+
+  Widget _buildFloatingToolbar(BuildContext context) {
+    return EditorToolbar(
+      editorViewportKey: _viewportKey,
+      anchor: _selectionLayerLinks.expandedSelectionBoundsLink,
+      editorFocusNode: _editorFocusNode,
+      editor: _docEditor,
+      document: _doc,
+      composer: _composer,
+      closeToolbar: _hideEditorToolbar,
+    );
+  }
+
+  Widget _buildImageToolbar(BuildContext context) {
+    return ImageFormatToolbar(
+      anchor: _imageSelectionAnchor,
+      composer: _composer,
+      setWidth: (nodeId, width) {
+        print("Applying width $width to node $nodeId");
+        final node = _doc.getNodeById(nodeId)!;
+        final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
+        SingleColumnLayoutComponentStyles(
+          width: width,
+          padding: currentStyles.padding,
+        ).applyTo(node);
+
+        // TODO: schedule a presentation reflow so that the image changes size immediately (https://github.com/superlistapp/super_editor/issues/1529)
+        //       Right now, nothing happens when pressing the button, unless we force a
+        //       rebuild/reflow.
+      },
+      closeToolbar: _hideImageToolbar,
     );
   }
 }
