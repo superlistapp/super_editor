@@ -63,6 +63,7 @@ class SuperReader extends StatefulWidget {
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
+    this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? readOnlyDefaultStylesheet,
@@ -167,7 +168,12 @@ class SuperReader extends StatefulWidget {
   final WidgetBuilder? androidToolbarBuilder;
 
   /// Color of the text selection drag handles on iOS.
+  @Deprecated("To configure handle color, surround SuperEditor with an IosEditorControlsScope, instead")
   final Color? iOSHandleColor;
+
+  /// Builder that creates a floating toolbar when running on iOS.
+  @Deprecated("To configure a toolbar builder, surround SuperEditor with an IosEditorControlsScope, instead")
+  final WidgetBuilder? iOSToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, like drag
   /// handles, magnifiers, and popover toolbars, preventing the overlay

@@ -122,6 +122,8 @@ class SuperEditor extends StatefulWidget {
     this.overlayController,
     this.androidHandleColor,
     this.androidToolbarBuilder,
+    this.iOSHandleColor,
+    this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.plugins = const {},
     this.debugPaint = const DebugPaintConfig(),
@@ -277,6 +279,14 @@ class SuperEditor extends StatefulWidget {
   /// Builder that creates a floating toolbar when running on Android.
   final WidgetBuilder? androidToolbarBuilder;
 
+  /// Color of the text selection drag handles on iOS.
+  @Deprecated("To configure handle color, surround SuperEditor with an IosEditorControlsScope, instead")
+  final Color? iOSHandleColor;
+
+  /// Builder that creates a floating toolbar when running on iOS.
+  @Deprecated("To configure a toolbar builder, surround SuperEditor with an IosEditorControlsScope, instead")
+  final WidgetBuilder? iOSToolbarBuilder;
+
   /// Creates a clipper that applies to overlay controls, like drag
   /// handles, magnifiers, and popover toolbars, preventing the overlay
   /// controls from appearing outside the given clipping region.
@@ -284,6 +294,7 @@ class SuperEditor extends StatefulWidget {
   /// If no clipper factory method is provided, then the overlay controls
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
+  // TODO: remove this once both iOS and Android overlay controls are moved to ancestor scopes.
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
   /// Plugins that add sets of behaviors to the editing experience.
