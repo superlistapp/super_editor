@@ -1308,7 +1308,11 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   void _onPerformAction(TextInputAction action) {
     switch (action) {
       case TextInputAction.newline:
-        _textController.insertNewline();
+        // Do nothing for IME newline actions.
+        //
+        // Mac: Key presses flow, unhandled, to the OS and turn into IME selectors. We handle newlines there.
+        // Windows/Linux: Key presses flow, unhandled, to the OS and turn into text deltas. We handle newlines there.
+        // Android/iOS: This text field implementation is only for desktop, mobile is handled elsewhere.
         break;
       case TextInputAction.done:
         widget.focusNode.unfocus();
@@ -1761,7 +1765,6 @@ const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
   // handlers, passing the key combo to the OS on Mac. Place all custom Mac key
   // combos above this handler.
   DefaultSuperTextFieldKeyboardHandlers.sendKeyEventToMacOs,
-  DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
   DefaultSuperTextFieldKeyboardHandlers.moveToLineStartWithHome,
