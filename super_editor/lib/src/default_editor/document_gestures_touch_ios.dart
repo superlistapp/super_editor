@@ -119,7 +119,7 @@ class SuperEditorIosControlsController {
 
   void dispose() {
     floatingCursorController.dispose();
-    shouldCaretBlink.dispose();
+    _shouldCaretBlink.dispose();
     _shouldShowMagnifier.dispose();
     _shouldShowToolbar.dispose();
   }
@@ -128,7 +128,14 @@ class SuperEditorIosControlsController {
   final Color? handleColor;
 
   /// Whether the caret (collapsed handle) should blink right now.
-  final shouldCaretBlink = ValueNotifier<bool>(false);
+  ValueListenable<bool> get shouldCaretBlink => _shouldCaretBlink;
+  final _shouldCaretBlink = ValueNotifier<bool>(false);
+
+  /// Tells the caret to blink by setting [shouldCaretBlink] to `true`.
+  void blinkCaret() => _shouldCaretBlink.value = true;
+
+  /// Tells the caret to stop blinking by setting [shouldCaretBlink] to `false`.
+  void doNotBlinkCaret() => _shouldCaretBlink.value = false;
 
   /// Controls the iOS floating cursor.
   late final FloatingCursorController floatingCursorController;
@@ -525,7 +532,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     // Stop the caret from blinking, in case this tap down turns into a long-press drag,
     // or a caret drag.
-    _controlsContext!.shouldCaretBlink.value = false;
+    _controlsContext!.doNotBlinkCaret();
   }
 
   // Runs when a tap down has lasted long enough to signify a long-press.
@@ -580,7 +587,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _controlsContext!.shouldCaretBlink.value = true;
+    _controlsContext!.blinkCaret();
 
     final selection = widget.selection.value;
     if (selection != null &&
@@ -821,7 +828,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _controlsContext!.shouldCaretBlink.value = false;
+    _controlsContext!.doNotBlinkCaret();
     _controlsContext!.hideToolbar();
     _controlsContext!.showToolbar();
 
@@ -1012,7 +1019,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _onHandleDragEnd();
     }
 
-    _controlsContext!.shouldCaretBlink.value = true;
+    _controlsContext!.blinkCaret();
     _handleAutoScrolling.stopAutoScrollHandleMonitoring();
     scrollPosition.removeListener(_onAutoScrollChange);
   }
