@@ -69,21 +69,21 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     _docOps.cut();
     // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
-    _iosEditorControlsController.shouldShowToolbar.value = false;
+    _iosEditorControlsController.hideToolbar();
   }
 
   void _copy() {
     _docOps.copy();
     // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
-    _iosEditorControlsController.shouldShowToolbar.value = false;
+    _iosEditorControlsController.hideToolbar();
   }
 
   void _paste() {
     _docOps.paste();
     // TODO: get rid of overlay controller once Android is refactored to use a control scope (as follow up to: https://github.com/superlistapp/super_editor/pull/1470)
     _overlayController.hideToolbar();
-    _iosEditorControlsController.shouldShowToolbar.value = false;
+    _iosEditorControlsController.hideToolbar();
   }
 
   @override

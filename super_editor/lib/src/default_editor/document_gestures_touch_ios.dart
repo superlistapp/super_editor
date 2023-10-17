@@ -120,8 +120,8 @@ class SuperEditorIosControlsController {
   void dispose() {
     floatingCursorController.dispose();
     shouldCaretBlink.dispose();
-    shouldShowMagnifier.dispose();
-    shouldShowToolbar.dispose();
+    _shouldShowMagnifier.dispose();
+    _shouldShowToolbar.dispose();
   }
 
   /// Color of the text selection drag handles on iOS.
@@ -134,7 +134,17 @@ class SuperEditorIosControlsController {
   late final FloatingCursorController floatingCursorController;
 
   /// Whether the iOS magnifier should be displayed right now.
-  final shouldShowMagnifier = ValueNotifier<bool>(false);
+  ValueListenable<bool> get shouldShowMagnifier => _shouldShowMagnifier;
+  final _shouldShowMagnifier = ValueNotifier<bool>(false);
+
+  /// Shows the magnifier by setting [shouldShowMagnifier] to `true`.
+  void showMagnifier() => _shouldShowMagnifier.value = true;
+
+  /// Hides the magnifier by setting [shouldShowMagnifier] to `false`.
+  void hideMagnifier() => _shouldShowMagnifier.value = false;
+
+  /// Toggles [shouldShowMagnifier].
+  void toggleMagnifier() => _shouldShowMagnifier.value = !_shouldShowMagnifier.value;
 
   /// Link to a location where a magnifier should be focused.
   final magnifierFocalPoint = LeaderLink();
@@ -145,10 +155,17 @@ class SuperEditorIosControlsController {
   final DocumentMagnifierBuilder? magnifierBuilder;
 
   /// Whether the iOS floating toolbar should be displayed right now.
-  final shouldShowToolbar = ValueNotifier<bool>(false);
+  ValueListenable<bool> get shouldShowToolbar => _shouldShowToolbar;
+  final _shouldShowToolbar = ValueNotifier<bool>(false);
+
+  /// Shows the toolbar by setting [shouldShowToolbar] to `true`.
+  void showToolbar() => _shouldShowToolbar.value = true;
+
+  /// Hides the toolbar by setting [shouldShowToolbar] to `false`.
+  void hideToolbar() => _shouldShowToolbar.value = false;
 
   /// Toggles [shouldShowToolbar].
-  void toggleToolbar() => shouldShowToolbar.value = !shouldShowToolbar.value;
+  void toggleToolbar() => _shouldShowToolbar.value = !_shouldShowToolbar.value;
 
   /// Link to a location where a toolbar should be focused.
   ///
@@ -411,7 +428,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onDocumentChange(_) {
-    _controlsContext!.shouldShowToolbar.value = false;
+    _controlsContext!.hideToolbar();
 
     onNextFrame((_) {
       // The user may have changed the type of node, e.g., paragraph to
@@ -544,8 +561,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalTapDownOffset!));
     _controlsContext!
-      ..shouldShowToolbar.value = false
-      ..shouldShowMagnifier.value = true;
+      ..hideToolbar()
+      ..showMagnifier();
 
     widget.focusNode.requestFocus();
   }
@@ -554,7 +571,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     // Stop waiting for a long-press to start.
     _globalTapDownOffset = null;
     _tapDownLongPressTimer?.cancel();
-    _controlsContext!.shouldShowMagnifier.value = false;
+    _controlsContext!.hideMagnifier();
 
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
@@ -606,7 +623,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         _controlsContext!.toggleToolbar();
       } else {
         // The user tapped somewhere else in the document. Hide the toolbar.
-        _controlsContext!.shouldShowToolbar.value = false;
+        _controlsContext!.hideToolbar();
       }
 
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -631,7 +648,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       widget.editor.execute([
         const ClearSelectionRequest(),
       ]);
-      _controlsContext!.shouldShowToolbar.value = false;
+      _controlsContext!.hideToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -688,9 +705,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     final newSelection = widget.selection.value;
     if (newSelection == null || newSelection.isCollapsed) {
-      _controlsContext!.shouldShowToolbar.value = false;
+      _controlsContext!.hideToolbar();
     } else {
-      _controlsContext!.shouldShowToolbar.value = true;
+      _controlsContext!.showToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -761,9 +778,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     final selection = widget.selection.value;
     if (selection == null || selection.isCollapsed) {
-      _controlsContext!.shouldShowToolbar.value = false;
+      _controlsContext!.hideToolbar();
     } else {
-      _controlsContext!.shouldShowToolbar.value = true;
+      _controlsContext!.showToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -805,8 +822,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     _controlsContext!.shouldCaretBlink.value = false;
-    _controlsContext!.shouldShowToolbar.value = false;
-    _controlsContext!.shouldShowMagnifier.value = true;
+    _controlsContext!.hideToolbar();
+    _controlsContext!.showToolbar();
 
     _globalStartDragOffset = details.globalPosition;
     final interactorBox = context.findRenderObject() as RenderBox;
@@ -960,7 +977,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   void _onPanEnd(DragEndDetails details) {
     _magnifierOffset.value = null;
-    _controlsContext!.shouldShowMagnifier.value = false;
+    _controlsContext!.hideMagnifier();
 
     if (_dragMode == null) {
       // User was dragging the scroll area. Go ballistic.
@@ -1015,9 +1032,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _updateOverlayControlsAfterFinishingDragSelection() {
-    _controlsContext!.shouldShowMagnifier.value = false;
+    _controlsContext!.hideMagnifier();
     if (!widget.selection.value!.isCollapsed) {
-      _controlsContext!.shouldShowToolbar.value = true;
+      _controlsContext!.showToolbar();
     }
   }
 
@@ -1577,8 +1594,8 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
     _floatingCursorFocalPointInViewport = _initialFloatingCursorOffsetInViewport!;
     _floatingCursorFocalPointInDocument = _viewportOffsetToDocumentOffset(_floatingCursorFocalPointInViewport!);
 
-    _controlsContext!.shouldShowToolbar.value = false;
-    _controlsContext!.shouldShowMagnifier.value = false;
+    _controlsContext!.hideToolbar();
+    _controlsContext!.hideMagnifier();
 
     _updateFloatingCursorGeometryForCurrentFloatingCursorFocalPoint();
   }

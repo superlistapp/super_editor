@@ -797,17 +797,17 @@ class DefaultIosEditorToolbar extends StatelessWidget {
 
   void _cut() {
     editorOps.cut();
-    editorControlsController.shouldShowToolbar.value = false;
+    editorControlsController.hideToolbar();
   }
 
   void _copy() {
     editorOps.copy();
-    editorControlsController.shouldShowToolbar.value = false;
+    editorControlsController.hideToolbar();
   }
 
   void _paste() {
     editorOps.paste();
-    editorControlsController.shouldShowToolbar.value = false;
+    editorControlsController.hideToolbar();
   }
 }
 
