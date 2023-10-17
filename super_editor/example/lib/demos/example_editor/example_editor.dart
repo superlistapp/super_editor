@@ -230,6 +230,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
       _imageSelectionAnchor.value = overlayBoundingBox.center;
     });
+
+    _imageFormatBarOverlayController.show();
   }
 
   void _hideImageToolbar() {
@@ -245,42 +247,43 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return OverlayPortal(
-      controller: _textFormatBarOverlayController,
-      overlayChildBuilder: _buildFloatingToolbar,
-      child: OverlayPortal(
-        controller: _imageFormatBarOverlayController,
-        overlayChildBuilder: _buildImageToolbar,
-        child: ListenableBuilder(
-          listenable: _brightness,
-          builder: (context, _) {
-            return Theme(
-              data: ThemeData(brightness: _brightness.value),
-              child: Builder(
-                builder: (themedContext) {
-                  // This builder captures the new theme
-                  return Stack(
+    return ValueListenableBuilder(
+      valueListenable: _brightness,
+      builder: (context, brightness, child) {
+        return Theme(
+          data: ThemeData(brightness: brightness),
+          child: child!,
+        );
+      },
+      child: Builder(
+        // This builder captures the new theme
+        builder: (themedContext) {
+          return OverlayPortal(
+            controller: _textFormatBarOverlayController,
+            overlayChildBuilder: _buildFloatingToolbar,
+            child: OverlayPortal(
+              controller: _imageFormatBarOverlayController,
+              overlayChildBuilder: _buildImageToolbar,
+              child: Stack(
+                children: [
+                  Column(
                     children: [
-                      Column(
-                        children: [
-                          Expanded(
-                            child: _buildEditor(themedContext),
-                          ),
-                          if (_isMobile) //
-                            _buildMountedToolbar(),
-                        ],
+                      Expanded(
+                        child: _buildEditor(themedContext),
                       ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: _buildCornerFabs(),
-                      ),
+                      if (_isMobile) //
+                        _buildMountedToolbar(),
                     ],
-                  );
-                },
+                  ),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: _buildCornerFabs(),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -454,12 +457,17 @@ class _ExampleEditorState extends State<ExampleEditor> {
       anchor: _imageSelectionAnchor,
       composer: _composer,
       setWidth: (nodeId, width) {
+        print("Applying width $width to node $nodeId");
         final node = _doc.getNodeById(nodeId)!;
         final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
         SingleColumnLayoutComponentStyles(
           width: width,
           padding: currentStyles.padding,
         ).applyTo(node);
+
+        // TODO: schedule a presentation reflow so that the image changes size immediately (https://github.com/superlistapp/super_editor/issues/1529)
+        //       Right now, nothing happens when pressing the button, unless we force a
+        //       rebuild/reflow.
       },
       closeToolbar: _hideImageToolbar,
     );
