@@ -231,7 +231,7 @@ void main() {
       });
 
       group('inserts line', () {
-        testWidgetsOnWindowsAndLinux('when ENTER is pressed in middle of text', (tester) async {
+        testWidgetsOnDesktop('when ENTER is pressed in middle of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -240,31 +240,13 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(8);
 
-          await tester.pressEnter();
+          await tester.pressEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
         });
 
-        testWidgetsOnMac('when ENTER is pressed in middle of text (on MAC)', (tester) async {
-          await _pumpSuperTextField(
-            tester,
-            AttributedTextEditingController(
-              text: AttributedText('this is some text'),
-            ),
-          );
-          await tester.placeCaretInSuperTextField(8);
-
-          // Simulate the user pressing ENTER.
-          // On macOS, pressing ENTER generates a new line input action.
-          await tester.testTextInput.receiveAction(TextInputAction.newline);
-          await tester.pump();
-
-          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
-          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
-        });
-
-        testWidgetsOnWindowsAndLinux('when ENTER is pressed at beginning of text', (tester) async {
+        testWidgetsOnDesktop('when ENTER is pressed at beginning of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -273,31 +255,13 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(0);
 
-          await tester.pressEnter();
+          await tester.pressEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
-        testWidgetsOnMac('when ENTER is pressed at beginning of text (on MAC)', (tester) async {
-          await _pumpSuperTextField(
-            tester,
-            AttributedTextEditingController(
-              text: AttributedText('this is some text'),
-            ),
-          );
-          await tester.placeCaretInSuperTextField(0);
-
-          // Simulate the user pressing ENTER.
-          // On macOS, pressing ENTER generates a new line input action.
-          await tester.testTextInput.receiveAction(TextInputAction.newline);
-          await tester.pump();
-
-          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
-          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
-        });
-
-        testWidgetsOnWindowsAndLinux('when ENTER is pressed at end of text', (tester) async {
+        testWidgetsOnDesktop('when ENTER is pressed at end of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -306,31 +270,13 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(17);
 
-          await tester.pressEnter();
+          await tester.pressEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
         });
 
-        testWidgetsOnMac('when ENTER is pressed at end of text (on MAC)', (tester) async {
-          await _pumpSuperTextField(
-            tester,
-            AttributedTextEditingController(
-              text: AttributedText('this is some text'),
-            ),
-          );
-          await tester.placeCaretInSuperTextField(17);
-
-          // Simulate the user pressing ENTER.
-          // On macOS, pressing ENTER generates a new line input action.
-          await tester.testTextInput.receiveAction(TextInputAction.newline);
-          await tester.pump();
-
-          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
-          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
-        });
-
-        // TODO: Make this a Windows + Linux test when Flutter supports numpad enter on windows
+        // TODO: Merge this with the testWidgetsOnMac below when Flutter supports numpad enter on windows
         testWidgetsOnLinux('when NUMPAD ENTER is pressed in middle of text', (tester) async {
           await _pumpSuperTextField(
             tester,
@@ -340,7 +286,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(8);
 
-          await tester.pressNumpadEnter();
+          await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
@@ -355,16 +301,13 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(8);
 
-          // Simulate the user pressing ENTER.
-          // On macOS, pressing ENTER generates a new line input action.
-          await tester.testTextInput.receiveAction(TextInputAction.newline);
-          await tester.pump();
+          await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
         });
 
-        // TODO: Make this a Windows + Linux test when Flutter supports numpad enter on windows
+        // TODO: Merge this with the testWidgetsOnMac below when Flutter supports numpad enter on windows
         testWidgetsOnLinux('when NUMPAD ENTER is pressed at beginning of text', (tester) async {
           await _pumpSuperTextField(
             tester,
@@ -374,7 +317,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(0);
 
-          await tester.pressNumpadEnter();
+          await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
@@ -389,16 +332,13 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(0);
 
-          // Simulate the user pressing ENTER.
-          // On macOS, pressing ENTER generates a new line input action.
-          await tester.testTextInput.receiveAction(TextInputAction.newline);
-          await tester.pump();
+          await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
-        // TODO: Make this a Windows + Linux test when Flutter supports numpad enter on windows
+        // TODO: Merge this with the testWidgetsOnMac below when Flutter supports numpad enter on windows
         testWidgetsOnLinux('when NUMPAD ENTER is pressed at end of text', (tester) async {
           await _pumpSuperTextField(
             tester,
@@ -408,7 +348,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(17);
 
-          await tester.pressNumpadEnter();
+          await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
@@ -423,10 +363,7 @@ void main() {
           );
           await tester.placeCaretInSuperTextField(17);
 
-          // Simulate the user pressing ENTER.
-          // On macOS, pressing ENTER generates a new line input action.
-          await tester.testTextInput.receiveAction(TextInputAction.newline);
-          await tester.pump();
+          await tester.pressNumpadEnterAdaptive(getter: imeClientGetter);
 
           expect(SuperTextFieldInspector.findText().text, "this is some text\n");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
