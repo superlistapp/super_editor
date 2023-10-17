@@ -203,17 +203,5 @@ class LeaderLayoutLayerState extends ContentLayerState<LeaderLayoutLayer, Rect> 
         ),
       ),
     );
-
-    // return Stack(
-    //   children: [
-    //     if (layoutData != null)
-    //       Positioned.fromRect(
-    //         rect: layoutData,
-    //         child: ColoredBox(
-    //           color: Colors.red,
-    //         ),
-    //       ),
-    //   ],
-    // );
   }
 }
