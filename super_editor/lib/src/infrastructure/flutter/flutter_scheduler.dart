@@ -39,15 +39,19 @@ extension Scheduler on WidgetsBinding {
 /// Extensions on [State] that provide concise, convenient control over
 /// common Flutter pipeline scheduling needs.
 extension Frames on State {
-  /// Runs the given [stateChange] (which might call `setState()`) as early as
-  /// possible.
+  /// Runs the given [stateChange] within `setState()` as early as possible.
   ///
-  /// Given that [stateChange] might call `setState()`, it can't be run during
-  /// Flutter's build phase. If Flutter is currently in the middle of the build
+  /// Given that `setState()` is called, it can't be run during Flutter's
+  /// build phase. If Flutter is currently in the middle of the build
   /// phase, another frame is scheduled, and [stateChange] is run after the
   /// current build phase completes. Otherwise, [stateChange] is run immediately.
-  void runStateChangeAsSoonAsPossible(VoidCallback stateChange) {
-    WidgetsBinding.instance.runAsSoonAsPossible(stateChange);
+  void setStateAsSoonAsPossible(VoidCallback stateChange) {
+    WidgetsBinding.instance.runAsSoonAsPossible(
+      // ignore: invalid_use_of_protected_member
+      () => setState(() {
+        stateChange();
+      }),
+    );
   }
 
   /// Runs the given [work] in a post-frame callback, but only if the [State]

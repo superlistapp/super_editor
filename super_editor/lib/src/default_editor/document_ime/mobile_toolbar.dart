@@ -109,9 +109,9 @@ class _KeyboardEditingToolbarState extends State<KeyboardEditingToolbar> with Wi
     // The toolbar in the overlay changed its height. Our child needs to take up the
     // same amount of height so that content doesn't go behind our toolbar. Rebuild
     // with the latest toolbar height and take up an equal amount of height.
-    runStateChangeAsSoonAsPossible(() => setState(() {
-          _toolbarHeight = toolbarHeight;
-        }));
+    setStateAsSoonAsPossible(() {
+      _toolbarHeight = toolbarHeight;
+    });
   }
 
   @override
