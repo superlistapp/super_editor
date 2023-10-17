@@ -206,7 +206,7 @@ class SuperEditorIosControlsController {
 ///    floating cursor based on the content beneath it, and then notifies the ancestor
 ///    [SuperEditorIosControlsScope] of the new floating cursor position and size.
 ///  * Listens for the user to stop using the floating cursor, notifies the ancestor
-///    [SuperEditorIosControlsScope] thta the floating cursor is inactive, and stops
+///    [SuperEditorIosControlsScope] that the floating cursor is inactive, and stops
 ///    managing auto-scrolling based on the floating cursor offset in the viewport.
 ///
 /// This widget does NOT paint a floating cursor. That responsibility is left to
