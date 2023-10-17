@@ -23,23 +23,36 @@ class _ToolbarFollowingContentInLayerState extends State<ToolbarFollowingContent
   final _baseContentWidth = 10.0;
   final _expansionExtent = ValueNotifier<double>(0);
 
+  OverlayState? _ancestorOverlay;
   late final OverlayEntry _toolbarEntry;
 
   @override
   void initState() {
     super.initState();
+
+    _toolbarEntry = OverlayEntry(builder: (_) {
+      return _buildToolbarOverlay();
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _toolbarEntry = OverlayEntry(builder: (_) {
-      return _buildToolbarOverlay();
-    });
-
+    // Any time our dependencies change, our ancestor Overlay may have changed.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      Overlay.of(context).insert(_toolbarEntry);
+      final newOverlay = Overlay.of(context);
+      if (newOverlay == _ancestorOverlay) {
+        // Overlay didn't change. Nothing to do.
+        return;
+      }
+
+      if (_ancestorOverlay != null) {
+        _toolbarEntry.remove();
+      }
+
+      _ancestorOverlay = newOverlay;
+      newOverlay.insert(_toolbarEntry);
     });
   }
 
