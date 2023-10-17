@@ -128,7 +128,6 @@ class _ToolbarFollowingContentInLayerState extends State<ToolbarFollowingContent
         aligner: CupertinoPopoverToolbarAligner(_viewportKey),
         child: CupertinoPopoverToolbar(
           focalPoint: LeaderMenuFocalPoint(link: _leaderLink),
-          // height: 54,
           children: [
             CupertinoPopoverToolbarMenuItem(
               label: 'Cut',
