@@ -255,8 +255,6 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     widget.document.removeListener(_onDocumentChange);
     widget.selection.removeListener(_onSelectionChange);
 
-    _removeEditingOverlayControls();
-
     _teardownScrollController();
 
     widget.focusNode.removeListener(_onFocusChange);

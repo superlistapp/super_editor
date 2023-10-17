@@ -307,7 +307,8 @@ class DragHandleAutoScroller {
   void updateAutoScrollHandleMonitoring({
     required Offset dragEndInViewport,
   }) {
-    if (dragEndInViewport.dy < _dragAutoScrollBoundary.leading) {
+    if (dragEndInViewport.dy < _dragAutoScrollBoundary.leading &&
+        _getScrollPosition().pixels > _getScrollPosition().minScrollExtent) {
       editorGesturesLog.finest('Metrics say we should try to scroll up');
 
       final leadingScrollBoundary = _dragAutoScrollBoundary.leading;
@@ -319,7 +320,8 @@ class DragHandleAutoScroller {
       _autoScroller.stopScrollingUp();
     }
 
-    if (_getViewportBox().size.height - dragEndInViewport.dy < _dragAutoScrollBoundary.trailing) {
+    if (_getViewportBox().size.height - dragEndInViewport.dy < _dragAutoScrollBoundary.trailing &&
+        _getScrollPosition().pixels < _getScrollPosition().maxScrollExtent) {
       editorGesturesLog.finest('Metrics say we should try to scroll down');
 
       final trailingScrollBoundary = _dragAutoScrollBoundary.trailing;
