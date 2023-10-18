@@ -1804,7 +1804,6 @@ const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.scrollOnCtrlOrCmdAndEndKeyPress,
   DefaultSuperTextFieldKeyboardHandlers.scrollOnHomeOnMacOrWeb,
   DefaultSuperTextFieldKeyboardHandlers.scrollOnEndOnMacOrWeb,
-  DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
   DefaultSuperTextFieldKeyboardHandlers.moveToLineStartWithHome,
