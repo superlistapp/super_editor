@@ -271,7 +271,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
   ScrollPosition? _activeScrollPosition;
 
-  SuperEditorIosControlsController? _controlsContext;
+  SuperEditorIosControlsController? _controlsController;
   late FloatingCursorListener _floatingCursorListener;
 
   late DragHandleAutoScroller _handleAutoScrolling;
@@ -319,14 +319,14 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    if (_controlsContext != null) {
-      _controlsContext!.floatingCursorController.removeListener(_floatingCursorListener);
-      _controlsContext!.floatingCursorController.cursorGeometryInViewport
+    if (_controlsController != null) {
+      _controlsController!.floatingCursorController.removeListener(_floatingCursorListener);
+      _controlsController!.floatingCursorController.cursorGeometryInViewport
           .removeListener(_onFloatingCursorGeometryChange);
     }
-    _controlsContext = SuperEditorIosControlsScope.rootOf(context);
-    _controlsContext!.floatingCursorController.addListener(_floatingCursorListener);
-    _controlsContext!.floatingCursorController.cursorGeometryInViewport.addListener(_onFloatingCursorGeometryChange);
+    _controlsController = SuperEditorIosControlsScope.rootOf(context);
+    _controlsController!.floatingCursorController.addListener(_floatingCursorListener);
+    _controlsController!.floatingCursorController.cursorGeometryInViewport.addListener(_onFloatingCursorGeometryChange);
 
     _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
 
@@ -367,7 +367,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
 
-    _controlsContext!.floatingCursorController.removeListener(_floatingCursorListener);
+    _controlsController!.floatingCursorController.removeListener(_floatingCursorListener);
 
     widget.document.removeListener(_onDocumentChange);
 
@@ -435,7 +435,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onDocumentChange(_) {
-    _controlsContext!.hideToolbar();
+    _controlsController!.hideToolbar();
 
     onNextFrame((_) {
       // The user may have changed the type of node, e.g., paragraph to
@@ -532,7 +532,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     // Stop the caret from blinking, in case this tap down turns into a long-press drag,
     // or a caret drag.
-    _controlsContext!.doNotBlinkCaret();
+    _controlsController!.doNotBlinkCaret();
   }
 
   // Runs when a tap down has lasted long enough to signify a long-press.
@@ -567,7 +567,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalTapDownOffset!));
-    _controlsContext!
+    _controlsController!
       ..hideToolbar()
       ..showMagnifier();
 
@@ -578,7 +578,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     // Stop waiting for a long-press to start.
     _globalTapDownOffset = null;
     _tapDownLongPressTimer?.cancel();
-    _controlsContext!.hideMagnifier();
+    _controlsController!.hideMagnifier();
 
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
@@ -587,13 +587,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _controlsContext!.blinkCaret();
+    _controlsController!.blinkCaret();
 
     final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
         (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
-      _controlsContext!.toggleToolbar();
+      _controlsController!.toggleToolbar();
       return;
     }
 
@@ -617,7 +617,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         !selection.isCollapsed &&
         widget.document.doesSelectionContainPosition(selection, docPosition)) {
       // The user tapped on an expanded selection. Toggle the toolbar.
-      _controlsContext!.toggleToolbar();
+      _controlsController!.toggleToolbar();
       return;
     }
 
@@ -627,10 +627,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       if (didTapOnExistingSelection) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
-        _controlsContext!.toggleToolbar();
+        _controlsController!.toggleToolbar();
       } else {
         // The user tapped somewhere else in the document. Hide the toolbar.
-        _controlsContext!.hideToolbar();
+        _controlsController!.hideToolbar();
       }
 
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -655,7 +655,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       widget.editor.execute([
         const ClearSelectionRequest(),
       ]);
-      _controlsContext!.hideToolbar();
+      _controlsController!.hideToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -712,9 +712,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     final newSelection = widget.selection.value;
     if (newSelection == null || newSelection.isCollapsed) {
-      _controlsContext!.hideToolbar();
+      _controlsController!.hideToolbar();
     } else {
-      _controlsContext!.showToolbar();
+      _controlsController!.showToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -785,9 +785,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     final selection = widget.selection.value;
     if (selection == null || selection.isCollapsed) {
-      _controlsContext!.hideToolbar();
+      _controlsController!.hideToolbar();
     } else {
-      _controlsContext!.showToolbar();
+      _controlsController!.showToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -828,9 +828,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _controlsContext!.doNotBlinkCaret();
-    _controlsContext!.hideToolbar();
-    _controlsContext!.showToolbar();
+    _controlsController!.doNotBlinkCaret();
+    _controlsController!.hideToolbar();
+    _controlsController!.showToolbar();
 
     _globalStartDragOffset = details.globalPosition;
     final interactorBox = context.findRenderObject() as RenderBox;
@@ -984,7 +984,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   void _onPanEnd(DragEndDetails details) {
     _magnifierOffset.value = null;
-    _controlsContext!.hideMagnifier();
+    _controlsController!.hideMagnifier();
 
     if (_dragMode == null) {
       // User was dragging the scroll area. Go ballistic.
@@ -1019,7 +1019,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _onHandleDragEnd();
     }
 
-    _controlsContext!.blinkCaret();
+    _controlsController!.blinkCaret();
     _handleAutoScrolling.stopAutoScrollHandleMonitoring();
     scrollPosition.removeListener(_onAutoScrollChange);
   }
@@ -1039,9 +1039,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _updateOverlayControlsAfterFinishingDragSelection() {
-    _controlsContext!.hideMagnifier();
+    _controlsController!.hideMagnifier();
     if (!widget.selection.value!.isCollapsed) {
-      _controlsContext!.showToolbar();
+      _controlsController!.showToolbar();
     }
   }
 
@@ -1161,7 +1161,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onFloatingCursorGeometryChange() {
-    final cursorGeometry = _controlsContext!.floatingCursorController.cursorGeometryInViewport.value;
+    final cursorGeometry = _controlsController!.floatingCursorController.cursorGeometryInViewport.value;
     if (cursorGeometry == null) {
       return;
     }
@@ -1277,7 +1277,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           left: magnifierOffset.dx,
           top: magnifierOffset.dy,
           child: Leader(
-            link: _controlsContext!.magnifierFocalPoint,
+            link: _controlsController!.magnifierFocalPoint,
             child: const SizedBox(width: 1, height: 1),
           ),
         );

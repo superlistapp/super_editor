@@ -395,8 +395,6 @@ class SuperEditorState extends State<SuperEditor> {
       _composer = widget.composer;
     }
 
-    // TODO: update the platform gesture controls controller
-
     if (widget.editor != oldWidget.editor) {
       for (final plugin in oldWidget.plugins) {
         plugin.detach(oldWidget.editor);
@@ -614,17 +612,9 @@ class SuperEditorState extends State<SuperEditor> {
   }) {
     switch (gestureMode) {
       // case DocumentGestureMode.mouse:
-      //   // TODO: create context for mouse mode
-      //   return IOSEditorControlsContext(
-      //     data: data,
-      //     child: child,
-      //   );
+      //   // TODO: create context for mouse mode (#1533)
       // case DocumentGestureMode.android:
-      //   // TODO: create context for Android
-      //   return IOSEditorControlsContext(
-      //     data: data,
-      //     child: child,
-      //   );
+      //   // TODO: create context for Android (#1509)
       case DocumentGestureMode.iOS:
       default:
         return SuperEditorIosControlsScope(

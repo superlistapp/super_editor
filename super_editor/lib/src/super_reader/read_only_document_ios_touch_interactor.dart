@@ -110,15 +110,25 @@ class SuperReaderIosControlsController {
   });
 
   void dispose() {
-    shouldShowMagnifier.dispose();
-    shouldShowToolbar.dispose();
+    _shouldShowMagnifier.dispose();
+    _shouldShowToolbar.dispose();
   }
 
   /// Color of the text selection drag handles on iOS.
   final Color? handleColor;
 
   /// Whether the iOS magnifier should be displayed right now.
-  final shouldShowMagnifier = ValueNotifier<bool>(false);
+  ValueListenable<bool> get shouldShowMagnifier => _shouldShowMagnifier;
+  final _shouldShowMagnifier = ValueNotifier<bool>(false);
+
+  /// Shows the magnifier by setting [shouldShowMagnifier] to `true`.
+  void showMagnifier() => _shouldShowMagnifier.value = true;
+
+  /// Hides the magnifier by setting [shouldShowMagnifier] to `false`.
+  void hideMagnifier() => _shouldShowMagnifier.value = false;
+
+  /// Toggles [shouldShowMagnifier].
+  void toggleMagnifier() => _shouldShowMagnifier.value = !_shouldShowMagnifier.value;
 
   /// Link to a location where a magnifier should be focused.
   final magnifierFocalPoint = LeaderLink();
@@ -129,10 +139,17 @@ class SuperReaderIosControlsController {
   final DocumentMagnifierBuilder? magnifierBuilder;
 
   /// Whether the iOS floating toolbar should be displayed right now.
-  final shouldShowToolbar = ValueNotifier<bool>(false);
+  ValueListenable<bool> get shouldShowToolbar => _shouldShowToolbar;
+  final _shouldShowToolbar = ValueNotifier<bool>(false);
+
+  /// Shows the toolbar by setting [shouldShowToolbar] to `true`.
+  void showToolbar() => _shouldShowToolbar.value = true;
+
+  /// Hides the toolbar by setting [shouldShowToolbar] to `false`.
+  void hideToolbar() => _shouldShowToolbar.value = false;
 
   /// Toggles [shouldShowToolbar].
-  void toggleToolbar() => shouldShowToolbar.value = !shouldShowToolbar.value;
+  void toggleToolbar() => _shouldShowToolbar.value = !_shouldShowToolbar.value;
 
   /// Link to a location where a toolbar should be focused.
   ///
@@ -216,7 +233,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
   ScrollPosition? _activeScrollPosition;
 
-  SuperReaderIosControlsController? _controlsContext;
+  SuperReaderIosControlsController? _controlsController;
 
   late DragHandleAutoScroller _handleAutoScrolling;
   Offset? _globalStartDragOffset;
@@ -263,7 +280,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = SuperReaderIosControlsScope.rootOf(context);
+    _controlsController = SuperReaderIosControlsScope.rootOf(context);
 
     _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
 
@@ -342,7 +359,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _onDocumentChange(_) {
-    _controlsContext!.shouldShowToolbar.value = false;
+    _controlsController!.hideToolbar();
 
     onNextFrame((_) {
       // The user may have changed the type of node, e.g., paragraph to
@@ -365,7 +382,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     final newSelection = widget.selection.value;
 
     if (newSelection == null) {
-      _controlsContext!.shouldShowToolbar.value = false;
+      _controlsController!.hideToolbar();
     }
   }
 
@@ -457,9 +474,9 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     }
 
     _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalTapDownOffset!));
-    _controlsContext!
-      ..shouldShowToolbar.value = false
-      ..shouldShowMagnifier.value = true;
+    _controlsController!
+      ..hideToolbar()
+      ..showMagnifier();
 
     widget.focusNode.requestFocus();
   }
@@ -468,13 +485,13 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     // Stop waiting for a long-press to start.
     _globalTapDownOffset = null;
     _tapDownLongPressTimer?.cancel();
-    _controlsContext!.shouldShowMagnifier.value = false;
+    _controlsController!.hideMagnifier();
 
     final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
         (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
-      _controlsContext!.toggleToolbar();
+      _controlsController!.toggleToolbar();
       return;
     }
 
@@ -498,12 +515,12 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
         !selection.isCollapsed &&
         widget.document.doesSelectionContainPosition(selection, docPosition)) {
       // The user tapped on an expanded selection. Toggle the toolbar.
-      _controlsContext!.toggleToolbar();
+      _controlsController!.toggleToolbar();
       return;
     }
 
     widget.selection.value = null;
-    _controlsContext!.shouldShowToolbar.value = false;
+    _controlsController!.hideToolbar();
 
     widget.focusNode.requestFocus();
   }
@@ -554,9 +571,9 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
     final newSelection = widget.selection.value;
     if (newSelection == null || newSelection.isCollapsed) {
-      _controlsContext!.shouldShowToolbar.value = false;
+      _controlsController!.hideToolbar();
     } else {
-      _controlsContext!.shouldShowToolbar.value = true;
+      _controlsController!.showToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -596,9 +613,9 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
     final selection = widget.selection.value;
     if (selection == null || selection.isCollapsed) {
-      _controlsContext!.shouldShowToolbar.value = false;
+      _controlsController!.hideToolbar();
     } else {
-      _controlsContext!.shouldShowToolbar.value = true;
+      _controlsController!.showToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -636,7 +653,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       return;
     }
 
-    _controlsContext!.shouldShowToolbar.value = false;
+    _controlsController!.hideToolbar();
 
     _globalStartDragOffset = details.globalPosition;
     final interactorBox = context.findRenderObject() as RenderBox;
@@ -730,7 +747,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       dragEndInViewport: dragEndInViewport,
     );
 
-    _controlsContext!.shouldShowMagnifier.value = true;
+    _controlsController!.showMagnifier();
 
     _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(details.globalPosition));
   }
@@ -812,9 +829,9 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _updateOverlayControlsAfterFinishingDragSelection() {
-    _controlsContext!.shouldShowMagnifier.value = false;
+    _controlsController!.hideMagnifier();
     if (!widget.selection.value!.isCollapsed) {
-      _controlsContext!.shouldShowToolbar.value = true;
+      _controlsController!.showToolbar();
     } else {
       // Read-only documents don't support collapsed selections.
       widget.selection.value = null;
@@ -962,7 +979,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
           left: magnifierOffset.dx,
           top: magnifierOffset.dy,
           child: Leader(
-            link: _controlsContext!.magnifierFocalPoint,
+            link: _controlsController!.magnifierFocalPoint,
             child: const SizedBox(width: 1, height: 1),
           ),
         );

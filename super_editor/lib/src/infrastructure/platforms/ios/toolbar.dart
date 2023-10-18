@@ -8,7 +8,7 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
   const IOSTextEditingFloatingToolbar({
     Key? key,
     this.floatingToolbarKey,
-    this.focalPoint,
+    required this.focalPoint,
     this.onCutPressed,
     this.onCopyPressed,
     this.onPastePressed,
@@ -17,7 +17,7 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
   final Key? floatingToolbarKey;
 
   /// Direction that the toolbar arrow should point.
-  final LeaderLink? focalPoint;
+  final LeaderLink focalPoint;
 
   final VoidCallback? onCutPressed;
   final VoidCallback? onCopyPressed;
@@ -35,9 +35,7 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
       ),
       child: CupertinoPopoverToolbar(
         key: floatingToolbarKey,
-        // TODO: make the focal point required
-        focalPoint:
-            focalPoint != null ? LeaderMenuFocalPoint(link: focalPoint!) : const StationaryMenuFocalPoint(Offset.zero),
+        focalPoint: LeaderMenuFocalPoint(link: focalPoint),
         elevation: 8.0,
         backgroundColor: brightness == Brightness.dark //
             ? iOSToolbarDarkBackgroundColor

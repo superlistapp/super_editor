@@ -106,10 +106,14 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
   TextSelection? _selectionBeforeTap;
 
+  TextSelection? _previousToolbarFocusSelection;
+  final _toolbarFocusSelectionRect = ValueNotifier<Rect?>(null);
+
   @override
   void initState() {
     super.initState();
 
+    widget.textController.addListener(_onSelectionChange);
     widget.textScrollController.addListener(_onScrollChange);
   }
 
@@ -117,6 +121,10 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   void didUpdateWidget(IOSTextFieldTouchInteractor oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (widget.textController != oldWidget.textController) {
+      oldWidget.textController.removeListener(_onSelectionChange);
+      widget.textController.addListener(_onSelectionChange);
+    }
     if (widget.textScrollController != oldWidget.textScrollController) {
       oldWidget.textScrollController.removeListener(_onScrollChange);
       widget.textScrollController.addListener(_onScrollChange);
@@ -125,11 +133,20 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
   @override
   void dispose() {
+    _toolbarFocusSelectionRect.dispose();
+    widget.textController.removeListener(_onSelectionChange);
     widget.textScrollController.removeListener(_onScrollChange);
     super.dispose();
   }
 
   ProseTextLayout get _textLayout => widget.selectableTextKey.currentState!.textLayout;
+
+  void _onSelectionChange() {
+    if (widget.textController.selection != _previousToolbarFocusSelection) {
+      // Update the selection bounds focal point
+      WidgetsBinding.instance.runAsSoonAsPossible(_computeSelectionRect);
+    }
+  }
 
   void _onTapDown(TapDownDetails details) {
     _log.fine("User tapped down");
@@ -391,7 +408,8 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
             clipBehavior: Clip.none,
             children: [
               widget.child,
-              if (widget.textController.selection.extentOffset >= 0) _buildExtentTrackerForMagnifier(),
+              _buildExtentTrackerForMagnifier(),
+              _buildTrackerForToolbarFocus(),
               _buildTapAndDragDetector(),
             ],
           ),
@@ -437,11 +455,47 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     );
   }
 
+  Widget _buildTrackerForToolbarFocus() {
+    return ValueListenableBuilder(
+      valueListenable: _toolbarFocusSelectionRect,
+      builder: (context, selectionRect, child) {
+        if (selectionRect == null) {
+          return const SizedBox();
+        }
+
+        return Positioned.fromRect(
+          rect: selectionRect,
+          child: Leader(
+            link: widget.editingOverlayController.toolbarFocalPoint,
+            child: widget.showDebugPaint ? ColoredBox(color: Colors.green.withOpacity(0.2)) : const SizedBox(),
+          ),
+        );
+      },
+    );
+  }
+
+  void _computeSelectionRect() {
+    _previousToolbarFocusSelection = widget.textController.selection;
+
+    if (!widget.textController.selection.isValid || widget.textController.selection.isCollapsed) {
+      _toolbarFocusSelectionRect.value = null;
+      return;
+    }
+
+    final textBoxes = _textLayout.getBoxesForSelection(widget.textController.selection);
+
+    Rect boundingBox = textBoxes.first.toRect();
+    for (int i = 1; i < textBoxes.length; i += 1) {
+      boundingBox = boundingBox.expandToInclude(textBoxes[i].toRect());
+    }
+    _toolbarFocusSelectionRect.value = boundingBox;
+  }
+
   /// Builds a tracking widget at the selection extent offset.
   ///
   /// The extent widget is tracked via [_draggingHandleLink]
   Widget _buildExtentTrackerForMagnifier() {
-    if (!_isDraggingCaret) {
+    if (!widget.textController.selection.isValid || !_isDraggingCaret) {
       return const SizedBox();
     }
 

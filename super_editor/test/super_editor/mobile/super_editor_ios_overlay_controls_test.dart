@@ -14,7 +14,7 @@ void main() {
         // Create a collapsed selection.
         await tester.tapInParagraph("1", 1);
 
-        // Ensure we have a collapsed.
+        // Ensure we have a collapsed selection.
         expect(SuperEditorInspector.findDocumentSelection(), isNotNull);
         expect(SuperEditorInspector.findDocumentSelection()!.isCollapsed, isTrue);
 

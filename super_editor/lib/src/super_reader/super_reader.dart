@@ -385,7 +385,6 @@ class SuperReaderState extends State<SuperReader> {
               gestureBuilder: _buildGestureInteractor,
               scrollController: _scrollController,
               autoScrollController: _autoScrollController,
-              // TODO: Finish integrating the DocumentScroller in SuperReader (https://github.com/superlistapp/super_editor/issues/1306)
               scroller: _scroller,
               presenter: _docLayoutPresenter!,
               componentBuilders: widget.componentBuilders,
@@ -425,17 +424,9 @@ class SuperReaderState extends State<SuperReader> {
   }) {
     switch (_gestureMode) {
       // case DocumentGestureMode.mouse:
-      //   // TODO: create context for mouse mode
-      //   return IOSEditorControlsContext(
-      //     data: data,
-      //     child: child,
-      //   );
+      // TODO: create context for mouse mode (#1533)
       // case DocumentGestureMode.android:
-      //   // TODO: create context for Android
-      //   return IOSEditorControlsContext(
-      //     data: data,
-      //     child: child,
-      //   );
+      // TODO: create context for Android (#1509)
       case DocumentGestureMode.iOS:
       default:
         return SuperReaderIosControlsScope(
@@ -567,7 +558,7 @@ class DefaultIosReaderToolbar extends StatelessWidget {
 
   /// Copies selected content to the OS clipboard.
   void _copy() {
-    editorControlsController.shouldShowToolbar.value = false;
+    editorControlsController.hideToolbar();
 
     if (selection.value == null) {
       return;

@@ -550,9 +550,11 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
 class IOSEditingOverlayController with ChangeNotifier {
   IOSEditingOverlayController({
     required this.textController,
+    required LeaderLink toolbarFocalPoint,
     required LeaderLink magnifierFocalPoint,
     required this.overlayController,
-  }) : _magnifierFocalPoint = magnifierFocalPoint {
+  })  : _toolbarFocalPoint = toolbarFocalPoint,
+        _magnifierFocalPoint = magnifierFocalPoint {
     overlayController.addListener(_overlayControllerChanged);
   }
 
@@ -578,6 +580,9 @@ class IOSEditingOverlayController with ChangeNotifier {
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController overlayController;
 
+  LeaderLink get toolbarFocalPoint => _toolbarFocalPoint;
+  final LeaderLink _toolbarFocalPoint;
+
   void toggleToolbar() {
     overlayController.toggleToolbar();
   }
@@ -590,8 +595,8 @@ class IOSEditingOverlayController with ChangeNotifier {
     overlayController.hideToolbar();
   }
 
-  final LeaderLink _magnifierFocalPoint;
   LeaderLink get magnifierFocalPoint => _magnifierFocalPoint;
+  final LeaderLink _magnifierFocalPoint;
 
   bool get isMagnifierVisible => overlayController.shouldDisplayMagnifier;
 

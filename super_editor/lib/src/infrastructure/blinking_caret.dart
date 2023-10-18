@@ -50,7 +50,7 @@ class BlinkingCaretState extends State<BlinkingCaret> with SingleTickerProviderS
     super.didUpdateWidget(oldWidget);
 
     if (widget.controller != oldWidget.controller) {
-      if (widget.controller == null) {
+      if (oldWidget.controller == null) {
         _caretBlinkController.dispose();
       }
 
