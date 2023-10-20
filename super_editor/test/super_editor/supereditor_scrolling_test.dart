@@ -581,6 +581,60 @@ void main() {
         expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
       });
 
+      testWidgetsOnMobile('scrolls when dragging without attaching to IME', (tester) async {
+        final scrollController = ScrollController();
+
+        // Pump an editor inside a CustomScrollView without enough room to display
+        // the whole content.
+        await tester
+            .createDocument() //
+            .withLongTextContent()
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => MaterialApp(
+                home: Scaffold(
+                  body: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 200),
+                    child: CustomScrollView(
+                      controller: scrollController,
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: superEditor,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            )
+            .pump();
+
+        // Ensure the scrollview didn't start scrolled.
+        expect(scrollController.offset, 0);
+
+        final scrollableRect = tester.getRect(find.byType(CustomScrollView));
+
+        const dragFrameCount = 10;
+        final dragAmountPerFrame = scrollableRect.height / dragFrameCount;
+
+        // Drag from the bottom all the way up to the top of the scrollable.
+        final dragGesture = await tester.startGesture(scrollableRect.bottomCenter - const Offset(0, 1));
+        for (int i = 0; i < dragFrameCount; i += 1) {
+          await dragGesture.moveBy(Offset(0, -dragAmountPerFrame));
+          await tester.pump();
+        }
+
+        // The editor supports long press to select.
+        // Wait long enough to make sure  this gesture wasn't confused with a long press.
+        await tester.pump(kLongPressTimeout + const Duration(milliseconds: 1));
+        await dragGesture.up();
+        await dragGesture.removePointer();
+
+        // Ensure we scrolled, didn't changed the selection and didn't attach to the IME.
+        expect(scrollController.offset, greaterThan(0));
+        expect(SuperEditorInspector.findDocumentSelection(), isNull);
+        expect(tester.testTextInput.hasAnyClients, isFalse);
+      });
+
       group('respects horizontal scrolling', () {
         testWidgetsOnAllPlatforms('inside a TabBar', (tester) async {
           final tabController = TabController(length: 2, vsync: tester);
