@@ -224,6 +224,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
         ),
       ]);
     }
+
+    // Rebuild to display the selected item.
+    setState(() {});
   }
 
   /// Returns true if the given [_TextType] represents an
@@ -440,6 +443,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
     final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId) as ParagraphNode;
     selectedNode.putMetadataValue('textAlign', newAlignmentValue);
+
+    // Rebuild to display the selected item.
+    setState(() {});
   }
 
   /// Returns the localized name for the given [_TextType], e.g.,
@@ -521,26 +527,30 @@ class _EditorToolbarState extends State<EditorToolbar> {
               if (_isConvertibleNode()) ...[
                 Tooltip(
                   message: AppLocalizations.of(context)!.labelTextBlockType,
-                  child: DropdownButton<_TextType>(
+                  child: SuperDropdownButton<_TextType>(
+                    boundaryKey: widget.editorViewportKey,
                     value: _getCurrentTextType(),
-                    items: _TextType.values
-                        .map((textType) => DropdownMenuItem<_TextType>(
-                              value: textType,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 16.0),
-                                child: Text(_getTextTypeName(textType)),
-                              ),
-                            ))
-                        .toList(),
-                    icon: const Icon(Icons.arrow_drop_down),
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
+                    items: _TextType.values,
+                    itemBuilder: (context, item) => Text(
+                      _getTextTypeName(item),
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                      ),
                     ),
-                    underline: const SizedBox(),
-                    elevation: 0,
-                    itemHeight: 48,
+                    buttonBuilder: (context, item) => Padding(
+                      padding: EdgeInsets.only(left: 8.0),
+                      child: Text(
+                        _getTextTypeName(item!),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    parentFocusNode: widget.editorFocusNode,
                     onChanged: _convertTextToNewType,
+                    focusColor: Colors.yellow,
                   ),
                 ),
                 _buildVerticalDivider(),
@@ -584,26 +594,14 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 _buildVerticalDivider(),
                 Tooltip(
                   message: AppLocalizations.of(context)!.labelTextAlignment,
-                  child: DropdownButton<TextAlign>(
+                  child: SuperDropdownButton<TextAlign>(
                     value: _getCurrentTextAlignment(),
-                    items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
-                        .map((textAlign) => DropdownMenuItem<TextAlign>(
-                              value: textAlign,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Icon(_buildTextAlignIcon(textAlign)),
-                              ),
-                            ))
-                        .toList(),
-                    icon: const Icon(Icons.arrow_drop_down),
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
-                    ),
-                    underline: const SizedBox(),
-                    elevation: 0,
-                    itemHeight: 48,
+                    items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify],
                     onChanged: _changeAlignment,
+                    boundaryKey: widget.editorViewportKey,
+                    parentFocusNode: widget.editorFocusNode,
+                    itemBuilder: (context, item) => Icon(_buildTextAlignIcon(item)),
+                    buttonBuilder: (context, item) => Icon(_buildTextAlignIcon(item!)),
                   ),
                 ),
               ],
