@@ -745,7 +745,8 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
         },
         builder: (context) {
           final isShowingFloatingCursor = widget.floatingCursorController?.isActive.value == true;
-          if (isShowingFloatingCursor && widget.floatingCursorController?.isNearText.value == true) {
+          final isNearText = widget.floatingCursorController?.isNearText.value == true;
+          if (isShowingFloatingCursor && isNearText) {
             // The floating cursor is active and it's near some text. We don't want to
             // paint a collapsed handle/caret.
             return const SizedBox();
