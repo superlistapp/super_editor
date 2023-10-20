@@ -581,7 +581,7 @@ void main() {
         expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
       });
 
-      testWidgetsOnMobile('scrolls when dragging without attaching to IME', (tester) async {
+      testWidgetsOnMobile('scrolling doesn\'t cause the keyboard to open', (tester) async {
         final scrollController = ScrollController();
 
         // Pump an editor inside a CustomScrollView without enough room to display

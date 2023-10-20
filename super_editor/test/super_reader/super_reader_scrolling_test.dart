@@ -314,7 +314,7 @@ void main() {
     });
 
     group("with ancestor scrollable", () {
-      testWidgetsOnMobile('scrolls when dragging without selecting content', (tester) async {
+      testWidgetsOnMobile('scrolling doesn\'t change selection', (tester) async {
         final scrollController = ScrollController();
 
         // Pump a reader inside a CustomScrollView without enough room to display
