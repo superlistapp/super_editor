@@ -368,6 +368,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     WidgetsBinding.instance.removeObserver(this);
 
     _controlsController!.floatingCursorController.removeListener(_floatingCursorListener);
+    _controlsController!.floatingCursorController.cursorGeometryInViewport
+        .removeListener(_onFloatingCursorGeometryChange);
 
     widget.document.removeListener(_onDocumentChange);
 
@@ -1688,9 +1690,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
   /// in the document, and moves the selection to that position.
   void _selectPositionUnderFloatingCursor() {
     editorIosFloatingCursorLog.finer("Updating document selection based on floating cursor focal point.");
-    final controlsContext = SuperEditorIosControlsScope.rootOf(context);
-
-    final floatingCursorRectInViewport = controlsContext.floatingCursorController.cursorGeometryInViewport.value;
+    final floatingCursorRectInViewport = _controlsContext!.floatingCursorController.cursorGeometryInViewport.value;
     if (floatingCursorRectInViewport == null) {
       editorIosFloatingCursorLog.finer(" - the floating cursor rect is null. Not selecting anything.");
       return;
@@ -1737,7 +1737,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
 
   Widget _buildFloatingCursor() {
     return ValueListenableBuilder<Rect?>(
-      valueListenable: SuperEditorIosControlsScope.rootOf(context).floatingCursorController.cursorGeometryInViewport,
+      valueListenable: _controlsContext!.floatingCursorController.cursorGeometryInViewport,
       builder: (context, floatingCursorRect, child) {
         if (floatingCursorRect == null) {
           return const SizedBox();

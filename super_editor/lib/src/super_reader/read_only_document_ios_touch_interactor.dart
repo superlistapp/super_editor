@@ -774,6 +774,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _onPanEnd(DragEndDetails details) {
+    scrollPosition.removeListener(_onAutoScrollChange);
     _magnifierOffset.value = null;
 
     if (_dragMode == null) {
@@ -795,6 +796,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _onPanCancel() {
+    scrollPosition.removeListener(_onAutoScrollChange);
     _magnifierOffset.value = null;
 
     if (_dragMode != null) {

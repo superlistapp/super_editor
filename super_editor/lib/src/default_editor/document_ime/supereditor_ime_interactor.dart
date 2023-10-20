@@ -145,6 +145,8 @@ class SuperEditorImeInteractor extends StatefulWidget {
 class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> implements ImeInputOwner {
   late FocusNode _focusNode;
 
+  SuperEditorIosControlsController? _controlsController;
+
   final _imeConnection = ValueNotifier<TextInputConnection?>(null);
   late TextInputConfiguration _textInputConfiguration;
   late DocumentImeInputClient _documentImeClient;
@@ -179,8 +181,9 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _controlsController = SuperEditorIosControlsScope.maybeRootOf(context);
     _documentImeClient.floatingCursorController =
-        widget.floatingCursorController ?? SuperEditorIosControlsScope.maybeRootOf(context)?.floatingCursorController;
+        widget.floatingCursorController ?? _controlsController?.floatingCursorController;
   }
 
   @override
@@ -190,7 +193,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     if (widget.editContext != oldWidget.editContext) {
       _setupImeConnection();
       _documentImeClient.floatingCursorController =
-          widget.floatingCursorController ?? SuperEditorIosControlsScope.maybeRootOf(context)?.floatingCursorController;
+          widget.floatingCursorController ?? _controlsController?.floatingCursorController;
       _imeConnection.notifyListeners();
     }
 

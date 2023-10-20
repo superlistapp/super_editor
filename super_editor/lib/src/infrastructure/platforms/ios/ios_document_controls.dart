@@ -13,7 +13,6 @@ import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
-import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
@@ -629,6 +628,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     widget.shouldCaretBlink.removeListener(_onBlinkModeChange);
     widget.floatingCursorController?.isActive.removeListener(_onFloatingCursorActivationChange);
 
+    _caretBlinkController.dispose();
     super.dispose();
   }
 
@@ -700,13 +700,9 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   Widget doBuild(BuildContext context, DocumentSelectionLayout? layoutData) {
     return IgnorePointer(
       child: SizedBox.expand(
-        child: Stack(
-          children: [
-            if (layoutData != null) ...[
-              _buildHandles(layoutData),
-            ],
-          ],
-        ),
+        child: layoutData != null //
+            ? _buildHandles(layoutData)
+            : const SizedBox(),
       ),
     );
   }
