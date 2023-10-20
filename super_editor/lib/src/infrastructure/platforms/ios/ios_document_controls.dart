@@ -12,6 +12,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
@@ -455,13 +456,10 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
     // The current selection is expanded, or we went from expanded in the previous frame
     // to non-expanded in this frame. Either way, we need to recalculate the toolbar focal
     // point bounds.
-    if (mounted && SchedulerBinding.instance.schedulerPhase != SchedulerPhase.persistentCallbacks) {
-      // The Flutter pipeline isn't running. Schedule a re-build to re-position the toolbar focal point.
-      setState(() {
-        // The selection bounds, and Leader build, will take place in methods that
-        // run in response to setState().
-      });
-    }
+    setStateAsSoonAsPossible(() {
+      // The selection bounds, and Leader build, will take place in methods that
+      // run in response to setState().
+    });
   }
 
   @override
