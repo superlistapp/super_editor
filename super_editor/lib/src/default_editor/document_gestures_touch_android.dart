@@ -785,7 +785,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     // The user is trying to scroll the document. Change the scroll offset.
-    scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
+    scrollPosition.pointerScroll(-details.delta.dy);
   }
 
   void _updateLongPressSelection(DocumentSelection newSelection) {

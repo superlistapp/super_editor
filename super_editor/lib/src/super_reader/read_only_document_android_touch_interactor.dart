@@ -718,7 +718,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
-    scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
+    scrollPosition.pointerScroll(-details.delta.dy);
   }
 
   void _updateLongPressSelection(DocumentSelection newSelection) {
