@@ -528,9 +528,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 Tooltip(
                   message: AppLocalizations.of(context)!.labelTextBlockType,
                   child: SuperDropdownButton<_TextType>(
+                    parentFocusNode: widget.editorFocusNode,
                     boundaryKey: widget.editorViewportKey,
                     value: _getCurrentTextType(),
                     items: _TextType.values,
+                    onChanged: _convertTextToNewType,
+                    focusColor: Colors.yellow,
                     itemBuilder: (context, item) => Text(
                       _getTextTypeName(item),
                       style: const TextStyle(
@@ -548,9 +551,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
                         ),
                       ),
                     ),
-                    parentFocusNode: widget.editorFocusNode,
-                    onChanged: _convertTextToNewType,
-                    focusColor: Colors.yellow,
                   ),
                 ),
                 _buildVerticalDivider(),

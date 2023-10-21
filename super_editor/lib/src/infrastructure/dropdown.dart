@@ -20,40 +20,37 @@ import 'package:super_editor/super_editor.dart';
 class SuperDropdownButton<T> extends StatefulWidget {
   const SuperDropdownButton({
     super.key,
+    required this.parentFocusNode,
+    required this.boundaryKey,
     required this.items,
     required this.value,
     required this.onChanged,
     required this.itemBuilder,
     required this.buttonBuilder,
     this.focusColor,
-    required this.boundaryKey,
-    required this.parentFocusNode,
     this.dropdownContraints,
     this.dropdownKey,
   });
 
-  /// The items that will be displayed in the dropdown list.
-  final List<T> items;
-
-  /// The currently selected value or `null` if no item is selected.
-  final T? value;
-
-  /// Called when the user selects an item on the dropdown list.
-  final ValueChanged<T?> onChanged;
-
-  /// Builds each item in the dropdown list.
-  final Widget Function(BuildContext context, T item) itemBuilder;
-
-  /// Builds the button that opens the dropdown.
-  final Widget Function(BuildContext context, T? item) buttonBuilder;
-
-  /// The background color of the focused list item.
-  final Color? focusColor;
+  /// [FocusNode] which will share focus with the dropdown list.
+  final FocusNode parentFocusNode;
 
   /// A [GlobalKey] to a widget that determines the bounds where the dropdown can be displayed.
   ///
   /// Used to avoid the dropdown to be displayed off-screen.
   final GlobalKey boundaryKey;
+
+  /// The currently selected value or `null` if no item is selected.
+  final T? value;
+
+  /// The items that will be displayed in the dropdown list.
+  final List<T> items;
+
+  /// Called when the user selects an item on the dropdown list.
+  final ValueChanged<T?> onChanged;
+
+  /// The background color of the focused list item.
+  final Color? focusColor;
 
   /// A [GlobalKey] bound to the dropdown list.
   final GlobalKey? dropdownKey;
@@ -61,8 +58,11 @@ class SuperDropdownButton<T> extends StatefulWidget {
   /// Constraints applied to the dropdown list.
   final BoxConstraints? dropdownContraints;
 
-  /// [FocusNode] which will share focus with the dropdown list.
-  final FocusNode parentFocusNode;
+  /// Builds each item in the dropdown list.
+  final Widget Function(BuildContext context, T item) itemBuilder;
+
+  /// Builds the button that opens the dropdown.
+  final Widget Function(BuildContext context, T? item) buttonBuilder;
 
   @override
   State<SuperDropdownButton<T>> createState() => SuperDropdownButtonState<T>();
@@ -70,15 +70,15 @@ class SuperDropdownButton<T> extends StatefulWidget {
 
 @visibleForTesting
 class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with SingleTickerProviderStateMixin {
+  @visibleForTesting
+  int? get focusedIndex => _focusedIndex;
+  int? _focusedIndex;
+
   final DropdownController _dropdownController = DropdownController();
 
   @visibleForTesting
   ScrollController get scrollController => _scrollController;
   final ScrollController _scrollController = ScrollController();
-
-  @visibleForTesting
-  int? get focusedIndex => _focusedIndex;
-  int? _focusedIndex;
 
   late final AnimationController _animationController;
   late final Animation<double> _resizeAnimation;
@@ -253,18 +253,21 @@ class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with Sin
 
     return Follower.withOffset(
       link: link,
-      leaderAnchor: Alignment.center,
-      followerAnchor: Alignment.center,
+      leaderAnchor: Alignment.bottomCenter,
+      followerAnchor: Alignment.topCenter,
+      offset: const Offset(0, 12),
       boundary: boundary,
       showWhenUnlinked: false,
       child: ConstrainedBox(
         constraints: widget.dropdownContraints ?? const BoxConstraints(),
-        child: SizeTransition(
-          sizeFactor: _resizeAnimation,
-          axisAlignment: 1.0,
-          fixedCrossAxisSizeFactor: 1.0,
-          child: Material(
-            key: widget.dropdownKey,
+        child: Material(
+          key: widget.dropdownKey,
+          elevation: 8,
+          borderRadius: BorderRadius.circular(12),
+          child: SizeTransition(
+            sizeFactor: _resizeAnimation,
+            axisAlignment: 1.0,
+            fixedCrossAxisSizeFactor: 1.0,
             child: ScrollConfiguration(
               behavior: ScrollConfiguration.of(context).copyWith(
                 scrollbars: false,
