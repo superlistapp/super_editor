@@ -631,6 +631,10 @@ void main() {
         expect(scrollController.offset, greaterThan(0));
         expect(SuperEditorInspector.findDocumentSelection(), isNull);
         expect(tester.testTextInput.hasAnyClients, isFalse);
+
+        // Release the pointer.
+        await dragGesture.up();
+        await dragGesture.removePointer();
       });
 
       testWidgetsOnMobile('scrolling and releasing the pointer doesn\'t cause the keyboard to open', (tester) async {
