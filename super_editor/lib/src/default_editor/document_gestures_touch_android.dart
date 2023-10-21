@@ -324,6 +324,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     if (isScrolling) {
       _isScrolling = true;
+
+      // The long-press timer is cancelled if a pan gesture is detected.
+      // However, if we have an ancestor scrollable, we won't receive a pan gesture in this widget.
+      // Cancel the timer as soon as the user started scrolling.
+      _tapDownLongPressTimer?.cancel();
+      _tapDownLongPressTimer = null;
     } else {
       onNextFrame((_) {
         // Set our scrolling flag to false on the next frame, so that our tap handlers
@@ -497,13 +503,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   // Runs when a tap down has lasted long enough to signify a long-press.
   void _onLongPressDown() {
-    if (_isScrolling) {
-      // When the editor has an ancestor scrollable, dragging won't trigger a pan gesture
-      // is this widget. Because of that, the timer still fires after the timeout.
-      // Do nothing to let the user scroll.
-      return;
-    }
-
     _longPressStrategy = AndroidDocumentLongPressSelectionStrategy(
       document: widget.document,
       documentLayout: _docLayout,

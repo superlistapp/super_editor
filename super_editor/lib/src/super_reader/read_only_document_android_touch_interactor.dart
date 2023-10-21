@@ -304,6 +304,12 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
     if (isScrolling) {
       _isScrolling = true;
+
+      // The long-press timer is cancelled if a pan gesture is detected.
+      // However, if we have an ancestor scrollable, we won't receive a pan gesture in this widget.
+      // Cancel the timer as soon as the user started scrolling.
+      _tapDownLongPressTimer?.cancel();
+      _tapDownLongPressTimer = null;
     } else {
       onNextFrame((_) {
         // Set our scrolling flag to false on the next frame, so that our tap handlers
