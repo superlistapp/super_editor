@@ -69,40 +69,36 @@ class IOSSelectionHandle extends StatelessWidget {
 
   Widget _buildExpandedHandle() {
     final ballDiameter = ballRadius * 2;
-    final verticalOffset = handleType == HandleType.upstream ? -ballRadius : ballRadius;
 
-    return Transform.translate(
-      offset: Offset(0, verticalOffset),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Show the ball on the top for an upstream handle
-          if (handleType == HandleType.upstream)
-            Container(
-              width: ballDiameter,
-              height: ballDiameter,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Show the ball on the top for an upstream handle
+        if (handleType == HandleType.upstream)
           Container(
-            width: 2,
-            height: caretHeight + ballRadius,
-            color: color,
-          ),
-          // Show the ball on the bottom for a downstream handle
-          if (handleType == HandleType.downstream)
-            Container(
-              width: ballDiameter,
-              height: ballDiameter,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
+            width: ballDiameter,
+            height: ballDiameter,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
             ),
-        ],
-      ),
+          ),
+        Container(
+          width: 2,
+          height: caretHeight + ballRadius,
+          color: color,
+        ),
+        // Show the ball on the bottom for a downstream handle
+        if (handleType == HandleType.downstream)
+          Container(
+            width: ballDiameter,
+            height: ballDiameter,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+      ],
     );
   }
 }

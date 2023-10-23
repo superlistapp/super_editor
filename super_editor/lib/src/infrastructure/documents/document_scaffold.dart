@@ -137,19 +137,19 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
   Widget _buildDocumentLayout() {
     return Align(
       alignment: Alignment.topCenter,
-      child: ContentLayers(
-        content: (onBuildScheduled) => CompositedTransformTarget(
-          link: widget.documentLayoutLink,
-          child: SingleColumnDocumentLayout(
+      child: CompositedTransformTarget(
+        link: widget.documentLayoutLink,
+        child: ContentLayers(
+          content: (onBuildScheduled) => SingleColumnDocumentLayout(
             key: widget.documentLayoutKey,
             presenter: widget.presenter,
             componentBuilders: widget.componentBuilders,
             onBuildScheduled: onBuildScheduled,
             showDebugPaint: widget.debugPaint.layout,
           ),
+          underlays: widget.underlays,
+          overlays: widget.overlays,
         ),
-        underlays: widget.underlays,
-        overlays: widget.overlays,
       ),
     );
   }

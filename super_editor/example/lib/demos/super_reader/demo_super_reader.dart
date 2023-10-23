@@ -14,13 +14,24 @@ class SuperReaderDemo extends StatefulWidget {
 class _SuperReaderDemoState extends State<SuperReaderDemo> {
   late final Document _document;
   final _selection = ValueNotifier<DocumentSelection?>(null);
+  final _selectionLayerLinks = SelectionLayerLinks();
   late MagnifierAndToolbarController _overlayController;
+  late final SuperReaderIosControlsController _iosReaderControlsController;
 
   @override
   void initState() {
     super.initState();
     _document = createInitialDocument();
     _overlayController = MagnifierAndToolbarController();
+    _iosReaderControlsController = SuperReaderIosControlsController(
+      toolbarBuilder: _buildToolbar,
+    );
+  }
+
+  @override
+  void dispose() {
+    _iosReaderControlsController.dispose();
+    super.dispose();
   }
 
   void _copy() {
@@ -117,18 +128,26 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return SuperReader(
-      document: _document,
-      selection: _selection,
-      overlayController: _overlayController,
-      androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-        onCopyPressed: _copy,
-        onSelectAllPressed: _selectAll,
+    return SuperReaderIosControlsScope(
+      controller: _iosReaderControlsController,
+      child: SuperReader(
+        document: _document,
+        selection: _selection,
+        overlayController: _overlayController,
+        selectionLayerLinks: _selectionLayerLinks,
+        androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+          onCopyPressed: _copy,
+          onSelectAllPressed: _selectAll,
+        ),
       ),
-      iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-        onCopyPressed: _copy,
-        focalPoint: _overlayController.toolbarTopAnchor!,
-      ),
+    );
+  }
+
+  Widget _buildToolbar(context, mobileToolbarKey, focalPoint) {
+    return IOSTextEditingFloatingToolbar(
+      key: mobileToolbarKey,
+      focalPoint: focalPoint,
+      onCopyPressed: _copy,
     );
   }
 }

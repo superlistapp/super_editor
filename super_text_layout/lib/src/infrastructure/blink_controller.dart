@@ -96,13 +96,16 @@ class BlinkController with ChangeNotifier {
 
   /// Make the object completely opaque, and restart the blink timer.
   void jumpToOpaque() {
+    final wasBlinking = isBlinking;
     stopBlinking();
 
     if (!_isBlinkingEnabled) {
       return;
     }
 
-    startBlinking();
+    if (wasBlinking) {
+      startBlinking();
+    }
   }
 
   void _onTick(Duration elapsedTime) {

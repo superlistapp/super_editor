@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:overlord/follow_the_leader.dart';
 import 'package:overlord/overlord.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/colors.dart';
 
 class IOSTextEditingFloatingToolbar extends StatelessWidget {
   const IOSTextEditingFloatingToolbar({
     Key? key,
+    this.floatingToolbarKey,
+    required this.focalPoint,
     this.onCutPressed,
     this.onCopyPressed,
     this.onPastePressed,
-    required this.focalPoint,
   }) : super(key: key);
+
+  final Key? floatingToolbarKey;
+
+  /// Direction that the toolbar arrow should point.
+  final LeaderLink focalPoint;
 
   final VoidCallback? onCutPressed;
   final VoidCallback? onCopyPressed;
   final VoidCallback? onPastePressed;
-
-  /// The point where the toolbar should point to.
-  ///
-  /// Represented as global coordinates.
-  final Offset focalPoint;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +34,8 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
             : const ColorScheme.dark(primary: Colors.white),
       ),
       child: CupertinoPopoverToolbar(
-        focalPoint: StationaryMenuFocalPoint(focalPoint),
+        key: floatingToolbarKey,
+        focalPoint: LeaderMenuFocalPoint(link: focalPoint),
         elevation: 8.0,
         backgroundColor: brightness == Brightness.dark //
             ? iOSToolbarDarkBackgroundColor
@@ -67,6 +71,12 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
     required String title,
     required VoidCallback onPressed,
   }) {
+    // TODO: Bring this back after its updated to support theming (Overlord #17)
+    // return CupertinoPopoverToolbarMenuItem(
+    //   label: title,
+    //   onPressed: onPressed,
+    // );
+
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(

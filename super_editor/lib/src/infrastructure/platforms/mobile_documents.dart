@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/_scrolling.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
-import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 
 /// Controls the display and position of a magnifier and a floating toolbar.
 class MagnifierAndToolbarController with ChangeNotifier {

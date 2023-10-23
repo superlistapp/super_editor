@@ -39,6 +39,7 @@ class BlinkingCaretState extends State<BlinkingCaret> with SingleTickerProviderS
         BlinkController(
           tickerProvider: this,
         );
+
     if (widget.caretOffset != null) {
       _caretBlinkController.jumpToOpaque();
     }
@@ -47,6 +48,17 @@ class BlinkingCaretState extends State<BlinkingCaret> with SingleTickerProviderS
   @override
   void didUpdateWidget(BlinkingCaret oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (widget.controller != oldWidget.controller) {
+      if (oldWidget.controller == null) {
+        _caretBlinkController.dispose();
+      }
+
+      _caretBlinkController = widget.controller ??
+          BlinkController(
+            tickerProvider: this,
+          );
+    }
 
     if (widget.caretOffset != oldWidget.caretOffset) {
       if (widget.caretOffset != null) {

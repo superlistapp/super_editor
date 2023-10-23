@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
 
 /// A document layer that positions leader widgets at the user's selection bounds.
 ///
@@ -15,12 +16,11 @@ import 'package:super_editor/src/infrastructure/content_layers.dart';
 /// on the document's self-reported caret height for the given document position.
 ///
 /// When no selection exists, no leaders are built in the layer's widget tree.
-class SelectionLeadersDocumentLayer extends ContentLayerStatefulWidget {
+class SelectionLeadersDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   const SelectionLeadersDocumentLayer({
     Key? key,
     required this.document,
     required this.selection,
-    required this.documentLayoutResolver,
     required this.links,
     this.showDebugLeaderBounds = false,
   }) : super(key: key);
@@ -32,10 +32,6 @@ class SelectionLeadersDocumentLayer extends ContentLayerStatefulWidget {
   /// The current user's selection within a document.
   final ValueListenable<DocumentSelection?> selection;
 
-  /// Delegate that returns a reference to the editor's [DocumentLayout], so
-  /// that the current selection can be mapped to an (x,y) offset and a height.
-  final DocumentLayout Function() documentLayoutResolver;
-
   /// Collections of [LayerLink]s, which are given to leader widgets that are
   /// positioned at the selection bounds, and around the full selection.
   final SelectionLayerLinks links;
@@ -44,12 +40,12 @@ class SelectionLeadersDocumentLayer extends ContentLayerStatefulWidget {
   final bool showDebugLeaderBounds;
 
   @override
-  ContentLayerState<ContentLayerStatefulWidget, DocumentSelectionLayout> createState() =>
+  DocumentLayoutLayerState<ContentLayerStatefulWidget, DocumentSelectionLayout> createState() =>
       _SelectionLeadersDocumentLayerState();
 }
 
 class _SelectionLeadersDocumentLayerState
-    extends ContentLayerState<SelectionLeadersDocumentLayer, DocumentSelectionLayout>
+    extends DocumentLayoutLayerState<SelectionLeadersDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
   @override
   void initState() {
@@ -86,13 +82,12 @@ class _SelectionLeadersDocumentLayerState
 
   /// Updates the caret rect, immediately, without scheduling a rebuild.
   @override
-  DocumentSelectionLayout? computeLayoutData(RenderObject? contentLayout) {
+  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
     final documentSelection = widget.selection.value;
     if (documentSelection == null) {
       return null;
     }
 
-    final documentLayout = widget.documentLayoutResolver();
     final selectedComponent = documentLayout.getComponentByNodeId(widget.selection.value!.extent.nodeId);
     if (selectedComponent == null) {
       // Assume that we're in a momentary transitive state where the document layout

@@ -12,6 +12,9 @@ class BinaryNodePosition implements NodePosition {
   final bool isIncluded;
 
   @override
+  bool isEquivalentTo(NodePosition other) => this == other;
+
+  @override
   String toString() => "[BinaryNodePosition] - is included: $isIncluded";
 
   @override

@@ -42,7 +42,19 @@ void testWidgetsOnWebDesktop(
   testWidgetsOnLinuxWeb("$description (on Linux Web)", test, skip: skip, variant: variant);
 }
 
-// A widget test that runs for macOS web.
+/// A widget test that runs a variant for every mobile platform on web, e.g.,
+/// iOS, Android.
+@isTestGroup
+void testWidgetsOnWebMobile(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgetsOnWebIos("$description (on iOS Web)", test, skip: skip, variant: variant);
+  testWidgetsOnWebAndroid("$description (on Android Web)", test, skip: skip, variant: variant);
+}
+
 @isTestGroup
 void testWidgetsOnMacWeb(
   String description,
@@ -67,7 +79,57 @@ void testWidgetsOnMacWeb(
   }, variant: variant, skip: skip);
 }
 
-// A widget test that runs for Windows web.
+@isTestGroup
+void testWidgetsOnIosDeviceAndWeb(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgetsOnIos(description, test, skip: skip, variant: variant);
+  testWidgetsOnWebIos(description, test, skip: skip, variant: variant);
+}
+
+@isTestGroup
+void testWidgetsOnWebIos(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgets(description, (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    debugIsWebOverride = WebPlatformOverride.web;
+
+    try {
+      await test(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      debugIsWebOverride = null;
+    }
+  }, variant: variant, skip: skip);
+}
+
+@isTestGroup
+void testWidgetsOnWebAndroid(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgets(description, (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    debugIsWebOverride = WebPlatformOverride.web;
+
+    try {
+      await test(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      debugIsWebOverride = null;
+    }
+  }, variant: variant, skip: skip);
+}
+
 @isTestGroup
 void testWidgetsOnWindowsWeb(
   String description,
@@ -92,7 +154,6 @@ void testWidgetsOnWindowsWeb(
   }, variant: variant, skip: skip);
 }
 
-// A widget test that runs for Linux web.
 @isTestGroup
 void testWidgetsOnLinuxWeb(
   String description,

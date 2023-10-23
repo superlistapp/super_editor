@@ -2,6 +2,7 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
@@ -21,10 +22,11 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
+import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
-import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -113,15 +115,16 @@ class SuperEditor extends StatefulWidget {
     this.selectorHandlers,
     this.gestureMode,
     this.contentTapDelegateFactory = superEditorLaunchLinkTapHandlerFactory,
+    this.selectionLayerLinks,
+    this.documentUnderlayBuilders = const [],
+    this.documentOverlayBuilders = defaultSuperEditorDocumentOverlayBuilders,
+    this.autofocus = false,
+    this.overlayController,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
-    this.selectionLayerLinks,
-    this.documentOverlayBuilders = const [DefaultCaretOverlayBuilder()],
-    this.autofocus = false,
-    this.overlayController,
     this.plugins = const {},
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? defaultStylesheet,
@@ -143,9 +146,6 @@ class SuperEditor extends StatefulWidget {
   /// `scrollController` is not used if this `SuperEditor` has an ancestor
   /// `Scrollable`.
   final ScrollController? scrollController;
-
-  /// Shows, hides, and positions a floating toolbar and magnifier.
-  final MagnifierAndToolbarController? overlayController;
 
   /// [GlobalKey] that's bound to the [DocumentLayout] within
   /// this `SuperEditor`.
@@ -224,27 +224,6 @@ class SuperEditor extends StatefulWidget {
   /// when a user taps on a link.
   final SuperEditorContentTapDelegateFactory? contentTapDelegateFactory;
 
-  /// Color of the text selection drag handles on Android.
-  final Color? androidHandleColor;
-
-  /// Builder that creates a floating toolbar when running on Android.
-  final WidgetBuilder? androidToolbarBuilder;
-
-  /// Color of the text selection drag handles on iOS.
-  final Color? iOSHandleColor;
-
-  /// Builder that creates a floating toolbar when running on iOS.
-  final WidgetBuilder? iOSToolbarBuilder;
-
-  /// Creates a clipper that applies to overlay controls, like drag
-  /// handles, magnifiers, and popover toolbars, preventing the overlay
-  /// controls from appearing outside the given clipping region.
-  ///
-  /// If no clipper factory method is provided, then the overlay controls
-  /// will be allowed to appear anywhere in the overlay in which they sit
-  /// (probably the entire screen).
-  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
-
   /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.
   ///
@@ -258,6 +237,10 @@ class SuperEditor extends StatefulWidget {
 
   /// The [Document] that's edited by the [editor].
   final Document document;
+
+  /// Layers that are displayed under the document layout, aligned
+  /// with the location and size of the document layout.
+  final List<SuperEditorLayerBuilder> documentUnderlayBuilders;
 
   /// Layers that are displayed on top of the document layout, aligned
   /// with the location and size of the document layout.
@@ -286,6 +269,33 @@ class SuperEditor extends StatefulWidget {
   /// The IME reports selectors as unique `String`s, therefore selector handlers are
   /// defined as a mapping from selector names to handler functions.
   final Map<String, SuperEditorSelectorHandler>? selectorHandlers;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
+
+  /// Color of the text selection drag handles on Android.
+  final Color? androidHandleColor;
+
+  /// Builder that creates a floating toolbar when running on Android.
+  final WidgetBuilder? androidToolbarBuilder;
+
+  /// Color of the text selection drag handles on iOS.
+  @Deprecated("To configure handle color, surround SuperEditor with an IosEditorControlsScope, instead")
+  final Color? iOSHandleColor;
+
+  /// Builder that creates a floating toolbar when running on iOS.
+  @Deprecated("To configure a toolbar builder, surround SuperEditor with an IosEditorControlsScope, instead")
+  final WidgetBuilder? iOSToolbarBuilder;
+
+  /// Creates a clipper that applies to overlay controls, like drag
+  /// handles, magnifiers, and popover toolbars, preventing the overlay
+  /// controls from appearing outside the given clipping region.
+  ///
+  /// If no clipper factory method is provided, then the overlay controls
+  /// will be allowed to appear anywhere in the overlay in which they sit
+  /// (probably the entire screen).
+  // TODO: remove this once both iOS and Android overlay controls are moved to ancestor scopes.
+  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
   /// Plugins that add sets of behaviors to the editing experience.
   final Set<SuperEditorPlugin> plugins;
@@ -316,16 +326,23 @@ class SuperEditorState extends State<SuperEditor> {
 
   late DocumentComposer _composer;
 
-  late DocumentScroller _scroller;
+  DocumentScroller? _scroller;
   late ScrollController _scrollController;
   late AutoScrollController _autoScrollController;
+  // Signal that's notified every time the scroll offset changes for SuperEditor,
+  // including the cases where SuperEditor controls an ancestor Scrollable.
+  final _scrollChangeSignal = SignalNotifier();
 
   @visibleForTesting
   late SuperEditorContext editContext;
 
   ContentTapDelegate? _contentTapDelegate;
 
-  final _floatingCursorController = FloatingCursorController();
+  // GlobalKey for the iOS editor controls context so that the context data doesn't
+  // continuously replace itself every time we rebuild. We want to retain the same
+  // controls because they're shared throughout a number of disconnected widgets.
+  final _iosControlsContextKey = GlobalKey();
+  final _iosControlsController = SuperEditorIosControlsController();
 
   // Leader links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
@@ -411,6 +428,8 @@ class SuperEditorState extends State<SuperEditor> {
   void dispose() {
     _contentTapDelegate?.dispose();
 
+    _iosControlsController.dispose();
+
     widget.editor.context.remove(Editor.layoutKey);
 
     _focusNode.removeListener(_onFocusChange);
@@ -423,14 +442,17 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   void _createEditContext() {
-    _scroller = DocumentScroller();
+    if (_scroller != null) {
+      _scroller!.dispose();
+    }
+    _scroller = DocumentScroller()..addScrollChangeListener(_scrollChangeSignal.notifyListeners);
 
     editContext = SuperEditorContext(
       editor: widget.editor,
       document: widget.document,
       composer: _composer,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-      scroller: _scroller,
+      scroller: _scroller!,
       commonOps: CommonEditorOperations(
         editor: widget.editor,
         document: widget.document,
@@ -521,51 +543,91 @@ class SuperEditorState extends State<SuperEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return SuperEditorFocusDebugVisuals(
-      focusNode: _focusNode,
-      child: EditorSelectionAndFocusPolicy(
-        focusNode: _focusNode,
-        editor: widget.editor,
-        document: widget.document,
-        selection: _composer.selectionNotifier,
-        isDocumentLayoutAvailable: () => _docLayoutKey.currentContext != null,
-        getDocumentLayout: () => editContext.documentLayout,
-        placeCaretAtEndOfDocumentOnGainFocus: widget.selectionPolicies.placeCaretAtEndOfDocumentOnGainFocus,
-        restorePreviousSelectionOnGainFocus: widget.selectionPolicies.restorePreviousSelectionOnGainFocus,
-        clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
-        child: _buildInputSystem(
-          child: DocumentScaffold(
-            documentLayoutLink: _documentLayoutLink,
-            documentLayoutKey: _docLayoutKey,
-            gestureBuilder: _buildGestureInteractor,
-            scrollController: _scrollController,
-            autoScrollController: _autoScrollController,
-            scroller: _scroller,
-            presenter: presenter,
-            componentBuilders: widget.componentBuilders,
-            overlays: [
-              // Layer that positions and sizes leader widgets at the bounds
-              // of the users selection so that carets, handles, toolbars, and
-              // other things can follow the selection.
-              (context) {
-                return _SelectionLeadersDocumentLayerBuilder(
-                  links: _selectionLinks,
-                ).build(context, editContext);
-              },
-              // Add all overlays that the app wants.
-              for (final overlayBuilder in widget.documentOverlayBuilders) //
-                (context) => overlayBuilder.build(context, editContext),
-            ],
-            debugPaint: widget.debugPaint,
+    return _buildGestureControlsScope(
+      // We add a Builder immediately beneath the gesture controls scope so that
+      // all descendant widgets built within SuperEditor can access that scope.
+      child: Builder(builder: (controlsScopeContext) {
+        return SuperEditorFocusDebugVisuals(
+          focusNode: _focusNode,
+          child: EditorSelectionAndFocusPolicy(
+            focusNode: _focusNode,
+            editor: widget.editor,
+            document: widget.document,
+            selection: _composer.selectionNotifier,
+            isDocumentLayoutAvailable: () => _docLayoutKey.currentContext != null,
+            getDocumentLayout: () => editContext.documentLayout,
+            placeCaretAtEndOfDocumentOnGainFocus: widget.selectionPolicies.placeCaretAtEndOfDocumentOnGainFocus,
+            restorePreviousSelectionOnGainFocus: widget.selectionPolicies.restorePreviousSelectionOnGainFocus,
+            clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
+            child: _buildTextInputSystem(
+              child: _buildPlatformSpecificViewportDecorations(
+                controlsScopeContext,
+                child: DocumentScaffold(
+                  documentLayoutLink: _documentLayoutLink,
+                  documentLayoutKey: _docLayoutKey,
+                  gestureBuilder: _buildGestureInteractor,
+                  scrollController: _scrollController,
+                  autoScrollController: _autoScrollController,
+                  scroller: _scroller,
+                  presenter: presenter,
+                  componentBuilders: widget.componentBuilders,
+                  underlays: [
+                    // Add all underlays that the app wants.
+                    for (final underlayBuilder in widget.documentUnderlayBuilders) //
+                      (context) => underlayBuilder.build(context, editContext),
+                  ],
+                  overlays: [
+                    // Layer that positions and sizes leader widgets at the bounds
+                    // of the users selection so that carets, handles, toolbars, and
+                    // other things can follow the selection.
+                    (context) {
+                      return _SelectionLeadersDocumentLayerBuilder(
+                        links: _selectionLinks,
+                        showDebugLeaderBounds: false,
+                      ).build(context, editContext);
+                    },
+                    // Add all overlays that the app wants.
+                    for (final overlayBuilder in widget.documentOverlayBuilders) //
+                      (context) => overlayBuilder.build(context, editContext),
+                  ],
+                  debugPaint: widget.debugPaint,
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
+  }
+
+  /// Builds an [InheritedWidget] that holds a shared context for editor controls,
+  /// e.g., caret, handles, magnifier, toolbar.
+  ///
+  /// This context may be shared by multiple widgets within [SuperEditor]. It's also
+  /// possible that a client app has wrapped [SuperEditor] with its own context
+  /// [InheritedWidget], in which case the context is shared with widgets inside
+  /// of [SuperEditor], and widgets outside of [SuperEditor].
+  Widget _buildGestureControlsScope({
+    required Widget child,
+  }) {
+    switch (gestureMode) {
+      // case DocumentGestureMode.mouse:
+      //   // TODO: create context for mouse mode (#1533)
+      // case DocumentGestureMode.android:
+      //   // TODO: create context for Android (#1509)
+      case DocumentGestureMode.iOS:
+      default:
+        return SuperEditorIosControlsScope(
+          key: _iosControlsContextKey,
+          controller: _iosControlsController,
+          child: child,
+        );
+    }
   }
 
   /// Builds the widget tree that applies user input, e.g., key
   /// presses from a keyboard, or text deltas from the IME.
-  Widget _buildInputSystem({
+  Widget _buildTextInputSystem({
     required Widget child,
   }) {
     switch (inputSource) {
@@ -601,76 +663,152 @@ class SuperEditorState extends State<SuperEditor> {
             ..._keyboardActions,
           ],
           selectorHandlers: widget.selectorHandlers ?? defaultEditorSelectorHandlers,
-          floatingCursorController: _floatingCursorController,
           child: child,
         );
+    }
+  }
+
+  /// Builds any widgets that a platform wants to wrap around the editor viewport,
+  /// e.g., editor toolbar, floating cursor display for iOS.
+  Widget _buildPlatformSpecificViewportDecorations(
+    BuildContext context, {
+    required Widget child,
+  }) {
+    switch (gestureMode) {
+      case DocumentGestureMode.iOS:
+        return SuperEditorIosToolbarOverlayManager(
+          defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultIosEditorToolbarBuilder(
+            overlayContext,
+            mobileToolbarKey,
+            focalPoint,
+            editContext.commonOps,
+            SuperEditorIosControlsScope.rootOf(context),
+          ),
+          child: SuperEditorIosMagnifierOverlayManager(
+            child: EditorFloatingCursor(
+              editor: widget.editor,
+              document: widget.document,
+              getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+              selection: widget.composer.selectionNotifier,
+              scrollChangeSignal: _scrollChangeSignal,
+              child: child,
+            ),
+          ),
+        );
+      case DocumentGestureMode.mouse:
+      case DocumentGestureMode.android:
+      default:
+        return child;
     }
   }
 
   Widget _buildGestureInteractor(BuildContext context) {
     switch (gestureMode) {
       case DocumentGestureMode.mouse:
-        return _buildDesktopGestureSystem();
+        return DocumentMouseInteractor(
+          focusNode: _focusNode,
+          editor: editContext.editor,
+          document: editContext.document,
+          getDocumentLayout: () => editContext.documentLayout,
+          selectionChanges: editContext.composer.selectionChanges,
+          selectionNotifier: editContext.composer.selectionNotifier,
+          contentTapHandler: _contentTapDelegate,
+          autoScroller: _autoScrollController,
+          showDebugPaint: widget.debugPaint.gestures,
+        );
       case DocumentGestureMode.android:
-        return _buildAndroidGestureSystem();
+        return AndroidDocumentTouchInteractor(
+          focusNode: _focusNode,
+          editor: editContext.editor,
+          document: editContext.document,
+          getDocumentLayout: () => editContext.documentLayout,
+          selection: editContext.composer.selectionNotifier,
+          contentTapHandler: _contentTapDelegate,
+          scrollController: _scrollController,
+          documentKey: _docLayoutKey,
+          documentLayoutLink: _documentLayoutLink,
+          selectionLinks: _selectionLinks,
+          handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
+          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
+          createOverlayControlsClipper: widget.createOverlayControlsClipper,
+          overlayController: widget.overlayController,
+          showDebugPaint: widget.debugPaint.gestures,
+        );
       case DocumentGestureMode.iOS:
-        return _buildIOSGestureSystem();
+        return IosDocumentTouchInteractor(
+          focusNode: _focusNode,
+          editor: editContext.editor,
+          document: editContext.document,
+          getDocumentLayout: () => editContext.documentLayout,
+          selection: editContext.composer.selectionNotifier,
+          contentTapHandler: _contentTapDelegate,
+          scrollController: _scrollController,
+          showDebugPaint: widget.debugPaint.gestures,
+        );
     }
   }
+}
 
-  Widget _buildDesktopGestureSystem() {
-    return DocumentMouseInteractor(
-      focusNode: _focusNode,
-      editor: editContext.editor,
-      document: editContext.document,
-      getDocumentLayout: () => editContext.documentLayout,
-      selectionChanges: editContext.composer.selectionChanges,
-      selectionNotifier: editContext.composer.selectionNotifier,
-      contentTapHandler: _contentTapDelegate,
-      autoScroller: _autoScrollController,
-      showDebugPaint: widget.debugPaint.gestures,
+/// Builds a standard editor-style iOS floating toolbar.
+Widget defaultIosEditorToolbarBuilder(
+  BuildContext context,
+  Key floatingToolbarKey,
+  LeaderLink focalPoint,
+  CommonEditorOperations editorOps,
+  SuperEditorIosControlsController editorControlsController,
+) {
+  if (isWeb) {
+    // On web, we defer to the browser's internal overlay controls for mobile.
+    return const SizedBox();
+  }
+
+  return DefaultIosEditorToolbar(
+    floatingToolbarKey: floatingToolbarKey,
+    focalPoint: focalPoint,
+    editorOps: editorOps,
+    editorControlsController: editorControlsController,
+  );
+}
+
+/// An iOS floating toolbar, which includes standard buttons for an editor use-case.
+class DefaultIosEditorToolbar extends StatelessWidget {
+  const DefaultIosEditorToolbar({
+    super.key,
+    this.floatingToolbarKey,
+    required this.focalPoint,
+    required this.editorOps,
+    required this.editorControlsController,
+  });
+
+  final Key? floatingToolbarKey;
+  final LeaderLink focalPoint;
+  final CommonEditorOperations editorOps;
+  final SuperEditorIosControlsController editorControlsController;
+
+  @override
+  Widget build(BuildContext context) {
+    return IOSTextEditingFloatingToolbar(
+      floatingToolbarKey: floatingToolbarKey,
+      focalPoint: focalPoint,
+      onCutPressed: _cut,
+      onCopyPressed: _copy,
+      onPastePressed: _paste,
     );
   }
 
-  Widget _buildAndroidGestureSystem() {
-    return AndroidDocumentTouchInteractor(
-      focusNode: _focusNode,
-      editor: editContext.editor,
-      document: editContext.document,
-      getDocumentLayout: () => editContext.documentLayout,
-      selection: editContext.composer.selectionNotifier,
-      contentTapHandler: _contentTapDelegate,
-      scrollController: _scrollController,
-      documentKey: _docLayoutKey,
-      documentLayoutLink: _documentLayoutLink,
-      selectionLinks: _selectionLinks,
-      handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
-      popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
-      createOverlayControlsClipper: widget.createOverlayControlsClipper,
-      overlayController: widget.overlayController,
-      showDebugPaint: widget.debugPaint.gestures,
-    );
+  void _cut() {
+    editorOps.cut();
+    editorControlsController.hideToolbar();
   }
 
-  Widget _buildIOSGestureSystem() {
-    return IOSDocumentTouchInteractor(
-      focusNode: _focusNode,
-      editor: editContext.editor,
-      document: editContext.document,
-      getDocumentLayout: () => editContext.documentLayout,
-      selection: editContext.composer.selectionNotifier,
-      contentTapHandler: _contentTapDelegate,
-      scrollController: _scrollController,
-      documentKey: _docLayoutKey,
-      documentLayoutLink: _documentLayoutLink,
-      selectionLinks: _selectionLinks,
-      handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
-      popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
-      floatingCursorController: _floatingCursorController,
-      createOverlayControlsClipper: widget.createOverlayControlsClipper,
-      overlayController: widget.overlayController,
-      showDebugPaint: widget.debugPaint.gestures,
-    );
+  void _copy() {
+    editorOps.copy();
+    editorControlsController.hideToolbar();
+  }
+
+  void _paste() {
+    editorOps.paste();
+    editorControlsController.hideToolbar();
   }
 }
 
@@ -696,7 +834,6 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
     return SelectionLeadersDocumentLayer(
       document: editContext.document,
       selection: editContext.composer.selectionNotifier,
-      documentLayoutResolver: () => editContext.documentLayout,
       links: links,
       showDebugLeaderBounds: showDebugLeaderBounds,
     );
@@ -864,12 +1001,24 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
 ///
 /// These builders are in priority order. The first builder
 /// to return a non-null component is used.
-final defaultComponentBuilders = <ComponentBuilder>[
-  const BlockquoteComponentBuilder(),
-  const ParagraphComponentBuilder(),
-  const ListItemComponentBuilder(),
-  const ImageComponentBuilder(),
-  const HorizontalRuleComponentBuilder(),
+const defaultComponentBuilders = <ComponentBuilder>[
+  BlockquoteComponentBuilder(),
+  ParagraphComponentBuilder(),
+  ListItemComponentBuilder(),
+  ImageComponentBuilder(),
+  HorizontalRuleComponentBuilder(),
+];
+
+/// Default list of document overlays that are displayed on top of the document
+/// layout in a [SuperEditor].
+const defaultSuperEditorDocumentOverlayBuilders = [
+  // Adds a Leader around the document selection at a focal point for the
+  // iOS floating toolbar.
+  SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
+  // Displays caret and drag handles, specifically for iOS.
+  SuperEditorIosHandlesDocumentLayerBuilder(),
+  // Displays caret for typical desktop use-cases.
+  DefaultCaretOverlayBuilder(),
 ];
 
 /// Keyboard actions for the standard [SuperEditor].

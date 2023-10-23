@@ -47,10 +47,16 @@ extension Frames on State {
   /// current build phase completes. Otherwise, [stateChange] is run immediately.
   void setStateAsSoonAsPossible(VoidCallback stateChange) {
     WidgetsBinding.instance.runAsSoonAsPossible(
-      // ignore: invalid_use_of_protected_member
-      () => setState(() {
-        stateChange();
-      }),
+      () {
+        if (!mounted) {
+          return;
+        }
+
+        // ignore: invalid_use_of_protected_member
+        setState(() {
+          stateChange();
+        });
+      },
     );
   }
 
