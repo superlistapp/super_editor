@@ -32,9 +32,10 @@ You might notice that this is a mono-repo, which includes multiple projects. Tha
   <a href="attributed_text/README.md"><img src="https://user-images.githubusercontent.com/7259036/170845473-268655ac-3fec-47c1-86ab-41a1391aa1e0.png" width="300" alt="Attributed Text"></a>
 </p>
 
-<h2 align="center">Releases</h2>
-Sometimes we make changes to multiple packages before cutting new releases. If you see compilation errors
-while using the pub.dev version, please consider overriding the dependencies in your pubspec.yaml:
+<h2 align="center">Mono-repo Versioning</h2>
+If you have compilation errors when using the GitHub version of super_editor, try overriding dependencies for the other packages in this mono-repo, e.g., super_editor_markdown, super_text_layout, and attributed_text. This project often makes changes to multiple packages within the mono-repo, which requires that you use the latest main or stable version of every package.
+
+You can override your dependencies as follows:
 
 ```yaml
 dependency_overrides:
@@ -42,7 +43,7 @@ dependency_overrides:
     git:
       url: https://github.com/superlistapp/super_editor
       path: super_editor
-      ref: stable
+      ref: stable # or "main"
   super_editor_markdown:
     git:
       url: https://github.com/superlistapp/super_editor
