@@ -55,7 +55,7 @@ class _AttributionBoundsState extends ContentLayerState<AttributionBounds, List<
   }
 
   @override
-  List<AttributionBoundsLayout>? computeLayoutData(RenderObject? contentLayout) {
+  List<AttributionBoundsLayout>? computeLayoutData(Element? contentElement, RenderObject? contentLayout) {
     final bounds = <AttributionBoundsLayout>[];
 
     for (final node in widget.document.nodes) {

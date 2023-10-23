@@ -11,6 +11,7 @@ class LogNames {
   static const editorIme = 'editor.ime';
   static const editorImeConnection = 'editor.ime.connection';
   static const editorImeDeltas = 'editor.ime.deltas';
+  static const editorIosFloatingCursor = 'editor.ios.floatingCursor';
   static const editorLayout = 'editor.layout';
   static const editorStyle = 'editor.style';
   static const editorDocument = 'editor.document';
@@ -54,6 +55,7 @@ final editorKeyLog = logging.Logger(LogNames.editorKeys);
 final editorImeLog = logging.Logger(LogNames.editorIme);
 final editorImeConnectionLog = logging.Logger(LogNames.editorImeConnection);
 final editorImeDeltasLog = logging.Logger(LogNames.editorImeDeltas);
+final editorIosFloatingCursorLog = logging.Logger(LogNames.editorIosFloatingCursor);
 final editorLayoutLog = logging.Logger(LogNames.editorLayout);
 final editorStyleLog = logging.Logger(LogNames.editorStyle);
 final editorDocLog = logging.Logger(LogNames.editorDocument);

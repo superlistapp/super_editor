@@ -12,6 +12,9 @@ class UpstreamDownstreamNodePosition implements NodePosition {
   final TextAffinity affinity;
 
   @override
+  bool isEquivalentTo(NodePosition other) => this == other;
+
+  @override
   String toString() => "[UpstreamDownstreamNodePosition] - $affinity";
 
   @override

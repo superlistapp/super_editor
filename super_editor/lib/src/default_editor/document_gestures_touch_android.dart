@@ -15,6 +15,7 @@ import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
+import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/overlay_with_groups.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
@@ -23,7 +24,6 @@ import 'package:super_editor/src/infrastructure/platforms/android/long_press_sel
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
-import 'package:super_editor/src/infrastructure/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
@@ -918,6 +918,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       dragEndInViewport: dragEndInViewport,
     );
 
+    // TODO: find a way to only invoke this when needed, instead of every move of the handle
     _editingController.showMagnifier();
   }
 

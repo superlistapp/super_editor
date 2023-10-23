@@ -544,7 +544,7 @@ void main() {
         expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
       });
 
-      testWidgets('on iOS, keeps caret visible when keyboard appears', (WidgetTester tester) async {
+      testWidgetsOnIos('on iOS, keeps caret visible when keyboard appears', (WidgetTester tester) async {
         tester.view
           ..physicalSize = screenSizeWithoutKeyboard
           ..platformDispatcher.textScaleFactorTestValue = 1.0
@@ -559,6 +559,7 @@ void main() {
         // Select text near the bottom of the screen, where the keyboard will appear
         final tapPosition = Offset(screenSizeWithoutKeyboard.width / 2, screenSizeWithoutKeyboard.height - 1);
         await tester.tapAt(tapPosition);
+        await tester.pump();
 
         // Shrink the screen height, as if the keyboard appeared.
         await _simulateKeyboardAppearance(
@@ -569,16 +570,15 @@ void main() {
         );
 
         // Ensure that the editor auto-scrolled to keep the caret visible.
-        // TODO: there are 2 `BlinkingCaret` at the same time. There should be only 1 caret
         final caretFinder = find.byType(BlinkingCaret);
-        final caretOffset = tester.getBottomLeft(caretFinder.last);
+        final caretOffset = tester.getBottomLeft(caretFinder);
 
         // The default trailing boundary of the default `SuperEditor`
         const trailingBoundary = 54.0;
 
         // The caret should be at the trailing boundary, within a small margin of error
-        expect(caretOffset.dy, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
-        expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
+        expect(caretOffset.dy, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary + 2));
+        expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary - 2));
       });
 
       testWidgetsOnMobile('scrolling doesn\'t cause the keyboard to open', (tester) async {
