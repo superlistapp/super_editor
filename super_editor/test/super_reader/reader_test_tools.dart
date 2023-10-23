@@ -94,7 +94,7 @@ class TestDocumentConfigurator {
   FocusNode? _focusNode;
   DocumentSelection? _selection;
   WidgetBuilder? _androidToolbarBuilder;
-  WidgetBuilder? _iOSToolbarBuilder;
+  DocumentFloatingToolbarBuilder? _iOSToolbarBuilder;
 
   /// Configures the [SuperReader] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -184,7 +184,7 @@ class TestDocumentConfigurator {
   }
 
   /// Configures the [SuperEditor] to use the given [builder] as its iOS toolbar builder.
-  TestDocumentConfigurator withiOSToolbarBuilder(WidgetBuilder? builder) {
+  TestDocumentConfigurator withiOSToolbarBuilder(DocumentFloatingToolbarBuilder? builder) {
     _iOSToolbarBuilder = builder;
     return this;
   }
@@ -243,22 +243,26 @@ class TestDocumentConfigurator {
     );
 
     final superDocument = _buildContent(
-      SuperReader(
-        focusNode: testContext.focusNode,
-        document: documentContext.document,
-        documentLayoutKey: layoutKey,
-        selection: documentContext.selection,
-        selectionStyle: _selectionStyles,
-        gestureMode: _gestureMode ?? _defaultGestureMode,
-        stylesheet: _stylesheet,
-        componentBuilders: [
-          ..._addedComponents,
-          ...(_componentBuilders ?? defaultComponentBuilders),
-        ],
-        autofocus: _autoFocus,
-        scrollController: _scrollController,
-        androidToolbarBuilder: _androidToolbarBuilder,
-        iOSToolbarBuilder: _iOSToolbarBuilder,
+      SuperReaderIosControlsScope(
+        controller: SuperReaderIosControlsController(
+          toolbarBuilder: _iOSToolbarBuilder,
+        ),
+        child: SuperReader(
+          focusNode: testContext.focusNode,
+          document: documentContext.document,
+          documentLayoutKey: layoutKey,
+          selection: documentContext.selection,
+          selectionStyle: _selectionStyles,
+          gestureMode: _gestureMode ?? _defaultGestureMode,
+          stylesheet: _stylesheet,
+          componentBuilders: [
+            ..._addedComponents,
+            ...(_componentBuilders ?? defaultComponentBuilders),
+          ],
+          autofocus: _autoFocus,
+          scrollController: _scrollController,
+          androidToolbarBuilder: _androidToolbarBuilder,
+        ),
       ),
     );
 

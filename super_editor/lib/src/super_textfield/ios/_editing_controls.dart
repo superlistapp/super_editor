@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -517,7 +518,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     return Positioned(
       left: _localDragOffset!.dx,
       top: _localDragOffset!.dy,
-      child: CompositedTransformTarget(
+      child: Leader(
         link: widget.editingController.magnifierFocalPoint,
         child: const SizedBox(width: 1, height: 1),
       ),
@@ -535,7 +536,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     // positioning the LayerLink target.
     return Center(
       child: IOSFollowingMagnifier.roundedRectangle(
-        layerLink: widget.editingController.magnifierFocalPoint,
+        leaderLink: widget.editingController.magnifierFocalPoint,
         offsetFromFocalPoint: const Offset(0, -72),
       ),
     );
@@ -549,9 +550,11 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
 class IOSEditingOverlayController with ChangeNotifier {
   IOSEditingOverlayController({
     required this.textController,
-    required LayerLink magnifierFocalPoint,
+    required LeaderLink toolbarFocalPoint,
+    required LeaderLink magnifierFocalPoint,
     required this.overlayController,
-  }) : _magnifierFocalPoint = magnifierFocalPoint {
+  })  : _toolbarFocalPoint = toolbarFocalPoint,
+        _magnifierFocalPoint = magnifierFocalPoint {
     overlayController.addListener(_overlayControllerChanged);
   }
 
@@ -577,6 +580,9 @@ class IOSEditingOverlayController with ChangeNotifier {
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController overlayController;
 
+  LeaderLink get toolbarFocalPoint => _toolbarFocalPoint;
+  final LeaderLink _toolbarFocalPoint;
+
   void toggleToolbar() {
     overlayController.toggleToolbar();
   }
@@ -589,8 +595,8 @@ class IOSEditingOverlayController with ChangeNotifier {
     overlayController.hideToolbar();
   }
 
-  final LayerLink _magnifierFocalPoint;
-  LayerLink get magnifierFocalPoint => _magnifierFocalPoint;
+  LeaderLink get magnifierFocalPoint => _magnifierFocalPoint;
+  final LeaderLink _magnifierFocalPoint;
 
   bool get isMagnifierVisible => overlayController.shouldDisplayMagnifier;
 
