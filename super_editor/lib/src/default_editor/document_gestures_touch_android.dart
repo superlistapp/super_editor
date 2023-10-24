@@ -145,7 +145,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   final _longPressMagnifierGlobalOffset = ValueNotifier<Offset?>(null);
 
   /// Holds the drag gesture that scrolls the document.
-  Drag? _drag;
+  Drag? _dragToScroll;
 
   @override
   void initState() {
@@ -743,7 +743,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     if (!_isLongPressInProgress) {
       // We only care about starting a pan if we're long-press dragging.
-      _drag = scrollPosition.drag(details, () {
+      _dragToScroll = scrollPosition.drag(details, () {
         // Allows receiving touches while scrolling due to scroll momentum.
         // This is needed to allow the user to stop scrolling by tapping down.
         scrollPosition.context.setIgnorePointer(false);
@@ -792,9 +792,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    if (_drag != null) {
+    if (_dragToScroll != null) {
       // The user is trying to scroll the document. Change the scroll offset.
-      _drag!.update(details);
+      _dragToScroll!.update(details);
     }
   }
 
@@ -826,14 +826,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    if (_drag != null) {
-      _drag!.end(details);
-    }
-
-    final pos = scrollPosition;
-    if (pos is ScrollPositionWithSingleContext) {
-      pos.goBallistic(-details.velocity.pixelsPerSecond.dy);
-      pos.context.setIgnorePointer(false);
+    if (_dragToScroll != null) {
+      // The user was performing a drag gesture to scroll the document.
+      // End the drag gesture.
+      _dragToScroll!.end(details);
     }
   }
 
@@ -843,8 +839,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    if (_drag != null) {
-      _drag!.cancel();
+    if (_dragToScroll != null) {
+      // The user was performing a drag gesture to scroll the document.
+      // End the drag gesture.
+      _dragToScroll!.cancel();
     }
   }
 

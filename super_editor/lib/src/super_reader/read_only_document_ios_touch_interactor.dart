@@ -255,7 +255,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   IosLongPressSelectionStrategy? _longPressStrategy;
 
   /// Holds the drag gesture that scrolls the document.
-  Drag? _drag;
+  Drag? _dragToScroll;
 
   @override
   void initState() {
@@ -442,6 +442,13 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _onTapDown(TapDownDetails details) {
+    if (scrollPosition.isScrollingNotifier.value) {
+      // The user tapped while the document was scrolling.
+      // Cancel the scroll momentum.
+      (scrollPosition as ScrollPositionWithSingleContext).goIdle();
+      return;
+    }
+
     _globalTapDownOffset = details.globalPosition;
     _tapDownLongPressTimer?.cancel();
     _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
@@ -650,7 +657,8 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       _dragMode = DragMode.extent;
       _dragHandleType = HandleType.downstream;
     } else {
-      _drag = scrollPosition.drag(details, () {
+      _dragMode = DragMode.scroll;
+      _dragToScroll = scrollPosition.drag(details, () {
         // Allows receiving touches while scrolling due to scroll momentum.
         // This is needed to allow the user to stop scrolling by tapping down.
         scrollPosition.context.setIgnorePointer(false);
@@ -725,10 +733,9 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    // If the user isn't dragging a handle, then the user is trying to
-    // scroll the document. Scroll it, accordingly.
-    if (_dragMode == null && _drag != null) {
-      _drag!.update(details);
+    if (_dragMode == DragMode.scroll && _dragToScroll != null) {
+      // The user is trying to scroll the document. Scroll it, accordingly.
+      _dragToScroll!.update(details);
       return;
     }
 
@@ -785,25 +792,16 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     scrollPosition.removeListener(_onAutoScrollChange);
     _magnifierOffset.value = null;
 
-    if (_drag != null) {
-      _drag!.end(details);
-      _drag = null;
-
+    if (_dragToScroll != null) {
+      // The user was performing a drag gesture to scroll the document.
+      // End the drag gesture.
+      _dragToScroll!.end(details);
+      _dragToScroll = null;
+      _dragMode = null;
       return;
     }
 
-    if (_dragMode == null) {
-      // User was dragging the scroll area. Go ballistic.
-      if (scrollPosition is ScrollPositionWithSingleContext) {
-        (scrollPosition as ScrollPositionWithSingleContext).goBallistic(-details.velocity.pixelsPerSecond.dy);
-
-        if (_activeScrollPosition != scrollPosition) {
-          // We add the scroll change listener again, because going ballistic
-          // seems to switch out the scroll position.
-          _activeScrollPosition = scrollPosition;
-        }
-      }
-    } else {
+    if (_dragMode != null) {
       // The user was dragging a selection change in some way, either with handles
       // or with a long-press. Finish that interaction.
       _onDragSelectionEnd();
@@ -814,9 +812,13 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     scrollPosition.removeListener(_onAutoScrollChange);
     _magnifierOffset.value = null;
 
-    if (_drag != null) {
-      _drag!.cancel();
-      _drag = null;
+    if (_dragToScroll != null) {
+      // The user was performing a drag gesture to scroll the document.
+      // Cancel the drag gesture.
+      _dragToScroll!.cancel();
+      _dragToScroll = null;
+      _dragMode = null;
+      return;
     }
 
     if (_dragMode != null) {
