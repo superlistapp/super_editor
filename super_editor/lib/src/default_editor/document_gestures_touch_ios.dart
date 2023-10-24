@@ -580,7 +580,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     // Stop waiting for a long-press to start.
     _globalTapDownOffset = null;
     _tapDownLongPressTimer?.cancel();
-    _controlsController!.hideMagnifier();
+    _controlsController!
+      ..hideMagnifier()
+      ..blinkCaret();
 
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
@@ -588,8 +590,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       // action on this touch event. The user will tap again to change the selection.
       return;
     }
-
-    _controlsController!.blinkCaret();
 
     final selection = widget.selection.value;
     if (selection != null &&
@@ -986,7 +986,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   void _onPanEnd(DragEndDetails details) {
     _magnifierOffset.value = null;
-    _controlsController!.hideMagnifier();
+    _controlsController!
+      ..hideMagnifier()
+      ..blinkCaret();
 
     if (_dragMode == null) {
       // User was dragging the scroll area. Go ballistic.
@@ -1021,7 +1023,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _onHandleDragEnd();
     }
 
-    _controlsController!.blinkCaret();
     _handleAutoScrolling.stopAutoScrollHandleMonitoring();
     scrollPosition.removeListener(_onAutoScrollChange);
   }
