@@ -338,6 +338,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           inputSource: _inputSource,
           textInputAction: _textInputAction,
           imeConfiguration: widget.imeConfiguration,
+          blinkTimingMode: widget.blinkTimingMode,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(
@@ -363,6 +364,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             textInputAction: _textInputAction,
             imeConfiguration: widget.imeConfiguration,
             padding: widget.padding,
+            blinkTimingMode: widget.blinkTimingMode,
           ),
         );
       case SuperTextFieldPlatformConfiguration.iOS:
@@ -389,6 +391,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             textInputAction: _textInputAction,
             imeConfiguration: widget.imeConfiguration,
             padding: widget.padding,
+            blinkTimingMode: widget.blinkTimingMode,
           ),
         );
     }
