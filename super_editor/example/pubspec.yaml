@@ -53,7 +53,7 @@ dependencies:
     git:
       url: https://github.com/superlistapp/super_editor.git
       path: super_text_layout
-  follow_the_leader: ^0.0.4+5
+  follow_the_leader: ^0.0.4+6
   overlord: ^0.0.3+4
 
 dependency_overrides:
