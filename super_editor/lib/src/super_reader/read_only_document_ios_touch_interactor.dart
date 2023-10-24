@@ -729,7 +729,6 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     // scroll the document. Scroll it, accordingly.
     if (_dragMode == null && _drag != null) {
       _drag!.update(details);
-      _positionToolbar();
       return;
     }
 
