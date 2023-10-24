@@ -254,6 +254,9 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   bool get _isLongPressInProgress => _longPressStrategy != null;
   IosLongPressSelectionStrategy? _longPressStrategy;
 
+  /// Holds the drag gesture that scrolls the document.
+  Drag? _drag;
+
   @override
   void initState() {
     super.initState();
@@ -635,25 +638,30 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     //       placement during onTapDown, and then pick that up here. I think the little
     //       bit of slop might be the problem.
     final selection = widget.selection.value;
-    if (selection == null) {
-      return;
-    }
 
     if (_isLongPressInProgress) {
       _dragMode = DragMode.longPress;
       _dragHandleType = null;
       _longPressStrategy!.onLongPressDragStart();
-    } else if (_isOverBaseHandle(details.localPosition)) {
+    } else if (selection != null && _isOverBaseHandle(details.localPosition)) {
       _dragMode = DragMode.base;
       _dragHandleType = HandleType.upstream;
-    } else if (_isOverExtentHandle(details.localPosition)) {
+    } else if (selection != null && _isOverExtentHandle(details.localPosition)) {
       _dragMode = DragMode.extent;
       _dragHandleType = HandleType.downstream;
     } else {
+      _drag = scrollPosition.drag(details, () {
+        // Allows receiving touches while scrolling due to scroll momentum.
+        // This is needed to allow the user to stop scrolling by tapping down.
+        scrollPosition.context.setIgnorePointer(false);
+      });
       return;
     }
 
     _controlsController!.hideToolbar();
+    if (selection == null) {
+      return;
+    }
 
     _globalStartDragOffset = details.globalPosition;
     final interactorBox = context.findRenderObject() as RenderBox;
@@ -719,8 +727,9 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   void _onPanUpdate(DragUpdateDetails details) {
     // If the user isn't dragging a handle, then the user is trying to
     // scroll the document. Scroll it, accordingly.
-    if (_dragMode == null) {
-      scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
+    if (_dragMode == null && _drag != null) {
+      _drag!.update(details);
+      _positionToolbar();
       return;
     }
 
@@ -777,6 +786,13 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     scrollPosition.removeListener(_onAutoScrollChange);
     _magnifierOffset.value = null;
 
+    if (_drag != null) {
+      _drag!.end(details);
+      _drag = null;
+
+      return;
+    }
+
     if (_dragMode == null) {
       // User was dragging the scroll area. Go ballistic.
       if (scrollPosition is ScrollPositionWithSingleContext) {
@@ -798,6 +814,11 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   void _onPanCancel() {
     scrollPosition.removeListener(_onAutoScrollChange);
     _magnifierOffset.value = null;
+
+    if (_drag != null) {
+      _drag!.cancel();
+      _drag = null;
+    }
 
     if (_dragMode != null) {
       _onDragSelectionEnd();

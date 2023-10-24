@@ -144,6 +144,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   AndroidDocumentLongPressSelectionStrategy? _longPressStrategy;
   final _longPressMagnifierGlobalOffset = ValueNotifier<Offset?>(null);
 
+  /// Holds the drag gesture that scrolls the document.
+  Drag? _drag;
+
   @override
   void initState() {
     super.initState();
@@ -740,6 +743,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     if (!_isLongPressInProgress) {
       // We only care about starting a pan if we're long-press dragging.
+      _drag = scrollPosition.drag(details, () {
+        // Allows receiving touches while scrolling due to scroll momentum.
+        // This is needed to allow the user to stop scrolling by tapping down.
+        scrollPosition.context.setIgnorePointer(false);
+      });
       return;
     }
 
@@ -784,8 +792,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    // The user is trying to scroll the document. Change the scroll offset.
-    scrollPosition.pointerScroll(-details.delta.dy);
+    if (_drag != null) {
+      // The user is trying to scroll the document. Change the scroll offset.
+      _drag!.update(details);
+    }
   }
 
   void _updateLongPressSelection(DocumentSelection newSelection) {
@@ -816,6 +826,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
+    if (_drag != null) {
+      _drag!.end(details);
+    }
+
     final pos = scrollPosition;
     if (pos is ScrollPositionWithSingleContext) {
       pos.goBallistic(-details.velocity.pixelsPerSecond.dy);
@@ -827,6 +841,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (_isLongPressInProgress) {
       _onLongPressEnd();
       return;
+    }
+
+    if (_drag != null) {
+      _drag!.cancel();
     }
   }
 
@@ -1251,10 +1269,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
                 ..gestureSettings = gestureSettings;
             },
           ),
-          PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-            () => PanGestureRecognizer(),
-            (PanGestureRecognizer recognizer) {
+          VerticalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<VerticalDragGestureRecognizer>(
+            () => VerticalDragGestureRecognizer(),
+            (VerticalDragGestureRecognizer recognizer) {
               recognizer
+                ..dragStartBehavior = DragStartBehavior.down
                 ..onStart = _onPanStart
                 ..onUpdate = _onPanUpdate
                 ..onEnd = _onPanEnd

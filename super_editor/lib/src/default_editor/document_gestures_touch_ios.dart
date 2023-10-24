@@ -292,6 +292,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   bool get _isLongPressInProgress => _longPressStrategy != null;
   IosLongPressSelectionStrategy? _longPressStrategy;
 
+  /// Holds the drag gesture that scrolls the document.
+  Drag? _drag;
+
   @override
   void initState() {
     super.initState();
@@ -809,15 +812,12 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     //       placement during onTapDown, and then pick that up here. I think the little
     //       bit of slop might be the problem.
     final selection = widget.selection.value;
-    if (selection == null) {
-      return;
-    }
 
     if (_isLongPressInProgress) {
       _dragMode = DragMode.longPress;
       _dragHandleType = null;
       _longPressStrategy!.onLongPressDragStart();
-    } else if (selection.isCollapsed && _isOverCollapsedHandle(details.localPosition)) {
+    } else if (selection != null && selection.isCollapsed && _isOverCollapsedHandle(details.localPosition)) {
       _dragMode = DragMode.collapsed;
       _dragHandleType = HandleType.collapsed;
     } else if (_isOverBaseHandle(details.localPosition)) {
@@ -827,12 +827,20 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _dragMode = DragMode.extent;
       _dragHandleType = HandleType.downstream;
     } else {
+      _drag = scrollPosition.drag(details, () {
+        // Allows receiving touches while scrolling due to scroll momentum.
+        // This is needed to allow the user to stop scrolling by tapping down.
+        scrollPosition.context.setIgnorePointer(false);
+      });
       return;
     }
 
     _controlsController!.doNotBlinkCaret();
     _controlsController!.hideToolbar();
     _controlsController!.showToolbar();
+    if (selection == null) {
+      return;
+    }
 
     _globalStartDragOffset = details.globalPosition;
     final interactorBox = context.findRenderObject() as RenderBox;
@@ -911,8 +919,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   void _onPanUpdate(DragUpdateDetails details) {
     // If the user isn't dragging a handle, then the user is trying to
     // scroll the document. Scroll it, accordingly.
-    if (_dragMode == null) {
-      scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
+    if (_dragMode == null && _drag != null) {
+      _drag!.update(details);
+      _positionToolbar();
       return;
     }
 
@@ -990,6 +999,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       ..hideMagnifier()
       ..blinkCaret();
 
+    if (_drag != null) {
+      _drag!.end(details);
+      _drag = null;
+
+      return;
+    }
+
     if (_dragMode == null) {
       // User was dragging the scroll area. Go ballistic.
       if (scrollPosition is ScrollPositionWithSingleContext) {
@@ -1010,6 +1026,11 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   void _onPanCancel() {
     _magnifierOffset.value = null;
+
+    if (_drag != null) {
+      _drag!.cancel();
+      _drag = null;
+    }
 
     if (_dragMode != null) {
       _onDragSelectionEnd();
