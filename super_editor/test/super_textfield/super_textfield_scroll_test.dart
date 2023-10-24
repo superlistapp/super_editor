@@ -515,11 +515,10 @@ void main() {
             matching: find.byType(Scrollable),
           ));
 
-          // Find the very first textfield's  ancestor scrollable
-          final ancestorScrollState = tester.state<ScrollableState>(find.ancestor(
-            of: find.byType(SuperTextField),
-            matching: find.byType(Scrollable),
-          ));
+          // Find the textfield's  ancestor scrollable
+          final ancestorScrollState = tester.state<ScrollableState>(
+            find.byKey(textfieldAncestorScrollableKey),
+          );
 
           // First loop scrolls the textfield, check that it scrolls to the bottom.
           // Second loop scrolls the ancestor scrollable, check that it scrolls to the bottom.
@@ -584,9 +583,9 @@ void main() {
             currentVariant.alignment,
           );
 
-          // Find the very first textfield's  ancestor scrollable
+          // Find the textfield's  ancestor scrollable
           final ancestorScrollState = tester.state<ScrollableState>(
-            find.byType(Scrollable).first,
+            find.byKey(textfieldAncestorScrollableKey),
           );
 
           ancestorScrollState.position.jumpTo(ancestorScrollState.position.maxScrollExtent);
@@ -647,6 +646,107 @@ void main() {
           }
         },
         variant: _scrollingWithinAncestorScrollableAtBottomVariant,
+      );
+
+      testWidgetsOnDesktopAndWeb(
+        'when placed at the center of page, scrolls all the way from top to bottom of textfield and page, and then back to the top of the page',
+        (tester) async {
+          final currentVariant = _scrollingWithinAncestorScrollableAtCenterVariant.currentValue;
+
+          // Pump the widget tree with a SuperTextField which is four lines tall.
+          await currentVariant!.pumpEditor(
+            tester,
+            currentVariant.textInputSource,
+            currentVariant.alignment,
+          );
+
+          // Find the textfield's  ancestor scrollable
+          final ancestorScrollState = tester.state<ScrollableState>(
+            find.byKey(textfieldAncestorScrollableKey),
+          );
+
+          await tester.tap(find.byKey(textfieldAncestorScrollableKey));
+          await tester.pump();
+
+          await tester.scrollUntilVisible(
+            find.byType(SuperTextField),
+            200,
+          );
+          await tester.pump();
+
+          // Find SuperTextField scrollable
+          final scrollState = tester.state<ScrollableState>(
+            find.descendant(
+              of: find.byType(SuperTextField),
+              matching: find.byType(Scrollable),
+            ),
+          );
+
+          // Tap at top left in the textfield to focus it
+          await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+          await tester.pump();
+
+          // Ensure we are at the top of the textfiled
+          expect(
+            scrollState.position.pixels,
+            equals(scrollState.position.minScrollExtent),
+          );
+
+          // First loop scrolls the textfield to bottom and ensures it has scrolled to
+          // the bottom.
+          // Second loop scrolls the ancestor scrollable to bottom and ensures it has
+          // scrolled to the bottom.
+          for (var i = 0; i < 2; i++) {
+            // Scroll all the way to the bottom of the page.
+            if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
+              await _pressCmdEnd(tester);
+            } else {
+              await _pressCtrlEnd(tester);
+            }
+
+            if (i == 0) {
+              // Ensure we scrolled to the bottom of the textfield.
+              expect(
+                scrollState.position.pixels,
+                equals(scrollState.position.maxScrollExtent),
+              );
+            } else {
+              // Ensure we scrolled to the bottom of the page.
+              expect(
+                ancestorScrollState.position.pixels,
+                equals(ancestorScrollState.position.maxScrollExtent),
+              );
+            }
+          }
+
+          // First loop scrolls the textfield to top and ensures it has scrolled to
+          // the top.
+          // Second loop scrolls the ancestor scrollable to top and ensures it has
+          // scrolled to the top.
+          for (var i = 0; i < 2; i++) {
+            // Scroll all the way to the top of the page.
+            if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
+              await _pressCmdHome(tester);
+            } else {
+              await _pressCtrlHome(tester);
+            }
+
+            if (i == 0) {
+              // Ensure we scrolled to the top of the textfield.
+              expect(
+                scrollState.position.pixels,
+                equals(scrollState.position.minScrollExtent),
+              );
+            } else {
+              // Ensure we scrolled to the top of the page.
+              expect(
+                ancestorScrollState.position.pixels,
+                equals(ancestorScrollState.position.minScrollExtent),
+              );
+            }
+          }
+        },
+        variant: _scrollingWithinAncestorScrollableAtCenterVariant,
       );
     });
   });
@@ -779,6 +879,23 @@ final _scrollingWithinAncestorScrollableAtBottomVariant = ValueVariant<_SuperTex
   ),
 });
 
+/// Variant for an editor experience with an internal scrollable and
+/// an ancestor scrollable.
+final _scrollingWithinAncestorScrollableAtCenterVariant = ValueVariant<_SuperTextFieldScrollSetup>({
+  const _SuperTextFieldScrollSetup(
+    description: "ancestor viewport at center",
+    pumpEditor: _pumpSuperTextFieldScrollSliverTestSetup,
+    textInputSource: TextInputSource.ime,
+    alignment: _TextFieldAlignment.center,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "ancestor viewport at center",
+    pumpEditor: _pumpSuperTextFieldScrollSliverTestSetup,
+    textInputSource: TextInputSource.keyboard,
+    alignment: _TextFieldAlignment.center,
+  ),
+});
+
 class _SuperTextFieldScrollSetup {
   const _SuperTextFieldScrollSetup({
     required this.description,
@@ -878,7 +995,7 @@ Future<void> _pumpSuperTextFieldScrollSliverApp(
     MaterialApp(
       home: Scaffold(
         body: CustomScrollView(
-          key: const ValueKey("AncestorScrollable"),
+          key: textfieldAncestorScrollableKey,
           slivers: alignment == _TextFieldAlignment.top //
               ? slivers
               : slivers.reversed.toList(),
@@ -890,6 +1007,8 @@ Future<void> _pumpSuperTextFieldScrollSliverApp(
   // The first frame might have a zero viewport height. Pump a second frame to account for the final viewport size.
   await tester.pump();
 }
+
+const textfieldAncestorScrollableKey = ValueKey("AncestorScrollable");
 
 enum _TextFieldAlignment {
   top,
