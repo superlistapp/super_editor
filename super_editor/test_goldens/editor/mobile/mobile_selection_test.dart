@@ -793,48 +793,92 @@ void _testParagraphSelection(
   Future<void> Function(WidgetTester, GlobalKey docKey, ValueNotifier<_Line?> dragLine) test, {
   int maxPixelMismatchCount = 0,
 }) {
+  switch (platform) {
+    case DocumentGestureMode.mouse:
+      testGoldensOnMac(
+        description,
+        (tester) => _runParagraphSelectionTest(
+          tester,
+          platform,
+          goldenName,
+          test,
+          maxPixelMismatchCount: maxPixelMismatchCount,
+        ),
+      );
+    case DocumentGestureMode.android:
+      testGoldensOnAndroid(
+        description,
+        (tester) => _runParagraphSelectionTest(
+          tester,
+          platform,
+          goldenName,
+          test,
+          maxPixelMismatchCount: maxPixelMismatchCount,
+        ),
+      );
+    case DocumentGestureMode.iOS:
+      testGoldensOniOS(
+        description,
+        (tester) => _runParagraphSelectionTest(
+          tester,
+          platform,
+          goldenName,
+          test,
+          maxPixelMismatchCount: maxPixelMismatchCount,
+        ),
+      );
+  }
+}
+
+Future<void> _runParagraphSelectionTest(
+  WidgetTester tester,
+  DocumentGestureMode platform,
+  String goldenName,
+  Future<void> Function(WidgetTester, GlobalKey docKey, ValueNotifier<_Line?> dragLine) test, {
+  int maxPixelMismatchCount = 0,
+}) async {
   final docKey = GlobalKey();
 
-  testGoldensOnAndroid(description, (tester) async {
-    tester.view
-      ..physicalSize = const Size(800, 200)
-      ..devicePixelRatio = 1.0;
-    tester.binding.platformDispatcher.textScaleFactorTestValue = 1.0;
+  tester.view
+    ..physicalSize = const Size(800, 200)
+    ..devicePixelRatio = 1.0;
+  tester.binding.platformDispatcher.textScaleFactorTestValue = 1.0;
 
-    final dragLine = ValueNotifier<_Line?>(null);
+  final dragLine = ValueNotifier<_Line?>(null);
 
-    await tester //
-        .createDocument()
-        .withCustomContent(_createSingleParagraphDoc())
-        .withLayoutKey(docKey)
-        .withGestureMode(platform)
-        .useStylesheet(Stylesheet(
-          documentPadding: const EdgeInsets.all(16),
-          rules: defaultStylesheet.rules,
-          inlineTextStyler: (attributions, style) => _textStyleBuilder(attributions),
-        ))
-        .withCustomWidgetTreeBuilder(
-      (superEditor) {
-        return _buildScaffold(
-          dragLine: dragLine,
-          child: superEditor,
-        );
-      },
-    ) //
-        .pump();
+  await tester //
+      .createDocument()
+      .withCustomContent(_createSingleParagraphDoc())
+      .withLayoutKey(docKey)
+      .withGestureMode(platform)
+      .useStylesheet(Stylesheet(
+        documentPadding: const EdgeInsets.all(16),
+        rules: defaultStylesheet.rules,
+        inlineTextStyler: (attributions, style) => _textStyleBuilder(attributions),
+      ))
+      // Don't build a floating toolbar. It's a distraction for the details we care to verify.
+      .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
+      .withCustomWidgetTreeBuilder(
+    (superEditor) {
+      return _buildScaffold(
+        dragLine: dragLine,
+        child: superEditor,
+      );
+    },
+  ) //
+      .pump();
 
-    // Run the test
-    await test(tester, docKey, dragLine);
+  // Run the test
+  await test(tester, docKey, dragLine);
 
-    // Compare the golden
-    await tester.pumpAndSettle();
-    await expectLater(
-      find.byType(_DragLinePaint),
-      matchesGoldenFileWithPixelAllowance("goldens/$goldenName.png", maxPixelMismatchCount),
-    );
+  // Compare the golden
+  await tester.pumpAndSettle();
+  await expectLater(
+    find.byType(_DragLinePaint),
+    matchesGoldenFileWithPixelAllowance("goldens/$goldenName.png", maxPixelMismatchCount),
+  );
 
-    tester.view.resetPhysicalSize();
-  });
+  tester.view.resetPhysicalSize();
 }
 
 Widget _buildScaffold({
