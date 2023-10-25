@@ -96,8 +96,8 @@ class SuperEditorInspector {
       return androidControls.editingController.caretTop!;
     }
 
-    final iOSControls = (find.byType(IosHandlesDocumentLayer).evaluate().lastOrNull as StatefulElement?)?.state
-        as IosControlsDocumentLayerState?;
+    final iOSControls = (find.byType(AndroidHandlesDocumentLayer).evaluate().lastOrNull as StatefulElement?)?.state
+        as AndroidControlsDocumentLayerState?;
     if (iOSControls != null && iOSControls.caret != null) {
       return iOSControls.caret!.topCenter;
     }

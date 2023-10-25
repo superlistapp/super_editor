@@ -52,7 +52,7 @@ class SuperEditorIosControlsScope extends InheritedWidget {
     final data = maybeRootOf(context);
 
     if (data == null) {
-      throw Exception("Tried to depend upon the root IOSEditorControlsContext but no such ancestor widget exists.");
+      throw Exception("Tried to depend upon the root SuperEditorIosControlsScope but no such ancestor widget exists.");
     }
 
     return data;

@@ -10,11 +10,14 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/overlay_with_groups.dart';
@@ -34,6 +37,295 @@ import 'package:super_text_layout/super_text_layout.dart';
 import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
 import 'selection_upstream_downstream.dart';
+
+/// An [InheritedWidget] that provides shared access to a [SuperEditorAndroidControlsController],
+/// which coordinates the state of Android controls like the caret, handles, magnifier, etc.
+///
+/// This widget and its associated controller exist so that [SuperEditor] has maximum freedom
+/// in terms of where to implement Android gestures vs carets vs the magnifier vs the toolbar.
+/// Each of these responsibilities have some unique differences, which make them difficult or
+/// impossible to implement within a single widget. By sharing a controller, a group of independent
+/// widgets can work together to cover those various responsibilities.
+///
+/// Centralizing a controller in an [InheritedWidget] also allows [SuperEditor] to share that
+/// control with application code outside of [SuperEditor], by placing a [SuperEditorAndroidControlsScope]
+/// above the [SuperEditor] in the widget tree. For this reason, [SuperEditor] should access
+/// the [SuperEditorAndroidControlsScope] through [rootOf].
+class SuperEditorAndroidControlsScope extends InheritedWidget {
+  /// Finds the highest [SuperEditorAndroidControlsScope] in the widget tree, above the given
+  /// [context], and returns its associated [SuperEditorAndroidControlsController].
+  static SuperEditorAndroidControlsController rootOf(BuildContext context) {
+    final data = maybeRootOf(context);
+
+    if (data == null) {
+      throw Exception(
+          "Tried to depend upon the root SuperEditorAndroidControlsScope but no such ancestor widget exists.");
+    }
+
+    return data;
+  }
+
+  static SuperEditorAndroidControlsController? maybeRootOf(BuildContext context) {
+    InheritedElement? root;
+
+    context.visitAncestorElements((element) {
+      if (element is! InheritedElement || element.widget is! SuperEditorAndroidControlsScope) {
+        // Keep visiting.
+        return true;
+      }
+
+      root = element;
+
+      // Keep visiting, to ensure we get the root scope.
+      return true;
+    });
+
+    if (root == null) {
+      return null;
+    }
+
+    // Create build dependency on the Android controls context.
+    context.dependOnInheritedElement(root!);
+
+    // Return the current Android controls data.
+    return (root!.widget as SuperEditorAndroidControlsScope).controller;
+  }
+
+  /// Finds the nearest [SuperEditorAndroidControlsScope] in the widget tree, above the given
+  /// [context], and returns its associated [SuperEditorAndroidControlsController].
+  static SuperEditorAndroidControlsController nearestOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<SuperEditorAndroidControlsScope>()!.controller;
+
+  static SuperEditorAndroidControlsController? maybeNearestOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<SuperEditorAndroidControlsScope>()?.controller;
+
+  const SuperEditorAndroidControlsScope({
+    super.key,
+    required this.controller,
+    required super.child,
+  });
+
+  final SuperEditorAndroidControlsController controller;
+
+  @override
+  bool updateShouldNotify(SuperEditorAndroidControlsScope oldWidget) {
+    return controller != oldWidget.controller;
+  }
+}
+
+/// A controller, which coordinates the state of various Android editor controls, including
+/// the caret, handles, magnifier, and toolbar.
+class SuperEditorAndroidControlsController {
+  SuperEditorAndroidControlsController({
+    // TODO: how do we resolve implied conflict between handleColor and custom handle builders?
+    this.handleColor,
+    LeaderLink? collapsedHandleFocalPoint,
+    this.collapsedHandleBuilder,
+    LeaderLink? upstreamHandleFocalPoint,
+    LeaderLink? downstreamHandleFocalPoint,
+    this.expandedHandlesBuilder,
+    this.magnifierBuilder,
+    this.toolbarBuilder,
+    this.createOverlayControlsClipper,
+  })  : collapsedHandleFocalPoint = collapsedHandleFocalPoint ?? LeaderLink(),
+        upstreamHandleFocalPoint = upstreamHandleFocalPoint ?? LeaderLink(),
+        downstreamHandleFocalPoint = downstreamHandleFocalPoint ?? LeaderLink();
+
+  void dispose() {
+    _shouldCaretBlink.dispose();
+    _shouldShowMagnifier.dispose();
+    _shouldShowToolbar.dispose();
+  }
+
+  /// Whether the caret should blink right now.
+  ValueListenable<bool> get shouldCaretBlink => _shouldCaretBlink;
+  final _shouldCaretBlink = ValueNotifier<bool>(false);
+
+  /// Tells the caret to blink by setting [shouldCaretBlink] to `true`.
+  void blinkCaret() => _shouldCaretBlink.value = true;
+
+  /// Tells the caret to stop blinking by setting [shouldCaretBlink] to `false`.
+  void doNotBlinkCaret() => _shouldCaretBlink.value = false;
+
+  /// Color of the text selection drag handles on Android.
+  final Color? handleColor;
+
+  final LeaderLink collapsedHandleFocalPoint;
+
+  /// Whether the collapsed drag handle should be displayed right now.
+  ///
+  /// This value is enforced to be opposite of [shouldShowExpandedHandles].
+  ValueListenable<bool> get shouldShowCollapsedHandle => _shouldShowCollapsedHandle;
+  final _shouldShowCollapsedHandle = ValueNotifier<bool>(false);
+
+  /// Shows the collapsed drag handle by setting [shouldShowCollapsedHandle] to `true`, and also
+  /// hides the expanded handle by setting [shouldShowExpandedHandles] to `false`.
+  void showCollapsedHandle() {
+    _shouldShowCollapsedHandle.value = true;
+    _shouldShowExpandedHandles.value = false;
+  }
+
+  /// Hides the collapsed drag handle by setting [shouldShowCollapsedHandle] to `false`.
+  void hideCollapsedHandle() => _shouldShowCollapsedHandle.value = false;
+
+  /// Toggles [shouldShowCollapsedHandle], and if necessary, hides the expanded handles.
+  void toggleCollapsedHandle() {
+    if (shouldShowCollapsedHandle.value) {
+      hideCollapsedHandle();
+    } else {
+      showCollapsedHandle();
+    }
+  }
+
+  /// (Optional) Builder to create the visual representation of all drag handles: collapsed,
+  /// upstream, downstream.
+  ///
+  /// If [collapsedHandleBuilder] is `null`, a default Android handle is displayed.
+  final DocumentCollapsedHandleBuilder? collapsedHandleBuilder;
+
+  final LeaderLink upstreamHandleFocalPoint;
+  final LeaderLink downstreamHandleFocalPoint;
+
+  /// Whether the expanded drag handles should be displayed right now.
+  ///
+  /// This value is enforced to be opposite of [shouldShowCollapsedHandle].
+  ValueListenable<bool> get shouldShowExpandedHandles => _shouldShowExpandedHandles;
+  final _shouldShowExpandedHandles = ValueNotifier<bool>(false);
+
+  /// Shows the expanded drag handles by setting [shouldShowExpandedHandles] to `true`, and also
+  /// hides the collapsed handle by setting [shouldShowCollapsedHandle] to `false`.
+  void showExpandedHandles() {
+    _shouldShowExpandedHandles.value = true;
+    _shouldShowCollapsedHandle.value = false;
+  }
+
+  /// Hides the expanded drag handles by setting [shouldShowExpandedHandles] to `false`.
+  void hideExpandedHandles() => _shouldShowExpandedHandles.value = false;
+
+  /// Toggles [shouldShowExpandedHandles], and if necessary, hides the collapsed handle.
+  void toggleExpandedHandles() {
+    if (shouldShowExpandedHandles.value) {
+      hideCollapsedHandle();
+    } else {
+      showCollapsedHandle();
+    }
+  }
+
+  /// (Optional) Builder to create the visual representation of the expanded drag handles.
+  ///
+  /// If [expandedHandlesBuilder] is `null`, default Android handles are displayed.
+  final DocumentExpandedHandlesBuilder? expandedHandlesBuilder;
+
+  /// Whether the Android magnifier should be displayed right now.
+  ValueListenable<bool> get shouldShowMagnifier => _shouldShowMagnifier;
+  final _shouldShowMagnifier = ValueNotifier<bool>(false);
+
+  /// Shows the magnifier by setting [shouldShowMagnifier] to `true`.
+  void showMagnifier() => _shouldShowMagnifier.value = true;
+
+  /// Hides the magnifier by setting [shouldShowMagnifier] to `false`.
+  void hideMagnifier() => _shouldShowMagnifier.value = false;
+
+  /// Toggles [shouldShowMagnifier].
+  void toggleMagnifier() => _shouldShowMagnifier.value = !_shouldShowMagnifier.value;
+
+  /// Link to a location where a magnifier should be focused.
+  final magnifierFocalPoint = LeaderLink();
+
+  /// (Optional) Builder to create the visual representation of the magnifier.
+  ///
+  /// If [magnifierBuilder] is `null`, a default Android magnifier is displayed.
+  final DocumentMagnifierBuilder? magnifierBuilder;
+
+  /// Whether the Android floating toolbar should be displayed right now.
+  ValueListenable<bool> get shouldShowToolbar => _shouldShowToolbar;
+  final _shouldShowToolbar = ValueNotifier<bool>(false);
+
+  /// Shows the toolbar by setting [shouldShowToolbar] to `true`.
+  void showToolbar() => _shouldShowToolbar.value = true;
+
+  /// Hides the toolbar by setting [shouldShowToolbar] to `false`.
+  void hideToolbar() => _shouldShowToolbar.value = false;
+
+  /// Toggles [shouldShowToolbar].
+  void toggleToolbar() => _shouldShowToolbar.value = !_shouldShowToolbar.value;
+
+  /// Link to a location where a toolbar should be focused.
+  ///
+  /// This link probably points to a rectangle, such as a bounding rectangle
+  /// around the user's selection. Therefore, the toolbar builder shouldn't
+  /// assume that this focal point is a single pixel.
+  final toolbarFocalPoint = LeaderLink();
+
+  /// (Optional) Builder to create the visual representation of the floating
+  /// toolbar.
+  ///
+  /// If [toolbarBuilder] is `null`, a default Android toolbar is displayed.
+  final DocumentFloatingToolbarBuilder? toolbarBuilder;
+
+  /// Creates a clipper that restricts where the toolbar and magnifier can
+  /// appear in the overlay.
+  ///
+  /// If no clipper factory method is provided, then the overlay controls
+  /// will be allowed to appear anywhere in the overlay in which they sit
+  /// (probably the entire screen).
+  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
+}
+
+/// A [SuperEditorDocumentLayerBuilder] that builds an [AndroidToolbarFocalPointDocumentLayer], which
+/// positions a [Leader] widget around the document selection, as a focal point for an Android
+/// floating toolbar.
+class SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder implements SuperEditorLayerBuilder {
+  const SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder({
+    // ignore: unused_element
+    this.showDebugLeaderBounds = false,
+  });
+
+  /// Whether to paint colorful bounds around the leader widget.
+  final bool showDebugLeaderBounds;
+
+  @override
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editorContext) {
+    return AndroidToolbarFocalPointDocumentLayer(
+      document: editorContext.document,
+      selection: editorContext.composer.selectionNotifier,
+      toolbarFocalPointLink: SuperEditorAndroidControlsScope.rootOf(context).toolbarFocalPoint,
+      showDebugLeaderBounds: showDebugLeaderBounds,
+    );
+  }
+}
+
+/// A [SuperEditorLayerBuilder], which builds an [AndroidHandlesDocumentLayer],
+/// which displays Android-style caret and handles.
+class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerBuilder {
+  const SuperEditorAndroidHandlesDocumentLayerBuilder({
+    this.handleColor,
+  });
+
+  final Color? handleColor;
+
+  @override
+  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return const ContentLayerProxyWidget(child: SizedBox());
+    }
+
+    return AndroidHandlesDocumentLayer(
+      document: editContext.document,
+      documentLayout: editContext.documentLayout,
+      selection: editContext.composer.selectionNotifier,
+      changeSelection: (newSelection, changeType, reason) {
+        editContext.editor.execute([
+          ChangeSelectionRequest(newSelection, changeType, reason),
+        ]);
+      },
+      handleColor: handleColor ??
+          SuperEditorAndroidControlsScope.maybeRootOf(context)?.handleColor ??
+          Theme.of(context).primaryColor,
+      shouldCaretBlink: SuperEditorAndroidControlsScope.rootOf(context).shouldCaretBlink,
+    );
+  }
+}
 
 /// Document gesture interactor that's designed for Android touch input, e.g.,
 /// drag to scroll, and handles to control selection.

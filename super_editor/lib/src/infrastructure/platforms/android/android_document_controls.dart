@@ -1,8 +1,383 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
+import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
+/// A document layer that positions a leader widget around the user's selection,
+/// as a focal point for an Android-style toolbar display.
+///
+/// By default, the toolbar focal point [LeaderLink] is obtained from an ancestor
+/// [SuperEditorAndroidControlsScope].
+class AndroidToolbarFocalPointDocumentLayer extends DocumentLayoutLayerStatefulWidget {
+  const AndroidToolbarFocalPointDocumentLayer({
+    Key? key,
+    required this.document,
+    required this.selection,
+    required this.toolbarFocalPointLink,
+    this.showDebugLeaderBounds = false,
+  }) : super(key: key);
+
+  /// The editor's [Document], which is used to find the start and end of
+  /// the user's expanded selection.
+  final Document document;
+
+  /// The current user's selection within a document.
+  final ValueListenable<DocumentSelection?> selection;
+
+  /// The [LeaderLink], which is attached to the toolbar focal point bounds.
+  ///
+  /// By default, this [LeaderLink] is obtained from an ancestor [SuperEditorAndroidControlsScope].
+  /// If [toolbarFocalPointLink] is non-null, it's used instead of the ancestor value.
+  final LeaderLink toolbarFocalPointLink;
+
+  /// Whether to paint colorful bounds around the leader widgets, for debugging purposes.
+  final bool showDebugLeaderBounds;
+
+  @override
+  DocumentLayoutLayerState<ContentLayerStatefulWidget, Rect> createState() =>
+      _AndroidToolbarFocalPointDocumentLayerState();
+}
+
+class _AndroidToolbarFocalPointDocumentLayerState
+    extends DocumentLayoutLayerState<AndroidToolbarFocalPointDocumentLayer, Rect> with SingleTickerProviderStateMixin {
+  bool _wasSelectionExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.selection.addListener(_onSelectionChange);
+  }
+
+  @override
+  void didUpdateWidget(AndroidToolbarFocalPointDocumentLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.selection != oldWidget.selection) {
+      oldWidget.selection.removeListener(_onSelectionChange);
+      widget.selection.addListener(_onSelectionChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.selection.removeListener(_onSelectionChange);
+
+    super.dispose();
+  }
+
+  void _onSelectionChange() {
+    final selection = widget.selection.value;
+    _wasSelectionExpanded = !(selection?.isCollapsed == true);
+
+    if (selection == null && !_wasSelectionExpanded) {
+      // There's no selection now, and in the previous frame there either was no selection,
+      // or a collapsed selection. We don't need to worry about re-calculating or rebuilding
+      // our bounds.
+      return;
+    }
+    if (selection != null && selection.isCollapsed && !_wasSelectionExpanded) {
+      // The current selection is collapsed, and the selection in the previous frame was
+      // either null, or was also collapsed. We only need to position bounds when the selection
+      // is expanded, or goes from expanded to collapsed, or from collapsed to expanded.
+      return;
+    }
+
+    // The current selection is expanded, or we went from expanded in the previous frame
+    // to non-expanded in this frame. Either way, we need to recalculate the toolbar focal
+    // point bounds.
+    setStateAsSoonAsPossible(() {
+      // The selection bounds, and Leader build, will take place in methods that
+      // run in response to setState().
+    });
+  }
+
+  @override
+  Rect? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+    final documentSelection = widget.selection.value;
+    if (documentSelection == null) {
+      return null;
+    }
+
+    final selectedComponent = documentLayout.getComponentByNodeId(widget.selection.value!.extent.nodeId);
+    if (selectedComponent == null) {
+      // Assume that we're in a momentary transitive state where the document layout
+      // just gained or lost a component. We expect this method to run again in a moment
+      // to correct for this.
+      return null;
+    }
+
+    if (documentSelection.isCollapsed) {
+      return null;
+    }
+
+    return documentLayout.getRectForSelection(
+      documentSelection.base,
+      documentSelection.extent,
+    );
+  }
+
+  @override
+  Widget doBuild(BuildContext context, Rect? expandedSelectionBounds) {
+    if (expandedSelectionBounds == null) {
+      return const SizedBox();
+    }
+
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          Positioned.fromRect(
+            rect: expandedSelectionBounds,
+            child: Leader(
+              link: widget.toolbarFocalPointLink,
+              child: widget.showDebugLeaderBounds
+                  ? DecoratedBox(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          width: 4,
+                          color: const Color(0xFFFF00FF),
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// TODO: should we de-dup AndroidHandlesDocumentLayer with the iOS version? It's mostly the same.
+
+/// A document layer that displays an Android-style caret, and positions [Leader]s for the Android
+/// collapsed and expanded drag handles.
+///
+/// This layer positions and paints the caret directly, rather than using `Leader`s and `Follower`s,
+/// because its position is based on the document layout, rather than the user's gesture behavior.
+class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
+  const AndroidHandlesDocumentLayer({
+    super.key,
+    required this.document,
+    required this.documentLayout,
+    required this.selection,
+    required this.changeSelection,
+    required this.handleColor,
+    required this.shouldCaretBlink,
+    this.showDebugPaint = false,
+  });
+
+  final Document document;
+
+  final DocumentLayout documentLayout;
+
+  final ValueListenable<DocumentSelection?> selection;
+
+  final void Function(DocumentSelection?, SelectionChangeType, String selectionReason) changeSelection;
+
+  /// Color used to render the Android-style caret (not handles).
+  final Color handleColor;
+
+  /// Whether the caret should blink, whenever the caret is visible.
+  final ValueListenable<bool> shouldCaretBlink;
+
+  final bool showDebugPaint;
+
+  @override
+  DocumentLayoutLayerState<AndroidHandlesDocumentLayer, DocumentSelectionLayout> createState() =>
+      AndroidControlsDocumentLayerState();
+}
+
+@visibleForTesting
+class AndroidControlsDocumentLayerState
+    extends DocumentLayoutLayerState<AndroidHandlesDocumentLayer, DocumentSelectionLayout>
+    with SingleTickerProviderStateMixin {
+  late BlinkController _caretBlinkController;
+
+  SuperEditorAndroidControlsController? _controlsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _caretBlinkController = BlinkController(tickerProvider: this);
+
+    widget.selection.addListener(_onSelectionChange);
+    widget.shouldCaretBlink.addListener(_onBlinkModeChange);
+
+    _onBlinkModeChange();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
+  }
+
+  @override
+  void didUpdateWidget(AndroidHandlesDocumentLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.selection != oldWidget.selection) {
+      oldWidget.selection.removeListener(_onSelectionChange);
+      widget.selection.addListener(_onSelectionChange);
+    }
+
+    if (widget.shouldCaretBlink != oldWidget.shouldCaretBlink) {
+      oldWidget.shouldCaretBlink.removeListener(_onBlinkModeChange);
+      widget.shouldCaretBlink.addListener(_onBlinkModeChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.selection.removeListener(_onSelectionChange);
+    widget.shouldCaretBlink.removeListener(_onBlinkModeChange);
+
+    _caretBlinkController.dispose();
+    super.dispose();
+  }
+
+  @visibleForTesting
+  Rect? get caret => layoutData?.caret;
+
+  @visibleForTesting
+  Color get caretColor => widget.handleColor;
+
+  @visibleForTesting
+  bool get isCaretDisplayed => layoutData?.caret != null;
+
+  @visibleForTesting
+  bool get isUpstreamHandleDisplayed => layoutData?.upstream != null;
+
+  @visibleForTesting
+  bool get isDownstreamHandleDisplayed => layoutData?.downstream != null;
+
+  void _onSelectionChange() {
+    setState(() {
+      // Schedule a new layout computation because the caret and/or handles need to move.
+    });
+  }
+
+  void _onBlinkModeChange() {
+    if (widget.shouldCaretBlink.value) {
+      _caretBlinkController.startBlinking();
+    } else {
+      _caretBlinkController.stopBlinking();
+    }
+  }
+
+  @override
+  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+    final selection = widget.selection.value;
+    if (selection == null) {
+      return null;
+    }
+
+    if (selection.isCollapsed) {
+      return DocumentSelectionLayout(
+        caret: documentLayout.getRectForPosition(selection.extent)!,
+      );
+    } else {
+      return DocumentSelectionLayout(
+        upstream: documentLayout.getRectForPosition(
+          widget.document.selectUpstreamPosition(selection.base, selection.extent),
+        )!,
+        downstream: documentLayout.getRectForPosition(
+          widget.document.selectDownstreamPosition(selection.base, selection.extent),
+        )!,
+        expandedSelectionBounds: documentLayout.getRectForSelection(
+          selection.base,
+          selection.extent,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget doBuild(BuildContext context, DocumentSelectionLayout? layoutData) {
+    return IgnorePointer(
+      child: SizedBox.expand(
+        child: layoutData != null //
+            ? _buildHandles(layoutData)
+            : const SizedBox(),
+      ),
+    );
+  }
+
+  Widget _buildHandles(DocumentSelectionLayout layoutData) {
+    if (widget.selection.value == null) {
+      editorGesturesLog.finer("Not building overlay handles because there's no selection.");
+      return const SizedBox.shrink();
+    }
+
+    return Stack(
+      children: [
+        if (layoutData.caret != null) //
+          _buildCaret(caret: layoutData.caret!),
+        if (layoutData.upstream != null && layoutData.downstream != null)
+          ..._buildExpandedHandleLeaders(
+            upstream: layoutData.upstream!,
+            downstream: layoutData.downstream!,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCaret({
+    required Rect caret,
+  }) {
+    return Positioned(
+      left: caret.left,
+      top: caret.top,
+      height: caret.height,
+      width: 1,
+      child: Leader(
+        link: _controlsController!.collapsedHandleFocalPoint,
+        child: ListenableBuilder(
+          listenable: _caretBlinkController,
+          builder: (context, child) {
+            print("Building caret with opacity: ${_caretBlinkController.opacity}");
+            return ColoredBox(
+              key: DocumentKeys.androidCaret,
+              color: widget.handleColor.withOpacity(_caretBlinkController.opacity),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildExpandedHandleLeaders({
+    required Rect upstream,
+    required Rect downstream,
+  }) {
+    return [
+      Positioned.fromRect(
+        rect: upstream,
+        child: Leader(link: _controlsController!.upstreamHandleFocalPoint),
+      ),
+      Positioned.fromRect(
+        rect: downstream,
+        child: Leader(link: _controlsController!.downstreamHandleFocalPoint),
+      ),
+    ];
+  }
+}
+
+// TODO: Can we get rid of this controller after migrating to compositional approach
 /// Controls the display of drag handles, a magnifier, and a
 /// floating toolbar, assuming Android-style behavior for the
 /// handles.

@@ -1,8 +1,136 @@
 import 'package:flutter/widgets.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/_scrolling.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
+
+class DocumentKeys {
+  static const mobileToolbar = ValueKey("document_mobile_toolbar");
+  static const magnifier = ValueKey("document_magnifier");
+  static const iOsCaret = ValueKey("document_ios_caret");
+  static const androidCaret = ValueKey("document_android_caret");
+  static const androidCaretHandle = ValueKey("document_android_caret_handle");
+  static const upstreamHandle = ValueKey("document_upstream_handle");
+  static const downstreamHandle = ValueKey("document_downstream_handle");
+
+  DocumentKeys._();
+}
+
+/// Builds a full-screen collapsed drag handle display, with the handle positioned near the [focalPoint],
+/// and with the handle attached to the given [handleKey].
+///
+/// The [handleKey] is used to find the handle in the widget tree for various purposes,
+/// e.g., within tests to verify the presence or absence of the handle.
+///
+/// The [handleKey] must be attached to the handle, not the top-level widget returned
+/// from this builder, because the [handleKey] might be used to verify the size and location
+/// of the handle. For example:
+///
+/// ```dart
+/// Widget buildCollapsedHandle(context, handleKey, focalPoint) {
+///   return Follower(
+///     link: focalPoint,
+///     child: CollapsedHandle(
+///       key: handleKey,
+///     ),
+///   );
+/// }
+/// ```
+typedef DocumentCollapsedHandleBuilder = Widget Function(BuildContext, Key handleKey, LeaderLink focalPoint);
+
+/// Builds a full-screen display of a set of expanded drag handles, with the handles positioned near the
+/// [upstreamFocalPoint] and [downstreamFocalPoint], respectively, and with the handles attached to the
+/// given [upstreamHandleKey] and [downstreamHandleKey], respectively.
+///
+/// The [upstreamHandleKey] and [downstreamHandleKey] are used to find the handles in the widget tree for
+/// various purposes, e.g., within tests to verify the presence or absence of the handles.
+///
+/// The handle keys must be attached to the handles, not the top-level widget returned
+/// from this builder, because the handle keys might be used to verify the size and location
+/// of the handles. For example:
+///
+/// ```dart
+/// Widget buildCollapsedHandle(context, upstreamHandleKey, upstreamFocalPoint, downstreamHandleKey, downstreamFocalPoint) {
+///   return Stack(
+///     children: [
+///       Follower(
+///        link: upstreamFocalPoint,
+///        child: UpstreamHandle(key: upstreamHandleKey),
+///       ),
+///       Follower(
+///        link: downstreamFocalPoint,
+///        child: DownstreamHandle(key: downstreamHandleKey),
+///       ),
+///     ],
+///   );
+/// }
+/// ```
+typedef DocumentExpandedHandlesBuilder = Widget Function(
+  BuildContext,
+  Key upstreamHandleKey,
+  LeaderLink upstreamFocalPoint,
+  Key downstreamHandleKey,
+  LeaderLink downstreamFocalPoint,
+);
+
+/// Builds a full-screen floating toolbar display, with the toolbar positioned near the
+/// [focalPoint], and with the toolbar attached to the given [mobileToolbarKey].
+///
+/// The [mobileToolbarKey] is used to find the toolbar in the widget tree for various purposes,
+/// e.g., within tests to verify the presence or absence of a toolbar. If your builder chooses
+/// not to build a toolbar, e.g., returns a `SizedBox()` instead of a toolbar, then the
+/// you shouldn't use the [mobileToolbarKey].
+///
+/// The [mobileToolbarKey] must be attached to the toolbar, not the top-level widget returned
+/// from this builder, because the [mobileToolbarKey] might be used to verify the size and location
+/// of the toolbar. For example:
+///
+/// ```dart
+/// Widget buildMagnifier(context, mobileToolbarKey, focalPoint) {
+///   return Follower(
+///     link: focalPoint,
+///     child: Toolbar(
+///       key: mobileToolbarKey,
+///       width: 100,
+///       height: 42,
+///       magnification: 1.5,
+///     ),
+///   );
+/// }
+/// ```
+typedef DocumentFloatingToolbarBuilder = Widget Function(
+  BuildContext context,
+  Key mobileToolbarKey,
+  LeaderLink focalPoint,
+);
+
+/// Builds a full-screen magnifier display, with the magnifier following the given [focalPoint],
+/// and with the magnifier attached to the given [magnifierKey].
+///
+/// The [magnifierKey] is used to find the magnifier in the widget tree for various purposes,
+/// e.g., within tests to verify the presence or absence of a magnifier. If your builder chooses
+/// not to build a magnifier, e.g., returns a `SizedBox()` instead of a magnifier, then the
+/// you shouldn't use the [magnifierKey].
+///
+/// The [magnifierKey] must be attached to the magnifier, not the top-level widget returned
+/// from this builder, because the [magnifierKey] might be used to verify the size and location
+/// of the magnifier. For example:
+///
+/// ```dart
+/// Widget buildMagnifier(context, magnifierKey, focalPoint) {
+///   return Follower(
+///     link: focalPoint,
+///     child: Magnifier(
+///       key: magnifierKey,
+///       width: 100,
+///       height: 42,
+///       magnification: 1.5,
+///     ),
+///   );
+/// }
+/// ```
+typedef DocumentMagnifierBuilder = Widget Function(BuildContext, Key magnifierKey, LeaderLink focalPoint);
 
 /// Global flag that disables long-press selection for Android and iOS, as a hack for Superlist, because
 /// Superlist has a custom long-press behavior per-component.

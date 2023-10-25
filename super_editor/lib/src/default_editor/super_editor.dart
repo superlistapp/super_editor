@@ -338,11 +338,17 @@ class SuperEditorState extends State<SuperEditor> {
 
   ContentTapDelegate? _contentTapDelegate;
 
-  // GlobalKey for the iOS editor controls context so that the context data doesn't
+  // GlobalKey for the iOS editor controls scope so that the scope's controller doesn't
   // continuously replace itself every time we rebuild. We want to retain the same
   // controls because they're shared throughout a number of disconnected widgets.
   final _iosControlsContextKey = GlobalKey();
   final _iosControlsController = SuperEditorIosControlsController();
+
+  // GlobalKey for the Android editor controls scope so that the scope's controller doesn't
+  // continuously replace itself every time we rebuild. We want to retain the same
+  // controls because they're shared throughout a number of disconnected widgets.
+  final _androidControlsContextKey = GlobalKey();
+  final _androidControlsController = SuperEditorAndroidControlsController();
 
   // Leader links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
@@ -612,12 +618,16 @@ class SuperEditorState extends State<SuperEditor> {
     required Widget child,
   }) {
     switch (gestureMode) {
-      // case DocumentGestureMode.mouse:
-      //   // TODO: create context for mouse mode (#1533)
-      // case DocumentGestureMode.android:
-      //   // TODO: create context for Android (#1509)
+      case DocumentGestureMode.mouse:
+        // TODO: create context for mouse mode (#1533)
+        return child;
+      case DocumentGestureMode.android:
+        return SuperEditorAndroidControlsScope(
+          key: _androidControlsContextKey,
+          controller: _androidControlsController,
+          child: child,
+        );
       case DocumentGestureMode.iOS:
-      default:
         return SuperEditorIosControlsScope(
           key: _iosControlsContextKey,
           controller: _iosControlsController,
@@ -1018,6 +1028,13 @@ const defaultSuperEditorDocumentOverlayBuilders = [
   SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
   // Displays caret and drag handles, specifically for iOS.
   SuperEditorIosHandlesDocumentLayerBuilder(),
+
+  // Adds a Leader around the document selection at a focal point for the
+  // Android floating toolbar.
+  SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
+  // Displays caret and drag handles, specifically for Android.
+  SuperEditorAndroidHandlesDocumentLayerBuilder(),
+
   // Displays caret for typical desktop use-cases.
   DefaultCaretOverlayBuilder(),
 ];
