@@ -831,7 +831,11 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 ///   );
 /// }
 /// ```
-typedef DocumentFloatingToolbarBuilder = Widget Function(BuildContext, Key mobileToolbarKey, LeaderLink focalPoint);
+typedef DocumentFloatingToolbarBuilder = Widget Function(
+  BuildContext context,
+  Key mobileToolbarKey,
+  LeaderLink focalPoint,
+);
 
 /// Builds a full-screen magnifier display, with the magnifier following the given [focalPoint],
 /// and with the magnifier attached to the given [magnifierKey].
