@@ -908,7 +908,7 @@ final _scrollTextFieldPlacedAtCenter = ValueVariant<_SuperTextFieldScrollSetup>(
 Future<void> _pumpSuperTextFieldTestApp(
   WidgetTester tester,
   TextInputSource textInputSource, [
-  _TextFieldPlacementWithinScrollable? placement,
+  _,
 ]) async {
   return await _pumpTestApp(
     tester,
@@ -962,7 +962,7 @@ Future<void> _pumpTestApp(
 Future<void> _pumpSuperTextFieldWithinScrollableTestApp(
   WidgetTester tester,
   TextInputSource textInputSource, [
-  _TextFieldPlacementWithinScrollable? placement,
+  _TextFieldPlacementWithinScrollable placement = _TextFieldPlacementWithinScrollable.top,
 ]) async {
   return await _pumpSuperTextFieldScrollSliverApp(
     tester,
@@ -972,7 +972,7 @@ Future<void> _pumpSuperTextFieldWithinScrollableTestApp(
     minLines: 1,
     maxLines: 4,
     textInputSource: textInputSource,
-    placement: placement ?? _TextFieldPlacementWithinScrollable.top,
+    placement: placement,
   );
 }
 
@@ -1058,10 +1058,10 @@ class _SuperTextFieldScrollSetup {
 typedef _PumpEditorWidget = Future<void> Function(
   WidgetTester tester,
   TextInputSource textInputSource, [
-  _TextFieldPlacementWithinScrollable? placement,
+  _TextFieldPlacementWithinScrollable placement,
 ]);
 
-/// Defines the placement of the SuperTextField within the ancestor
+/// Defines the placement of [SuperTextField] within ancestor
 /// scrollable.
 enum _TextFieldPlacementWithinScrollable {
   top,
