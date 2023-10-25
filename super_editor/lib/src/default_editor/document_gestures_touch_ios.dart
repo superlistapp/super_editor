@@ -830,9 +830,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _controlsController!.doNotBlinkCaret();
-    _controlsController!.hideToolbar();
-    _controlsController!.showToolbar();
+    _controlsController!
+      ..doNotBlinkCaret()
+      ..hideToolbar()
+      ..showMagnifier();
 
     _globalStartDragOffset = details.globalPosition;
     final interactorBox = context.findRenderObject() as RenderBox;

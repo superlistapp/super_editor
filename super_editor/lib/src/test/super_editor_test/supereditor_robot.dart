@@ -44,6 +44,22 @@ extension SuperEditorRobot on WidgetTester {
     await _tapInParagraph(nodeId, offset, affinity, 1, superEditorFinder);
   }
 
+  Future<TestGesture> tapDownInParagraph(
+    String nodeId,
+    int offset, {
+    TextAffinity affinity = TextAffinity.downstream,
+    Finder? superEditorFinder,
+  }) async {
+    // Calculate the global tap position based on the TextLayout and desired
+    // TextPosition.
+    final globalTapOffset = _findGlobalOffsetForTextPosition(nodeId, offset, affinity, superEditorFinder);
+
+    // TODO: check that the tap offset is visible within the viewport. Add option to
+    // auto-scroll, or throw exception when it's not tappable.
+
+    return await startGesture(globalTapOffset);
+  }
+
   /// Simulates a long-press at the given text [offset] within the paragraph
   /// with the given [nodeId].
   Future<void> longPressInParagraph(
@@ -52,7 +68,7 @@ extension SuperEditorRobot on WidgetTester {
     TextAffinity affinity = TextAffinity.downstream,
     Finder? superEditorFinder,
   }) async {
-    final gesture = await _pressDownInParagraph(nodeId, offset, affinity, 1, superEditorFinder);
+    final gesture = await tapDownInParagraph(nodeId, offset, affinity: affinity, superEditorFinder: superEditorFinder);
     await pump(kLongPressTimeout + kPressTimeout);
 
     await gesture.up();
@@ -68,7 +84,7 @@ extension SuperEditorRobot on WidgetTester {
     TextAffinity affinity = TextAffinity.downstream,
     Finder? superEditorFinder,
   }) async {
-    final gesture = await _pressDownInParagraph(nodeId, offset, affinity, 1, superEditorFinder);
+    final gesture = await tapDownInParagraph(nodeId, offset, affinity: affinity, superEditorFinder: superEditorFinder);
     await pump(kLongPressTimeout + kPressTimeout);
     return gesture;
   }
@@ -120,23 +136,6 @@ extension SuperEditorRobot on WidgetTester {
     await pump(kTapTimeout);
 
     await pumpAndSettle();
-  }
-
-  Future<TestGesture> _pressDownInParagraph(
-    String nodeId,
-    int offset,
-    TextAffinity affinity,
-    int tapCount, [
-    Finder? superEditorFinder,
-  ]) async {
-    // Calculate the global tap position based on the TextLayout and desired
-    // TextPosition.
-    final globalTapOffset = _findGlobalOffsetForTextPosition(nodeId, offset, affinity, superEditorFinder);
-
-    // TODO: check that the tap offset is visible within the viewport. Add option to
-    // auto-scroll, or throw exception when it's not tappable.
-
-    return await startGesture(globalTapOffset);
   }
 
   /// Taps at the center of the content at the given [position] within a [SuperEditor].
@@ -254,6 +253,26 @@ extension SuperEditorRobot on WidgetTester {
     await gesture.up();
     await gesture.removePointer();
     await pumpAndSettle();
+  }
+
+  Future<TestGesture> pressDownOnUpstreamMobileHandle() async {
+    final handleElement = find.byKey(DocumentKeys.upstreamHandle).evaluate().firstOrNull;
+    assert(handleElement != null, "Tried to press down on upstream handle but no handle was found.");
+    final renderHandle = handleElement!.renderObject as RenderBox;
+    final handleCenter = renderHandle.localToGlobal(renderHandle.size.center(Offset.zero));
+
+    final gesture = await startGesture(handleCenter);
+    return gesture;
+  }
+
+  Future<TestGesture> pressDownOnDownstreamMobileHandle() async {
+    final handleElement = find.byKey(DocumentKeys.downstreamHandle).evaluate().firstOrNull;
+    assert(handleElement != null, "Tried to press down on upstream handle but no handle was found.");
+    final renderHandle = handleElement!.renderObject as RenderBox;
+    final handleCenter = renderHandle.localToGlobal(renderHandle.size.center(Offset.zero));
+
+    final gesture = await startGesture(handleCenter);
+    return gesture;
   }
 
   /// Types the given [text] into a [SuperEditor] by simulating IME text deltas from
