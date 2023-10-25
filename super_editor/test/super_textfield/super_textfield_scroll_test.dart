@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:meta/meta.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -208,11 +209,11 @@ void main() {
             _scrollingVariant.currentValue!.textInputSource,
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Find SuperTextField scrollable
+          // Find textfield scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
             of: find.byType(SuperTextField),
             matching: find.byType(Scrollable),
@@ -243,11 +244,11 @@ void main() {
             _scrollingVariant.currentValue!.textInputSource,
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Find SuperTextField scrollable
+          // Find SuperTextField scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
             of: find.byType(SuperTextField),
             matching: find.byType(Scrollable),
@@ -280,11 +281,11 @@ void main() {
             _scrollingVariant.currentValue!.textInputSource,
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Find SuperTextField scrollable
+          // Find SuperTextField scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
             of: find.byType(SuperTextField),
             matching: find.byType(Scrollable),
@@ -318,11 +319,11 @@ void main() {
             _scrollingVariant.currentValue!.textInputSource,
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Find SuperTextField scrollable
+          // Find SuperTextField scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
             of: find.byType(SuperTextField),
             matching: find.byType(Scrollable),
@@ -355,11 +356,11 @@ void main() {
             _scrollingVariant.currentValue!.textInputSource,
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Find SuperTextField scrollable
+          // Find SuperTextField scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
             of: find.byType(SuperTextField),
             matching: find.byType(Scrollable),
@@ -394,11 +395,11 @@ void main() {
             _scrollingVariant.currentValue!.textInputSource,
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Find SuperTextField scrollable
+          // Find SuperTextField scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
             of: find.byType(SuperTextField),
             matching: find.byType(Scrollable),
@@ -432,11 +433,11 @@ void main() {
             _scrollingVariant.currentValue!.textInputSource,
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Find SuperTextField scrollable
+          // Find SuperTextField scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
             of: find.byType(SuperTextField),
             matching: find.byType(Scrollable),
@@ -465,11 +466,11 @@ void main() {
             _scrollingVariant.currentValue!.textInputSource,
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Find SuperTextField scrollable
+          // Find SuperTextField scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
             of: find.byType(SuperTextField),
             matching: find.byType(Scrollable),
@@ -493,9 +494,10 @@ void main() {
       );
     });
 
-    group("scrolls ancestor scrollable upon exceeding scroll extent when at the top of the page", () {
+    group("upon exceeding scroll extent, scrolls ancestor scrollable if any present", () {
       testWidgetsOnDesktopAndWeb(
-        'scrolls all the way from top of the textfield to bottom of the page and back to the top of the textfield',
+        '''scrolls from top->bottom of textfiled and then towards bottom of 
+        the page and back to the top of the page''',
         (tester) async {
           final currentVariant = _scrollingWithinAncestorScrollableVariant.currentValue;
 
@@ -505,11 +507,11 @@ void main() {
             currentVariant.textInputSource,
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Find SuperTextField scrollable
+          // Find SuperTextField scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
             of: find.byType(SuperTextField),
             matching: find.byType(Scrollable),
@@ -517,13 +519,15 @@ void main() {
 
           // Find the textfield's  ancestor scrollable
           final ancestorScrollState = tester.state<ScrollableState>(
-            find.byKey(textfieldAncestorScrollableKey),
+            find.descendant(
+              of: find.byKey(textfieldAncestorScrollableKey),
+              matching: find.byType(Scrollable).first,
+            ),
           );
 
-          // First loop scrolls the textfield, check that it scrolls to the bottom.
-          // Second loop scrolls the ancestor scrollable, check that it scrolls to the bottom.
+          // First loop scrolls the textfield, ensures it scrolls to the bottom.
+          // Second loop scrolls the ancestor scrollable, ensures it scrolls to the bottom.
           for (var i = 0; i < 2; i++) {
-            // Scroll all the way to the bottom of the page.
             if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
               await _pressCmdEnd(tester);
             } else {
@@ -531,12 +535,13 @@ void main() {
             }
 
             if (i == 0) {
+              // Ensure we scrolled to the bottom of the textfield's viewport.
               expect(
                 scrollState.position.pixels,
                 equals(scrollState.position.maxScrollExtent),
               );
             } else {
-              // Ensure we scrolled to the bottom of the viewport.
+              // Ensure we scrolled to the bottom of the page viewport.
               expect(
                 ancestorScrollState.position.pixels,
                 equals(ancestorScrollState.position.maxScrollExtent),
@@ -544,8 +549,8 @@ void main() {
             }
           }
 
-          // First loop scrolls the textfield, check that it scrolls to the top.
-          // Second loop scrolls the ancestor scrollable, check that it scrolls to the top.
+          // First loop scrolls the textfield, ensures it scrolls to the top.
+          // Second loop scrolls the ancestor scrollable, ensures it scrolls to the top.
           for (var i = 0; i < 2; i++) {
             // Scroll all the way to the bottom of the page.
             if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
@@ -555,12 +560,13 @@ void main() {
             }
 
             if (i == 0) {
-              // Ensure we scrolled to the top of the viewport.
+              // Ensure we scrolled to the top of the textfield's viewport.
               expect(
                 scrollState.position.pixels,
                 equals(scrollState.position.minScrollExtent),
               );
             } else {
+              // Ensure we scrolled to the bottom of the page viewport.
               expect(
                 ancestorScrollState.position.pixels,
                 equals(ancestorScrollState.position.minScrollExtent),
@@ -583,15 +589,18 @@ void main() {
             currentVariant.alignment,
           );
 
-          // Find the textfield's  ancestor scrollable
+          // Find the textfield's ancestor scrollable
           final ancestorScrollState = tester.state<ScrollableState>(
-            find.byKey(textfieldAncestorScrollableKey),
+            find.descendant(
+              of: find.byKey(textfieldAncestorScrollableKey),
+              matching: find.byType(Scrollable).first,
+            ),
           );
 
           ancestorScrollState.position.jumpTo(ancestorScrollState.position.maxScrollExtent);
           await tester.pump();
 
-          // Ensure we are at the bottom of the page
+          // Ensure we are at the bottom of the page.
           expect(
             ancestorScrollState.position.pixels,
             equals(ancestorScrollState.position.maxScrollExtent),
@@ -605,11 +614,11 @@ void main() {
             ),
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Scroll all the way to the bottom of the textfield
+          // Scroll all the way to the bottom of the textfield.
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
             await _pressCmdEnd(tester);
           } else {
@@ -621,10 +630,9 @@ void main() {
             equals(scrollState.position.maxScrollExtent),
           );
 
-          // First loop scrolls the textfield, check that it scrolls to the top.
-          // Second loop scrolls the ancestor scrollable, check that it scrolls to the top.
+          // First loop scrolls the textfield, ensures it scrolls to the top.
+          // Second loop scrolls the ancestor scrollable, ensures it scrolls to the top.
           for (var i = 0; i < 2; i++) {
-            // Scroll all the way to the bottom of the page.
             if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
               await _pressCmdHome(tester);
             } else {
@@ -632,12 +640,13 @@ void main() {
             }
 
             if (i == 0) {
-              // Ensure we scrolled to the top of the viewport.
+              // Ensure we scrolled to the top of the textfield viewport.
               expect(
                 scrollState.position.pixels,
                 equals(scrollState.position.minScrollExtent),
               );
             } else {
+              // Ensure we scrolled to the top of the page viewport.
               expect(
                 ancestorScrollState.position.pixels,
                 equals(ancestorScrollState.position.minScrollExtent),
@@ -660,21 +669,26 @@ void main() {
             currentVariant.alignment,
           );
 
-          // Find the textfield's  ancestor scrollable
+          // Find the textfield's ancestor scrollable.
           final ancestorScrollState = tester.state<ScrollableState>(
-            find.byKey(textfieldAncestorScrollableKey),
+            find.descendant(
+              of: find.byKey(textfieldAncestorScrollableKey),
+              matching: find.byType(Scrollable).first,
+            ),
           );
 
+          // Tap on the page to focus it.
           await tester.tap(find.byKey(textfieldAncestorScrollableKey));
           await tester.pump();
 
+          // Scroll untill textfield is visible.
           await tester.scrollUntilVisible(
             find.byType(SuperTextField),
             200,
           );
           await tester.pump();
 
-          // Find SuperTextField scrollable
+          // Find SuperTextField scrollable.
           final scrollState = tester.state<ScrollableState>(
             find.descendant(
               of: find.byType(SuperTextField),
@@ -682,22 +696,19 @@ void main() {
             ),
           );
 
-          // Tap at top left in the textfield to focus it
+          // Tap on the textfield to focus it.
           await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
           await tester.pump();
 
-          // Ensure we are at the top of the textfiled
+          // Ensure we are at the top of the textfiled.
           expect(
             scrollState.position.pixels,
             equals(scrollState.position.minScrollExtent),
           );
 
-          // First loop scrolls the textfield to bottom and ensures it has scrolled to
-          // the bottom.
-          // Second loop scrolls the ancestor scrollable to bottom and ensures it has
-          // scrolled to the bottom.
+          // First loop scrolls the textfield, ensures it scrolls to the bottom.
+          // Second loop scrolls the ancestor scrollable, ensures it scrolls to the bottom.
           for (var i = 0; i < 2; i++) {
-            // Scroll all the way to the bottom of the page.
             if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
               await _pressCmdEnd(tester);
             } else {
@@ -705,13 +716,13 @@ void main() {
             }
 
             if (i == 0) {
-              // Ensure we scrolled to the bottom of the textfield.
+              // Ensure we scrolled to the bottom of the textfield viewport.
               expect(
                 scrollState.position.pixels,
                 equals(scrollState.position.maxScrollExtent),
               );
             } else {
-              // Ensure we scrolled to the bottom of the page.
+              // Ensure we scrolled to the bottom of the page viewport.
               expect(
                 ancestorScrollState.position.pixels,
                 equals(ancestorScrollState.position.maxScrollExtent),
@@ -719,12 +730,9 @@ void main() {
             }
           }
 
-          // First loop scrolls the textfield to top and ensures it has scrolled to
-          // the top.
-          // Second loop scrolls the ancestor scrollable to top and ensures it has
-          // scrolled to the top.
+          // First loop scrolls the textfield, ensures it scrolls to the top.
+          // Second loop scrolls the ancestor scrollable, ensures it scrolls to the top.
           for (var i = 0; i < 2; i++) {
-            // Scroll all the way to the top of the page.
             if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
               await _pressCmdHome(tester);
             } else {
@@ -732,13 +740,13 @@ void main() {
             }
 
             if (i == 0) {
-              // Ensure we scrolled to the top of the textfield.
+              // Ensure we scrolled to the top of the textfield viewport.
               expect(
                 scrollState.position.pixels,
                 equals(scrollState.position.minScrollExtent),
               );
             } else {
-              // Ensure we scrolled to the top of the page.
+              // Ensure we scrolled to the top of the page viewport.
               expect(
                 ancestorScrollState.position.pixels,
                 equals(ancestorScrollState.position.minScrollExtent),
