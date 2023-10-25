@@ -136,6 +136,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   double? _dragStartScrollOffset;
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
+
+  /// Holds the drag gesture that scrolls the document.
+  Drag? _scrollingDrag;
+
   SelectionHandleType? _selectionType;
 
   Timer? _tapDownLongPressTimer;
@@ -143,9 +147,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   bool get _isLongPressInProgress => _longPressStrategy != null;
   AndroidDocumentLongPressSelectionStrategy? _longPressStrategy;
   final _longPressMagnifierGlobalOffset = ValueNotifier<Offset?>(null);
-
-  /// Holds the drag gesture that scrolls the document.
-  Drag? _dragToScroll;
 
   @override
   void initState() {
@@ -743,7 +744,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     if (!_isLongPressInProgress) {
       // We only care about starting a pan if we're long-press dragging.
-      _dragToScroll = scrollPosition.drag(details, () {
+      _scrollingDrag = scrollPosition.drag(details, () {
         // Allows receiving touches while scrolling due to scroll momentum.
         // This is needed to allow the user to stop scrolling by tapping down.
         scrollPosition.context.setIgnorePointer(false);
@@ -792,9 +793,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    if (_dragToScroll != null) {
+    if (_scrollingDrag != null) {
       // The user is trying to scroll the document. Change the scroll offset.
-      _dragToScroll!.update(details);
+      _scrollingDrag!.update(details);
     }
   }
 
@@ -826,10 +827,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    if (_dragToScroll != null) {
+    if (_scrollingDrag != null) {
       // The user was performing a drag gesture to scroll the document.
-      // End the drag gesture.
-      _dragToScroll!.end(details);
+      // End the scroll activity and let the document scrolling with momentum.
+      _scrollingDrag!.end(details);
     }
   }
 
@@ -839,10 +840,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    if (_dragToScroll != null) {
+    if (_scrollingDrag != null) {
       // The user was performing a drag gesture to scroll the document.
       // End the drag gesture.
-      _dragToScroll!.cancel();
+      _scrollingDrag!.cancel();
     }
   }
 

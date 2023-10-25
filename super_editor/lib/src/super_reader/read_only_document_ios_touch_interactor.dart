@@ -255,7 +255,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   IosLongPressSelectionStrategy? _longPressStrategy;
 
   /// Holds the drag gesture that scrolls the document.
-  Drag? _dragToScroll;
+  Drag? _scrollingDrag;
 
   @override
   void initState() {
@@ -645,31 +645,30 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     //       placement during onTapDown, and then pick that up here. I think the little
     //       bit of slop might be the problem.
     final selection = widget.selection.value;
+    if (selection == null) {
+      // There isn't a selection, the user is dragging to scroll the document.
+      _startDragScrolling(details);
+      return;
+    }
 
     if (_isLongPressInProgress) {
       _dragMode = DragMode.longPress;
       _dragHandleType = null;
       _longPressStrategy!.onLongPressDragStart();
-    } else if (selection != null && _isOverBaseHandle(details.localPosition)) {
+    } else if (_isOverBaseHandle(details.localPosition)) {
       _dragMode = DragMode.base;
       _dragHandleType = HandleType.upstream;
-    } else if (selection != null && _isOverExtentHandle(details.localPosition)) {
+    } else if (_isOverExtentHandle(details.localPosition)) {
       _dragMode = DragMode.extent;
       _dragHandleType = HandleType.downstream;
     } else {
-      _dragMode = DragMode.scroll;
-      _dragToScroll = scrollPosition.drag(details, () {
-        // Allows receiving touches while scrolling due to scroll momentum.
-        // This is needed to allow the user to stop scrolling by tapping down.
-        scrollPosition.context.setIgnorePointer(false);
-      });
+      // The user isn't dragging over a handle.
+      // Start scrolling the document.
+      _startDragScrolling(details);
       return;
     }
 
     _controlsController!.hideToolbar();
-    if (selection == null) {
-      return;
-    }
 
     _globalStartDragOffset = details.globalPosition;
     final interactorBox = context.findRenderObject() as RenderBox;
@@ -733,9 +732,9 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    if (_dragMode == DragMode.scroll && _dragToScroll != null) {
+    if (_dragMode == DragMode.scroll) {
       // The user is trying to scroll the document. Scroll it, accordingly.
-      _dragToScroll!.update(details);
+      _scrollingDrag!.update(details);
       return;
     }
 
@@ -792,11 +791,11 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     scrollPosition.removeListener(_onAutoScrollChange);
     _magnifierOffset.value = null;
 
-    if (_dragToScroll != null) {
+    if (_scrollingDrag != null) {
       // The user was performing a drag gesture to scroll the document.
-      // End the drag gesture.
-      _dragToScroll!.end(details);
-      _dragToScroll = null;
+      // End the scroll activity and let the document scrolling with momentum.
+      _scrollingDrag!.end(details);
+      _scrollingDrag = null;
       _dragMode = null;
       return;
     }
@@ -812,11 +811,11 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     scrollPosition.removeListener(_onAutoScrollChange);
     _magnifierOffset.value = null;
 
-    if (_dragToScroll != null) {
+    if (_scrollingDrag != null) {
       // The user was performing a drag gesture to scroll the document.
       // Cancel the drag gesture.
-      _dragToScroll!.cancel();
-      _dragToScroll = null;
+      _scrollingDrag!.cancel();
+      _scrollingDrag = null;
       _dragMode = null;
       return;
     }
@@ -928,6 +927,17 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       final interactorBox = context.findRenderObject() as RenderBox;
       _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalDragOffset!));
     }
+  }
+
+  /// Starts a drag activity to scroll the document.
+  void _startDragScrolling(DragStartDetails details) {
+    _dragMode = DragMode.scroll;
+
+    _scrollingDrag = scrollPosition.drag(details, () {
+      // Allows receiving touches while scrolling due to scroll momentum.
+      // This is needed to allow the user to stop scrolling by tapping down.
+      scrollPosition.context.setIgnorePointer(false);
+    });
   }
 
   @override

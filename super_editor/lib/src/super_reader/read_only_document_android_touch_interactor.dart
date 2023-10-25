@@ -136,7 +136,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   final _longPressMagnifierGlobalOffset = ValueNotifier<Offset?>(null);
 
   /// Holds the drag gesture that scrolls the document.
-  Drag? _dragToScroll;
+  Drag? _scrollingDrag;
 
   @override
   void initState() {
@@ -677,7 +677,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
     if (!_isLongPressInProgress) {
       // We only care about starting a pan if we're long-press dragging.
-      _dragToScroll = scrollPosition.drag(details, () {
+      _scrollingDrag = scrollPosition.drag(details, () {
         // Allows receiving touches while scrolling due to scroll momentum.
         // This is needed to allow the user to stop scrolling by tapping down.
         scrollPosition.context.setIgnorePointer(false);
@@ -726,9 +726,9 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
-    if (_dragToScroll != null) {
+    if (_scrollingDrag != null) {
       // The user is trying to scroll the document. Change the scroll offset.
-      _dragToScroll!.update(details);
+      _scrollingDrag!.update(details);
     }
   }
 
@@ -760,10 +760,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
-    if (_dragToScroll != null) {
+    if (_scrollingDrag != null) {
       // The user was performing a drag gesture to scroll the document.
-      // End the drag gesture.
-      _dragToScroll!.end(details);
+      // End the scroll activity and let the document scrolling with momentum.
+      _scrollingDrag!.end(details);
     }
   }
 
@@ -773,10 +773,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
-    if (_dragToScroll != null) {
+    if (_scrollingDrag != null) {
       // The user was performing a drag gesture to scroll the document.
       // Cancel the drag gesture.
-      _dragToScroll!.cancel();
+      _scrollingDrag!.cancel();
     }
   }
 
