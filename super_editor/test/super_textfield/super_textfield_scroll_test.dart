@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
-import 'package:meta/meta.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -370,16 +369,7 @@ void main() {
           // Scroll to the bottom of the viewport.
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
 
-          if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-            await tester.sendKeyEvent(LogicalKeyboardKey.home);
-            await tester.pumpAndSettle();
-          } else {
-            if (defaultTargetPlatform == TargetPlatform.macOS) {
-              await _pressCmdHome(tester);
-            } else {
-              await _pressCtrlHome(tester);
-            }
-          }
+          await _scrollToTop(useHomeOnMacOrWeb, tester);
 
           // Ensure we scrolled to the top of the viewport.
           expect(
@@ -417,16 +407,7 @@ void main() {
           // and test scrolling behaviour in more realistic manner.
           scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
 
-          if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-            await tester.sendKeyEvent(LogicalKeyboardKey.home);
-            await tester.pumpAndSettle();
-          } else {
-            if (defaultTargetPlatform == TargetPlatform.macOS) {
-              await _pressCmdHome(tester);
-            } else {
-              await _pressCtrlHome(tester);
-            }
-          }
+          await _scrollToTop(useHomeOnMacOrWeb, tester);
 
           // Ensure we didn't scroll past the top of the viewport.
           expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
@@ -456,16 +437,7 @@ void main() {
             matching: find.byType(Scrollable),
           ));
 
-          if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-            await tester.sendKeyEvent(LogicalKeyboardKey.end);
-            await tester.pumpAndSettle();
-          } else {
-            if (defaultTargetPlatform == TargetPlatform.macOS) {
-              await _pressCmdEnd(tester);
-            } else {
-              await _pressCtrlEnd(tester);
-            }
-          }
+          await _scrollToEnd(useHomeOnMacOrWeb, tester);
 
           // Ensure we scrolled to the bottom of the viewport.
           expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
@@ -500,16 +472,7 @@ void main() {
           // and test scrolling behaviour in more realistic manner.
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
 
-          if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-            await tester.sendKeyEvent(LogicalKeyboardKey.end);
-            await tester.pumpAndSettle();
-          } else {
-            if (defaultTargetPlatform == TargetPlatform.macOS) {
-              await _pressCmdEnd(tester);
-            } else {
-              await _pressCtrlEnd(tester);
-            }
-          }
+          await _scrollToEnd(useHomeOnMacOrWeb, tester);
 
           // Ensure we didn't scroll past the bottom of the viewport.
           expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
@@ -518,7 +481,7 @@ void main() {
       );
     });
 
-    group("upon exceeding scroll extent, scrolls ancestor scrollable if any present", () {
+    group("textfield scrolling within ancestor scrollable", () {
       testWidgetsOnDesktopAndWeb(
         '''scrolls from top->bottom of textfiled and then towards bottom of 
         the page and back to the top of the page''',
@@ -554,16 +517,7 @@ void main() {
           // First loop scrolls the textfield, ensures it scrolls to the bottom.
           // Second loop scrolls the ancestor scrollable, ensures it scrolls to the bottom.
           for (var i = 0; i < 2; i++) {
-            if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-              await tester.sendKeyEvent(LogicalKeyboardKey.end);
-              await tester.pumpAndSettle();
-            } else {
-              if (defaultTargetPlatform == TargetPlatform.macOS) {
-                await _pressCmdEnd(tester);
-              } else {
-                await _pressCtrlEnd(tester);
-              }
-            }
+            await _scrollToEnd(useHomeOnMacOrWeb, tester);
 
             if (i == 0) {
               // Ensure we scrolled to the bottom of the textfield's viewport.
@@ -584,16 +538,7 @@ void main() {
           // Second loop scrolls the ancestor scrollable, ensures it scrolls to the top.
           for (var i = 0; i < 2; i++) {
             // Scroll all the way to the bottom of the page.
-            if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-              await tester.sendKeyEvent(LogicalKeyboardKey.home);
-              await tester.pumpAndSettle();
-            } else {
-              if (defaultTargetPlatform == TargetPlatform.macOS) {
-                await _pressCmdHome(tester);
-              } else {
-                await _pressCtrlHome(tester);
-              }
-            }
+            await _scrollToTop(useHomeOnMacOrWeb, tester);
 
             if (i == 0) {
               // Ensure we scrolled to the top of the textfield's viewport.
@@ -656,16 +601,7 @@ void main() {
           await tester.pump();
 
           // Scroll all the way to the bottom of the textfield.
-          if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-            await tester.sendKeyEvent(LogicalKeyboardKey.end);
-            await tester.pumpAndSettle();
-          } else {
-            if (defaultTargetPlatform == TargetPlatform.macOS) {
-              await _pressCmdEnd(tester);
-            } else {
-              await _pressCtrlEnd(tester);
-            }
-          }
+          await _scrollToEnd(useHomeOnMacOrWeb, tester);
 
           expect(
             scrollState.position.pixels,
@@ -675,16 +611,7 @@ void main() {
           // First loop scrolls the textfield, ensures it scrolls to the top.
           // Second loop scrolls the ancestor scrollable, ensures it scrolls to the top.
           for (var i = 0; i < 2; i++) {
-            if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-              await tester.sendKeyEvent(LogicalKeyboardKey.home);
-              await tester.pumpAndSettle();
-            } else {
-              if (defaultTargetPlatform == TargetPlatform.macOS) {
-                await _pressCmdHome(tester);
-              } else {
-                await _pressCtrlHome(tester);
-              }
-            }
+            await _scrollToTop(useHomeOnMacOrWeb, tester);
 
             if (i == 0) {
               // Ensure we scrolled to the top of the textfield viewport.
@@ -757,16 +684,7 @@ void main() {
           // First loop scrolls the textfield, ensures it scrolls to the bottom.
           // Second loop scrolls the ancestor scrollable, ensures it scrolls to the bottom.
           for (var i = 0; i < 2; i++) {
-            if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-              await tester.sendKeyEvent(LogicalKeyboardKey.end);
-              await tester.pumpAndSettle();
-            } else {
-              if (defaultTargetPlatform == TargetPlatform.macOS) {
-                await _pressCmdEnd(tester);
-              } else {
-                await _pressCtrlEnd(tester);
-              }
-            }
+            await _scrollToEnd(useHomeOnMacOrWeb, tester);
 
             if (i == 0) {
               // Ensure we scrolled to the bottom of the textfield viewport.
@@ -786,16 +704,7 @@ void main() {
           // First loop scrolls the textfield, ensures it scrolls to the top.
           // Second loop scrolls the ancestor scrollable, ensures it scrolls to the top.
           for (var i = 0; i < 2; i++) {
-            if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-              await tester.sendKeyEvent(LogicalKeyboardKey.home);
-              await tester.pumpAndSettle();
-            } else {
-              if (defaultTargetPlatform == TargetPlatform.macOS) {
-                await _pressCmdHome(tester);
-              } else {
-                await _pressCtrlHome(tester);
-              }
-            }
+            await _scrollToTop(useHomeOnMacOrWeb, tester);
 
             if (i == 0) {
               // Ensure we scrolled to the top of the textfield viewport.
@@ -816,6 +725,46 @@ void main() {
       );
     });
   });
+}
+
+/// Sends a scrollToEnd event using platform appropriate shortcuts.
+///
+/// On macOS and web, (CMD + END) and END shortcuts are performed. On all other platforms,
+/// (CTRL + END) is used.
+///
+/// [useHomeOnMacOrWeb] is used to toggle between using (CMD + END) and END on macOS
+/// and web.
+Future<void> _scrollToEnd(bool useHomeOnMacOrWeb, WidgetTester tester) async {
+  if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+    await tester.sendKeyEvent(LogicalKeyboardKey.end);
+    await tester.pumpAndSettle();
+  } else {
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      await _pressCmdEnd(tester);
+    } else {
+      await _pressCtrlEnd(tester);
+    }
+  }
+}
+
+/// Sends a scrollToHome event using platform appropriate shortcuts.
+///
+/// On macOS and web, (CMD + HOME) and HOME shortcuts are performed. On all other platforms,
+/// (CTRL + HOME) is used.
+///
+/// [useHomeOnMacOrWeb] is used to toggle between using (CMD + HOME) and HOME on macOS
+/// and web.
+Future<void> _scrollToTop(bool useHomeOnMacOrWeb, WidgetTester tester) async {
+  if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+    await tester.sendKeyEvent(LogicalKeyboardKey.home);
+    await tester.pumpAndSettle();
+  } else {
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      await _pressCmdHome(tester);
+    } else {
+      await _pressCtrlHome(tester);
+    }
+  }
 }
 
 /// Variant for an [SuperTextField] experience with/without ancestor scrollable.
