@@ -346,12 +346,13 @@ void main() {
       );
 
       testWidgetsOnDesktopAndWeb(
-        'CMD + HOME on mac/ios and CTRL + HOME on other platforms scrolls to top of viewport',
+        'CMD + HOME on mac, HOME on mac/web and CTRL + HOME on other platforms scrolls to top of viewport',
         (tester) async {
           final currentVariant = _scrollingVariant.currentValue;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
 
           // Pump the widget tree with a SuperTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
+          await currentVariant.pumpEditor(
             tester,
             _scrollingVariant.currentValue!.textInputSource,
           );
@@ -369,10 +370,15 @@ void main() {
           // Scroll to the bottom of the viewport.
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
 
-          if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdHome(tester);
+          if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+            await tester.sendKeyEvent(LogicalKeyboardKey.home);
+            await tester.pumpAndSettle();
           } else {
-            await _pressCtrlHome(tester);
+            if (defaultTargetPlatform == TargetPlatform.macOS) {
+              await _pressCmdHome(tester);
+            } else {
+              await _pressCtrlHome(tester);
+            }
           }
 
           // Ensure we scrolled to the top of the viewport.
@@ -385,12 +391,13 @@ void main() {
       );
 
       testWidgetsOnDesktopAndWeb(
-        "CMD + HOME on mac/ios and CTRL + HOME on other platforms does not scroll past top of the viewport",
+        "CMD + HOME on mac, HOME on mac/web and CTRL + HOME on other platforms does not scroll past top of the viewport",
         (tester) async {
           final currentVariant = _scrollingVariant.currentValue;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
 
           // Pump the widget tree with a SuperTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
+          await currentVariant.pumpEditor(
             tester,
             _scrollingVariant.currentValue!.textInputSource,
           );
@@ -410,10 +417,15 @@ void main() {
           // and test scrolling behaviour in more realistic manner.
           scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
 
-          if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdHome(tester);
+          if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+            await tester.sendKeyEvent(LogicalKeyboardKey.home);
+            await tester.pumpAndSettle();
           } else {
-            await _pressCtrlHome(tester);
+            if (defaultTargetPlatform == TargetPlatform.macOS) {
+              await _pressCmdHome(tester);
+            } else {
+              await _pressCtrlHome(tester);
+            }
           }
 
           // Ensure we didn't scroll past the top of the viewport.
@@ -423,12 +435,13 @@ void main() {
       );
 
       testWidgetsOnDesktopAndWeb(
-        "CMD + END on mac/ios and CTRL + END on other platforms scrolls to bottom of viewport",
+        "CMD + END on mac, END on mac/web and CTRL + END on other platforms scrolls to bottom of viewport",
         (tester) async {
           final currentVariant = _scrollingVariant.currentValue;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
 
           // Pump the widget tree with a SuperTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
+          await currentVariant.pumpEditor(
             tester,
             _scrollingVariant.currentValue!.textInputSource,
           );
@@ -443,10 +456,15 @@ void main() {
             matching: find.byType(Scrollable),
           ));
 
-          if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdEnd(tester);
+          if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+            await tester.sendKeyEvent(LogicalKeyboardKey.end);
+            await tester.pumpAndSettle();
           } else {
-            await _pressCtrlEnd(tester);
+            if (defaultTargetPlatform == TargetPlatform.macOS) {
+              await _pressCmdEnd(tester);
+            } else {
+              await _pressCtrlEnd(tester);
+            }
           }
 
           // Ensure we scrolled to the bottom of the viewport.
@@ -456,12 +474,13 @@ void main() {
       );
 
       testWidgetsOnDesktopAndWeb(
-        "CMD + END on mac/ios and CTRL + END on other platforms does not scroll past bottom of the viewport",
+        "CMD + END on mac, END on mac/web and CTRL + END on other platforms does not scroll past bottom of the viewport",
         (tester) async {
           final currentVariant = _scrollingVariant.currentValue;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
 
           // Pump the widget tree with a SuperTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
+          await currentVariant.pumpEditor(
             tester,
             _scrollingVariant.currentValue!.textInputSource,
           );
@@ -481,10 +500,15 @@ void main() {
           // and test scrolling behaviour in more realistic manner.
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
 
-          if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdEnd(tester);
+          if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+            await tester.sendKeyEvent(LogicalKeyboardKey.end);
+            await tester.pumpAndSettle();
           } else {
-            await _pressCtrlEnd(tester);
+            if (defaultTargetPlatform == TargetPlatform.macOS) {
+              await _pressCmdEnd(tester);
+            } else {
+              await _pressCtrlEnd(tester);
+            }
           }
 
           // Ensure we didn't scroll past the bottom of the viewport.
@@ -499,12 +523,14 @@ void main() {
         '''scrolls from top->bottom of textfiled and then towards bottom of 
         the page and back to the top of the page''',
         (tester) async {
-          final currentVariant = _scrollingWithinAncestorScrollableVariant.currentValue;
+          final currentVariant = _scrollTextFieldPlacedAtTopVariant.currentValue;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
 
           // Pump the widget tree with a SuperTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
+          await currentVariant.pumpEditor(
             tester,
             currentVariant.textInputSource,
+            currentVariant.placement,
           );
 
           // Tap on the textfield to focus it.
@@ -520,7 +546,7 @@ void main() {
           // Find the textfield's  ancestor scrollable
           final ancestorScrollState = tester.state<ScrollableState>(
             find.descendant(
-              of: find.byKey(textfieldAncestorScrollableKey),
+              of: find.byKey(textfieldsAncestorScrollableKey),
               matching: find.byType(Scrollable).first,
             ),
           );
@@ -528,10 +554,15 @@ void main() {
           // First loop scrolls the textfield, ensures it scrolls to the bottom.
           // Second loop scrolls the ancestor scrollable, ensures it scrolls to the bottom.
           for (var i = 0; i < 2; i++) {
-            if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-              await _pressCmdEnd(tester);
+            if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+              await tester.sendKeyEvent(LogicalKeyboardKey.end);
+              await tester.pumpAndSettle();
             } else {
-              await _pressCtrlEnd(tester);
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await _pressCmdEnd(tester);
+              } else {
+                await _pressCtrlEnd(tester);
+              }
             }
 
             if (i == 0) {
@@ -553,10 +584,15 @@ void main() {
           // Second loop scrolls the ancestor scrollable, ensures it scrolls to the top.
           for (var i = 0; i < 2; i++) {
             // Scroll all the way to the bottom of the page.
-            if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-              await _pressCmdHome(tester);
+            if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+              await tester.sendKeyEvent(LogicalKeyboardKey.home);
+              await tester.pumpAndSettle();
             } else {
-              await _pressCtrlHome(tester);
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await _pressCmdHome(tester);
+              } else {
+                await _pressCtrlHome(tester);
+              }
             }
 
             if (i == 0) {
@@ -574,25 +610,26 @@ void main() {
             }
           }
         },
-        variant: _scrollingWithinAncestorScrollableVariant,
+        variant: _scrollTextFieldPlacedAtTopVariant,
       );
 
       testWidgetsOnDesktopAndWeb(
         'when placed at bottom of page, scrolls all the way from top of the textfield to bottom of the page and back to the top of the page',
         (tester) async {
-          final currentVariant = _scrollingWithinAncestorScrollableAtBottomVariant.currentValue;
+          final currentVariant = _scrollTextfieldPlacedAtBottomVariant.currentValue;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
 
           // Pump the widget tree with a SuperTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
+          await currentVariant.pumpEditor(
             tester,
             currentVariant.textInputSource,
-            currentVariant.alignment,
+            currentVariant.placement,
           );
 
           // Find the textfield's ancestor scrollable
           final ancestorScrollState = tester.state<ScrollableState>(
             find.descendant(
-              of: find.byKey(textfieldAncestorScrollableKey),
+              of: find.byKey(textfieldsAncestorScrollableKey),
               matching: find.byType(Scrollable).first,
             ),
           );
@@ -619,10 +656,15 @@ void main() {
           await tester.pump();
 
           // Scroll all the way to the bottom of the textfield.
-          if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdEnd(tester);
+          if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+            await tester.sendKeyEvent(LogicalKeyboardKey.end);
+            await tester.pumpAndSettle();
           } else {
-            await _pressCtrlEnd(tester);
+            if (defaultTargetPlatform == TargetPlatform.macOS) {
+              await _pressCmdEnd(tester);
+            } else {
+              await _pressCtrlEnd(tester);
+            }
           }
 
           expect(
@@ -633,10 +675,15 @@ void main() {
           // First loop scrolls the textfield, ensures it scrolls to the top.
           // Second loop scrolls the ancestor scrollable, ensures it scrolls to the top.
           for (var i = 0; i < 2; i++) {
-            if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-              await _pressCmdHome(tester);
+            if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+              await tester.sendKeyEvent(LogicalKeyboardKey.home);
+              await tester.pumpAndSettle();
             } else {
-              await _pressCtrlHome(tester);
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await _pressCmdHome(tester);
+              } else {
+                await _pressCtrlHome(tester);
+              }
             }
 
             if (i == 0) {
@@ -654,31 +701,32 @@ void main() {
             }
           }
         },
-        variant: _scrollingWithinAncestorScrollableAtBottomVariant,
+        variant: _scrollTextfieldPlacedAtBottomVariant,
       );
 
       testWidgetsOnDesktopAndWeb(
         'when placed at the center of page, scrolls all the way from top to bottom of textfield and page, and then back to the top of the page',
         (tester) async {
-          final currentVariant = _scrollingWithinAncestorScrollableAtCenterVariant.currentValue;
+          final currentVariant = _scrollTextFieldPlacedAtCenter.currentValue;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
 
           // Pump the widget tree with a SuperTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
+          await currentVariant.pumpEditor(
             tester,
             currentVariant.textInputSource,
-            currentVariant.alignment,
+            currentVariant.placement,
           );
 
           // Find the textfield's ancestor scrollable.
           final ancestorScrollState = tester.state<ScrollableState>(
             find.descendant(
-              of: find.byKey(textfieldAncestorScrollableKey),
+              of: find.byKey(textfieldsAncestorScrollableKey),
               matching: find.byType(Scrollable).first,
             ),
           );
 
           // Tap on the page to focus it.
-          await tester.tap(find.byKey(textfieldAncestorScrollableKey));
+          await tester.tap(find.byKey(textfieldsAncestorScrollableKey));
           await tester.pump();
 
           // Scroll untill textfield is visible.
@@ -709,10 +757,15 @@ void main() {
           // First loop scrolls the textfield, ensures it scrolls to the bottom.
           // Second loop scrolls the ancestor scrollable, ensures it scrolls to the bottom.
           for (var i = 0; i < 2; i++) {
-            if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-              await _pressCmdEnd(tester);
+            if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+              await tester.sendKeyEvent(LogicalKeyboardKey.end);
+              await tester.pumpAndSettle();
             } else {
-              await _pressCtrlEnd(tester);
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await _pressCmdEnd(tester);
+              } else {
+                await _pressCtrlEnd(tester);
+              }
             }
 
             if (i == 0) {
@@ -733,10 +786,15 @@ void main() {
           // First loop scrolls the textfield, ensures it scrolls to the top.
           // Second loop scrolls the ancestor scrollable, ensures it scrolls to the top.
           for (var i = 0; i < 2; i++) {
-            if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-              await _pressCmdHome(tester);
+            if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
+              await tester.sendKeyEvent(LogicalKeyboardKey.home);
+              await tester.pumpAndSettle();
             } else {
-              await _pressCtrlHome(tester);
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await _pressCmdHome(tester);
+              } else {
+                await _pressCtrlHome(tester);
+              }
             }
 
             if (i == 0) {
@@ -754,10 +812,164 @@ void main() {
             }
           }
         },
-        variant: _scrollingWithinAncestorScrollableAtCenterVariant,
+        variant: _scrollTextFieldPlacedAtCenter,
       );
     });
   });
+}
+
+/// Variant for an [SuperTextField] experience with/without ancestor scrollable.
+final _scrollingVariant = ValueVariant<_SuperTextFieldScrollSetup>({
+  const _SuperTextFieldScrollSetup(
+    description: "without ancestor scrollable",
+    pumpEditor: _pumpSuperTextFieldTestApp,
+    textInputSource: TextInputSource.ime,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "without ancestor scrollable",
+    pumpEditor: _pumpSuperTextFieldTestApp,
+    textInputSource: TextInputSource.keyboard,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.ime,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.keyboard,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "without ancestor scrollable",
+    pumpEditor: _pumpSuperTextFieldTestApp,
+    textInputSource: TextInputSource.ime,
+    useHomeEndToScrollOnMacOrWeb: true,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "without ancestor scrollable",
+    pumpEditor: _pumpSuperTextFieldTestApp,
+    textInputSource: TextInputSource.keyboard,
+    useHomeEndToScrollOnMacOrWeb: true,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.ime,
+    useHomeEndToScrollOnMacOrWeb: true,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.keyboard,
+    useHomeEndToScrollOnMacOrWeb: true,
+  ),
+});
+
+/// Variant for an editor experience with an internal scrollable and
+/// an ancestor scrollable.
+final _scrollTextFieldPlacedAtTopVariant = ValueVariant<_SuperTextFieldScrollSetup>({
+  const _SuperTextFieldScrollSetup(
+    description: "inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.ime,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.keyboard,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.ime,
+    useHomeEndToScrollOnMacOrWeb: true,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.keyboard,
+    useHomeEndToScrollOnMacOrWeb: true,
+  ),
+});
+
+/// Variant for an editor experience with an internal scrollable and
+/// an ancestor scrollable.
+final _scrollTextfieldPlacedAtBottomVariant = ValueVariant<_SuperTextFieldScrollSetup>({
+  const _SuperTextFieldScrollSetup(
+    description: "placed at botton inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.ime,
+    placement: _TextFieldPlacementWithinScrollable.bottom,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "placed at botton inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.keyboard,
+    placement: _TextFieldPlacementWithinScrollable.bottom,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "placed at botton inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.ime,
+    placement: _TextFieldPlacementWithinScrollable.bottom,
+    useHomeEndToScrollOnMacOrWeb: true,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "placed at botton inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.keyboard,
+    placement: _TextFieldPlacementWithinScrollable.bottom,
+    useHomeEndToScrollOnMacOrWeb: true,
+  ),
+});
+
+/// Variant for an editor experience with an internal scrollable and
+/// an ancestor scrollable.
+final _scrollTextFieldPlacedAtCenter = ValueVariant<_SuperTextFieldScrollSetup>({
+  const _SuperTextFieldScrollSetup(
+    description: "placed at center inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.ime,
+    placement: _TextFieldPlacementWithinScrollable.center,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "placed at center inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.keyboard,
+    placement: _TextFieldPlacementWithinScrollable.center,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "placed at center inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.ime,
+    placement: _TextFieldPlacementWithinScrollable.center,
+    useHomeEndToScrollOnMacOrWeb: true,
+  ),
+  const _SuperTextFieldScrollSetup(
+    description: "placed at center inside scrollable",
+    pumpEditor: _pumpSuperTextFieldWithinScrollableTestApp,
+    textInputSource: TextInputSource.keyboard,
+    placement: _TextFieldPlacementWithinScrollable.center,
+    useHomeEndToScrollOnMacOrWeb: true,
+  ),
+});
+
+/// Pumps a [SuperTextField].
+Future<void> _pumpSuperTextFieldTestApp(
+  WidgetTester tester,
+  TextInputSource textInputSource, [
+  _TextFieldPlacementWithinScrollable? placement,
+]) async {
+  return await _pumpTestApp(
+    tester,
+    textController: AttributedTextEditingController(
+      text: AttributedText(_scrollableTextFieldText),
+    ),
+    minLines: 1,
+    maxLines: 4,
+    textInputSource: textInputSource,
+  );
 }
 
 Future<void> _pumpTestApp(
@@ -796,7 +1008,117 @@ Future<void> _pumpTestApp(
   await tester.pump();
 }
 
+/// Wrapper around [_pumpSuperTextFieldScrollSliverApp] for
+/// convenience.
+Future<void> _pumpSuperTextFieldWithinScrollableTestApp(
+  WidgetTester tester,
+  TextInputSource textInputSource, [
+  _TextFieldPlacementWithinScrollable? placement,
+]) async {
+  return await _pumpSuperTextFieldScrollSliverApp(
+    tester,
+    textController: AttributedTextEditingController(
+      text: AttributedText(_scrollableTextFieldText),
+    ),
+    minLines: 1,
+    maxLines: 4,
+    textInputSource: textInputSource,
+    placement: placement ?? _TextFieldPlacementWithinScrollable.top,
+  );
+}
+
+/// Pumps a [SuperTextField] wrapped within [Scrollable].
+Future<void> _pumpSuperTextFieldScrollSliverApp(
+  WidgetTester tester, {
+  required AttributedTextEditingController textController,
+  required int minLines,
+  required int maxLines,
+  EdgeInsets? padding,
+  TextInputSource? textInputSource,
+  _TextFieldPlacementWithinScrollable placement = _TextFieldPlacementWithinScrollable.top,
+}) async {
+  final slivers = [
+    if (placement == _TextFieldPlacementWithinScrollable.center)
+      SliverList.builder(
+        itemCount: 100,
+        itemBuilder: (context, index) {
+          return ListTile(title: Text("Item $index"));
+        },
+      ),
+    SliverToBoxAdapter(
+      child: SuperTextField(
+        textController: textController,
+        lineHeight: 20,
+        textStyleBuilder: (_) => const TextStyle(fontSize: 20),
+        minLines: minLines,
+        maxLines: maxLines,
+        padding: padding,
+        inputSource: textInputSource,
+      ),
+    ),
+    SliverList.builder(
+      itemCount: 100,
+      itemBuilder: (context, index) {
+        return ListTile(title: Text("Item $index"));
+      },
+    ),
+  ];
+
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: CustomScrollView(
+          key: textfieldsAncestorScrollableKey,
+          slivers: placement == _TextFieldPlacementWithinScrollable.top //
+              ? slivers
+              : slivers.reversed.toList(),
+        ),
+      ),
+    ),
+  );
+
+  // The first frame might have a zero viewport height. Pump a second frame to account for the final viewport size.
+  await tester.pump();
+}
+
+/// Key used by [SuperTextField]'s ancestor scrollable.
+const textfieldsAncestorScrollableKey = ValueKey("AncestorScrollable");
+
 final String _scrollableTextFieldText = List.generate(10, (index) => "Line $index").join("\n");
+
+class _SuperTextFieldScrollSetup {
+  const _SuperTextFieldScrollSetup({
+    required this.description,
+    required this.pumpEditor,
+    required this.textInputSource,
+    this.placement = _TextFieldPlacementWithinScrollable.top,
+    this.useHomeEndToScrollOnMacOrWeb = false,
+  });
+  final String description;
+  final _PumpEditorWidget pumpEditor;
+  final TextInputSource textInputSource;
+  final _TextFieldPlacementWithinScrollable placement;
+  final bool useHomeEndToScrollOnMacOrWeb;
+
+  @override
+  String toString() {
+    return "SuperTextFieldScrollSetup: $description, at ${placement.name},  ${textInputSource.toString()}, ${useHomeEndToScrollOnMacOrWeb ? "uses HOME/END to scroll on mac/web" : ""}";
+  }
+}
+
+typedef _PumpEditorWidget = Future<void> Function(
+  WidgetTester tester,
+  TextInputSource textInputSource, [
+  _TextFieldPlacementWithinScrollable? placement,
+]);
+
+/// Defines the placement of the SuperTextField within the ancestor
+/// scrollable.
+enum _TextFieldPlacementWithinScrollable {
+  top,
+  center,
+  bottom;
+}
 
 Future<void> _pressCmdHome(WidgetTester tester) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.meta, platform: 'macos');
@@ -828,198 +1150,4 @@ Future<void> _pressCtrlEnd(WidgetTester tester) async {
   await tester.sendKeyUpEvent(LogicalKeyboardKey.control, platform: 'macos');
   await tester.sendKeyUpEvent(LogicalKeyboardKey.end, platform: 'macos');
   await tester.pumpAndSettle();
-}
-
-/// Variant for an editor experience with an internal scrollable and
-/// an ancestor scrollable.
-final _scrollingVariant = ValueVariant<_SuperTextFieldScrollSetup>({
-  const _SuperTextFieldScrollSetup(
-    description: "inner viewport",
-    pumpEditor: _pumpSuperTextFieldScrollTestSetup,
-    textInputSource: TextInputSource.ime,
-  ),
-  const _SuperTextFieldScrollSetup(
-    description: "inner viewport",
-    pumpEditor: _pumpSuperTextFieldScrollTestSetup,
-    textInputSource: TextInputSource.keyboard,
-  ),
-  const _SuperTextFieldScrollSetup(
-    description: "ancestor viewport",
-    pumpEditor: _pumpSuperTextFieldScrollSliverTestSetup,
-    textInputSource: TextInputSource.ime,
-  ),
-  const _SuperTextFieldScrollSetup(
-    description: "ancestor viewport",
-    pumpEditor: _pumpSuperTextFieldScrollSliverTestSetup,
-    textInputSource: TextInputSource.keyboard,
-  ),
-});
-
-/// Variant for an editor experience with an internal scrollable and
-/// an ancestor scrollable.
-final _scrollingWithinAncestorScrollableVariant = ValueVariant<_SuperTextFieldScrollSetup>({
-  const _SuperTextFieldScrollSetup(
-    description: "ancestor viewport",
-    pumpEditor: _pumpSuperTextFieldScrollSliverTestSetup,
-    textInputSource: TextInputSource.ime,
-  ),
-  const _SuperTextFieldScrollSetup(
-    description: "ancestor viewport",
-    pumpEditor: _pumpSuperTextFieldScrollSliverTestSetup,
-    textInputSource: TextInputSource.keyboard,
-  ),
-});
-
-/// Variant for an editor experience with an internal scrollable and
-/// an ancestor scrollable.
-final _scrollingWithinAncestorScrollableAtBottomVariant = ValueVariant<_SuperTextFieldScrollSetup>({
-  const _SuperTextFieldScrollSetup(
-    description: "ancestor viewport at bottom",
-    pumpEditor: _pumpSuperTextFieldScrollSliverTestSetup,
-    textInputSource: TextInputSource.ime,
-    alignment: _TextFieldAlignment.bottom,
-  ),
-  const _SuperTextFieldScrollSetup(
-    description: "ancestor viewport at bottom",
-    pumpEditor: _pumpSuperTextFieldScrollSliverTestSetup,
-    textInputSource: TextInputSource.keyboard,
-    alignment: _TextFieldAlignment.bottom,
-  ),
-});
-
-/// Variant for an editor experience with an internal scrollable and
-/// an ancestor scrollable.
-final _scrollingWithinAncestorScrollableAtCenterVariant = ValueVariant<_SuperTextFieldScrollSetup>({
-  const _SuperTextFieldScrollSetup(
-    description: "ancestor viewport at center",
-    pumpEditor: _pumpSuperTextFieldScrollSliverTestSetup,
-    textInputSource: TextInputSource.ime,
-    alignment: _TextFieldAlignment.center,
-  ),
-  const _SuperTextFieldScrollSetup(
-    description: "ancestor viewport at center",
-    pumpEditor: _pumpSuperTextFieldScrollSliverTestSetup,
-    textInputSource: TextInputSource.keyboard,
-    alignment: _TextFieldAlignment.center,
-  ),
-});
-
-class _SuperTextFieldScrollSetup {
-  const _SuperTextFieldScrollSetup({
-    required this.description,
-    required this.pumpEditor,
-    required this.textInputSource,
-    this.alignment = _TextFieldAlignment.top,
-  });
-  final String description;
-  final _PumpEditorWidget pumpEditor;
-  final TextInputSource textInputSource;
-  final _TextFieldAlignment alignment;
-
-  @override
-  String toString() {
-    return "SuperTextFieldScrollSetup: $description, at ${alignment.name},  ${textInputSource.toString()}";
-  }
-}
-
-typedef _PumpEditorWidget = Future<void> Function(
-  WidgetTester tester,
-  TextInputSource textInputSource, [
-  _TextFieldAlignment? alignment,
-]);
-
-/// Pumps a [SuperEditor] experience with the default [Scrollable].
-Future<void> _pumpSuperTextFieldScrollTestSetup(
-  WidgetTester tester,
-  TextInputSource textInputSource, [
-  _TextFieldAlignment? alignment,
-]) async {
-  return await _pumpTestApp(
-    tester,
-    textController: AttributedTextEditingController(
-      text: AttributedText(_scrollableTextFieldText),
-    ),
-    minLines: 1,
-    maxLines: 4,
-    textInputSource: textInputSource,
-  );
-}
-
-/// Pumps a [SuperEditor] experience with the default [Scrollable].
-Future<void> _pumpSuperTextFieldScrollSliverTestSetup(
-  WidgetTester tester,
-  TextInputSource textInputSource, [
-  _TextFieldAlignment? alignment,
-]) async {
-  return await _pumpSuperTextFieldScrollSliverApp(
-    tester,
-    textController: AttributedTextEditingController(
-      text: AttributedText(_scrollableTextFieldText),
-    ),
-    minLines: 1,
-    maxLines: 4,
-    textInputSource: textInputSource,
-    alignment: alignment ?? _TextFieldAlignment.top,
-  );
-}
-
-Future<void> _pumpSuperTextFieldScrollSliverApp(
-  WidgetTester tester, {
-  required AttributedTextEditingController textController,
-  required int minLines,
-  required int maxLines,
-  EdgeInsets? padding,
-  TextInputSource? textInputSource,
-  _TextFieldAlignment alignment = _TextFieldAlignment.top,
-}) async {
-  final slivers = [
-    if (alignment == _TextFieldAlignment.center)
-      SliverList.builder(
-        itemCount: 100,
-        itemBuilder: (context, index) {
-          return ListTile(title: Text("Item $index"));
-        },
-      ),
-    SliverToBoxAdapter(
-      child: SuperTextField(
-        textController: textController,
-        lineHeight: 20,
-        textStyleBuilder: (_) => const TextStyle(fontSize: 20),
-        minLines: minLines,
-        maxLines: maxLines,
-        padding: padding,
-        inputSource: textInputSource,
-      ),
-    ),
-    SliverList.builder(
-      itemCount: 100,
-      itemBuilder: (context, index) {
-        return ListTile(title: Text("Item $index"));
-      },
-    ),
-  ];
-
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: CustomScrollView(
-          key: textfieldAncestorScrollableKey,
-          slivers: alignment == _TextFieldAlignment.top //
-              ? slivers
-              : slivers.reversed.toList(),
-        ),
-      ),
-    ),
-  );
-
-  // The first frame might have a zero viewport height. Pump a second frame to account for the final viewport size.
-  await tester.pump();
-}
-
-const textfieldAncestorScrollableKey = ValueKey("AncestorScrollable");
-
-enum _TextFieldAlignment {
-  top,
-  center,
-  bottom;
 }
