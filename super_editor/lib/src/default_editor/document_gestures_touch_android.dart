@@ -497,7 +497,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _globalTapDownOffset = details.globalPosition;
     _tapDownLongPressTimer?.cancel();
-    _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
+    if (!disableLongPressSelectionForSuperlist) {
+      _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
+    }
   }
 
   // Runs when a tap down has lasted long enough to signify a long-press.
