@@ -4,6 +4,18 @@ import 'package:super_editor/src/infrastructure/_scrolling.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 
+/// Global flag that disables long-press selection for Android and iOS, as a hack for Superlist, because
+/// Superlist has a custom long-press behavior per-component.
+///
+/// This is a hack and is expected to be replaced ASAP. Issue: https://github.com/superlistapp/super_editor/issues/1547
+///
+/// The underlying issue is that the document layout components have a gesture mode of "translucent", which
+/// lets both the document component and the overall document gesture interactor both respond to the touch
+/// event. As a result, if a user long-presses on a component to re-order it, that long-press also triggers
+/// the long-press text selection behavior within the standard document interactor.
+@Deprecated("Don't use this unless you're Superlist. This will be removed ASAP. See issue #1547.")
+bool disableLongPressSelectionForSuperlist = false;
+
 /// Controls the display and position of a magnifier and a floating toolbar.
 class MagnifierAndToolbarController with ChangeNotifier {
   /// Whether the magnifier should be displayed.

@@ -28,6 +28,28 @@ void main() {
           _expectHandlesAndToolbar();
         });
 
+        testWidgetsOnIos("does nothing with hack global property", (tester) async {
+          disableLongPressSelectionForSuperlist = true;
+          addTearDown(() => disableLongPressSelectionForSuperlist = false);
+
+          await _pumpAppWithLongText(tester);
+
+          // Long press down on the middle of "conse|ctetur"
+          final gesture = await tester.longPressDownInParagraph("1", 33);
+          await tester.pump();
+
+          // Ensure that there's no selection.
+          expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+          // Release the long-press.
+          await gesture.up();
+          await tester.pump();
+
+          // Ensure that only the caret was placed, rather than an expanded selection due
+          // to a long press.
+          expect(SuperEditorInspector.findDocumentSelection()!.isCollapsed, isTrue);
+        });
+
         testWidgetsOnIos("over handle does nothing", (tester) async {
           await _pumpAppWithLongText(tester);
 
