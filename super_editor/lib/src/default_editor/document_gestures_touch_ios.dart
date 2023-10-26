@@ -530,7 +530,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     _globalTapDownOffset = details.globalPosition;
     _tapDownLongPressTimer?.cancel();
-    _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
+    if (!disableLongPressSelectionForSuperlist) {
+      _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
+    }
 
     // Stop the caret from blinking, in case this tap down turns into a long-press drag,
     // or a caret drag.
