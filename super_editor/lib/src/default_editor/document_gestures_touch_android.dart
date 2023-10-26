@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:overlord/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -26,6 +27,7 @@ import 'package:super_editor/src/infrastructure/platforms/android/android_docume
 import 'package:super_editor/src/infrastructure/platforms/android/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
@@ -402,6 +404,8 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
 
 class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+  SuperEditorAndroidControlsController? _controlsController;
+
   bool _isScrolling = false;
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
@@ -487,6 +491,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
 
     _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
 
@@ -700,12 +706,28 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         ..downstreamHandleOffset = null
         ..collapsedHandleOffset = null
         ..cancelCollapsedHandleAutoHideCountdown();
+
+      _controlsController!
+        ..doNotBlinkCaret()
+        ..hideCollapsedHandle()
+        ..hideExpandedHandles()
+        ..hideMagnifier()
+        ..hideToolbar();
     } else if (newSelection.isCollapsed) {
       _positionCaret();
       _positionCollapsedHandle();
+
+      _controlsController!
+        ..blinkCaret()
+        ..hideExpandedHandles();
     } else {
       // The selection is expanded
       _positionExpandedHandles();
+
+      _controlsController!
+        ..doNotBlinkCaret()
+        ..hideCollapsedHandle()
+        ..showExpandedHandles();
     }
   }
 
@@ -815,6 +837,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       ..disallowHandles()
       ..hideMagnifier()
       ..showToolbar();
+    _controlsController!
+      ..hideCollapsedHandle()
+      ..hideExpandedHandles()
+      ..hideMagnifier()
+      ..showToolbar();
     _positionToolbar();
     _overlayPortalRebuildSignal.notifyListeners();
 
@@ -869,9 +896,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
         _editingController.toggleToolbar();
+        _controlsController!.toggleToolbar();
       } else {
         // The user tapped somewhere else in the document. Hide the toolbar.
         _editingController.hideToolbar();
+        _controlsController!.hideToolbar();
       }
 
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -897,6 +926,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       _clearSelection();
 
       _editingController.hideToolbar();
+      _controlsController!.hideToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -944,6 +974,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
       if (!widget.selection.value!.isCollapsed) {
         _editingController.showToolbar();
+        _controlsController!.showToolbar();
         _positionToolbar();
       } else {
         // The selection is collapsed. The collapsed handle should disappear
@@ -952,6 +983,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         _editingController
           ..unHideCollapsedHandle()
           ..startCollapsedHandleAutoHideCountdown();
+        _controlsController!
+          ..showCollapsedHandle()
+          ..hideCollapsedHandle();
       }
     } else {
       _clearSelection();
@@ -1061,6 +1095,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _editingController
       ..hideToolbar()
       ..showMagnifier();
+    _controlsController!
+      ..hideToolbar()
+      ..showMagnifier();
     _overlayPortalRebuildSignal.notifyListeners();
   }
 
@@ -1137,15 +1174,19 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _editingController
       ..allowHandles()
       ..hideMagnifier();
+    _controlsController!
+      // TODO: allow handles
+      ..hideMagnifier();
     if (!widget.selection.value!.isCollapsed) {
       _editingController.showToolbar();
+      _controlsController!.showToolbar();
       _positionToolbar();
     }
     _overlayPortalRebuildSignal.notifyListeners();
   }
 
   void _showEditingControlsOverlay() {
-    _overlayPortalController.show();
+    // _overlayPortalController.show();
   }
 
   void _removeEditingOverlayControls() {
@@ -1210,6 +1251,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     // TODO: find a way to only invoke this when needed, instead of every move of the handle
     _editingController.showMagnifier();
+    _controlsController!.showMagnifier();
   }
 
   void _updateSelectionForNewDragHandleLocation() {
@@ -1260,6 +1302,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     scrollPosition.removeListener(_updateDragSelection);
 
     _editingController.hideMagnifier();
+    _controlsController!.hideMagnifier();
 
     _dragStartScrollOffset = null;
     _dragStartInDoc = null;
@@ -1272,8 +1315,13 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       _editingController
         ..unHideCollapsedHandle()
         ..startCollapsedHandleAutoHideCountdown();
+      _controlsController!
+        // TODO: unHideCollapsedHandle
+        // TODO: start auto-hide countdown
+        ..hideCollapsedHandle();
     } else {
       _editingController.showToolbar();
+      _controlsController!.showToolbar();
       _positionToolbar();
     }
   }
@@ -1350,6 +1398,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       ..collapsedHandleOffset = handleOffset
       ..unHideCollapsedHandle()
       ..startCollapsedHandleAutoHideCountdown();
+    _controlsController!
+      // TODO: unHideCollapsedHandle
+      // TODO: start collapsed handle countdown
+      ..showCollapsedHandle();
   }
 
   void _positionExpandedHandles() {
@@ -1376,6 +1428,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       ..upstreamHandleOffset = upstreamHandleOffset
       ..downstreamHandleOffset = downstreamHandleOffset
       ..cancelCollapsedHandleAutoHideCountdown();
+
+    _controlsController!
+      // TODO: hide caret
+      ..hideCollapsedHandle()
+      ..hideExpandedHandles();
   }
 
   void _positionCaret() {
@@ -1580,6 +1637,167 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
             showDebugPaint: false,
           );
         });
+  }
+}
+
+/// Adds and removes an Android-style editor controls overlay, as dictated by an ancestor
+/// [SuperEditorAndroidControlsScope].
+class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
+  const SuperEditorAndroidControlsOverlayManager({
+    super.key,
+    this.child,
+  });
+
+  final Widget? child;
+
+  @override
+  State<SuperEditorAndroidControlsOverlayManager> createState() => SuperEditorAndroidControlsOverlayManagerState();
+}
+
+@visibleForTesting
+class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAndroidControlsOverlayManager> {
+  final _overlayController = OverlayPortalController();
+
+  SuperEditorAndroidControlsController? _controlsController;
+  late FollowerAligner _toolbarAligner;
+
+  @override
+  void initState() {
+    super.initState();
+    _overlayController.show();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
+    // TODO: Create an Android toolbar aligner, or rename the Cupertino aligner to be generic.
+    _toolbarAligner = CupertinoPopoverToolbarAligner();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OverlayPortal(
+      controller: _overlayController,
+      overlayChildBuilder: _buildOverlay,
+      child: widget.child ?? const SizedBox(),
+    );
+  }
+
+  Widget _buildOverlay(BuildContext context) {
+    return Stack(
+      children: [
+        _buildCollapsedHandle(),
+        ..._buildExpandedHandles(),
+        _buildToolbar(),
+        _buildMagnifier(),
+      ],
+    );
+  }
+
+  Widget _buildCollapsedHandle() {
+    return ValueListenableBuilder(
+      valueListenable: _controlsController!.shouldShowCollapsedHandle,
+      builder: (context, shouldShow, child) {
+        return shouldShow ? child! : const SizedBox();
+      },
+      child: Follower.withOffset(
+        link: _controlsController!.collapsedHandleFocalPoint,
+        leaderAnchor: Alignment.bottomCenter,
+        followerAnchor: Alignment.topCenter,
+        child: const AndroidSelectionHandle(
+          handleType: HandleType.collapsed,
+          // TODO: use real color
+          color: Colors.lightGreenAccent,
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildExpandedHandles() {
+    return [
+      ValueListenableBuilder(
+        valueListenable: _controlsController!.shouldShowExpandedHandles,
+        builder: (context, shouldShow, child) {
+          return shouldShow ? child! : const SizedBox();
+        },
+        child: Follower.withOffset(
+          link: _controlsController!.upstreamHandleFocalPoint,
+          leaderAnchor: Alignment.bottomLeft,
+          followerAnchor: Alignment.topRight,
+          child: const AndroidSelectionHandle(
+            handleType: HandleType.upstream,
+            // TODO: use real color
+            color: Colors.lightGreenAccent,
+          ),
+        ),
+      ),
+      ValueListenableBuilder(
+        valueListenable: _controlsController!.shouldShowExpandedHandles,
+        builder: (context, shouldShow, child) {
+          return shouldShow ? child! : const SizedBox();
+        },
+        child: Follower.withOffset(
+          link: _controlsController!.downstreamHandleFocalPoint,
+          leaderAnchor: Alignment.bottomRight,
+          followerAnchor: Alignment.topLeft,
+          child: const AndroidSelectionHandle(
+            handleType: HandleType.downstream,
+            // TODO: use real color
+            color: Colors.lightGreenAccent,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildToolbar() {
+    return ValueListenableBuilder(
+      valueListenable: _controlsController!.shouldShowToolbar,
+      builder: (context, shouldShow, child) {
+        return shouldShow ? child! : const SizedBox();
+      },
+      child: Follower.withAligner(
+        link: _controlsController!.toolbarFocalPoint,
+        aligner: _toolbarAligner,
+        // TODO: use controller builder
+        // child: _controlsController!.toolbarBuilder(),
+        child: AndroidTextEditingFloatingToolbar(
+          // TODO: implement actions
+          onCopyPressed: () {},
+          onCutPressed: () {},
+          onPastePressed: () {},
+          onSelectAllPressed: () {},
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMagnifier() {
+    return ValueListenableBuilder(
+      valueListenable: _controlsController!.shouldShowMagnifier,
+      builder: (context, shouldShow, child) {
+        if (shouldShow) {
+          print("SHOWING MAGNIFIER - focal point: ${_controlsController!.magnifierFocalPoint}");
+        }
+        return shouldShow ? child! : const SizedBox();
+      },
+      child: Follower.withOffset(
+        link: _controlsController!.magnifierFocalPoint,
+        offset: const Offset(0, -50),
+        leaderAnchor: Alignment.center,
+        followerAnchor: Alignment.bottomCenter,
+        // TODO: use controller builder
+        // child: _controlsController!.magnifierBuilder(),
+        // child: const AndroidMagnifyingGlass(),
+        child: Container(
+          width: 50,
+          height: 50,
+          color: Colors.red,
+        ),
+      ),
+    );
   }
 }
 

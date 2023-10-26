@@ -343,13 +343,14 @@ class AndroidControlsDocumentLayerState
       left: caret.left,
       top: caret.top,
       height: caret.height,
-      width: 1,
+      width: 2,
       child: Leader(
         link: _controlsController!.collapsedHandleFocalPoint,
         child: ListenableBuilder(
           listenable: _caretBlinkController,
           builder: (context, child) {
-            print("Building caret with opacity: ${_caretBlinkController.opacity}");
+            print(
+                "Building caret with opacity: ${_caretBlinkController.opacity}, is blinking? ${_caretBlinkController.isBlinking}");
             return ColoredBox(
               key: DocumentKeys.androidCaret,
               color: widget.handleColor.withOpacity(_caretBlinkController.opacity),

@@ -706,9 +706,11 @@ class SuperEditorState extends State<SuperEditor> {
             ),
           ),
         );
-      case DocumentGestureMode.mouse:
       case DocumentGestureMode.android:
-      default:
+        return SuperEditorAndroidControlsOverlayManager(
+          child: child,
+        );
+      case DocumentGestureMode.mouse:
         return child;
     }
   }
