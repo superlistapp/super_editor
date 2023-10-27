@@ -554,7 +554,8 @@ class SuperEditorState extends State<SuperEditor> {
             editor: widget.editor,
             document: widget.document,
             selection: _composer.selectionNotifier,
-            isDocumentLayoutAvailable: () => _docLayoutKey.currentContext != null,
+            isDocumentLayoutAvailable: () =>
+                (_docLayoutKey.currentContext?.findRenderObject() as RenderBox?)?.hasSize == true,
             getDocumentLayout: () => editContext.documentLayout,
             placeCaretAtEndOfDocumentOnGainFocus: widget.selectionPolicies.placeCaretAtEndOfDocumentOnGainFocus,
             restorePreviousSelectionOnGainFocus: widget.selectionPolicies.restorePreviousSelectionOnGainFocus,
