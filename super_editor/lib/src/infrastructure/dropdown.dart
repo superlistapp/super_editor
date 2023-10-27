@@ -93,9 +93,7 @@ class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with Sin
 
     _containerFadeInAnimation = CurvedAnimation(
       parent: _animationController,
-      // The first half of the animation fades-in the dropdown list container.
-      // The other half will fade in the items.
-      curve: const Interval(0.0, 0.5),
+      curve: Curves.easeInOut,
     );
   }
 
@@ -219,38 +217,6 @@ class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with Sin
   }
 
   Widget _buildDropDown(BuildContext context, LeaderLink link, FollowerBoundary boundary) {
-    final dropdownItems = <Widget>[];
-
-    // The fade-in animation start at the middle of the animation.
-    const fadeAnimationStart = 0.5;
-
-    // The fade-in animation takes half of the animation duration.
-    const fadeAnimationTotalDuration = 0.5;
-
-    final animationPercentagePerItem = fadeAnimationTotalDuration / (widget.items.length);
-
-    // The duration of the fade-in animation for each list item.
-    final itemFadeInDuration = fadeAnimationTotalDuration * animationPercentagePerItem;
-
-    for (int i = 0; i < widget.items.length; i++) {
-      // Computes at which point of the animation each item starts/ends fading in.
-      final start = clampDouble(fadeAnimationStart + (i + 1) * animationPercentagePerItem, 0.0, 1.0);
-      final end = clampDouble(start + itemFadeInDuration, 0.0, 1.0);
-
-      dropdownItems.add(
-        FadeTransition(
-          opacity: CurvedAnimation(
-            parent: _animationController,
-            curve: Interval(start, end),
-          ),
-          child: Container(
-            color: _focusedIndex == i ? widget.focusColor : null,
-            child: _buildDropDownItem(context, widget.items[i]),
-          ),
-        ),
-      );
-    }
-
     return Follower.withAligner(
       link: link,
       aligner: _DropdownAligner(boundaryKey: widget.boundaryKey),
@@ -262,6 +228,7 @@ class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with Sin
           key: widget.dropdownKey,
           elevation: 8,
           borderRadius: BorderRadius.circular(12),
+          clipBehavior: Clip.hardEdge,
           child: FadeTransition(
             opacity: _containerFadeInAnimation,
             child: ScrollConfiguration(
@@ -279,7 +246,13 @@ class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with Sin
                     child: IntrinsicWidth(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: dropdownItems,
+                        children: [
+                          for (int i = 0; i < widget.items.length; i++)
+                            Container(
+                              color: _focusedIndex == i ? widget.focusColor : null,
+                              child: _buildDropDownItem(context, widget.items[i]),
+                            ),
+                        ],
                       ),
                     ),
                   ),
