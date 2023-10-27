@@ -441,6 +441,7 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
       // The selection didn't change from what it was the last time we calculated selection bounds.
       return;
     }
+    _selectionUsedForMostRecentLayout = selection;
 
     // The selection changed, which means the selection bounds changed, we need to recalculate the
     // toolbar focal point bounds.
