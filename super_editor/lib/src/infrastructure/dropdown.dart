@@ -81,7 +81,7 @@ class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with Sin
   final ScrollController _scrollController = ScrollController();
 
   late final AnimationController _animationController;
-  late final Animation<double> _resizeAnimation;
+  late final Animation<double> _containerFadeInAnimation;
 
   @override
   void initState() {
@@ -91,9 +91,9 @@ class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with Sin
       vsync: this,
     );
 
-    _resizeAnimation = CurvedAnimation(
+    _containerFadeInAnimation = CurvedAnimation(
       parent: _animationController,
-      // The first half of the animation resizes the dropdown list.
+      // The first half of the animation fades-in the dropdown list container.
       // The other half will fade in the items.
       curve: const Interval(0.0, 0.5),
     );
@@ -251,11 +251,9 @@ class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with Sin
       );
     }
 
-    return Follower.withOffset(
+    return Follower.withAligner(
       link: link,
-      leaderAnchor: Alignment.bottomCenter,
-      followerAnchor: Alignment.topCenter,
-      offset: const Offset(0, 12),
+      aligner: _DropdownAligner(boundaryKey: widget.boundaryKey),
       boundary: boundary,
       showWhenUnlinked: false,
       child: ConstrainedBox(
@@ -264,10 +262,8 @@ class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with Sin
           key: widget.dropdownKey,
           elevation: 8,
           borderRadius: BorderRadius.circular(12),
-          child: SizeTransition(
-            sizeFactor: _resizeAnimation,
-            axisAlignment: 1.0,
-            fixedCrossAxisSizeFactor: 1.0,
+          child: FadeTransition(
+            opacity: _containerFadeInAnimation,
             child: ScrollConfiguration(
               behavior: ScrollConfiguration.of(context).copyWith(
                 scrollbars: false,
@@ -308,6 +304,62 @@ class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with Sin
         ),
       ),
     );
+  }
+}
+
+/// A [FollowerAligner] to position a dropdown list relative to the dropdown button.
+///
+/// The following rules are applied, in order:
+///
+/// 1. If there is enough room to display the dropdown list beneath the button,
+/// position it below the button.
+///
+/// 2. If there is enough room to display the dropdown list above the button,
+/// position it above the button.
+///
+/// 3. Pin the dropdown list to the bottom of the `RenderBox` bound to [boundaryKey],
+/// letting the dropdown list cover the button.
+class _DropdownAligner implements FollowerAligner {
+  _DropdownAligner({required this.boundaryKey});
+
+  final GlobalKey? boundaryKey;
+
+  @override
+  FollowerAlignment align(Rect globalLeaderRect, Size followerSize) {
+    final boundsBox = boundaryKey?.currentContext?.findRenderObject() as RenderBox?;
+    final bounds = boundsBox != null
+        ? Rect.fromPoints(
+            boundsBox.localToGlobal(Offset.zero),
+            boundsBox.localToGlobal(boundsBox.size.bottomRight(Offset.zero)),
+          )
+        : Rect.largest;
+    late FollowerAlignment alignment;
+
+    if (globalLeaderRect.bottom + followerSize.height < bounds.bottom) {
+      // The follower fits below the leader.
+      alignment = const FollowerAlignment(
+        leaderAnchor: Alignment.bottomCenter,
+        followerAnchor: Alignment.topCenter,
+        followerOffset: Offset(0, 20),
+      );
+    } else if (globalLeaderRect.top - followerSize.height > bounds.top) {
+      // The follower fits above the leader.
+      alignment = const FollowerAlignment(
+        leaderAnchor: Alignment.topCenter,
+        followerAnchor: Alignment.bottomCenter,
+        followerOffset: Offset(0, -20),
+      );
+    } else {
+      // There isn't enough room to fully display the follower below or above the leader.
+      // Pin the dropdown list to the bottom, letting the follower cover the leader.
+      alignment = const FollowerAlignment(
+        leaderAnchor: Alignment.bottomCenter,
+        followerAnchor: Alignment.topCenter,
+        followerOffset: Offset(0, 20),
+      );
+    }
+
+    return alignment;
   }
 }
 
