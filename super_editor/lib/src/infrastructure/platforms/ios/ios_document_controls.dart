@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:overlord/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -410,7 +409,7 @@ class IosToolbarFocalPointDocumentLayer extends DocumentLayoutLayerStatefulWidge
 
 class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<IosToolbarFocalPointDocumentLayer, Rect>
     with SingleTickerProviderStateMixin {
-  bool _wasSelectionExpanded = false;
+  DocumentSelection? _selectionUsedForMostRecentLayout;
 
   @override
   void initState() {
@@ -438,24 +437,14 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
 
   void _onSelectionChange() {
     final selection = widget.selection.value;
-    _wasSelectionExpanded = !(selection?.isCollapsed == true);
-
-    if (selection == null && !_wasSelectionExpanded) {
-      // There's no selection now, and in the previous frame there either was no selection,
-      // or a collapsed selection. We don't need to worry about re-calculating or rebuilding
-      // our bounds.
+    if (selection == _selectionUsedForMostRecentLayout) {
+      // The selection didn't change from what it was the last time we calculated selection bounds.
       return;
     }
-    if (selection != null && selection.isCollapsed && !_wasSelectionExpanded) {
-      // The current selection is collapsed, and the selection in the previous frame was
-      // either null, or was also collapsed. We only need to position bounds when the selection
-      // is expanded, or goes from expanded to collapsed, or from collapsed to expanded.
-      return;
-    }
+    _selectionUsedForMostRecentLayout = selection;
 
-    // The current selection is expanded, or we went from expanded in the previous frame
-    // to non-expanded in this frame. Either way, we need to recalculate the toolbar focal
-    // point bounds.
+    // The selection changed, which means the selection bounds changed, we need to recalculate the
+    // toolbar focal point bounds.
     setStateAsSoonAsPossible(() {
       // The selection bounds, and Leader build, will take place in methods that
       // run in response to setState().
@@ -477,10 +466,6 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
       return null;
     }
 
-    if (documentSelection.isCollapsed) {
-      return null;
-    }
-
     return documentLayout.getRectForSelection(
       documentSelection.base,
       documentSelection.extent,
@@ -488,8 +473,8 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
   }
 
   @override
-  Widget doBuild(BuildContext context, Rect? expandedSelectionBounds) {
-    if (expandedSelectionBounds == null) {
+  Widget doBuild(BuildContext context, Rect? selectionBounds) {
+    if (selectionBounds == null) {
       return const SizedBox();
     }
 
@@ -497,7 +482,7 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
       child: Stack(
         children: [
           Positioned.fromRect(
-            rect: expandedSelectionBounds,
+            rect: selectionBounds,
             child: Leader(
               link: widget.toolbarFocalPointLink,
               child: widget.showDebugLeaderBounds
