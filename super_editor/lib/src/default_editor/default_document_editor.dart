@@ -17,8 +17,8 @@ Editor createDefaultDocumentEditor({
 }) {
   final editor = Editor(
     editables: {
-      Editor.documentKey: document,
       Editor.composerKey: composer,
+      Editor.documentKey: document,
     },
     requestHandlers: List.from(defaultRequestHandlers),
     reactionPipeline: List.from(defaultEditorReactions),

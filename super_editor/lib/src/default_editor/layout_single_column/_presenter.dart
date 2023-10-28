@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -77,6 +79,8 @@ class SingleColumnLayoutPresenter {
 
   final _listeners = <SingleColumnLayoutPresenterChangeListener>{};
 
+  bool isStylePhaseScheduled = false;
+
   void addChangeListener(SingleColumnLayoutPresenterChangeListener listener) {
     _listeners.add(listener);
   }
@@ -107,6 +111,8 @@ class SingleColumnLayoutPresenter {
 
       // Listen for all dirty phase notifications.
       _pipeline[i].dirtyCallback = () {
+        if (isStylePhaseScheduled) return;
+
         final phaseIndex = i;
         if (phaseIndex < 0) {
           throw Exception("A phase marked itself as dirty, but that phase isn't in the pipeline. Index: $phaseIndex");
@@ -144,15 +150,31 @@ class SingleColumnLayoutPresenter {
 
     editorLayoutLog.fine("Earliest dirty phase is: $_earliestDirtyPhase. Phase count: ${_pipeline.length}");
 
-    final oldViewModel = _viewModel;
-    _viewModel = _createNewViewModel();
+    if (isStylePhaseScheduled) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        SingleColumnLayoutViewModel oldViewModel = _viewModel;
 
-    editorLayoutLog.info("Done calculating new document layout view model");
+        _viewModel = _createNewViewModel();
+        editorLayoutLog.info("Done calculating new document layout view model");
+        _notifyListenersOfChanges(
+          oldViewModel: oldViewModel,
+          newViewModel: _viewModel,
+        );
+      });
+    } else {
+      isStylePhaseScheduled = true;
+      WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
+        SingleColumnLayoutViewModel oldViewModel = _viewModel;
 
-    _notifyListenersOfChanges(
-      oldViewModel: oldViewModel,
-      newViewModel: _viewModel,
-    );
+        _viewModel = _createNewViewModel();
+        editorLayoutLog.info("Done calculating new document layout view model");
+        _notifyListenersOfChanges(
+          oldViewModel: oldViewModel,
+          newViewModel: _viewModel,
+        );
+        isStylePhaseScheduled = false;
+      });
+    }
   }
 
   SingleColumnLayoutViewModel _createNewViewModel() {
