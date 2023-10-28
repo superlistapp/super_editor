@@ -293,9 +293,12 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       return;
     }
 
-    _reportSizeAndTransformToIme();
-    _reportCaretRectToIme();
-    _reportTextStyleToIme();
+    final myRenderBox = context.findRenderObject() as RenderBox?;
+    if (myRenderBox != null && myRenderBox.hasSize) {
+      _reportSizeAndTransformToIme();
+      _reportCaretRectToIme();
+      _reportTextStyleToIme();
+    }
 
     // There are some operations that might affect our transform, size and the caret rect,
     // but we can't react to them.
