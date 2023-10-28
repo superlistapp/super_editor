@@ -626,7 +626,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     if (docPosition != null) {
-      final didTapOnExistingSelection = selection != null && selection.isCollapsed && selection.extent == docPosition;
+      final didTapOnExistingSelection = selection != null &&
+          selection.isCollapsed &&
+          selection.extent.nodePosition.isEquivalentTo(docPosition.nodePosition);
 
       if (didTapOnExistingSelection) {
         // Toggle the toolbar display when the user taps on the collapsed caret,

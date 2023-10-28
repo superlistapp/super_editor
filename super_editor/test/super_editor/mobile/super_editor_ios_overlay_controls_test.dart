@@ -1,7 +1,5 @@
-import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../../test_runners.dart';
@@ -18,6 +16,24 @@ void main() {
       // Ensure all controls are hidden.
       expect(SuperEditorInspector.isMobileMagnifierVisible(), isFalse);
       expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
+    });
+
+    testWidgetsOnIos("shows toolbar when tapping on caret", (tester) async {
+      await _pumpSingleParagraphApp(tester);
+
+      // Place the caret.
+      await tester.tapInParagraph("1", 200);
+
+      // Ensure all controls are hidden.
+      expect(SuperEditorInspector.isMobileMagnifierVisible(), isFalse);
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
+
+      // Tap again on the caret.
+      await tester.tapInParagraph("1", 200);
+
+      // Ensure that the toolbar is visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isTrue);
+      expect(SuperEditorInspector.isMobileMagnifierVisible(), isFalse);
     });
 
     testWidgetsOnIos("shows magnifier when dragging the caret", (tester) async {
