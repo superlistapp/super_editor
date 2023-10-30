@@ -998,20 +998,25 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       ..hideMagnifier()
       ..blinkCaret();
 
-    if (_dragMode == DragMode.scroll) {
-      // The user was performing a drag gesture to scroll the document.
-      // End the scroll activity and let the document scrolling with momentum.
-      _scrollingDrag!.end(details);
-      _scrollingDrag = null;
-      _dragMode = null;
-
-      return;
-    }
-
-    if (_dragMode != null) {
-      // The user was dragging a selection change in some way, either with handles
-      // or with a long-press. Finish that interaction.
-      _onDragSelectionEnd();
+    switch (_dragMode) {
+      case DragMode.scroll:
+        // The user was performing a drag gesture to scroll the document.
+        // End the scroll activity and let the document scrolling with momentum.
+        _scrollingDrag!.end(details);
+        _scrollingDrag = null;
+        _dragMode = null;
+        break;
+      case DragMode.collapsed:
+      case DragMode.base:
+      case DragMode.extent:
+      case DragMode.longPress:
+        // The user was dragging a selection change in some way, either with handles
+        // or with a long-press. Finish that interaction.
+        _onDragSelectionEnd();
+        break;
+      case null:
+        // The user wasn't dragging over a selection. Do nothing.
+        break;
     }
   }
 
