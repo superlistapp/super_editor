@@ -1,7 +1,8 @@
 import 'package:example/demos/supertextfield/_emojis_demo.dart';
 import 'package:example/demos/supertextfield/_expanding_multi_line_demo.dart';
 import 'package:example/demos/supertextfield/_interactive_demo.dart';
-import 'package:example/demos/supertextfield/_textfield_within_scrollable_demo.dart';
+import 'package:example/demos/supertextfield/textfield_inside_single_child_scroll_view_demo.dart';
+import 'package:example/demos/supertextfield/textfield_inside_slivers_demo.dart';
 import 'package:example/demos/supertextfield/_single_line_demo.dart';
 import 'package:example/demos/supertextfield/_static_multi_line_demo.dart';
 import 'package:example/demos/supertextfield/_textfield_demo_screen.dart';
@@ -93,10 +94,18 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
           },
         ),
         DemoMenuItem(
-          label: 'TextField Scrollable',
+          label: 'TextField inside slivers',
           onPressed: () {
             setState(() {
-              _demoBuilder = (_) => const TextFieldWithinScrollableDemo();
+              _demoBuilder = (_) => const TextFieldInsideSliversDemo();
+            });
+          },
+        ),
+        DemoMenuItem(
+          label: 'TextField inside SingleChildScrollView',
+          onPressed: () {
+            setState(() {
+              _demoBuilder = (_) => const TextFieldInsideSingleChildScrollViewDemo();
             });
           },
         ),
