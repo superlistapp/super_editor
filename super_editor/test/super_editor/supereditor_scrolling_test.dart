@@ -8,6 +8,7 @@ import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../test_tools.dart';
 import 'supereditor_test_tools.dart';
 import 'test_documents.dart';
 
@@ -503,98 +504,80 @@ void main() {
     testWidgetsOnAndroid("doesn't overscroll when dragging down", (tester) async {
       final scrollController = ScrollController();
 
-      await tester
+      await tester //
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(TextInputSource.ime)
-          .withEditorSize(const Size(300, 300))
           .withScrollController(scrollController)
           .pump();
 
-      // Ensure the scrollview didn't start scrolled.
+      // Ensure the editor didn't start scrolled.
       expect(scrollController.offset, 0);
 
-      final editorRect = tester.getRect(find.byType(SuperEditor));
+      // Drag an amount of pixels chosen experimentally from the top of the editor.
+      final dragGesture = await tester.dragInMultipleFrames(
+        startLocation: tester.getTopLeft(find.byType(SuperEditor)),
+        dragAmount: const Offset(0, 200.0),
+        frameCount: 10,
+      );
 
-      const dragFrameCount = 10;
-      final dragAmountPerFrame = editorRect.height / dragFrameCount;
-
-      // Drag from the top all the way up to the bottom of the editor.
-      final dragGesture = await tester.startGesture(editorRect.topCenter);
-      for (int i = 0; i < dragFrameCount; i += 1) {
-        await dragGesture.moveBy(Offset(0, dragAmountPerFrame));
-        await tester.pump();
-
-        // Ensure we don't scroll.
-        expect(scrollController.offset, 0);
-      }
+      // Ensure the drag gesture didn't scroll the editor.
+      expect(scrollController.offset, 0);
 
       // End the gesture.
       await dragGesture.up();
-      await dragGesture.removePointer();
+
+      // Let any pending timers resolve.
       await tester.pumpAndSettle();
     });
 
     testWidgetsOnAndroid("doesn't overscroll when dragging up", (tester) async {
       final scrollController = ScrollController();
 
-      await tester
+      await tester //
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(TextInputSource.ime)
-          .withEditorSize(const Size(300, 300))
           .withScrollController(scrollController)
           .pump();
 
       // Jump to the bottom.
       scrollController.jumpTo(scrollController.position.maxScrollExtent);
 
-      final editorRect = tester.getRect(find.byType(SuperEditor));
+      // Drag an amount of pixels chosen experimentally from the bottom of the editor.
+      // The gesture starts with a small margin from the bottom, also chosen experimentally.
+      final dragGesture = await tester.dragInMultipleFrames(
+        startLocation: tester.getBottomLeft(find.byType(SuperEditor)) - const Offset(0, 10),
+        dragAmount: const Offset(0, -200.0),
+        frameCount: 10,
+      );
 
-      const dragFrameCount = 10;
-      final dragAmountPerFrame = editorRect.height / dragFrameCount;
-
-      // Drag from the bottom all the way up to the top of the editor.
-      final dragGesture = await tester.startGesture(editorRect.topCenter);
-      for (int i = 0; i < dragFrameCount; i += 1) {
-        await dragGesture.moveBy(Offset(0, -dragAmountPerFrame));
-        await tester.pump();
-
-        // Ensure we don't scroll.
-        expect(scrollController.offset, scrollController.position.maxScrollExtent);
-      }
+      // Ensure we don't scroll.
+      expect(scrollController.offset, scrollController.position.maxScrollExtent);
 
       // End the gesture.
       await dragGesture.up();
-      await dragGesture.removePointer();
+
+      // Let any pending timers resolve.
       await tester.pumpAndSettle();
     });
 
     testWidgetsOnIos('overscrolls when dragging down', (tester) async {
       final scrollController = ScrollController();
 
-      await tester
+      await tester //
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(TextInputSource.ime)
-          .withEditorSize(const Size(300, 300))
           .withScrollController(scrollController)
           .pump();
 
       // Ensure the scrollview didn't start scrolled.
       expect(scrollController.offset, 0);
 
-      // Start a drag gesture a few pixels below the top of the editor.
-      final dragGesture =
-          await tester.startGesture(tester.getRect(find.byType(SuperEditor)).topCenter + const Offset(0, 5));
-
-      // Drag an arbitrary amount, smaller than the editor size.
-      const dragFrameCount = 10;
-      const dragAmountPerFrame = (80 / dragFrameCount);
-      for (int i = 0; i < dragFrameCount; i += 1) {
-        await dragGesture.moveBy(const Offset(0, dragAmountPerFrame));
-        await tester.pump();
-      }
+      // Drag an amount of pixels chosen experimentally a few pixels below the top of the editor.
+      final dragGesture = await tester.dragInMultipleFrames(
+        startLocation: tester.getRect(find.byType(SuperEditor)).topCenter + const Offset(0, 5),
+        dragAmount: const Offset(0, 80.0),
+        frameCount: 10,
+      );
 
       // Ensure we are overscrolling while holding the pointer down.
       await tester.pumpAndSettle();
@@ -602,7 +585,8 @@ void main() {
 
       // Release the pointer to end the gesture.
       await dragGesture.up();
-      await dragGesture.removePointer();
+
+      // Let any pending timers resolve.
       await tester.pumpAndSettle();
 
       // Ensure the we scrolled back to the top.
@@ -612,11 +596,9 @@ void main() {
     testWidgetsOnIos('overscrolls when dragging up', (tester) async {
       final scrollController = ScrollController();
 
-      await tester
+      await tester //
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(TextInputSource.ime)
-          .withEditorSize(const Size(300, 300))
           .withScrollController(scrollController)
           .pump();
 
@@ -624,17 +606,13 @@ void main() {
       scrollController.jumpTo(scrollController.position.maxScrollExtent);
       await tester.pumpAndSettle();
 
-      // Start a drag gesture a few pixels above the top of the editor.
-      final dragGesture =
-          await tester.startGesture(tester.getRect(find.byType(SuperEditor)).bottomCenter - const Offset(0, 5));
-
-      // Drag up an arbitrary amount, smaller than the editor size.
-      const dragFrameCount = 10;
-      const dragAmountPerFrame = (200 / dragFrameCount);
-      for (int i = 0; i < dragFrameCount; i += 1) {
-        await dragGesture.moveBy(const Offset(0, -dragAmountPerFrame));
-        await tester.pump();
-      }
+      // Drag an amount of pixels chosen experimentally from the bottom of the editor.
+      // The gesture starts with a small margin from the bottom, also chosen experimentally.
+      final dragGesture = await tester.dragInMultipleFrames(
+        startLocation: tester.getRect(find.byType(SuperEditor)).bottomCenter - const Offset(0, 5),
+        dragAmount: const Offset(0, -200.0),
+        frameCount: 10,
+      );
 
       // Ensure we are overscrolling while holding the pointer down.
       await tester.pumpAndSettle();
@@ -642,7 +620,8 @@ void main() {
 
       // Release the pointer to end the gesture.
       await dragGesture.up();
-      await dragGesture.removePointer();
+
+      // Let any pending timers resolve.
       await tester.pumpAndSettle();
 
       // Ensure the we scrolled back to the end.
@@ -849,7 +828,6 @@ void main() {
         await tester
             .createDocument()
             .withSingleParagraph()
-            .withInputSource(TextInputSource.ime)
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -872,24 +850,20 @@ void main() {
         // Ensure the scrollview didn't start scrolled.
         expect(scrollController.offset, 0);
 
-        final editorRect = tester.getRect(find.byType(SuperEditor));
+        // Drag an amount of pixels chosen experimentally from the top of the editor.
+        final dragGesture = await tester.dragInMultipleFrames(
+          startLocation: tester.getTopLeft(find.byType(SuperEditor)),
+          dragAmount: const Offset(0, 400.0),
+          frameCount: 10,
+        );
 
-        const dragFrameCount = 10;
-        final dragAmountPerFrame = editorRect.height / dragFrameCount;
-
-        // Drag from the top all the way up to the bottom of the editor.
-        final dragGesture = await tester.startGesture(editorRect.topCenter);
-        for (int i = 0; i < dragFrameCount; i += 1) {
-          await dragGesture.moveBy(Offset(0, dragAmountPerFrame));
-          await tester.pump();
-
-          // Ensure we don't scroll.
-          expect(scrollController.offset, 0);
-        }
+        // Ensure we don't scroll.
+        expect(scrollController.offset, 0);
 
         // End the gesture.
         await dragGesture.up();
-        await dragGesture.removePointer();
+
+        // Let any pending timers resolve.
         await tester.pumpAndSettle();
       });
 
@@ -899,7 +873,6 @@ void main() {
         await tester
             .createDocument()
             .withSingleParagraph()
-            .withInputSource(TextInputSource.ime)
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -922,25 +895,23 @@ void main() {
         // Jump to the bottom.
         scrollController.jumpTo(scrollController.position.maxScrollExtent);
 
-        final editorRect = tester.getRect(find.byType(SuperEditor));
+        // Drag an amount of pixels chosen experimentally from the bottom of the editor.
+        final dragGesture = await tester.dragInMultipleFrames(
+          startLocation: tester.getBottomLeft(find.byType(CustomScrollView)) - const Offset(0, 10),
+          dragAmount: const Offset(0, -400.0),
+          frameCount: 10,
+        );
 
-        const dragFrameCount = 10;
-        final dragAmountPerFrame = editorRect.height / dragFrameCount;
+        // Ensure we don't scroll.
+        expect(scrollController.offset, scrollController.position.maxScrollExtent);
 
-        // Drag from the bottom all the way up to the top of the editor.
-        final dragGesture = await tester.startGesture(editorRect.topCenter);
-        addTearDown(() => dragGesture.removePointer());
-        for (int i = 0; i < dragFrameCount; i += 1) {
-          await dragGesture.moveBy(Offset(0, -dragAmountPerFrame));
-          await tester.pump();
-
-          // Ensure we don't scroll.
-          expect(scrollController.offset, scrollController.position.maxScrollExtent);
-        }
+        // Ensure we don't scroll.
+        expect(scrollController.offset, scrollController.position.maxScrollExtent);
 
         // End the gesture.
         await dragGesture.up();
-        await dragGesture.removePointer();
+
+        // Let any pending timers resolve.
         await tester.pumpAndSettle();
       });
 
@@ -974,17 +945,13 @@ void main() {
         // Ensure the scrollview didn't start scrolled.
         expect(scrollController.offset, 0);
 
-        // Start a drag gesture a few pixels below the top of the editor.
-        final dragGesture =
-            await tester.startGesture(tester.getRect(find.byType(CustomScrollView)).topCenter + const Offset(0, 5));
-
         // Drag an arbitrary amount, smaller than the editor size.
-        const dragFrameCount = 10;
-        const dragAmountPerFrame = (80 / dragFrameCount);
-        for (int i = 0; i < dragFrameCount; i += 1) {
-          await dragGesture.moveBy(const Offset(0, dragAmountPerFrame));
-          await tester.pump();
-        }
+        // Drag an amount of pixels chosen experimentally from the top of the editor.
+        final dragGesture = await tester.dragInMultipleFrames(
+          startLocation: tester.getRect(find.byType(CustomScrollView)).topCenter + const Offset(0, 5),
+          dragAmount: const Offset(0, 80.0),
+          frameCount: 10,
+        );
 
         // Ensure we are overscrolling while holding the pointer down.
         await tester.pumpAndSettle();
@@ -992,7 +959,8 @@ void main() {
 
         // Release the pointer to end the gesture.
         await dragGesture.up();
-        await dragGesture.removePointer();
+
+        // Let any pending timers resolve.
         await tester.pumpAndSettle();
 
         // Ensure the we scrolled back to the top.
@@ -1030,17 +998,13 @@ void main() {
         scrollController.jumpTo(scrollController.position.maxScrollExtent);
         await tester.pumpAndSettle();
 
-        // Start a drag gesture a few pixels above the top of the editor.
-        final dragGesture =
-            await tester.startGesture(tester.getRect(find.byType(CustomScrollView)).bottomCenter - const Offset(0, 5));
-
         // Drag up an arbitrary amount, smaller than the editor size.
-        const dragFrameCount = 10;
-        const dragAmountPerFrame = (200 / dragFrameCount);
-        for (int i = 0; i < dragFrameCount; i += 1) {
-          await dragGesture.moveBy(const Offset(0, -dragAmountPerFrame));
-          await tester.pump();
-        }
+        // Drag an amount of pixels chosen experimentally from the bottom of the editor.
+        final dragGesture = await tester.dragInMultipleFrames(
+          startLocation: tester.getRect(find.byType(CustomScrollView)).bottomCenter - const Offset(0, 5),
+          dragAmount: const Offset(0, -100.0),
+          frameCount: 10,
+        );
 
         // Ensure we are overscrolling while holding the pointer down.
         await tester.pumpAndSettle();
@@ -1048,7 +1012,8 @@ void main() {
 
         // Release the pointer to end the gesture.
         await dragGesture.up();
-        await dragGesture.removePointer();
+
+        // Let any pending timers resolve.
         await tester.pumpAndSettle();
 
         // Ensure the we scrolled back to the end.
