@@ -27,9 +27,8 @@ class _TextFieldInsideSingleChildScrollViewDemoState extends State<TextFieldInsi
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: SuperDesktopTextField(
-              // Provides sufficient space to test out textfields scrolling behaviour
+              minLines: 5, // Provides sufficient space to test out textfields scrolling behaviour
               // properly.
-              minLines: 5,
               maxLines: 5,
               textStyleBuilder: demoTextStyleBuilder,
               decorationBuilder: (context, child) {
