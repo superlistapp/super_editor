@@ -2774,12 +2774,14 @@ bool _scrollToBeginningOfDocument({
   final ScrollPosition? ancestorScrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
 
   if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
-    // No scrollable content within `SuperDesktopField` and ancestor scrollable
-    // is absent, give other handlers opportunity to handle the key event.
+    // The text field doesn't have any scrollable content. There is no ancestor
+    // scrollable to scroll. Fizzle.
     return false;
   }
 
   if (textFieldScroller.scrollOffset > 0) {
+    // The text field has more content than can fit, and the text field is partially
+    // scrolled downward. Scroll back to the top of the text field.
     textFieldScroller.animateTo(
       textFieldScroller.minScrollExtent,
       duration: const Duration(milliseconds: 150),
@@ -2790,11 +2792,11 @@ bool _scrollToBeginningOfDocument({
   }
 
   if (ancestorScrollable == null) {
-    // Ancestor scrollable is absent, give other handlers opportunity
-    // to handle to the key event.
+    // There is no ancestor scrollable to scroll. Fizzle.
     return false;
   }
 
+  // Scroll to the top of the ancestor scrollable.
   ancestorScrollable.animateTo(
     ancestorScrollable.minScrollExtent,
     duration: const Duration(milliseconds: 150),
@@ -2819,12 +2821,14 @@ bool _scrollToEndOfDocument({
   final ScrollPosition? ancestorScrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
 
   if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
-    // No scrollable content within `SuperDesktopField` and ancestor scrollable
-    // is absent, give other handlers opportunity to handle the key event.
+    // The text field doesn't have any scrollable content. There is no ancestor
+    // scrollable to scroll. Fizzle.
     return false;
   }
 
   if (textFieldScroller.scrollOffset < textFieldScroller.maxScrollExtent) {
+    // The text field has more content than can fit, and the text field is partially
+    // scrolled upward. Scroll back to the bottom of the text field.
     textFieldScroller.animateTo(
       textFieldScroller.maxScrollExtent,
       duration: const Duration(milliseconds: 150),
@@ -2835,16 +2839,17 @@ bool _scrollToEndOfDocument({
   }
 
   if (ancestorScrollable == null) {
-    // Ancestor scrollable is absent, give other handlers opportunity
-    // to handle to the key event.
+    // There is no ancestor scrollable to scroll. Fizzle.
     return false;
   }
 
   if (!ancestorScrollable.maxScrollExtent.isFinite) {
-    // Can't scroll to infinity, but we technically handled the task.
+    // We want to scroll to the end of the ancestor scrollable, but it's infinitely long,
+    // so we can't. Fizzle.
     return false;
   }
 
+  // Scroll to the end of the ancestor scrollable.
   ancestorScrollable.animateTo(
     ancestorScrollable.maxScrollExtent,
     duration: const Duration(milliseconds: 150),
@@ -2875,6 +2880,7 @@ bool _scrollPageUp({
   }
 
   if (textFieldScroller.scrollOffset > 0) {
+    // The text field has more content than can fit. Scroll up text field by viewport height.
     textFieldScroller.animateTo(
       max(
         textFieldScroller.scrollOffset - textFieldScroller.viewportDimension,
@@ -2887,11 +2893,11 @@ bool _scrollPageUp({
   }
 
   if (ancestorScrollable == null) {
-    // Ancestor scrollable is absent, give other handlers opportunity
-    // to handle to the key event.
+    // There is no ancestor scrollable to scroll. Fizzle.
     return false;
   }
 
+  // Scroll up ancestor scrollable by viewport height.
   ancestorScrollable.animateTo(
     max(ancestorScrollable.pixels - ancestorScrollable.viewportDimension, ancestorScrollable.minScrollExtent),
     duration: const Duration(milliseconds: 150),
@@ -2922,6 +2928,7 @@ bool _scrollPageDown({
   }
 
   if (textFieldScroller.scrollOffset < textFieldScroller.maxScrollExtent) {
+    // The text field has more content than can fit. Scroll down text field by viewport height.
     textFieldScroller.animateTo(
       min(
         textFieldScroller.scrollOffset + textFieldScroller.viewportDimension,
@@ -2934,11 +2941,11 @@ bool _scrollPageDown({
   }
 
   if (ancestorScrollable == null) {
-    // Ancestor scrollable is absent, give other handlers opportunity
-    // to handle to the key event.
+    // There is no ancestor scrollable to scroll. Fizzle.
     return false;
   }
 
+  // Scroll down ancestor scrollable by viewport height.
   ancestorScrollable.animateTo(
     min(ancestorScrollable.pixels + ancestorScrollable.viewportDimension, ancestorScrollable.maxScrollExtent),
     duration: const Duration(milliseconds: 150),
