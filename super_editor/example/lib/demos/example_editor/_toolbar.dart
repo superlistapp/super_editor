@@ -615,6 +615,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
                     boundaryKey: widget.editorViewportKey,
                     parentFocusNode: widget.editorFocusNode,
                     itemBuilder: (context, item) => Icon(_buildTextAlignIcon(item)),
+                    activeItemDecoration: BoxDecoration(color: Colors.yellow),
                     selectedItemBuilder: (context, item) => Padding(
                       padding: EdgeInsets.only(left: 8.0, right: 24),
                       child: Icon(

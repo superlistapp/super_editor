@@ -19,6 +19,13 @@ import 'package:super_editor/super_editor.dart';
 ///    3. The popover is displayed with its bottom aligned with the bottom of
 ///         the given boundary, and it covers the selected item.
 ///
+/// The popover list height is based on the following rules:
+///
+///    1. The popover height is constrained by [popoverContraints], if provided, becoming scrollable if
+///         there isn't enough room to display all items, or
+///    2. The popover is displayed as tall as all items in the list, if there's enough room, or
+///    3. The popover is displayed as tall as the available space and becomes scrollable.
+///
 /// Provide [popoverContraints] to enforce aditional constraints on the popover list. For example:
 ///    1. Provide a tight [BoxConstraints] to force the popover list to be a specific size.
 ///    2. Provide a [BoxConstraints] with a `maxWidth` to prevent the popover list from being taller
@@ -157,7 +164,20 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
       ..forward();
 
     setState(() {
-      _activeIndex = null;
+      final selectedItem = widget.value;
+
+      if (selectedItem == null) {
+        _activeIndex = null;
+        return;
+      }
+
+      int selectedItemIndex = widget.items.indexOf(selectedItem);
+      if (selectedItemIndex > -1) {
+        _activeIndex = selectedItemIndex;
+      } else {
+        // A selected item was provided, but it isn't included in the list of items.
+        _activeIndex = null;
+      }
     });
   }
 
