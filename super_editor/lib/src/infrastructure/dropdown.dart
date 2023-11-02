@@ -34,7 +34,7 @@ class ItemSelector<T> extends StatefulWidget {
   const ItemSelector({
     super.key,
     required this.parentFocusNode,
-    required this.boundaryKey,
+    this.boundaryKey,
     required this.items,
     required this.value,
     required this.onChanged,
@@ -399,7 +399,7 @@ class RawDropdown extends StatefulWidget {
   const RawDropdown({
     super.key,
     required this.controller,
-    required this.boundaryKey,
+    this.boundaryKey,
     required this.dropdownBuilder,
     required this.parentFocusNode,
     this.onKeyEvent,
