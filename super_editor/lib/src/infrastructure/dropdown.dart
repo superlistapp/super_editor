@@ -59,7 +59,7 @@ class ItemSelector<T> extends StatefulWidget {
   /// need your widget tree to retain focus while the popover list is visible, then
   /// you need to provide the [FocusNode] that the popover list should use as its
   /// parent, thereby retaining focus for your widgets.
-  final FocusNode parentFocusNode;
+  final FocusNode? parentFocusNode;
 
   /// A [GlobalKey] to a widget that determines the bounds where the popover list can be displayed.
   ///
@@ -101,12 +101,12 @@ class ItemSelector<T> extends StatefulWidget {
   /// Builds each item in the popover list.
   ///
   /// This method is called for each item in [items], to build its visual representation.
-  final Widget Function(BuildContext context, T item) itemBuilder;
+  final ItemBuilder<T> itemBuilder;
 
   /// Builds the selected item which, upon tap, opens the popover list.
   ///
   /// This method is called with the currently selected [value].
-  final Widget Function(BuildContext context, T? item) selectedItemBuilder;
+  final ItemBuilder<T?> selectedItemBuilder;
 
   @override
   State<ItemSelector<T>> createState() => ItemSelectorState<T>();
@@ -322,6 +322,8 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
   }
 }
 
+typedef ItemBuilder<T> = Widget Function(BuildContext context, T item);
+
 /// A [FollowerAligner] to position a dropdown list relative to the dropdown button.
 ///
 /// The following rules are applied, in order:
@@ -397,7 +399,7 @@ class RawDropdown extends StatefulWidget {
     required this.controller,
     this.boundaryKey,
     required this.dropdownBuilder,
-    required this.parentFocusNode,
+    this.parentFocusNode,
     this.onKeyEvent,
     required this.child,
   });
@@ -412,7 +414,7 @@ class RawDropdown extends StatefulWidget {
   final FocusOnKeyEventCallback? onKeyEvent;
 
   /// [FocusNode] which will share focus with the dropdown.
-  final FocusNode parentFocusNode;
+  final FocusNode? parentFocusNode;
 
   /// A [GlobalKey] to a widget that determines the bounds where the popover can be displayed.
   ///
@@ -435,6 +437,7 @@ class _RawDropdownState extends State<RawDropdown> {
   final OverlayPortalController _overlayController = OverlayPortalController();
   final LeaderLink _dropdownLink = LeaderLink();
   final FocusNode _dropdownFocusNode = FocusNode();
+  late FocusNode _parentFocusNode;
 
   late FollowerBoundary _screenBoundary;
 
@@ -442,6 +445,7 @@ class _RawDropdownState extends State<RawDropdown> {
   void initState() {
     super.initState();
 
+    _parentFocusNode = widget.parentFocusNode ?? FocusNode();
     widget.controller.addListener(_onDropdownControllerChanged);
   }
 
@@ -458,6 +462,15 @@ class _RawDropdownState extends State<RawDropdown> {
       oldWidget.controller.removeListener(_onDropdownControllerChanged);
       widget.controller.addListener(_onDropdownControllerChanged);
     }
+
+    if (oldWidget.parentFocusNode != widget.parentFocusNode) {
+      if (oldWidget.parentFocusNode == null) {
+        _parentFocusNode.dispose();
+      }
+
+      _parentFocusNode = widget.parentFocusNode ?? FocusNode();
+    }
+
     if (oldWidget.boundaryKey != widget.boundaryKey) {
       _updateFollowerBoundary();
     }
@@ -467,6 +480,10 @@ class _RawDropdownState extends State<RawDropdown> {
   void dispose() {
     widget.controller.removeListener(_onDropdownControllerChanged);
     _dropdownLink.dispose();
+
+    if (widget.parentFocusNode == null) {
+      _parentFocusNode.dispose();
+    }
 
     super.dispose();
   }
@@ -527,7 +544,7 @@ class _RawDropdownState extends State<RawDropdown> {
       onTapOutside: _onTapOutsideOfDropdown,
       child: SuperEditorPopover(
         popoverFocusNode: _dropdownFocusNode,
-        editorFocusNode: widget.parentFocusNode,
+        editorFocusNode: _parentFocusNode,
         onKeyEvent: _onKeyEvent,
         child: widget.dropdownBuilder(context, _dropdownLink, _screenBoundary),
       ),
