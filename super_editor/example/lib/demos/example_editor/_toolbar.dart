@@ -83,6 +83,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
         ImeAttributedTextEditingController(controller: SingleLineAttributedTextEditingController(_applyLink)) //
           ..onPerformActionPressed = _onPerformAction
           ..text = AttributedText("https://");
+
+    widget.document.addListener(_onDocumentChanged);
   }
 
   @override
@@ -96,11 +98,29 @@ class _EditorToolbarState extends State<EditorToolbar> {
   }
 
   @override
+  void didUpdateWidget(covariant EditorToolbar oldWidget) {
+    if (oldWidget.document != widget.document) {
+      oldWidget.document.removeListener(_onDocumentChanged);
+      widget.document.addListener(_onDocumentChanged);
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
   void dispose() {
     _urlFocusNode.dispose();
     _urlController!.dispose();
     _popoverFocusNode.dispose();
+
+    widget.document.removeListener(_onDocumentChanged);
     super.dispose();
+  }
+
+  void _onDocumentChanged(DocumentChangeLog doc) {
+    // The document has changed.
+    // Some of the selected node's metadata, for example, the blockType, influences how the toolbar is displayed.
+    // Reflow the toolbar to acount for the new state of the selected node.
+    setState(() {});
   }
 
   /// Returns true if the currently selected text node is capable of being
@@ -224,9 +244,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
         ),
       ]);
     }
-
-    // Rebuild to display the selected item.
-    setState(() {});
   }
 
   /// Returns true if the given [_TextType] represents an
@@ -443,9 +460,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
     final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId) as ParagraphNode;
     selectedNode.putMetadataValue('textAlign', newAlignmentValue);
-
-    // Rebuild to display the selected item.
-    setState(() {});
   }
 
   /// Returns the localized name for the given [_TextType], e.g.,
@@ -601,7 +615,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
                     boundaryKey: widget.editorViewportKey,
                     parentFocusNode: widget.editorFocusNode,
                     itemBuilder: (context, item) => Icon(_buildTextAlignIcon(item)),
-                    selectedItemBuilder: (context, item) => Icon(_buildTextAlignIcon(item!)),
+                    selectedItemBuilder: (context, item) => Padding(
+                      padding: EdgeInsets.only(left: 8.0, right: 24),
+                      child: Icon(
+                        _buildTextAlignIcon(item!),
+                      ),
+                    ),
                   ),
                 ),
               ],
