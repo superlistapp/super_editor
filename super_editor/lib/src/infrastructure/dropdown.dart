@@ -236,14 +236,10 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
       dropdownBuilder: _buildDropDown,
       parentFocusNode: widget.parentFocusNode,
       onKeyEvent: _onKeyEvent,
-      child: ConstrainedBox(
-        // TODO: what value should we use?
-        constraints: const BoxConstraints(maxHeight: 100),
-        child: InkWell(
-          onTap: _onButtonTap,
-          child: Center(
-            child: _buildSelectedItem(),
-          ),
+      child: InkWell(
+        onTap: _onButtonTap,
+        child: Center(
+          child: _buildSelectedItem(),
         ),
       ),
     );
