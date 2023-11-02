@@ -533,7 +533,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
                     value: _getCurrentTextType(),
                     items: _TextType.values,
                     onChanged: _convertTextToNewType,
-                    focusColor: Colors.yellow,
+                    activeItemDecoration: BoxDecoration(color: Colors.yellow),
                     itemBuilder: (context, item) => Text(
                       _getTextTypeName(item),
                       style: const TextStyle(
@@ -541,8 +541,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
                         fontSize: 12,
                       ),
                     ),
-                    buttonBuilder: (context, item) => Padding(
-                      padding: EdgeInsets.only(left: 8.0),
+                    selectedItemBuilder: (context, item) => Padding(
+                      padding: EdgeInsets.only(left: 16.0, right: 24),
                       child: Text(
                         _getTextTypeName(item!),
                         style: const TextStyle(
@@ -601,7 +601,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
                     boundaryKey: widget.editorViewportKey,
                     parentFocusNode: widget.editorFocusNode,
                     itemBuilder: (context, item) => Icon(_buildTextAlignIcon(item)),
-                    buttonBuilder: (context, item) => Icon(_buildTextAlignIcon(item!)),
+                    selectedItemBuilder: (context, item) => Icon(_buildTextAlignIcon(item!)),
                   ),
                 ),
               ],

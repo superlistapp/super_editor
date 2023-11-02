@@ -19,7 +19,10 @@ import 'package:super_editor/super_editor.dart';
 ///    3. The popover is displayed with its bottom aligned with the bottom of
 ///         the given boundary, and it covers the selected item.
 ///
-/// Provide [dropdownContraints] to enforce aditional constraints on the popover list.
+/// Provide [popoverContraints] to enforce aditional constraints on the popover list. For example:
+///    1. Provide a tight [BoxConstraints] to force the popover list to be a specific size.
+///    2. Provide a [BoxConstraints] with a `maxWidth` to prevent the popover list from being taller
+///         than the [BoxConstraints.maxWidth].
 ///
 /// The popover list includes keyboard selection behaviors:
 ///
@@ -36,10 +39,10 @@ class ItemSelector<T> extends StatefulWidget {
     required this.value,
     required this.onChanged,
     required this.itemBuilder,
-    required this.buttonBuilder,
-    this.focusColor,
-    this.dropdownContraints,
-    this.dropdownKey,
+    required this.selectedItemBuilder,
+    this.activeItemDecoration,
+    this.popoverContraints,
+    this.popoverKey,
   });
 
   /// The [FocusNode], to which the popover list's [FocusNode] will be added as a child.
@@ -58,34 +61,52 @@ class ItemSelector<T> extends StatefulWidget {
   /// parent, thereby retaining focus for your widgets.
   final FocusNode parentFocusNode;
 
-  /// A [GlobalKey] to a widget that determines the bounds where the dropdown can be displayed.
+  /// A [GlobalKey] to a widget that determines the bounds where the popover list can be displayed.
   ///
-  /// Used to avoid the dropdown to be displayed off-screen.
-  final GlobalKey boundaryKey;
+  /// As the popover list follows the selected item, it can be displayed off-screen if this [ItemSelector]
+  /// is close to the bottom of the screen.
+  ///
+  /// Passing a [boundaryKey] causes the popover list to be confined to the bounds of the widget
+  /// bound to the [boundaryKey].
+  ///
+  /// If `null`, the popover list is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
+  final GlobalKey? boundaryKey;
 
   /// The currently selected value or `null` if no item is selected.
+  ///
+  /// This value is passed to [selectedItemBuilder] to build the visual representation of the selected item.
   final T? value;
 
-  /// The items that will be displayed in the dropdown list.
+  /// The items that will be displayed in the popover list.
+  ///
+  /// For each item, [itemBuilder] is called to build its visual representation.
   final List<T> items;
 
-  /// Called when the user selects an item on the dropdown list.
+  /// Called when the user selects an item on the popover list.
+  ///
+  /// The selection can be performed by:
+  ///    1. Tapping on an item in the popover list.
+  ///    2. Pressing ENTER when the popover list has an active item.
   final ValueChanged<T?> onChanged;
 
-  /// The background color of the focused list item.
-  final Color? focusColor;
+  /// The background color of the active list item.
+  final BoxDecoration? activeItemDecoration;
 
-  /// A [GlobalKey] bound to the dropdown list.
-  final GlobalKey? dropdownKey;
+  /// A [GlobalKey] bound to the popover list.
+  final GlobalKey? popoverKey;
 
-  /// Constraints applied to the dropdown list.
-  final BoxConstraints? dropdownContraints;
+  /// Constraints applied to the popover list.
+  final BoxConstraints? popoverContraints;
 
-  /// Builds each item in the dropdown list.
+  /// Builds each item in the popover list.
+  ///
+  /// This method is called for each item in [items], to build its visual representation.
   final Widget Function(BuildContext context, T item) itemBuilder;
 
-  /// Builds the button that opens the dropdown.
-  final Widget Function(BuildContext context, T? item) buttonBuilder;
+  /// Builds the selected item which, upon tap, opens the popover list.
+  ///
+  /// This method is called with the currently selected [value].
+  final Widget Function(BuildContext context, T? item) selectedItemBuilder;
 
   @override
   State<ItemSelector<T>> createState() => ItemSelectorState<T>();
@@ -94,10 +115,10 @@ class ItemSelector<T> extends StatefulWidget {
 @visibleForTesting
 class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProviderStateMixin {
   @visibleForTesting
-  int? get focusedIndex => _focusedIndex;
-  int? _focusedIndex;
+  int? get activeIndex => _activeIndex;
+  int? _activeIndex;
 
-  final DropdownController _dropdownController = DropdownController();
+  final DropdownController _popoverController = DropdownController();
 
   @visibleForTesting
   ScrollController get scrollController => _scrollController;
@@ -122,7 +143,7 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
 
   @override
   void dispose() {
-    _dropdownController.dispose();
+    _popoverController.dispose();
     _scrollController.dispose();
 
     _animationController.dispose();
@@ -130,20 +151,20 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
   }
 
   void _onButtonTap() {
-    _dropdownController.show();
+    _popoverController.open();
     _animationController
       ..reset()
       ..forward();
 
     setState(() {
-      _focusedIndex = null;
+      _activeIndex = null;
     });
   }
 
-  /// Called when the user taps an item or presses ENTER with a focused item.
-  void _submitItem(T item) {
+  /// Called when the user taps an item or presses ENTER with an active item.
+  void _selectItem(T item) {
     widget.onChanged(item);
-    _dropdownController.hide();
+    _popoverController.close();
   }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
@@ -151,7 +172,7 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
       return KeyEventResult.ignored;
     }
 
-    if (![
+    if (!const [
       LogicalKeyboardKey.enter,
       LogicalKeyboardKey.numpadEnter,
       LogicalKeyboardKey.arrowDown,
@@ -162,44 +183,46 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
     }
 
     if (event.logicalKey == LogicalKeyboardKey.escape) {
-      _dropdownController.hide();
+      _popoverController.close();
       return KeyEventResult.handled;
     }
 
     if (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter) {
-      if (_focusedIndex == null) {
-        _dropdownController.hide();
+      if (_activeIndex == null) {
+        // The user pressed ENTER without an active item.
+        // Close the popover without changing the selected item.
+        _popoverController.close();
         return KeyEventResult.handled;
       }
 
-      _submitItem(widget.items[_focusedIndex!]);
+      _selectItem(widget.items[_activeIndex!]);
 
       return KeyEventResult.handled;
     }
 
-    int? newFocusedIndex;
+    int? newActiveIndex;
     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-      if (_focusedIndex == null || _focusedIndex! >= widget.items.length - 1) {
-        // We don't have a focused item or we are at the end of the list. Focus the first item.
-        newFocusedIndex = 0;
+      if (_activeIndex == null || _activeIndex! >= widget.items.length - 1) {
+        // We don't have an active item or we are at the end of the list. Activate the first item.
+        newActiveIndex = 0;
       } else {
-        // Move the focus down.
-        newFocusedIndex = _focusedIndex! + 1;
+        // Activate the next item.
+        newActiveIndex = _activeIndex! + 1;
       }
     }
 
     if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-      if (_focusedIndex == null || _focusedIndex! <= 0) {
-        // We don't have a focused item or we are at the beginning of the list. Focus the last item.
-        newFocusedIndex = widget.items.length - 1;
+      if (_activeIndex == null || _activeIndex! <= 0) {
+        // We don't have an active item or we are at the beginning of the list. Activate the last item.
+        newActiveIndex = widget.items.length - 1;
       } else {
-        // Move the focus up.
-        newFocusedIndex = _focusedIndex! - 1;
+        // Activate the previous item.
+        newActiveIndex = _activeIndex! - 1;
       }
     }
 
     setState(() {
-      _focusedIndex = newFocusedIndex;
+      _activeIndex = newActiveIndex;
     });
 
     return KeyEventResult.handled;
@@ -208,7 +231,7 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
   @override
   Widget build(BuildContext context) {
     return RawDropdown(
-      controller: _dropdownController,
+      controller: _popoverController,
       boundaryKey: widget.boundaryKey,
       dropdownBuilder: _buildDropDown,
       parentFocusNode: widget.parentFocusNode,
@@ -227,14 +250,14 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
   }
 
   Widget _buildSelectedItem() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Stack(
+      alignment: Alignment.centerLeft,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-          child: widget.buttonBuilder(context, widget.value),
+        widget.selectedItemBuilder(context, widget.value),
+        const Positioned(
+          right: 0,
+          child: Icon(Icons.arrow_drop_down),
         ),
-        const Icon(Icons.arrow_drop_down),
       ],
     );
   }
@@ -246,9 +269,9 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
       boundary: boundary,
       showWhenUnlinked: false,
       child: ConstrainedBox(
-        constraints: widget.dropdownContraints ?? const BoxConstraints(),
+        constraints: widget.popoverContraints ?? const BoxConstraints(),
         child: Material(
-          key: widget.dropdownKey,
+          key: widget.popoverKey,
           elevation: 8,
           borderRadius: BorderRadius.circular(12),
           clipBehavior: Clip.hardEdge,
@@ -272,7 +295,7 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
                         children: [
                           for (int i = 0; i < widget.items.length; i++)
                             Container(
-                              color: _focusedIndex == i ? widget.focusColor : null,
+                              decoration: _activeIndex == i ? widget.activeItemDecoration : null,
                               child: _buildDropDownItem(context, widget.items[i]),
                             ),
                         ],
@@ -290,7 +313,7 @@ class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProvi
 
   Widget _buildDropDownItem(BuildContext context, T item) {
     return InkWell(
-      onTap: () => _submitItem(item),
+      onTap: () => _selectItem(item),
       child: Container(
         constraints: const BoxConstraints(minHeight: kMinInteractiveDimension),
         alignment: AlignmentDirectional.centerStart,
@@ -363,7 +386,7 @@ class _DropdownAligner implements FollowerAligner {
 ///
 /// The dropdown is displayed in an `Overlay` and it can follow the [child]
 /// by being wrapped with a [Follower]. The visibility of the dropdown
-/// is changed by calling [DropdownController.show] or [DropdownController.hide].
+/// is changed by calling [DropdownController.open] or [DropdownController.close].
 /// The dropdown is automatically closed when the user taps outside of its bounds.
 ///
 /// When the dropdown is displayed it requests focus to itself, so the user can
@@ -395,10 +418,16 @@ class RawDropdown extends StatefulWidget {
   /// [FocusNode] which will share focus with the dropdown.
   final FocusNode parentFocusNode;
 
-  /// A [GlobalKey] to a widget that determines the bounds where the dropdown can be displayed.
+  /// A [GlobalKey] to a widget that determines the bounds where the popover can be displayed.
   ///
-  /// Used to avoid the dropdown to be displayed off-screen.
-  final GlobalKey boundaryKey;
+  /// As the popover follows the selected item, it can be displayed off-screen if this [RawDropdown]
+  /// is close to the bottom of the screen.
+  ///
+  /// Passing a [boundaryKey] causes the popover to be confined to the bounds of the widget
+  /// bound to the [boundaryKey].
+  ///
+  /// If `null`, the popover is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
+  final GlobalKey? boundaryKey;
 
   final Widget child;
 
@@ -423,10 +452,7 @@ class _RawDropdownState extends State<RawDropdown> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _screenBoundary = WidgetFollowerBoundary(
-      boundaryKey: widget.boundaryKey,
-      devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
-    );
+    _updateFollowerBoundary();
   }
 
   @override
@@ -436,6 +462,9 @@ class _RawDropdownState extends State<RawDropdown> {
       oldWidget.controller.removeListener(_onDropdownControllerChanged);
       widget.controller.addListener(_onDropdownControllerChanged);
     }
+    if (oldWidget.boundaryKey != widget.boundaryKey) {
+      _updateFollowerBoundary();
+    }
   }
 
   @override
@@ -444,6 +473,20 @@ class _RawDropdownState extends State<RawDropdown> {
     _dropdownLink.dispose();
 
     super.dispose();
+  }
+
+  void _updateFollowerBoundary() {
+    if (widget.boundaryKey != null) {
+      _screenBoundary = WidgetFollowerBoundary(
+        boundaryKey: widget.boundaryKey,
+        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+      );
+    } else {
+      _screenBoundary = ScreenFollowerBoundary(
+        screenSize: MediaQuery.sizeOf(context),
+        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+      );
+    }
   }
 
   void _onDropdownControllerChanged() {
@@ -460,7 +503,7 @@ class _RawDropdownState extends State<RawDropdown> {
   }
 
   void _onTapOutsideOfDropdown(PointerDownEvent e) {
-    widget.controller.hide();
+    widget.controller.close();
   }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
@@ -504,7 +547,7 @@ class DropdownController with ChangeNotifier {
   bool get shouldShow => _shouldShow;
   bool _shouldShow = false;
 
-  void show() {
+  void open() {
     if (_shouldShow) {
       return;
     }
@@ -512,7 +555,7 @@ class DropdownController with ChangeNotifier {
     notifyListeners();
   }
 
-  void hide() {
+  void close() {
     if (!_shouldShow) {
       return;
     }
@@ -522,9 +565,9 @@ class DropdownController with ChangeNotifier {
 
   void toggle() {
     if (shouldShow) {
-      hide();
+      close();
     } else {
-      show();
+      open();
     }
   }
 }

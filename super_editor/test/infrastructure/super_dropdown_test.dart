@@ -174,23 +174,23 @@ void main() {
       final dropdownButonState = tester.state<ItemSelectorState<String>>(find.byType(ItemSelector<String>));
 
       // Ensure the dropdown is displayed without any focused item.
-      expect(dropdownButonState.focusedIndex, isNull);
+      expect(dropdownButonState.activeIndex, isNull);
 
       // Press DOWN ARROW to focus the first item.
       await tester.pressDownArrow();
-      expect(dropdownButonState.focusedIndex, 0);
+      expect(dropdownButonState.activeIndex, 0);
 
       // Press DOWN ARROW to focus the second item.
       await tester.pressDownArrow();
-      expect(dropdownButonState.focusedIndex, 1);
+      expect(dropdownButonState.activeIndex, 1);
 
       // Press DOWN ARROW to focus the third item.
       await tester.pressDownArrow();
-      expect(dropdownButonState.focusedIndex, 2);
+      expect(dropdownButonState.activeIndex, 2);
 
       // Press DOWN ARROW to focus the first item again.
       await tester.pressDownArrow();
-      expect(dropdownButonState.focusedIndex, 0);
+      expect(dropdownButonState.activeIndex, 0);
     });
 
     testWidgetsOnAllPlatforms('moves focus up with UP ARROW', (tester) async {
@@ -206,23 +206,23 @@ void main() {
       final dropdownButonState = tester.state<ItemSelectorState<String>>(find.byType(ItemSelector<String>));
 
       // Ensure the dropdown is displayed without any focused item.
-      expect(dropdownButonState.focusedIndex, isNull);
+      expect(dropdownButonState.activeIndex, isNull);
 
       // Press UP ARROW to focus the last item.
       await tester.pressUpArrow();
-      expect(dropdownButonState.focusedIndex, 2);
+      expect(dropdownButonState.activeIndex, 2);
 
       // Press UP ARROW to focus the second item.
       await tester.pressUpArrow();
-      expect(dropdownButonState.focusedIndex, 1);
+      expect(dropdownButonState.activeIndex, 1);
 
       // Press UP ARROW to focus the first item.
       await tester.pressUpArrow();
-      expect(dropdownButonState.focusedIndex, 0);
+      expect(dropdownButonState.activeIndex, 0);
 
       // Press UP ARROW to focus the last item again.
       await tester.pressUpArrow();
-      expect(dropdownButonState.focusedIndex, 2);
+      expect(dropdownButonState.activeIndex, 2);
     });
 
     testWidgetsOnAllPlatforms('selects the focused item on ENTER', (tester) async {
@@ -311,7 +311,7 @@ void main() {
             toolbar: ItemSelector<String>(
               items: const ['Item1', 'Item2', 'Item3'],
               itemBuilder: (context, e) => Text(e),
-              buttonBuilder: (context, e) => const SizedBox(width: 50),
+              selectedItemBuilder: (context, e) => const SizedBox(width: 50),
               value: null,
               onChanged: (s) => {},
               boundaryKey: boundaryKey,
@@ -394,13 +394,13 @@ Future<void> _pumpDropdownTestApp(
             child: ItemSelector<String>(
               items: const ['Item1', 'Item2', 'Item3'],
               itemBuilder: (context, e) => Text(e),
-              buttonBuilder: (context, e) => const SizedBox(width: 50),
+              selectedItemBuilder: (context, e) => const SizedBox(width: 50),
               value: null,
               onChanged: onValueChanged,
               boundaryKey: boundaryKey,
               parentFocusNode: focusNode,
-              dropdownContraints: dropdownConstraints,
-              dropdownKey: dropdownKey,
+              popoverContraints: dropdownConstraints,
+              popoverKey: dropdownKey,
             ),
           ),
         ),
