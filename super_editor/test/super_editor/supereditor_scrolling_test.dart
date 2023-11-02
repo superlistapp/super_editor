@@ -513,11 +513,10 @@ void main() {
       // Ensure the editor didn't start scrolled.
       expect(scrollController.offset, 0);
 
-      // Drag an amount of pixels chosen experimentally from the top of the editor.
-      final dragGesture = await tester.dragInMultipleFrames(
-        startLocation: tester.getTopLeft(find.byType(SuperEditor)),
-        dragAmount: const Offset(0, 200.0),
-        frameCount: 10,
+      // Drag an arbitrary amount of pixels from the top of the editor with a small margin.
+      final dragGesture = await tester.dragByFrameCount(
+        startLocation: tester.getRect(find.byType(SuperEditor)).topCenter + const Offset(0, 5),
+        totalDragOffset: const Offset(0, 200.0),
       );
 
       // Ensure the drag gesture didn't scroll the editor.
@@ -542,12 +541,11 @@ void main() {
       // Jump to the bottom.
       scrollController.jumpTo(scrollController.position.maxScrollExtent);
 
-      // Drag an amount of pixels chosen experimentally from the bottom of the editor.
-      // The gesture starts with a small margin from the bottom, also chosen experimentally.
-      final dragGesture = await tester.dragInMultipleFrames(
-        startLocation: tester.getBottomLeft(find.byType(SuperEditor)) - const Offset(0, 10),
-        dragAmount: const Offset(0, -200.0),
-        frameCount: 10,
+      // Drag an arbitrary amount of pixels from the bottom of the editor.
+      // The gesture starts with an arbitrary small margin from the bottom.
+      final dragGesture = await tester.dragByFrameCount(
+        startLocation: tester.getRect(find.byType(SuperEditor)).bottomCenter - const Offset(0, 10),
+        totalDragOffset: const Offset(0, -200.0),
       );
 
       // Ensure we don't scroll.
@@ -572,11 +570,10 @@ void main() {
       // Ensure the scrollview didn't start scrolled.
       expect(scrollController.offset, 0);
 
-      // Drag an amount of pixels chosen experimentally a few pixels below the top of the editor.
-      final dragGesture = await tester.dragInMultipleFrames(
+      // Drag an arbitrary amount of pixels a few pixels below the top of the editor.
+      final dragGesture = await tester.dragByFrameCount(
         startLocation: tester.getRect(find.byType(SuperEditor)).topCenter + const Offset(0, 5),
-        dragAmount: const Offset(0, 80.0),
-        frameCount: 10,
+        totalDragOffset: const Offset(0, 80.0),
       );
 
       // Ensure we are overscrolling while holding the pointer down.
@@ -606,12 +603,11 @@ void main() {
       scrollController.jumpTo(scrollController.position.maxScrollExtent);
       await tester.pumpAndSettle();
 
-      // Drag an amount of pixels chosen experimentally from the bottom of the editor.
-      // The gesture starts with a small margin from the bottom, also chosen experimentally.
-      final dragGesture = await tester.dragInMultipleFrames(
+      // Drag an arbitrary amount of pixels from the bottom of the editor.
+      // The gesture starts with an arbitrary margin from the bottom.
+      final dragGesture = await tester.dragByFrameCount(
         startLocation: tester.getRect(find.byType(SuperEditor)).bottomCenter - const Offset(0, 5),
-        dragAmount: const Offset(0, -200.0),
-        frameCount: 10,
+        totalDragOffset: const Offset(0, -200.0),
       );
 
       // Ensure we are overscrolling while holding the pointer down.
@@ -850,11 +846,10 @@ void main() {
         // Ensure the scrollview didn't start scrolled.
         expect(scrollController.offset, 0);
 
-        // Drag an amount of pixels chosen experimentally from the top of the editor.
-        final dragGesture = await tester.dragInMultipleFrames(
-          startLocation: tester.getTopLeft(find.byType(SuperEditor)),
-          dragAmount: const Offset(0, 400.0),
-          frameCount: 10,
+        // Drag an arbitrary amount of pixels from the top of the editor.
+        final dragGesture = await tester.dragByFrameCount(
+          startLocation: tester.getRect(find.byType(SuperEditor)).topCenter + const Offset(0, 5),
+          totalDragOffset: const Offset(0, 400.0),
         );
 
         // Ensure we don't scroll.
@@ -895,11 +890,10 @@ void main() {
         // Jump to the bottom.
         scrollController.jumpTo(scrollController.position.maxScrollExtent);
 
-        // Drag an amount of pixels chosen experimentally from the bottom of the editor.
-        final dragGesture = await tester.dragInMultipleFrames(
-          startLocation: tester.getBottomLeft(find.byType(CustomScrollView)) - const Offset(0, 10),
-          dragAmount: const Offset(0, -400.0),
-          frameCount: 10,
+        // Drag an arbitrary amount of pixels from the bottom of the editor.
+        final dragGesture = await tester.dragByFrameCount(
+          startLocation: tester.getRect(find.byType(CustomScrollView)).bottomCenter - const Offset(0, 10),
+          totalDragOffset: const Offset(0, -400.0),
         );
 
         // Ensure we don't scroll.
@@ -946,11 +940,9 @@ void main() {
         expect(scrollController.offset, 0);
 
         // Drag an arbitrary amount, smaller than the editor size.
-        // Drag an amount of pixels chosen experimentally from the top of the editor.
-        final dragGesture = await tester.dragInMultipleFrames(
+        final dragGesture = await tester.dragByFrameCount(
           startLocation: tester.getRect(find.byType(CustomScrollView)).topCenter + const Offset(0, 5),
-          dragAmount: const Offset(0, 80.0),
-          frameCount: 10,
+          totalDragOffset: const Offset(0, 80.0),
         );
 
         // Ensure we are overscrolling while holding the pointer down.
@@ -999,11 +991,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // Drag up an arbitrary amount, smaller than the editor size.
-        // Drag an amount of pixels chosen experimentally from the bottom of the editor.
-        final dragGesture = await tester.dragInMultipleFrames(
+        final dragGesture = await tester.dragByFrameCount(
           startLocation: tester.getRect(find.byType(CustomScrollView)).bottomCenter - const Offset(0, 5),
-          dragAmount: const Offset(0, -100.0),
-          frameCount: 10,
+          totalDragOffset: const Offset(0, -100.0),
         );
 
         // Ensure we are overscrolling while holding the pointer down.
