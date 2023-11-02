@@ -31,7 +31,7 @@ void main() {
       expect(find.byKey(dropdownKey), findsNothing);
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
@@ -52,7 +52,7 @@ void main() {
       expect(find.byKey(dropdownKey), findsNothing);
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
@@ -81,7 +81,7 @@ void main() {
       expect(find.byKey(dropdownKey), findsNothing);
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
@@ -110,7 +110,7 @@ void main() {
       expect(find.byKey(dropdownKey), findsNothing);
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
@@ -129,15 +129,14 @@ void main() {
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
       expect(find.byKey(dropdownKey), findsOneWidget);
 
       // Ensure the dropdown list isn't scrollable.
-      final dropdownButonState =
-          tester.state<SuperDropdownButtonState<String>>(find.byType(SuperDropdownButton<String>));
+      final dropdownButonState = tester.state<ItemSelectorState<String>>(find.byType(ItemSelector<String>));
       expect(dropdownButonState.scrollController.position.maxScrollExtent, 0.0);
     });
 
@@ -151,15 +150,14 @@ void main() {
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
       expect(find.byKey(dropdownKey), findsOneWidget);
 
       // Ensure the dropdown list is scrollable.
-      final dropdownButonState =
-          tester.state<SuperDropdownButtonState<String>>(find.byType(SuperDropdownButton<String>));
+      final dropdownButonState = tester.state<ItemSelectorState<String>>(find.byType(ItemSelector<String>));
       expect(dropdownButonState.scrollController.position.maxScrollExtent, greaterThan(0.0));
     });
 
@@ -170,11 +168,10 @@ void main() {
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
-      final dropdownButonState =
-          tester.state<SuperDropdownButtonState<String>>(find.byType(SuperDropdownButton<String>));
+      final dropdownButonState = tester.state<ItemSelectorState<String>>(find.byType(ItemSelector<String>));
 
       // Ensure the dropdown is displayed without any focused item.
       expect(dropdownButonState.focusedIndex, isNull);
@@ -203,11 +200,10 @@ void main() {
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
-      final dropdownButonState =
-          tester.state<SuperDropdownButtonState<String>>(find.byType(SuperDropdownButton<String>));
+      final dropdownButonState = tester.state<ItemSelectorState<String>>(find.byType(ItemSelector<String>));
 
       // Ensure the dropdown is displayed without any focused item.
       expect(dropdownButonState.focusedIndex, isNull);
@@ -239,7 +235,7 @@ void main() {
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
       // Press ARROW DOWN to focus the first item.
@@ -265,7 +261,7 @@ void main() {
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
       // Press ENTER without a focused item to close the dropdown.
@@ -288,7 +284,7 @@ void main() {
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
       // Press ARROW DOWN to focus the first item.
@@ -312,7 +308,7 @@ void main() {
           key: boundaryKey,
           home: _SuperEditorDropdownTestApp(
             editorFocusNode: editorFocusNode,
-            toolbar: SuperDropdownButton<String>(
+            toolbar: ItemSelector<String>(
               items: const ['Item1', 'Item2', 'Item3'],
               itemBuilder: (context, e) => Text(e),
               buttonBuilder: (context, e) => const SizedBox(width: 50),
@@ -347,7 +343,7 @@ void main() {
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(SuperDropdownButton<String>));
+      await tester.tap(find.byType(ItemSelector<String>));
       await tester.pumpAndSettle();
 
       // Ensure the editor has non-primary focus.
@@ -377,7 +373,7 @@ void main() {
   });
 }
 
-/// Pumps a widget tree with a centered [SuperDropdownButton] containing three items.
+/// Pumps a widget tree with a centered [ItemSelector] containing three items.
 Future<void> _pumpDropdownTestApp(
   WidgetTester tester, {
   required void Function(String? value) onValueChanged,
@@ -395,7 +391,7 @@ Future<void> _pumpDropdownTestApp(
           child: Focus(
             focusNode: focusNode,
             autofocus: true,
-            child: SuperDropdownButton<String>(
+            child: ItemSelector<String>(
               items: const ['Item1', 'Item2', 'Item3'],
               itemBuilder: (context, e) => Text(e),
               buttonBuilder: (context, e) => const SizedBox(width: 50),

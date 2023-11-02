@@ -527,7 +527,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
               if (_isConvertibleNode()) ...[
                 Tooltip(
                   message: AppLocalizations.of(context)!.labelTextBlockType,
-                  child: SuperDropdownButton<_TextType>(
+                  child: ItemSelector<_TextType>(
                     parentFocusNode: widget.editorFocusNode,
                     boundaryKey: widget.editorViewportKey,
                     value: _getCurrentTextType(),
@@ -594,7 +594,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 _buildVerticalDivider(),
                 Tooltip(
                   message: AppLocalizations.of(context)!.labelTextAlignment,
-                  child: SuperDropdownButton<TextAlign>(
+                  child: ItemSelector<TextAlign>(
                     value: _getCurrentTextAlignment(),
                     items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify],
                     onChanged: _changeAlignment,

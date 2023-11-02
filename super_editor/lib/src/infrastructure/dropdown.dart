@@ -3,21 +3,32 @@ import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// A button which displays a dropdown with a vertical list of items.
+/// A selection control, which displays a selected item, and upon tap, displays a
+/// popover list of available options, from which the user can select a different
+/// option.
 ///
-/// Unlike Flutter `DropdownButton`, which displays the dropdown in a separate route,
-/// this widget displays its dropdown in an `Overlay`. By using an `Overlay`, focus can shared
-/// with the [parentFocusNode]. This means that when the dropdown requests focus, [parentFocusNode]
+/// Unlike Flutter `DropdownButton`, which displays the popover list in a separate route,
+/// this widget displays its popover list in an `Overlay`. By using an `Overlay`, focus can be shared
+/// with the [parentFocusNode]. This means that when the popover list requests focus, [parentFocusNode]
 /// still has non-primary focus.
 ///
-/// The dropdown tries to fit all items on the available space. If there isn't enough room,
-/// the list of items becomes scrollable with an always visible toolbar.
-/// Provide [dropdownContraints] to enforce aditional constraints on the dropdown list.
+/// The popover list is positioned based on the following rules:
 ///
-/// The user can navigate between the options using the arrow keys, select an option with ENTER and
-/// close the dropdown with ESC.
-class SuperDropdownButton<T> extends StatefulWidget {
-  const SuperDropdownButton({
+///    1. The popover is displayed below the selected item, if there's enough room, or
+///    2. The popover is displayed above the selected item, if there's enough room, or
+///    3. The popover is displayed with its bottom aligned with the bottom of
+///         the given boundary, and it covers the selected item.
+///
+/// Provide [dropdownContraints] to enforce aditional constraints on the popover list.
+///
+/// The popover list includes keyboard selection behaviors:
+///
+///   * Pressing UP/DOWN moves the "active" item selection up/down.
+///   * Pressing UP with the first item active moves the active item selection to the last item.
+///   * Pressing DOWN with the last item active moves the active item selection to the first item.
+///   * Pressing ENTER selects the currently active item and closes the popover list.
+class ItemSelector<T> extends StatefulWidget {
+  const ItemSelector({
     super.key,
     required this.parentFocusNode,
     required this.boundaryKey,
@@ -31,7 +42,20 @@ class SuperDropdownButton<T> extends StatefulWidget {
     this.dropdownKey,
   });
 
-  /// [FocusNode] which will share focus with the dropdown list.
+  /// The [FocusNode], to which the popover list's [FocusNode] will be added as a child.
+  ///
+  /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
+  /// entire ancestor path to "have focus", but only the lowest level descendant
+  /// in that path has "primary focus". This path is important because various
+  /// widgets alter their presentation or behavior based on whether or not they
+  /// currently have focus, even if they only have "non-primary focus".
+  ///
+  /// When the popover list of items is visible, that list will have primary focus.
+  /// Moreover, because the popover list is built in an `Overlay`, none of your
+  /// widgets are in the natural focus path for that popover list. Therefore, if you
+  /// need your widget tree to retain focus while the popover list is visible, then
+  /// you need to provide the [FocusNode] that the popover list should use as its
+  /// parent, thereby retaining focus for your widgets.
   final FocusNode parentFocusNode;
 
   /// A [GlobalKey] to a widget that determines the bounds where the dropdown can be displayed.
@@ -64,11 +88,11 @@ class SuperDropdownButton<T> extends StatefulWidget {
   final Widget Function(BuildContext context, T? item) buttonBuilder;
 
   @override
-  State<SuperDropdownButton<T>> createState() => SuperDropdownButtonState<T>();
+  State<ItemSelector<T>> createState() => ItemSelectorState<T>();
 }
 
 @visibleForTesting
-class SuperDropdownButtonState<T> extends State<SuperDropdownButton<T>> with SingleTickerProviderStateMixin {
+class ItemSelectorState<T> extends State<ItemSelector<T>> with SingleTickerProviderStateMixin {
   @visibleForTesting
   int? get focusedIndex => _focusedIndex;
   int? _focusedIndex;
