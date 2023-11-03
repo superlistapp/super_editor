@@ -120,7 +120,7 @@ class SuperEditorAndroidControlsScope extends InheritedWidget {
 class SuperEditorAndroidControlsController {
   SuperEditorAndroidControlsController({
     // TODO: how do we resolve implied conflict between handleColor and custom handle builders?
-    this.handleColor,
+    this.controlsColor,
     LeaderLink? collapsedHandleFocalPoint,
     this.collapsedHandleBuilder,
     LeaderLink? upstreamHandleFocalPoint,
@@ -144,13 +144,19 @@ class SuperEditorAndroidControlsController {
   final _shouldCaretBlink = ValueNotifier<bool>(false);
 
   /// Tells the caret to blink by setting [shouldCaretBlink] to `true`.
-  void blinkCaret() => _shouldCaretBlink.value = true;
+  void blinkCaret() {
+    print("START BLINKING CARET!");
+    _shouldCaretBlink.value = true;
+  }
 
   /// Tells the caret to stop blinking by setting [shouldCaretBlink] to `false`.
-  void doNotBlinkCaret() => _shouldCaretBlink.value = false;
+  void doNotBlinkCaret() {
+    print("STOP BLINKING CARET!");
+    _shouldCaretBlink.value = false;
+  }
 
-  /// Color of the text selection drag handles on Android.
-  final Color? handleColor;
+  /// Color of the caret and text selection drag handles on Android.
+  final Color? controlsColor;
 
   final LeaderLink collapsedHandleFocalPoint;
 
@@ -322,7 +328,7 @@ class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerB
         ]);
       },
       handleColor: handleColor ??
-          SuperEditorAndroidControlsScope.maybeRootOf(context)?.handleColor ??
+          SuperEditorAndroidControlsScope.maybeRootOf(context)?.controlsColor ??
           Theme.of(context).primaryColor,
       shouldCaretBlink: SuperEditorAndroidControlsScope.rootOf(context).shouldCaretBlink,
     );
@@ -718,7 +724,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       _positionCollapsedHandle();
 
       _controlsController!
-        ..blinkCaret()
+        // ..blinkCaret() // I commented this out because it causes blinking while we drag the caret handle
         ..hideExpandedHandles();
     } else {
       // The selection is expanded
@@ -1645,8 +1651,17 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
   const SuperEditorAndroidControlsOverlayManager({
     super.key,
+    required this.getDocumentLayout,
+    required this.autoScroller,
+    required this.selection,
+    required this.setSelection,
     this.child,
   });
+
+  final DocumentLayoutResolver getDocumentLayout;
+  final DragHandleAutoScroller autoScroller;
+  final ValueListenable<DocumentSelection?> selection;
+  final void Function(DocumentSelection?) setSelection;
 
   final Widget? child;
 
@@ -1660,6 +1675,10 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
 
   SuperEditorAndroidControlsController? _controlsController;
   late FollowerAligner _toolbarAligner;
+
+  HandleType? _dragHandleType;
+  final _dragHandleSelectionGlobalFocalPoint = ValueNotifier<Offset?>(null);
+  final _magnifierFocalPoint = ValueNotifier<Offset?>(null);
 
   @override
   void initState() {
@@ -1676,6 +1695,114 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     _toolbarAligner = CupertinoPopoverToolbarAligner();
   }
 
+  void _onHandlePanStart(DragStartDetails details, HandleType handleType) {
+    final selection = widget.selection.value;
+    if (selection == null) {
+      throw Exception("Tried to drag a collapsed Android handle when there's no selection.");
+    }
+    if (handleType == HandleType.collapsed && !selection.isCollapsed) {
+      throw Exception("Tried to drag a collapsed Android handle but the selection is expanded.");
+    }
+    if (handleType != HandleType.collapsed && selection.isCollapsed) {
+      throw Exception("Tried to drag an expanded Android handle but the selection is collapsed.");
+    }
+
+    _dragHandleType = handleType;
+
+    // Find the global offset for the center of the caret as the selection focal point.
+    final selectionBound = handleType == HandleType.upstream ? selection.base : selection.extent;
+    final documentLayout = widget.getDocumentLayout();
+    // FIXME: this logic makes sense for selecting characters, but what about images? Does it make sense to set the focal point at the center of the image?
+    final centerOfContentAtOffset = documentLayout.getAncestorOffsetFromDocumentOffset(
+      documentLayout.getRectForPosition(selectionBound)!.center,
+    );
+    _dragHandleSelectionGlobalFocalPoint.value = centerOfContentAtOffset;
+
+    final myBox = context.findRenderObject() as RenderBox;
+    _magnifierFocalPoint.value = myBox.globalToLocal(centerOfContentAtOffset);
+
+    // Don't blink the caret while dragging the handle.
+    _controlsController!
+      ..doNotBlinkCaret()
+      ..showMagnifier()
+      ..hideToolbar();
+  }
+
+  void _onHandlePanUpdate(DragUpdateDetails details) {
+    if (_dragHandleSelectionGlobalFocalPoint.value == null) {
+      throw Exception(
+          "Tried to pan an Android drag handle but the focal point is null. The focal point is set when the drag begins. This shouldn't be possible.");
+    }
+
+    // Move the selection focal point by the given delta.
+    _dragHandleSelectionGlobalFocalPoint.value = _dragHandleSelectionGlobalFocalPoint.value! + details.delta;
+
+    // Move the selection to the document position that's nearest the focal point.
+    final documentLayout = widget.getDocumentLayout();
+    final nearestPosition = documentLayout.getDocumentPositionNearestToOffset(
+      documentLayout.getDocumentOffsetFromAncestorOffset(_dragHandleSelectionGlobalFocalPoint.value!),
+    )!;
+
+    // Move the magnifier focal point to match the drag x-offset, but always remain focused on the vertical
+    // center of the line.
+    final myBox = context.findRenderObject() as RenderBox;
+    final centerOfContentAtNearestPosition = documentLayout.getAncestorOffsetFromDocumentOffset(
+      documentLayout.getRectForPosition(nearestPosition)!.center,
+    );
+    _magnifierFocalPoint.value = myBox.globalToLocal(
+      Offset(
+        _magnifierFocalPoint.value!.dx + details.delta.dx,
+        centerOfContentAtNearestPosition.dy,
+      ),
+    );
+
+    switch (_dragHandleType!) {
+      case HandleType.collapsed:
+        widget.setSelection(DocumentSelection.collapsed(position: nearestPosition));
+      case HandleType.upstream:
+        widget.setSelection(DocumentSelection(
+          base: nearestPosition,
+          extent: widget.selection.value!.extent,
+        ));
+      case HandleType.downstream:
+        widget.setSelection(DocumentSelection(
+          base: widget.selection.value!.base,
+          extent: nearestPosition,
+        ));
+    }
+  }
+
+  void _onHandlePanEnd(DragEndDetails details) {
+    _onHandleDragEnd();
+  }
+
+  void _onHandlePanCancel() {
+    _onHandleDragEnd();
+  }
+
+  void _onHandleDragEnd() {
+    _dragHandleType = null;
+    _dragHandleSelectionGlobalFocalPoint.value = null;
+    _magnifierFocalPoint.value = null;
+
+    // Start blinking the caret again, and hide the magnifier.
+    _controlsController!
+      ..blinkCaret()
+      ..hideMagnifier();
+
+    // If the selection is expanded, show the toolbar.
+    if (widget.selection.value?.isCollapsed == false) {
+      _controlsController!.showToolbar();
+    }
+  }
+
+  // TODO: register this method to be notified whenever the document changes its global offset
+  void _onDocumentMove() {
+    // If the user isn't dragging a handle, return.
+
+    // Find the new document position that's nearest to the focal point after the movement and update the selection.
+  }
+
   @override
   Widget build(BuildContext context) {
     return OverlayPortal(
@@ -1688,10 +1815,13 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   Widget _buildOverlay(BuildContext context) {
     return Stack(
       children: [
+        _buildMagnifierFocalPoint(),
+        _buildDebugSelectionFocalPoint(),
+        _buildMagnifier(),
+        // Handles and toolbar are built after the magnifier so that they don't appear in the magnifier.
         _buildCollapsedHandle(),
         ..._buildExpandedHandles(),
         _buildToolbar(),
-        _buildMagnifier(),
       ],
     );
   }
@@ -1700,18 +1830,32 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     return ValueListenableBuilder(
       valueListenable: _controlsController!.shouldShowCollapsedHandle,
       builder: (context, shouldShow, child) {
-        return shouldShow ? child! : const SizedBox();
+        if (!shouldShow) {
+          return const SizedBox();
+        }
+
+        // Note: If we pass this widget as the `child` property, it causes repeated starts and stops
+        // of the pan gesture. By building it here, pan events work as expected.
+        return Follower.withOffset(
+          link: _controlsController!.collapsedHandleFocalPoint,
+          leaderAnchor: Alignment.bottomCenter,
+          followerAnchor: Alignment.topCenter,
+          child: GestureDetector(
+            onTapDown: (_) {
+              // Register tap down to win gesture arena ASAP.
+            },
+            onPanStart: (details) => _onHandlePanStart(details, HandleType.collapsed),
+            onPanUpdate: _onHandlePanUpdate,
+            onPanEnd: _onHandlePanEnd,
+            onPanCancel: _onHandlePanCancel,
+            dragStartBehavior: DragStartBehavior.down,
+            child: AndroidSelectionHandle(
+              handleType: HandleType.collapsed,
+              color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+            ),
+          ),
+        );
       },
-      child: Follower.withOffset(
-        link: _controlsController!.collapsedHandleFocalPoint,
-        leaderAnchor: Alignment.bottomCenter,
-        followerAnchor: Alignment.topCenter,
-        child: const AndroidSelectionHandle(
-          handleType: HandleType.collapsed,
-          // TODO: use real color
-          color: Colors.lightGreenAccent,
-        ),
-      ),
     );
   }
 
@@ -1720,34 +1864,58 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       ValueListenableBuilder(
         valueListenable: _controlsController!.shouldShowExpandedHandles,
         builder: (context, shouldShow, child) {
-          return shouldShow ? child! : const SizedBox();
+          if (!shouldShow) {
+            return const SizedBox();
+          }
+
+          return Follower.withOffset(
+            link: _controlsController!.upstreamHandleFocalPoint,
+            leaderAnchor: Alignment.bottomLeft,
+            followerAnchor: Alignment.topRight,
+            child: GestureDetector(
+              onTapDown: (_) {
+                // Register tap down to win gesture arena ASAP.
+              },
+              onPanStart: (details) => _onHandlePanStart(details, HandleType.upstream),
+              onPanUpdate: _onHandlePanUpdate,
+              onPanEnd: _onHandlePanEnd,
+              onPanCancel: _onHandlePanCancel,
+              dragStartBehavior: DragStartBehavior.down,
+              child: AndroidSelectionHandle(
+                handleType: HandleType.upstream,
+                color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+              ),
+            ),
+          );
         },
-        child: Follower.withOffset(
-          link: _controlsController!.upstreamHandleFocalPoint,
-          leaderAnchor: Alignment.bottomLeft,
-          followerAnchor: Alignment.topRight,
-          child: const AndroidSelectionHandle(
-            handleType: HandleType.upstream,
-            // TODO: use real color
-            color: Colors.lightGreenAccent,
-          ),
-        ),
       ),
       ValueListenableBuilder(
         valueListenable: _controlsController!.shouldShowExpandedHandles,
         builder: (context, shouldShow, child) {
-          return shouldShow ? child! : const SizedBox();
+          if (!shouldShow) {
+            return const SizedBox();
+          }
+
+          return Follower.withOffset(
+            link: _controlsController!.downstreamHandleFocalPoint,
+            leaderAnchor: Alignment.bottomRight,
+            followerAnchor: Alignment.topLeft,
+            child: GestureDetector(
+              onTapDown: (_) {
+                // Register tap down to win gesture arena ASAP.
+              },
+              onPanStart: (details) => _onHandlePanStart(details, HandleType.downstream),
+              onPanUpdate: _onHandlePanUpdate,
+              onPanEnd: _onHandlePanEnd,
+              onPanCancel: _onHandlePanCancel,
+              dragStartBehavior: DragStartBehavior.down,
+              child: AndroidSelectionHandle(
+                handleType: HandleType.downstream,
+                color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+              ),
+            ),
+          );
         },
-        child: Follower.withOffset(
-          link: _controlsController!.downstreamHandleFocalPoint,
-          leaderAnchor: Alignment.bottomRight,
-          followerAnchor: Alignment.topLeft,
-          child: const AndroidSelectionHandle(
-            handleType: HandleType.downstream,
-            // TODO: use real color
-            color: Colors.lightGreenAccent,
-          ),
-        ),
       ),
     ];
   }
@@ -1774,6 +1942,30 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     );
   }
 
+  Widget _buildMagnifierFocalPoint() {
+    return ValueListenableBuilder(
+      valueListenable: _magnifierFocalPoint,
+      builder: (context, focalPoint, child) {
+        if (focalPoint == null) {
+          return const SizedBox();
+        }
+
+        return Positioned(
+          left: focalPoint.dx,
+          top: focalPoint.dy,
+          width: 1,
+          height: 1,
+          child: Leader(
+            link: _controlsController!.magnifierFocalPoint,
+            child: ColoredBox(
+              color: Colors.pinkAccent,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildMagnifier() {
     return ValueListenableBuilder(
       valueListenable: _controlsController!.shouldShowMagnifier,
@@ -1785,18 +1977,52 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       },
       child: Follower.withOffset(
         link: _controlsController!.magnifierFocalPoint,
-        offset: const Offset(0, -50),
+        offset: const Offset(0, -150),
         leaderAnchor: Alignment.center,
-        followerAnchor: Alignment.bottomCenter,
+        followerAnchor: Alignment.topLeft,
         // TODO: use controller builder
         // child: _controlsController!.magnifierBuilder(),
-        // child: const AndroidMagnifyingGlass(),
-        child: Container(
-          width: 50,
-          height: 50,
-          color: Colors.red,
+        // Theoretically, we should be able to use a leaderAnchor and followerAnchor of "center"
+        // and avoid the following FractionalTranslation. However, when centering the follower,
+        // we don't get the expect focal point within the magnified area. It's off-center. I'm not
+        // sure why that happens, but using a followerAnchor of "topLeft" and then pulling back
+        // by 50% solve the problem.
+        child: const FractionalTranslation(
+          translation: Offset(-0.5, -0.5),
+          child: AndroidMagnifyingGlass(
+            magnificationScale: 1.5,
+            // In theory, the offsetFromFocalPoint should either be `-150` to match the actual
+            // offset, or it should be `-150 / magnificationLevel`. Neither of those align the
+            // focal point correctly. The following offset was found empirically to give the
+            // desired results, no matter how high the magnification.
+            offsetFromFocalPoint: Offset(0, -58),
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDebugSelectionFocalPoint() {
+    return ValueListenableBuilder(
+      valueListenable: _dragHandleSelectionGlobalFocalPoint,
+      builder: (context, focalPoint, child) {
+        if (focalPoint == null) {
+          return const SizedBox();
+        }
+
+        return Positioned(
+          left: focalPoint.dx,
+          top: focalPoint.dy,
+          child: FractionalTranslation(
+            translation: const Offset(-0.5, -0.5),
+            child: Container(
+              width: 5,
+              height: 5,
+              color: Colors.red,
+            ),
+          ),
+        );
+      },
     );
   }
 }
