@@ -83,8 +83,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
         ImeAttributedTextEditingController(controller: SingleLineAttributedTextEditingController(_applyLink)) //
           ..onPerformActionPressed = _onPerformAction
           ..text = AttributedText("https://");
-
-    widget.document.addListener(_onDocumentChanged);
   }
 
   @override
@@ -98,29 +96,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
   }
 
   @override
-  void didUpdateWidget(covariant EditorToolbar oldWidget) {
-    if (oldWidget.document != widget.document) {
-      oldWidget.document.removeListener(_onDocumentChanged);
-      widget.document.addListener(_onDocumentChanged);
-    }
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
   void dispose() {
     _urlFocusNode.dispose();
     _urlController!.dispose();
     _popoverFocusNode.dispose();
 
-    widget.document.removeListener(_onDocumentChanged);
     super.dispose();
-  }
-
-  void _onDocumentChanged(DocumentChangeLog doc) {
-    // The document has changed.
-    // Some of the selected node's metadata, for example, the blockType, influences how the toolbar is displayed.
-    // Reflow the toolbar to acount for the new state of the selected node.
-    setState(() {});
   }
 
   /// Returns true if the currently selected text node is capable of being
@@ -541,30 +522,35 @@ class _EditorToolbarState extends State<EditorToolbar> {
               if (_isConvertibleNode()) ...[
                 Tooltip(
                   message: AppLocalizations.of(context)!.labelTextBlockType,
-                  child: ItemSelector<_TextType>(
-                    parentFocusNode: widget.editorFocusNode,
-                    boundaryKey: widget.editorViewportKey,
-                    value: _getCurrentTextType(),
-                    items: _TextType.values,
-                    onChanged: _convertTextToNewType,
-                    activeItemDecoration: BoxDecoration(color: Colors.yellow),
-                    itemBuilder: (context, item) => Text(
-                      _getTextTypeName(item),
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 12,
-                      ),
-                    ),
-                    selectedItemBuilder: (context, item) => Padding(
-                      padding: EdgeInsets.only(left: 16.0, right: 24),
-                      child: Text(
-                        _getTextTypeName(item!),
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
+                  child: _DocumentListenableBuilder(
+                    document: widget.document,
+                    builder: (context) {
+                      return ItemSelector<_TextType>(
+                        parentFocusNode: widget.editorFocusNode,
+                        boundaryKey: widget.editorViewportKey,
+                        value: _getCurrentTextType(),
+                        items: _TextType.values,
+                        onChanged: _convertTextToNewType,
+                        activeItemDecoration: BoxDecoration(color: Colors.yellow),
+                        itemBuilder: (context, item) => Text(
+                          _getTextTypeName(item),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ),
+                        selectedItemBuilder: (context, item) => Padding(
+                          padding: EdgeInsets.only(left: 16.0, right: 24),
+                          child: Text(
+                            _getTextTypeName(item!),
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 _buildVerticalDivider(),
@@ -604,27 +590,39 @@ class _EditorToolbarState extends State<EditorToolbar> {
               ),
               // Only display alignment controls if the currently selected text
               // node respects alignment. List items, for example, do not.
-              if (_isTextAlignable()) ...[
-                _buildVerticalDivider(),
-                Tooltip(
-                  message: AppLocalizations.of(context)!.labelTextAlignment,
-                  child: ItemSelector<TextAlign>(
-                    value: _getCurrentTextAlignment(),
-                    items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify],
-                    onChanged: _changeAlignment,
-                    boundaryKey: widget.editorViewportKey,
-                    parentFocusNode: widget.editorFocusNode,
-                    itemBuilder: (context, item) => Icon(_buildTextAlignIcon(item)),
-                    activeItemDecoration: BoxDecoration(color: Colors.yellow),
-                    selectedItemBuilder: (context, item) => Padding(
-                      padding: EdgeInsets.only(left: 8.0, right: 24),
-                      child: Icon(
-                        _buildTextAlignIcon(item!),
+              _DocumentListenableBuilder(
+                document: widget.document,
+                builder: (context) {
+                  if (!_isTextAlignable()) {
+                    return const SizedBox();
+                  }
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildVerticalDivider(),
+                      Tooltip(
+                        message: AppLocalizations.of(context)!.labelTextAlignment,
+                        child: ItemSelector<TextAlign>(
+                          value: _getCurrentTextAlignment(),
+                          items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify],
+                          onChanged: _changeAlignment,
+                          boundaryKey: widget.editorViewportKey,
+                          parentFocusNode: widget.editorFocusNode,
+                          itemBuilder: (context, item) => Icon(_buildTextAlignIcon(item)),
+                          activeItemDecoration: BoxDecoration(color: Colors.yellow),
+                          selectedItemBuilder: (context, item) => Padding(
+                            padding: EdgeInsets.only(left: 8.0, right: 24),
+                            child: Icon(
+                              _buildTextAlignIcon(item!),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-              ],
+                    ],
+                  );
+                },
+              ),
+
               _buildVerticalDivider(),
               Center(
                 child: IconButton(
@@ -905,5 +903,54 @@ class SingleLineAttributedTextEditingController extends AttributedTextEditingCon
 
     // TODO: this is a hack. SuperTextField shouldn't insert newlines in a single
     // line field (#697).
+  }
+}
+
+/// A Widget that calls its [builder] whenever the [document] changes.
+class _DocumentListenableBuilder extends StatefulWidget {
+  const _DocumentListenableBuilder({
+    required this.document,
+    required this.builder,
+  });
+
+  /// The [document] to listen to.
+  final Document document;
+
+  final WidgetBuilder builder;
+
+  @override
+  State<_DocumentListenableBuilder> createState() => _DocumentListenableBuilderState();
+}
+
+class _DocumentListenableBuilderState extends State<_DocumentListenableBuilder> {
+  @override
+  void initState() {
+    widget.document.addListener(_onDocumentChanged);
+    super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant _DocumentListenableBuilder oldWidget) {
+    if (oldWidget.document != widget.document) {
+      oldWidget.document.removeListener(_onDocumentChanged);
+      widget.document.addListener(_onDocumentChanged);
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    widget.document.removeListener(_onDocumentChanged);
+    super.dispose();
+  }
+
+  void _onDocumentChanged(DocumentChangeLog doc) {
+    // The document has changed. Rebuild.
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.builder(context);
   }
 }
