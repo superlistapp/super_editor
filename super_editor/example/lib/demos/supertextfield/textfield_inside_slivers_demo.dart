@@ -2,6 +2,7 @@ import 'package:example/demos/supertextfield/demo_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_text_field.dart';
 
+/// Demo of [SuperDesktopTextField] inside Slivers with scrollable content.
 class TextFieldInsideSliversDemo extends StatefulWidget {
   const TextFieldInsideSliversDemo({super.key});
 
@@ -29,8 +30,10 @@ class _TextFieldInsideSliversDemoState extends State<TextFieldInsideSliversDemo>
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: SuperDesktopTextField(
-              minLines: 5, // Provides sufficient space to test out textfields scrolling behaviour
-              // properly.
+              // This demo tests scrolling text field behavior. Force the text field to be tall
+              // enough to easily see content scrolling by, but short enough to ensure that
+              // the content is scrollable.
+              minLines: 5,
               maxLines: 5,
               textStyleBuilder: demoTextStyleBuilder,
               decorationBuilder: (context, child) {

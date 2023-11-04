@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../test_runners.dart';
@@ -159,7 +160,7 @@ void main() {
         'CMD + HOME on mac, HOME on mac/web and CTRL + HOME on other platforms scrolls to top of viewport',
         (tester) async {
           final currentVariant = _scrollingVariant.currentValue;
-          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndShortcutsOnMacAndWeb;
 
           // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
           await currentVariant.pumpEditor(
@@ -195,7 +196,7 @@ void main() {
         "CMD + HOME on mac, HOME on mac/web and CTRL + HOME on other platforms does not scroll past top of the viewport",
         (tester) async {
           final currentVariant = _scrollingVariant.currentValue;
-          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndShortcutsOnMacAndWeb;
 
           // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
           await currentVariant.pumpEditor(
@@ -230,7 +231,7 @@ void main() {
         "CMD + END on mac, END on mac/web and CTRL + END on other platforms scrolls to bottom of viewport",
         (tester) async {
           final currentVariant = _scrollingVariant.currentValue;
-          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndShortcutsOnMacAndWeb;
 
           // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
           await currentVariant.pumpEditor(
@@ -259,7 +260,7 @@ void main() {
         "CMD + END on mac, END on mac/web and CTRL + END on other platforms does not scroll past bottom of the viewport",
         (tester) async {
           final currentVariant = _scrollingVariant.currentValue;
-          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndShortcutsOnMacAndWeb;
 
           // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
           await currentVariant.pumpEditor(
@@ -297,7 +298,7 @@ void main() {
         the page and back to the top of the page''',
         (tester) async {
           final currentVariant = _scrollTextFieldPlacedAtTopVariant.currentValue;
-          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndShortcutsOnMacAndWeb;
 
           // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
           await currentVariant.pumpEditor(
@@ -367,7 +368,7 @@ void main() {
         bottom of the page and back to the top of the page''',
         (tester) async {
           final currentVariant = _scrollTextfieldPlacedAtBottomVariant.currentValue;
-          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndShortcutsOnMacAndWeb;
 
           // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
           await currentVariant.pumpEditor(
@@ -438,7 +439,7 @@ void main() {
         textfield and page, and then back to the top of the page''',
         (tester) async {
           final currentVariant = _scrollTextFieldPlacedAtCenter.currentValue;
-          final useHomeOnMacOrWeb = currentVariant!.useHomeEndToScrollOnMacOrWeb;
+          final useHomeOnMacOrWeb = currentVariant!.useHomeEndShortcutsOnMacAndWeb;
 
           // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
           await currentVariant.pumpEditor(
@@ -534,13 +535,12 @@ void main() {
 /// and web.
 Future<void> _pressScrollToEndCombo(bool useHomeOnMacOrWeb, WidgetTester tester) async {
   if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-    await tester.sendKeyEvent(LogicalKeyboardKey.end);
-    await tester.pumpAndSettle();
+    await tester.pressEnd();
   } else {
     if (defaultTargetPlatform == TargetPlatform.macOS) {
-      await _pressCmdEnd(tester);
+      await tester.pressCmdEnd(tester);
     } else {
-      await _pressCtrlEnd(tester);
+      await tester.pressCtrlEnd(tester);
     }
   }
 }
@@ -554,13 +554,12 @@ Future<void> _pressScrollToEndCombo(bool useHomeOnMacOrWeb, WidgetTester tester)
 /// and web.
 Future<void> _pressScrollToTopCombo(bool useHomeOnMacOrWeb, WidgetTester tester) async {
   if (useHomeOnMacOrWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
-    await tester.sendKeyEvent(LogicalKeyboardKey.home);
-    await tester.pumpAndSettle();
+    await tester.pressHome();
   } else {
     if (defaultTargetPlatform == TargetPlatform.macOS) {
-      await _pressCmdHome(tester);
+      await tester.pressCmdHome(tester);
     } else {
-      await _pressCtrlHome(tester);
+      await tester.pressCtrlHome(tester);
     }
   }
 }
@@ -591,25 +590,25 @@ final _scrollingVariant = ValueVariant<_SuperDesktopTextFieldScrollSetup>({
     description: "without ancestor scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldTestApp,
     textInputSource: TextInputSource.ime,
-    useHomeEndToScrollOnMacOrWeb: true,
+    useHomeEndShortcutsOnMacAndWeb: true,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     description: "without ancestor scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldTestApp,
     textInputSource: TextInputSource.keyboard,
-    useHomeEndToScrollOnMacOrWeb: true,
+    useHomeEndShortcutsOnMacAndWeb: true,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     description: "inside scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldWithinScrollableTestApp,
     textInputSource: TextInputSource.ime,
-    useHomeEndToScrollOnMacOrWeb: true,
+    useHomeEndShortcutsOnMacAndWeb: true,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     description: "inside scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldWithinScrollableTestApp,
     textInputSource: TextInputSource.keyboard,
-    useHomeEndToScrollOnMacOrWeb: true,
+    useHomeEndShortcutsOnMacAndWeb: true,
   ),
 });
 
@@ -630,13 +629,13 @@ final _scrollTextFieldPlacedAtTopVariant = ValueVariant<_SuperDesktopTextFieldSc
     description: "inside scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldWithinScrollableTestApp,
     textInputSource: TextInputSource.ime,
-    useHomeEndToScrollOnMacOrWeb: true,
+    useHomeEndShortcutsOnMacAndWeb: true,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     description: "inside scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldWithinScrollableTestApp,
     textInputSource: TextInputSource.keyboard,
-    useHomeEndToScrollOnMacOrWeb: true,
+    useHomeEndShortcutsOnMacAndWeb: true,
   ),
 });
 
@@ -660,14 +659,14 @@ final _scrollTextfieldPlacedAtBottomVariant = ValueVariant<_SuperDesktopTextFiel
     pumpEditor: _pumpSuperDesktopTextFieldWithinScrollableTestApp,
     textInputSource: TextInputSource.ime,
     placement: _TextFieldPlacementWithinScrollable.bottom,
-    useHomeEndToScrollOnMacOrWeb: true,
+    useHomeEndShortcutsOnMacAndWeb: true,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     description: "placed at botton inside scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldWithinScrollableTestApp,
     textInputSource: TextInputSource.keyboard,
     placement: _TextFieldPlacementWithinScrollable.bottom,
-    useHomeEndToScrollOnMacOrWeb: true,
+    useHomeEndShortcutsOnMacAndWeb: true,
   ),
 });
 
@@ -691,14 +690,14 @@ final _scrollTextFieldPlacedAtCenter = ValueVariant<_SuperDesktopTextFieldScroll
     pumpEditor: _pumpSuperDesktopTextFieldWithinScrollableTestApp,
     textInputSource: TextInputSource.ime,
     placement: _TextFieldPlacementWithinScrollable.center,
-    useHomeEndToScrollOnMacOrWeb: true,
+    useHomeEndShortcutsOnMacAndWeb: true,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     description: "placed at center inside scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldWithinScrollableTestApp,
     textInputSource: TextInputSource.keyboard,
     placement: _TextFieldPlacementWithinScrollable.center,
-    useHomeEndToScrollOnMacOrWeb: true,
+    useHomeEndShortcutsOnMacAndWeb: true,
   ),
 });
 
@@ -764,9 +763,6 @@ Future<void> _pumpSuperDesktopTextFieldWithinScrollableTestApp(
     textController: AttributedTextEditingController(
       text: AttributedText(_scrollableTextFieldText),
     ),
-    minLines: 4, // Provides sufficient space to test out textfields scrolling behaviour
-    // properly.
-    maxLines: 4,
     textInputSource: textInputSource,
     placement: placement,
   );
@@ -776,8 +772,6 @@ Future<void> _pumpSuperDesktopTextFieldWithinScrollableTestApp(
 Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
   WidgetTester tester, {
   required AttributedTextEditingController textController,
-  required int minLines,
-  required int maxLines,
   TextInputSource textInputSource = TextInputSource.keyboard,
   _TextFieldPlacementWithinScrollable placement = _TextFieldPlacementWithinScrollable.top,
 }) async {
@@ -800,8 +794,10 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
       child: SuperDesktopTextField(
         textController: textController,
         textStyleBuilder: (_) => const TextStyle(fontSize: 20),
-        minLines: minLines,
-        maxLines: maxLines,
+        // Force the text field to be tall enough to easily see content scrolling by,
+        // but short enough to ensure that the content is scrollable.
+        minLines: 4,
+        maxLines: 4,
         inputSource: textInputSource,
       ),
     ),
@@ -840,29 +836,43 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
 /// Key used by [SuperDesktopTextField]'s ancestor scrollable.
 const textfieldsAncestorScrollableKey = ValueKey("AncestorScrollable");
 
+/// An arbitrary string with enough lines to introduce scrollable content
+/// within text field.
 final String _scrollableTextFieldText = List.generate(10, (index) => "Line $index").join("\n");
 
+/// Defines [SuperDesktopTextField] test configurations for a test variant.
+///
+/// Specificed configurations alter the conditions under which we test
+/// [SuperDesktopTextField] scrolling on scroll actions invoked through shortcuts.
+///
+/// If [useHomeEndShortcutsOnMacAndWeb] is true, tests use 'HOME/END' to scroll
+/// to top/bottom of the text field respectively, else 'CMD' + 'HOME/END' or
+/// 'CTRL' + 'HOME/END' shortcuts are used depending on the platform tests are running on.
 class _SuperDesktopTextFieldScrollSetup {
   const _SuperDesktopTextFieldScrollSetup({
     required this.description,
     required this.pumpEditor,
     required this.textInputSource,
     this.placement = _TextFieldPlacementWithinScrollable.top,
-    this.useHomeEndToScrollOnMacOrWeb = false,
+    this.useHomeEndShortcutsOnMacAndWeb = false,
   });
   final String description;
   final _PumpSuperDesktopTextFieldWidget pumpEditor;
   final TextInputSource textInputSource;
   final _TextFieldPlacementWithinScrollable placement;
-  final bool useHomeEndToScrollOnMacOrWeb;
+  final bool useHomeEndShortcutsOnMacAndWeb;
 
   @override
   String toString() {
-    return "SuperDesktopTextFieldScrollSetup: $description, at ${placement.name},  ${textInputSource.toString()}, ${useHomeEndToScrollOnMacOrWeb ? "uses HOME/END to scroll on mac/web" : ""}";
+    return '''SuperDesktopTextFieldScrollSetup: $description, placed at ${placement.name},  ${textInputSource.toString()}, 
+    ${useHomeEndShortcutsOnMacAndWeb ? "uses HOME/END to scroll to top/bottom respectively on mac and web" : ""}''';
   }
 }
 
-/// Holds the setup for a text field scroll test.
+/// Pumps a [SuperDesktopTextField] experience with the given [textInputSource].
+///
+/// Optionally takes in [placement] which can be used to decide on the text field placement
+/// within parent.
 typedef _PumpSuperDesktopTextFieldWidget = Future<void> Function(
   WidgetTester tester,
   TextInputSource textInputSource, [
@@ -871,40 +881,12 @@ typedef _PumpSuperDesktopTextFieldWidget = Future<void> Function(
 
 /// Defines the placement of [SuperDesktopTextField] within ancestor
 /// scrollable.
+///
+/// Used to create different layout scenarios that we can test against and verify
+/// that scroll shortcuts scrolls the textfield or ancestor scrollable in same way
+/// irrespective of text fields placement within ancestor scrollable.
 enum _TextFieldPlacementWithinScrollable {
   top,
   center,
   bottom;
-}
-
-Future<void> _pressCmdHome(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressCmdEnd(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressCtrlHome(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressCtrlEnd(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.pumpAndSettle();
 }
