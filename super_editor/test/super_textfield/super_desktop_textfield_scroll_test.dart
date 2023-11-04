@@ -318,10 +318,7 @@ void main() {
 
           // Find the textfield's  ancestor scrollable
           final ancestorScrollState = tester.state<ScrollableState>(
-            find.descendant(
-              of: find.byKey(textfieldsAncestorScrollableKey),
-              matching: find.byType(Scrollable).first,
-            ),
+            find.byType(Scrollable).first,
           );
 
           // Scrolls to textfield's bottom.
@@ -379,10 +376,7 @@ void main() {
 
           // Find the textfield's ancestor scrollable
           final ancestorScrollState = tester.state<ScrollableState>(
-            find.descendant(
-              of: find.byKey(textfieldsAncestorScrollableKey),
-              matching: find.byType(Scrollable).first,
-            ),
+            find.byType(Scrollable).first,
           );
 
           ancestorScrollState.position.jumpTo(ancestorScrollState.position.maxScrollExtent);
@@ -450,14 +444,11 @@ void main() {
 
           // Find the textfield's ancestor scrollable.
           final ancestorScrollState = tester.state<ScrollableState>(
-            find.descendant(
-              of: find.byKey(textfieldsAncestorScrollableKey),
-              matching: find.byType(Scrollable).first,
-            ),
+            find.byType(Scrollable).first,
           );
 
           // Tap on the page to focus it.
-          await tester.tap(find.byKey(textfieldsAncestorScrollableKey));
+          await tester.tap(find.byType(CustomScrollView));
           await tester.pump();
 
           // Scroll untill textfield is visible.
@@ -820,7 +811,6 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
     MaterialApp(
       home: Scaffold(
         body: CustomScrollView(
-          key: textfieldsAncestorScrollableKey,
           slivers: placement == _TextFieldPlacementWithinScrollable.top //
               ? slivers
               : slivers.reversed.toList(),
@@ -829,12 +819,10 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
     ),
   );
 
-  // The first frame might have a zero viewport height. Pump a second frame to account for the final viewport size.
+  // The first frame might have a zero viewport height. Pump a second frame to account for
+  // the final viewport size.
   await tester.pump();
 }
-
-/// Key used by [SuperDesktopTextField]'s ancestor scrollable.
-const textfieldsAncestorScrollableKey = ValueKey("AncestorScrollable");
 
 /// An arbitrary string with enough lines to introduce scrollable content
 /// within text field.
