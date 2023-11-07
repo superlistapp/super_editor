@@ -203,7 +203,6 @@ Future<void> _pumpTestApp(
   double? maxWidth,
   double? maxHeight,
   EdgeInsets? padding,
-  TextInputSource? textInputSource,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -220,7 +219,6 @@ Future<void> _pumpTestApp(
             minLines: minLines,
             maxLines: maxLines,
             padding: padding,
-            inputSource: textInputSource,
           ),
         ),
       ),
