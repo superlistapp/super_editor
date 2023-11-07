@@ -301,6 +301,20 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] to be displayed inside a [CustomScrollView].
+  TestSuperEditorConfigurator insideCustomScrollView() {
+    _config.insideCustomScrollView = true;
+    return this;
+  }
+
+  /// Configures the ancestor [CustomScrollView] to use the given [scrollController].
+  ///
+  /// The [CustomScrollView] must be added to the configuration by calling [insideCustomScrollView].
+  TestSuperEditorConfigurator withCustomScrollViewScrollController(ScrollController? scrollController) {
+    _config.customScrollViewScrollController = scrollController;
+    return this;
+  }
+
   /// Pumps a [SuperEditor] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
   /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
@@ -333,7 +347,9 @@ class TestSuperEditorConfigurator {
   ConfiguredSuperEditorWidget _build([TestDocumentContext? testDocumentContext]) {
     final context = testDocumentContext ?? _createTestDocumentContext();
     final superEditor = _buildConstrainedContent(
-      _buildSuperEditor(context),
+      _buildAncestorScrollable(
+        child: _buildSuperEditor(context),
+      ),
     );
 
     return ConfiguredSuperEditorWidget(
@@ -395,6 +411,21 @@ class TestSuperEditorConfigurator {
       );
     }
     return superEditor;
+  }
+
+  /// Places [child] inside a [CustomScrollView], based on configurations in this class.
+  Widget _buildAncestorScrollable({required Widget child}) {
+    if (_config.insideCustomScrollView) {
+      return CustomScrollView(
+        controller: _config.customScrollViewScrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: child,
+          ),
+        ],
+      );
+    }
+    return child;
   }
 
   /// Builds a [SuperEditor] widget based on the configuration of the given
@@ -474,6 +505,9 @@ class SuperEditorTestConfiguration {
   final plugins = <SuperEditorPlugin>{};
 
   WidgetTreeBuilder? widgetTreeBuilder;
+
+  bool insideCustomScrollView = false;
+  ScrollController? customScrollViewScrollController;
 }
 
 /// Must return a widget tree containing the given [superEditor]

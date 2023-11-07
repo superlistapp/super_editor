@@ -713,23 +713,9 @@ void main() {
         await tester
             .createDocument() //
             .withLongTextContent()
-            .withCustomWidgetTreeBuilder(
-              (superEditor) => MaterialApp(
-                home: Scaffold(
-                  body: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: CustomScrollView(
-                      controller: scrollController,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: superEditor,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            )
+            .withEditorSize(const Size(200, 200))
+            .insideCustomScrollView()
+            .withCustomScrollViewScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -769,23 +755,9 @@ void main() {
         await tester
             .createDocument() //
             .withLongTextContent()
-            .withCustomWidgetTreeBuilder(
-              (superEditor) => MaterialApp(
-                home: Scaffold(
-                  body: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: CustomScrollView(
-                      controller: scrollController,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: superEditor,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            )
+            .withEditorSize(const Size(200, 200))
+            .insideCustomScrollView()
+            .withCustomScrollViewScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -824,23 +796,8 @@ void main() {
         await tester
             .createDocument()
             .withSingleParagraph()
-            .withCustomWidgetTreeBuilder(
-              (superEditor) => MaterialApp(
-                home: Scaffold(
-                  body: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: CustomScrollView(
-                      controller: scrollController,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: superEditor,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            )
+            .insideCustomScrollView()
+            .withCustomScrollViewScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -865,26 +822,14 @@ void main() {
       testWidgetsOnAndroid("doesn't overscroll when dragging up", (tester) async {
         final scrollController = ScrollController();
 
+        // Pump an editor inside a CustomScrollView without enough room to display
+        // the whole content.
         await tester
             .createDocument()
             .withSingleParagraph()
-            .withCustomWidgetTreeBuilder(
-              (superEditor) => MaterialApp(
-                home: Scaffold(
-                  body: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: CustomScrollView(
-                      controller: scrollController,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: superEditor,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            )
+            .withEditorSize(const Size(200, 200))
+            .insideCustomScrollView()
+            .withCustomScrollViewScrollController(scrollController)
             .pump();
 
         // Jump to the bottom.
@@ -917,23 +862,8 @@ void main() {
         await tester
             .createDocument() //
             .withLongTextContent()
-            .withCustomWidgetTreeBuilder(
-              (superEditor) => MaterialApp(
-                home: Scaffold(
-                  body: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: CustomScrollView(
-                      controller: scrollController,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: superEditor,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            )
+            .insideCustomScrollView()
+            .withCustomScrollViewScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -967,23 +897,9 @@ void main() {
         await tester
             .createDocument() //
             .withLongTextContent()
-            .withCustomWidgetTreeBuilder(
-              (superEditor) => MaterialApp(
-                home: Scaffold(
-                  body: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: CustomScrollView(
-                      controller: scrollController,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: superEditor,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            )
+            .withEditorSize(const Size(200, 200))
+            .insideCustomScrollView()
+            .withCustomScrollViewScrollController(scrollController)
             .pump();
 
         // Jump to the bottom.
