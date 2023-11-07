@@ -225,6 +225,8 @@ class TestDocumentConfigurator {
   }
 
   /// Configures the [SuperReader] to be displayed inside a [CustomScrollView].
+  ///
+  /// The [CustomScrollView] is constrained by the size provided in [withEditorSize].
   TestDocumentConfigurator insideCustomScrollView() {
     _insideCustomScrollView = true;
     return this;

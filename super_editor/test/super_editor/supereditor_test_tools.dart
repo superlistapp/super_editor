@@ -302,6 +302,8 @@ class TestSuperEditorConfigurator {
   }
 
   /// Configures the [SuperEditor] to be displayed inside a [CustomScrollView].
+  ///
+  /// The [CustomScrollView] is constrained by the size provided in [withEditorSize].
   TestSuperEditorConfigurator insideCustomScrollView() {
     _config.insideCustomScrollView = true;
     return this;
