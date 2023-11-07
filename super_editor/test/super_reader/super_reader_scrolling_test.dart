@@ -245,7 +245,7 @@ void main() {
       // End the gesture.
       await dragGesture.up();
 
-      // Let any pending timers resolve.
+      // Wait for the long-press timer to resolve.
       await tester.pumpAndSettle();
     });
 
@@ -273,7 +273,7 @@ void main() {
       // End the gesture.
       await dragGesture.up();
 
-      // Let any pending timers resolve.
+      // Wait for the long-press timer to resolve.
       await tester.pumpAndSettle();
     });
 
@@ -302,7 +302,7 @@ void main() {
       // Release the pointer to end the gesture.
       await dragGesture.up();
 
-      // Let any pending timers resolve.
+      // Wait for the long-press timer to resolve.
       await tester.pumpAndSettle();
 
       // Ensure the we scrolled back to the top.
@@ -336,7 +336,7 @@ void main() {
       // Release the pointer to end the gesture.
       await dragGesture.up();
 
-      // Let any pending timers resolve.
+      // Wait for the long-press timer to resolve.
       await tester.pumpAndSettle();
 
       // Ensure the we scrolled back to the end.
@@ -588,7 +588,7 @@ void main() {
         // End the gesture.
         await dragGesture.up();
 
-        // Let any pending timers resolve.
+        // Wait for the long-press timer to resolve.
         await tester.pumpAndSettle();
       });
 
@@ -632,7 +632,7 @@ void main() {
         // End the gesture.
         await dragGesture.up();
 
-        // Let any pending timers resolve.
+        // Wait for the long-press timer to resolve.
         await tester.pumpAndSettle();
       });
 
@@ -679,7 +679,7 @@ void main() {
         // Release the pointer to end the gesture.
         await dragGesture.up();
 
-        // Let any pending timers resolve.
+        // Wait for the long-press timer to resolve.
         await tester.pumpAndSettle();
 
         // Ensure the we scrolled back to the top.
@@ -730,7 +730,7 @@ void main() {
         // Release the pointer to end the gesture.
         await dragGesture.up();
 
-        // Let any pending timers resolve.
+        // Wait for the long-press timer to resolve.
         await tester.pumpAndSettle();
 
         // Ensure the we scrolled back to the end.
