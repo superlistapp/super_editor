@@ -6,6 +6,7 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../test_runners.dart';
+import 'super_textfield_robot.dart';
 
 void main() {
   group("SuperDesktopTextField", () {
@@ -22,7 +23,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -56,7 +57,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -93,7 +94,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -131,7 +132,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -169,7 +170,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -214,7 +215,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -258,7 +259,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -295,7 +296,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -342,7 +343,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -462,7 +463,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Scroll all the way to the text field's bottom.
           if (useHomeOrEndOnMacAndWeb && (defaultTargetPlatform == TargetPlatform.macOS || isWeb)) {
@@ -554,7 +555,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.tap(find.byType(SuperDesktopTextField));
+          await tester.placeCaretInSuperDesktopTextField(0);
 
           // Ensure we are at the top of the textfiled.
           expect(

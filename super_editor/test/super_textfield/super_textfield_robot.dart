@@ -51,6 +51,26 @@ extension SuperTextFieldRobot on WidgetTester {
     }
   }
 
+  /// Taps to place a caret at the given [offset].
+  ///
+  /// {@template superdesktoptextfield_finder}
+  /// By default, this method expects a single [SuperDesktopTextField] in the widget tree and
+  /// finds it `byType`. To specify one [SuperDesktopTextField] among many, pass a [superDesktopTextFieldFinder].
+  /// {@endtemplate}
+  Future<void> placeCaretInSuperDesktopTextField(int offset,
+      [Finder? superDesktopTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
+    final fieldFinder = SuperTextFieldInspector.findInnerPlatformTextField(
+      superDesktopTextFieldFinder ?? find.byType(SuperDesktopTextField),
+    );
+
+    final didTap = await _tapAtTextPositionOnDesktop(state<SuperDesktopTextFieldState>(fieldFinder), offset, affinity);
+    if (!didTap) {
+      throw Exception("The desired text offset wasn't tappable in SuperDesktopTextField: $offset");
+    }
+
+    await pumpAndSettle();
+  }
+
   /// Double taps in a [SuperTextField] at the given [offset]
   ///
   /// {@macro supertextfield_finder}
