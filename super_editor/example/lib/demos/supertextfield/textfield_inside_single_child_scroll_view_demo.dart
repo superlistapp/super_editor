@@ -17,8 +17,10 @@ class _TextFieldInsideSingleChildScrollViewDemoState extends State<TextFieldInsi
       child: Column(
         children: [
           SizedBox(
+            // Occupy 80% of the vertical space to avoid pushing text field off-screen
+            // and to provide a visual clue on text field's position within demo.
             height: MediaQuery.of(context).size.height * 0.8,
-            width: double.maxFinite,
+            width: double.infinity,
             child: Placeholder(
               child: Center(
                 child: Text("Content"),
@@ -50,7 +52,7 @@ class _TextFieldInsideSingleChildScrollViewDemoState extends State<TextFieldInsi
           ),
           SizedBox(
             height: MediaQuery.of(context).size.height * 2,
-            width: double.maxFinite,
+            width: double.infinity,
             child: Placeholder(
               child: Center(
                 child: Text("Content"),

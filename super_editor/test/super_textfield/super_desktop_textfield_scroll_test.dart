@@ -851,7 +851,7 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
         child: Builder(builder: (context) {
           return SizedBox(
             height: MediaQuery.of(context).size.height,
-            width: double.maxFinite,
+            width: double.infinity,
             child: const Placeholder(
               child: Center(
                 child: Text("Content"),
@@ -875,7 +875,7 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
       child: Builder(builder: (context) {
         return SizedBox(
           height: MediaQuery.of(context).size.height,
-          width: double.maxFinite,
+          width: double.infinity,
           child: const Placeholder(
             child: Center(
               child: Text("Content"),

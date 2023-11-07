@@ -17,8 +17,10 @@ class _TextFieldInsideSliversDemoState extends State<TextFieldInsideSliversDemo>
       slivers: [
         SliverToBoxAdapter(
           child: SizedBox(
+            // Occupy 80% of the vertical space to avoid pushing text field off-screen
+            // and to provide a visual clue on text field's position within demo.
             height: MediaQuery.of(context).size.height * 0.8,
-            width: double.maxFinite,
+            width: double.infinity,
             child: Placeholder(
               child: Center(
                 child: Text("Content"),
@@ -54,7 +56,7 @@ class _TextFieldInsideSliversDemoState extends State<TextFieldInsideSliversDemo>
         SliverToBoxAdapter(
           child: SizedBox(
             height: MediaQuery.of(context).size.height,
-            width: double.maxFinite,
+            width: double.infinity,
             child: Placeholder(
               child: Center(
                 child: Text("Content"),
