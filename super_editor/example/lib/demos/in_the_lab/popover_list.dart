@@ -102,7 +102,7 @@ class _PopoverListState extends State<PopoverList> {
       return KeyEventResult.ignored;
     }
 
-    if (event is KeyDownEvent) {
+    if (event is KeyDownEvent || event is KeyRepeatEvent) {
       // Only handle up events, so we don't run our behavior twice
       // for the same key press.
       return KeyEventResult.handled;

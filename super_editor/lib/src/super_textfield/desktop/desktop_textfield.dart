@@ -542,9 +542,9 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     final tapTextPosition = _getPositionNearestToTextOffset(textOffset);
     _log.finer("Tap text position: $tapTextPosition");
 
-    final expandSelection = RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
-        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
-        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift);
+    final expandSelection = HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+        HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftRight) ||
+        HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shift);
 
     setState(() {
       widget.textController.selection = expandSelection
@@ -972,9 +972,9 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
     widget.textFieldContext.controller.selection = const TextSelection.collapsed(offset: -1);
   }
 
-  KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
+  KeyEventResult _onKeyPressed(FocusNode focusNode, KeyEvent keyEvent) {
     _log.fine('_onKeyPressed - keyEvent: ${keyEvent.logicalKey}, character: ${keyEvent.character}');
-    if (keyEvent is! RawKeyDownEvent) {
+    if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
       _log.finer('_onKeyPressed - not a "down" event. Ignoring.');
       return KeyEventResult.ignored;
     }
@@ -1005,7 +1005,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
   Widget build(BuildContext context) {
     return NonReparentingFocus(
       focusNode: widget.focusNode,
-      onKey: _onKeyPressed,
+      onKeyEvent: _onKeyPressed,
       child: widget.child,
     );
   }
@@ -1708,7 +1708,7 @@ enum TextFieldKeyboardHandlerResult {
 
 typedef TextFieldKeyboardHandler = TextFieldKeyboardHandlerResult Function({
   required SuperTextFieldContext textFieldContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 });
 
 /// A [TextFieldKeyboardHandler] that reports [TextFieldKeyboardHandlerResult.blocked]
@@ -1716,10 +1716,10 @@ typedef TextFieldKeyboardHandler = TextFieldKeyboardHandlerResult Function({
 TextFieldKeyboardHandler ignoreTextFieldKeyCombos(List<ShortcutActivator> keys) {
   return ({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     for (final key in keys) {
-      if (key.accepts(keyEvent, RawKeyboard.instance)) {
+      if (key.accepts(keyEvent, HardwareKeyboard.instance)) {
         return TextFieldKeyboardHandlerResult.blocked;
       }
     }
@@ -1803,7 +1803,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// (CMD on Mac, CTL on Windows) + C is pressed.
   static TextFieldKeyboardHandlerResult copyTextWhenCmdCIsPressed({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -1824,7 +1824,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// (CMD on Mac, CTL on Windows) + V is pressed.
   static TextFieldKeyboardHandlerResult pasteTextWhenCmdVIsPressed({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -1849,7 +1849,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// (CMD on Mac, CTL on Windows) + A is pressed.
   static TextFieldKeyboardHandlerResult selectAllTextFieldWhenCmdAIsPressed({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -1867,10 +1867,10 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// on MacOS platforms. This is part of expected behavior on MacOS. Not applicable to Windows.
   static TextFieldKeyboardHandlerResult moveCaretToStartOrEnd({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     bool moveLeft = false;
-    if (!keyEvent.isControlPressed) {
+    if (!HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (defaultTargetPlatform != TargetPlatform.macOS) {
@@ -1903,7 +1903,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// If there is no caret selection. it does nothing.
   static TextFieldKeyboardHandlerResult moveUpDownLeftAndRightWithArrowKeys({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     const arrowKeys = [
       LogicalKeyboardKey.arrowLeft,
@@ -1931,12 +1931,12 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.handled;
     }
 
-    if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+    if (defaultTargetPlatform == TargetPlatform.windows && HardwareKeyboard.instance.isAltPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
     if (defaultTargetPlatform == TargetPlatform.linux &&
-        keyEvent.isAltPressed &&
+        HardwareKeyboard.instance.isAltPressed &&
         (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
@@ -1946,17 +1946,17 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
       MovementModifier? movementModifier;
       if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-          keyEvent.isControlPressed) {
+          HardwareKeyboard.instance.isControlPressed) {
         movementModifier = MovementModifier.word;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
         movementModifier = MovementModifier.line;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
         movementModifier = MovementModifier.word;
       }
 
       textFieldContext.controller.moveCaretHorizontally(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveLeft: true,
         movementModifier: movementModifier,
       );
@@ -1965,17 +1965,17 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
       MovementModifier? movementModifier;
       if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-          keyEvent.isControlPressed) {
+          HardwareKeyboard.instance.isControlPressed) {
         movementModifier = MovementModifier.word;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
         movementModifier = MovementModifier.line;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
         movementModifier = MovementModifier.word;
       }
 
       textFieldContext.controller.moveCaretHorizontally(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveLeft: false,
         movementModifier: movementModifier,
       );
@@ -1983,14 +1983,14 @@ class DefaultSuperTextFieldKeyboardHandlers {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling up arrow key');
       textFieldContext.controller.moveCaretVertically(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveUp: true,
       );
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling down arrow key');
       textFieldContext.controller.moveCaretVertically(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveUp: false,
       );
     }
@@ -2000,7 +2000,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
   static TextFieldKeyboardHandlerResult moveToLineStartWithHome({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -2009,7 +2009,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
       textFieldContext.controller.moveCaretHorizontally(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveLeft: true,
         movementModifier: MovementModifier.line,
       );
@@ -2021,7 +2021,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
   static TextFieldKeyboardHandlerResult moveToLineEndWithEnd({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -2030,7 +2030,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
       textFieldContext.controller.moveCaretHorizontally(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveLeft: false,
         movementModifier: MovementModifier.line,
       );
@@ -2045,9 +2045,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// since their behavior is unexpected. Check definition for more details.
   static TextFieldKeyboardHandlerResult insertCharacterWhenKeyIsPressed({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
-    if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
+    if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2079,7 +2079,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// presses CMD + Backspace, or CTL + Backspace.
   static TextFieldKeyboardHandlerResult deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -2113,7 +2113,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult deleteTextWhenBackspaceOrDeleteIsPressed({
     required SuperTextFieldContext textFieldContext,
     ProseTextLayout? textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     final isBackspace = keyEvent.logicalKey == LogicalKeyboardKey.backspace;
     final isDelete = keyEvent.logicalKey == LogicalKeyboardKey.delete;
@@ -2136,13 +2136,13 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// [deleteWordWhenAltBackSpaceIsPressedOnMac] deletes single words when Alt+Backspace is pressed on Mac.
   static TextFieldKeyboardHandlerResult deleteWordWhenAltBackSpaceIsPressedOnMac({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform != TargetPlatform.macOS) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !keyEvent.isAltPressed) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !HardwareKeyboard.instance.isAltPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (textFieldContext.controller.selection.extentOffset < 0) {
@@ -2157,13 +2157,13 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// [deleteWordWhenAltBackSpaceIsPressedOnMac] deletes single words when Ctl+Backspace is pressed on Windows/Linux.
   static TextFieldKeyboardHandlerResult deleteWordWhenCtlBackSpaceIsPressedOnWindowsAndLinux({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !keyEvent.isControlPressed) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (textFieldContext.controller.selection.extentOffset < 0) {
@@ -2194,7 +2194,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult insertNewlineWhenEnterIsPressed({
     required SuperTextFieldContext textFieldContext,
     ProseTextLayout? textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -2210,7 +2210,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
   static TextFieldKeyboardHandlerResult sendKeyEventToMacOs({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform == TargetPlatform.macOS && !isWeb) {
       // On macOS, we let the IME handle all key events. Then, the IME might generate

@@ -678,7 +678,7 @@ Future<TestDocumentContext> _pumpTestEditor(
 
 ExecutionInstruction _submitOnEnter({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent is KeyDownEvent) {
     return ExecutionInstruction.continueExecution;

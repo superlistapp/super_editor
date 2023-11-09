@@ -4,7 +4,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 /// Demo that displays a very limited iOS text field, constructed from
 /// the ground up, using [TextInput] for user interaction instead
-/// of a [RawKeyboardListener] or similar.
+/// of a [KeyboardListener] or similar.
 class BarebonesIosTextInputClientDemo extends StatefulWidget {
   @override
   State<BarebonesIosTextInputClientDemo> createState() => _BarebonesIosTextInputClientDemoState();

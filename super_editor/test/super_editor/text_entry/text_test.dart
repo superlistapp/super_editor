@@ -56,13 +56,10 @@ void main() {
         // Press just the meta key.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.meta,
-              physicalKey: PhysicalKeyboardKey.metaLeft,
-              isMetaPressed: true,
-              isModifierKeyPressed: false,
-            ),
+          keyEvent: const KeyDownEvent(
+            logicalKey: LogicalKeyboardKey.meta,
+            physicalKey: PhysicalKeyboardKey.metaLeft,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -72,13 +69,10 @@ void main() {
         // Press "a" + meta key
         result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-              isMetaPressed: true,
-              isModifierKeyPressed: false,
-            ),
+          keyEvent: const KeyDownEvent(
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -92,11 +86,10 @@ void main() {
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-            ),
+          keyEvent: const KeyDownEvent(
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -136,11 +129,10 @@ void main() {
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-            ),
+          keyEvent: const KeyDownEvent(
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -173,11 +165,10 @@ void main() {
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-            ),
+          keyEvent: const KeyDownEvent(
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -213,13 +204,11 @@ void main() {
         // Press the "alt" key
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
+          keyEvent: const KeyDownEvent(
             character: null,
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.alt,
-              physicalKey: PhysicalKeyboardKey.altLeft,
-              isModifierKeyPressed: true,
-            ),
+            logicalKey: LogicalKeyboardKey.alt,
+            physicalKey: PhysicalKeyboardKey.altLeft,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -229,12 +218,11 @@ void main() {
         // Press the "enter" key
         result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
+          keyEvent: const KeyDownEvent(
             character: '', // Empirically, pressing enter sends '' as the character instead of null
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.enter,
-              physicalKey: PhysicalKeyboardKey.enter,
-            ),
+            logicalKey: LogicalKeyboardKey.enter,
+            physicalKey: PhysicalKeyboardKey.enter,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -270,12 +258,11 @@ void main() {
         // Press the "a" key
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
+          keyEvent: const KeyDownEvent(
             character: 'a',
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-            ),
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -315,12 +302,11 @@ void main() {
         // Type a non-English character
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
+          keyEvent: const KeyDownEvent(
             character: 'ß',
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-            ),
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 

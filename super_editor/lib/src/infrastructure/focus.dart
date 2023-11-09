@@ -19,6 +19,7 @@ class NonReparentingFocus extends StatefulWidget {
     Key? key,
     required this.focusNode,
     this.onKey,
+    this.onKeyEvent,
     required this.child,
   }) : super(key: key);
 
@@ -27,6 +28,9 @@ class NonReparentingFocus extends StatefulWidget {
 
   /// The callback invoked whenever [focusNode] receives key events.
   final FocusOnKeyCallback? onKey;
+
+  /// The callback invoked whenever [focusNode] receives key events.
+  final FocusOnKeyEventCallback? onKeyEvent;
 
   /// The child of this widget.
   final Widget child;
@@ -41,7 +45,7 @@ class _NonReparentingFocusState extends State<NonReparentingFocus> {
   @override
   void initState() {
     super.initState();
-    _keyboardFocusAttachment = widget.focusNode.attach(context, onKey: _onKey);
+    _keyboardFocusAttachment = widget.focusNode.attach(context, onKeyEvent: _onKeyEvent);
   }
 
   @override
@@ -73,8 +77,8 @@ class _NonReparentingFocusState extends State<NonReparentingFocus> {
     }
   }
 
-  KeyEventResult _onKey(FocusNode focusNode, RawKeyEvent event) {
-    return widget.onKey?.call(focusNode, event) ?? KeyEventResult.ignored;
+  KeyEventResult _onKeyEvent(FocusNode focusNode, KeyEvent event) {
+    return widget.onKeyEvent?.call(focusNode, event) ?? KeyEventResult.ignored;
   }
 
   @override
@@ -197,7 +201,7 @@ class FocusWithCustomParent extends StatefulWidget {
   /// A handler for keys that are pressed when this object or one of its
   /// children has focus.
   ///
-  /// This is a legacy API based on [RawKeyEvent] and will be deprecated in the
+  /// This is a legacy API based on [KeyEvent] and will be deprecated in the
   /// future. Prefer [onKeyEvent] instead.
   ///
   /// Key events are first given to the [FocusNode] that has primary focus, and
