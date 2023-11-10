@@ -26,6 +26,7 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
     this.underlays = const [],
     this.overlays = const [],
     this.debugPaint = const DebugPaintConfig(),
+    this.shrinkWrap = false,
   });
 
   /// [LayerLink] that's is attached to the document layout.
@@ -71,6 +72,11 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
   /// Paints some extra visual ornamentation to help with debugging.
   final DebugPaintConfig debugPaint;
 
+  /// Whether to shrink wrap the document layout. If true, the document
+  /// layout will be sized to fit its content.
+  /// Quick and dirty fix for our needs
+  final bool shrinkWrap;
+
   @override
   State<DocumentScaffold> createState() => _DocumentScaffoldState();
 }
@@ -80,7 +86,10 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
   Widget build(BuildContext context) {
     return _buildDocumentScrollable(
       child: _buildGestureSystem(
-        child: _buildDocumentLayout(),
+        shrinkWrap: widget.shrinkWrap,
+        child: _buildDocumentLayout(
+          shrinkWrap: widget.shrinkWrap,
+        ),
       ),
     );
   }
@@ -111,46 +120,59 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
   /// on mobile.
   Widget _buildGestureSystem({
     required Widget child,
+    bool shrinkWrap = false,
   }) {
-    return ViewportBoundsReplicator(
-      viewportOuterConstraints: _contentConstraints,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // A layer that sits beneath the document and handles gestures.
-          // It's beneath the document so that components that include
-          // interactive UI, like a Checkbox, can intercept their own
-          // touch events.
-          //
-          // This layer is placed outside of `ContentLayers` because this
-          // layer needs to be wider than the document, to fill all available
-          // space.
-          Positioned.fill(
-            child: widget.gestureBuilder(context),
-          ),
-          child,
-        ],
-      ),
+    Widget res = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // A layer that sits beneath the document and handles gestures.
+        // It's beneath the document so that components that include
+        // interactive UI, like a Checkbox, can intercept their own
+        // touch events.
+        //
+        // This layer is placed outside of `ContentLayers` because this
+        // layer needs to be wider than the document, to fill all available
+        // space.
+        Positioned.fill(
+          child: widget.gestureBuilder(context),
+        ),
+        child,
+      ],
     );
+
+    if (!shrinkWrap) {
+      res = ViewportBoundsReplicator(
+        viewportOuterConstraints: _contentConstraints,
+        child: res,
+      );
+    }
+
+    return res;
   }
 
-  Widget _buildDocumentLayout() {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: CompositedTransformTarget(
-        link: widget.documentLayoutLink,
-        child: ContentLayers(
-          content: (onBuildScheduled) => SingleColumnDocumentLayout(
-            key: widget.documentLayoutKey,
-            presenter: widget.presenter,
-            componentBuilders: widget.componentBuilders,
-            onBuildScheduled: onBuildScheduled,
-            showDebugPaint: widget.debugPaint.layout,
-          ),
-          underlays: widget.underlays,
-          overlays: widget.overlays,
+  Widget _buildDocumentLayout({required bool shrinkWrap}) {
+    Widget res = CompositedTransformTarget(
+      link: widget.documentLayoutLink,
+      child: ContentLayers(
+        content: (onBuildScheduled) => SingleColumnDocumentLayout(
+          key: widget.documentLayoutKey,
+          presenter: widget.presenter,
+          componentBuilders: widget.componentBuilders,
+          onBuildScheduled: onBuildScheduled,
+          showDebugPaint: widget.debugPaint.layout,
         ),
+        underlays: widget.underlays,
+        overlays: widget.overlays,
       ),
     );
+
+    if (!shrinkWrap) {
+      res = Align(
+        alignment: Alignment.topCenter,
+        child: res,
+      );
+    }
+
+    return res;
   }
 }

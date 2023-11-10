@@ -127,6 +127,7 @@ class SuperEditor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.plugins = const {},
     this.debugPaint = const DebugPaintConfig(),
+    this.shrinkWrap = false,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         componentBuilders = componentBuilders != null
@@ -303,6 +304,11 @@ class SuperEditor extends StatefulWidget {
   /// Paints some extra visual ornamentation to help with
   /// debugging.
   final DebugPaintConfig debugPaint;
+
+  /// Whether to shrink wrap the document layout. If true, the document
+  /// layout will be sized to fit its content.
+  /// Quick and dirty fix for our needs
+  final bool shrinkWrap;
 
   @override
   SuperEditorState createState() => SuperEditorState();
@@ -570,6 +576,7 @@ class SuperEditorState extends State<SuperEditor> {
                   scrollController: _scrollController,
                   autoScrollController: _autoScrollController,
                   scroller: _scroller,
+                  shrinkWrap: widget.shrinkWrap,
                   presenter: presenter,
                   componentBuilders: widget.componentBuilders,
                   underlays: [
