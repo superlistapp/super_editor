@@ -4,6 +4,7 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
+import 'package:logging/logging.dart';
 
 import '../../supereditor_test_tools.dart';
 import '../../test_documents.dart';
@@ -680,7 +681,7 @@ ExecutionInstruction _submitOnEnter({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
 }) {
-  if (keyEvent is KeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {

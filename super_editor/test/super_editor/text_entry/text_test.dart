@@ -50,7 +50,7 @@ void main() {
     });
 
     group('TextComposable text entry', () {
-      test('it does nothing when meta is pressed', () {
+      testWidgets('it does nothing when meta is pressed', (WidgetTester tester) async {
         final editContext = _createEditContext();
 
         // Press just the meta key.
@@ -80,7 +80,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
       });
 
-      test('it does nothing when nothing is selected', () {
+      testWidgets('it does nothing when nothing is selected', (WidgetTester tester) async {
         final editContext = _createEditContext();
 
         // Try to type a character.
@@ -97,7 +97,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
       });
 
-      test('it does nothing when the selection is not collapsed', () {
+      testWidgets('it does nothing when the selection is not collapsed', (WidgetTester tester) async {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
@@ -140,7 +140,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
       });
 
-      test('it does nothing when a non-text node is selected', () {
+      testWidgets('it does nothing when a non-text node is selected', (WidgetTester tester) async {
         final editContext = _createEditContext();
 
         // Add a non-text node to the document.
@@ -176,7 +176,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
       });
 
-      test('it does nothing when the key doesn\'t have a character', () {
+      testWidgets('it does nothing when the key doesn\'t have a character', (WidgetTester tester) async {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
@@ -230,7 +230,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
       });
 
-      test('it inserts an English character', () {
+      testWidgets('it inserts an English character', (WidgetTester tester) async {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
@@ -274,7 +274,7 @@ void main() {
         );
       });
 
-      test('it inserts a non-English character', () {
+      testWidgets('it inserts a non-English character', (WidgetTester tester) async {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
