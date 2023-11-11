@@ -1,5 +1,3 @@
-import 'dart:js_util';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1337,8 +1335,8 @@ Future<void> _pumpSuperDesktopTextFieldTestApp(
   return await _pumpTestApp(
     tester,
     textController: textController,
-    minLines: 1,
-    maxLines: 4,
+    minLines: 8,
+    maxLines: 8,
     textInputSource: textInputSource,
   );
 }
@@ -1390,10 +1388,12 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
     if (placement == _TextFieldPlacementWithinScrollable.bottom ||
         placement == _TextFieldPlacementWithinScrollable.center)
       SliverToBoxAdapter(
-        // Occupy 95% of the vertical space to avoid pushing text field off-screen.
         child: Builder(builder: (context) {
           return SizedBox(
-            height: MediaQuery.of(context).size.height * 0.8,
+            // Occupy enough vertical space to push text field slightly across the viewport
+            // to introduce scrollable content but small enough to keep it within viewport to be
+            // detected in tests.
+            height: MediaQuery.of(context).size.height * 0.95,
             width: double.infinity,
             child: const Placeholder(
               child: Center(
@@ -1409,8 +1409,8 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
         textStyleBuilder: (_) => const TextStyle(fontSize: 20),
         // Force the text field to be tall enough to easily see content scrolling by,
         // but short enough to ensure that the content is scrollable.
-        minLines: 4,
-        maxLines: 4,
+        minLines: 8,
+        maxLines: 8,
         inputSource: textInputSource,
       ),
     ),
@@ -1447,7 +1447,7 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
 
 /// An arbitrary input, long enough to introduce scrollable content
 /// within text field.
-final String _textFieldInput = List.generate(10, (index) => "Line $index").join("\n");
+final String _textFieldInput = List.generate(20, (index) => "Line $index").join("\n");
 
 /// Defines [SuperDesktopTextField] test configurations for a test variant.
 ///
