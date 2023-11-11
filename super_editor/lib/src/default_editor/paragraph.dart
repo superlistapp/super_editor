@@ -1,6 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -227,6 +228,53 @@ class ChangeParagraphBlockTypeCommand implements EditCommand {
       DocumentEdit(
         NodeChangeEvent(nodeId),
       ),
+    ]);
+  }
+}
+
+/// [EditRequest] to change the alignment of the [ParagraphNode] to [textAlign].
+class ChangeParagraphAlignmentRequest implements EditRequest {
+  ChangeParagraphAlignmentRequest({
+    required this.nodeId,
+    required this.textAlign,
+  });
+
+  final String nodeId;
+  final String? textAlign;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChangeParagraphAlignmentRequest &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          textAlign == other.textAlign;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ textAlign.hashCode;
+}
+
+/// Updates alignment of the [ParagraphNode] with the given [textAlign].
+class ChangeParagraphAlignmentCommand implements EditCommand {
+  const ChangeParagraphAlignmentCommand({
+    required this.nodeId,
+    required this.textAlign,
+  });
+
+  final String nodeId;
+  final String? textAlign;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    final existingNode = document.getNodeById(nodeId)! as ParagraphNode;
+    existingNode.putMetadataValue('textAlign', textAlign);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      )
     ]);
   }
 }

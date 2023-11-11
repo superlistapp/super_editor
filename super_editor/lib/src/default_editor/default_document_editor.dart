@@ -195,6 +195,12 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           composer: request.composer,
         )
       : null,
+  (request) => request is ChangeParagraphAlignmentRequest
+      ? ChangeParagraphAlignmentCommand(
+          nodeId: request.nodeId,
+          textAlign: request.textAlign,
+        )
+      : null,
 ]);
 
 final defaultEditorReactions = List.unmodifiable([

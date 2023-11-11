@@ -438,8 +438,14 @@ class _EditorToolbarState extends State<EditorToolbar> {
         break;
     }
 
-    final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId) as ParagraphNode;
-    selectedNode.putMetadataValue('textAlign', newAlignmentValue);
+    widget.editor!.execute([
+      ChangeParagraphAlignmentRequest(
+        nodeId: widget.composer.selection!.extent.nodeId,
+        textAlign: newAlignmentValue,
+      ),
+    ]);
+
+    widget.closeToolbar();
   }
 
   /// Returns the localized name for the given [_TextType], e.g.,

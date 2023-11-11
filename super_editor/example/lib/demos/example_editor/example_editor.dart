@@ -415,6 +415,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
               keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
               androidToolbarBuilder: (_) => _buildAndroidFloatingToolbar(),
               overlayController: _overlayController,
+              selectionPolicies: SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+                clearSelectionWhenImeConnectionCloses: false,
+              ),
             ),
           ),
         ),
