@@ -19,44 +19,39 @@ import '../super_editor/test_documents.dart';
 void main() {
   group('SuperDropdown', () {
     testWidgetsOnAllPlatforms('shows the dropdown list on tap', (tester) async {
-      final dropdownKey = GlobalKey();
-
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) {},
-        dropdownKey: dropdownKey,
       );
 
       // Ensures the dropdown list isn't displayed.
-      expect(find.byKey(dropdownKey), findsNothing);
+      expect(find.byType(PopoverShape), findsNothing);
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
-      expect(find.byKey(dropdownKey), findsOneWidget);
+      expect(find.byType(PopoverShape), findsOneWidget);
     });
 
-    testWidgetsOnAllPlatforms('calls onValueChanged and closes the dropdown list when tapping an item', (tester) async {
+    testWidgetsOnAllPlatforms('calls onSelected and closes the dropdown list when tapping an item', (tester) async {
       String? selectedValue;
 
-      final dropdownKey = GlobalKey();
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) => selectedValue = s,
-        dropdownKey: dropdownKey,
       );
 
       // Ensures the dropdown list isn't displayed.
-      expect(find.byKey(dropdownKey), findsNothing);
+      expect(find.byType(PopoverShape), findsNothing);
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
-      expect(find.byKey(dropdownKey), findsOneWidget);
+      expect(find.byType(PopoverShape), findsOneWidget);
 
       // Taps the first item on the list
       await tester.tap(find.text('Item1'));
@@ -64,28 +59,26 @@ void main() {
 
       // Ensure the tapped item was selected and the dropdown was closed.
       expect(selectedValue, 'Item1');
-      expect(find.byKey(dropdownKey), findsNothing);
+      expect(find.byType(PopoverShape), findsNothing);
     });
 
     testWidgetsOnAllPlatforms('closes the dropdown list when tapping outside', (tester) async {
       bool onValueChangedCalled = false;
 
-      final dropdownKey = GlobalKey();
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) => onValueChangedCalled = true,
-        dropdownKey: dropdownKey,
       );
 
       // Ensures the dropdown list isn't displayed.
-      expect(find.byKey(dropdownKey), findsNothing);
+      expect(find.byType(PopoverShape), findsNothing);
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
-      expect(find.byKey(dropdownKey), findsOneWidget);
+      expect(find.byType(PopoverShape), findsOneWidget);
 
       // Taps outside of the dropdown.
       await tester.tapAt(Offset.zero);
@@ -93,149 +86,144 @@ void main() {
 
       // Ensures onValueChanged wasn't called and the dropdown list was closed.
       expect(onValueChangedCalled, isFalse);
-      expect(find.byKey(dropdownKey), findsNothing);
+      expect(find.byType(PopoverShape), findsNothing);
     });
 
     testWidgetsOnAllPlatforms('enforces the given dropdown constraints', (tester) async {
-      final dropdownKey = GlobalKey();
-
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) {},
-        dropdownConstraints: const BoxConstraints(maxHeight: 10),
-        dropdownKey: dropdownKey,
+        popoverGeometry: PopoverGeometry(
+          constraints: const BoxConstraints(maxHeight: 10),
+        ),
       );
 
       // Ensures the dropdown list isn't displayed.
-      expect(find.byKey(dropdownKey), findsNothing);
+      expect(find.byType(PopoverShape), findsNothing);
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
-      expect(find.byKey(dropdownKey), findsOneWidget);
+      expect(find.byType(PopoverShape), findsOneWidget);
 
       // Ensure the maxHeight was honored.
-      expect(tester.getRect(find.byKey(dropdownKey)).height, 10);
+      expect(tester.getRect(find.byType(PopoverShape)).height, 10);
     });
 
     testWidgetsOnAllPlatforms('dropdown list isn\' scrollable if all items fit on screen', (tester) async {
-      final dropdownKey = GlobalKey();
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) {},
-        dropdownKey: dropdownKey,
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
-      expect(find.byKey(dropdownKey), findsOneWidget);
+      expect(find.byType(PopoverShape), findsOneWidget);
 
       // Ensure the dropdown list isn't scrollable.
-      final dropdownButonState = tester.state<ItemSelectorState<String>>(find.byType(ItemSelector<String>));
+      final dropdownButonState = tester.state<ItemSelectionListState<String>>(find.byType(ItemSelectionList<String>));
       expect(dropdownButonState.scrollController.position.maxScrollExtent, 0.0);
     });
 
     testWidgetsOnAllPlatforms('dropdown list is scrollable if items don\'t fit on screen', (tester) async {
-      final dropdownKey = GlobalKey();
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) {},
-        dropdownKey: dropdownKey,
-        dropdownConstraints: const BoxConstraints(maxHeight: 100),
+        popoverGeometry: PopoverGeometry(constraints: const BoxConstraints(maxHeight: 50)),
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
       // Ensures the dropdown list is displayed.
-      expect(find.byKey(dropdownKey), findsOneWidget);
+      expect(find.byType(PopoverShape), findsOneWidget);
 
       // Ensure the dropdown list is scrollable.
-      final dropdownButonState = tester.state<ItemSelectorState<String>>(find.byType(ItemSelector<String>));
+      final dropdownButonState = tester.state<ItemSelectionListState<String>>(find.byType(ItemSelectionList<String>));
       expect(dropdownButonState.scrollController.position.maxScrollExtent, greaterThan(0.0));
     });
 
     testWidgetsOnAllPlatforms('moves focus down with DOWN ARROW', (tester) async {
+      String? activeItem;
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) => {},
+        onActivate: (s) => activeItem = s,
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
-      final dropdownButonState = tester.state<ItemSelectorState<String>>(find.byType(ItemSelector<String>));
-
       // Ensure the dropdown is displayed without any focused item.
-      expect(dropdownButonState.activeIndex, isNull);
+      expect(activeItem, isNull);
 
       // Press DOWN ARROW to focus the first item.
       await tester.pressDownArrow();
-      expect(dropdownButonState.activeIndex, 0);
+      expect(activeItem, 'Item1');
 
       // Press DOWN ARROW to focus the second item.
       await tester.pressDownArrow();
-      expect(dropdownButonState.activeIndex, 1);
+      expect(activeItem, 'Item2');
 
       // Press DOWN ARROW to focus the third item.
       await tester.pressDownArrow();
-      expect(dropdownButonState.activeIndex, 2);
+      expect(activeItem, 'Item3');
 
       // Press DOWN ARROW to focus the first item again.
       await tester.pressDownArrow();
-      expect(dropdownButonState.activeIndex, 0);
+      expect(activeItem, 'Item1');
     });
 
     testWidgetsOnAllPlatforms('moves focus up with UP ARROW', (tester) async {
+      String? activeItem;
+
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) => {},
+        onActivate: (s) => activeItem = s,
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
-      final dropdownButonState = tester.state<ItemSelectorState<String>>(find.byType(ItemSelector<String>));
-
       // Ensure the dropdown is displayed without any focused item.
-      expect(dropdownButonState.activeIndex, isNull);
+      expect(activeItem, isNull);
 
       // Press UP ARROW to focus the last item.
       await tester.pressUpArrow();
-      expect(dropdownButonState.activeIndex, 2);
+      expect(activeItem, 'Item3');
 
       // Press UP ARROW to focus the second item.
       await tester.pressUpArrow();
-      expect(dropdownButonState.activeIndex, 1);
+      expect(activeItem, 'Item2');
 
       // Press UP ARROW to focus the first item.
       await tester.pressUpArrow();
-      expect(dropdownButonState.activeIndex, 0);
+      expect(activeItem, 'Item1');
 
       // Press UP ARROW to focus the last item again.
       await tester.pressUpArrow();
-      expect(dropdownButonState.activeIndex, 2);
+      expect(activeItem, 'Item3');
     });
 
     testWidgetsOnAllPlatforms('selects the focused item on ENTER', (tester) async {
       String? selectedValue;
 
-      final dropdownKey = GlobalKey();
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) => selectedValue = s,
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
       // Press ARROW DOWN to focus the first item.
@@ -247,21 +235,19 @@ void main() {
 
       // Ensure the first item was selected and the dropdown was closed.
       expect(selectedValue, 'Item1');
-      expect(find.byKey(dropdownKey), findsNothing);
+      expect(find.byType(PopoverShape), findsNothing);
     });
 
     testWidgetsOnAllPlatforms('closes dropdown list on ENTER', (tester) async {
       String? selectedValue;
 
-      final dropdownKey = GlobalKey();
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) => selectedValue = s,
-        dropdownKey: dropdownKey,
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
       // Press ENTER without a focused item to close the dropdown.
@@ -269,22 +255,20 @@ void main() {
       await tester.pump();
 
       // Ensure the dropdown was closed and no item was selected.
-      expect(find.byKey(dropdownKey), findsNothing);
+      expect(find.byType(PopoverShape), findsNothing);
       expect(selectedValue, isNull);
     });
 
     testWidgetsOnAllPlatforms('closes dropdown list on ESC', (tester) async {
       String? selectedValue;
 
-      final dropdownKey = GlobalKey();
       await _pumpDropdownTestApp(
         tester,
         onValueChanged: (s) => selectedValue = s,
-        dropdownKey: dropdownKey,
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
       // Press ARROW DOWN to focus the first item.
@@ -295,7 +279,7 @@ void main() {
       await tester.pump();
 
       // Ensure the dropdown was closed and no item was selected.
-      expect(find.byKey(dropdownKey), findsNothing);
+      expect(find.byType(PopoverShape), findsNothing);
       expect(selectedValue, isNull);
     });
 
@@ -310,12 +294,18 @@ void main() {
             editorFocusNode: editorFocusNode,
             toolbar: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 100),
-              child: ItemSelector<String>(
+              child: ItemSelectionList<String>(
                 items: const ['Item1', 'Item2', 'Item3'],
-                itemBuilder: (context, e) => Text(e),
-                selectedItemBuilder: (context, e) => const SizedBox(width: 50),
+                itemBuilder: (context, e, isActive, onTap) => TextButton(
+                  onPressed: onTap,
+                  child: Text(e),
+                ),
+                buttonBuilder: (context, e, onTap) => ElevatedButton(
+                  onPressed: onTap,
+                  child: const SizedBox(width: 50),
+                ),
                 value: null,
-                onChanged: (s) => {},
+                onItemSelected: (s) => {},
                 boundaryKey: boundaryKey,
                 parentFocusNode: editorFocusNode,
               ),
@@ -346,7 +336,7 @@ void main() {
       );
 
       // Tap the button to show the dropdown.
-      await tester.tap(find.byType(ItemSelector<String>));
+      await tester.tap(find.byType(ItemSelectionList<String>));
       await tester.pumpAndSettle();
 
       // Ensure the editor has non-primary focus.
@@ -376,12 +366,12 @@ void main() {
   });
 }
 
-/// Pumps a widget tree with a centered [ItemSelector] containing three items.
+/// Pumps a widget tree with a centered [ItemSelectionList] containing three items.
 Future<void> _pumpDropdownTestApp(
   WidgetTester tester, {
   required void Function(String? value) onValueChanged,
-  BoxConstraints? dropdownConstraints,
-  GlobalKey? dropdownKey,
+  void Function(String? value)? onActivate,
+  PopoverGeometry? popoverGeometry,
 }) async {
   final boundaryKey = GlobalKey();
   final focusNode = FocusNode();
@@ -396,16 +386,22 @@ Future<void> _pumpDropdownTestApp(
             autofocus: true,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 100),
-              child: ItemSelector<String>(
+              child: ItemSelectionList<String>(
                 items: const ['Item1', 'Item2', 'Item3'],
-                itemBuilder: (context, e) => Text(e),
-                selectedItemBuilder: (context, e) => const SizedBox(width: 50),
+                itemBuilder: (context, e, isActive, onTap) => TextButton(
+                  onPressed: onTap,
+                  child: Text(e),
+                ),
+                buttonBuilder: (context, e, onTap) => ElevatedButton(
+                  onPressed: onTap,
+                  child: const SizedBox(width: 50),
+                ),
                 value: null,
-                onChanged: onValueChanged,
+                onItemActivated: onActivate,
+                onItemSelected: onValueChanged,
                 boundaryKey: boundaryKey,
                 parentFocusNode: focusNode,
-                popoverContraints: dropdownConstraints,
-                popoverKey: dropdownKey,
+                popoverGeometry: popoverGeometry,
               ),
             ),
           ),

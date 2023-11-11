@@ -525,30 +525,28 @@ class _EditorToolbarState extends State<EditorToolbar> {
                   child: _DocumentListenableBuilder(
                     document: widget.document,
                     builder: (context) {
-                      return ItemSelector<_TextType>(
+                      return SuperEditorDemoTextItemSelector(
                         parentFocusNode: widget.editorFocusNode,
                         boundaryKey: widget.editorViewportKey,
-                        value: _getCurrentTextType(),
-                        items: _TextType.values,
-                        onChanged: _convertTextToNewType,
-                        activeItemDecoration: BoxDecoration(color: Colors.yellow),
-                        itemBuilder: (context, item) => Text(
-                          _getTextTypeName(item),
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 12,
-                          ),
+                        value: SuperEditorDemoTextItem(
+                          value: _getCurrentTextType().name,
+                          label: _getTextTypeName(_getCurrentTextType()),
                         ),
-                        selectedItemBuilder: (context, item) => Padding(
-                          padding: EdgeInsets.only(left: 16.0, right: 24),
-                          child: Text(
-                            _getTextTypeName(item!),
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
+                        items: _TextType.values
+                            .map(
+                              (e) => SuperEditorDemoTextItem(
+                                value: e.name,
+                                label: _getTextTypeName(e),
+                              ),
+                            )
+                            .toList(),
+                        onSelected: (selectedItem) {
+                          if (selectedItem != null) {
+                            _convertTextToNewType(_TextType.values //
+                                .where((e) => e.name == selectedItem.value)
+                                .first);
+                          }
+                        },
                       );
                     },
                   ),
@@ -602,20 +600,21 @@ class _EditorToolbarState extends State<EditorToolbar> {
                       _buildVerticalDivider(),
                       Tooltip(
                         message: AppLocalizations.of(context)!.labelTextAlignment,
-                        child: ItemSelector<TextAlign>(
-                          value: _getCurrentTextAlignment(),
-                          items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify],
-                          onChanged: _changeAlignment,
-                          boundaryKey: widget.editorViewportKey,
+                        child: SuperEditorDemoIconItemSelector(
                           parentFocusNode: widget.editorFocusNode,
-                          itemBuilder: (context, item) => Icon(_buildTextAlignIcon(item)),
-                          activeItemDecoration: BoxDecoration(color: Colors.yellow),
-                          selectedItemBuilder: (context, item) => Padding(
-                            padding: EdgeInsets.only(left: 8.0, right: 24),
-                            child: Icon(
-                              _buildTextAlignIcon(item!),
-                            ),
+                          boundaryKey: widget.editorViewportKey,
+                          value: SuperEditorDemoIconItem(
+                            value: _getCurrentTextAlignment().name,
+                            icon: _buildTextAlignIcon(_getCurrentTextAlignment()),
                           ),
+                          items: TextAlign.values
+                              .map((e) => SuperEditorDemoIconItem(icon: _buildTextAlignIcon(e), value: e.name))
+                              .toList(),
+                          onSelected: (selectedItem) {
+                            if (selectedItem != null) {
+                              _changeAlignment(TextAlign.values.firstWhere((e) => e.name == selectedItem.value));
+                            }
+                          },
                         ),
                       ),
                     ],
