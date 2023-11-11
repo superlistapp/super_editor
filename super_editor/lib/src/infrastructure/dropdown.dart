@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_pipeline.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// A selection control, which displays a button with the selected item, and upon tap, displays a
@@ -385,6 +386,11 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
   ScrollController get scrollController => _scrollController;
   final ScrollController _scrollController = ScrollController();
 
+  final GlobalKey _scrollableKey = GlobalKey();
+
+  /// Holds keys to each item on the list.
+  final List<GlobalKey> _itemKeys = [];
+
   @override
   void dispose() {
     _popoverController.dispose();
@@ -406,8 +412,9 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
 
       int selectedItemIndex = widget.items.indexOf(selectedItem);
       if (selectedItemIndex > -1) {
-        _activeIndex = selectedItemIndex;
-        widget.onItemActivated?.call(widget.items[selectedItemIndex]);
+        // We just opened the popover.
+        // Jump to the active item without animation.
+        _activateItem(selectedItemIndex, Duration.zero);
       } else {
         // A selected item was provided, but it isn't included in the list of items.
         _activeIndex = null;
@@ -419,6 +426,40 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
   void _selectItem(T item) {
     widget.onItemSelected(item);
     _popoverController.close();
+  }
+
+  /// Activates the item at [itemIndex] and ensure it's visible on screen.
+  void _activateItem(int? itemIndex, Duration animationDuration) {
+    _activeIndex = itemIndex;
+    if (itemIndex != null) {
+      widget.onItemActivated?.call(widget.items[itemIndex]);
+    }
+
+    // Scrolls on the next frame to let the popover to be
+    // laid-out first, so we can access its RenderBox.
+    onNextFrame((timeStamp) {
+      _ensureActiveItemIsVisible(animationDuration);
+    });
+  }
+
+  /// Scrolls the popover scrollable to display the selected item.
+  void _ensureActiveItemIsVisible(Duration animationDuration) {
+    if (_activeIndex == null) {
+      return;
+    }
+
+    final key = _itemKeys[_activeIndex!];
+
+    final childRenderBox = key.currentContext?.findRenderObject() as RenderBox?;
+    if (childRenderBox == null) {
+      return;
+    }
+
+    childRenderBox.showOnScreen(
+      rect: Offset.zero & childRenderBox.size,
+      duration: animationDuration,
+      curve: Curves.easeIn,
+    );
   }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
@@ -476,10 +517,7 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
     }
 
     setState(() {
-      _activeIndex = newActiveIndex;
-      if (_activeIndex != null) {
-        widget.onItemActivated?.call(widget.items[_activeIndex!]);
-      }
+      _activateItem(newActiveIndex, const Duration(milliseconds: 100));
     });
 
     return KeyEventResult.handled;
@@ -499,6 +537,23 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
   }
 
   Widget _buildPopover(BuildContext context) {
+    final children = <Widget>[];
+    _itemKeys.clear();
+
+    for (int i = 0; i < widget.items.length; i++) {
+      final key = GlobalKey();
+      children.add(Container(
+        key: key,
+        child: widget.itemBuilder(
+          context,
+          widget.items[i],
+          i == _activeIndex,
+          () => _selectItem(widget.items[i]),
+        ),
+      ));
+      _itemKeys.add(key);
+    }
+
     return PopoverShape(
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
@@ -511,19 +566,12 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
           child: Scrollbar(
             thumbVisibility: true,
             child: SingleChildScrollView(
+              key: _scrollableKey,
               primary: true,
               child: IntrinsicWidth(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (int i = 0; i < widget.items.length; i++) //
-                      widget.itemBuilder(
-                        context,
-                        widget.items[i],
-                        i == _activeIndex,
-                        () => _selectItem(widget.items[i]),
-                      ),
-                  ],
+                  children: children,
                 ),
               ),
             ),
