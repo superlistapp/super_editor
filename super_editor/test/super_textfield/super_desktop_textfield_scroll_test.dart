@@ -1021,6 +1021,7 @@ Future<void> _pumpTestApp(
           ),
           child: SuperTextField(
             textController: textController,
+            configuration: SuperTextFieldPlatformConfiguration.desktop,
             textStyleBuilder: (_) => const TextStyle(fontSize: 20),
             minLines: minLines,
             maxLines: maxLines,
@@ -1067,6 +1068,7 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
     SliverToBoxAdapter(
       child: SuperTextField(
         textController: textController,
+        configuration: SuperTextFieldPlatformConfiguration.desktop,
         textStyleBuilder: (_) => const TextStyle(fontSize: 20),
         // Force the text field to be tall enough to easily see content scrolling by,
         // but short enough to ensure that the content is scrollable.
