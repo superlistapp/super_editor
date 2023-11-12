@@ -26,7 +26,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.placeCaretInSuperDesktopTextField(0);
+          await tester.placeCaretInSuperTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -61,7 +61,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.placeCaretInSuperDesktopTextField(0);
+          await tester.placeCaretInSuperTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -99,7 +99,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.placeCaretInSuperDesktopTextField(0);
+          await tester.placeCaretInSuperTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -138,7 +138,7 @@ void main() {
           );
 
           // Tap on the text field to focus it.
-          await tester.placeCaretInSuperDesktopTextField(0);
+          await tester.placeCaretInSuperTextField(0);
 
           // Find text field scrollable.
           final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -177,7 +177,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -218,7 +218,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -257,7 +257,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -297,7 +297,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -335,7 +335,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -369,7 +369,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -401,7 +401,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -440,7 +440,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -481,7 +481,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -562,7 +562,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
@@ -651,7 +651,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Scroll all the way to the text field's bottom.
             if (defaultTargetPlatform == TargetPlatform.macOS) {
@@ -729,7 +729,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Scroll all the way to the text field's bottom.
             await tester.pressEnd();
@@ -789,7 +789,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Ensure we are at the top of the textfiled.
             expect(
@@ -878,7 +878,7 @@ void main() {
             );
 
             // Tap on the text field to focus it.
-            await tester.placeCaretInSuperDesktopTextField(0);
+            await tester.placeCaretInSuperTextField(0);
 
             // Ensure we are at the top of the textfiled.
             expect(
@@ -1019,7 +1019,7 @@ Future<void> _pumpTestApp(
             maxWidth: maxWidth ?? double.infinity,
             maxHeight: maxHeight ?? double.infinity,
           ),
-          child: SuperDesktopTextField(
+          child: SuperTextField(
             textController: textController,
             textStyleBuilder: (_) => const TextStyle(fontSize: 20),
             minLines: minLines,
@@ -1065,7 +1065,7 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
         }),
       ),
     SliverToBoxAdapter(
-      child: SuperDesktopTextField(
+      child: SuperTextField(
         textController: textController,
         textStyleBuilder: (_) => const TextStyle(fontSize: 20),
         // Force the text field to be tall enough to easily see content scrolling by,
