@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/src/foundation/diagnostics.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_text_field.dart';
 
@@ -22,24 +23,32 @@ class _SuperTextFieldDemoState extends State<_SuperTextFieldDemo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Actions(
-        actions: {
-          DismissIntent: CallbackAction<DismissIntent>(onInvoke: (DismissIntent intent) {
-            print("Action executed for dismiss intent");
-            return null;
-          }),
+      body: Shortcuts(
+        shortcuts: {
+          SingleActivator(LogicalKeyboardKey.escape): ExceptionIntent("This should never execute!"),
         },
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 500),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SingleLineTextField(),
-                const SizedBox(height: 16),
-                MultiLineTextField(),
-              ],
+        child: Actions(
+          actions: {
+            DismissIntent: CallbackAction<DismissIntent>(onInvoke: (DismissIntent intent) {
+              print("Action executed for dismiss intent");
+              return null;
+            }),
+            ExceptionIntent: CallbackAction<ExceptionIntent>(onInvoke: (ExceptionIntent intent) {
+              throw Exception(intent.message);
+            }),
+          },
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 500),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SingleLineTextField(),
+                  const SizedBox(height: 16),
+                  MultiLineTextField(),
+                ],
+              ),
             ),
           ),
         ),
@@ -178,4 +187,10 @@ class _MultiLineTextFieldState extends State<MultiLineTextField> {
       ),
     );
   }
+}
+
+class ExceptionIntent extends Intent {
+  const ExceptionIntent(this.message);
+
+  final String message;
 }

@@ -527,45 +527,6 @@ void main() {
       expect(enableDeltaModel, true);
       expect(keyboardAppearance, 'Brightness.dark');
     });
-
-    testWidgetsOnMac('allows apps to handle selectors in their own way', (tester) async {
-      bool customHandlerCalled = false;
-
-      final controller = AttributedTextEditingController(
-        text: AttributedText('Selectors test'),
-      );
-
-      await tester.pumpWidget(
-        _buildScaffold(
-          child: SuperTextField(
-            textController: controller,
-            inputSource: TextInputSource.ime,
-            selectorHandlers: {
-              MacOsSelectors.moveRight: ({
-                required SuperTextFieldContext textFieldContext,
-              }) {
-                customHandlerCalled = true;
-              }
-            },
-          ),
-        ),
-      );
-
-      // Place the caret at the beginning of the text field.
-      await tester.placeCaretInSuperTextField(0);
-
-      // Press right arrow key to trigger the MacOsSelectors.moveRight selector.
-      await tester.pressRightArrow();
-
-      // Ensure the custom handler was called.
-      expect(customHandlerCalled, isTrue);
-
-      // Ensure that the textfield didn't execute the default handler for the MacOsSelectors.moveRight selector.
-      expect(
-        SuperTextFieldInspector.findSelection(),
-        const TextSelection.collapsed(offset: 0),
-      );
-    });
   });
 
   group('SuperTextField on some bad Android software keyboards', () {

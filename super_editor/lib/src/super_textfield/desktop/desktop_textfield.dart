@@ -990,7 +990,15 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
     }
 
     _log.finest("Key handler result: $result");
-    return result == TextFieldKeyboardHandlerResult.handled ? KeyEventResult.handled : KeyEventResult.ignored;
+    switch (result) {
+      case TextFieldKeyboardHandlerResult.handled:
+        return KeyEventResult.handled;
+      case TextFieldKeyboardHandlerResult.sendToOperatingSystem:
+        return KeyEventResult.skipRemainingHandlers;
+      case TextFieldKeyboardHandlerResult.blocked:
+      case TextFieldKeyboardHandlerResult.notHandled:
+        return KeyEventResult.ignored;
+    }
   }
 
   @override
@@ -1296,7 +1304,6 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   }
 
   void _onPerformSelector(String selectorName) {
-    print("_onPerformSelector: $selectorName");
     final handler = widget.selectorHandlers[selectorName];
     if (handler == null) {
       editorImeLog.warning("No handler found for $selectorName");
@@ -1676,6 +1683,20 @@ enum TextFieldKeyboardHandlerResult {
   /// (possibly) be handled by other keyboard/shortcut
   /// listeners.
   blocked,
+
+  /// The handler recognized the key event but chose to
+  /// take no action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event shouldn't bubble up the Flutter tree,
+  /// but it should be sent to the operating system (rather
+  /// than being consumed and disposed).
+  ///
+  /// Use this result, for example, when Mac OS needs to
+  /// convert a key event into a selector, and send that
+  /// selector through the IME.
+  sendToOperatingSystem,
 
   /// The handler has no relation to the key event and
   /// took no action.
@@ -2198,7 +2219,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       // For the full list of selectors handled by SuperEditor, see the MacOsSelectors class.
       //
       // This is needed for the interaction with the accent panel to work.
-      return TextFieldKeyboardHandlerResult.blocked;
+      return TextFieldKeyboardHandlerResult.sendToOperatingSystem;
     }
 
     return TextFieldKeyboardHandlerResult.notHandled;
