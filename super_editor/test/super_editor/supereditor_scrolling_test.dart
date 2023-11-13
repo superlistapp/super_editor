@@ -714,8 +714,7 @@ void main() {
             .createDocument() //
             .withLongTextContent()
             .withEditorSize(const Size(200, 200))
-            .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .insideCustomScrollView(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -756,8 +755,7 @@ void main() {
             .createDocument() //
             .withLongTextContent()
             .withEditorSize(const Size(200, 200))
-            .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .insideCustomScrollView(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -794,10 +792,9 @@ void main() {
         final scrollController = ScrollController();
 
         await tester
-            .createDocument()
+            .createDocument() //
             .withSingleParagraph()
-            .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .insideCustomScrollView(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -828,8 +825,7 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withEditorSize(const Size(200, 200))
-            .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .insideCustomScrollView(scrollController)
             .pump();
 
         // Jump to the bottom.
@@ -840,9 +836,6 @@ void main() {
           startLocation: tester.getRect(find.byType(CustomScrollView)).bottomCenter - const Offset(0, 10),
           totalDragOffset: const Offset(0, -400.0),
         );
-
-        // Ensure we don't scroll.
-        expect(scrollController.offset, scrollController.position.maxScrollExtent);
 
         // Ensure we don't scroll.
         expect(scrollController.offset, scrollController.position.maxScrollExtent);
@@ -862,8 +855,7 @@ void main() {
         await tester
             .createDocument() //
             .withLongTextContent()
-            .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .insideCustomScrollView(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -898,8 +890,7 @@ void main() {
             .createDocument() //
             .withLongTextContent()
             .withEditorSize(const Size(200, 200))
-            .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .insideCustomScrollView(scrollController)
             .pump();
 
         // Jump to the bottom.

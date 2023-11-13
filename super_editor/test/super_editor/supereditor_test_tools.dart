@@ -304,15 +304,8 @@ class TestSuperEditorConfigurator {
   /// Configures the [SuperEditor] to be displayed inside a [CustomScrollView].
   ///
   /// The [CustomScrollView] is constrained by the size provided in [withEditorSize].
-  TestSuperEditorConfigurator insideCustomScrollView() {
+  TestSuperEditorConfigurator insideCustomScrollView([ScrollController? scrollController]) {
     _config.insideCustomScrollView = true;
-    return this;
-  }
-
-  /// Configures the ancestor [CustomScrollView] to use the given [scrollController].
-  ///
-  /// The [CustomScrollView] must be added to the configuration by calling [insideCustomScrollView].
-  TestSuperEditorConfigurator withCustomScrollViewScrollController(ScrollController? scrollController) {
     _config.customScrollViewScrollController = scrollController;
     return this;
   }
@@ -417,17 +410,18 @@ class TestSuperEditorConfigurator {
 
   /// Places [child] inside a [CustomScrollView], based on configurations in this class.
   Widget _buildAncestorScrollable({required Widget child}) {
-    if (_config.insideCustomScrollView) {
-      return CustomScrollView(
-        controller: _config.customScrollViewScrollController,
-        slivers: [
-          SliverToBoxAdapter(
-            child: child,
-          ),
-        ],
-      );
+    if (!_config.insideCustomScrollView) {
+      return child;
     }
-    return child;
+
+    return CustomScrollView(
+      controller: _config.customScrollViewScrollController,
+      slivers: [
+        SliverToBoxAdapter(
+          child: child,
+        ),
+      ],
+    );
   }
 
   /// Builds a [SuperEditor] widget based on the configuration of the given
@@ -487,6 +481,8 @@ class SuperEditorTestConfiguration {
   List<ComponentBuilder>? componentBuilders;
   Stylesheet? stylesheet;
   ScrollController? scrollController;
+  bool insideCustomScrollView = false;
+  ScrollController? customScrollViewScrollController;
   DocumentGestureMode? gestureMode;
   TextInputSource? inputSource;
   SuperEditorSelectionPolicies? selectionPolicies;
@@ -507,9 +503,6 @@ class SuperEditorTestConfiguration {
   final plugins = <SuperEditorPlugin>{};
 
   WidgetTreeBuilder? widgetTreeBuilder;
-
-  bool insideCustomScrollView = false;
-  ScrollController? customScrollViewScrollController;
 }
 
 /// Must return a widget tree containing the given [superEditor]
