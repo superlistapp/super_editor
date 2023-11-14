@@ -2,12 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
+import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// A selection control, which displays a button with the selected item, and upon tap, displays a
 /// popover list of available text options, from which the user can select a different
 /// option.
-class SuperEditorDemoTextItemSelector extends StatelessWidget {
+///
+/// Unlike Flutter `DropdownButton`, which displays the popover list in a separate route,
+/// this widget displays its popover list in an `Overlay`. By using an `Overlay`, focus can be shared
+/// with the [parentFocusNode]. This means that when the popover list requests focus, [parentFocusNode]
+/// still has non-primary focus.
+///
+/// The popover list is positioned based on the following rules:
+///
+///    1. The popover is displayed below the selected item, if there's enough room, or
+///    2. The popover is displayed above the selected item, if there's enough room, or
+///    3. The popover is displayed with its bottom aligned with the bottom of
+///         the given boundary, and it covers the selected item.
+///
+/// The popover list height is based on the following rules:
+///
+///    1. The popover is displayed as tall as all items in the list, if there's enough room, or
+///    2. The popover is displayed as tall as the available space and becomes scrollable.
+///
+/// The popover list includes keyboard selection behaviors:
+///
+///   * Pressing UP/DOWN moves the "active" item selection up/down.
+///   * Pressing UP with the first item active moves the active item selection to the last item.
+///   * Pressing DOWN with the last item active moves the active item selection to the first item.
+///   * Pressing ENTER selects the currently active item and closes the popover list.
+class SuperEditorDemoTextItemSelector extends StatefulWidget {
   const SuperEditorDemoTextItemSelector({
     super.key,
     this.value,
@@ -31,21 +56,68 @@ class SuperEditorDemoTextItemSelector extends StatelessWidget {
   final void Function(SuperEditorDemoTextItem? value) onSelected;
 
   /// The [FocusNode], to which the popover list's [FocusNode] will be added as a child.
+  ///
+  /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
+  /// entire ancestor path to "have focus", but only the lowest level descendant
+  /// in that path has "primary focus". This path is important because various
+  /// widgets alter their presentation or behavior based on whether or not they
+  /// currently have focus, even if they only have "non-primary focus".
+  ///
+  /// When the popover list of items is visible, that list will have primary focus.
+  /// Moreover, because the popover list is built in an `Overlay`, none of your
+  /// widgets are in the natural focus path for that popover list. Therefore, if you
+  /// need your widget tree to retain focus while the popover list is visible, then
+  /// you need to provide the [FocusNode] that the popover list should use as its
+  /// parent, thereby retaining focus for your widgets.
   final FocusNode? parentFocusNode;
 
   /// A [GlobalKey] to a widget that determines the bounds where the popover list can be displayed.
+  ///
+  /// As the popover list follows the selected item, it can be displayed off-screen if this [SuperEditorDemoTextItemSelector]
+  /// is close to the bottom of the screen.
+  ///
+  /// Passing a [boundaryKey] causes the popover list to be confined to the bounds of the widget
+  /// bound to the [boundaryKey].
+  ///
+  /// If `null`, the popover list is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
   final GlobalKey? boundaryKey;
 
   @override
+  State<SuperEditorDemoTextItemSelector> createState() => _SuperEditorDemoTextItemSelectorState();
+}
+
+class _SuperEditorDemoTextItemSelectorState extends State<SuperEditorDemoTextItemSelector> {
+  /// Shows and hides the popover.
+  final PopoverController _popoverController = PopoverController();
+
+  /// The [FocusNode] of the popover list.
+  final FocusNode _popoverFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _popoverController.dispose();
+    _popoverFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ItemSelectionList<SuperEditorDemoTextItem>(
-      value: value,
-      items: items,
+    return PopoverScaffold(
+      controller: _popoverController,
       buttonBuilder: _buildButton,
-      itemBuilder: _buildPopoverListItem,
-      onItemSelected: onSelected,
-      parentFocusNode: parentFocusNode,
-      boundaryKey: boundaryKey,
+      popoverFocusNode: _popoverFocusNode,
+      boundaryKey: widget.boundaryKey,
+      popoverBuilder: (context) => PopoverShape(
+        child: ItemSelectionList<SuperEditorDemoTextItem>(
+          value: widget.value,
+          items: widget.items,
+          itemBuilder: _buildPopoverListItem,
+          onItemSelected: _onItemSelected,
+          onCancel: () => _popoverController.close(),
+          focusNode: _popoverFocusNode,
+          parentFocusNode: widget.parentFocusNode,
+        ),
+      ),
     );
   }
 
@@ -72,20 +144,25 @@ class SuperEditorDemoTextItemSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildButton(BuildContext context, SuperEditorDemoTextItem? selectedItem, VoidCallback onTap) {
+  Widget _buildButton(BuildContext context) {
     return PopoverArrowButton(
-      onTap: onTap,
+      onTap: () => _popoverController.open(),
       padding: const EdgeInsets.only(left: 16.0, right: 24),
-      child: selectedItem == null //
+      child: widget.value == null //
           ? const SizedBox()
           : Text(
-              selectedItem.label,
+              widget.value!.label,
               style: const TextStyle(
                 color: Colors.black,
                 fontSize: 12,
               ),
             ),
     );
+  }
+
+  void _onItemSelected(SuperEditorDemoTextItem? value) {
+    _popoverController.close();
+    widget.onSelected(value);
   }
 }
 
@@ -115,7 +192,31 @@ class SuperEditorDemoTextItem {
 
 /// A selection control, which displays a button with the selected item, and upon tap, displays a
 /// popover list of available icons, from which the user can select a different option.
-class SuperEditorDemoIconItemSelector extends StatelessWidget {
+///
+/// Unlike Flutter `DropdownButton`, which displays the popover list in a separate route,
+/// this widget displays its popover list in an `Overlay`. By using an `Overlay`, focus can be shared
+/// with the [parentFocusNode]. This means that when the popover list requests focus, [parentFocusNode]
+/// still has non-primary focus.
+///
+/// The popover list is positioned based on the following rules:
+///
+///    1. The popover is displayed below the selected item, if there's enough room, or
+///    2. The popover is displayed above the selected item, if there's enough room, or
+///    3. The popover is displayed with its bottom aligned with the bottom of
+///         the given boundary, and it covers the selected item.
+///
+/// The popover list height is based on the following rules:
+///
+///    1. The popover is displayed as tall as all items in the list, if there's enough room, or
+///    2. The popover is displayed as tall as the available space and becomes scrollable.
+///
+/// The popover list includes keyboard selection behaviors:
+///
+///   * Pressing UP/DOWN moves the "active" item selection up/down.
+///   * Pressing UP with the first item active moves the active item selection to the last item.
+///   * Pressing DOWN with the last item active moves the active item selection to the first item.
+///   * Pressing ENTER selects the currently active item and closes the popover list.
+class SuperEditorDemoIconItemSelector extends StatefulWidget {
   const SuperEditorDemoIconItemSelector({
     super.key,
     this.value,
@@ -139,21 +240,67 @@ class SuperEditorDemoIconItemSelector extends StatelessWidget {
   final void Function(SuperEditorDemoIconItem? value) onSelected;
 
   /// The [FocusNode], to which the popover list's [FocusNode] will be added as a child.
+  ///
+  /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
+  /// entire ancestor path to "have focus", but only the lowest level descendant
+  /// in that path has "primary focus". This path is important because various
+  /// widgets alter their presentation or behavior based on whether or not they
+  /// currently have focus, even if they only have "non-primary focus".
+  ///
+  /// When the popover list of items is visible, that list will have primary focus.
+  /// Moreover, because the popover list is built in an `Overlay`, none of your
+  /// widgets are in the natural focus path for that popover list. Therefore, if you
+  /// need your widget tree to retain focus while the popover list is visible, then
+  /// you need to provide the [FocusNode] that the popover list should use as its
+  /// parent, thereby retaining focus for your widgets.
   final FocusNode? parentFocusNode;
 
   /// A [GlobalKey] to a widget that determines the bounds where the popover list can be displayed.
+  ///
+  /// As the popover list follows the selected item, it can be displayed off-screen if this [SuperEditorDemoIconItemSelector]
+  /// is close to the bottom of the screen.
+  ///
+  /// Passing a [boundaryKey] causes the popover list to be confined to the bounds of the widget
+  /// bound to the [boundaryKey].
+  ///
+  /// If `null`, the popover list is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
   final GlobalKey? boundaryKey;
 
   @override
+  State<SuperEditorDemoIconItemSelector> createState() => _SuperEditorDemoIconItemSelectorState();
+}
+
+class _SuperEditorDemoIconItemSelectorState extends State<SuperEditorDemoIconItemSelector> {
+  /// Shows and hides the popover.
+  final PopoverController _popoverController = PopoverController();
+
+  /// The [FocusNode] of the popover list.
+  final FocusNode _popoverFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _popoverController.dispose();
+    _popoverFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ItemSelectionList<SuperEditorDemoIconItem>(
-      value: value,
-      items: items,
+    return PopoverScaffold(
+      controller: _popoverController,
       buttonBuilder: _buildButton,
-      itemBuilder: _buildItem,
-      onItemSelected: onSelected,
-      parentFocusNode: parentFocusNode,
-      boundaryKey: boundaryKey,
+      popoverFocusNode: _popoverFocusNode,
+      popoverBuilder: (context) => PopoverShape(
+        child: ItemSelectionList<SuperEditorDemoIconItem>(
+          value: widget.value,
+          items: widget.items,
+          itemBuilder: _buildItem,
+          onItemSelected: _onItemSelected,
+          onCancel: () => _popoverController.close(),
+          parentFocusNode: widget.parentFocusNode,
+          focusNode: _popoverFocusNode,
+        ),
+      ),
     );
   }
 
@@ -174,14 +321,19 @@ class SuperEditorDemoIconItemSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildButton(BuildContext context, SuperEditorDemoIconItem? selectedItem, VoidCallback onTap) {
+  Widget _buildButton(BuildContext context) {
     return PopoverArrowButton(
-      onTap: onTap,
+      onTap: () => _popoverController.open(),
       padding: const EdgeInsets.only(left: 8.0, right: 24),
-      child: selectedItem == null //
+      child: widget.value == null //
           ? const SizedBox()
-          : Icon(selectedItem.icon),
+          : Icon(widget.value!.icon),
     );
+  }
+
+  void _onItemSelected(SuperEditorDemoIconItem? value) {
+    _popoverController.close();
+    widget.onSelected(value);
   }
 }
 
@@ -278,9 +430,7 @@ class PopoverArrowButton extends StatelessWidget {
 ///    2. The popover is displayed as tall as all items in the list, if there's enough room, or
 ///    3. The popover is displayed as tall as the available space and becomes scrollable.
 ///
-/// Provide a [popoverGeometry] to control the size and position of the popover. The popover
-/// is first sized given the [PopoverGeometry.constraints] and then positioned using the
-/// [PopoverGeometry.align].
+
 ///
 /// The popover list includes keyboard selection behaviors:
 ///
@@ -293,13 +443,12 @@ class ItemSelectionList<T> extends StatefulWidget {
     super.key,
     required this.value,
     required this.items,
-    required this.buttonBuilder,
     required this.itemBuilder,
     this.onItemActivated,
     required this.onItemSelected,
-    this.popoverGeometry,
+    this.onCancel,
+    this.focusNode,
     this.parentFocusNode,
-    this.boundaryKey,
   });
 
   /// The currently selected value or `null` if no item is selected.
@@ -311,13 +460,6 @@ class ItemSelectionList<T> extends StatefulWidget {
   ///
   /// For each item, [itemBuilder] is called to build its visual representation.
   final List<T> items;
-
-  /// Builds the selected item which, upon tap, opens the popover list.
-  ///
-  /// This method is called with the currently selected [value].
-  ///
-  /// The provided `onTap` must be called when the button is tapped.
-  final PopoverListButtonBuilder<T> buttonBuilder;
 
   /// Builds each item in the popover list.
   ///
@@ -340,37 +482,14 @@ class ItemSelectionList<T> extends StatefulWidget {
   ///    2. Pressing ENTER when the popover list has an active item.
   final ValueChanged<T?> onItemSelected;
 
-  /// Controls the size and position of the popover.
-  ///
-  /// The popover is first sized, then positioned.
-  final PopoverGeometry? popoverGeometry;
+  /// Called when the user presses ESCAPE.
+  final VoidCallback? onCancel;
 
-  /// The [FocusNode], to which the popover list's [FocusNode] will be added as a child.
-  ///
-  /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
-  /// entire ancestor path to "have focus", but only the lowest level descendant
-  /// in that path has "primary focus". This path is important because various
-  /// widgets alter their presentation or behavior based on whether or not they
-  /// currently have focus, even if they only have "non-primary focus".
-  ///
-  /// When the popover list of items is visible, that list will have primary focus.
-  /// Moreover, because the popover list is built in an `Overlay`, none of your
-  /// widgets are in the natural focus path for that popover list. Therefore, if you
-  /// need your widget tree to retain focus while the popover list is visible, then
-  /// you need to provide the [FocusNode] that the popover list should use as its
-  /// parent, thereby retaining focus for your widgets.
+  /// The [FocusNode] of the list.
+  final FocusNode? focusNode;
+
+  /// The [FocusNode], to which the list's [FocusNode] will be added as a child.
   final FocusNode? parentFocusNode;
-
-  /// A [GlobalKey] to a widget that determines the bounds where the popover list can be displayed.
-  ///
-  /// As the popover list follows the selected item, it can be displayed off-screen if this [ItemSelectionList]
-  /// is close to the bottom of the screen.
-  ///
-  /// Passing a [boundaryKey] causes the popover list to be confined to the bounds of the widget
-  /// bound to the [boundaryKey].
-  ///
-  /// If `null`, the popover list is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
-  final GlobalKey? boundaryKey;
 
   @override
   State<ItemSelectionList<T>> createState() => ItemSelectionListState<T>();
@@ -379,8 +498,6 @@ class ItemSelectionList<T> extends StatefulWidget {
 @visibleForTesting
 class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleTickerProviderStateMixin {
   int? _activeIndex;
-
-  final PopoverController _popoverController = PopoverController();
 
   @visibleForTesting
   ScrollController get scrollController => _scrollController;
@@ -392,40 +509,40 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
   final List<GlobalKey> _itemKeys = [];
 
   @override
+  void initState() {
+    super.initState();
+    _activateSelectedItem();
+  }
+
+  @override
   void dispose() {
-    _popoverController.dispose();
     _scrollController.dispose();
 
     super.dispose();
   }
 
-  void _onButtonTap() {
-    _popoverController.open();
+  void _activateSelectedItem() {
+    final selectedItem = widget.value;
 
-    setState(() {
-      final selectedItem = widget.value;
+    if (selectedItem == null) {
+      _activeIndex = null;
+      return;
+    }
 
-      if (selectedItem == null) {
-        _activeIndex = null;
-        return;
-      }
-
-      int selectedItemIndex = widget.items.indexOf(selectedItem);
-      if (selectedItemIndex > -1) {
-        // We just opened the popover.
-        // Jump to the active item without animation.
-        _activateItem(selectedItemIndex, Duration.zero);
-      } else {
-        // A selected item was provided, but it isn't included in the list of items.
-        _activeIndex = null;
-      }
-    });
+    int selectedItemIndex = widget.items.indexOf(selectedItem);
+    if (selectedItemIndex > -1) {
+      // We just opened the popover.
+      // Jump to the active item without animation.
+      _activateItem(selectedItemIndex, Duration.zero);
+    } else {
+      // A selected item was provided, but it isn't included in the list of items.
+      _activeIndex = null;
+    }
   }
 
   /// Called when the user taps an item or presses ENTER with an active item.
-  void _selectItem(T item) {
+  void _selectItem(T? item) {
     widget.onItemSelected(item);
-    _popoverController.close();
   }
 
   /// Activates the item at [itemIndex] and ensure it's visible on screen.
@@ -478,15 +595,14 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
     }
 
     if (event.logicalKey == LogicalKeyboardKey.escape) {
-      _popoverController.close();
+      widget.onCancel?.call();
       return KeyEventResult.handled;
     }
 
     if (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter) {
       if (_activeIndex == null) {
         // The user pressed ENTER without an active item.
-        // Close the popover without changing the selected item.
-        _popoverController.close();
+        _selectItem(null);
         return KeyEventResult.handled;
       }
 
@@ -525,18 +641,6 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
 
   @override
   Widget build(BuildContext context) {
-    return PopoverScaffold(
-      controller: _popoverController,
-      buttonBuilder: (context) => widget.buttonBuilder(context, widget.value, _onButtonTap),
-      popoverBuilder: _buildPopover,
-      popoverGeometry: widget.popoverGeometry ?? const PopoverGeometry(),
-      onKeyEvent: _onKeyEvent,
-      boundaryKey: widget.boundaryKey,
-      parentFocusNode: widget.parentFocusNode,
-    );
-  }
-
-  Widget _buildPopover(BuildContext context) {
     final children = <Widget>[];
     _itemKeys.clear();
 
@@ -554,7 +658,10 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
       _itemKeys.add(key);
     }
 
-    return PopoverShape(
+    return Focus(
+      focusNode: widget.focusNode,
+      parentNode: widget.parentFocusNode,
+      onKeyEvent: _onKeyEvent,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
           scrollbars: false,
@@ -642,10 +749,12 @@ class _PopoverShapeState extends State<PopoverShape> with SingleTickerProviderSt
 /// [PopoverController.open] or [PopoverController.close]. The popover is automatically closed
 /// when the user taps outside of its bounds.
 ///
+/// Provide a [popoverGeometry] to control the size and position of the popover. The popover
+/// is first sized given the [PopoverGeometry.constraints] and then positioned using the
+/// [PopoverGeometry.align].
+///
 /// When the popover is displayed it requests focus to itself, so the user can
-/// interact with the content using the keyboard. The focus is shared
-/// with the [parentFocusNode]. Provide [onKeyEvent] to handle key presses
-/// when the popover is visible.
+/// interact with the content using the keyboard.
 class PopoverScaffold extends StatefulWidget {
   const PopoverScaffold({
     super.key,
@@ -654,7 +763,7 @@ class PopoverScaffold extends StatefulWidget {
     required this.popoverBuilder,
     this.popoverGeometry = const PopoverGeometry(),
     this.onKeyEvent,
-    this.parentFocusNode,
+    this.popoverFocusNode,
     this.boundaryKey,
   });
 
@@ -676,7 +785,7 @@ class PopoverScaffold extends StatefulWidget {
   final FocusOnKeyEventCallback? onKeyEvent;
 
   /// [FocusNode] which will share focus with the popover.
-  final FocusNode? parentFocusNode;
+  final FocusNode? popoverFocusNode;
 
   /// A [GlobalKey] to a widget that determines the bounds where the popover can be displayed.
   ///
@@ -696,8 +805,7 @@ class PopoverScaffold extends StatefulWidget {
 class _PopoverScaffoldState extends State<PopoverScaffold> {
   final OverlayPortalController _overlayController = OverlayPortalController();
   final LeaderLink _popoverLink = LeaderLink();
-  final FocusNode _popoverFocusNode = FocusNode();
-  late FocusNode _parentFocusNode;
+  late FocusNode _popoverFocusNode;
 
   late FollowerBoundary _screenBoundary;
 
@@ -705,7 +813,7 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
   void initState() {
     super.initState();
 
-    _parentFocusNode = widget.parentFocusNode ?? FocusNode();
+    _popoverFocusNode = widget.popoverFocusNode ?? FocusNode();
     widget.controller.addListener(_onPopoverControllerChanged);
   }
 
@@ -723,12 +831,12 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
       widget.controller.addListener(_onPopoverControllerChanged);
     }
 
-    if (oldWidget.parentFocusNode != widget.parentFocusNode) {
-      if (oldWidget.parentFocusNode == null) {
-        _parentFocusNode.dispose();
+    if (oldWidget.popoverFocusNode != widget.popoverFocusNode) {
+      if (oldWidget.popoverFocusNode == null) {
+        _popoverFocusNode.dispose();
       }
 
-      _parentFocusNode = widget.parentFocusNode ?? FocusNode();
+      _popoverFocusNode = widget.popoverFocusNode ?? FocusNode();
     }
 
     if (oldWidget.boundaryKey != widget.boundaryKey) {
@@ -741,8 +849,8 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
     widget.controller.removeListener(_onPopoverControllerChanged);
     _popoverLink.dispose();
 
-    if (widget.parentFocusNode == null) {
-      _parentFocusNode.dispose();
+    if (widget.popoverFocusNode == null) {
+      _popoverFocusNode.dispose();
     }
 
     super.dispose();
@@ -779,14 +887,6 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
     widget.controller.close();
   }
 
-  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
-    if (widget.onKeyEvent != null) {
-      return widget.onKeyEvent!(node, event);
-    }
-
-    return KeyEventResult.ignored;
-  }
-
   @override
   Widget build(BuildContext context) {
     return OverlayPortal(
@@ -802,10 +902,8 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
   Widget _buildDropdown(BuildContext context) {
     return TapRegion(
       onTapOutside: _onTapOutsideOfDropdown,
-      child: SuperEditorPopover(
-        popoverFocusNode: _popoverFocusNode,
-        editorFocusNode: _parentFocusNode,
-        onKeyEvent: _onKeyEvent,
+      child: Actions(
+        actions: disabledMacIntents,
         child: Follower.withAligner(
           link: _popoverLink,
           boundary: _screenBoundary,
