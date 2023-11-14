@@ -244,6 +244,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   void _createTextFieldContext() {
     _textFieldContext = SuperTextFieldContext(
       textFieldBuildContext: context,
+      focusNode: _focusNode,
       controller: _controller,
       getTextLayout: () => textLayout,
       scroller: _textFieldScroller,
@@ -989,7 +990,15 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
     }
 
     _log.finest("Key handler result: $result");
-    return result == TextFieldKeyboardHandlerResult.handled ? KeyEventResult.handled : KeyEventResult.ignored;
+    switch (result) {
+      case TextFieldKeyboardHandlerResult.handled:
+        return KeyEventResult.handled;
+      case TextFieldKeyboardHandlerResult.sendToOperatingSystem:
+        return KeyEventResult.skipRemainingHandlers;
+      case TextFieldKeyboardHandlerResult.blocked:
+      case TextFieldKeyboardHandlerResult.notHandled:
+        return KeyEventResult.ignored;
+    }
   }
 
   @override
@@ -1675,6 +1684,20 @@ enum TextFieldKeyboardHandlerResult {
   /// listeners.
   blocked,
 
+  /// The handler recognized the key event but chose to
+  /// take no action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event shouldn't bubble up the Flutter tree,
+  /// but it should be sent to the operating system (rather
+  /// than being consumed and disposed).
+  ///
+  /// Use this result, for example, when Mac OS needs to
+  /// convert a key event into a selector, and send that
+  /// selector through the IME.
+  sendToOperatingSystem,
+
   /// The handler has no relation to the key event and
   /// took no action.
   ///
@@ -2196,7 +2219,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       // For the full list of selectors handled by SuperEditor, see the MacOsSelectors class.
       //
       // This is needed for the interaction with the accent panel to work.
-      return TextFieldKeyboardHandlerResult.blocked;
+      return TextFieldKeyboardHandlerResult.sendToOperatingSystem;
     }
 
     return TextFieldKeyboardHandlerResult.notHandled;
@@ -2251,6 +2274,10 @@ typedef SuperTextFieldSelectorHandler = void Function({
 });
 
 const defaultTextFieldSelectorHandlers = <String, SuperTextFieldSelectorHandler>{
+  // Control.
+  MacOsSelectors.insertTab: _moveFocusNext,
+  MacOsSelectors.cancelOperation: _giveUpFocus,
+
   // Caret movement.
   MacOsSelectors.moveLeft: _moveCaretUpstream,
   MacOsSelectors.moveRight: _moveCaretDownstream,
@@ -2282,6 +2309,18 @@ const defaultTextFieldSelectorHandlers = <String, SuperTextFieldSelectorHandler>
   MacOsSelectors.deleteToEndOfLine: _deleteToEndOfLine,
   MacOsSelectors.deleteBackwardByDecomposingPreviousCharacter: _deleteUpstream,
 };
+
+void _giveUpFocus({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  textFieldContext.focusNode.unfocus();
+}
+
+void _moveFocusNext({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  textFieldContext.focusNode.nextFocus();
+}
 
 void _moveCaretUpstream({
   required SuperTextFieldContext textFieldContext,
