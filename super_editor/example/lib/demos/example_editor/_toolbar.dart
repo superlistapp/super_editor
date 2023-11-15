@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:example/demos/infrastructure/super_editor_item_selector.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -70,6 +71,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
   late FocusNode _urlFocusNode;
   ImeAttributedTextEditingController? _urlController;
 
+  SuperEditorDemoTextItem? _selectedBlockType;
+  SuperEditorDemoIconItem? _selectedAlignment;
+
   @override
   void initState() {
     super.initState();
@@ -92,6 +96,21 @@ class _EditorToolbarState extends State<EditorToolbar> {
     _screenBoundary = WidgetFollowerBoundary(
       boundaryKey: widget.editorViewportKey,
       devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+    );
+
+    // We assign the selected block type here instead of initState
+    // because we need to access `AppLocalizations.of`, which isn't
+    // available in initState.
+    final currentBlockType = _getCurrentTextType();
+    _selectedBlockType = SuperEditorDemoTextItem(
+      value: currentBlockType.name,
+      label: _getTextTypeName(currentBlockType),
+    );
+
+    final currentAlignment = _getCurrentTextAlignment();
+    _selectedAlignment = SuperEditorDemoIconItem(
+      value: currentAlignment.name,
+      icon: _buildTextAlignIcon(currentAlignment),
     );
   }
 
@@ -470,6 +489,28 @@ class _EditorToolbarState extends State<EditorToolbar> {
     }
   }
 
+  /// Called when the user selects a block type on the toolbar.
+  void _onBlockTypeSelected(SuperEditorDemoTextItem? selectedItem) {
+    if (selectedItem != null) {
+      setState(() {
+        _selectedBlockType = selectedItem;
+        _convertTextToNewType(_TextType.values //
+            .where((e) => e.name == selectedItem.value)
+            .first);
+      });
+    }
+  }
+
+  /// Called when the user selects an alignment on the toolbar.
+  void _onAlignmentSelected(SuperEditorDemoIconItem? selectedItem) {
+    if (selectedItem != null) {
+      setState(() {
+        _selectedAlignment = selectedItem;
+        _changeAlignment(TextAlign.values.firstWhere((e) => e.name == selectedItem.value));
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BuildInOrder(
@@ -522,34 +563,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
               if (_isConvertibleNode()) ...[
                 Tooltip(
                   message: AppLocalizations.of(context)!.labelTextBlockType,
-                  child: _DocumentListenableBuilder(
-                    document: widget.document,
-                    builder: (context) {
-                      return SuperEditorDemoTextItemSelector(
-                        parentFocusNode: widget.editorFocusNode,
-                        boundaryKey: widget.editorViewportKey,
-                        value: SuperEditorDemoTextItem(
-                          value: _getCurrentTextType().name,
-                          label: _getTextTypeName(_getCurrentTextType()),
-                        ),
-                        items: _TextType.values
-                            .map(
-                              (e) => SuperEditorDemoTextItem(
-                                value: e.name,
-                                label: _getTextTypeName(e),
-                              ),
-                            )
-                            .toList(),
-                        onSelected: (selectedItem) {
-                          if (selectedItem != null) {
-                            _convertTextToNewType(_TextType.values //
-                                .where((e) => e.name == selectedItem.value)
-                                .first);
-                          }
-                        },
-                      );
-                    },
-                  ),
+                  child: _buildBlockTypeSelector(),
                 ),
                 _buildVerticalDivider(),
               ],
@@ -588,39 +602,17 @@ class _EditorToolbarState extends State<EditorToolbar> {
               ),
               // Only display alignment controls if the currently selected text
               // node respects alignment. List items, for example, do not.
-              _DocumentListenableBuilder(
-                document: widget.document,
-                builder: (context) {
-                  if (!_isTextAlignable()) {
-                    return const SizedBox();
-                  }
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildVerticalDivider(),
-                      Tooltip(
-                        message: AppLocalizations.of(context)!.labelTextAlignment,
-                        child: SuperEditorDemoIconItemSelector(
-                          parentFocusNode: widget.editorFocusNode,
-                          boundaryKey: widget.editorViewportKey,
-                          value: SuperEditorDemoIconItem(
-                            value: _getCurrentTextAlignment().name,
-                            icon: _buildTextAlignIcon(_getCurrentTextAlignment()),
-                          ),
-                          items: TextAlign.values
-                              .map((e) => SuperEditorDemoIconItem(icon: _buildTextAlignIcon(e), value: e.name))
-                              .toList(),
-                          onSelected: (selectedItem) {
-                            if (selectedItem != null) {
-                              _changeAlignment(TextAlign.values.firstWhere((e) => e.name == selectedItem.value));
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+              if (_isTextAlignable()) //
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildVerticalDivider(),
+                    Tooltip(
+                      message: AppLocalizations.of(context)!.labelTextAlignment,
+                      child: _buildAlignmentSelector(),
+                    ),
+                  ],
+                ),
 
               _buildVerticalDivider(),
               Center(
@@ -635,6 +627,40 @@ class _EditorToolbarState extends State<EditorToolbar> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildAlignmentSelector() {
+    return SuperEditorDemoIconItemSelector(
+      parentFocusNode: widget.editorFocusNode,
+      boundaryKey: widget.editorViewportKey,
+      value: _selectedAlignment,
+      items: TextAlign.values
+          .map(
+            (e) => SuperEditorDemoIconItem(
+              icon: _buildTextAlignIcon(e),
+              value: e.name,
+            ),
+          )
+          .toList(),
+      onSelected: _onAlignmentSelected,
+    );
+  }
+
+  Widget _buildBlockTypeSelector() {
+    return SuperEditorDemoTextItemSelector(
+      parentFocusNode: widget.editorFocusNode,
+      boundaryKey: widget.editorViewportKey,
+      value: _selectedBlockType,
+      items: _TextType.values
+          .map(
+            (e) => SuperEditorDemoTextItem(
+              value: e.name,
+              label: _getTextTypeName(e),
+            ),
+          )
+          .toList(),
+      onSelected: _onBlockTypeSelected,
     );
   }
 
@@ -902,54 +928,5 @@ class SingleLineAttributedTextEditingController extends AttributedTextEditingCon
 
     // TODO: this is a hack. SuperTextField shouldn't insert newlines in a single
     // line field (#697).
-  }
-}
-
-/// A Widget that calls its [builder] whenever the [document] changes.
-class _DocumentListenableBuilder extends StatefulWidget {
-  const _DocumentListenableBuilder({
-    required this.document,
-    required this.builder,
-  });
-
-  /// The [document] to listen to.
-  final Document document;
-
-  final WidgetBuilder builder;
-
-  @override
-  State<_DocumentListenableBuilder> createState() => _DocumentListenableBuilderState();
-}
-
-class _DocumentListenableBuilderState extends State<_DocumentListenableBuilder> {
-  @override
-  void initState() {
-    widget.document.addListener(_onDocumentChanged);
-    super.initState();
-  }
-
-  @override
-  void didUpdateWidget(covariant _DocumentListenableBuilder oldWidget) {
-    if (oldWidget.document != widget.document) {
-      oldWidget.document.removeListener(_onDocumentChanged);
-      widget.document.addListener(_onDocumentChanged);
-    }
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
-  void dispose() {
-    widget.document.removeListener(_onDocumentChanged);
-    super.dispose();
-  }
-
-  void _onDocumentChanged(DocumentChangeLog doc) {
-    // The document has changed. Rebuild.
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return widget.builder(context);
   }
 }
