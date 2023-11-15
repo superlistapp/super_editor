@@ -91,12 +91,11 @@ class TestDocumentConfigurator {
   List<ComponentBuilder>? _componentBuilders;
   WidgetTreeBuilder? _widgetTreeBuilder;
   ScrollController? _scrollController;
+  bool _insideCustomScrollView = false;
   FocusNode? _focusNode;
   DocumentSelection? _selection;
   WidgetBuilder? _androidToolbarBuilder;
   DocumentFloatingToolbarBuilder? _iOSToolbarBuilder;
-  bool _insideCustomScrollView = false;
-  ScrollController? _customScrollViewController;
 
   /// Configures the [SuperReader] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -227,16 +226,10 @@ class TestDocumentConfigurator {
   /// Configures the [SuperReader] to be displayed inside a [CustomScrollView].
   ///
   /// The [CustomScrollView] is constrained by the size provided in [withEditorSize].
+  ///
+  /// Use [withScrollController] to define the [ScrollController] of the [CustomScrollView].
   TestDocumentConfigurator insideCustomScrollView() {
     _insideCustomScrollView = true;
-    return this;
-  }
-
-  /// Configures the ancestor [CustomScrollView] to use the given [scrollController].
-  ///
-  /// The [CustomScrollView] must be added to the configuration by calling [insideCustomScrollView].
-  TestDocumentConfigurator withCustomScrollViewScrollController(ScrollController? scrollController) {
-    _customScrollViewController = scrollController;
     return this;
   }
 
@@ -308,17 +301,18 @@ class TestDocumentConfigurator {
 
   /// Places [child] inside a [CustomScrollView], based on configurations in this class.
   Widget _buildAncestorScrollable({required Widget child}) {
-    if (_insideCustomScrollView) {
-      return CustomScrollView(
-        controller: _customScrollViewController,
-        slivers: [
-          SliverToBoxAdapter(
-            child: child,
-          ),
-        ],
-      );
+    if (!_insideCustomScrollView) {
+      return child;
     }
-    return child;
+
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverToBoxAdapter(
+          child: child,
+        ),
+      ],
+    );
   }
 
   Widget _buildWidgetTree(Widget superReader) {

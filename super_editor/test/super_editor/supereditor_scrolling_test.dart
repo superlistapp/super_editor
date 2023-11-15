@@ -714,7 +714,8 @@ void main() {
             .createDocument() //
             .withLongTextContent()
             .withEditorSize(const Size(200, 200))
-            .insideCustomScrollView(scrollController)
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -755,7 +756,8 @@ void main() {
             .createDocument() //
             .withLongTextContent()
             .withEditorSize(const Size(200, 200))
-            .insideCustomScrollView(scrollController)
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -794,7 +796,8 @@ void main() {
         await tester
             .createDocument() //
             .withSingleParagraph()
-            .insideCustomScrollView(scrollController)
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -825,7 +828,8 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withEditorSize(const Size(200, 200))
-            .insideCustomScrollView(scrollController)
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
             .pump();
 
         // Jump to the bottom.
@@ -855,7 +859,8 @@ void main() {
         await tester
             .createDocument() //
             .withLongTextContent()
-            .insideCustomScrollView(scrollController)
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -890,7 +895,8 @@ void main() {
             .createDocument() //
             .withLongTextContent()
             .withEditorSize(const Size(200, 200))
-            .insideCustomScrollView(scrollController)
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
             .pump();
 
         // Jump to the bottom.

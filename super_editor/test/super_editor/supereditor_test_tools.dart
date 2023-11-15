@@ -304,9 +304,10 @@ class TestSuperEditorConfigurator {
   /// Configures the [SuperEditor] to be displayed inside a [CustomScrollView].
   ///
   /// The [CustomScrollView] is constrained by the size provided in [withEditorSize].
-  TestSuperEditorConfigurator insideCustomScrollView([ScrollController? scrollController]) {
+  ///
+  /// Use [withScrollController] to define the [ScrollController] of the [CustomScrollView].
+  TestSuperEditorConfigurator insideCustomScrollView() {
     _config.insideCustomScrollView = true;
-    _config.customScrollViewScrollController = scrollController;
     return this;
   }
 
@@ -415,7 +416,7 @@ class TestSuperEditorConfigurator {
     }
 
     return CustomScrollView(
-      controller: _config.customScrollViewScrollController,
+      controller: _config.scrollController,
       slivers: [
         SliverToBoxAdapter(
           child: child,
@@ -482,7 +483,6 @@ class SuperEditorTestConfiguration {
   Stylesheet? stylesheet;
   ScrollController? scrollController;
   bool insideCustomScrollView = false;
-  ScrollController? customScrollViewScrollController;
   DocumentGestureMode? gestureMode;
   TextInputSource? inputSource;
   SuperEditorSelectionPolicies? selectionPolicies;

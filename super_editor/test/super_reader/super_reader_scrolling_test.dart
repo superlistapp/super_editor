@@ -447,7 +447,7 @@ void main() {
             .withLongTextContent()
             .withEditorSize(const Size(200, 200))
             .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .withScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -488,7 +488,7 @@ void main() {
             .withLongTextContent()
             .withEditorSize(const Size(200, 200))
             .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .withScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -527,7 +527,7 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .withScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -559,7 +559,7 @@ void main() {
             .withSingleParagraph()
             .withEditorSize(const Size(200, 200))
             .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .withScrollController(scrollController)
             .pump();
 
         // Jump to the bottom.
@@ -588,7 +588,7 @@ void main() {
             .createDocument() //
             .withLongTextContent()
             .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .withScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -624,7 +624,7 @@ void main() {
             .withLongTextContent()
             .withEditorSize(const Size(200, 200))
             .insideCustomScrollView()
-            .withCustomScrollViewScrollController(scrollController)
+            .withScrollController(scrollController)
             .pump();
 
         // Jump to the bottom.
