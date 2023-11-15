@@ -224,6 +224,17 @@ class SuperEditorAndroidControlsController {
   /// If [expandedHandlesBuilder] is `null`, default Android handles are displayed.
   final DocumentExpandedHandlesBuilder? expandedHandlesBuilder;
 
+  /// Auto-scroller that operates based on drag handle offsets.
+  ///
+  /// The [handleAutoScroller] is set and cleared by the editor's internal Android gesture system.
+  // TODO: Try to remove this. The Android controls configuration has a handle auto scroller
+  //       when the iOS version doesn't, because the iOS version has handles built into the document
+  //       layer whereas Android displays handles in the overlay. Therefore, the overlay handles need
+  //       access to an auto-scroller. But this auto-scroller exposes an internal editor implementation
+  //       in the public scope interface. We'd rather not have this here. Once the Android composition
+  //       configuration work is done in #1509, try to remove this from the public interface.
+  final handleAutoScroller = ValueNotifier<DragHandleAutoScroller?>(null);
+
   /// Whether the Android magnifier should be displayed right now.
   ValueListenable<bool> get shouldShowMagnifier => _shouldShowMagnifier;
   final _shouldShowMagnifier = ValueNotifier<bool>(false);
@@ -498,7 +509,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    _controlsController?.handleAutoScroller.value = null;
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
+    _controlsController!.handleAutoScroller.value = _handleAutoScrolling;
 
     _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
 
@@ -1652,16 +1665,17 @@ class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
   const SuperEditorAndroidControlsOverlayManager({
     super.key,
     required this.getDocumentLayout,
-    required this.autoScroller,
     required this.selection,
     required this.setSelection,
+    required this.scrollChangeSignal,
     this.child,
   });
 
   final DocumentLayoutResolver getDocumentLayout;
-  final DragHandleAutoScroller autoScroller;
   final ValueListenable<DocumentSelection?> selection;
   final void Function(DocumentSelection?) setSelection;
+
+  final SignalNotifier scrollChangeSignal;
 
   final Widget? child;
 
@@ -1695,6 +1709,29 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     _toolbarAligner = CupertinoPopoverToolbarAligner();
   }
 
+  @override
+  void didUpdateWidget(SuperEditorAndroidControlsOverlayManager oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.scrollChangeSignal != oldWidget.scrollChangeSignal) {
+      oldWidget.scrollChangeSignal.removeListener(_onDocumentScroll);
+      if (_dragHandleType != null) {
+        // The user is currently dragging a handle. Listen for scroll changes.
+        widget.scrollChangeSignal.addListener(_onDocumentScroll);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    // In case we're disposed in the middle of auto-scrolling, stop auto-scrolling and
+    // stop listening for document scroll changes.
+    _controlsController!.handleAutoScroller.value!.stopAutoScrollHandleMonitoring();
+    widget.scrollChangeSignal.removeListener(_onDocumentScroll);
+
+    super.dispose();
+  }
+
   void _onHandlePanStart(DragStartDetails details, HandleType handleType) {
     final selection = widget.selection.value;
     if (selection == null) {
@@ -1726,6 +1763,13 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       ..doNotBlinkCaret()
       ..showMagnifier()
       ..hideToolbar();
+
+    // Start auto-scrolling based on the drag-handle offset.
+    _controlsController!.handleAutoScroller.value!.startAutoScrollHandleMonitoring();
+
+    // Listen for scroll changes so that we can update the selection when the user's
+    // finger is standing still, but the document is moving beneath it during auto scrolling.
+    widget.scrollChangeSignal.addListener(_onDocumentScroll);
   }
 
   void _onHandlePanUpdate(DragUpdateDetails details) {
@@ -1737,39 +1781,8 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     // Move the selection focal point by the given delta.
     _dragHandleSelectionGlobalFocalPoint.value = _dragHandleSelectionGlobalFocalPoint.value! + details.delta;
 
-    // Move the selection to the document position that's nearest the focal point.
-    final documentLayout = widget.getDocumentLayout();
-    final nearestPosition = documentLayout.getDocumentPositionNearestToOffset(
-      documentLayout.getDocumentOffsetFromAncestorOffset(_dragHandleSelectionGlobalFocalPoint.value!),
-    )!;
-
-    // Move the magnifier focal point to match the drag x-offset, but always remain focused on the vertical
-    // center of the line.
-    final myBox = context.findRenderObject() as RenderBox;
-    final centerOfContentAtNearestPosition = documentLayout.getAncestorOffsetFromDocumentOffset(
-      documentLayout.getRectForPosition(nearestPosition)!.center,
-    );
-    _magnifierFocalPoint.value = myBox.globalToLocal(
-      Offset(
-        _magnifierFocalPoint.value!.dx + details.delta.dx,
-        centerOfContentAtNearestPosition.dy,
-      ),
-    );
-
-    switch (_dragHandleType!) {
-      case HandleType.collapsed:
-        widget.setSelection(DocumentSelection.collapsed(position: nearestPosition));
-      case HandleType.upstream:
-        widget.setSelection(DocumentSelection(
-          base: nearestPosition,
-          extent: widget.selection.value!.extent,
-        ));
-      case HandleType.downstream:
-        widget.setSelection(DocumentSelection(
-          base: widget.selection.value!.base,
-          extent: nearestPosition,
-        ));
-    }
+    // Update the selection and magnifier based on the latest drag handle offset.
+    _moveSelectionAndMagnifierToDragHandleOffset(dragDx: details.delta.dx);
   }
 
   void _onHandlePanEnd(DragEndDetails details) {
@@ -1790,17 +1803,71 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       ..blinkCaret()
       ..hideMagnifier();
 
+    // Stop auto-scrolling based on the drag-handle offset.
+    _controlsController!.handleAutoScroller.value!.stopAutoScrollHandleMonitoring();
+    widget.scrollChangeSignal.removeListener(_onDocumentScroll);
+
     // If the selection is expanded, show the toolbar.
     if (widget.selection.value?.isCollapsed == false) {
       _controlsController!.showToolbar();
     }
   }
 
-  // TODO: register this method to be notified whenever the document changes its global offset
-  void _onDocumentMove() {
-    // If the user isn't dragging a handle, return.
+  void _onDocumentScroll() {
+    if (_dragHandleType == null) {
+      // The user isn't dragging anything. We don't care that the document moved. Return.
+      return;
+    }
 
-    // Find the new document position that's nearest to the focal point after the movement and update the selection.
+    // Update the selection based on the handle's offset in the document, now that the
+    // document has scrolled.
+    _moveSelectionAndMagnifierToDragHandleOffset();
+  }
+
+  void _moveSelectionAndMagnifierToDragHandleOffset({
+    double dragDx = 0,
+  }) {
+    // Move the selection to the document position that's nearest the focal point.
+    final documentLayout = widget.getDocumentLayout();
+    final nearestPosition = documentLayout.getDocumentPositionNearestToOffset(
+      documentLayout.getDocumentOffsetFromAncestorOffset(_dragHandleSelectionGlobalFocalPoint.value!),
+    )!;
+
+    // Move the magnifier focal point to match the drag x-offset, but always remain focused on the vertical
+    // center of the line.
+    final myBox = context.findRenderObject() as RenderBox;
+    final centerOfContentAtNearestPosition = documentLayout.getAncestorOffsetFromDocumentOffset(
+      documentLayout.getRectForPosition(nearestPosition)!.center,
+    );
+    _magnifierFocalPoint.value = myBox.globalToLocal(
+      Offset(
+        _magnifierFocalPoint.value!.dx + dragDx,
+        centerOfContentAtNearestPosition.dy,
+      ),
+    );
+
+    switch (_dragHandleType!) {
+      case HandleType.collapsed:
+        widget.setSelection(DocumentSelection.collapsed(
+          position: nearestPosition,
+        ));
+      case HandleType.upstream:
+        widget.setSelection(DocumentSelection(
+          base: nearestPosition,
+          extent: widget.selection.value!.extent,
+        ));
+      case HandleType.downstream:
+        widget.setSelection(DocumentSelection(
+          base: widget.selection.value!.base,
+          extent: nearestPosition,
+        ));
+    }
+
+    // Update the auto-scroll focal point so that the viewport scrolls if we're
+    // close to the boundary.
+    _controlsController!.handleAutoScroller.value!.updateAutoScrollHandleMonitoring(
+      dragEndInViewport: centerOfContentAtNearestPosition,
+    );
   }
 
   @override

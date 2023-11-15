@@ -709,11 +709,11 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.android:
         return SuperEditorAndroidControlsOverlayManager(
           getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-          autoScroller: _autoScrollController,
           selection: _composer.selectionNotifier,
           setSelection: (newSelection) => editContext.editor.execute([
             ChangeSelectionRequest(newSelection, SelectionChangeType.pushCaret, SelectionReason.userInteraction),
           ]),
+          scrollChangeSignal: _scrollChangeSignal,
           child: child,
         );
       case DocumentGestureMode.mouse:
