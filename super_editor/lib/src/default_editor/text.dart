@@ -1498,7 +1498,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
 
   // Do nothing if CMD or CTRL are pressed because this signifies an attempted
   // shortcut.
-  if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
+  if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -1953,7 +1953,7 @@ ExecutionInstruction shiftEnterToInsertNewlineInBlock({
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!HardwareKeyboard.instance.isShiftPressed) {
+  if (!keyEvent.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 

@@ -16,6 +16,7 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
+import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_field_scroller.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
@@ -1870,7 +1871,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required KeyEvent keyEvent,
   }) {
     bool moveLeft = false;
-    if (!HardwareKeyboard.instance.isControlPressed) {
+    if (!keyEvent.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (defaultTargetPlatform != TargetPlatform.macOS) {
@@ -1931,12 +1932,12 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.handled;
     }
 
-    if (defaultTargetPlatform == TargetPlatform.windows && HardwareKeyboard.instance.isAltPressed) {
+    if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
     if (defaultTargetPlatform == TargetPlatform.linux &&
-        HardwareKeyboard.instance.isAltPressed &&
+        keyEvent.isAltPressed &&
         (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
@@ -1946,17 +1947,17 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
       MovementModifier? movementModifier;
       if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-          HardwareKeyboard.instance.isControlPressed) {
+          keyEvent.isControlPressed) {
         movementModifier = MovementModifier.word;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
         movementModifier = MovementModifier.line;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
         movementModifier = MovementModifier.word;
       }
 
       textFieldContext.controller.moveCaretHorizontally(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: HardwareKeyboard.instance.isShiftPressed,
+        expandSelection: keyEvent.isShiftPressed,
         moveLeft: true,
         movementModifier: movementModifier,
       );
@@ -1965,17 +1966,17 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
       MovementModifier? movementModifier;
       if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-          HardwareKeyboard.instance.isControlPressed) {
+          keyEvent.isControlPressed) {
         movementModifier = MovementModifier.word;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
         movementModifier = MovementModifier.line;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
         movementModifier = MovementModifier.word;
       }
 
       textFieldContext.controller.moveCaretHorizontally(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: HardwareKeyboard.instance.isShiftPressed,
+        expandSelection: keyEvent.isShiftPressed,
         moveLeft: false,
         movementModifier: movementModifier,
       );
@@ -1983,14 +1984,14 @@ class DefaultSuperTextFieldKeyboardHandlers {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling up arrow key');
       textFieldContext.controller.moveCaretVertically(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: HardwareKeyboard.instance.isShiftPressed,
+        expandSelection: keyEvent.isShiftPressed,
         moveUp: true,
       );
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling down arrow key');
       textFieldContext.controller.moveCaretVertically(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: HardwareKeyboard.instance.isShiftPressed,
+        expandSelection: keyEvent.isShiftPressed,
         moveUp: false,
       );
     }
@@ -2009,7 +2010,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
       textFieldContext.controller.moveCaretHorizontally(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: HardwareKeyboard.instance.isShiftPressed,
+        expandSelection: keyEvent.isShiftPressed,
         moveLeft: true,
         movementModifier: MovementModifier.line,
       );
@@ -2030,7 +2031,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
       textFieldContext.controller.moveCaretHorizontally(
         textLayout: textFieldContext.getTextLayout(),
-        expandSelection: HardwareKeyboard.instance.isShiftPressed,
+        expandSelection: keyEvent.isShiftPressed,
         moveLeft: false,
         movementModifier: MovementModifier.line,
       );
@@ -2047,7 +2048,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required SuperTextFieldContext textFieldContext,
     required KeyEvent keyEvent,
   }) {
-    if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) {
+    if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2142,7 +2143,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !HardwareKeyboard.instance.isAltPressed) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !keyEvent.isAltPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (textFieldContext.controller.selection.extentOffset < 0) {
@@ -2163,7 +2164,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !HardwareKeyboard.instance.isControlPressed) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !keyEvent.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (textFieldContext.controller.selection.extentOffset < 0) {

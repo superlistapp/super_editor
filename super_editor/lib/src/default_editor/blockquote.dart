@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import '../core/document.dart';
@@ -251,7 +252,7 @@ ExecutionInstruction insertNewlineInBlockquote({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!HardwareKeyboard.instance.isShiftPressed) {
+  if (!keyEvent.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 

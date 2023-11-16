@@ -655,7 +655,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
 
   // Do nothing if CMD or CTRL are pressed because this signifies an attempted
   // shortcut.
-  if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
+  if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
