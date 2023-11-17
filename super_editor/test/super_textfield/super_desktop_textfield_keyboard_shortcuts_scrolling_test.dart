@@ -13,164 +13,14 @@ import 'super_textfield_robot.dart';
 void main() {
   group("SuperDesktopTextField", () {
     group("text field scrolling", () {
-      testWidgetsOnDesktopAndWeb(
-        'PAGE DOWN scrolls down by the viewport height',
-        (tester) async {
-          final currentVariant = _scrollingVariant.currentValue;
-
-          // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
-            tester,
-            textInputSource: currentVariant.textInputSource,
-            verticalAlignment: currentVariant.verticalAlignment,
-          );
-
-          // Tap on the text field to focus it.
-          await tester.placeCaretInSuperTextField(0);
-
-          // Find text field scrollable.
-          final scrollState = tester.state<ScrollableState>(find.descendant(
-            of: find.byType(SuperDesktopTextField),
-            matching: find.byType(Scrollable),
-          ));
-
-          await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
-
-          // Let the scrolling system auto-scroll, as desired.
-          await tester.pumpAndSettle();
-
-          // Ensure we scrolled down by the viewport height.
-          expect(
-            scrollState.position.pixels,
-            equals(scrollState.position.viewportDimension),
-          );
-        },
-        variant: _scrollingVariant,
-      );
-
-      testWidgetsOnDesktopAndWeb(
-        'PAGE DOWN does not scroll past bottom of the viewport',
-        (tester) async {
-          final currentVariant = _scrollingVariant.currentValue;
-
-          // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
-            tester,
-            textInputSource: currentVariant.textInputSource,
-            verticalAlignment: currentVariant.verticalAlignment,
-          );
-
-          // Tap on the text field to focus it.
-          await tester.placeCaretInSuperTextField(0);
-
-          // Find text field scrollable.
-          final scrollState = tester.state<ScrollableState>(find.descendant(
-            of: find.byType(SuperDesktopTextField),
-            matching: find.byType(Scrollable),
-          ));
-
-          // Scroll very close to the bottom but not all the way to avoid explicit
-          // checks comparing scroll offset directly against `maxScrollExtent`
-          // and test scrolling behaviour in more realistic manner.
-          scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
-          await tester.pump();
-
-          await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
-
-          // Let the scrolling system auto-scroll, as desired.
-          await tester.pumpAndSettle();
-
-          // Ensure we didn't scroll past the bottom of the viewport.
-          expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
-        },
-        variant: _scrollingVariant,
-      );
-
-      testWidgetsOnDesktopAndWeb(
-        'PAGE UP scrolls up by the viewport height',
-        (tester) async {
-          final currentVariant = _scrollingVariant.currentValue;
-
-          // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
-            tester,
-            textInputSource: currentVariant.textInputSource,
-            verticalAlignment: currentVariant.verticalAlignment,
-          );
-
-          // Tap on the text field to focus it.
-          await tester.placeCaretInSuperTextField(0);
-
-          // Find text field scrollable.
-          final scrollState = tester.state<ScrollableState>(find.descendant(
-            of: find.byType(SuperDesktopTextField),
-            matching: find.byType(Scrollable),
-          ));
-
-          // Scroll to the bottom of the viewport.
-          scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
-          await tester.pump();
-
-          await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
-
-          // Let the scrolling system auto-scroll, as desired.
-          await tester.pumpAndSettle();
-
-          // Ensure we scrolled up by the viewport height.
-          expect(
-            scrollState.position.pixels,
-            equals(scrollState.position.maxScrollExtent - scrollState.position.viewportDimension),
-          );
-        },
-        variant: _scrollingVariant,
-      );
-
-      testWidgetsOnDesktopAndWeb(
-        'PAGE UP does not scroll past top of the viewport',
-        (tester) async {
-          final currentVariant = _scrollingVariant.currentValue;
-
-          // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-          await currentVariant!.pumpEditor(
-            tester,
-            textInputSource: currentVariant.textInputSource,
-            verticalAlignment: currentVariant.verticalAlignment,
-          );
-
-          // Tap on the text field to focus it.
-          await tester.placeCaretInSuperTextField(0);
-
-          // Find text field scrollable.
-          final scrollState = tester.state<ScrollableState>(find.descendant(
-            of: find.byType(SuperDesktopTextField),
-            matching: find.byType(Scrollable),
-          ));
-
-          // Scroll very close to the top but not all the way to avoid explicit
-          // checks comparing scroll offset directly against `minScrollExtent`
-          // and test scrolling behaviour in more realistic manner.
-          scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
-          await tester.pump();
-
-          await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
-
-          // Let the scrolling system auto-scroll, as desired.
-          await tester.pumpAndSettle();
-
-          // Ensure we didn't scroll past the top of the viewport.
-          expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
-        },
-        variant: _scrollingVariant,
-      );
-
-      group("scrolls to top of viewport", () {
-        testWidgetsOnDesktop(
-          'using CMD + HOME on mac and CTRL + HOME on other platforms',
+      group("without ancestor scrollable", () {
+        testWidgetsOnDesktopAndWeb(
+          'PAGE DOWN scrolls down by the viewport height',
           (tester) async {
-            final currentVariant = _scrollingVariant.currentValue;
+            final currentVariant = _scrollingVariant.currentValue!;
 
             // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await currentVariant!.pumpEditor(
+            await _pumpSuperDesktopTextFieldTestApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -185,216 +35,27 @@ void main() {
               matching: find.byType(Scrollable),
             ));
 
-            // Scroll to the bottom of the viewport.
-            scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
-            await tester.pump();
+            await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
 
-            // Scroll to viewport's top.
-            if (defaultTargetPlatform == TargetPlatform.macOS) {
-              await tester.pressCmdHome(tester);
-            } else {
-              await tester.pressCtrlHome(tester);
-            }
+            // Let the scrolling system auto-scroll, as desired.
+            await tester.pumpAndSettle();
 
-            // Ensure we scrolled to the viewport's top.
+            // Ensure we scrolled down by the viewport height.
             expect(
               scrollState.position.pixels,
-              equals(scrollState.position.minScrollExtent),
+              equals(scrollState.position.viewportDimension),
             );
           },
           variant: _scrollingVariant,
         );
 
-        _testWidgetsOnMacAndWebDesktop(
-          'using HOME on mac and web desktop',
+        testWidgetsOnDesktopAndWeb(
+          'PAGE DOWN does not scroll past bottom of the viewport',
           (tester) async {
-            final currentVariant = _scrollingVariant.currentValue;
+            final currentVariant = _scrollingVariant.currentValue!;
 
             // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await currentVariant!.pumpEditor(
-              tester,
-              textInputSource: currentVariant.textInputSource,
-              verticalAlignment: currentVariant.verticalAlignment,
-            );
-
-            // Tap on the text field to focus it.
-            await tester.placeCaretInSuperTextField(0);
-
-            // Find text field scrollable.
-            final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
-              matching: find.byType(Scrollable),
-            ));
-
-            // Scroll to the bottom of the viewport.
-            scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
-            await tester.pump();
-
-            // Scroll to viewport's top.
-            await tester.pressHome();
-
-            // Ensure we scrolled to the viewport's top.
-            expect(
-              scrollState.position.pixels,
-              equals(scrollState.position.minScrollExtent),
-            );
-          },
-          variant: _scrollingVariant,
-        );
-      });
-
-      group("does not scroll past top of the viewport", () {
-        testWidgetsOnDesktop(
-          "using CMD + HOME on mac and CTRL + HOME on other platforms ",
-          (tester) async {
-            final currentVariant = _scrollingVariant.currentValue;
-
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await currentVariant!.pumpEditor(
-              tester,
-              textInputSource: currentVariant.textInputSource,
-              verticalAlignment: currentVariant.verticalAlignment,
-            );
-
-            // Tap on the text field to focus it.
-            await tester.placeCaretInSuperTextField(0);
-
-            // Find text field scrollable.
-            final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
-              matching: find.byType(Scrollable),
-            ));
-
-            // Scroll very close to the top but not all the way to avoid explicit
-            // checks comparing scroll offset directly against `minScrollExtent`
-            // and test scrolling behaviour in more realistic manner.
-            scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
-            await tester.pump();
-
-            // Scroll to viewport's top.
-            if (defaultTargetPlatform == TargetPlatform.macOS) {
-              await tester.pressCmdHome(tester);
-            } else {
-              await tester.pressCtrlHome(tester);
-            }
-
-            // Ensure we didn't scroll past the viewport's top.
-            expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
-          },
-          variant: _scrollingVariant,
-        );
-
-        _testWidgetsOnMacAndWebDesktop(
-          'using HOME on mac and web desktop',
-          (tester) async {
-            final currentVariant = _scrollingVariant.currentValue;
-
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await currentVariant!.pumpEditor(
-              tester,
-              textInputSource: currentVariant.textInputSource,
-              verticalAlignment: currentVariant.verticalAlignment,
-            );
-
-            // Tap on the text field to focus it.
-            await tester.placeCaretInSuperTextField(0);
-
-            // Find text field scrollable.
-            final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
-              matching: find.byType(Scrollable),
-            ));
-
-            // Scroll very close to the top but not all the way to avoid explicit
-            // checks comparing scroll offset directly against `minScrollExtent`
-            // and test scrolling behaviour in more realistic manner.
-            scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
-            await tester.pump();
-
-            // Scroll to viewport's top.
-            await tester.pressHome();
-
-            // Ensure we didn't scroll past the viewport's top.
-            expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
-          },
-          variant: _scrollingVariant,
-        );
-      });
-
-      group("scrolls to bottom of viewport", () {
-        testWidgetsOnDesktop(
-          "using CMD + END on mac and CTRL + END on other platforms ",
-          (tester) async {
-            final currentVariant = _scrollingVariant.currentValue;
-
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await currentVariant!.pumpEditor(
-              tester,
-              textInputSource: currentVariant.textInputSource,
-              verticalAlignment: currentVariant.verticalAlignment,
-            );
-
-            // Tap on the text field to focus it.
-            await tester.placeCaretInSuperTextField(0);
-
-            // Find text field scrollable.
-            final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
-              matching: find.byType(Scrollable),
-            ));
-
-            // Scroll to viewport's bottom.
-            if (defaultTargetPlatform == TargetPlatform.macOS) {
-              await tester.pressCmdEnd(tester);
-            } else {
-              await tester.pressCtrlEnd(tester);
-            }
-
-            // Ensure we scrolled to the viewport's bottom.
-            expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
-          },
-          variant: _scrollingVariant,
-        );
-
-        _testWidgetsOnMacAndWebDesktop(
-          'using END on mac and web desktop',
-          (tester) async {
-            final currentVariant = _scrollingVariant.currentValue;
-
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await currentVariant!.pumpEditor(
-              tester,
-              textInputSource: currentVariant.textInputSource,
-              verticalAlignment: currentVariant.verticalAlignment,
-            );
-
-            // Tap on the text field to focus it.
-            await tester.placeCaretInSuperTextField(0);
-
-            // Find text field scrollable.
-            final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
-              matching: find.byType(Scrollable),
-            ));
-
-            // Scroll to viewport's bottom.
-            await tester.pressEnd();
-
-            // Ensure we scrolled to the viewport's bottom.
-            expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
-          },
-          variant: _scrollingVariant,
-        );
-      });
-
-      group("does not scroll past bottom of the viewport", () {
-        testWidgetsOnDesktop(
-          "using CMD + END on mac and CTRL + END on other platforms",
-          (tester) async {
-            final currentVariant = _scrollingVariant.currentValue;
-
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await currentVariant!.pumpEditor(
+            await _pumpSuperDesktopTextFieldTestApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -415,25 +76,439 @@ void main() {
             scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
             await tester.pump();
 
-            // Scroll to viewport's bottom.
-            if (defaultTargetPlatform == TargetPlatform.macOS) {
-              await tester.pressCmdEnd(tester);
-            } else {
-              await tester.pressCtrlEnd(tester);
-            }
-            // Ensure we didn't scroll past the viewport's bottom.
+            await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+
+            // Let the scrolling system auto-scroll, as desired.
+            await tester.pumpAndSettle();
+
+            // Ensure we didn't scroll past the bottom of the viewport.
             expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
           },
           variant: _scrollingVariant,
         );
 
-        _testWidgetsOnMacAndWebDesktop(
-          'using END on mac and web desktop',
+        testWidgetsOnDesktopAndWeb(
+          'PAGE UP scrolls up by the viewport height',
           (tester) async {
-            final currentVariant = _scrollingVariant.currentValue;
+            final currentVariant = _scrollingVariant.currentValue!;
 
             // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await currentVariant!.pumpEditor(
+            await _pumpSuperDesktopTextFieldTestApp(
+              tester,
+              textInputSource: currentVariant.textInputSource,
+              verticalAlignment: currentVariant.verticalAlignment,
+            );
+
+            // Tap on the text field to focus it.
+            await tester.placeCaretInSuperTextField(0);
+
+            // Find text field scrollable.
+            final scrollState = tester.state<ScrollableState>(find.descendant(
+              of: find.byType(SuperDesktopTextField),
+              matching: find.byType(Scrollable),
+            ));
+
+            // Scroll to the bottom of the viewport.
+            scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
+            await tester.pump();
+
+            await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+
+            // Let the scrolling system auto-scroll, as desired.
+            await tester.pumpAndSettle();
+
+            // Ensure we scrolled up by the viewport height.
+            expect(
+              scrollState.position.pixels,
+              equals(scrollState.position.maxScrollExtent - scrollState.position.viewportDimension),
+            );
+          },
+          variant: _scrollingVariant,
+        );
+
+        testWidgetsOnDesktopAndWeb(
+          'PAGE UP does not scroll past top of the viewport',
+          (tester) async {
+            final currentVariant = _scrollingVariant.currentValue!;
+
+            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+            await _pumpSuperDesktopTextFieldTestApp(
+              tester,
+              textInputSource: currentVariant.textInputSource,
+              verticalAlignment: currentVariant.verticalAlignment,
+            );
+
+            // Tap on the text field to focus it.
+            await tester.placeCaretInSuperTextField(0);
+
+            // Find text field scrollable.
+            final scrollState = tester.state<ScrollableState>(find.descendant(
+              of: find.byType(SuperDesktopTextField),
+              matching: find.byType(Scrollable),
+            ));
+
+            // Scroll very close to the top but not all the way to avoid explicit
+            // checks comparing scroll offset directly against `minScrollExtent`
+            // and test scrolling behaviour in more realistic manner.
+            scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
+            await tester.pump();
+
+            await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+
+            // Let the scrolling system auto-scroll, as desired.
+            await tester.pumpAndSettle();
+
+            // Ensure we didn't scroll past the top of the viewport.
+            expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
+          },
+          variant: _scrollingVariant,
+        );
+
+        group("scrolls to top of viewport", () {
+          testWidgetsOnDesktop(
+            'using CMD + HOME on mac and CTRL + HOME on other platforms',
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldTestApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll to the bottom of the viewport.
+              scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
+              await tester.pump();
+
+              // Scroll to viewport's top.
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await tester.pressCmdHome(tester);
+              } else {
+                await tester.pressCtrlHome(tester);
+              }
+
+              // Ensure we scrolled to the viewport's top.
+              expect(
+                scrollState.position.pixels,
+                equals(scrollState.position.minScrollExtent),
+              );
+            },
+            variant: _scrollingVariant,
+          );
+
+          _testWidgetsOnMacAndWebDesktop(
+            'using HOME on mac and web desktop',
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldTestApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll to the bottom of the viewport.
+              scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
+              await tester.pump();
+
+              // Scroll to viewport's top.
+              await tester.pressHome();
+
+              // Ensure we scrolled to the viewport's top.
+              expect(
+                scrollState.position.pixels,
+                equals(scrollState.position.minScrollExtent),
+              );
+            },
+            variant: _scrollingVariant,
+          );
+        });
+
+        group("does not scroll past top of the viewport", () {
+          testWidgetsOnDesktop(
+            "using CMD + HOME on mac and CTRL + HOME on other platforms ",
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldTestApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll very close to the top but not all the way to avoid explicit
+              // checks comparing scroll offset directly against `minScrollExtent`
+              // and test scrolling behaviour in more realistic manner.
+              scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
+              await tester.pump();
+
+              // Scroll to viewport's top.
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await tester.pressCmdHome(tester);
+              } else {
+                await tester.pressCtrlHome(tester);
+              }
+
+              // Ensure we didn't scroll past the viewport's top.
+              expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+
+          _testWidgetsOnMacAndWebDesktop(
+            'using HOME on mac and web desktop',
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldTestApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll very close to the top but not all the way to avoid explicit
+              // checks comparing scroll offset directly against `minScrollExtent`
+              // and test scrolling behaviour in more realistic manner.
+              scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
+              await tester.pump();
+
+              // Scroll to viewport's top.
+              await tester.pressHome();
+
+              // Ensure we didn't scroll past the viewport's top.
+              expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+        });
+
+        group("scrolls to bottom of viewport", () {
+          testWidgetsOnDesktop(
+            "using CMD + END on mac and CTRL + END on other platforms ",
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldTestApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll to viewport's bottom.
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await tester.pressCmdEnd(tester);
+              } else {
+                await tester.pressCtrlEnd(tester);
+              }
+
+              // Ensure we scrolled to the viewport's bottom.
+              expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+
+          _testWidgetsOnMacAndWebDesktop(
+            'using END on mac and web desktop',
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldTestApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll to viewport's bottom.
+              await tester.pressEnd();
+
+              // Ensure we scrolled to the viewport's bottom.
+              expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+        });
+
+        group("does not scroll past bottom of the viewport", () {
+          testWidgetsOnDesktop(
+            "using CMD + END on mac and CTRL + END on other platforms",
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldTestApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll very close to the bottom but not all the way to avoid explicit
+              // checks comparing scroll offset directly against `maxScrollExtent`
+              // and test scrolling behaviour in more realistic manner.
+              scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
+              await tester.pump();
+
+              // Scroll to viewport's bottom.
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await tester.pressCmdEnd(tester);
+              } else {
+                await tester.pressCtrlEnd(tester);
+              }
+              // Ensure we didn't scroll past the viewport's bottom.
+              expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+
+          _testWidgetsOnMacAndWebDesktop(
+            'using END on mac and web desktop',
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldTestApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll very close to the bottom but not all the way to avoid explicit
+              // checks comparing scroll offset directly against `maxScrollExtent`
+              // and test scrolling behaviour in more realistic manner.
+              scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
+              await tester.pump();
+
+              // Scroll to viewport's bottom.
+              await tester.pressEnd();
+
+              // Ensure we didn't scroll past the viewport's bottom.
+              expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+        });
+      });
+
+      group("inside ancestor scrollable", () {
+        testWidgetsOnDesktopAndWeb(
+          'PAGE DOWN scrolls down by the viewport height',
+          (tester) async {
+            final currentVariant = _scrollingVariant.currentValue!;
+
+            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+            await _pumpSuperDesktopTextFieldScrollSliverApp(
+              tester,
+              textInputSource: currentVariant.textInputSource,
+              verticalAlignment: currentVariant.verticalAlignment,
+            );
+
+            // Tap on the text field to focus it.
+            await tester.placeCaretInSuperTextField(0);
+
+            // Find text field scrollable.
+            final scrollState = tester.state<ScrollableState>(find.descendant(
+              of: find.byType(SuperDesktopTextField),
+              matching: find.byType(Scrollable),
+            ));
+
+            await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+
+            // Let the scrolling system auto-scroll, as desired.
+            await tester.pumpAndSettle();
+
+            // Ensure we scrolled down by the viewport height.
+            expect(
+              scrollState.position.pixels,
+              equals(scrollState.position.viewportDimension),
+            );
+          },
+          variant: _scrollingVariant,
+        );
+
+        testWidgetsOnDesktopAndWeb(
+          'PAGE DOWN does not scroll past bottom of the viewport',
+          (tester) async {
+            final currentVariant = _scrollingVariant.currentValue!;
+
+            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+            await _pumpSuperDesktopTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -454,14 +529,394 @@ void main() {
             scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
             await tester.pump();
 
-            // Scroll to viewport's bottom.
-            await tester.pressEnd();
+            await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
 
-            // Ensure we didn't scroll past the viewport's bottom.
+            // Let the scrolling system auto-scroll, as desired.
+            await tester.pumpAndSettle();
+
+            // Ensure we didn't scroll past the bottom of the viewport.
             expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
           },
           variant: _scrollingVariant,
         );
+
+        testWidgetsOnDesktopAndWeb(
+          'PAGE UP scrolls up by the viewport height',
+          (tester) async {
+            final currentVariant = _scrollingVariant.currentValue!;
+
+            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+            await _pumpSuperDesktopTextFieldScrollSliverApp(
+              tester,
+              textInputSource: currentVariant.textInputSource,
+              verticalAlignment: currentVariant.verticalAlignment,
+            );
+
+            // Tap on the text field to focus it.
+            await tester.placeCaretInSuperTextField(0);
+
+            // Find text field scrollable.
+            final scrollState = tester.state<ScrollableState>(find.descendant(
+              of: find.byType(SuperDesktopTextField),
+              matching: find.byType(Scrollable),
+            ));
+
+            // Scroll to the bottom of the viewport.
+            scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
+            await tester.pump();
+
+            await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+
+            // Let the scrolling system auto-scroll, as desired.
+            await tester.pumpAndSettle();
+
+            // Ensure we scrolled up by the viewport height.
+            expect(
+              scrollState.position.pixels,
+              equals(scrollState.position.maxScrollExtent - scrollState.position.viewportDimension),
+            );
+          },
+          variant: _scrollingVariant,
+        );
+
+        testWidgetsOnDesktopAndWeb(
+          'PAGE UP does not scroll past top of the viewport',
+          (tester) async {
+            final currentVariant = _scrollingVariant.currentValue!;
+
+            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+            await _pumpSuperDesktopTextFieldScrollSliverApp(
+              tester,
+              textInputSource: currentVariant.textInputSource,
+              verticalAlignment: currentVariant.verticalAlignment,
+            );
+
+            // Tap on the text field to focus it.
+            await tester.placeCaretInSuperTextField(0);
+
+            // Find text field scrollable.
+            final scrollState = tester.state<ScrollableState>(find.descendant(
+              of: find.byType(SuperDesktopTextField),
+              matching: find.byType(Scrollable),
+            ));
+
+            // Scroll very close to the top but not all the way to avoid explicit
+            // checks comparing scroll offset directly against `minScrollExtent`
+            // and test scrolling behaviour in more realistic manner.
+            scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
+            await tester.pump();
+
+            await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+
+            // Let the scrolling system auto-scroll, as desired.
+            await tester.pumpAndSettle();
+
+            // Ensure we didn't scroll past the top of the viewport.
+            expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
+          },
+          variant: _scrollingVariant,
+        );
+
+        group("scrolls to top of viewport", () {
+          testWidgetsOnDesktop(
+            'using CMD + HOME on mac and CTRL + HOME on other platforms',
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldScrollSliverApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll to the bottom of the viewport.
+              scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
+              await tester.pump();
+
+              // Scroll to viewport's top.
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await tester.pressCmdHome(tester);
+              } else {
+                await tester.pressCtrlHome(tester);
+              }
+
+              // Ensure we scrolled to the viewport's top.
+              expect(
+                scrollState.position.pixels,
+                equals(scrollState.position.minScrollExtent),
+              );
+            },
+            variant: _scrollingVariant,
+          );
+
+          _testWidgetsOnMacAndWebDesktop(
+            'using HOME on mac and web desktop',
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldScrollSliverApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll to the bottom of the viewport.
+              scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
+              await tester.pump();
+
+              // Scroll to viewport's top.
+              await tester.pressHome();
+
+              // Ensure we scrolled to the viewport's top.
+              expect(
+                scrollState.position.pixels,
+                equals(scrollState.position.minScrollExtent),
+              );
+            },
+            variant: _scrollingVariant,
+          );
+        });
+
+        group("does not scroll past top of the viewport", () {
+          testWidgetsOnDesktop(
+            "using CMD + HOME on mac and CTRL + HOME on other platforms ",
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldScrollSliverApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll very close to the top but not all the way to avoid explicit
+              // checks comparing scroll offset directly against `minScrollExtent`
+              // and test scrolling behaviour in more realistic manner.
+              scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
+              await tester.pump();
+
+              // Scroll to viewport's top.
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await tester.pressCmdHome(tester);
+              } else {
+                await tester.pressCtrlHome(tester);
+              }
+
+              // Ensure we didn't scroll past the viewport's top.
+              expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+
+          _testWidgetsOnMacAndWebDesktop(
+            'using HOME on mac and web desktop',
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldScrollSliverApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll very close to the top but not all the way to avoid explicit
+              // checks comparing scroll offset directly against `minScrollExtent`
+              // and test scrolling behaviour in more realistic manner.
+              scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
+              await tester.pump();
+
+              // Scroll to viewport's top.
+              await tester.pressHome();
+
+              // Ensure we didn't scroll past the viewport's top.
+              expect(scrollState.position.pixels, equals(scrollState.position.minScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+        });
+
+        group("scrolls to bottom of viewport", () {
+          testWidgetsOnDesktop(
+            "using CMD + END on mac and CTRL + END on other platforms ",
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldScrollSliverApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll to viewport's bottom.
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await tester.pressCmdEnd(tester);
+              } else {
+                await tester.pressCtrlEnd(tester);
+              }
+
+              // Ensure we scrolled to the viewport's bottom.
+              expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+
+          _testWidgetsOnMacAndWebDesktop(
+            'using END on mac and web desktop',
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldScrollSliverApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll to viewport's bottom.
+              await tester.pressEnd();
+
+              // Ensure we scrolled to the viewport's bottom.
+              expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+        });
+
+        group("does not scroll past bottom of the viewport", () {
+          testWidgetsOnDesktop(
+            "using CMD + END on mac and CTRL + END on other platforms",
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldScrollSliverApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll very close to the bottom but not all the way to avoid explicit
+              // checks comparing scroll offset directly against `maxScrollExtent`
+              // and test scrolling behaviour in more realistic manner.
+              scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
+              await tester.pump();
+
+              // Scroll to viewport's bottom.
+              if (defaultTargetPlatform == TargetPlatform.macOS) {
+                await tester.pressCmdEnd(tester);
+              } else {
+                await tester.pressCtrlEnd(tester);
+              }
+              // Ensure we didn't scroll past the viewport's bottom.
+              expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+
+          _testWidgetsOnMacAndWebDesktop(
+            'using END on mac and web desktop',
+            (tester) async {
+              final currentVariant = _scrollingVariant.currentValue!;
+
+              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
+              await _pumpSuperDesktopTextFieldScrollSliverApp(
+                tester,
+                textInputSource: currentVariant.textInputSource,
+                verticalAlignment: currentVariant.verticalAlignment,
+              );
+
+              // Tap on the text field to focus it.
+              await tester.placeCaretInSuperTextField(0);
+
+              // Find text field scrollable.
+              final scrollState = tester.state<ScrollableState>(find.descendant(
+                of: find.byType(SuperDesktopTextField),
+                matching: find.byType(Scrollable),
+              ));
+
+              // Scroll very close to the bottom but not all the way to avoid explicit
+              // checks comparing scroll offset directly against `maxScrollExtent`
+              // and test scrolling behaviour in more realistic manner.
+              scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
+              await tester.pump();
+
+              // Scroll to viewport's bottom.
+              await tester.pressEnd();
+
+              // Ensure we didn't scroll past the viewport's bottom.
+              expect(scrollState.position.pixels, equals(scrollState.position.maxScrollExtent));
+            },
+            variant: _scrollingVariant,
+          );
+        });
       });
     });
 
@@ -932,46 +1387,24 @@ void main() {
 /// Variant for an [SuperDesktopTextField] experience with/without ancestor scrollable.
 final _scrollingVariant = ValueVariant<_SuperDesktopTextFieldScrollSetup>({
   const _SuperDesktopTextFieldScrollSetup(
-    description: "without ancestor scrollable",
-    pumpEditor: _pumpSuperDesktopTextFieldTestApp,
     textInputSource: TextInputSource.ime,
   ),
   const _SuperDesktopTextFieldScrollSetup(
-    description: "without ancestor scrollable",
-    pumpEditor: _pumpSuperDesktopTextFieldTestApp,
     textInputSource: TextInputSource.keyboard,
   ),
   const _SuperDesktopTextFieldScrollSetup(
-    description: "inside scrollable",
-    pumpEditor: _pumpSuperDesktopTextFieldScrollSliverApp,
-    textInputSource: TextInputSource.ime,
-  ),
-  const _SuperDesktopTextFieldScrollSetup(
-    description: "inside scrollable",
-    pumpEditor: _pumpSuperDesktopTextFieldScrollSliverApp,
-    textInputSource: TextInputSource.keyboard,
-  ),
-  const _SuperDesktopTextFieldScrollSetup(
-    description: "inside scrollable",
-    pumpEditor: _pumpSuperDesktopTextFieldScrollSliverApp,
     textInputSource: TextInputSource.ime,
     verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.center,
   ),
   const _SuperDesktopTextFieldScrollSetup(
-    description: "inside scrollable",
-    pumpEditor: _pumpSuperDesktopTextFieldScrollSliverApp,
     textInputSource: TextInputSource.keyboard,
     verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.center,
   ),
   const _SuperDesktopTextFieldScrollSetup(
-    description: "inside scrollable",
-    pumpEditor: _pumpSuperDesktopTextFieldScrollSliverApp,
     textInputSource: TextInputSource.ime,
     verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.bottom,
   ),
   const _SuperDesktopTextFieldScrollSetup(
-    description: "inside scrollable",
-    pumpEditor: _pumpSuperDesktopTextFieldScrollSliverApp,
     textInputSource: TextInputSource.keyboard,
     verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.bottom,
   ),
@@ -1123,19 +1556,15 @@ final String _textFieldInput = List.generate(20, (index) => "Line $index").join(
 /// 'CTRL' + 'HOME/END' shortcuts are used depending on the platform tests are running on.
 class _SuperDesktopTextFieldScrollSetup {
   const _SuperDesktopTextFieldScrollSetup({
-    required this.description,
-    required this.pumpEditor,
     required this.textInputSource,
     this.verticalAlignment = _TextFieldVerticalAlignmentWithinScrollable.top,
   });
-  final String description;
-  final _PumpSuperDesktopTextFieldWidget pumpEditor;
   final TextInputSource textInputSource;
   final _TextFieldVerticalAlignmentWithinScrollable verticalAlignment;
 
   @override
   String toString() {
-    return '''SuperDesktopTextFieldScrollSetup: $description, placed at ${verticalAlignment.name},  ${textInputSource.toString()}''';
+    return 'SuperDesktopTextFieldScrollSetup: aligned at ${verticalAlignment.name},  ${textInputSource.toString()}';
   }
 }
 
