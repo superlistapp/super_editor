@@ -22,7 +22,7 @@ void main() {
           await currentVariant!.pumpEditor(
             tester,
             textInputSource: currentVariant.textInputSource,
-            placement: currentVariant.placement,
+            verticalAlignment: currentVariant.verticalAlignment,
           );
 
           // Tap on the text field to focus it.
@@ -57,7 +57,7 @@ void main() {
           await currentVariant!.pumpEditor(
             tester,
             textInputSource: currentVariant.textInputSource,
-            placement: currentVariant.placement,
+            verticalAlignment: currentVariant.verticalAlignment,
           );
 
           // Tap on the text field to focus it.
@@ -95,7 +95,7 @@ void main() {
           await currentVariant!.pumpEditor(
             tester,
             textInputSource: currentVariant.textInputSource,
-            placement: currentVariant.placement,
+            verticalAlignment: currentVariant.verticalAlignment,
           );
 
           // Tap on the text field to focus it.
@@ -134,7 +134,7 @@ void main() {
           await currentVariant!.pumpEditor(
             tester,
             textInputSource: currentVariant.textInputSource,
-            placement: currentVariant.placement,
+            verticalAlignment: currentVariant.verticalAlignment,
           );
 
           // Tap on the text field to focus it.
@@ -173,7 +173,7 @@ void main() {
             await currentVariant!.pumpEditor(
               tester,
               textInputSource: currentVariant.textInputSource,
-              placement: currentVariant.placement,
+              verticalAlignment: currentVariant.verticalAlignment,
             );
 
             // Tap on the text field to focus it.
@@ -214,7 +214,7 @@ void main() {
             await currentVariant!.pumpEditor(
               tester,
               textInputSource: currentVariant.textInputSource,
-              placement: currentVariant.placement,
+              verticalAlignment: currentVariant.verticalAlignment,
             );
 
             // Tap on the text field to focus it.
@@ -253,7 +253,7 @@ void main() {
             await currentVariant!.pumpEditor(
               tester,
               textInputSource: currentVariant.textInputSource,
-              placement: currentVariant.placement,
+              verticalAlignment: currentVariant.verticalAlignment,
             );
 
             // Tap on the text field to focus it.
@@ -293,7 +293,7 @@ void main() {
             await currentVariant!.pumpEditor(
               tester,
               textInputSource: currentVariant.textInputSource,
-              placement: currentVariant.placement,
+              verticalAlignment: currentVariant.verticalAlignment,
             );
 
             // Tap on the text field to focus it.
@@ -331,7 +331,7 @@ void main() {
             await currentVariant!.pumpEditor(
               tester,
               textInputSource: currentVariant.textInputSource,
-              placement: currentVariant.placement,
+              verticalAlignment: currentVariant.verticalAlignment,
             );
 
             // Tap on the text field to focus it.
@@ -365,7 +365,7 @@ void main() {
             await currentVariant!.pumpEditor(
               tester,
               textInputSource: currentVariant.textInputSource,
-              placement: currentVariant.placement,
+              verticalAlignment: currentVariant.verticalAlignment,
             );
 
             // Tap on the text field to focus it.
@@ -397,7 +397,7 @@ void main() {
             await currentVariant!.pumpEditor(
               tester,
               textInputSource: currentVariant.textInputSource,
-              placement: currentVariant.placement,
+              verticalAlignment: currentVariant.verticalAlignment,
             );
 
             // Tap on the text field to focus it.
@@ -436,7 +436,7 @@ void main() {
             await currentVariant!.pumpEditor(
               tester,
               textInputSource: currentVariant.textInputSource,
-              placement: currentVariant.placement,
+              verticalAlignment: currentVariant.verticalAlignment,
             );
 
             // Tap on the text field to focus it.
@@ -477,7 +477,7 @@ void main() {
             await _pumpSuperDesktopTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
-              placement: _TextFieldPlacementWithinScrollable.top,
+              verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.top,
             );
 
             // Tap on the text field to focus it.
@@ -558,7 +558,7 @@ void main() {
             await _pumpSuperDesktopTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
-              placement: _TextFieldPlacementWithinScrollable.top,
+              verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.top,
             );
 
             // Tap on the text field to focus it.
@@ -626,7 +626,7 @@ void main() {
             await _pumpSuperDesktopTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
-              placement: _TextFieldPlacementWithinScrollable.bottom,
+              verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.bottom,
             );
 
             // Find the text field's ancestor scrollable
@@ -703,7 +703,7 @@ void main() {
             await _pumpSuperDesktopTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
-              placement: _TextFieldPlacementWithinScrollable.bottom,
+              verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.bottom,
             );
 
             // Find the text field's ancestor scrollable
@@ -772,7 +772,7 @@ void main() {
             await _pumpSuperDesktopTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
-              placement: _TextFieldPlacementWithinScrollable.center,
+              verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.center,
             );
 
             // Find the text field's ancestor scrollable.
@@ -861,7 +861,7 @@ void main() {
             await _pumpSuperDesktopTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
-              placement: _TextFieldPlacementWithinScrollable.center,
+              verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.center,
             );
 
             // Find the text field's ancestor scrollable.
@@ -955,25 +955,25 @@ final _scrollingVariant = ValueVariant<_SuperDesktopTextFieldScrollSetup>({
     description: "inside scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldScrollSliverApp,
     textInputSource: TextInputSource.ime,
-    placement: _TextFieldPlacementWithinScrollable.center,
+    verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.center,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     description: "inside scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldScrollSliverApp,
     textInputSource: TextInputSource.keyboard,
-    placement: _TextFieldPlacementWithinScrollable.center,
+    verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.center,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     description: "inside scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldScrollSliverApp,
     textInputSource: TextInputSource.ime,
-    placement: _TextFieldPlacementWithinScrollable.bottom,
+    verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.bottom,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     description: "inside scrollable",
     pumpEditor: _pumpSuperDesktopTextFieldScrollSliverApp,
     textInputSource: TextInputSource.keyboard,
-    placement: _TextFieldPlacementWithinScrollable.bottom,
+    verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.bottom,
   ),
 });
 
@@ -987,7 +987,7 @@ final _textFieldInputSourceVariant = ValueVariant<TextInputSource>({
 Future<void> _pumpSuperDesktopTextFieldTestApp(
   WidgetTester tester, {
   TextInputSource textInputSource = TextInputSource.keyboard,
-  _TextFieldPlacementWithinScrollable placement = _TextFieldPlacementWithinScrollable.top,
+  _TextFieldVerticalAlignmentWithinScrollable verticalAlignment = _TextFieldVerticalAlignmentWithinScrollable.top,
 }) async {
   final textController = AttributedTextEditingController(
     text: AttributedText(_textFieldInput),
@@ -1040,15 +1040,15 @@ Future<void> _pumpTestApp(
 Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
   WidgetTester tester, {
   TextInputSource textInputSource = TextInputSource.keyboard,
-  _TextFieldPlacementWithinScrollable placement = _TextFieldPlacementWithinScrollable.top,
+  _TextFieldVerticalAlignmentWithinScrollable verticalAlignment = _TextFieldVerticalAlignmentWithinScrollable.top,
 }) async {
   final textController = AttributedTextEditingController(
     text: AttributedText(_textFieldInput),
   );
 
   final slivers = [
-    if (placement == _TextFieldPlacementWithinScrollable.bottom ||
-        placement == _TextFieldPlacementWithinScrollable.center)
+    if (verticalAlignment == _TextFieldVerticalAlignmentWithinScrollable.bottom ||
+        verticalAlignment == _TextFieldVerticalAlignmentWithinScrollable.center)
       SliverToBoxAdapter(
         child: Builder(builder: (context) {
           return SizedBox(
@@ -1077,7 +1077,8 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
         inputSource: textInputSource,
       ),
     ),
-    if (placement == _TextFieldPlacementWithinScrollable.top || placement == _TextFieldPlacementWithinScrollable.center)
+    if (verticalAlignment == _TextFieldVerticalAlignmentWithinScrollable.top ||
+        verticalAlignment == _TextFieldVerticalAlignmentWithinScrollable.center)
       SliverToBoxAdapter(
         child: Builder(builder: (context) {
           return SizedBox(
@@ -1125,36 +1126,36 @@ class _SuperDesktopTextFieldScrollSetup {
     required this.description,
     required this.pumpEditor,
     required this.textInputSource,
-    this.placement = _TextFieldPlacementWithinScrollable.top,
+    this.verticalAlignment = _TextFieldVerticalAlignmentWithinScrollable.top,
   });
   final String description;
   final _PumpSuperDesktopTextFieldWidget pumpEditor;
   final TextInputSource textInputSource;
-  final _TextFieldPlacementWithinScrollable placement;
+  final _TextFieldVerticalAlignmentWithinScrollable verticalAlignment;
 
   @override
   String toString() {
-    return '''SuperDesktopTextFieldScrollSetup: $description, placed at ${placement.name},  ${textInputSource.toString()}''';
+    return '''SuperDesktopTextFieldScrollSetup: $description, placed at ${verticalAlignment.name},  ${textInputSource.toString()}''';
   }
 }
 
 /// Pumps a [SuperDesktopTextField] experience with the given [textInputSource].
 ///
-/// Optionally takes in [placement] which can be used to decide on the text field's placement
+/// Optionally takes in [verticalAlignment] which can be used to decide on the text field's vertical alignment
 /// within parent.
 typedef _PumpSuperDesktopTextFieldWidget = Future<void> Function(
   WidgetTester tester, {
   TextInputSource textInputSource,
-  _TextFieldPlacementWithinScrollable placement,
+  _TextFieldVerticalAlignmentWithinScrollable verticalAlignment,
 });
 
-/// Defines the placement of [SuperDesktopTextField] within ancestor
+/// Defines the vertical alignment of [SuperDesktopTextField] within ancestor
 /// scrollable.
 ///
 /// Testing against different layouts helps verify that the text field's scrolling
-/// through scroll shortcuts remains same irrespective of the text field's placement
+/// through scroll shortcuts remains same irrespective of the text field's vertical alignment
 /// within ancestor scrollable.
-enum _TextFieldPlacementWithinScrollable {
+enum _TextFieldVerticalAlignmentWithinScrollable {
   top,
   center,
   bottom;
