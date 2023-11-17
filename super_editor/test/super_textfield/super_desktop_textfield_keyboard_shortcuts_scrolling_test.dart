@@ -1388,9 +1388,11 @@ void main() {
 final _scrollingVariant = ValueVariant<_SuperDesktopTextFieldScrollSetup>({
   const _SuperDesktopTextFieldScrollSetup(
     textInputSource: TextInputSource.ime,
+    verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.top,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     textInputSource: TextInputSource.keyboard,
+    verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.top,
   ),
   const _SuperDesktopTextFieldScrollSetup(
     textInputSource: TextInputSource.ime,
@@ -1557,7 +1559,7 @@ final String _textFieldInput = List.generate(20, (index) => "Line $index").join(
 class _SuperDesktopTextFieldScrollSetup {
   const _SuperDesktopTextFieldScrollSetup({
     required this.textInputSource,
-    this.verticalAlignment = _TextFieldVerticalAlignmentWithinScrollable.top,
+    required this.verticalAlignment,
   });
   final TextInputSource textInputSource;
   final _TextFieldVerticalAlignmentWithinScrollable verticalAlignment;
