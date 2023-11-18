@@ -66,6 +66,24 @@ class DocumentSelection extends DocumentRange {
   /// equivalent. Otherwise, the [DocumentSelection] is "expanded".
   bool get isCollapsed => base.nodeId == extent.nodeId && base.nodePosition.isEquivalentTo(extent.nodePosition);
 
+  /// Returns the affinity (direction) for this selection - downstream refers to a selection
+  /// that starts at earlier content and ends at later content, upstream refers to a selection
+  /// that starts at later content and ends at earlier content.
+  ///
+  /// Calculating the selection affinity requires a [Document] because only the [Document] knows the
+  /// relative position of various [DocumentPosition]s.
+  TextAffinity calculateAffinity(Document document) => document.getAffinityBetween(base: base, extent: extent);
+
+  /// Returns `true` if this selection has an affinity of [TextAffinity.downstream].
+  ///
+  /// See [calculateAffinity] for more info.
+  bool hasDownstreamAffinity(Document document) => calculateAffinity(document) == TextAffinity.downstream;
+
+  /// Returns `true` if this selection has an affinity of [TextAffinity.upstream].
+  ///
+  /// See [calculateAffinity] for more info.
+  bool hasUpstreamAffinity(Document document) => calculateAffinity(document) == TextAffinity.upstream;
+
   @override
   String toString() {
     return '[DocumentSelection] - \n  base: ($base),\n  extent: ($extent)';

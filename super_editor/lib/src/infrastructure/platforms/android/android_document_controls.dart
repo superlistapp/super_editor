@@ -52,9 +52,7 @@ class AndroidToolbarFocalPointDocumentLayer extends DocumentLayoutLayerStatefulW
 }
 
 class _AndroidToolbarFocalPointDocumentLayerState
-    extends DocumentLayoutLayerState<AndroidToolbarFocalPointDocumentLayer, Rect> with SingleTickerProviderStateMixin {
-  bool _wasSelectionExpanded = false;
-
+    extends DocumentLayoutLayerState<AndroidToolbarFocalPointDocumentLayer, Rect> {
   @override
   void initState() {
     super.initState();
@@ -80,25 +78,7 @@ class _AndroidToolbarFocalPointDocumentLayerState
   }
 
   void _onSelectionChange() {
-    final selection = widget.selection.value;
-    _wasSelectionExpanded = !(selection?.isCollapsed == true);
-
-    if (selection == null && !_wasSelectionExpanded) {
-      // There's no selection now, and in the previous frame there either was no selection,
-      // or a collapsed selection. We don't need to worry about re-calculating or rebuilding
-      // our bounds.
-      return;
-    }
-    if (selection != null && selection.isCollapsed && !_wasSelectionExpanded) {
-      // The current selection is collapsed, and the selection in the previous frame was
-      // either null, or was also collapsed. We only need to position bounds when the selection
-      // is expanded, or goes from expanded to collapsed, or from collapsed to expanded.
-      return;
-    }
-
-    // The current selection is expanded, or we went from expanded in the previous frame
-    // to non-expanded in this frame. Either way, we need to recalculate the toolbar focal
-    // point bounds.
+    // Re-calculate the selection visual bounds by running setState().
     setStateAsSoonAsPossible(() {
       // The selection bounds, and Leader build, will take place in methods that
       // run in response to setState().
@@ -117,10 +97,6 @@ class _AndroidToolbarFocalPointDocumentLayerState
       // Assume that we're in a momentary transitive state where the document layout
       // just gained or lost a component. We expect this method to run again in a moment
       // to correct for this.
-      return null;
-    }
-
-    if (documentSelection.isCollapsed) {
       return null;
     }
 
@@ -349,8 +325,6 @@ class AndroidControlsDocumentLayerState
         child: ListenableBuilder(
           listenable: _caretBlinkController,
           builder: (context, child) {
-            print(
-                "Building caret with opacity: ${_caretBlinkController.opacity}, is blinking? ${_caretBlinkController.isBlinking}");
             return ColoredBox(
               key: DocumentKeys.androidCaret,
               color: widget.handleColor.withOpacity(_caretBlinkController.opacity),

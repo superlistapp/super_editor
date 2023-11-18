@@ -35,6 +35,7 @@ class AndroidMagnifyingGlass extends StatelessWidget {
   static const _cornerRadius = 8.0;
 
   const AndroidMagnifyingGlass({
+    super.key,
     this.magnificationScale = 1.5,
     this.offsetFromFocalPoint = Offset.zero,
   });

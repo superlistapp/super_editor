@@ -227,6 +227,7 @@ class IosDocumentTouchInteractor extends StatefulWidget {
     required this.getDocumentLayout,
     required this.selection,
     required this.scrollController,
+    required this.dragHandleAutoScroller,
     this.contentTapHandler,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     this.showDebugPaint = false,
@@ -245,6 +246,8 @@ class IosDocumentTouchInteractor extends StatefulWidget {
   final ContentTapDelegate? contentTapHandler;
 
   final ScrollController scrollController;
+
+  final ValueNotifier<DragHandleAutoScroller?> dragHandleAutoScroller;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -274,7 +277,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   SuperEditorIosControlsController? _controlsController;
   late FloatingCursorListener _floatingCursorListener;
 
-  late DragHandleAutoScroller _handleAutoScrolling;
   Offset? _globalStartDragOffset;
   Offset? _dragStartInDoc;
   Offset? _startDragPositionOffset;
@@ -296,7 +298,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   void initState() {
     super.initState();
 
-    _handleAutoScrolling = DragHandleAutoScroller(
+    widget.dragHandleAutoScroller.value = DragHandleAutoScroller(
       vsync: this,
       dragAutoScrollBoundary: widget.dragAutoScrollBoundary,
       getScrollPosition: () => scrollPosition,
@@ -375,7 +377,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     _teardownScrollController();
 
-    _handleAutoScrolling.dispose();
+    widget.dragHandleAutoScroller.value?.dispose();
 
     super.dispose();
   }
@@ -433,7 +435,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         ? _documentOffsetToViewportOffset(selectionRectInDocumentLayout.bottomCenter)
         : _documentOffsetToViewportOffset(selectionRectInDocumentLayout.topCenter);
 
-    _handleAutoScrolling.ensureOffsetIsVisible(extentOffsetInViewport);
+    widget.dragHandleAutoScroller.value?.ensureOffsetIsVisible(extentOffsetInViewport);
   }
 
   void _onDocumentChange(_) {
@@ -865,7 +867,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     // finger/mouse position hasn't changed.
     _dragStartScrollOffset = scrollPosition.pixels;
 
-    _handleAutoScrolling.startAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.startAutoScrollHandleMonitoring();
 
     scrollPosition.addListener(_onAutoScrollChange);
   }
@@ -940,7 +942,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     // Auto-scroll, if needed, for either handle dragging or long press dragging.
-    _handleAutoScrolling.updateAutoScrollHandleMonitoring(
+    widget.dragHandleAutoScroller.value?.updateAutoScrollHandleMonitoring(
       dragEndInViewport: dragEndInViewport,
     );
 
@@ -1028,7 +1030,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _onHandleDragEnd();
     }
 
-    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
     scrollPosition.removeListener(_onAutoScrollChange);
   }
 
@@ -1165,7 +1167,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _handleAutoScrolling.startAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.startAutoScrollHandleMonitoring();
   }
 
   void _onFloatingCursorGeometryChange() {
@@ -1174,13 +1176,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _handleAutoScrolling.updateAutoScrollHandleMonitoring(
+    widget.dragHandleAutoScroller.value?.updateAutoScrollHandleMonitoring(
       dragEndInViewport: cursorGeometry.center,
     );
   }
 
   void _onFloatingCursorStop() {
-    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
   }
 
   void _selectPosition(DocumentPosition position) {
