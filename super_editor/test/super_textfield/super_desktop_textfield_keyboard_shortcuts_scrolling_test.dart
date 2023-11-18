@@ -11,7 +11,7 @@ import '../test_runners.dart';
 import 'super_textfield_robot.dart';
 
 void main() {
-  group("SuperDesktopTextField", () {
+  group("SuperTextField", () {
     group("text field scrolling", () {
       group("without ancestor scrollable", () {
         testWidgetsOnDesktopAndWeb(
@@ -19,8 +19,8 @@ void main() {
           (tester) async {
             final currentVariant = _scrollingVariant.currentValue!;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldTestApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldTestApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -31,7 +31,7 @@ void main() {
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
+              of: find.byType(SuperTextField),
               matching: find.byType(Scrollable),
             ));
 
@@ -54,8 +54,8 @@ void main() {
           (tester) async {
             final currentVariant = _scrollingVariant.currentValue!;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldTestApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldTestApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -66,7 +66,7 @@ void main() {
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
+              of: find.byType(SuperTextField),
               matching: find.byType(Scrollable),
             ));
 
@@ -92,8 +92,8 @@ void main() {
           (tester) async {
             final currentVariant = _scrollingVariant.currentValue!;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldTestApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldTestApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -104,7 +104,7 @@ void main() {
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
+              of: find.byType(SuperTextField),
               matching: find.byType(Scrollable),
             ));
 
@@ -131,8 +131,8 @@ void main() {
           (tester) async {
             final currentVariant = _scrollingVariant.currentValue!;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldTestApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldTestApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -143,7 +143,7 @@ void main() {
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
+              of: find.byType(SuperTextField),
               matching: find.byType(Scrollable),
             ));
 
@@ -170,8 +170,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldTestApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldTestApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -182,7 +182,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -211,8 +211,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldTestApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldTestApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -223,7 +223,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -250,8 +250,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldTestApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldTestApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -262,7 +262,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -290,8 +290,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldTestApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldTestApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -302,7 +302,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -328,8 +328,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldTestApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldTestApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -340,7 +340,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -362,8 +362,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldTestApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldTestApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -374,7 +374,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -394,8 +394,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldTestApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldTestApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -406,7 +406,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -433,8 +433,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldTestApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldTestApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -445,7 +445,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -472,8 +472,8 @@ void main() {
           (tester) async {
             final currentVariant = _scrollingVariant.currentValue!;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldScrollSliverApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -484,7 +484,7 @@ void main() {
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
+              of: find.byType(SuperTextField),
               matching: find.byType(Scrollable),
             ));
 
@@ -507,8 +507,8 @@ void main() {
           (tester) async {
             final currentVariant = _scrollingVariant.currentValue!;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldScrollSliverApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -519,7 +519,7 @@ void main() {
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
+              of: find.byType(SuperTextField),
               matching: find.byType(Scrollable),
             ));
 
@@ -545,8 +545,8 @@ void main() {
           (tester) async {
             final currentVariant = _scrollingVariant.currentValue!;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldScrollSliverApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -557,7 +557,7 @@ void main() {
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
+              of: find.byType(SuperTextField),
               matching: find.byType(Scrollable),
             ));
 
@@ -584,8 +584,8 @@ void main() {
           (tester) async {
             final currentVariant = _scrollingVariant.currentValue!;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldScrollSliverApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant.textInputSource,
               verticalAlignment: currentVariant.verticalAlignment,
@@ -596,7 +596,7 @@ void main() {
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
+              of: find.byType(SuperTextField),
               matching: find.byType(Scrollable),
             ));
 
@@ -623,8 +623,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldScrollSliverApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldScrollSliverApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -635,7 +635,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -664,8 +664,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldScrollSliverApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldScrollSliverApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -676,7 +676,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -703,8 +703,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldScrollSliverApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldScrollSliverApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -715,7 +715,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -743,8 +743,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldScrollSliverApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldScrollSliverApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -755,7 +755,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -781,8 +781,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldScrollSliverApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldScrollSliverApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -793,7 +793,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -815,8 +815,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldScrollSliverApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldScrollSliverApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -827,7 +827,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -847,8 +847,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldScrollSliverApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldScrollSliverApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -859,7 +859,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -886,8 +886,8 @@ void main() {
             (tester) async {
               final currentVariant = _scrollingVariant.currentValue!;
 
-              // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-              await _pumpSuperDesktopTextFieldScrollSliverApp(
+              // Pump the widget tree with a SuperTextField which is four lines tall.
+              await _pumpSuperTextFieldScrollSliverApp(
                 tester,
                 textInputSource: currentVariant.textInputSource,
                 verticalAlignment: currentVariant.verticalAlignment,
@@ -898,7 +898,7 @@ void main() {
 
               // Find text field scrollable.
               final scrollState = tester.state<ScrollableState>(find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ));
 
@@ -928,8 +928,8 @@ void main() {
           (tester) async {
             final currentVariant = _textFieldInputSourceVariant.currentValue;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldScrollSliverApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
               verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.top,
@@ -940,7 +940,7 @@ void main() {
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
+              of: find.byType(SuperTextField),
               matching: find.byType(Scrollable),
             ));
 
@@ -1009,8 +1009,8 @@ void main() {
           (tester) async {
             final currentVariant = _textFieldInputSourceVariant.currentValue;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldScrollSliverApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
               verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.top,
@@ -1021,7 +1021,7 @@ void main() {
 
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(find.descendant(
-              of: find.byType(SuperDesktopTextField),
+              of: find.byType(SuperTextField),
               matching: find.byType(Scrollable),
             ));
 
@@ -1077,8 +1077,8 @@ void main() {
           (tester) async {
             final currentVariant = _textFieldInputSourceVariant.currentValue;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldScrollSliverApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
               verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.bottom,
@@ -1097,10 +1097,10 @@ void main() {
               equals(ancestorScrollState.position.maxScrollExtent),
             );
 
-            // Find SuperDesktopTextField scrollable
+            // Find SuperTextField scrollable
             final scrollState = tester.state<ScrollableState>(
               find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ),
             );
@@ -1154,8 +1154,8 @@ void main() {
           (tester) async {
             final currentVariant = _textFieldInputSourceVariant.currentValue;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldScrollSliverApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
               verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.bottom,
@@ -1175,10 +1175,10 @@ void main() {
               equals(ancestorScrollState.position.maxScrollExtent),
             );
 
-            // Find SuperDesktopTextField scrollable
+            // Find SuperTextField scrollable
             final scrollState = tester.state<ScrollableState>(
               find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ),
             );
@@ -1223,8 +1223,8 @@ void main() {
           (tester) async {
             final currentVariant = _textFieldInputSourceVariant.currentValue;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldScrollSliverApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
               verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.center,
@@ -1238,7 +1238,7 @@ void main() {
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(
               find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ),
             );
@@ -1312,8 +1312,8 @@ void main() {
           (tester) async {
             final currentVariant = _textFieldInputSourceVariant.currentValue;
 
-            // Pump the widget tree with a SuperDesktopTextField which is four lines tall.
-            await _pumpSuperDesktopTextFieldScrollSliverApp(
+            // Pump the widget tree with a SuperTextField which is four lines tall.
+            await _pumpSuperTextFieldScrollSliverApp(
               tester,
               textInputSource: currentVariant!,
               verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.center,
@@ -1327,7 +1327,7 @@ void main() {
             // Find text field scrollable.
             final scrollState = tester.state<ScrollableState>(
               find.descendant(
-                of: find.byType(SuperDesktopTextField),
+                of: find.byType(SuperTextField),
                 matching: find.byType(Scrollable),
               ),
             );
@@ -1384,42 +1384,42 @@ void main() {
   });
 }
 
-/// Variant for an [SuperDesktopTextField] experience with/without ancestor scrollable.
-final _scrollingVariant = ValueVariant<_SuperDesktopTextFieldScrollSetup>({
-  const _SuperDesktopTextFieldScrollSetup(
+/// Variant for an [SuperTextField] experience with/without ancestor scrollable.
+final _scrollingVariant = ValueVariant<_SuperTextFieldScrollSetup>({
+  const _SuperTextFieldScrollSetup(
     textInputSource: TextInputSource.ime,
     verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.top,
   ),
-  const _SuperDesktopTextFieldScrollSetup(
+  const _SuperTextFieldScrollSetup(
     textInputSource: TextInputSource.keyboard,
     verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.top,
   ),
-  const _SuperDesktopTextFieldScrollSetup(
+  const _SuperTextFieldScrollSetup(
     textInputSource: TextInputSource.ime,
     verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.center,
   ),
-  const _SuperDesktopTextFieldScrollSetup(
+  const _SuperTextFieldScrollSetup(
     textInputSource: TextInputSource.keyboard,
     verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.center,
   ),
-  const _SuperDesktopTextFieldScrollSetup(
+  const _SuperTextFieldScrollSetup(
     textInputSource: TextInputSource.ime,
     verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.bottom,
   ),
-  const _SuperDesktopTextFieldScrollSetup(
+  const _SuperTextFieldScrollSetup(
     textInputSource: TextInputSource.keyboard,
     verticalAlignment: _TextFieldVerticalAlignmentWithinScrollable.bottom,
   ),
 });
 
-/// Variant for [SuperDesktopTextField]'s text input source.
+/// Variant for [SuperTextField]'s text input source.
 final _textFieldInputSourceVariant = ValueVariant<TextInputSource>({
   TextInputSource.keyboard,
   TextInputSource.ime,
 });
 
-/// Pumps a [SuperDesktopTextField].
-Future<void> _pumpSuperDesktopTextFieldTestApp(
+/// Pumps a [SuperTextField].
+Future<void> _pumpSuperTextFieldTestApp(
   WidgetTester tester, {
   TextInputSource textInputSource = TextInputSource.keyboard,
   _TextFieldVerticalAlignmentWithinScrollable verticalAlignment = _TextFieldVerticalAlignmentWithinScrollable.top,
@@ -1471,8 +1471,8 @@ Future<void> _pumpTestApp(
   await tester.pump();
 }
 
-/// Pumps a [SuperDesktopTextField] wrapped within [Scrollable].
-Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
+/// Pumps a [SuperTextField] wrapped within [Scrollable].
+Future<void> _pumpSuperTextFieldScrollSliverApp(
   WidgetTester tester, {
   TextInputSource textInputSource = TextInputSource.keyboard,
   _TextFieldVerticalAlignmentWithinScrollable verticalAlignment = _TextFieldVerticalAlignmentWithinScrollable.top,
@@ -1548,16 +1548,16 @@ Future<void> _pumpSuperDesktopTextFieldScrollSliverApp(
 /// within text field.
 final String _textFieldInput = List.generate(20, (index) => "Line $index").join("\n");
 
-/// Defines [SuperDesktopTextField] test configurations for a test variant.
+/// Defines [SuperTextField] test configurations for a test variant.
 ///
 /// Specificed configurations alter the conditions under which we test
-/// [SuperDesktopTextField] scrolling on scroll actions invoked through shortcuts.
+/// [SuperTextField] scrolling on scroll actions invoked through shortcuts.
 ///
 /// If [useHomeEndShortcutsOnMacAndWeb] is true, tests use 'HOME/END' to scroll
 /// to top/bottom of the text field respectively, else 'CMD' + 'HOME/END' or
 /// 'CTRL' + 'HOME/END' shortcuts are used depending on the platform tests are running on.
-class _SuperDesktopTextFieldScrollSetup {
-  const _SuperDesktopTextFieldScrollSetup({
+class _SuperTextFieldScrollSetup {
+  const _SuperTextFieldScrollSetup({
     required this.textInputSource,
     required this.verticalAlignment,
   });
@@ -1566,21 +1566,11 @@ class _SuperDesktopTextFieldScrollSetup {
 
   @override
   String toString() {
-    return 'SuperDesktopTextFieldScrollSetup: aligned at ${verticalAlignment.name},  ${textInputSource.toString()}';
+    return 'SuperTextFieldScrollSetup: aligned at ${verticalAlignment.name},  ${textInputSource.toString()}';
   }
 }
 
-/// Pumps a [SuperDesktopTextField] experience with the given [textInputSource].
-///
-/// Optionally takes in [verticalAlignment] which can be used to decide on the text field's vertical alignment
-/// within parent.
-typedef _PumpSuperDesktopTextFieldWidget = Future<void> Function(
-  WidgetTester tester, {
-  TextInputSource textInputSource,
-  _TextFieldVerticalAlignmentWithinScrollable verticalAlignment,
-});
-
-/// Defines the vertical alignment of [SuperDesktopTextField] within ancestor
+/// Defines the vertical alignment of [SuperTextField] within ancestor
 /// scrollable.
 ///
 /// Testing against different layouts helps verify that the text field's scrolling
