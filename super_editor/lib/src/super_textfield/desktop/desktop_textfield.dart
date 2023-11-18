@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_input_configuration.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
@@ -2811,7 +2812,8 @@ bool _scrollToBeginningOfDocument({
   required SuperTextFieldContext textFieldContext,
 }) {
   final TextFieldScroller textFieldScroller = textFieldContext.scroller;
-  final ScrollPosition? ancestorScrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
 
   if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
     // The text field doesn't have any scrollable content. There is no ancestor
@@ -2856,7 +2858,8 @@ bool _scrollToEndOfDocument({
   required SuperTextFieldContext textFieldContext,
 }) {
   final TextFieldScroller textFieldScroller = textFieldContext.scroller;
-  final ScrollPosition? ancestorScrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
 
   if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
     // The text field doesn't have any scrollable content. There is no ancestor
@@ -2907,7 +2910,8 @@ bool _scrollPageUp({
   required SuperTextFieldContext textFieldContext,
 }) {
   final TextFieldScroller textFieldScroller = textFieldContext.scroller;
-  final ScrollPosition? ancestorScrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
 
   if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
     // No scrollable content within `SuperDesktopField` and ancestor scrollable
@@ -2953,7 +2957,8 @@ bool _scrollPageDown({
   required SuperTextFieldContext textFieldContext,
 }) {
   final TextFieldScroller textFieldScroller = textFieldContext.scroller;
-  final ScrollPosition? ancestorScrollable = _findAncestorScrollable(textFieldContext.textFieldBuildContext)?.position;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
 
   if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
     // No scrollable content within `SuperDesktopField` and ancestor scrollable
@@ -2987,20 +2992,4 @@ bool _scrollPageDown({
   );
 
   return true;
-}
-
-ScrollableState? _findAncestorScrollable(BuildContext context) {
-  final ancestorScrollable = Scrollable.maybeOf(context);
-  if (ancestorScrollable == null) {
-    return null;
-  }
-
-  final direction = ancestorScrollable.axisDirection;
-  // If the direction is horizontal, then we are inside a widget like a TabBar
-  // or a horizontal ListView, so we can't use the ancestor scrollable
-  if (direction == AxisDirection.left || direction == AxisDirection.right) {
-    return null;
-  }
-
-  return ancestorScrollable;
 }
