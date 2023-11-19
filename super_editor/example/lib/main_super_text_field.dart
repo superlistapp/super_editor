@@ -377,7 +377,7 @@ class __DynamicTextFieldState extends State<_DynamicTextField> {
         }
 
         int value = int.parse(userInput);
-        if (value <= 0 || value >= 10) {
+        if (value <= 0 || value > 5) {
           return 'Please select a value between (1, 5)';
         }
 
