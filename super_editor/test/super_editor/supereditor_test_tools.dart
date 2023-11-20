@@ -246,7 +246,7 @@ class TestSuperEditorConfigurator {
   }
 
   /// Configures the [SuperEditor] to use the given [builder] as its android toolbar builder.
-  TestSuperEditorConfigurator withAndroidToolbarBuilder(WidgetBuilder? builder) {
+  TestSuperEditorConfigurator withAndroidToolbarBuilder(DocumentFloatingToolbarBuilder? builder) {
     _config.androidToolbarBuilder = builder;
     return this;
   }
@@ -400,41 +400,103 @@ class TestSuperEditorConfigurator {
   /// Builds a [SuperEditor] widget based on the configuration of the given
   /// [testDocumentContext], as well as other configurations in this class.
   Widget _buildSuperEditor(TestDocumentContext testDocumentContext) {
-    return SuperEditorIosControlsScope(
-      controller: SuperEditorIosControlsController(
-        toolbarBuilder: _config.iOSToolbarBuilder,
-      ),
-      child: SuperEditor(
-        key: _config.key,
-        focusNode: testDocumentContext.focusNode,
-        editor: testDocumentContext.editor,
-        document: testDocumentContext.document,
-        composer: testDocumentContext.composer,
-        documentLayoutKey: testDocumentContext.layoutKey,
-        inputSource: _config.inputSource,
-        selectionPolicies: _config.selectionPolicies ?? const SuperEditorSelectionPolicies(),
-        selectionStyle: _config.selectionStyles,
-        softwareKeyboardController: _config.softwareKeyboardController,
-        imePolicies: _config.imePolicies ?? const SuperEditorImePolicies(),
-        imeConfiguration: _config.imeConfiguration,
-        imeOverrides: _config.imeOverrides,
-        keyboardActions: [
-          ..._config.prependedKeyboardActions,
-          ...(_config.inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions),
-          ..._config.appendedKeyboardActions,
-        ],
-        selectorHandlers: _config.selectorHandlers,
-        gestureMode: _config.gestureMode,
-        androidToolbarBuilder: _config.androidToolbarBuilder,
-        stylesheet: _config.stylesheet,
-        componentBuilders: [
-          ..._config.addedComponents,
-          ...(_config.componentBuilders ?? defaultComponentBuilders),
-        ],
-        autofocus: _config.autoFocus,
-        scrollController: _config.scrollController,
-        plugins: _config.plugins,
-      ),
+    return _TestSuperEditor(
+      testDocumentContext: testDocumentContext,
+      testConfiguration: _config,
+    );
+  }
+}
+
+class _TestSuperEditor extends StatefulWidget {
+  const _TestSuperEditor({
+    required this.testDocumentContext,
+    required this.testConfiguration,
+  });
+
+  final TestDocumentContext testDocumentContext;
+  final SuperEditorTestConfiguration testConfiguration;
+
+  @override
+  State<_TestSuperEditor> createState() => _TestSuperEditorState();
+}
+
+class _TestSuperEditorState extends State<_TestSuperEditor> {
+  late final SuperEditorIosControlsController? _iOsControlsController;
+  late final SuperEditorAndroidControlsController? _androidControlsController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _iOsControlsController = SuperEditorIosControlsController(
+      toolbarBuilder: widget.testConfiguration.iOSToolbarBuilder,
+    );
+    _androidControlsController = SuperEditorAndroidControlsController(
+      toolbarBuilder: widget.testConfiguration.androidToolbarBuilder,
+    );
+  }
+
+  @override
+  void dispose() {
+    _iOsControlsController?.dispose();
+    _androidControlsController?.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget testSuperEditor = _buildSuperEditor();
+
+    if (_iOsControlsController != null) {
+      testSuperEditor = SuperEditorIosControlsScope(
+        controller: _iOsControlsController!,
+        child: testSuperEditor,
+      );
+    }
+
+    if (_androidControlsController != null) {
+      testSuperEditor = SuperEditorAndroidControlsScope(
+        controller: _androidControlsController!,
+        child: testSuperEditor,
+      );
+    }
+
+    return testSuperEditor;
+  }
+
+  Widget _buildSuperEditor() {
+    return SuperEditor(
+      key: widget.testConfiguration.key,
+      focusNode: widget.testDocumentContext.focusNode,
+      editor: widget.testDocumentContext.editor,
+      document: widget.testDocumentContext.document,
+      composer: widget.testDocumentContext.composer,
+      documentLayoutKey: widget.testDocumentContext.layoutKey,
+      inputSource: widget.testConfiguration.inputSource,
+      selectionPolicies: widget.testConfiguration.selectionPolicies ?? const SuperEditorSelectionPolicies(),
+      selectionStyle: widget.testConfiguration.selectionStyles,
+      softwareKeyboardController: widget.testConfiguration.softwareKeyboardController,
+      imePolicies: widget.testConfiguration.imePolicies ?? const SuperEditorImePolicies(),
+      imeConfiguration: widget.testConfiguration.imeConfiguration,
+      imeOverrides: widget.testConfiguration.imeOverrides,
+      keyboardActions: [
+        ...widget.testConfiguration.prependedKeyboardActions,
+        ...(widget.testConfiguration.inputSource == TextInputSource.ime
+            ? defaultImeKeyboardActions
+            : defaultKeyboardActions),
+        ...widget.testConfiguration.appendedKeyboardActions,
+      ],
+      selectorHandlers: widget.testConfiguration.selectorHandlers,
+      gestureMode: widget.testConfiguration.gestureMode,
+      stylesheet: widget.testConfiguration.stylesheet,
+      componentBuilders: [
+        ...widget.testConfiguration.addedComponents,
+        ...(widget.testConfiguration.componentBuilders ?? defaultComponentBuilders),
+      ],
+      autofocus: widget.testConfiguration.autoFocus,
+      scrollController: widget.testConfiguration.scrollController,
+      plugins: widget.testConfiguration.plugins,
     );
   }
 }
@@ -466,7 +528,7 @@ class SuperEditorTestConfiguration {
   final prependedKeyboardActions = <DocumentKeyboardAction>[];
   final appendedKeyboardActions = <DocumentKeyboardAction>[];
   final addedComponents = <ComponentBuilder>[];
-  WidgetBuilder? androidToolbarBuilder;
+  DocumentFloatingToolbarBuilder? androidToolbarBuilder;
   DocumentFloatingToolbarBuilder? iOSToolbarBuilder;
 
   DocumentSelection? selection;

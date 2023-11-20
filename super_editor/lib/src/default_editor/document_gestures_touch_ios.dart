@@ -1327,17 +1327,14 @@ class SuperEditorIosToolbarOverlayManager extends StatefulWidget {
 
 @visibleForTesting
 class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolbarOverlayManager> {
-  SuperEditorIosControlsController? _controlsContext;
+  SuperEditorIosControlsController? _controlsController;
   OverlayEntry? _toolbarOverlayEntry;
-
-  @visibleForTesting
-  bool get wantsToDisplayToolbar => _controlsContext!.shouldShowToolbar.value;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = SuperEditorIosControlsScope.rootOf(context);
+    _controlsController = SuperEditorIosControlsScope.rootOf(context);
 
     // Add our overlay on the next frame. If we did it immediately, it would
     // cause a setState() to be called during didChangeDependencies, which is
@@ -1353,6 +1350,9 @@ class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolb
     super.dispose();
   }
 
+  @visibleForTesting
+  bool get wantsToDisplayToolbar => _controlsController!.shouldShowToolbar.value;
+
   void _addToolbarOverlay() {
     if (_toolbarOverlayEntry != null) {
       return;
@@ -1360,11 +1360,11 @@ class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolb
 
     _toolbarOverlayEntry = OverlayEntry(builder: (overlayContext) {
       return IosFloatingToolbarOverlay(
-        shouldShowToolbar: _controlsContext!.shouldShowToolbar,
-        toolbarFocalPoint: _controlsContext!.toolbarFocalPoint,
+        shouldShowToolbar: _controlsController!.shouldShowToolbar,
+        toolbarFocalPoint: _controlsController!.toolbarFocalPoint,
         floatingToolbarBuilder:
-            _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
-        createOverlayControlsClipper: _controlsContext!.createOverlayControlsClipper,
+            _controlsController!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
+        createOverlayControlsClipper: _controlsController!.createOverlayControlsClipper,
         showDebugPaint: false,
       );
     });
@@ -1403,11 +1403,8 @@ class SuperEditorIosMagnifierOverlayManager extends StatefulWidget {
 
 @visibleForTesting
 class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMagnifierOverlayManager> {
-  SuperEditorIosControlsController? _controlsContext;
+  SuperEditorIosControlsController? _controlsController;
   OverlayEntry? _magnifierOverlayEntry;
-
-  @visibleForTesting
-  bool get wantsToDisplayMagnifier => _controlsContext!.shouldShowMagnifier.value;
 
   @override
   void initState() {
@@ -1425,7 +1422,7 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = SuperEditorIosControlsScope.rootOf(context);
+    _controlsController = SuperEditorIosControlsScope.rootOf(context);
   }
 
   @override
@@ -1433,6 +1430,9 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     _removeMagnifierOverlay();
     super.dispose();
   }
+
+  @visibleForTesting
+  bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
   void _addMagnifierOverlay() {
     if (_magnifierOverlayEntry != null) {
@@ -1464,7 +1464,7 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     // position a Leader with a LeaderLink. This magnifier follows that Leader
     // via the LeaderLink.
     return ValueListenableBuilder(
-      valueListenable: _controlsContext!.shouldShowMagnifier,
+      valueListenable: _controlsController!.shouldShowMagnifier,
       builder: (context, shouldShowMagnifier, child) {
         if (!shouldShowMagnifier) {
           return const SizedBox();
@@ -1472,9 +1472,10 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
 
         return child!;
       },
-      child: _controlsContext!.magnifierBuilder != null //
-          ? _controlsContext!.magnifierBuilder!(context, DocumentKeys.magnifier, _controlsContext!.magnifierFocalPoint)
-          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, _controlsContext!.magnifierFocalPoint),
+      child: _controlsController!.magnifierBuilder != null //
+          ? _controlsController!.magnifierBuilder!(
+              context, DocumentKeys.magnifier, _controlsController!.magnifierFocalPoint)
+          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, _controlsController!.magnifierFocalPoint),
     );
   }
 

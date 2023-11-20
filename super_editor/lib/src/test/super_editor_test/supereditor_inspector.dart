@@ -269,14 +269,27 @@ class SuperEditorInspector {
   ///    [wantsMobileToolbarToBeVisible] is `true`, but [isMobileToolbarVisible]
   ///    is `false`.
   static bool wantsMobileToolbarToBeVisible([Finder? superEditorFinder]) {
-    // TODO: add Android support
-    final toolbarManager = find.state<SuperEditorIosToolbarOverlayManagerState>(superEditorFinder);
-    if (toolbarManager == null) {
-      throw Exception(
-          "Tried to verify that SuperEditor wants mobile toolbar to be visible, but couldn't find the toolbar manager widget.");
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        final toolbarManager = find.state<SuperEditorAndroidControlsOverlayManagerState>(superEditorFinder);
+        if (toolbarManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile toolbar to be visible on Android, but couldn't find the toolbar manager widget.");
+        }
+        return toolbarManager.wantsToDisplayToolbar;
+      case TargetPlatform.iOS:
+        final toolbarManager = find.state<SuperEditorIosToolbarOverlayManagerState>(superEditorFinder);
+        if (toolbarManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile toolbar to be visible on iOS, but couldn't find the toolbar manager widget.");
+        }
+        return toolbarManager.wantsToDisplayToolbar;
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.fuchsia:
+        return false;
     }
-
-    return toolbarManager.wantsToDisplayToolbar;
   }
 
   /// Returns `true` if the mobile floating toolbar is currently visible, or `false`
@@ -308,14 +321,29 @@ class SuperEditorInspector {
   ///    [wantsMobileMagnifierToBeVisible] is `true`, but [isMobileMagnifierVisible]
   ///    is `false`.
   static bool wantsMobileMagnifierToBeVisible([Finder? superEditorFinder]) {
-    // TODO: add Android support
-    final magnifierManager = find.state<SuperEditorIosMagnifierOverlayManagerState>(superEditorFinder);
-    if (magnifierManager == null) {
-      throw Exception(
-          "Tried to verify that SuperEditor wants mobile magnifier to be visible, but couldn't find the magnifier manager widget.");
-    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        final magnifierManager = find.state<SuperEditorAndroidControlsOverlayManagerState>(superEditorFinder);
+        if (magnifierManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile magnifier to be visible on Android, but couldn't find the magnifier manager widget.");
+        }
 
-    return magnifierManager.wantsToDisplayMagnifier;
+        return magnifierManager.wantsToDisplayMagnifier;
+      case TargetPlatform.iOS:
+        final magnifierManager = find.state<SuperEditorIosMagnifierOverlayManagerState>(superEditorFinder);
+        if (magnifierManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile magnifier to be visible on iOS, but couldn't find the magnifier manager widget.");
+        }
+
+        return magnifierManager.wantsToDisplayMagnifier;
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.fuchsia:
+        return false;
+    }
   }
 
   /// Returns `true` if a mobile magnifier is currently visible, or `false` if it's

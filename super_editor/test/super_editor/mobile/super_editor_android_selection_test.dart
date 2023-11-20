@@ -459,7 +459,11 @@ Future<void> _pumpAppWithLongText(WidgetTester tester) async {
       .createDocument()
       // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
       .withSingleParagraph()
-      .withAndroidToolbarBuilder((context) => const AndroidTextEditingFloatingToolbar())
+      .withAndroidToolbarBuilder(
+        (context, key, leaderLink) => AndroidTextEditingFloatingToolbar(
+          floatingToolbarKey: key,
+        ),
+      )
       .pump();
 }
 

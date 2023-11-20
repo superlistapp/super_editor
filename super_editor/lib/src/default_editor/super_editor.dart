@@ -443,6 +443,7 @@ class SuperEditorState extends State<SuperEditor> {
     _contentTapDelegate?.dispose();
 
     _iosControlsController.dispose();
+    _androidControlsController.dispose();
 
     widget.editor.context.remove(Editor.layoutKey);
 
@@ -849,11 +850,6 @@ Widget defaultAndroidEditorToolbarBuilder(
   CommonEditorOperations editorOps,
   SuperEditorAndroidControlsController editorControlsController,
 ) {
-  if (isWeb) {
-    // On web, we defer to the browser's internal overlay controls for mobile.
-    return const SizedBox();
-  }
-
   return DefaultAndroidEditorToolbar(
     floatingToolbarKey: floatingToolbarKey,
     editorOps: editorOps,
