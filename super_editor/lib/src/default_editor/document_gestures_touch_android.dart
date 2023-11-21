@@ -136,6 +136,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   double? _dragStartScrollOffset;
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
+
+  /// Holds the drag gesture that scrolls the document.
+  Drag? _scrollingDrag;
+
   SelectionHandleType? _selectionType;
 
   Timer? _tapDownLongPressTimer;
@@ -742,6 +746,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     if (!_isLongPressInProgress) {
       // We only care about starting a pan if we're long-press dragging.
+      _scrollingDrag = scrollPosition.drag(details, () {
+        // Allows receiving touches while scrolling due to scroll momentum.
+        // This is needed to allow the user to stop scrolling by tapping down.
+        scrollPosition.context.setIgnorePointer(false);
+      });
       return;
     }
 
@@ -786,8 +795,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    // The user is trying to scroll the document. Change the scroll offset.
-    scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
+    if (_scrollingDrag != null) {
+      // The user is trying to scroll the document. Change the scroll offset.
+      _scrollingDrag!.update(details);
+    }
   }
 
   void _updateLongPressSelection(DocumentSelection newSelection) {
@@ -818,10 +829,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    final pos = scrollPosition;
-    if (pos is ScrollPositionWithSingleContext) {
-      pos.goBallistic(-details.velocity.pixelsPerSecond.dy);
-      pos.context.setIgnorePointer(false);
+    if (_scrollingDrag != null) {
+      // The user was performing a drag gesture to scroll the document.
+      // End the scroll activity and let the document scrolling with momentum.
+      _scrollingDrag!.end(details);
     }
   }
 
@@ -829,6 +840,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (_isLongPressInProgress) {
       _onLongPressEnd();
       return;
+    }
+
+    if (_scrollingDrag != null) {
+      // The user was performing a drag gesture to scroll the document.
+      // End the drag gesture.
+      _scrollingDrag!.cancel();
     }
   }
 
@@ -1253,10 +1270,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
                 ..gestureSettings = gestureSettings;
             },
           ),
-          PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-            () => PanGestureRecognizer(),
-            (PanGestureRecognizer recognizer) {
+          VerticalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<VerticalDragGestureRecognizer>(
+            () => VerticalDragGestureRecognizer(),
+            (VerticalDragGestureRecognizer recognizer) {
               recognizer
+                ..dragStartBehavior = DragStartBehavior.down
                 ..onStart = _onPanStart
                 ..onUpdate = _onPanUpdate
                 ..onEnd = _onPanEnd
