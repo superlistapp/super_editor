@@ -301,6 +301,16 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] to be displayed inside a [CustomScrollView].
+  ///
+  /// The [CustomScrollView] is constrained by the size provided in [withEditorSize].
+  ///
+  /// Use [withScrollController] to define the [ScrollController] of the [CustomScrollView].
+  TestSuperEditorConfigurator insideCustomScrollView() {
+    _config.insideCustomScrollView = true;
+    return this;
+  }
+
   /// Pumps a [SuperEditor] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
   /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
@@ -333,7 +343,9 @@ class TestSuperEditorConfigurator {
   ConfiguredSuperEditorWidget _build([TestDocumentContext? testDocumentContext]) {
     final context = testDocumentContext ?? _createTestDocumentContext();
     final superEditor = _buildConstrainedContent(
-      _buildSuperEditor(context),
+      _buildAncestorScrollable(
+        child: _buildSuperEditor(context),
+      ),
     );
 
     return ConfiguredSuperEditorWidget(
@@ -397,6 +409,22 @@ class TestSuperEditorConfigurator {
     return superEditor;
   }
 
+  /// Places [child] inside a [CustomScrollView], based on configurations in this class.
+  Widget _buildAncestorScrollable({required Widget child}) {
+    if (!_config.insideCustomScrollView) {
+      return child;
+    }
+
+    return CustomScrollView(
+      controller: _config.scrollController,
+      slivers: [
+        SliverToBoxAdapter(
+          child: child,
+        ),
+      ],
+    );
+  }
+
   /// Builds a [SuperEditor] widget based on the configuration of the given
   /// [testDocumentContext], as well as other configurations in this class.
   Widget _buildSuperEditor(TestDocumentContext testDocumentContext) {
@@ -454,6 +482,7 @@ class SuperEditorTestConfiguration {
   List<ComponentBuilder>? componentBuilders;
   Stylesheet? stylesheet;
   ScrollController? scrollController;
+  bool insideCustomScrollView = false;
   DocumentGestureMode? gestureMode;
   TextInputSource? inputSource;
   SuperEditorSelectionPolicies? selectionPolicies;
