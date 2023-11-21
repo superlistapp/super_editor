@@ -10,27 +10,9 @@ extension IsArrowKeyExtension on KeyEvent {
 
 
 extension IsKeyPressed on KeyEvent {
-  bool isLogicalKeyPressed(LogicalKeyboardKey key) {
-    return HardwareKeyboard.instance.logicalKeysPressed.contains(key);
-  }
-
-  bool get isMetaPressed {
-    return isLogicalKeyPressed(LogicalKeyboardKey.metaLeft) ||
-        isLogicalKeyPressed(LogicalKeyboardKey.metaRight);
-  }
-
-  bool get isControlPressed {
-    return isLogicalKeyPressed(LogicalKeyboardKey.controlLeft) ||
-        isLogicalKeyPressed(LogicalKeyboardKey.controlRight);
-  }
-
-  bool get isShiftPressed {
-    return isLogicalKeyPressed(LogicalKeyboardKey.shiftLeft) ||
-        isLogicalKeyPressed(LogicalKeyboardKey.shiftRight);
-  }
-
-  bool get isAltPressed {
-    return isLogicalKeyPressed(LogicalKeyboardKey.altLeft) ||
-        isLogicalKeyPressed(LogicalKeyboardKey.altRight);
-  }
+  bool isLogicalKeyPressed(LogicalKeyboardKey key) => HardwareKeyboard.instance.isLogicalKeyPressed(key);
+  bool get isMetaPressed => HardwareKeyboard.instance.isMetaPressed;
+  bool get isControlPressed => HardwareKeyboard.instance.isControlPressed;
+  bool get isShiftPressed => HardwareKeyboard.instance.isShiftPressed;
+  bool get isAltPressed => HardwareKeyboard.instance.isAltPressed;
 }
