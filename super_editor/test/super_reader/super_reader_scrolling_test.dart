@@ -5,6 +5,7 @@ import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_reader_test.dart';
 
+import '../test_tools.dart';
 import 'reader_test_tools.dart';
 import 'test_documents.dart';
 
@@ -220,6 +221,128 @@ void main() {
       );
     });
 
+    testWidgetsOnAndroid("doesn't overscroll when dragging down", (tester) async {
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withScrollController(scrollController)
+          .pump();
+
+      // Ensure the reader didn't start scrolled.
+      expect(scrollController.offset, 0);
+
+      // Drag an arbitrary amount of pixels from the top of the reader.
+      final dragGesture = await tester.dragByFrameCount(
+        startLocation: tester.getRect(find.byType(SuperReader)).topCenter + const Offset(0, 5),
+        totalDragOffset: const Offset(0, 200.0),
+      );
+
+      // Ensure we don't scroll.
+      expect(scrollController.offset, 0);
+
+      // End the gesture.
+      await dragGesture.up();
+
+      // Wait for the long-press timer to resolve.
+      await tester.pumpAndSettle();
+    });
+
+    testWidgetsOnAndroid("doesn't overscroll when dragging up", (tester) async {
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withScrollController(scrollController)
+          .pump();
+
+      // Jump to the bottom.
+      scrollController.jumpTo(scrollController.position.maxScrollExtent);
+
+      // Drag an arbitrary amount of pixels from the bottom of the reader.
+      final dragGesture = await tester.dragByFrameCount(
+        startLocation: tester.getRect(find.byType(SuperReader)).bottomCenter - const Offset(0, 5),
+        totalDragOffset: const Offset(0, -200.0),
+      );
+
+      // Ensure we don't scroll.
+      expect(scrollController.offset, scrollController.position.maxScrollExtent);
+
+      // End the gesture.
+      await dragGesture.up();
+
+      // Wait for the long-press timer to resolve.
+      await tester.pumpAndSettle();
+    });
+
+    testWidgetsOnIos('overscrolls when dragging down', (tester) async {
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withScrollController(scrollController)
+          .pump();
+
+      // Ensure the scrollview didn't start scrolled.
+      expect(scrollController.offset, 0);
+
+      // Drag an arbitrary amount of pixels a few pixels below the top of the reader.
+      final dragGesture = await tester.dragByFrameCount(
+        startLocation: tester.getRect(find.byType(SuperReader)).topCenter + const Offset(0, 5),
+        totalDragOffset: const Offset(0, 80.0),
+      );
+
+      // Ensure we are overscrolling while holding the pointer down.
+      await tester.pumpAndSettle();
+      expect(scrollController.offset, lessThan(0.0));
+
+      // Release the pointer to end the gesture.
+      await dragGesture.up();
+
+      // Wait for the long-press timer to resolve.
+      await tester.pumpAndSettle();
+
+      // Ensure the we scrolled back to the top.
+      expect(scrollController.offset, 0.0);
+    });
+
+    testWidgetsOnIos('overscrolls when dragging up', (tester) async {
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withScrollController(scrollController)
+          .pump();
+
+      // Jump to the bottom.
+      scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+
+      // Drag an arbitrary amount of pixels from the bottom of the reader.
+      // The gesture starts with an arbitrary margin from the bottom.
+      final dragGesture = await tester.dragByFrameCount(
+        startLocation: tester.getRect(find.byType(SuperReader)).bottomCenter - const Offset(0, 5),
+        totalDragOffset: const Offset(0, -200.0),
+      );
+
+      // Ensure we are overscrolling while holding the pointer down.
+      await tester.pumpAndSettle();
+      expect(scrollController.offset, greaterThan(scrollController.position.maxScrollExtent));
+
+      // Release the pointer to end the gesture.
+      await dragGesture.up();
+
+      // Wait for the long-press timer to resolve.
+      await tester.pumpAndSettle();
+
+      // Ensure the we scrolled back to the end.
+      expect(scrollController.offset, scrollController.position.maxScrollExtent);
+    });
+
     group("when all content fits in the viewport", () {
       testWidgetsOnDesktop(
         "trackpad doesn't scroll content",
@@ -322,23 +445,9 @@ void main() {
         await tester
             .createDocument() //
             .withLongTextContent()
-            .withCustomWidgetTreeBuilder(
-              (superReader) => MaterialApp(
-                home: Scaffold(
-                  body: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: CustomScrollView(
-                      controller: scrollController,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: superReader,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            )
+            .withEditorSize(const Size(200, 200))
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -377,23 +486,9 @@ void main() {
         await tester
             .createDocument() //
             .withLongTextContent()
-            .withCustomWidgetTreeBuilder(
-              (superReader) => MaterialApp(
-                home: Scaffold(
-                  body: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: CustomScrollView(
-                      controller: scrollController,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: superReader,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            )
+            .withEditorSize(const Size(200, 200))
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
             .pump();
 
         // Ensure the scrollview didn't start scrolled.
@@ -423,6 +518,137 @@ void main() {
         // Ensure we scrolled and didn't change the selection.
         expect(scrollController.offset, greaterThan(0));
         expect(SuperReaderInspector.findDocumentSelection(), isNull);
+      });
+
+      testWidgetsOnAndroid("doesn't overscroll when dragging down", (tester) async {
+        final scrollController = ScrollController();
+
+        await tester
+            .createDocument()
+            .withSingleParagraph()
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
+            .pump();
+
+        // Ensure the scrollview didn't start scrolled.
+        expect(scrollController.offset, 0);
+
+        // Drag an arbitrary amount of pixels from the top of the reader.
+        final dragGesture = await tester.dragByFrameCount(
+          startLocation: tester.getRect(find.byType(SuperReader)).topCenter + const Offset(0, 5),
+          totalDragOffset: const Offset(0, 400.0),
+        );
+
+        // Ensure we don't scroll.
+        expect(scrollController.offset, 0);
+
+        // End the gesture.
+        await dragGesture.up();
+
+        // Wait for the long-press timer to resolve.
+        await tester.pumpAndSettle();
+      });
+
+      testWidgetsOnAndroid("doesn't overscroll when dragging up", (tester) async {
+        final scrollController = ScrollController();
+
+        // Pump a reader inside a CustomScrollView without enough room to display
+        // the whole content.
+        await tester
+            .createDocument()
+            .withSingleParagraph()
+            .withEditorSize(const Size(200, 200))
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
+            .pump();
+
+        // Jump to the bottom.
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+
+        // Drag an arbitrary amount of pixels from the bottom of the reader.
+        final dragGesture = await tester.dragByFrameCount(
+          startLocation: tester.getRect(find.byType(CustomScrollView)).bottomCenter - const Offset(0, 5),
+          totalDragOffset: const Offset(0, -400.0),
+        );
+
+        // Ensure we don't scroll.
+        expect(scrollController.offset, scrollController.position.maxScrollExtent);
+
+        // End the gesture.
+        await dragGesture.up();
+
+        // Wait for the long-press timer to resolve.
+        await tester.pumpAndSettle();
+      });
+
+      testWidgetsOnIos('overscrolls when dragging down', (tester) async {
+        final scrollController = ScrollController();
+
+        await tester
+            .createDocument() //
+            .withLongTextContent()
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
+            .pump();
+
+        // Ensure the scrollview didn't start scrolled.
+        expect(scrollController.offset, 0);
+
+        // Drag an arbitrary amount, smaller than the reader size.
+        final dragGesture = await tester.dragByFrameCount(
+          startLocation: tester.getRect(find.byType(CustomScrollView)).topCenter + const Offset(0, 5),
+          totalDragOffset: const Offset(0, 80.0),
+        );
+
+        // Ensure we are overscrolling while holding the pointer down.
+        await tester.pumpAndSettle();
+        expect(scrollController.offset, lessThan(0.0));
+
+        // Release the pointer to end the gesture.
+        await dragGesture.up();
+
+        // Wait for the long-press timer to resolve.
+        await tester.pumpAndSettle();
+
+        // Ensure the we scrolled back to the top.
+        expect(scrollController.offset, 0.0);
+      });
+
+      testWidgetsOnIos('overscrolls when dragging up', (tester) async {
+        final scrollController = ScrollController();
+
+        // Pump a reader inside a CustomScrollView without enough room to display
+        // the whole content.
+        await tester
+            .createDocument() //
+            .withLongTextContent()
+            .withEditorSize(const Size(200, 200))
+            .insideCustomScrollView()
+            .withScrollController(scrollController)
+            .pump();
+
+        // Jump to the bottom.
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        await tester.pumpAndSettle();
+
+        // Drag up an arbitrary amount, smaller than the reader size.
+        final dragGesture = await tester.dragByFrameCount(
+          startLocation: tester.getRect(find.byType(CustomScrollView)).bottomCenter - const Offset(0, 5),
+          totalDragOffset: const Offset(0, -100.0),
+        );
+
+        // Ensure we are overscrolling while holding the pointer down.
+        await tester.pumpAndSettle();
+        expect(scrollController.offset, greaterThan(scrollController.position.maxScrollExtent));
+
+        // Release the pointer to end the gesture.
+        await dragGesture.up();
+
+        // Wait for the long-press timer to resolve.
+        await tester.pumpAndSettle();
+
+        // Ensure the we scrolled back to the end.
+        expect(scrollController.offset, scrollController.position.maxScrollExtent);
       });
     });
   });

@@ -91,6 +91,7 @@ class TestDocumentConfigurator {
   List<ComponentBuilder>? _componentBuilders;
   WidgetTreeBuilder? _widgetTreeBuilder;
   ScrollController? _scrollController;
+  bool _insideCustomScrollView = false;
   FocusNode? _focusNode;
   DocumentSelection? _selection;
   WidgetBuilder? _androidToolbarBuilder;
@@ -222,6 +223,16 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Configures the [SuperReader] to be displayed inside a [CustomScrollView].
+  ///
+  /// The [CustomScrollView] is constrained by the size provided in [withEditorSize].
+  ///
+  /// Use [withScrollController] to define the [ScrollController] of the [CustomScrollView].
+  TestDocumentConfigurator insideCustomScrollView() {
+    _insideCustomScrollView = true;
+    return this;
+  }
+
   /// Pumps a [SuperReader] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
   /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
@@ -242,26 +253,28 @@ class TestDocumentConfigurator {
       documentContext: documentContext,
     );
 
-    final superDocument = _buildContent(
-      SuperReaderIosControlsScope(
-        controller: SuperReaderIosControlsController(
-          toolbarBuilder: _iOSToolbarBuilder,
-        ),
-        child: SuperReader(
-          focusNode: testContext.focusNode,
-          document: documentContext.document,
-          documentLayoutKey: layoutKey,
-          selection: documentContext.selection,
-          selectionStyle: _selectionStyles,
-          gestureMode: _gestureMode ?? _defaultGestureMode,
-          stylesheet: _stylesheet,
-          componentBuilders: [
-            ..._addedComponents,
-            ...(_componentBuilders ?? defaultComponentBuilders),
-          ],
-          autofocus: _autoFocus,
-          scrollController: _scrollController,
-          androidToolbarBuilder: _androidToolbarBuilder,
+    final superDocument = _buildConstrainedContent(
+      _buildAncestorScrollable(
+        child: SuperReaderIosControlsScope(
+          controller: SuperReaderIosControlsController(
+            toolbarBuilder: _iOSToolbarBuilder,
+          ),
+          child: SuperReader(
+            focusNode: testContext.focusNode,
+            document: documentContext.document,
+            documentLayoutKey: layoutKey,
+            selection: documentContext.selection,
+            selectionStyle: _selectionStyles,
+            gestureMode: _gestureMode ?? _defaultGestureMode,
+            stylesheet: _stylesheet,
+            componentBuilders: [
+              ..._addedComponents,
+              ...(_componentBuilders ?? defaultComponentBuilders),
+            ],
+            autofocus: _autoFocus,
+            scrollController: _scrollController,
+            androidToolbarBuilder: _androidToolbarBuilder,
+          ),
         ),
       ),
     );
@@ -273,7 +286,7 @@ class TestDocumentConfigurator {
     return testContext;
   }
 
-  Widget _buildContent(Widget superReader) {
+  Widget _buildConstrainedContent(Widget superReader) {
     if (_editorSize != null) {
       return ConstrainedBox(
         constraints: BoxConstraints(
@@ -284,6 +297,22 @@ class TestDocumentConfigurator {
       );
     }
     return superReader;
+  }
+
+  /// Places [child] inside a [CustomScrollView], based on configurations in this class.
+  Widget _buildAncestorScrollable({required Widget child}) {
+    if (!_insideCustomScrollView) {
+      return child;
+    }
+
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverToBoxAdapter(
+          child: child,
+        ),
+      ],
+    );
   }
 
   Widget _buildWidgetTree(Widget superReader) {
