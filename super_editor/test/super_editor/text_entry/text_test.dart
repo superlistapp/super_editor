@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
 
 import '../../test_tools_user_input.dart';
 import '../supereditor_test_tools.dart';
@@ -50,7 +51,7 @@ void main() {
     });
 
     group('TextComposable text entry', () {
-      testWidgets('it does nothing when meta is pressed', (WidgetTester tester) async {
+      test('it does nothing when meta is pressed', () {
         final editContext = _createEditContext();
 
         // Press just the meta key.
@@ -67,6 +68,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
 
         // Press "a" + meta key
+        IsKeyPressed.setTestKeyboard(FakeHardwareKeyboard(isMetaPressed: true));
         result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: const KeyDownEvent(
@@ -75,7 +77,7 @@ void main() {
             timeStamp: Duration.zero,
           ),
         );
-
+        IsKeyPressed.setTestKeyboard(null);
         // The handler should pass on handling the key.
         expect(result, ExecutionInstruction.continueExecution);
       });
@@ -97,7 +99,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
       });
 
-      testWidgets('it does nothing when the selection is not collapsed', (WidgetTester tester) async {
+      test('it does nothing when the selection is not collapsed', () {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
@@ -140,7 +142,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
       });
 
-      testWidgets('it does nothing when a non-text node is selected', (WidgetTester tester) async {
+      test('it does nothing when a non-text node is selected', () {
         final editContext = _createEditContext();
 
         // Add a non-text node to the document.
@@ -230,7 +232,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
       });
 
-      testWidgets('it inserts an English character', (WidgetTester tester) async {
+      test('it inserts an English character', () {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.

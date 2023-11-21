@@ -18,7 +18,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
-import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
+import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/strings.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -1496,7 +1496,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
     return ExecutionInstruction.continueExecution;
   }
 
-  // Do nothing if CMD or CTRL are pressed because this signifies an attempted
+  // Do nothing if META or CTRL are pressed because this signifies an attempted
   // shortcut.
   if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
     return ExecutionInstruction.continueExecution;

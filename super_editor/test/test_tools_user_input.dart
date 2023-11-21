@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:linkify/linkify.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
 
 final inputSourceVariant = ValueVariant({
   TextInputSource.keyboard,
@@ -43,5 +45,34 @@ class ImeConnectionWithUpdateCount extends TextInputConnectionDecorator {
   void setEditingState(TextEditingValue value) {
     super.setEditingState(value);
     _contentUpdateCount += 1;
+  }
+}
+
+class FakeHardwareKeyboard extends HardwareKeyboard {
+  FakeHardwareKeyboard({
+    this.isAltPressed = false,
+    this.isControlPressed = false,
+    this.isMetaPressed = false,
+    this.isShiftPressed = false,
+  });
+
+  @override
+  final bool isMetaPressed;
+  @override
+  final bool isControlPressed;
+  @override
+  final bool isAltPressed;
+  @override
+  final bool isShiftPressed;
+
+  @override
+  bool isLogicalKeyPressed(LogicalKeyboardKey key) {
+    return switch (key) {
+      LogicalKeyboardKey.shift || LogicalKeyboardKey.shiftLeft || LogicalKeyboardKey.shiftRight => isShiftPressed,
+      LogicalKeyboardKey.alt || LogicalKeyboardKey.altLeft || LogicalKeyboardKey.altRight => isAltPressed,
+      LogicalKeyboardKey.control || LogicalKeyboardKey.controlLeft || LogicalKeyboardKey.controlRight => isControlPressed,
+      LogicalKeyboardKey.meta || LogicalKeyboardKey.metaLeft || LogicalKeyboardKey.metaRight => isMetaPressed,
+      _ => HardwareKeyboard.instance.isLogicalKeyPressed(key)
+    };
   }
 }

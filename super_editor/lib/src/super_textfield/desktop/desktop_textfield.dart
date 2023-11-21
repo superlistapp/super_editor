@@ -16,7 +16,7 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
-import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
+import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_field_scroller.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
