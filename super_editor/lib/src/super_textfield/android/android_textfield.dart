@@ -491,57 +491,61 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     return OverlayPortal(
       controller: _popoverController,
       overlayChildBuilder: _buildPopoverToolbar,
-      child: TapRegion(
-        groupId: widget.tapRegionGroupId,
-        child: NonReparentingFocus(
-          key: _textFieldKey,
-          focusNode: _focusNode,
-          onKey: _onKeyPressed,
-          child: CompositedTransformTarget(
-            link: _textFieldLayerLink,
-            child: AndroidTextFieldTouchInteractor(
-              focusNode: _focusNode,
-              textKey: _textContentKey,
-              textFieldLayerLink: _textFieldLayerLink,
-              textController: _textEditingController,
-              editingOverlayController: _editingOverlayController,
-              textScrollController: _textScrollController,
-              isMultiline: _isMultiline,
-              handleColor: widget.handlesColor,
-              showDebugPaint: widget.showDebugPaint,
-              child: TextScrollView(
-                key: _scrollKey,
-                textScrollController: _textScrollController,
-                textKey: _textContentKey,
-                textEditingController: _textEditingController,
-                textAlign: widget.textAlign,
-                minLines: widget.minLines,
-                maxLines: widget.maxLines,
-                lineHeight: widget.lineHeight,
-                perLineAutoScrollDuration: const Duration(milliseconds: 100),
-                showDebugPaint: widget.showDebugPaint,
-                padding: widget.padding,
-                child: ListenableBuilder(
-                  listenable: _textEditingController,
-                  builder: (context, _) {
-                    final isTextEmpty = _textEditingController.text.text.isEmpty;
-                    final showHint = widget.hintBuilder != null &&
-                        ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                            (isTextEmpty &&
-                                !_focusNode.hasFocus &&
-                                widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+      child: _buildTextField(),
+    );
+  }
 
-                    return CompositedTransformTarget(
-                      link: _textContentLayerLink,
-                      child: Stack(
-                        children: [
-                          if (showHint) widget.hintBuilder!(context),
-                          _buildSelectableText(),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+  Widget _buildTextField() {
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: NonReparentingFocus(
+        key: _textFieldKey,
+        focusNode: _focusNode,
+        onKey: _onKeyPressed,
+        child: CompositedTransformTarget(
+          link: _textFieldLayerLink,
+          child: AndroidTextFieldTouchInteractor(
+            focusNode: _focusNode,
+            textKey: _textContentKey,
+            textFieldLayerLink: _textFieldLayerLink,
+            textController: _textEditingController,
+            editingOverlayController: _editingOverlayController,
+            textScrollController: _textScrollController,
+            isMultiline: _isMultiline,
+            handleColor: widget.handlesColor,
+            showDebugPaint: widget.showDebugPaint,
+            child: TextScrollView(
+              key: _scrollKey,
+              textScrollController: _textScrollController,
+              textKey: _textContentKey,
+              textEditingController: _textEditingController,
+              textAlign: widget.textAlign,
+              minLines: widget.minLines,
+              maxLines: widget.maxLines,
+              lineHeight: widget.lineHeight,
+              perLineAutoScrollDuration: const Duration(milliseconds: 100),
+              showDebugPaint: widget.showDebugPaint,
+              padding: widget.padding,
+              child: ListenableBuilder(
+                listenable: _textEditingController,
+                builder: (context, _) {
+                  final isTextEmpty = _textEditingController.text.text.isEmpty;
+                  final showHint = widget.hintBuilder != null &&
+                      ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                          (isTextEmpty &&
+                              !_focusNode.hasFocus &&
+                              widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+
+                  return CompositedTransformTarget(
+                    link: _textContentLayerLink,
+                    child: Stack(
+                      children: [
+                        if (showHint) widget.hintBuilder!(context),
+                        _buildSelectableText(),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ),
