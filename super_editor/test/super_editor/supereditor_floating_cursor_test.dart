@@ -132,9 +132,10 @@ void main() {
         // Ensure the caret is displayed.
         expect(_caretFinder(), findsOneWidget);
 
-        // Ensure the caret is blue.
+        // Ensure the caret is the same colors as the theme's primary color.
         caret = tester.widget<BlinkingCaret>(_caretFinder());
-        expect(caret.color, Colors.blue);
+
+        expect(caret.color, ThemeData().primaryColor);
       });
 
       testWidgetsOnIos('collapses an expanded selection', (tester) async {
