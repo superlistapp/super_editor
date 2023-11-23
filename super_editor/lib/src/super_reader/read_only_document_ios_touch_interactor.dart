@@ -972,12 +972,27 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
               ..gestureSettings = gestureSettings;
           },
         ),
-        // We use a VerticalDragGestureRecognizer instead of a PanGestureRecognizer
-        // because `Scrollable` also uses a VerticalDragGestureRecognizer and we
-        // need to beat out any ancestor `Scrollable` in the gesture arena.
+        // We use a combination of a VerticalDragGestureRecognizer and a HorizontalDragGestureRecognizer
+        // instead of a PanGestureRecognizer because `Scrollable` also uses a VerticalDragGestureRecognizer
+        // and we need to beat out any ancestor `Scrollable` in the gesture arena.
+        // Without the HorizontalDragGestureRecognizer, horizontal drags aren't reported here
+        // when the reader has an ancestor `Scrollable`.
         VerticalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<VerticalDragGestureRecognizer>(
           () => VerticalDragGestureRecognizer(),
           (VerticalDragGestureRecognizer instance) {
+            instance
+              ..dragStartBehavior = DragStartBehavior.down
+              ..onDown = _onPanDown
+              ..onStart = _onPanStart
+              ..onUpdate = _onPanUpdate
+              ..onEnd = _onPanEnd
+              ..onCancel = _onPanCancel
+              ..gestureSettings = gestureSettings;
+          },
+        ),
+        HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
+          () => HorizontalDragGestureRecognizer(),
+          (HorizontalDragGestureRecognizer instance) {
             instance
               ..dragStartBehavior = DragStartBehavior.down
               ..onDown = _onPanDown
