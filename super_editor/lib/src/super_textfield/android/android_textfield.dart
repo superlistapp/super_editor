@@ -5,6 +5,7 @@ import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/super_textfield/android/_user_interaction.dart';
@@ -220,6 +221,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
     if (widget.imeConfiguration != oldWidget.imeConfiguration &&
         widget.imeConfiguration != null &&
+        (oldWidget.imeConfiguration == null || !widget.imeConfiguration!.isEquivalentTo(oldWidget.imeConfiguration!)) &&
         _textEditingController.isAttachedToIme) {
       _textEditingController.updateTextInputConfiguration(
         textInputAction: widget.imeConfiguration!.inputAction,
@@ -227,6 +229,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         autocorrect: widget.imeConfiguration!.autocorrect,
         enableSuggestions: widget.imeConfiguration!.enableSuggestions,
         keyboardAppearance: widget.imeConfiguration!.keyboardAppearance,
+        textCapitalization: widget.imeConfiguration!.textCapitalization,
       );
     }
 

@@ -9,6 +9,7 @@ import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_scrollview.dart';
@@ -254,6 +255,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
     if (widget.imeConfiguration != oldWidget.imeConfiguration &&
         widget.imeConfiguration != null &&
+        (oldWidget.imeConfiguration == null || !widget.imeConfiguration!.isEquivalentTo(oldWidget.imeConfiguration!)) &&
         _textEditingController.isAttachedToIme) {
       _textEditingController.updateTextInputConfiguration(
         textInputAction: widget.imeConfiguration!.inputAction,
@@ -261,6 +263,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         autocorrect: widget.imeConfiguration!.autocorrect,
         enableSuggestions: widget.imeConfiguration!.enableSuggestions,
         keyboardAppearance: widget.imeConfiguration!.keyboardAppearance,
+        textCapitalization: widget.imeConfiguration!.textCapitalization,
       );
     }
 

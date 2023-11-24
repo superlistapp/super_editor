@@ -1134,6 +1134,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
 
     if (widget.imeConfiguration != oldWidget.imeConfiguration &&
         widget.imeConfiguration != null &&
+        (oldWidget.imeConfiguration == null || !widget.imeConfiguration!.isEquivalentTo(oldWidget.imeConfiguration!)) &&
         _textController.isAttachedToIme) {
       _textController.updateTextInputConfiguration(
         textInputAction: widget.imeConfiguration!.inputAction,
@@ -1141,6 +1142,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
         autocorrect: widget.imeConfiguration!.autocorrect,
         enableSuggestions: widget.imeConfiguration!.enableSuggestions,
         keyboardAppearance: widget.imeConfiguration!.keyboardAppearance,
+        textCapitalization: widget.imeConfiguration!.textCapitalization,
       );
     }
   }
