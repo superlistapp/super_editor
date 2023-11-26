@@ -528,7 +528,7 @@ void main() {
     });
   });
 
-  testWidgetsOnAllPlatforms('updates custom IME configuration when configuration changes', (tester) async {
+  testWidgetsOnAllPlatforms('updates IME configuration when it changes', (tester) async {
     final brightnessNotifier = ValueNotifier(Brightness.dark);
 
     // Pump a SuperTextField with an IME configuration with values
@@ -600,7 +600,7 @@ void main() {
     // Change the brightness to rebuild the widget
     // and re-attach to the IME.
     brightnessNotifier.value = Brightness.light;
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     // Ensure we use the values from the configuration,
     // updating only the keyboard appearance.
@@ -617,31 +617,40 @@ void main() {
     // Keeps track of how many times TextInput.setClient was called.
     int imeConnectionCount = 0;
 
-    final rebuildSignal = SignalNotifier();
+    // Explicitly avoid using const to ensure that we have two
+    // TextInputConfiguration instances with the same values.
+    //
+    // ignore: prefer_const_constructors
+    final configuration1 = TextInputConfiguration(
+      enableSuggestions: false,
+      autocorrect: false,
+      inputAction: TextInputAction.search,
+      keyboardAppearance: Brightness.dark,
+      inputType: TextInputType.number,
+      enableDeltaModel: false,
+    );
+    // ignore: prefer_const_constructors
+    final configuration2 = TextInputConfiguration(
+      enableSuggestions: false,
+      autocorrect: false,
+      inputAction: TextInputAction.search,
+      keyboardAppearance: Brightness.dark,
+      inputType: TextInputType.number,
+      enableDeltaModel: false,
+    );
+
+    final inputConfigurationNotifier = ValueNotifier(configuration1);
 
     // Pump a SuperTextField with an IME configuration with values
     // that differ from the defaults.
     await tester.pumpWidget(
       _buildScaffold(
-        child: ListenableBuilder(
-          listenable: rebuildSignal,
-          builder: (context, child) {
-            // Explicitly avoid using const to ensure that each build
-            // generates a new TextInputConfiguration instance
-            // with the same values.
-            //
-            // ignore: prefer_const_constructors
+        child: ValueListenableBuilder(
+          valueListenable: inputConfigurationNotifier,
+          builder: (context, inputConfiguration, child) {
             return SuperTextField(
               inputSource: TextInputSource.ime,
-              // ignore: prefer_const_constructors
-              imeConfiguration: TextInputConfiguration(
-                enableSuggestions: false,
-                autocorrect: false,
-                inputAction: TextInputAction.search,
-                keyboardAppearance: Brightness.dark,
-                inputType: TextInputType.number,
-                enableDeltaModel: false,
-              ),
+              imeConfiguration: inputConfiguration,
             );
           },
         ),
@@ -662,9 +671,9 @@ void main() {
     // Tap to focus the text field and attach to the IME.
     await tester.placeCaretInSuperTextField(0);
 
-    // Force the widget tree to rebuild.
-    rebuildSignal.notifyListeners();
-    await tester.pumpAndSettle();
+    // Change the configuration instance to trigger a rebuild.
+    inputConfigurationNotifier.value = configuration2;
+    await tester.pump();
 
     // Ensure the connection was performed only once.
     expect(imeConnectionCount, 1);
