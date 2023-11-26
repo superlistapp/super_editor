@@ -5,6 +5,7 @@ import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
+import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/super_textfield/android/_user_interaction.dart';
@@ -168,10 +169,12 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   late TextScrollController _textScrollController;
 
-  // OverlayEntry that displays the toolbar and magnifier, and
-  // positions the invisible touch targets for base/extent
-  // dragging.
-  OverlayEntry? _controlsOverlayEntry;
+  /// Opens/closes the popover that displays the toolbar and magnifier, and
+  // positions the invisible touch targets for base/extent dragging.
+  final _popoverController = OverlayPortalController();
+
+  /// Notifies the popover toolbar to rebuild itself.
+  final _popoverRebuildSignal = SignalNotifier();
 
   @override
   void initState() {
@@ -293,6 +296,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       ..removeListener(_onTextScrollChange)
       ..dispose();
 
+    _popoverRebuildSignal.dispose();
+
     WidgetsBinding.instance.removeObserver(this);
 
     super.dispose();
@@ -359,46 +364,32 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   }
 
   void _onTextScrollChange() {
-    if (_controlsOverlayEntry != null) {
+    if (_popoverController.isShowing) {
       _rebuildEditingOverlayControls();
     }
   }
 
-  /// Displays [AndroidEditingOverlayControls] in the app's [Overlay], if not already
+  /// Displays [AndroidEditingOverlayControls] in the [OverlayPortal], if not already
   /// displayed.
   void _showEditingControlsOverlay() {
-    if (_controlsOverlayEntry == null) {
-      _controlsOverlayEntry = OverlayEntry(builder: (overlayContext) {
-        return AndroidEditingOverlayControls(
-          editingController: _editingOverlayController,
-          textScrollController: _textScrollController,
-          textFieldLayerLink: _textFieldLayerLink,
-          textFieldKey: _textFieldKey,
-          textContentLayerLink: _textContentLayerLink,
-          textContentKey: _textContentKey,
-          tapRegionGroupId: widget.tapRegionGroupId,
-          handleColor: widget.handlesColor,
-          popoverToolbarBuilder: widget.popoverToolbarBuilder,
-          showDebugPaint: widget.showDebugPaint,
-        );
-      });
-
-      Overlay.of(context).insert(_controlsOverlayEntry!);
+    if (!_popoverController.isShowing) {
+      _popoverController.show();
     }
   }
 
-  /// Rebuilds the [AndroidEditingControls] in the app's [Overlay], if
+  /// Rebuilds the [AndroidEditingOverlayControls] in the [OverlayPortal], if
   /// they're currently displayed.
   void _rebuildEditingOverlayControls() {
-    _controlsOverlayEntry?.markNeedsBuild();
+    if (_popoverController.isShowing) {
+      _popoverRebuildSignal.notifyListeners();
+    }
   }
 
-  /// Removes [AndroidEditingControls] from the app's [Overlay], if they're
+  /// Hides the [AndroidEditingOverlayControls] in the [OverlayPortal], if they're
   /// currently displayed.
   void _removeEditingOverlayControls() {
-    if (_controlsOverlayEntry != null) {
-      _controlsOverlayEntry!.remove();
-      _controlsOverlayEntry = null;
+    if (_popoverController.isShowing) {
+      _popoverController.hide();
     }
   }
 
@@ -497,6 +488,14 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   @override
   Widget build(BuildContext context) {
+    return OverlayPortal(
+      controller: _popoverController,
+      overlayChildBuilder: _buildPopoverToolbar,
+      child: _buildTextField(),
+    );
+  }
+
+  Widget _buildTextField() {
     return TapRegion(
       groupId: widget.tapRegionGroupId,
       child: NonReparentingFocus(
@@ -576,6 +575,26 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           blinkTimingMode: widget.blinkTimingMode,
         ),
       ),
+    );
+  }
+
+  Widget _buildPopoverToolbar(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _popoverRebuildSignal,
+      builder: (context, _) {
+        return AndroidEditingOverlayControls(
+          editingController: _editingOverlayController,
+          textScrollController: _textScrollController,
+          textFieldLayerLink: _textFieldLayerLink,
+          textFieldKey: _textFieldKey,
+          textContentLayerLink: _textContentLayerLink,
+          textContentKey: _textContentKey,
+          tapRegionGroupId: widget.tapRegionGroupId,
+          handleColor: widget.handlesColor,
+          popoverToolbarBuilder: widget.popoverToolbarBuilder,
+          showDebugPaint: widget.showDebugPaint,
+        );
+      },
     );
   }
 }

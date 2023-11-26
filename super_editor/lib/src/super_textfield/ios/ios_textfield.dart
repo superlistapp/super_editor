@@ -9,6 +9,7 @@ import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_scrollview.dart';
@@ -177,10 +178,12 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   late MagnifierAndToolbarController _overlayController;
 
-  // OverlayEntry that displays the toolbar and magnifier, and
-  // positions the invisible touch targets for base/extent
-  // dragging.
-  OverlayEntry? _controlsOverlayEntry;
+  /// Opens/closes the popover that displays the toolbar and magnifier, and
+  // positions the invisible touch targets for base/extent dragging.
+  final _popoverController = OverlayPortalController();
+
+  /// Notifies the popover toolbar to rebuild itself.
+  final _popoverRebuildSignal = SignalNotifier();
 
   @override
   void initState() {
@@ -316,6 +319,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
     WidgetsBinding.instance.removeObserver(this);
 
+    _popoverRebuildSignal.dispose();
+
     super.dispose();
   }
 
@@ -380,46 +385,32 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   }
 
   void _onTextScrollChange() {
-    if (_controlsOverlayEntry != null) {
+    if (_popoverController.isShowing) {
       _rebuildHandles();
     }
   }
 
-  /// Displays [IOSEditingControls] in the app's [Overlay], if not already
+  /// Displays [IOSEditingControls] in the [OverlayPortal], if not already
   /// displayed.
   void _showHandles() {
-    if (_controlsOverlayEntry == null) {
-      _controlsOverlayEntry = OverlayEntry(builder: (overlayContext) {
-        return IOSEditingControls(
-          editingController: _editingOverlayController,
-          textScrollController: _textScrollController,
-          textFieldLayerLink: _textFieldLayerLink,
-          textFieldKey: _textFieldKey,
-          textContentLayerLink: _textContentLayerLink,
-          textContentKey: _textContentKey,
-          tapRegionGroupId: widget.tapRegionGroupId,
-          handleColor: widget.handlesColor,
-          popoverToolbarBuilder: _defaultPopoverToolbarBuilder,
-          showDebugPaint: widget.showDebugPaint,
-        );
-      });
-
-      Overlay.of(context).insert(_controlsOverlayEntry!);
+    if (!_popoverController.isShowing) {
+      _popoverController.show();
     }
   }
 
-  /// Rebuilds the [IOSEditingControls] in the app's [Overlay], if
+  /// Rebuilds the [IOSEditingControls] in the [OverlayPortal], if
   /// they're currently displayed.
   void _rebuildHandles() {
-    _controlsOverlayEntry?.markNeedsBuild();
+    if (!_popoverController.isShowing) {
+      _popoverRebuildSignal.notifyListeners();
+    }
   }
 
-  /// Removes [IOSEditingControls] from the app's [Overlay], if they're
+  /// Hides the [IOSEditingControls] in the [OverlayPortal], if they're
   /// currently displayed.
   void _removeEditingOverlayControls() {
-    if (_controlsOverlayEntry != null) {
-      _controlsOverlayEntry!.remove();
-      _controlsOverlayEntry = null;
+    if (_popoverController.isShowing) {
+      _popoverController.hide();
     }
   }
 
@@ -499,6 +490,14 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   @override
   Widget build(BuildContext context) {
+    return OverlayPortal(
+      controller: _popoverController,
+      overlayChildBuilder: _buildPopoverToolbar,
+      child: _buildTextField(),
+    );
+  }
+
+  Widget _buildTextField() {
     return TapRegion(
       groupId: widget.tapRegionGroupId,
       child: NonReparentingFocus(
@@ -593,6 +592,26 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           blinkTimingMode: widget.blinkTimingMode,
         ),
       ),
+    );
+  }
+
+  Widget _buildPopoverToolbar(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _popoverRebuildSignal,
+      builder: (context, _) {
+        return IOSEditingControls(
+          editingController: _editingOverlayController,
+          textScrollController: _textScrollController,
+          textFieldLayerLink: _textFieldLayerLink,
+          textFieldKey: _textFieldKey,
+          textContentLayerLink: _textContentLayerLink,
+          textContentKey: _textContentKey,
+          tapRegionGroupId: widget.tapRegionGroupId,
+          handleColor: widget.handlesColor,
+          popoverToolbarBuilder: widget.popoverToolbarBuilder,
+          showDebugPaint: widget.showDebugPaint,
+        );
+      },
     );
   }
 }
