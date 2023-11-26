@@ -468,7 +468,7 @@ spans multiple lines.''',
       expect(find.byType(AndroidSelectionHandle), findsOneWidget);
     });
 
-    testWidgetsOnIos('configures default gesture mode (on iOS)', (tester) async {
+    testWidgetsOnIos('configures default gesture mode', (tester) async {
       await tester //
           .createDocument()
           .withSingleParagraph()
