@@ -13,7 +13,7 @@ import 'super_textfield_robot.dart';
 
 void main() {
   group('SuperTextField', () {
-    testWidgetsOnIos('applies app theme to the popover toolbar (on iOS)', (tester) async {
+    testWidgetsOnIos('applies app theme to the popover toolbar', (tester) async {
       final controller = ImeAttributedTextEditingController(
         controller: AttributedTextEditingController(
           text: AttributedText('A single line textfield'),

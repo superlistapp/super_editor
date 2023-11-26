@@ -550,8 +550,7 @@ Second paragraph"""). //
         );
       });
 
-      testWidgetsOnIos(
-          'when the user presses the newline button on the software keyboard at the end of an image (on iOS)',
+      testWidgetsOnIos('when the user presses the newline button on the software keyboard at the end of an image',
           (tester) async {
         final testContext = await tester
             .createDocument()
