@@ -505,9 +505,9 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
         child: Follower.withAligner(
           link: _popoverLink,
           boundary: _screenBoundary,
-          aligner: _DelegateAligner(
-            delegate: widget.popoverGeometry.align,
-            boundaryKey: widget.boundaryKey,
+          aligner: FunctionalAligner(
+            delegate: (globalLeaderRect, followerSize) =>
+                widget.popoverGeometry.align(globalLeaderRect, followerSize, widget.boundaryKey),
           ),
           child: ConstrainedBox(
             constraints: widget.popoverGeometry.constraints ?? const BoxConstraints(),
@@ -567,27 +567,6 @@ class PopoverGeometry {
   ///
   /// If `null`, the popover can use all the available space.
   final BoxConstraints? constraints;
-}
-
-/// A [FollowerAligner] which uses a [delegate] to align a [Follower].
-class _DelegateAligner implements FollowerAligner {
-  _DelegateAligner({
-    required this.delegate,
-    this.boundaryKey,
-  });
-
-  /// Called to determine the position of the [Follower].
-  final PopoverAligner delegate;
-
-  /// A [GlobalKey] to a widget that determines the bounds where the popover list can be displayed.
-  ///
-  /// If non-`null`, the [FollowerAlignment] returned by the [delegate] must be within the bounds of its `RenderBox`.
-  final GlobalKey? boundaryKey;
-
-  @override
-  FollowerAlignment align(Rect globalLeaderRect, Size followerSize) {
-    return delegate(globalLeaderRect, followerSize, boundaryKey);
-  }
 }
 
 /// Computes the position of a popover list relative to the dropdown button.
