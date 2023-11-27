@@ -2,6 +2,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
 
 import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
 
@@ -35,8 +36,8 @@ enum ExecutionInstruction {
 
 extension PrimaryShortcutKey on KeyEvent {
   bool get isPrimaryShortcutKeyPressed =>
-      (defaultTargetPlatform == TargetPlatform.macOS && isMetaPressed) ||
-      (defaultTargetPlatform != TargetPlatform.macOS && isControlPressed);
+      (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) ||
+      (defaultTargetPlatform != TargetPlatform.macOS && HardwareKeyboard.instance.isControlPressed);
 }
 
 /// Whether the given [character] should be ignored when it's received within
