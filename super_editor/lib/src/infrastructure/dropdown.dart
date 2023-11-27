@@ -340,8 +340,7 @@ class _PopoverShapeState extends State<PopoverShape> with SingleTickerProviderSt
   }
 }
 
-/// A widget which displays a button built in [buttonBuilder] with a popover
-/// which follows the button.
+/// A widget used to build UI controls that display a following popover.
 ///
 /// The popover is displayed in an `Overlay` and its visibility is changed by calling
 /// [PopoverController.open] or [PopoverController.close]. The popover is automatically closed
