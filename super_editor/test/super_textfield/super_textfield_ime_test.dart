@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -527,6 +526,157 @@ void main() {
       expect(enableDeltaModel, true);
       expect(keyboardAppearance, 'Brightness.dark');
     });
+  });
+
+  testWidgetsOnAllPlatforms('updates IME configuration when it changes', (tester) async {
+    final brightnessNotifier = ValueNotifier(Brightness.dark);
+
+    // Pump a SuperTextField with an IME configuration with values
+    // that differ from the defaults.
+    await tester.pumpWidget(
+      _buildScaffold(
+        child: ValueListenableBuilder(
+          valueListenable: brightnessNotifier,
+          builder: (context, brightness, child) {
+            return SuperTextField(
+              inputSource: TextInputSource.ime,
+              imeConfiguration: TextInputConfiguration(
+                enableSuggestions: false,
+                autocorrect: false,
+                inputAction: TextInputAction.search,
+                keyboardAppearance: brightness,
+                inputType: TextInputType.number,
+                enableDeltaModel: false,
+                textCapitalization: TextCapitalization.characters,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    // Holds the IME configuration values passed to the platform.
+    String? inputAction;
+    String? inputType;
+    bool? autocorrect;
+    bool? enableSuggestions;
+    String? keyboardAppearance;
+    bool? enableDeltaModel;
+    String? textCapitalization;
+
+    // Intercept the setClient message sent to the platform to check the configuration.
+    tester
+        .interceptChannel(SystemChannels.textInput.name) //
+        .interceptMethod(
+      'TextInput.setClient',
+      (methodCall) {
+        final params = methodCall.arguments[1] as Map;
+        inputAction = params['inputAction'];
+        autocorrect = params['autocorrect'];
+        enableSuggestions = params['enableSuggestions'];
+        keyboardAppearance = params['keyboardAppearance'];
+        enableDeltaModel = params['enableDeltaModel'];
+        textCapitalization = params['textCapitalization'];
+
+        final inputTypeConfig = params['inputType'] as Map;
+        inputType = inputTypeConfig['name'];
+
+        return null;
+      },
+    );
+
+    // Tap to focus the text field and attach to the IME.
+    await tester.placeCaretInSuperTextField(0);
+
+    // Ensure we use the values from the configuration.
+    expect(inputAction, 'TextInputAction.search');
+    expect(inputType, 'TextInputType.number');
+    expect(autocorrect, false);
+    expect(enableSuggestions, false);
+    expect(enableDeltaModel, true);
+    expect(textCapitalization, 'TextCapitalization.characters');
+    expect(keyboardAppearance, 'Brightness.dark');
+
+    // Change the brightness to rebuild the widget
+    // and re-attach to the IME.
+    brightnessNotifier.value = Brightness.light;
+    await tester.pump();
+
+    // Ensure we use the values from the configuration,
+    // updating only the keyboard appearance.
+    expect(inputAction, 'TextInputAction.search');
+    expect(inputType, 'TextInputType.number');
+    expect(autocorrect, false);
+    expect(enableSuggestions, false);
+    expect(enableDeltaModel, true);
+    expect(textCapitalization, 'TextCapitalization.characters');
+    expect(keyboardAppearance, 'Brightness.light');
+  });
+
+  testWidgetsOnAllPlatforms('doesn\'t re-attach to IME if the configuration doesn\'t change', (tester) async {
+    // Keeps track of how many times TextInput.setClient was called.
+    int imeConnectionCount = 0;
+
+    // Explicitly avoid using const to ensure that we have two
+    // TextInputConfiguration instances with the same values.
+    //
+    // ignore: prefer_const_constructors
+    final configuration1 = TextInputConfiguration(
+      enableSuggestions: false,
+      autocorrect: false,
+      inputAction: TextInputAction.search,
+      keyboardAppearance: Brightness.dark,
+      inputType: TextInputType.number,
+      enableDeltaModel: false,
+    );
+    // ignore: prefer_const_constructors
+    final configuration2 = TextInputConfiguration(
+      enableSuggestions: false,
+      autocorrect: false,
+      inputAction: TextInputAction.search,
+      keyboardAppearance: Brightness.dark,
+      inputType: TextInputType.number,
+      enableDeltaModel: false,
+    );
+
+    final inputConfigurationNotifier = ValueNotifier(configuration1);
+
+    // Pump a SuperTextField with an IME configuration with values
+    // that differ from the defaults.
+    await tester.pumpWidget(
+      _buildScaffold(
+        child: ValueListenableBuilder(
+          valueListenable: inputConfigurationNotifier,
+          builder: (context, inputConfiguration, child) {
+            return SuperTextField(
+              inputSource: TextInputSource.ime,
+              imeConfiguration: inputConfiguration,
+            );
+          },
+        ),
+      ),
+    );
+
+    // Intercept the setClient message sent to the platform.
+    tester
+        .interceptChannel(SystemChannels.textInput.name) //
+        .interceptMethod(
+      'TextInput.setClient',
+      (methodCall) {
+        imeConnectionCount += 1;
+        return null;
+      },
+    );
+
+    // Tap to focus the text field and attach to the IME.
+    await tester.placeCaretInSuperTextField(0);
+
+    // Change the configuration instance to trigger a rebuild.
+    inputConfigurationNotifier.value = configuration2;
+    await tester.pump();
+
+    // Ensure the connection was performed only once.
+    expect(imeConnectionCount, 1);
   });
 
   group('SuperTextField on some bad Android software keyboards', () {

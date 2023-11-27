@@ -159,6 +159,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     TextInputAction textInputAction = TextInputAction.done,
     TextInputType textInputType = TextInputType.text,
     Brightness keyboardAppearance = Brightness.light,
+    TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
     // Change the keyboard appearance even if we are detached from the IME.
     // In the next time we attach to the IME, the keyboard appearance is used.
@@ -180,6 +181,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       inputAction: textInputAction,
       inputType: textInputType,
       keyboardAppearance: keyboardAppearance,
+      textCapitalization: textCapitalization,
     );
     final inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
     inputConnection.show();
