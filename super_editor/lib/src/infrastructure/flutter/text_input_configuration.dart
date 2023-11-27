@@ -31,11 +31,14 @@ extension AutofillConfigurationEquivalency on AutofillConfiguration {
   ///
   /// Two [AutofillConfiguration]s are considered to be equal
   /// if all properties are equal.
+  ///
+  /// The [currentEditingValue] isn't considered in the comparison.
+  /// Otherwise, whenever the user changes the text or selection
+  /// would result in two configurations being unequal.
   bool isEquivalentTo(AutofillConfiguration other) {
     return enabled == other.enabled &&
         uniqueIdentifier == other.uniqueIdentifier &&
         const DeepCollectionEquality().equals(autofillHints, other.autofillHints) &&
-        currentEditingValue == other.currentEditingValue &&
         hintText == other.hintText;
   }
 }
