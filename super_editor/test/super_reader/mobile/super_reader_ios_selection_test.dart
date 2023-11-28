@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
@@ -5,6 +6,7 @@ import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_reader_test.dart';
 
+import '../../test_tools.dart';
 import '../reader_test_tools.dart';
 
 void main() {
@@ -245,6 +247,98 @@ void main() {
           // Release the gesture so the test system doesn't complain.
           gesture.up();
         });
+      });
+    });
+
+    group('within ancestor scrollable', () {
+      testWidgetsOnIos("expands selection when dragging horizontally", (tester) async {
+        final testContext = await tester
+            .createDocument()
+            .fromMarkdown(
+              '''
+SuperEditor containing a
+paragraph that spans 
+multiple lines.''',
+            )
+            .insideCustomScrollView()
+            .pump();
+
+        final paragraphNode = testContext.document.nodes.first as ParagraphNode;
+
+        // Double tap to select "SuperEditor".
+        await SuperReaderRobot(tester).doubleTapInParagraph(paragraphNode.id, 0);
+
+        // Drag from "SuperEdito|r" a distance long enough to go through the entire first line.
+        await SuperReaderRobot(tester).dragSelectDocumentFromPositionByOffset(
+          from: DocumentPosition(
+            nodeId: paragraphNode.id,
+            nodePosition: const TextNodePosition(offset: 10),
+          ),
+          delta: const Offset(300, 0),
+          pointerDeviceKind: PointerDeviceKind.touch,
+        );
+
+        // Ensure the first line is selected.
+        expect(
+          SuperReaderInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: paragraphNode.id,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+              extent: DocumentPosition(
+                nodeId: paragraphNode.id,
+                nodePosition: const TextNodePosition(offset: 24),
+              ),
+            ),
+          ),
+        );
+      });
+
+      testWidgetsOnIos("expands selection when dragging vertically", (tester) async {
+        final testContext = await tester
+            .createDocument()
+            .fromMarkdown(
+              '''
+SuperEditor containing a
+paragraph that spans 
+multiple lines.''',
+            )
+            .insideCustomScrollView()
+            .pump();
+
+        final paragraphNode = testContext.document.nodes.first as ParagraphNode;
+
+        // Double tap to select "SuperEditor".
+        await SuperReaderRobot(tester).doubleTapInParagraph(paragraphNode.id, 0);
+
+        // Drag from "SuperEdito|r" a distance long enough to go to the last line.
+        await SuperReaderRobot(tester).dragSelectDocumentFromPositionByOffset(
+          from: DocumentPosition(
+            nodeId: paragraphNode.id,
+            nodePosition: const TextNodePosition(offset: 10),
+          ),
+          delta: const Offset(0, 40),
+          pointerDeviceKind: PointerDeviceKind.touch,
+        );
+
+        // Ensure the selection starts at the beginning and end at "multiple l|ines".
+        expect(
+          SuperReaderInspector.findDocumentSelection(),
+          equals(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: paragraphNode.id,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+              extent: DocumentPosition(
+                nodeId: paragraphNode.id,
+                nodePosition: const TextNodePosition(offset: 57),
+              ),
+            ),
+          ),
+        );
       });
     });
   });

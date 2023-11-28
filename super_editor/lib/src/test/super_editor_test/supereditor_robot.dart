@@ -159,6 +159,7 @@ extension SuperEditorRobot on WidgetTester {
   Future<void> dragSelectDocumentFromPositionByOffset({
     required DocumentPosition from,
     required Offset delta,
+    PointerDeviceKind pointerDeviceKind = PointerDeviceKind.mouse,
     Finder? superEditorFinder,
   }) async {
     final documentLayout = _findDocumentLayout(superEditorFinder);
@@ -197,7 +198,7 @@ extension SuperEditorRobot on WidgetTester {
     }
 
     // Simulate the drag.
-    final gesture = await startGesture(dragStartOffset, kind: PointerDeviceKind.mouse);
+    final gesture = await startGesture(dragStartOffset, kind: pointerDeviceKind);
 
     // Move slightly so that a "pan start" is reported.
     //

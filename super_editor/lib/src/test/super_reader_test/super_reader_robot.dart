@@ -85,6 +85,7 @@ extension SuperReaderRobot on WidgetTester {
   Future<void> dragSelectDocumentFromPositionByOffset({
     required DocumentPosition from,
     required Offset delta,
+    PointerDeviceKind pointerDeviceKind = PointerDeviceKind.mouse,
     Finder? superReaderFinder,
   }) async {
     final documentLayout = _findDocumentLayout(superReaderFinder);
@@ -123,7 +124,7 @@ extension SuperReaderRobot on WidgetTester {
     }
 
     // Simulate the drag.
-    final gesture = await startGesture(dragStartOffset, kind: PointerDeviceKind.mouse);
+    final gesture = await startGesture(dragStartOffset, kind: pointerDeviceKind);
 
     // Move slightly so that a "pan start" is reported.
     //
