@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 extension ScrollableFinder on BuildContext {
-  /// Finds the nearest ancestor [Scrollable] with a vertical scroll within
-  /// this [BuildContext].
+  /// Finds the nearest ancestor [Scrollable] with a vertical scroll in the
+  /// widget tree.
   ScrollableState? get findAncestorScrollableWithVerticalScroll {
     final ancestorScrollable = Scrollable.maybeOf(this);
     if (ancestorScrollable == null) {
