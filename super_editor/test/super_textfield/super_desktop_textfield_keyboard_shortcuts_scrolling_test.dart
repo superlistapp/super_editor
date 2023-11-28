@@ -1552,10 +1552,6 @@ final String _textFieldInput = List.generate(20, (index) => "Line $index").join(
 ///
 /// Specificed configurations alter the conditions under which we test
 /// [SuperTextField] scrolling on scroll actions invoked through shortcuts.
-///
-/// If [useHomeEndShortcutsOnMacAndWeb] is true, tests use 'HOME/END' to scroll
-/// to top/bottom of the text field respectively, else 'CMD' + 'HOME/END' or
-/// 'CTRL' + 'HOME/END' shortcuts are used depending on the platform tests are running on.
 class _SuperTextFieldScrollSetup {
   const _SuperTextFieldScrollSetup({
     required this.textInputSource,
