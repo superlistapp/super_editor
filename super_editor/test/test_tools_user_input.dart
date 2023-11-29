@@ -1,8 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:linkify/linkify.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
 
 final inputSourceVariant = ValueVariant({
   TextInputSource.keyboard,

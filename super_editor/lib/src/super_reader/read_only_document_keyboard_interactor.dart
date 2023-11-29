@@ -5,8 +5,6 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
-import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
-
 
 import 'reader_context.dart';
 

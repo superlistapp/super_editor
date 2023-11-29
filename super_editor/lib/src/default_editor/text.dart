@@ -1496,7 +1496,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
     return ExecutionInstruction.continueExecution;
   }
 
-  // Do nothing if META or CTRL are pressed because this signifies an attempted
+  // Do nothing if CMD or CTRL are pressed because this signifies an attempted
   // shortcut.
   if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
