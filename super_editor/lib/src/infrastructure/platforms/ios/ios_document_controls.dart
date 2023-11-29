@@ -649,7 +649,8 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 
     if (selection.isCollapsed) {
       return DocumentSelectionLayout(
-        caret: documentLayout.getRectForPosition(selection.extent)!,
+        // TODO: Replace "getRectForSelection()" with "getRectForPosition()" after #1614
+        caret: documentLayout.getRectForSelection(selection.extent, selection.extent)!,
       );
     } else {
       return DocumentSelectionLayout(
@@ -726,7 +727,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
           }
 
           return IOSCollapsedHandle(
-            key: DocumentKeys.iOsCaret,
+            key: DocumentKeys.caret,
             controller: _caretBlinkController,
             color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
             caretHeight: caret.height,

@@ -431,13 +431,13 @@ spans multiple lines.''',
       await tester
           .createDocument()
           .withSingleParagraph()
-          .autoFocus(true)
           .withEditorSize(const Size(300, 700))
           .withSelection(
             const DocumentSelection.collapsed(
                 position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0))),
           )
           .pump();
+
       final offsetOfLineBreak = SuperEditorInspector.findOffsetOfLineBreak('1');
 
       // Tap to place the at the end of the first line

@@ -878,7 +878,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return false;
     }
 
-    final extentRect = _docLayout.getRectForPosition(collapsedPosition)!;
+    // TODO: Replace "getRectForSelection()" with "getRectForPosition()" after #1614
+    final extentRect = _docLayout.getRectForSelection(collapsedPosition, collapsedPosition)!;
     final caretRect = Rect.fromLTWH(extentRect.left - 1, extentRect.center.dy, 1, 1).inflate(24);
 
     final docOffset = _interactorOffsetToDocumentOffset(interactorOffset);
@@ -1779,6 +1780,12 @@ class SuperEditorIosToolbarFocalPointDocumentLayerBuilder implements SuperEditor
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editorContext) {
+    if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
+      // There's no controls scope. This probably means SuperEditor is configured with
+      // a non-iOS gesture mode. Build nothing.
+      return const ContentLayerProxyWidget(child: SizedBox());
+    }
+
     return IosToolbarFocalPointDocumentLayer(
       document: editorContext.document,
       selection: editorContext.composer.selectionNotifier,
@@ -1799,7 +1806,9 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
-    if (defaultTargetPlatform != TargetPlatform.iOS) {
+    if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
+      // There's no controls scope. This probably means SuperEditor is configured with
+      // a non-iOS gesture mode. Build nothing.
       return const ContentLayerProxyWidget(child: SizedBox());
     }
 

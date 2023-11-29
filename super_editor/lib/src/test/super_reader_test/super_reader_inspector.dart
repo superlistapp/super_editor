@@ -264,7 +264,7 @@ class SuperReaderInspector {
       case TargetPlatform.iOS:
         return find.byWidgetPredicate(
           (widget) =>
-              widget.key == DocumentKeys.iOsCaret ||
+              widget.key == DocumentKeys.caret ||
               widget.key == DocumentKeys.upstreamHandle ||
               widget.key == DocumentKeys.downstreamHandle,
         );
@@ -279,9 +279,8 @@ class SuperReaderInspector {
   static Finder findMobileCaret([Finder? superReaderFinder]) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return find.byKey(DocumentKeys.androidCaret);
       case TargetPlatform.iOS:
-        return find.byKey(DocumentKeys.iOsCaret);
+        return find.byKey(DocumentKeys.caret);
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:
@@ -295,7 +294,7 @@ class SuperReaderInspector {
       case TargetPlatform.android:
         return find.byKey(DocumentKeys.androidCaretHandle);
       case TargetPlatform.iOS:
-        return find.byKey(DocumentKeys.iOsCaret);
+        return find.byKey(DocumentKeys.caret);
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:

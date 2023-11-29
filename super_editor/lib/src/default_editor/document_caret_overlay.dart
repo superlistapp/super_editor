@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 /// Document overlay that paints a caret with the given [caretStyle].
@@ -170,7 +171,7 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
                   animation: _blinkController,
                   builder: (context, child) {
                     return Container(
-                      key: primaryCaretKey,
+                      key: DocumentKeys.caret,
                       width: widget.caretStyle.width,
                       decoration: BoxDecoration(
                         color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
@@ -186,5 +187,3 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
     );
   }
 }
-
-const primaryCaretKey = ValueKey("caret_primary");

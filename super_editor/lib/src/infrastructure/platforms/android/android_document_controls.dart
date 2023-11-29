@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -151,8 +151,7 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
     required this.documentLayout,
     required this.selection,
     required this.changeSelection,
-    required this.handleColor,
-    required this.shouldCaretBlink,
+    this.caretColor,
     this.showDebugPaint = false,
   });
 
@@ -164,11 +163,9 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 
   final void Function(DocumentSelection?, SelectionChangeType, String selectionReason) changeSelection;
 
-  /// Color used to render the Android-style caret (not handles).
-  final Color handleColor;
-
-  /// Whether the caret should blink, whenever the caret is visible.
-  final ValueListenable<bool> shouldCaretBlink;
+  /// Color used to render the Android-style caret (not handles), by default the color
+  /// is retrieved from the root [SuperEditorAndroidControlsController].
+  final Color? caretColor;
 
   final bool showDebugPaint;
 
@@ -185,21 +182,30 @@ class AndroidControlsDocumentLayerState
 
   SuperEditorAndroidControlsController? _controlsController;
 
+  DocumentSelection? _previousSelection;
+
   @override
   void initState() {
     super.initState();
     _caretBlinkController = BlinkController(tickerProvider: this);
 
+    _previousSelection = widget.selection.value;
     widget.selection.addListener(_onSelectionChange);
-    widget.shouldCaretBlink.addListener(_onBlinkModeChange);
-
-    _onBlinkModeChange();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    if (_controlsController != null) {
+      _controlsController!.shouldCaretBlink.removeListener(_onBlinkModeChange);
+      _controlsController!.caretJumpToOpaqueSignal.removeListener(_caretJumpToOpaque);
+    }
+
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
+    _controlsController!.shouldCaretBlink.addListener(_onBlinkModeChange);
+    _controlsController!.caretJumpToOpaqueSignal.addListener(_caretJumpToOpaque);
+    _onBlinkModeChange();
   }
 
   @override
@@ -210,17 +216,12 @@ class AndroidControlsDocumentLayerState
       oldWidget.selection.removeListener(_onSelectionChange);
       widget.selection.addListener(_onSelectionChange);
     }
-
-    if (widget.shouldCaretBlink != oldWidget.shouldCaretBlink) {
-      oldWidget.shouldCaretBlink.removeListener(_onBlinkModeChange);
-      widget.shouldCaretBlink.addListener(_onBlinkModeChange);
-    }
   }
 
   @override
   void dispose() {
     widget.selection.removeListener(_onSelectionChange);
-    widget.shouldCaretBlink.removeListener(_onBlinkModeChange);
+    _controlsController?.shouldCaretBlink.removeListener(_onBlinkModeChange);
 
     _caretBlinkController.dispose();
     super.dispose();
@@ -230,7 +231,7 @@ class AndroidControlsDocumentLayerState
   Rect? get caret => layoutData?.caret;
 
   @visibleForTesting
-  Color get caretColor => widget.handleColor;
+  Color get caretColor => widget.caretColor ?? _controlsController?.controlsColor ?? Theme.of(context).primaryColor;
 
   @visibleForTesting
   bool get isCaretDisplayed => layoutData?.caret != null;
@@ -242,17 +243,37 @@ class AndroidControlsDocumentLayerState
   bool get isDownstreamHandleDisplayed => layoutData?.downstream != null;
 
   void _onSelectionChange() {
+    final newSelection = widget.selection.value;
+    if (newSelection != null && newSelection.isCollapsed) {
+      // Check for caret movement, because the caret should jump to opaque whenever it moves.
+      // This can happen when the user taps to move the caret, or when the user presses keyboard
+      // key sot move the caret.
+      if (_previousSelection != null &&
+          _previousSelection!.isCollapsed &&
+          !_previousSelection!.extent.isEquivalentTo(newSelection.extent)) {
+        // The caret moved from one place to another.
+        _controlsController!.jumpCaretToOpaque();
+      }
+      // Else, the selection went from null to non-null, or from caret to expanded. In these other
+      // cases, other areas of the system will ensure that the caret jumps to opaque.
+    }
+    _previousSelection = newSelection;
+
     setState(() {
       // Schedule a new layout computation because the caret and/or handles need to move.
     });
   }
 
   void _onBlinkModeChange() {
-    if (widget.shouldCaretBlink.value) {
+    if (_controlsController!.shouldCaretBlink.value) {
       _caretBlinkController.startBlinking();
     } else {
       _caretBlinkController.stopBlinking();
     }
+  }
+
+  void _caretJumpToOpaque() {
+    _caretBlinkController.jumpToOpaque();
   }
 
   @override
@@ -264,7 +285,8 @@ class AndroidControlsDocumentLayerState
 
     if (selection.isCollapsed) {
       return DocumentSelectionLayout(
-        caret: documentLayout.getRectForPosition(selection.extent)!,
+        // TODO: Replace "getRectForSelection()" with "getRectForPosition()" after #1614
+        caret: documentLayout.getRectForSelection(selection.extent, selection.extent)!,
       );
     } else {
       return DocumentSelectionLayout(
@@ -326,8 +348,8 @@ class AndroidControlsDocumentLayerState
           listenable: _caretBlinkController,
           builder: (context, child) {
             return ColoredBox(
-              key: DocumentKeys.androidCaret,
-              color: widget.handleColor.withOpacity(_caretBlinkController.opacity),
+              key: DocumentKeys.caret,
+              color: caretColor.withOpacity(_caretBlinkController.opacity),
             );
           },
         ),

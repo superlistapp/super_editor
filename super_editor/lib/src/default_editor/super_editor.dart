@@ -616,19 +616,20 @@ class SuperEditorState extends State<SuperEditor> {
     );
   }
 
-  /// Builds an [InheritedWidget] that holds a shared context for editor controls,
+  /// Build an [InheritedWidget] that holds a shared controller scope for editor controls,
   /// e.g., caret, handles, magnifier, toolbar.
   ///
-  /// This context may be shared by multiple widgets within [SuperEditor]. It's also
-  /// possible that a client app has wrapped [SuperEditor] with its own context
-  /// [InheritedWidget], in which case the context is shared with widgets inside
+  /// This controller may be shared by multiple widgets within [SuperEditor]. It's also
+  /// possible that a client app has wrapped [SuperEditor] with its own controller scope
+  /// [InheritedWidget], in which case the controller is shared with widgets inside
   /// of [SuperEditor], and widgets outside of [SuperEditor].
+  ///
+  /// The specific scope that's added to the widget tree is selected by the given [gestureMode].
   Widget _buildGestureControlsScope({
     required Widget child,
   }) {
     switch (gestureMode) {
       case DocumentGestureMode.mouse:
-        // TODO: create context for mouse mode (#1533)
         return child;
       case DocumentGestureMode.android:
         return SuperEditorAndroidControlsScope(

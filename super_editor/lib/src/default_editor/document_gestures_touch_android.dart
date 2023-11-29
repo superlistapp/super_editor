@@ -144,6 +144,15 @@ class SuperEditorAndroidControlsController {
     _shouldCaretBlink.value = false;
   }
 
+  /// Signal that's notified when the caret should return to fully opaque, such as
+  /// when the user moves the caret.
+  final caretJumpToOpaqueSignal = SignalNotifier();
+
+  /// Immediately make the caret fully opaque.
+  void jumpCaretToOpaque() {
+    caretJumpToOpaqueSignal.notifyListeners();
+  }
+
   /// Color of the caret and text selection drag handles on Android.
   ///
   /// The default handle builders honor this color. If custom handle builders are
@@ -333,6 +342,13 @@ class SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder implements SuperEd
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editorContext) {
+    if (defaultTargetPlatform != TargetPlatform.android ||
+        SuperEditorAndroidControlsScope.maybeNearestOf(context) == null) {
+      // There's no controls scope. This probably means SuperEditor is configured with
+      // a non-Android gesture mode. Build nothing.
+      return const ContentLayerProxyWidget(child: SizedBox());
+    }
+
     return AndroidToolbarFocalPointDocumentLayer(
       document: editorContext.document,
       selection: editorContext.composer.selectionNotifier,
@@ -346,14 +362,20 @@ class SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder implements SuperEd
 /// which displays Android-style caret and handles.
 class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerBuilder {
   const SuperEditorAndroidHandlesDocumentLayerBuilder({
-    this.handleColor,
+    this.caretColor,
   });
 
-  final Color? handleColor;
+  /// The (optional) color of the caret (not the drag handle), by default the color
+  /// defers to the root [SuperEditorAndroidControlsScope], or the app theme if the
+  /// controls controller has no preference for the color.
+  final Color? caretColor;
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
-    if (defaultTargetPlatform != TargetPlatform.android) {
+    if (defaultTargetPlatform != TargetPlatform.android ||
+        SuperEditorAndroidControlsScope.maybeNearestOf(context) == null) {
+      // There's no controls scope. This probably means SuperEditor is configured with
+      // a non-Android gesture mode. Build nothing.
       return const ContentLayerProxyWidget(child: SizedBox());
     }
 
@@ -366,10 +388,7 @@ class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerB
           ChangeSelectionRequest(newSelection, changeType, reason),
         ]);
       },
-      handleColor: handleColor ??
-          SuperEditorAndroidControlsScope.maybeRootOf(context)?.controlsColor ??
-          Theme.of(context).primaryColor,
-      shouldCaretBlink: SuperEditorAndroidControlsScope.rootOf(context).shouldCaretBlink,
+      caretColor: caretColor,
     );
   }
 }
@@ -722,6 +741,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (_isLongPressInProgress) {
       _longPressStrategy = null;
       _magnifierGlobalOffset.value = null;
+      _showAndHideEditingControlsAfterTapSelection(didTapOnExistingSelection: false);
       return;
     }
 
@@ -916,11 +936,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         ..hideMagnifier()
         ..doNotBlinkCaret();
     } else {
-      // The selection is collapsed. The collapsed handle should disappear
-      // after some inactivity. Start the countdown (or restart an in-progress
-      // countdown).
+      // The selection is collapsed.
       _controlsController!
         ..showCollapsedHandle()
+        // The collapsed handle should disappear after some inactivity. Start the
+        // countdown (or restart an in-progress countdown).
         ..startCollapsedHandleAutoHideCountdown()
         ..hideExpandedHandles()
         ..hideMagnifier()
@@ -1526,19 +1546,27 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
             // When the controller doesn't want the handle to be visible, hide it.
             opacity: shouldShow ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 150),
-            child: GestureDetector(
-              onTapDown: (_) {
-                // Register tap down to win gesture arena ASAP.
-              },
-              onPanStart: (details) => _onHandlePanStart(details, HandleType.collapsed),
-              onPanUpdate: _onHandlePanUpdate,
-              onPanEnd: _onHandlePanEnd,
-              onPanCancel: _onHandlePanCancel,
-              dragStartBehavior: DragStartBehavior.down,
-              child: AndroidSelectionHandle(
-                key: DocumentKeys.androidCaretHandle,
-                handleType: HandleType.collapsed,
-                color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+            child: IgnorePointer(
+              // Don't let the handle respond to touch events when the handle shouldn't
+              // be visible. This is needed because we don't remove the handle from the
+              // tree, we just make it invisible. In theory, invisible widgets aren't
+              // supposed to be hit-testable, but in tests I found that without this
+              // explicit IgnorePointer, gestures were still being captured by this handle.
+              ignoring: !shouldShow,
+              child: GestureDetector(
+                onTapDown: (_) {
+                  // Register tap down to win gesture arena ASAP.
+                },
+                onPanStart: (details) => _onHandlePanStart(details, HandleType.collapsed),
+                onPanUpdate: _onHandlePanUpdate,
+                onPanEnd: _onHandlePanEnd,
+                onPanCancel: _onHandlePanCancel,
+                dragStartBehavior: DragStartBehavior.down,
+                child: AndroidSelectionHandle(
+                  key: DocumentKeys.androidCaretHandle,
+                  handleType: HandleType.collapsed,
+                  color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+                ),
               ),
             ),
           ),

@@ -6,13 +6,13 @@ import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 
 class DocumentKeys {
-  static const mobileToolbar = ValueKey("document_mobile_toolbar");
-  static const magnifier = ValueKey("document_magnifier");
-  static const iOsCaret = ValueKey("document_ios_caret");
-  static const androidCaret = ValueKey("document_android_caret");
-  static const androidCaretHandle = ValueKey("document_android_caret_handle");
+  static const caret = ValueKey("document_caret");
   static const upstreamHandle = ValueKey("document_upstream_handle");
   static const downstreamHandle = ValueKey("document_downstream_handle");
+  static const mobileToolbar = ValueKey("document_mobile_toolbar");
+  static const magnifier = ValueKey("document_magnifier");
+
+  static const androidCaretHandle = ValueKey("document_android_caret_handle");
 
   DocumentKeys._();
 }
@@ -401,7 +401,6 @@ class DragHandleAutoScroller {
 
     final scrollPosition = _getScrollPosition();
     final currentScrollOffset = scrollPosition.pixels;
-    editorGesturesLog.fine("Current scroll offset: $currentScrollOffset");
 
     if (offsetInViewport.dy < _dragAutoScrollBoundary.leading) {
       // The offset is above the leading boundary. We need to scroll up
@@ -418,14 +417,12 @@ class DragHandleAutoScroller {
     } else if (offsetInViewport.dy > _getViewportBox().size.height - _dragAutoScrollBoundary.trailing) {
       // The offset is below the trailing boundary. We need to scroll down
       editorGesturesLog.fine('The scrollable needs to scroll down to make offset visible.');
-      // If currentScrollOffset isn't lesser than the maxScrollExtent it means
-      // we are already at the bottom edge of the scrollable, so we can't scroll further down.
       if (currentScrollOffset < scrollPosition.maxScrollExtent) {
-        // Jump to the position where the offset sits at the trailing boundary
-        scrollPosition.jumpTo(
-          currentScrollOffset +
-              (offsetInViewport.dy - (_getViewportBox().size.height - _dragAutoScrollBoundary.trailing)),
-        );
+        // We want to scroll further to show the offset, and there's still more scrollable
+        // distance below. Scroll to where the offset sits at the trailing boundary.
+        final jumpDeltaToShowOffset =
+            offsetInViewport.dy + _dragAutoScrollBoundary.trailing - _getViewportBox().size.height;
+        scrollPosition.jumpTo(currentScrollOffset + jumpDeltaToShowOffset);
       }
     }
   }
