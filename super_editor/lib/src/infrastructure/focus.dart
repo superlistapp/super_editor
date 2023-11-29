@@ -18,15 +18,16 @@ class NonReparentingFocus extends StatefulWidget {
   const NonReparentingFocus({
     Key? key,
     required this.focusNode,
-    this.onKey,
+    this.onKeyEvent,
     required this.child,
   }) : super(key: key);
 
   /// The [FocusNode] that sends key events to [onKey].
   final FocusNode focusNode;
 
-  /// The callback invoked whenever [focusNode] receives key events.
-  final FocusOnKeyCallback? onKey;
+
+  /// The callback invoked whenever [focusNode] receives [KeyEvent] events.
+  final FocusOnKeyEventCallback? onKeyEvent;
 
   /// The child of this widget.
   final Widget child;
@@ -41,7 +42,7 @@ class _NonReparentingFocusState extends State<NonReparentingFocus> {
   @override
   void initState() {
     super.initState();
-    _keyboardFocusAttachment = widget.focusNode.attach(context, onKey: _onKey);
+    _keyboardFocusAttachment = widget.focusNode.attach(context, onKeyEvent: _onKeyEvent);
   }
 
   @override
@@ -56,7 +57,7 @@ class _NonReparentingFocusState extends State<NonReparentingFocus> {
 
     if (widget.focusNode != oldWidget.focusNode) {
       _keyboardFocusAttachment.detach();
-      _keyboardFocusAttachment = widget.focusNode.attach(context, onKey: widget.onKey);
+      _keyboardFocusAttachment = widget.focusNode.attach(context, onKeyEvent: _onKeyEvent);
       _reparentIfMissingParent();
     }
   }
@@ -73,8 +74,8 @@ class _NonReparentingFocusState extends State<NonReparentingFocus> {
     }
   }
 
-  KeyEventResult _onKey(FocusNode focusNode, RawKeyEvent event) {
-    return widget.onKey?.call(focusNode, event) ?? KeyEventResult.ignored;
+  KeyEventResult _onKeyEvent(FocusNode focusNode, KeyEvent event) {
+    return widget.onKeyEvent?.call(focusNode, event) ?? KeyEventResult.ignored;
   }
 
   @override

@@ -266,13 +266,13 @@ class ConvertBlockquoteToParagraphCommand implements EditCommand {
 
 ExecutionInstruction insertNewlineInBlockquote({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!keyEvent.isShiftPressed) {
+  if (!HardwareKeyboard.instance.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -298,7 +298,7 @@ ExecutionInstruction insertNewlineInBlockquote({
 
 ExecutionInstruction splitBlockquoteWhenEnterPressed({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;

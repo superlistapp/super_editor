@@ -19,9 +19,9 @@ import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 /// when the user presses the Page Up key.
 ExecutionInstruction scrollOnPageUpKeyPress({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -44,9 +44,9 @@ ExecutionInstruction scrollOnPageUpKeyPress({
 /// when the user presses the Page Down key.
 ExecutionInstruction scrollOnPageDownKeyPress({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -69,9 +69,9 @@ ExecutionInstruction scrollOnPageDownKeyPress({
 /// CMD + HOME on Mac, or CTRL + HOME on all other platforms.
 ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -79,11 +79,11 @@ ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (CurrentPlatform.isApple && !keyEvent.isMetaPressed) {
+  if (CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!CurrentPlatform.isApple && !keyEvent.isControlPressed) {
+  if (!CurrentPlatform.isApple && !HardwareKeyboard.instance.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -102,9 +102,9 @@ ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
 /// CMD + END on Mac, or CTRL + END on all other platforms.
 ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -112,11 +112,11 @@ ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (CurrentPlatform.isApple && !keyEvent.isMetaPressed) {
+  if (CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!CurrentPlatform.isApple && !keyEvent.isControlPressed) {
+  if (!CurrentPlatform.isApple && !HardwareKeyboard.instance.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -143,7 +143,7 @@ ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
 /// would display an unknown '?' character in the document.
 ExecutionInstruction blockControlKeys({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey == LogicalKeyboardKey.escape ||
       keyEvent.logicalKey == LogicalKeyboardKey.pageUp ||
@@ -160,7 +160,7 @@ ExecutionInstruction blockControlKeys({
 
 ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.isPrimaryShortcutKeyPressed && !editContext.composer.isInInteractionMode.value) {
     editorKeyLog.fine("Activating editor interaction mode");
@@ -183,9 +183,9 @@ ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
 
 ExecutionInstruction doNothingWhenThereIsNoSelection({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -198,7 +198,7 @@ ExecutionInstruction doNothingWhenThereIsNoSelection({
 
 ExecutionInstruction sendKeyEventToMacOs({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (defaultTargetPlatform == TargetPlatform.macOS && !CurrentPlatform.isWeb) {
     // On macOS, we let the IME handle all key events. Then, the IME might generate
@@ -215,17 +215,17 @@ ExecutionInstruction sendKeyEventToMacOs({
 
 ExecutionInstruction deleteDownstreamCharacterWithCtrlDeleteOnMac({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (!CurrentPlatform.isApple) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (keyEvent.logicalKey != LogicalKeyboardKey.delete || !keyEvent.isControlPressed) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.delete || !HardwareKeyboard.instance.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -236,9 +236,9 @@ ExecutionInstruction deleteDownstreamCharacterWithCtrlDeleteOnMac({
 
 ExecutionInstruction pasteWhenCmdVIsPressed({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -256,9 +256,9 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
 
 ExecutionInstruction selectAllWhenCmdAIsPressed({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -272,9 +272,9 @@ ExecutionInstruction selectAllWhenCmdAIsPressed({
 
 ExecutionInstruction copyWhenCmdCIsPressed({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -296,9 +296,9 @@ ExecutionInstruction copyWhenCmdCIsPressed({
 
 ExecutionInstruction cutWhenCmdXIsPressed({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -320,9 +320,9 @@ ExecutionInstruction cutWhenCmdXIsPressed({
 
 ExecutionInstruction cmdBToToggleBold({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -341,9 +341,9 @@ ExecutionInstruction cmdBToToggleBold({
 
 ExecutionInstruction cmdIToToggleItalics({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -362,9 +362,9 @@ ExecutionInstruction cmdIToToggleItalics({
 
 ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -374,7 +374,7 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
 
   // Do nothing if CMD or CTRL are pressed because this signifies an attempted
   // shortcut.
-  if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
+  if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -388,7 +388,7 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   // needs to alter the selection, not delete content. We have to explicitly
   // look for this because when shift is pressed along with an arrow key,
   // Flutter reports a non-null character.
-  if (keyEvent.isShiftPressed) {
+  if (HardwareKeyboard.instance.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -419,9 +419,9 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
 
 ExecutionInstruction deleteUpstreamContentWithBackspace({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -436,9 +436,9 @@ ExecutionInstruction deleteUpstreamContentWithBackspace({
 
 ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
   if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
@@ -488,9 +488,9 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
 
 ExecutionInstruction moveUpAndDownWithArrowKeys({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -511,36 +511,37 @@ ExecutionInstruction moveUpAndDownWithArrowKeys({
     return ExecutionInstruction.blocked;
   }
 
-  if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+  if (defaultTargetPlatform == TargetPlatform.windows && HardwareKeyboard.instance.isAltPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform == TargetPlatform.linux && keyEvent.isAltPressed) {
+  if (defaultTargetPlatform == TargetPlatform.linux && HardwareKeyboard.instance.isAltPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
-    if (CurrentPlatform.isApple && keyEvent.isAltPressed) {
+    if (CurrentPlatform.isApple && HardwareKeyboard.instance.isAltPressed) {
       didMove = editContext.commonOps.moveCaretUpstream(
-        expand: keyEvent.isShiftPressed,
+        expand: HardwareKeyboard.instance.isShiftPressed,
         movementModifier: MovementModifier.paragraph,
       );
-    } else if (CurrentPlatform.isApple && keyEvent.isMetaPressed) {
-      didMove = editContext.commonOps.moveSelectionToBeginningOfDocument(expand: keyEvent.isShiftPressed);
+    } else if (CurrentPlatform.isApple && HardwareKeyboard.instance.isMetaPressed) {
+      didMove =
+          editContext.commonOps.moveSelectionToBeginningOfDocument(expand: HardwareKeyboard.instance.isShiftPressed);
     } else {
-      didMove = editContext.commonOps.moveCaretUp(expand: keyEvent.isShiftPressed);
+      didMove = editContext.commonOps.moveCaretUp(expand: HardwareKeyboard.instance.isShiftPressed);
     }
   } else {
-    if (CurrentPlatform.isApple && keyEvent.isAltPressed) {
+    if (CurrentPlatform.isApple && HardwareKeyboard.instance.isAltPressed) {
       didMove = editContext.commonOps.moveCaretDownstream(
-        expand: keyEvent.isShiftPressed,
+        expand: HardwareKeyboard.instance.isShiftPressed,
         movementModifier: MovementModifier.paragraph,
       );
-    } else if (CurrentPlatform.isApple && keyEvent.isMetaPressed) {
-      didMove = editContext.commonOps.moveSelectionToEndOfDocument(expand: keyEvent.isShiftPressed);
+    } else if (CurrentPlatform.isApple && HardwareKeyboard.instance.isMetaPressed) {
+      didMove = editContext.commonOps.moveSelectionToEndOfDocument(expand: HardwareKeyboard.instance.isShiftPressed);
     } else {
-      didMove = editContext.commonOps.moveCaretDown(expand: keyEvent.isShiftPressed);
+      didMove = editContext.commonOps.moveCaretDown(expand: HardwareKeyboard.instance.isShiftPressed);
     }
   }
 
@@ -549,9 +550,9 @@ ExecutionInstruction moveUpAndDownWithArrowKeys({
 
 ExecutionInstruction moveLeftAndRightWithArrowKeys({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -572,31 +573,31 @@ ExecutionInstruction moveLeftAndRightWithArrowKeys({
     return ExecutionInstruction.blocked;
   }
 
-  if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+  if (defaultTargetPlatform == TargetPlatform.windows && HardwareKeyboard.instance.isAltPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
   bool didMove = false;
   MovementModifier? movementModifier;
   if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-      keyEvent.isControlPressed) {
+      HardwareKeyboard.instance.isControlPressed) {
     movementModifier = MovementModifier.word;
-  } else if (CurrentPlatform.isApple && keyEvent.isMetaPressed) {
+  } else if (CurrentPlatform.isApple && HardwareKeyboard.instance.isMetaPressed) {
     movementModifier = MovementModifier.line;
-  } else if (CurrentPlatform.isApple && keyEvent.isAltPressed) {
+  } else if (CurrentPlatform.isApple && HardwareKeyboard.instance.isAltPressed) {
     movementModifier = MovementModifier.word;
   }
 
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
     // Move the caret left/upstream.
     didMove = editContext.commonOps.moveCaretUpstream(
-      expand: keyEvent.isShiftPressed,
+      expand: HardwareKeyboard.instance.isShiftPressed,
       movementModifier: movementModifier,
     );
   } else {
     // Move the caret right/downstream.
     didMove = editContext.commonOps.moveCaretDownstream(
-      expand: keyEvent.isShiftPressed,
+      expand: HardwareKeyboard.instance.isShiftPressed,
       movementModifier: movementModifier,
     );
   }
@@ -606,13 +607,13 @@ ExecutionInstruction moveLeftAndRightWithArrowKeys({
 
 ExecutionInstruction doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (!CurrentPlatform.isWeb) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -624,12 +625,12 @@ ExecutionInstruction doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+  if (defaultTargetPlatform == TargetPlatform.windows && HardwareKeyboard.instance.isAltPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (defaultTargetPlatform == TargetPlatform.linux &&
-      keyEvent.isAltPressed &&
+      HardwareKeyboard.instance.isAltPressed &&
       (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
     return ExecutionInstruction.continueExecution;
   }
@@ -672,9 +673,9 @@ ExecutionInstruction doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb({
 
 ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -682,21 +683,21 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!keyEvent.isControlPressed) {
+  if (!HardwareKeyboard.instance.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
   bool didMove = false;
 
   if (keyEvent.logicalKey == LogicalKeyboardKey.keyA) {
     didMove = editContext.commonOps.moveCaretUpstream(
-      expand: keyEvent.isShiftPressed,
+      expand: HardwareKeyboard.instance.isShiftPressed,
       movementModifier: MovementModifier.line,
     );
   }
 
   if (keyEvent.logicalKey == LogicalKeyboardKey.keyE) {
     didMove = editContext.commonOps.moveCaretDownstream(
-      expand: keyEvent.isShiftPressed,
+      expand: HardwareKeyboard.instance.isShiftPressed,
       movementModifier: MovementModifier.line,
     );
   }
@@ -706,9 +707,9 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
 
 ExecutionInstruction moveToLineStartWithHome({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -719,7 +720,7 @@ ExecutionInstruction moveToLineStartWithHome({
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
     didMove = editContext.commonOps.moveCaretUpstream(
-      expand: keyEvent.isShiftPressed,
+      expand: HardwareKeyboard.instance.isShiftPressed,
       movementModifier: MovementModifier.line,
     );
   }
@@ -729,9 +730,9 @@ ExecutionInstruction moveToLineStartWithHome({
 
 ExecutionInstruction moveToLineEndWithEnd({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -742,7 +743,7 @@ ExecutionInstruction moveToLineEndWithEnd({
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
     didMove = editContext.commonOps.moveCaretDownstream(
-      expand: keyEvent.isShiftPressed,
+      expand: HardwareKeyboard.instance.isShiftPressed,
       movementModifier: MovementModifier.line,
     );
   }
@@ -752,9 +753,9 @@ ExecutionInstruction moveToLineEndWithEnd({
 
 ExecutionInstruction deleteToStartOfLineWithCmdBackspaceOnMac({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -785,9 +786,9 @@ ExecutionInstruction deleteToStartOfLineWithCmdBackspaceOnMac({
 
 ExecutionInstruction deleteToEndOfLineWithCmdDeleteOnMac({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -818,16 +819,16 @@ ExecutionInstruction deleteToEndOfLineWithCmdDeleteOnMac({
 
 ExecutionInstruction deleteWordUpstreamWithAltBackspaceOnMac({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (!CurrentPlatform.isApple) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!keyEvent.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+  if (!HardwareKeyboard.instance.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -851,16 +852,16 @@ ExecutionInstruction deleteWordUpstreamWithAltBackspaceOnMac({
 
 ExecutionInstruction deleteWordUpstreamWithControlBackspaceOnWindowsAndLinux({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!keyEvent.isControlPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+  if (!HardwareKeyboard.instance.isControlPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -884,16 +885,16 @@ ExecutionInstruction deleteWordUpstreamWithControlBackspaceOnWindowsAndLinux({
 
 ExecutionInstruction deleteWordDownstreamWithAltDeleteOnMac({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (!CurrentPlatform.isApple) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!keyEvent.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {
+  if (!HardwareKeyboard.instance.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -917,16 +918,16 @@ ExecutionInstruction deleteWordDownstreamWithAltDeleteOnMac({
 
 ExecutionInstruction deleteWordDownstreamWithControlDeleteOnWindowsAndLinux({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!keyEvent.isControlPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {
+  if (!HardwareKeyboard.instance.isControlPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -953,9 +954,9 @@ ExecutionInstruction deleteWordDownstreamWithControlDeleteOnWindowsAndLinux({
 /// Do nothing if selection is already collapsed.
 ExecutionInstruction collapseSelectionWhenEscIsPressed({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
