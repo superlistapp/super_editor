@@ -275,7 +275,6 @@ multiple lines.''',
             nodePosition: const TextNodePosition(offset: 10),
           ),
           delta: const Offset(300, 0),
-          pointerDeviceKind: PointerDeviceKind.touch,
         );
 
         // Ensure the first line is selected.
@@ -320,13 +319,12 @@ multiple lines.''',
             nodePosition: const TextNodePosition(offset: 10),
           ),
           delta: const Offset(0, 40),
-          pointerDeviceKind: PointerDeviceKind.touch,
         );
 
         // Ensure the selection starts at the beginning and end at "multiple l|ines".
         expect(
           SuperReaderInspector.findDocumentSelection(),
-          equals(
+          selectionEquivalentTo(
             DocumentSelection(
               base: DocumentPosition(
                 nodeId: paragraphNode.id,

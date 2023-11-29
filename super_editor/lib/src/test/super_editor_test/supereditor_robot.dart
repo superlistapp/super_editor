@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -156,10 +157,14 @@ extension SuperEditorRobot on WidgetTester {
   /// to ensure that the drag rectangle never has a zero-width or a
   /// zero-height, because such a drag rectangle wouldn't be seen as
   /// intersecting any content.
+  ///
+  /// Provide a [pointerDeviceKind] to override the device kind used in the gesture.
+  /// If [pointerDeviceKind] is `null`, it defaults to [PointerDeviceKind.touch]
+  /// on mobile, and [PointerDeviceKind.mouse] on other platforms.
   Future<void> dragSelectDocumentFromPositionByOffset({
     required DocumentPosition from,
     required Offset delta,
-    PointerDeviceKind pointerDeviceKind = PointerDeviceKind.mouse,
+    PointerDeviceKind? pointerDeviceKind,
     Finder? superEditorFinder,
   }) async {
     final documentLayout = _findDocumentLayout(superEditorFinder);
@@ -197,8 +202,13 @@ extension SuperEditorRobot on WidgetTester {
       }
     }
 
+    final deviceKind = pointerDeviceKind ??
+        (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.android
+            ? PointerDeviceKind.touch
+            : PointerDeviceKind.mouse);
+
     // Simulate the drag.
-    final gesture = await startGesture(dragStartOffset, kind: pointerDeviceKind);
+    final gesture = await startGesture(dragStartOffset, kind: deviceKind);
 
     // Move slightly so that a "pan start" is reported.
     //

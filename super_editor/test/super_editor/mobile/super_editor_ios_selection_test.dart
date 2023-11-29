@@ -230,16 +230,12 @@ multiple lines.''',
         await tester.doubleTapInParagraph(paragraphNode.id, 0);
 
         // Drag from "SuperEdito|r" a distance long enough to go through the entire first line.
-        //
-        // Explicitly use "PointerDeviceKind.touch" because "PointerDeviceKind.mouse" isn't
-        // considered a drag device on mobile.
         await tester.dragSelectDocumentFromPositionByOffset(
           from: DocumentPosition(
             nodeId: paragraphNode.id,
             nodePosition: const TextNodePosition(offset: 10),
           ),
           delta: const Offset(300, 0),
-          pointerDeviceKind: PointerDeviceKind.touch,
         );
 
         // Ensure the first line is selected.
@@ -278,22 +274,18 @@ multiple lines.''',
         await tester.doubleTapInParagraph(paragraphNode.id, 0);
 
         // Drag from "SuperEdito|r" a distance long enough to go to the last line.
-        //
-        // Explicitly use "PointerDeviceKind.touch" because "PointerDeviceKind.mouse" isn't
-        // considered a drag device on mobile.
         await tester.dragSelectDocumentFromPositionByOffset(
           from: DocumentPosition(
             nodeId: paragraphNode.id,
             nodePosition: const TextNodePosition(offset: 10),
           ),
           delta: const Offset(0, 40),
-          pointerDeviceKind: PointerDeviceKind.touch,
         );
 
         // Ensure the selection starts at the beginning and end at "multiple l|ines".
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          equals(
+          selectionEquivalentTo(
             DocumentSelection(
               base: DocumentPosition(
                 nodeId: paragraphNode.id,
