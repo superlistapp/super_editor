@@ -13,7 +13,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
-import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
+import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 
 import 'layout_single_column/layout_single_column.dart';
@@ -647,7 +647,7 @@ class SubmitParagraphIntention extends Intention {
 
 ExecutionInstruction anyCharacterToInsertInParagraph({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
@@ -655,7 +655,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
 
   // Do nothing if CMD or CTRL are pressed because this signifies an attempted
   // shortcut.
-  if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
+  if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -721,9 +721,9 @@ class DeleteParagraphCommand implements EditCommand {
 /// header 1, header 2, blockquote.
 ExecutionInstruction backspaceToClearParagraphBlockType({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -755,9 +755,9 @@ ExecutionInstruction backspaceToClearParagraphBlockType({
 
 ExecutionInstruction enterToInsertBlockNewline({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -772,7 +772,7 @@ ExecutionInstruction enterToInsertBlockNewline({
 
 ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
@@ -817,9 +817,9 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
 
 ExecutionInstruction doNothingWithEnterOnWeb({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -839,9 +839,9 @@ ExecutionInstruction doNothingWithEnterOnWeb({
 
 ExecutionInstruction doNothingWithBackspaceOnWeb({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -861,9 +861,9 @@ ExecutionInstruction doNothingWithBackspaceOnWeb({
 
 ExecutionInstruction doNothingWithDeleteOnWeb({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
