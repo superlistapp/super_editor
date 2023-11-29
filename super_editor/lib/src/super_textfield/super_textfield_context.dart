@@ -8,6 +8,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 class SuperTextFieldContext {
   SuperTextFieldContext({
     required this.textFieldBuildContext,
+    required this.focusNode,
     required this.controller,
     required this.getTextLayout,
     required this.scroller,
@@ -22,6 +23,9 @@ class SuperTextFieldContext {
   /// said, it will point to an [Element] near the root of the text field, and the
   /// associated render object will match the outer bounds of the text field.
   final BuildContext textFieldBuildContext;
+
+  /// The [FocusNode] associated with the text field.
+  final FocusNode focusNode;
 
   /// Controller that owns the text content, selection, composing region and any
   /// other text-editing state for the associated text field.

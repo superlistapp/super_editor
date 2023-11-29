@@ -10,6 +10,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
+import 'package:super_editor/src/infrastructure/flutter/text_input_configuration.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
@@ -244,6 +245,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   void _createTextFieldContext() {
     _textFieldContext = SuperTextFieldContext(
       textFieldBuildContext: context,
+      focusNode: _focusNode,
       controller: _controller,
       getTextLayout: () => textLayout,
       scroller: _textFieldScroller,
@@ -259,7 +261,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   FocusNode get focusNode => _focusNode;
 
-  double get _textScaleFactor => MediaQuery.textScaleFactorOf(context);
+  TextScaler get _textScaler => MediaQuery.textScalerOf(context);
 
   void requestFocus() {
     _focusNode.requestFocus();
@@ -342,7 +344,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       return lineHeight;
     }
     final defaultStyle = widget.textStyleBuilder({});
-    return _estimatedLineHeight.calculate(defaultStyle, _textScaleFactor);
+    return _estimatedLineHeight.calculate(defaultStyle, _textScaler);
   }
 
   @override
@@ -450,7 +452,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
         key: _textKey,
         richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
         textAlign: widget.textAlign,
-        textScaleFactor: _textScaleFactor,
+        textScaler: _textScaler,
         userSelection: UserSelection(
           highlightStyle: widget.selectionHighlightStyle,
           caretStyle: widget.caretStyle,
@@ -989,7 +991,15 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
     }
 
     _log.finest("Key handler result: $result");
-    return result == TextFieldKeyboardHandlerResult.handled ? KeyEventResult.handled : KeyEventResult.ignored;
+    switch (result) {
+      case TextFieldKeyboardHandlerResult.handled:
+        return KeyEventResult.handled;
+      case TextFieldKeyboardHandlerResult.sendToOperatingSystem:
+        return KeyEventResult.skipRemainingHandlers;
+      case TextFieldKeyboardHandlerResult.blocked:
+      case TextFieldKeyboardHandlerResult.notHandled:
+        return KeyEventResult.ignored;
+    }
   }
 
   @override
@@ -1125,6 +1135,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
 
     if (widget.imeConfiguration != oldWidget.imeConfiguration &&
         widget.imeConfiguration != null &&
+        (oldWidget.imeConfiguration == null || !widget.imeConfiguration!.isEquivalentTo(oldWidget.imeConfiguration!)) &&
         _textController.isAttachedToIme) {
       _textController.updateTextInputConfiguration(
         textInputAction: widget.imeConfiguration!.inputAction,
@@ -1132,6 +1143,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
         autocorrect: widget.imeConfiguration!.autocorrect,
         enableSuggestions: widget.imeConfiguration!.enableSuggestions,
         keyboardAppearance: widget.imeConfiguration!.keyboardAppearance,
+        textCapitalization: widget.imeConfiguration!.textCapitalization,
       );
     }
   }
@@ -1675,6 +1687,20 @@ enum TextFieldKeyboardHandlerResult {
   /// listeners.
   blocked,
 
+  /// The handler recognized the key event but chose to
+  /// take no action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event shouldn't bubble up the Flutter tree,
+  /// but it should be sent to the operating system (rather
+  /// than being consumed and disposed).
+  ///
+  /// Use this result, for example, when Mac OS needs to
+  /// convert a key event into a selector, and send that
+  /// selector through the IME.
+  sendToOperatingSystem,
+
   /// The handler has no relation to the key event and
   /// took no action.
   ///
@@ -2196,7 +2222,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       // For the full list of selectors handled by SuperEditor, see the MacOsSelectors class.
       //
       // This is needed for the interaction with the accent panel to work.
-      return TextFieldKeyboardHandlerResult.blocked;
+      return TextFieldKeyboardHandlerResult.sendToOperatingSystem;
     }
 
     return TextFieldKeyboardHandlerResult.notHandled;
@@ -2213,26 +2239,26 @@ class _EstimatedLineHeight {
   /// TextStyle used to compute [_lastLineHeight].
   TextStyle? _lastComputedStyle;
 
-  /// Text scale factor used to compute [_lastLineHeight].
-  double? _lastTextScaleFactor;
+  /// Text scale policy used to compute [_lastLineHeight].
+  TextScaler? _lastTextScaleFactor;
 
   /// Computes the estimated line height for the given [style].
   ///
   /// The height is computed by laying out a [Paragraph] with an arbitrary
   /// character and inspecting it's height.
   ///
-  /// The result is cached for the last [style] and [textScaleFactor] used, so it's not computed
+  /// The result is cached for the last [style] and [textScaler] used, so it's not computed
   /// at each call.
-  double calculate(TextStyle style, double textScaleFactor) {
+  double calculate(TextStyle style, TextScaler textScaler) {
     if (_lastComputedStyle == style &&
         _lastLineHeight != null &&
-        _lastTextScaleFactor == textScaleFactor &&
+        _lastTextScaleFactor == textScaler &&
         _lastTextScaleFactor != null) {
       return _lastLineHeight!;
     }
 
     final builder = ui.ParagraphBuilder(style.getParagraphStyle())
-      ..pushStyle(style.getTextStyle(textScaleFactor: textScaleFactor))
+      ..pushStyle(style.getTextStyle(textScaler: textScaler))
       ..addText('A');
 
     final paragraph = builder.build();
@@ -2240,7 +2266,7 @@ class _EstimatedLineHeight {
 
     _lastLineHeight = paragraph.height;
     _lastComputedStyle = style;
-    _lastTextScaleFactor = textScaleFactor;
+    _lastTextScaleFactor = textScaler;
     return _lastLineHeight!;
   }
 }
@@ -2251,6 +2277,10 @@ typedef SuperTextFieldSelectorHandler = void Function({
 });
 
 const defaultTextFieldSelectorHandlers = <String, SuperTextFieldSelectorHandler>{
+  // Control.
+  MacOsSelectors.insertTab: _moveFocusNext,
+  MacOsSelectors.cancelOperation: _giveUpFocus,
+
   // Caret movement.
   MacOsSelectors.moveLeft: _moveCaretUpstream,
   MacOsSelectors.moveRight: _moveCaretDownstream,
@@ -2282,6 +2312,18 @@ const defaultTextFieldSelectorHandlers = <String, SuperTextFieldSelectorHandler>
   MacOsSelectors.deleteToEndOfLine: _deleteToEndOfLine,
   MacOsSelectors.deleteBackwardByDecomposingPreviousCharacter: _deleteUpstream,
 };
+
+void _giveUpFocus({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  textFieldContext.focusNode.unfocus();
+}
+
+void _moveFocusNext({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  textFieldContext.focusNode.nextFocus();
+}
 
 void _moveCaretUpstream({
   required SuperTextFieldContext textFieldContext,

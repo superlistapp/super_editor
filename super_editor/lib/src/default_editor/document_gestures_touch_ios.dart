@@ -287,6 +287,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   //       not collapsed/upstream/downstream. Change the type once it's working.
   HandleType? _dragHandleType;
 
+  /// Holds the drag gesture that scrolls the document.
+  Drag? _scrollingDrag;
+
   Timer? _tapDownLongPressTimer;
   Offset? _globalTapDownOffset;
   bool get _isLongPressInProgress => _longPressStrategy != null;
@@ -814,6 +817,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     //       bit of slop might be the problem.
     final selection = widget.selection.value;
     if (selection == null) {
+      // There isn't a selection, the user is dragging to scroll the document.
+      _startDragScrolling(details);
       return;
     }
 
@@ -831,6 +836,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _dragMode = DragMode.extent;
       _dragHandleType = HandleType.downstream;
     } else {
+      // The user isn't dragging over a handle.
+      // Start scrolling the document.
+      _startDragScrolling(details);
+
       return;
     }
 
@@ -914,10 +923,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    // If the user isn't dragging a handle, then the user is trying to
-    // scroll the document. Scroll it, accordingly.
-    if (_dragMode == null) {
-      scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
+    if (_dragMode == DragMode.scroll) {
+      // The user is trying to scroll the document. Scroll it, accordingly.
+      _scrollingDrag!.update(details);
       return;
     }
 
@@ -995,26 +1003,38 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       ..hideMagnifier()
       ..blinkCaret();
 
-    if (_dragMode == null) {
-      // User was dragging the scroll area. Go ballistic.
-      if (scrollPosition is ScrollPositionWithSingleContext) {
-        (scrollPosition as ScrollPositionWithSingleContext).goBallistic(-details.velocity.pixelsPerSecond.dy);
-
-        if (_activeScrollPosition != scrollPosition) {
-          // We add the scroll change listener again, because going ballistic
-          // seems to switch out the scroll position.
-          _activeScrollPosition = scrollPosition;
-        }
-      }
-    } else {
-      // The user was dragging a selection change in some way, either with handles
-      // or with a long-press. Finish that interaction.
-      _onDragSelectionEnd();
+    switch (_dragMode) {
+      case DragMode.scroll:
+        // The user was performing a drag gesture to scroll the document.
+        // End the scroll activity and let the document scrolling with momentum.
+        _scrollingDrag!.end(details);
+        _scrollingDrag = null;
+        _dragMode = null;
+        break;
+      case DragMode.collapsed:
+      case DragMode.base:
+      case DragMode.extent:
+      case DragMode.longPress:
+        // The user was dragging a selection change in some way, either with handles
+        // or with a long-press. Finish that interaction.
+        _onDragSelectionEnd();
+        break;
+      case null:
+        // The user wasn't dragging over a selection. Do nothing.
+        break;
     }
   }
 
   void _onPanCancel() {
     _magnifierOffset.value = null;
+
+    if (_scrollingDrag != null) {
+      // The user was performing a drag gesture to scroll the document.
+      // Cancel the drag gesture.
+      _scrollingDrag!.cancel();
+      _scrollingDrag = null;
+      return;
+    }
 
     if (_dragMode != null) {
       _onDragSelectionEnd();
@@ -1212,6 +1232,17 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     return ancestorScrollable;
   }
 
+  /// Starts a drag activity to scroll the document.
+  void _startDragScrolling(DragStartDetails details) {
+    _dragMode = DragMode.scroll;
+
+    _scrollingDrag = scrollPosition.drag(details, () {
+      // Allows receiving touches while scrolling due to scroll momentum.
+      // This is needed to allow the user to stop scrolling by tapping down.
+      scrollPosition.context.setIgnorePointer(false);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.scrollController.hasClients) {
@@ -1244,12 +1275,27 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
               ..gestureSettings = gestureSettings;
           },
         ),
-        // We use a VerticalDragGestureRecognizer instead of a PanGestureRecognizer
-        // because `Scrollable` also uses a VerticalDragGestureRecognizer and we
-        // need to beat out any ancestor `Scrollable` in the gesture arena.
+        // We use a combination of a VerticalDragGestureRecognizer and a HorizontalDragGestureRecognizer
+        // instead of a PanGestureRecognizer because `Scrollable` also uses a VerticalDragGestureRecognizer
+        // and we need to beat out any ancestor `Scrollable` in the gesture arena.
+        // Without the HorizontalDragGestureRecognizer, horizontal drags aren't reported here
+        // when the editor has an ancestor `Scrollable`.
         VerticalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<VerticalDragGestureRecognizer>(
           () => VerticalDragGestureRecognizer(),
           (VerticalDragGestureRecognizer instance) {
+            instance
+              ..dragStartBehavior = DragStartBehavior.down
+              ..onDown = _onPanDown
+              ..onStart = _onPanStart
+              ..onUpdate = _onPanUpdate
+              ..onEnd = _onPanEnd
+              ..onCancel = _onPanCancel
+              ..gestureSettings = gestureSettings;
+          },
+        ),
+        HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
+          () => HorizontalDragGestureRecognizer(),
+          (HorizontalDragGestureRecognizer instance) {
             instance
               ..dragStartBehavior = DragStartBehavior.down
               ..onDown = _onPanDown
@@ -1304,6 +1350,8 @@ enum DragMode {
   // Dragging after a long-press, which selects by the word
   // around the selected word.
   longPress,
+  // Dragging to scroll the document.
+  scroll
 }
 
 /// Adds and removes an iOS-style editor toolbar, as dictated by an ancestor

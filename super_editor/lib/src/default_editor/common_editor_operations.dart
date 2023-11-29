@@ -12,9 +12,9 @@ import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/super_editor.dart';
 
 import 'attributions.dart';
 import 'horizontal_rule.dart';
