@@ -37,6 +37,10 @@ TextStyle defaultTextFieldStyleBuilder(Set<Attribution> attributions) {
             ? TextDecoration.lineThrough
             : TextDecoration.combine([TextDecoration.lineThrough, newStyle.decoration!]),
       );
+    } else if (attribution is ColorAttribution) {
+      newStyle = newStyle.copyWith(
+        color: attribution.color,
+      );
     } else if (attribution is LinkAttribution) {
       newStyle = newStyle.copyWith(
         color: Colors.lightBlue,
