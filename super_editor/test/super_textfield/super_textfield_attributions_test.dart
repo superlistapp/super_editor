@@ -64,8 +64,8 @@ void main() {
 
         // Ensure the first span is colored black.
         expect(
-          superText.richText.getSpanForPosition(const TextPosition(offset: 0))!.style?.color,
-          null,
+          superText.richText.getSpanForPosition(const TextPosition(offset: 0))!.style!.color,
+          Colors.black,
         );
 
         // Ensure the second span is colored orange.

@@ -14,6 +14,7 @@ TextStyle defaultTextFieldStyleBuilder(Set<Attribution> attributions) {
   TextStyle newStyle = const TextStyle(
     fontSize: 16,
     height: 1,
+    color: Colors.black,
   );
 
   for (final attribution in attributions) {
