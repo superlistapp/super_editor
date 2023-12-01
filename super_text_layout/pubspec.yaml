@@ -12,6 +12,7 @@ dependencies:
     sdk: flutter
 
   attributed_text: ^0.2.2
+  collection: ^1.18.0
   logging: ^1.0.1
 
   # For inspector
