@@ -455,9 +455,6 @@ enum SelectionChangeType {
   /// Change the selection by deleting content, e.g., pressing backspace or delete.
   deleteContent,
 
-  /// The selection didn't change, but the composing region may have changed.
-  onlyComposingRegion,
-
   /// Clears the document selection, such as when a user taps in a textfield outside the editor.
   clearSelection,
 }
