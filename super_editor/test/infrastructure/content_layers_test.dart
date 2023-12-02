@@ -542,7 +542,11 @@ class _RebuildableWidget extends StatefulWidget {
     Key? key,
     this.rebuildSignal,
     this.buildTracker,
+    // ignore: unused_element
+    this.elementTracker,
     this.onBuildScheduled,
+    // ignore: unused_element
+    this.onBuild,
     this.builder,
     this.child,
   })  : assert(child != null || builder != null, "Must provide either a child OR a builder."),
@@ -555,8 +559,14 @@ class _RebuildableWidget extends StatefulWidget {
   /// The number of times this widget has run `build()`.
   final ValueNotifier<int>? buildTracker;
 
+  /// The [Element] that currently owns this `Widget` and its `State`.
+  final ValueNotifier<Element?>? elementTracker;
+
   /// Callback that's invoked when this widget calls `setState()`.
   final VoidCallback? onBuildScheduled;
+
+  /// Callback that's invoked during this widget's `build()` method.
+  final VoidCallback? onBuild;
 
   final WidgetBuilder? builder;
   final Widget? child;
@@ -615,6 +625,10 @@ class _RebuildableWidgetState extends State<_RebuildableWidget> {
   @override
   Widget build(BuildContext context) {
     widget.buildTracker?.value += 1;
+    widget.elementTracker?.value = context as Element;
+
+    widget.onBuild?.call();
+
     return widget.child != null ? widget.child! : widget.builder!.call(context);
   }
 }
@@ -626,6 +640,8 @@ class _RebuildableContentLayerWidget extends ContentLayerStatefulWidget {
     this.rebuildSignal,
     this.buildTracker,
     this.elementTracker,
+    // ignore: unused_element
+    this.onBuildScheduled,
     this.onBuild,
     this.builder,
     this.child,
@@ -641,6 +657,9 @@ class _RebuildableContentLayerWidget extends ContentLayerStatefulWidget {
 
   /// The [Element] that currently owns this `Widget` and its `State`.
   final ValueNotifier<Element?>? elementTracker;
+
+  /// Callback that's invoked when this widget calls `setState()`.
+  final VoidCallback? onBuildScheduled;
 
   /// Callback that's invoked during this widget's `build()` method.
   final VoidCallback? onBuild;
@@ -686,6 +705,17 @@ class _RebuildableContentLayerWidgetState extends ContentLayerState<_Rebuildable
     // layout pass so that our tests can inspect the order of operations and ensure that
     // when the content layout changes, the content is always laid out before layers.
     context.findRenderObject()?.markNeedsLayout();
+  }
+
+  // This override is a regrettable requirement for ContentLayers, which is needed so
+  // that ContentLayers can remove the layers to prevent them from building during a
+  // regular build phase when the content changes. This is the result of Flutter making
+  // it impossible to monitor dirty subtrees, and making it impossible to control build
+  // order.
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    widget.onBuildScheduled?.call();
   }
 
   @override
