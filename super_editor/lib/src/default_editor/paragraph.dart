@@ -105,6 +105,7 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       textSelection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
+      composingRegion: componentViewModel.composingRegion,
     );
   }
 }
@@ -122,6 +123,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   Attribution? blockType;
@@ -140,6 +142,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
+  @override
+  TextRange? composingRegion;
 
   @override
   ParagraphComponentViewModel copy() {
@@ -155,6 +159,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
+      composingRegion: composingRegion,
     );
   }
 
@@ -171,7 +176,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           textAlignment == other.textAlignment &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+          highlightWhenEmpty == other.highlightWhenEmpty &&
+          composingRegion == other.composingRegion;
 
   @override
   int get hashCode =>
@@ -183,7 +189,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       textAlignment.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+      highlightWhenEmpty.hashCode ^
+      composingRegion.hashCode;
 }
 
 class ChangeParagraphBlockTypeRequest implements EditRequest {
@@ -435,7 +442,6 @@ class SplitParagraphCommand implements EditCommand {
     // Move the caret to the new node.
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final oldSelection = composer.selection;
-    final oldComposingRegion = composer.composingRegion.value;
     final newSelection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newNodeId,
@@ -444,6 +450,7 @@ class SplitParagraphCommand implements EditCommand {
     );
 
     composer.setSelectionWithReason(newSelection, SelectionReason.userInteraction);
+    final oldComposingRegion = composer.composingRegion.value;
     composer.setComposingRegion(null);
 
     final documentChanges = [
@@ -456,10 +463,12 @@ class SplitParagraphCommand implements EditCommand {
       SelectionChangeEvent(
         oldSelection: oldSelection,
         newSelection: newSelection,
-        oldComposingRegion: oldComposingRegion,
-        newComposingRegion: null,
         changeType: SelectionChangeType.insertContent,
         reason: SelectionReason.userInteraction,
+      ),
+      ComposingRegionChangeEvent(
+        oldComposingRegion: oldComposingRegion,
+        newComposingRegion: null,
       ),
     ];
 

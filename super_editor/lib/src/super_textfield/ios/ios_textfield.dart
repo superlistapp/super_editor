@@ -580,20 +580,52 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     }
 
     return FillWidthIfConstrained(
-      child: SuperTextWithSelection.single(
+      child: SuperText(
         key: _textContentKey,
         richText: textSpan,
         textAlign: widget.textAlign,
         textScaler: MediaQuery.textScalerOf(context),
-        userSelection: UserSelection(
-          highlightStyle: SelectionHighlightStyle(
-            color: widget.selectionColor,
-          ),
-          caretStyle: caretStyle,
-          selection: _textEditingController.selection,
-          hasCaret: _focusNode.hasFocus,
-          blinkTimingMode: widget.blinkTimingMode,
-        ),
+        layerBeneathBuilder: (context, textLayout) {
+          return Stack(
+            children: [
+              if (widget.textController?.selection.isValid == true)
+                // Selection highlight beneath the text.
+                TextLayoutSelectionHighlight(
+                  textLayout: textLayout,
+                  style: SelectionHighlightStyle(
+                    color: widget.selectionColor,
+                  ),
+                  selection: widget.textController?.selection,
+                ),
+              // Underline beneath the composing region.
+              if (widget.textController?.composingRegion.isValid == true)
+                TextUnderlineLayer(
+                  textLayout: textLayout,
+                  underlines: [
+                    TextLayoutUnderline(
+                      style: UnderlineStyle(
+                        color: widget.textStyleBuilder({}).color ?? //
+                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                      ),
+                      range: widget.textController!.composingRegion,
+                    ),
+                  ],
+                ),
+            ],
+          );
+        },
+        layerAboveBuilder: (context, textLayout) {
+          if (!_focusNode.hasFocus) {
+            return const SizedBox();
+          }
+
+          return TextLayoutCaret(
+            textLayout: textLayout,
+            style: widget.caretStyle,
+            position: _textEditingController.selection.extent,
+            blinkTimingMode: widget.blinkTimingMode,
+          );
+        },
       ),
     );
   }

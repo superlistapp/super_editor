@@ -151,6 +151,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
+        composingRegion: componentViewModel.composingRegion,
       );
     } else if (componentViewModel.type == ListItemType.ordered) {
       return OrderedListItemComponent(
@@ -162,6 +163,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
+        composingRegion: componentViewModel.composingRegion,
       );
     }
 
@@ -186,6 +188,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   ListItemType type;
@@ -206,6 +209,8 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
+  @override
+  TextRange? composingRegion;
 
   @override
   ListItemComponentViewModel copy() {
@@ -221,6 +226,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
       textDirection: textDirection,
       selection: selection,
       selectionColor: selectionColor,
+      composingRegion: composingRegion,
     );
   }
 
@@ -237,7 +243,8 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
           text == other.text &&
           textDirection == other.textDirection &&
           selection == other.selection &&
-          selectionColor == other.selectionColor;
+          selectionColor == other.selectionColor &&
+          composingRegion == other.composingRegion;
 
   @override
   int get hashCode =>
@@ -249,7 +256,8 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
       text.hashCode ^
       textDirection.hashCode ^
       selection.hashCode ^
-      selectionColor.hashCode;
+      selectionColor.hashCode ^
+      composingRegion.hashCode;
 }
 
 /// Displays a un-ordered list item in a document.
@@ -269,6 +277,7 @@ class UnorderedListItemComponent extends StatelessWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -283,6 +292,7 @@ class UnorderedListItemComponent extends StatelessWidget {
   final bool showCaret;
   final Color caretColor;
   final bool highlightWhenEmpty;
+  final TextRange? composingRegion;
   final bool showDebugPaint;
 
   @override
@@ -316,6 +326,7 @@ class UnorderedListItemComponent extends StatelessWidget {
             textScaler: textScaler,
             selectionColor: selectionColor,
             highlightWhenEmpty: highlightWhenEmpty,
+            composingRegion: composingRegion,
             showDebugPaint: showDebugPaint,
           ),
         ),
@@ -359,6 +370,7 @@ class OrderedListItemComponent extends StatelessWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -374,6 +386,7 @@ class OrderedListItemComponent extends StatelessWidget {
   final bool showCaret;
   final Color caretColor;
   final bool highlightWhenEmpty;
+  final TextRange? composingRegion;
   final bool showDebugPaint;
 
   @override
@@ -406,6 +419,7 @@ class OrderedListItemComponent extends StatelessWidget {
             textScaler: textScaler,
             selectionColor: selectionColor,
             highlightWhenEmpty: highlightWhenEmpty,
+            composingRegion: composingRegion,
             showDebugPaint: showDebugPaint,
           ),
         ),

@@ -1191,6 +1191,9 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
         // Move the caret to the side of the tag in the direction of push motion.
         _pushCaretToOppositeTagEdge(editContext, requestDispatcher, selectionChangeEvent, textNode.id, tagAroundCaret);
         break;
+      case SelectionChangeType.onlyComposingRegion:
+        // Changes to the composing region shouldn't impact content entry. Ignore it.
+        break;
       case SelectionChangeType.placeExtent:
       case SelectionChangeType.pushExtent:
       case SelectionChangeType.expandSelection:
@@ -1269,6 +1272,9 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
           baseNode: baseNode,
           extentNode: extentNode,
         );
+        break;
+      case SelectionChangeType.onlyComposingRegion:
+        // Changes to the composing region shouldn't impact content entry. Ignore it.
         break;
       case SelectionChangeType.placeCaret:
       case SelectionChangeType.pushCaret:

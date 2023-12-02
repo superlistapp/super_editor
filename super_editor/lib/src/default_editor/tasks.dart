@@ -134,6 +134,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   bool isComplete;
@@ -153,6 +154,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
+  @override
+  TextRange? composingRegion;
 
   @override
   TaskComponentViewModel copy() {
@@ -168,6 +171,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
+      composingRegion: composingRegion,
     );
   }
 
@@ -184,7 +188,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           textAlignment == other.textAlignment &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+          highlightWhenEmpty == other.highlightWhenEmpty &&
+          composingRegion == other.composingRegion;
 
   @override
   int get hashCode =>
@@ -196,7 +201,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       textAlignment.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+      highlightWhenEmpty.hashCode ^
+      composingRegion.hashCode;
 }
 
 /// A document component that displays a complete-able task.
@@ -265,6 +271,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
+            composingRegion: widget.viewModel.composingRegion,
             showDebugPaint: widget.showDebugPaint,
           ),
         ),
@@ -551,10 +558,12 @@ class SplitExistingTaskCommand implements EditCommand {
       SelectionChangeEvent(
         oldSelection: oldSelection,
         newSelection: newSelection,
-        oldComposingRegion: oldComposingRegion,
-        newComposingRegion: null,
         changeType: SelectionChangeType.pushCaret,
         reason: SelectionReason.userInteraction,
+      ),
+      ComposingRegionChangeEvent(
+        oldComposingRegion: oldComposingRegion,
+        newComposingRegion: null,
       ),
     ]);
   }

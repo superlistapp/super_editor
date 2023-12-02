@@ -22,22 +22,29 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     required ValueListenable<DocumentSelection?> selection,
     required SelectionStyles selectionStyles,
     SelectedTextColorStrategy? selectedTextColorStrategy,
+    ValueListenable<DocumentRange?>? composingRegion,
   })  : _document = document,
         _selection = selection,
+        _composingRegion = composingRegion,
         _selectionStyles = selectionStyles,
         _selectedTextColorStrategy = selectedTextColorStrategy {
     // Our styles need to be re-applied whenever the document selection changes.
     _selection.addListener(markDirty);
+    _composingRegion?.addListener(() {
+      markDirty();
+    });
   }
 
   @override
   void dispose() {
     _selection.removeListener(markDirty);
+    _composingRegion?.removeListener(markDirty);
     super.dispose();
   }
 
   final Document _document;
   final ValueListenable<DocumentSelection?> _selection;
+  final ValueListenable<DocumentRange?>? _composingRegion;
 
   SelectionStyles _selectionStyles;
   set selectionStyles(SelectionStyles selectionStyles) {
@@ -147,11 +154,24 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
                       SpanRange(textSelection.start, textSelection.end - 1)))
                 : viewModel.text;
 
+        final documentComposingRegion = _composingRegion?.value;
+        TextRange? textComposingRegion;
+        if (documentComposingRegion != null &&
+            documentComposingRegion.start.nodeId == documentComposingRegion.end.nodeId &&
+            documentComposingRegion.start.nodeId == node.id) {
+          // There's a composing region and it's entirely within this text node.
+          // TODO: handle the possibility of a composing region extending across multiple nodes.
+          final startPosition = documentComposingRegion.start.nodePosition as TextNodePosition;
+          final endPosition = documentComposingRegion.end.nodePosition as TextNodePosition;
+          textComposingRegion = TextRange(start: startPosition.offset, end: endPosition.offset);
+        }
+
         viewModel
           ..text = textWithSelectionAttributions
           ..selection = textSelection
           ..selectionColor = _selectionStyles.selectionColor
-          ..highlightWhenEmpty = highlightWhenEmpty;
+          ..highlightWhenEmpty = highlightWhenEmpty
+          ..composingRegion = textComposingRegion;
       }
     }
     if (viewModel is ImageComponentViewModel) {

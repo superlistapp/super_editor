@@ -487,6 +487,7 @@ class SuperEditorState extends State<SuperEditor> {
       selection: editContext.composer.selectionNotifier,
       selectionStyles: widget.selectionStyles,
       selectedTextColorStrategy: widget.stylesheet.selectedTextColorStrategy,
+      composingRegion: editContext.composer.composingRegion,
     );
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(

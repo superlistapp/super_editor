@@ -448,18 +448,50 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   Widget _buildSelectableText() {
     return FillWidthIfConstrained(
-      child: SuperTextWithSelection.single(
+      child: SuperText(
         key: _textKey,
         richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
         textAlign: widget.textAlign,
         textScaler: _textScaler,
-        userSelection: UserSelection(
-          highlightStyle: widget.selectionHighlightStyle,
-          caretStyle: widget.caretStyle,
-          selection: _controller.selection,
-          hasCaret: _focusNode.hasFocus,
-          blinkTimingMode: widget.blinkTimingMode,
-        ),
+        layerBeneathBuilder: (context, textLayout) {
+          return Stack(
+            children: [
+              if (widget.textController?.selection.isValid == true)
+                // Selection highlight beneath the text.
+                TextLayoutSelectionHighlight(
+                  textLayout: textLayout,
+                  style: widget.selectionHighlightStyle,
+                  selection: widget.textController?.selection,
+                ),
+              // Underline beneath the composing region.
+              if (widget.textController?.composingRegion.isValid == true)
+                TextUnderlineLayer(
+                  textLayout: textLayout,
+                  underlines: [
+                    TextLayoutUnderline(
+                      style: UnderlineStyle(
+                        color: widget.textStyleBuilder({}).color ?? //
+                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                      ),
+                      range: widget.textController!.composingRegion,
+                    ),
+                  ],
+                ),
+            ],
+          );
+        },
+        layerAboveBuilder: (context, textLayout) {
+          if (!_focusNode.hasFocus) {
+            return const SizedBox();
+          }
+
+          return TextLayoutCaret(
+            textLayout: textLayout,
+            style: widget.caretStyle,
+            position: _controller.selection.extent,
+            blinkTimingMode: widget.blinkTimingMode,
+          );
+        },
       ),
     );
   }

@@ -94,6 +94,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   @override
@@ -110,6 +111,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
+  @override
+  TextRange? composingRegion;
 
   Color backgroundColor;
   BorderRadius borderRadius;
@@ -136,6 +139,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
+      composingRegion: composingRegion,
     );
   }
 

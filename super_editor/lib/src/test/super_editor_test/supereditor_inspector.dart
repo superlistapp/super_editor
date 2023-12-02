@@ -182,12 +182,12 @@ class SuperEditorInspector {
     final documentLayout = _findDocumentLayout(superEditorFinder);
 
     final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
-    final superTextWithSelection = find
-        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperTextWithSelection))
+    final superText = find
+        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
         .evaluate()
         .single
-        .widget as SuperTextWithSelection;
-    return superTextWithSelection.richText as TextSpan;
+        .widget as SuperText;
+    return superText.richText as TextSpan;
   }
 
   /// Finds and returns the [TextStyle] that's applied to the top-level of the [TextSpan]
