@@ -2249,9 +2249,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// ancestor scrollable content if one's present.
   static TextFieldKeyboardHandlerResult scrollOnPageUp({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! RawKeyDownEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2273,9 +2273,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// ancestor scrollable content if one's present.
   static TextFieldKeyboardHandlerResult scrollOnPageDown({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! RawKeyDownEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2297,9 +2297,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// top of the ancestor scrollable content if one's present.
   static TextFieldKeyboardHandlerResult scrollToBeginningOfDocumentOnCtrlOrCmdAndHome({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! RawKeyDownEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2309,11 +2309,11 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
     final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
 
-    if (isMacOrIos && !keyEvent.isMetaPressed) {
+    if (isMacOrIos && !HardwareKeyboard.instance.isMetaPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (!isMacOrIos && !keyEvent.isControlPressed) {
+    if (!isMacOrIos && !HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2331,9 +2331,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// bottom of the ancestor scrollable content if one's present.
   static TextFieldKeyboardHandlerResult scrollToEndOfDocumentOnCtrlOrCmdAndEnd({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! RawKeyDownEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2342,11 +2342,11 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
     final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
 
-    if (isMacOrIos && !keyEvent.isMetaPressed) {
+    if (isMacOrIos && !HardwareKeyboard.instance.isMetaPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (!isMacOrIos && !keyEvent.isControlPressed) {
+    if (!isMacOrIos && !HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2364,9 +2364,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// top of the ancestor scrollable content if one's present.
   static TextFieldKeyboardHandlerResult scrollToBeginningOfDocumentOnHomeOnMacOrWeb({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! RawKeyDownEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2392,9 +2392,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// bottom of the ancestor scrollable content if one's present.
   static TextFieldKeyboardHandlerResult scrollToEndOfDocumentOnEndOnMacOrWeb({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! RawKeyDownEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2420,7 +2420,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   /// would display an unknown '?' character in the textfield.
   static TextFieldKeyboardHandlerResult blockControlKeys({
     required SuperTextFieldContext textFieldContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (keyEvent.logicalKey == LogicalKeyboardKey.escape ||
         keyEvent.logicalKey == LogicalKeyboardKey.pageUp ||
