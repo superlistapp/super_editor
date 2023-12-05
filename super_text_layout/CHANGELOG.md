@@ -1,3 +1,7 @@
+## [0.1.8] - Dec, 2023
+ * Added `TextUnderlineLayer` to draw underlines beneath text.
+ * Added `collection` dependency.
+
 ## [0.1.7] - July, 2023
  * Added `isBlinking` property to `BlinkController`.
 

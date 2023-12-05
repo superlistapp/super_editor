@@ -68,7 +68,7 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
     super.dispose();
   }
 
-  KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
+  KeyEventResult _onKeyPressed(FocusNode node, KeyEvent keyEvent) {
     editorKeyLog.info("Handling key press: $keyEvent");
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
@@ -93,7 +93,7 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
   Widget build(BuildContext context) {
     return Focus(
       focusNode: _focusNode,
-      onKey: widget.keyboardActions.isEmpty ? null : _onKeyPressed,
+      onKeyEvent: widget.keyboardActions.isEmpty ? null : _onKeyPressed,
       autofocus: widget.autofocus,
       child: widget.child,
     );
@@ -111,7 +111,7 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
 /// `ExecutionInstruction.haltExecution` to prevent further execution.
 typedef DocumentKeyboardAction = ExecutionInstruction Function({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 });
 
 /// A [DocumentKeyboardAction] that reports [ExecutionInstruction.blocked]
@@ -119,10 +119,10 @@ typedef DocumentKeyboardAction = ExecutionInstruction Function({
 DocumentKeyboardAction ignoreKeyCombos(List<ShortcutActivator> keys) {
   return ({
     required SuperEditorContext editContext,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     for (final key in keys) {
-      if (key.accepts(keyEvent, RawKeyboard.instance)) {
+      if (key.accepts(keyEvent, HardwareKeyboard.instance)) {
         return ExecutionInstruction.blocked;
       }
     }
