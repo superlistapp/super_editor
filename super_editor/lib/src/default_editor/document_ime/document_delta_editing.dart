@@ -200,9 +200,7 @@ class TextDeltasDocumentEditor {
       return;
     }
 
-    final replacementComposingRegion = _serializedDoc.imeToDocumentRange(delta.composing);
-
-    replace(delta.replacedRange, replacementComposingRegion, delta.replacementText);
+    replace(delta.replacedRange, delta.replacementText);
 
     // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
@@ -216,6 +214,13 @@ class TextDeltasDocumentEditor {
       composingRegion.value,
       _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
     )..imeText = _previousImeValue.text;
+
+    // The delta's composing region is based on the content after insertion, so we
+    // apply the composing region here instead of during the replacement operation above.
+    final insertionComposingRegion = _serializedDoc.imeToDocumentRange(delta.composing);
+    editor.execute([
+      ChangeComposingRegionRequest(insertionComposingRegion),
+    ]);
   }
 
   void _applyDeletion(TextEditingDeltaDeletion delta) {
@@ -333,7 +338,7 @@ class TextDeltasDocumentEditor {
     return true;
   }
 
-  void replace(TextRange replacedRange, DocumentRange? composingRegion, String replacementText) {
+  void replace(TextRange replacedRange, String replacementText) {
     final replacementSelection = _serializedDoc.imeToDocumentSelection(TextSelection(
       baseOffset: replacedRange.start,
       // TODO: the delta API is wrong for TextRange.end, it should be exclusive,
@@ -349,7 +354,6 @@ class TextDeltasDocumentEditor {
           SelectionChangeType.expandSelection,
           SelectionReason.contentChange,
         ),
-        ChangeComposingRegionRequest(composingRegion),
       ]);
     }
     editorImeLog.fine("Replacing selection: $replacementSelection");

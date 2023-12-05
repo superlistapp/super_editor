@@ -1,202 +1,191 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 
-import '../../../test/super_editor/supereditor_test_tools.dart';
 import '../../test_tools_goldens.dart';
 
 void main() {
-  group("SuperEditor > text entry > composing region underline >", () {
-    testGoldensOnMac("in paragraph", (tester) async {
-      final context = await tester
-          .createDocument()
-          .withCustomContent(
-            deserializeMarkdownToDocument("Typing with composing a"),
-          )
-          .useStylesheet(_stylesheet)
-          .pump();
+  group("SuperEditor > text entry > composing region >", () {
+    testGoldensOnAndroid("is underlined in paragraph", _showsUnderlineInParagraph);
+    testGoldensOnAndroid("is underlined in list item", _showsUnderlineInListItem);
+    testGoldensOnAndroid("is underlined in task", _showsUnderlineInTask);
 
-      final nodeId = context.document.nodes.first.id;
-      context.editor.execute([
-        ChangeSelectionRequest(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 23),
-            ),
-          ),
-          SelectionChangeType.placeCaret,
-          SelectionReason.userInteraction,
-        ),
-        ChangeComposingRegionRequest(
-          DocumentRange(
-            start: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 22),
-            ),
-            end: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 23),
-            ),
-          ),
-        ),
-      ]);
-      await tester.pumpAndSettle();
+    testGoldensOniOS("is underlined in paragraph", _showsUnderlineInParagraph);
+    testGoldensOniOS("is underlined in list item", _showsUnderlineInListItem);
+    testGoldensOniOS("is underlined in task", _showsUnderlineInTask);
 
-      // Ensure the composing region is underlined.
-      await screenMatchesGolden(tester, "super-editor_text-entry_composing-region-underline_paragraph_1");
+    testGoldensOnMac("is underlined in paragraph", _showsUnderlineInParagraph);
+    testGoldensOnMac("is underlined in list item", _showsUnderlineInListItem);
+    testGoldensOnMac("is underlined in task", _showsUnderlineInTask);
+  });
 
-      context.editor.execute([
-        ChangeSelectionRequest(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 23),
-            ),
-          ),
-          SelectionChangeType.placeCaret,
-          SelectionReason.userInteraction,
-        ),
-        ChangeComposingRegionRequest(null),
-      ]);
-      await tester.pump();
+  group("SuperEditor > text entry > composing region >", () {
+    testGoldensOnWindows("shows nothing in paragraph", _showsNothingInParagraph);
+    testGoldensOnWindows("shows nothing in list item", _showsNothingInListItem);
+    testGoldensOnWindows("shows nothing in task", _showsNothingInTask);
 
-      // Ensure the underline disappeared now that the composing region is null.
-      await screenMatchesGolden(tester, "super-editor_text-entry_composing-region-underline_paragraph_2");
-    });
-
-    testGoldensOnMac("in list item", (tester) async {
-      final context = await tester
-          .createDocument()
-          .withCustomContent(
-            deserializeMarkdownToDocument(" * Typing with composing a"),
-          )
-          .useStylesheet(_stylesheet)
-          .pump();
-
-      final nodeId = context.document.nodes.first.id;
-      context.editor.execute([
-        ChangeSelectionRequest(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 23),
-            ),
-          ),
-          SelectionChangeType.placeCaret,
-          SelectionReason.userInteraction,
-        ),
-        ChangeComposingRegionRequest(
-          DocumentRange(
-            start: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 22),
-            ),
-            end: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 23),
-            ),
-          ),
-        ),
-      ]);
-      await tester.pumpAndSettle();
-
-      // Ensure the composing region is underlined.
-      await screenMatchesGolden(tester, "super-editor_text-entry_composing-region-underline_list-item_1");
-
-      context.editor.execute([
-        ChangeSelectionRequest(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 23),
-            ),
-          ),
-          SelectionChangeType.placeCaret,
-          SelectionReason.userInteraction,
-        ),
-        ChangeComposingRegionRequest(null),
-      ]);
-      await tester.pump();
-
-      // Ensure the underline disappeared now that the composing region is null.
-      await screenMatchesGolden(tester, "super-editor_text-entry_composing-region-underline_list-item_2");
-    });
-
-    testGoldensOnMac("in task", (tester) async {
-      // TODO: Whenever we're able to create a TaskComponentBuilder without passing the Editor, refactor
-      //       this setup to look like a normal SuperEditor test.
-      final document = deserializeMarkdownToDocument("- [ ] Typing with composing a");
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: SuperEditor(
-            editor: editor,
-            document: document,
-            composer: composer,
-            componentBuilders: [
-              TaskComponentBuilder(editor),
-              ...defaultComponentBuilders,
-            ],
-            stylesheet: _stylesheet,
-          ),
-        ),
-      ));
-
-      final nodeId = document.nodes.first.id;
-      editor.execute([
-        ChangeSelectionRequest(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 23),
-            ),
-          ),
-          SelectionChangeType.placeCaret,
-          SelectionReason.userInteraction,
-        ),
-        ChangeComposingRegionRequest(
-          DocumentRange(
-            start: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 22),
-            ),
-            end: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 23),
-            ),
-          ),
-        ),
-      ]);
-      await tester.pumpAndSettle();
-
-      // Ensure the composing region is underlined.
-      await screenMatchesGolden(tester, "super-editor_text-entry_composing-region-underline_task_1");
-
-      editor.execute([
-        ChangeSelectionRequest(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: const TextNodePosition(offset: 23),
-            ),
-          ),
-          SelectionChangeType.placeCaret,
-          SelectionReason.userInteraction,
-        ),
-        ChangeComposingRegionRequest(null),
-      ]);
-      await tester.pump();
-
-      // Ensure the underline disappeared now that the composing region is null.
-      await screenMatchesGolden(tester, "super-editor_text-entry_composing-region-underline_task_2");
-    });
+    testGoldensOnLinux("shows nothing in paragraph", _showsNothingInParagraph);
+    testGoldensOnLinux("shows nothing in list item", _showsNothingInListItem);
+    testGoldensOnLinux("shows nothing in task", _showsNothingInTask);
   });
 }
+
+Future<void> _showsUnderlineInParagraph(WidgetTester tester) async {
+  final (editor, document) = await _pumpScaffold(tester, _paragraphMarkdown);
+
+  _simulateComposingRegion(tester, editor, document);
+
+  // Ensure the composing region is underlined.
+  await screenMatchesGolden(
+      tester, "super-editor_text-entry_composing-region-shows-underline_paragraph_${defaultTargetPlatform.name}_1");
+
+  _clearComposingRegion(tester, editor, document);
+
+  // Ensure the underline disappeared now that the composing region is null.
+  await screenMatchesGolden(
+      tester, "super-editor_text-entry_composing-region-shows-underline_paragraph_${defaultTargetPlatform.name}_2");
+}
+
+Future<void> _showsNothingInParagraph(WidgetTester tester) async {
+  final (editor, document) = await _pumpScaffold(tester, _paragraphMarkdown);
+
+  _simulateComposingRegion(tester, editor, document);
+
+  // Ensure the composing region is underlined.
+  await screenMatchesGolden(
+      tester, "super-editor_text-entry_composing-region-showing-nothing_paragraph_${defaultTargetPlatform.name}");
+}
+
+Future<void> _showsUnderlineInListItem(WidgetTester tester) async {
+  final (editor, document) = await _pumpScaffold(tester, _listItemMarkdown);
+
+  _simulateComposingRegion(tester, editor, document);
+
+  // Ensure the composing region is underlined.
+  await screenMatchesGolden(
+      tester, "super-editor_text-entry_composing-region-shows-underline_list-item_${defaultTargetPlatform.name}_1");
+
+  _clearComposingRegion(tester, editor, document);
+
+  // Ensure the underline disappeared now that the composing region is null.
+  await screenMatchesGolden(
+      tester, "super-editor_text-entry_composing-region-shows-underline_list-item_${defaultTargetPlatform.name}_2");
+}
+
+Future<void> _showsNothingInListItem(WidgetTester tester) async {
+  final (editor, document) = await _pumpScaffold(tester, _listItemMarkdown);
+
+  _simulateComposingRegion(tester, editor, document);
+
+  // Ensure the composing region is underlined.
+  await screenMatchesGolden(
+      tester, "super-editor_text-entry_composing-region-shows-nothing_list-item_${defaultTargetPlatform.name}");
+}
+
+Future<void> _showsUnderlineInTask(WidgetTester tester) async {
+  final (editor, document) = await _pumpScaffold(tester, _taskMarkdown);
+
+  _simulateComposingRegion(tester, editor, document);
+
+  // Ensure the composing region is underlined.
+  await screenMatchesGolden(
+      tester, "super-editor_text-entry_composing-region-shows-underline_task_${defaultTargetPlatform.name}_1");
+
+  _clearComposingRegion(tester, editor, document);
+
+  // Ensure the underline disappeared now that the composing region is null.
+  await screenMatchesGolden(
+      tester, "super-editor_text-entry_composing-region-shows-underline_task_${defaultTargetPlatform.name}_2");
+}
+
+Future<void> _showsNothingInTask(WidgetTester tester) async {
+  final (editor, document) = await _pumpScaffold(tester, _taskMarkdown);
+
+  _simulateComposingRegion(tester, editor, document);
+
+  // Ensure the composing region is underlined.
+  await screenMatchesGolden(
+      tester, "super-editor_text-entry_composing-region-shows-nothing_task_${defaultTargetPlatform.name}");
+}
+
+Future<(Editor, Document)> _pumpScaffold(WidgetTester tester, String contentMarkdown) async {
+  // TODO: Whenever we're able to create a TaskComponentBuilder without passing the Editor, refactor
+  //       this setup to look like a normal SuperEditor test.
+  final document = deserializeMarkdownToDocument(contentMarkdown);
+  final composer = MutableDocumentComposer();
+  final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+  await tester.pumpWidget(MaterialApp(
+    home: Scaffold(
+      body: SuperEditor(
+        editor: editor,
+        document: document,
+        composer: composer,
+        componentBuilders: [
+          TaskComponentBuilder(editor),
+          ...defaultComponentBuilders,
+        ],
+        stylesheet: _stylesheet,
+      ),
+    ),
+  ));
+
+  return (editor, document);
+}
+
+Future<void> _simulateComposingRegion(WidgetTester tester, Editor editor, Document document) async {
+  final nodeId = document.nodes.first.id;
+  editor.execute([
+    ChangeSelectionRequest(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: const TextNodePosition(offset: 23),
+        ),
+      ),
+      SelectionChangeType.placeCaret,
+      SelectionReason.userInteraction,
+    ),
+    ChangeComposingRegionRequest(
+      DocumentRange(
+        start: DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: const TextNodePosition(offset: 22),
+        ),
+        end: DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: const TextNodePosition(offset: 23),
+        ),
+      ),
+    ),
+  ]);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _clearComposingRegion(WidgetTester tester, Editor editor, Document document) async {
+  final nodeId = document.nodes.first.id;
+  editor.execute([
+    ChangeSelectionRequest(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: const TextNodePosition(offset: 23),
+        ),
+      ),
+      SelectionChangeType.placeCaret,
+      SelectionReason.userInteraction,
+    ),
+    ChangeComposingRegionRequest(null),
+  ]);
+  await tester.pump();
+}
+
+const _paragraphMarkdown = "Typing with composing a";
+const _listItemMarkdown = " * Typing with composing a";
+const _taskMarkdown = "- [ ] Typing with composing a";
 
 /// A [StyleSheet] which applies the Roboto font for all nodes.
 ///

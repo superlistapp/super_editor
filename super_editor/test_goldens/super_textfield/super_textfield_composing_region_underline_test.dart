@@ -7,26 +7,55 @@ import 'package:super_editor/super_editor.dart';
 import '../test_tools_goldens.dart';
 
 void main() {
-  testGoldensOnAllPlatforms("SuperTextField > composing region underline", (tester) async {
-    final textController = AttributedTextEditingController(
-      text: AttributedText("Typing with composing a"),
-    );
-    await _pumpScaffold(tester, textController);
-
-    textController
-      ..selection = const TextSelection.collapsed(offset: 23)
-      ..composingRegion = const TextRange(start: 22, end: 23);
-    await tester.pumpAndSettle();
-
-    // Ensure the composing region is underlined.
-    await screenMatchesGolden(tester, "super-text-field_composing-region-underline_${defaultTargetPlatform.name}_1");
-
-    textController.composingRegion = const TextRange.collapsed(-1);
-    await tester.pump();
-
-    // Ensure the underline disappeared now that the composing region is null.
-    await screenMatchesGolden(tester, "super-text-field_composing-region-underline_${defaultTargetPlatform.name}_2");
+  group("SuperTextField > composing region >", () {
+    testGoldensOnAndroid("is underlined", _composingRegionIsUnderlined);
+    testGoldensOniOS("is underlined", _composingRegionIsUnderlined);
+    testGoldensOnMac("is underlined", _composingRegionIsUnderlined);
   });
+
+  group("SuperTextField > composing region >", () {
+    testGoldensOnWindows("shows nothing", _composingRegionShowsNothing);
+    testGoldensOnLinux("shows nothing", _composingRegionShowsNothing);
+  });
+}
+
+Future<void> _composingRegionIsUnderlined(WidgetTester tester) async {
+  final textController = AttributedTextEditingController(
+    text: AttributedText("Typing with composing a"),
+  );
+  await _pumpScaffold(tester, textController);
+
+  textController
+    ..selection = const TextSelection.collapsed(offset: 23)
+    ..composingRegion = const TextRange(start: 22, end: 23);
+  await tester.pumpAndSettle();
+
+  // Ensure the composing region is underlined.
+  await screenMatchesGolden(
+      tester, "super-text-field_composing-region-shows-underline_${defaultTargetPlatform.name}_1");
+
+  textController.composingRegion = const TextRange.collapsed(-1);
+  await tester.pump();
+
+  // Ensure the underline disappeared now that the composing region is null.
+  await screenMatchesGolden(
+      tester, "super-text-field_composing-region-shows-underline_${defaultTargetPlatform.name}_2");
+}
+
+Future<void> _composingRegionShowsNothing(WidgetTester tester) async {
+  final textController = AttributedTextEditingController(
+    text: AttributedText("Typing with composing a"),
+  );
+  await _pumpScaffold(tester, textController);
+
+  textController
+    ..selection = const TextSelection.collapsed(offset: 23)
+    ..composingRegion = const TextRange(start: 22, end: 23);
+  await tester.pumpAndSettle();
+
+  // Ensure that no underline is shown.
+  await screenMatchesGolden(
+      tester, "super-text-field_composing-region-underline-shows-nothing_${defaultTargetPlatform.name}");
 }
 
 Future<void> _pumpScaffold(

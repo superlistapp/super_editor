@@ -48,6 +48,7 @@ class SuperIOSTextField extends StatefulWidget {
     required this.handlesColor,
     this.textInputAction,
     this.imeConfiguration,
+    this.showComposingUnderline = true,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
@@ -139,6 +140,9 @@ class SuperIOSTextField extends StatefulWidget {
 
   /// Preferences for how the platform IME should look and behave during editing.
   final TextInputConfiguration? imeConfiguration;
+
+  /// Whether to show an underline beneath the text in the composing region.
+  final bool showComposingUnderline;
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
@@ -598,7 +602,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
                   selection: widget.textController?.selection,
                 ),
               // Underline beneath the composing region.
-              if (widget.textController?.composingRegion.isValid == true)
+              if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
                 TextUnderlineLayer(
                   textLayout: textLayout,
                   underlines: [

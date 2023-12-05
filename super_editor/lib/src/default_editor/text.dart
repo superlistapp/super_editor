@@ -376,6 +376,9 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   TextRange? get composingRegion;
   set composingRegion(TextRange? composingRegion);
 
+  bool get showComposingUnderline;
+  set showComposingUnderline(bool showComposingUnderline);
+
   @override
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
@@ -408,6 +411,8 @@ class TextWithHintComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
+    this.showComposingUnderline = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -421,6 +426,8 @@ class TextWithHintComponent extends StatefulWidget {
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool highlightWhenEmpty;
+  final TextRange? composingRegion;
+  final bool showComposingUnderline;
   final bool showDebugPaint;
 
   @override
@@ -469,6 +476,8 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
           textSelection: widget.textSelection,
           selectionColor: widget.selectionColor,
           highlightWhenEmpty: widget.highlightWhenEmpty,
+          composingRegion: widget.composingRegion,
+          showComposingUnderline: widget.showComposingUnderline,
           showDebugPaint: widget.showDebugPaint,
         ),
       ],
@@ -492,6 +501,7 @@ class TextComponent extends StatefulWidget {
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
     this.composingRegion,
+    this.showComposingUnderline = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -519,6 +529,12 @@ class TextComponent extends StatefulWidget {
   /// The span of text that's currently sitting in the IME's composing region,
   /// which is underlined by this component.
   final TextRange? composingRegion;
+
+  /// Whether to underline the [composingRegion].
+  ///
+  /// Showing the underline is optional because the behavior differs between
+  /// platforms, e.g., Mac shows an underline but Windows and Linux don't.
+  final bool showComposingUnderline;
 
   final bool showDebugPaint;
 

@@ -106,6 +106,7 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       selectionColor: componentViewModel.selectionColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
       composingRegion: componentViewModel.composingRegion,
+      showComposingUnderline: componentViewModel.showComposingUnderline,
     );
   }
 }
@@ -124,6 +125,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     required this.selectionColor,
     this.highlightWhenEmpty = false,
     this.composingRegion,
+    this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   Attribution? blockType;
@@ -144,6 +146,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   bool highlightWhenEmpty;
   @override
   TextRange? composingRegion;
+  @override
+  bool showComposingUnderline;
 
   @override
   ParagraphComponentViewModel copy() {
@@ -160,6 +164,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
       composingRegion: composingRegion,
+      showComposingUnderline: showComposingUnderline,
     );
   }
 
@@ -177,7 +182,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
-          composingRegion == other.composingRegion;
+          composingRegion == other.composingRegion &&
+          showComposingUnderline == other.showComposingUnderline;
 
   @override
   int get hashCode =>
@@ -190,7 +196,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selection.hashCode ^
       selectionColor.hashCode ^
       highlightWhenEmpty.hashCode ^
-      composingRegion.hashCode;
+      composingRegion.hashCode ^
+      showComposingUnderline.hashCode;
 }
 
 class ChangeParagraphBlockTypeRequest implements EditRequest {

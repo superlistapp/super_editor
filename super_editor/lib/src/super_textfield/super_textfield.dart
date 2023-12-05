@@ -72,6 +72,7 @@ class SuperTextField extends StatefulWidget {
     this.padding,
     this.textInputAction,
     this.imeConfiguration,
+    this.showComposingUnderline,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -196,6 +197,10 @@ class SuperTextField extends StatefulWidget {
 
   /// Preferences for how the platform IME should look and behave during editing.
   final TextInputConfiguration? imeConfiguration;
+
+  /// Whether to show an underline beneath the text in the composing region, or `null`
+  /// to let [SuperTextField] decide when to show the underline.
+  final bool? showComposingUnderline;
 
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
@@ -338,6 +343,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           inputSource: _inputSource,
           textInputAction: _textInputAction,
           imeConfiguration: widget.imeConfiguration,
+          showComposingUnderline: widget.showComposingUnderline ?? defaultTargetPlatform == TargetPlatform.macOS,
           blinkTimingMode: widget.blinkTimingMode,
         );
       case SuperTextFieldPlatformConfiguration.android:
@@ -363,6 +369,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             lineHeight: widget.lineHeight,
             textInputAction: _textInputAction,
             imeConfiguration: widget.imeConfiguration,
+            showComposingUnderline: widget.showComposingUnderline ?? true,
             padding: widget.padding,
             blinkTimingMode: widget.blinkTimingMode,
           ),
@@ -390,6 +397,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             lineHeight: widget.lineHeight,
             textInputAction: _textInputAction,
             imeConfiguration: widget.imeConfiguration,
+            showComposingUnderline: widget.showComposingUnderline ?? true,
             padding: widget.padding,
             blinkTimingMode: widget.blinkTimingMode,
           ),

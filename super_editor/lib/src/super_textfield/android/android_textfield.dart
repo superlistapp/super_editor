@@ -43,6 +43,7 @@ class SuperAndroidTextField extends StatefulWidget {
     required this.handlesColor,
     this.textInputAction,
     this.imeConfiguration,
+    this.showComposingUnderline = true,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
@@ -134,6 +135,9 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// Preferences for how the platform IME should look and behave during editing.
   final TextInputConfiguration? imeConfiguration;
+
+  /// Whether to show an underline beneath the text in the composing region.
+  final bool showComposingUnderline;
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;
@@ -581,7 +585,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
                   selection: widget.textController?.selection,
                 ),
               // Underline beneath the composing region.
-              if (widget.textController?.composingRegion.isValid == true)
+              if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
                 TextUnderlineLayer(
                   textLayout: textLayout,
                   underlines: [

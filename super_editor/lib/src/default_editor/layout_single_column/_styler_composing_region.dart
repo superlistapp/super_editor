@@ -1,173 +1,107 @@
-import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/core/styles.dart';
-import 'package:super_editor/src/default_editor/horizontal_rule.dart';
-import 'package:super_editor/src/default_editor/image.dart';
-import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import '../../core/document.dart';
-import '../attributions.dart';
 import '_presenter.dart';
 
-/// [SingleColumnLayoutStylePhase] that applies visual selections to each component,
-/// e.g., text selections, image selections, caret positioning.
-class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
-  SingleColumnLayoutSelectionStyler({
+/// [SingleColumnLayoutStylePhase] that draws an underline beneath the text in the IME's
+/// composing region.
+class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePhase {
+  SingleColumnLayoutComposingRegionStyler({
     required Document document,
-    required ValueListenable<DocumentSelection?> selection,
-    required SelectionStyles selectionStyles,
-    SelectedTextColorStrategy? selectedTextColorStrategy,
+    required ValueListenable<DocumentRange?> composingRegion,
+    required bool showComposingUnderline,
   })  : _document = document,
-        _selection = selection,
-        _selectionStyles = selectionStyles,
-        _selectedTextColorStrategy = selectedTextColorStrategy {
-    // Our styles need to be re-applied whenever the document selection changes.
-    _selection.addListener(markDirty);
+        _composingRegion = composingRegion,
+        _showComposingRegionUnderline = showComposingUnderline {
+    // Our styles need to be re-applied whenever the composing region changes.
+    _composingRegion.addListener(markDirty);
   }
 
   @override
   void dispose() {
-    _selection.removeListener(markDirty);
+    _composingRegion.removeListener(markDirty);
     super.dispose();
   }
 
   final Document _document;
-  final ValueListenable<DocumentSelection?> _selection;
-
-  SelectionStyles _selectionStyles;
-  set selectionStyles(SelectionStyles selectionStyles) {
-    if (selectionStyles == _selectionStyles) {
-      return;
-    }
-
-    _selectionStyles = selectionStyles;
-    markDirty();
-  }
-
-  SelectedTextColorStrategy? _selectedTextColorStrategy;
-  set selectedTextColorStrategy(SelectedTextColorStrategy? strategy) {
-    if (strategy == _selectedTextColorStrategy) {
-      return;
-    }
-
-    _selectedTextColorStrategy = strategy;
-    markDirty();
-  }
-
-  bool _shouldDocumentShowCaret = false;
-  set shouldDocumentShowCaret(bool newValue) {
-    if (newValue == _shouldDocumentShowCaret) {
-      return;
-    }
-
-    _shouldDocumentShowCaret = newValue;
-    editorStyleLog.fine("Change to 'document should show caret': $_shouldDocumentShowCaret");
-    markDirty();
-  }
+  final ValueListenable<DocumentRange?> _composingRegion;
+  final bool _showComposingRegionUnderline;
 
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
-    editorStyleLog.info("(Re)calculating selection view model for document layout");
-    editorStyleLog.fine("Applying selection to components: ${_selection.value}");
+    editorStyleLog.info("(Re)calculating composing region view model for document layout");
+    final documentComposingRegion = _composingRegion.value;
+    if (documentComposingRegion == null) {
+      // There's nothing for us to style if there's no composing region. Return the
+      // view model as-is.
+      return viewModel;
+    }
+    if (!_showComposingRegionUnderline) {
+      // No underline is desired for the composing region. Return the view model as-is.
+      return viewModel;
+    }
+
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels) //
-          _applySelection(previousViewModel.copy()),
+          _applyComposingRegion(previousViewModel.copy(), documentComposingRegion),
       ],
     );
   }
 
-  SingleColumnLayoutComponentViewModel _applySelection(SingleColumnLayoutComponentViewModel viewModel) {
-    final documentSelection = _selection.value;
+  SingleColumnLayoutComponentViewModel _applyComposingRegion(
+    SingleColumnLayoutComponentViewModel viewModel,
+    DocumentRange documentComposingRegion,
+  ) {
     final node = _document.getNodeById(viewModel.nodeId)!;
+    if (node is! TextNode) {
+      // An IME composing region is only relevant for text nodes. Do nothing to this component's viewmodel.
+      return viewModel;
+    }
+    if (viewModel is! TextComponentViewModel) {
+      // All components for TextNode's should be of type TextComponentViewModel, but we check
+      // just to be sure. In this case, it's not, for some reason. We can only style
+      // TextComponentViewModel's. Do nothing to this view model.
+      return viewModel;
+    }
+
+    editorStyleLog.fine("Applying composing region styles to node: ${node.id}");
 
     DocumentNodeSelection? nodeSelection;
-    if (documentSelection != null) {
-      late List<DocumentNode> selectedNodes;
-      try {
-        selectedNodes = _document.getNodesInside(
-          documentSelection.base,
-          documentSelection.extent,
-        );
-      } catch (exception) {
-        // This situation can happen in the moment between a document change and
-        // a corresponding selection change. For example: deleting an image and
-        // replacing it with an empty paragraph. Between the doc change and the
-        // selection change, the old image selection is applied to the new paragraph.
-        // This results in an exception.
-        //
-        // TODO: introduce a unified event ledger that combines related behaviors
-        //       into atomic transactions (#423)
-        selectedNodes = [];
-      }
-      nodeSelection =
-          _computeNodeSelection(documentSelection: documentSelection, selectedNodes: selectedNodes, node: node);
-    }
+    final nodesWithComposingRegion = _document.getNodesInside(
+      documentComposingRegion.start,
+      documentComposingRegion.end,
+    );
+    nodeSelection = _computeNodeSelection(
+      documentRange: documentComposingRegion,
+      selectedNodes: nodesWithComposingRegion,
+      node: node,
+    );
 
     editorStyleLog.fine("Node selection (${node.id}): $nodeSelection");
-    if (node is TextNode) {
-      final textSelection = nodeSelection == null || nodeSelection.nodeSelection is! TextSelection
-          ? null
-          : nodeSelection.nodeSelection as TextSelection;
-      if (nodeSelection != null && nodeSelection.nodeSelection is! TextSelection) {
-        editorStyleLog.shout(
-            'ERROR: Building a paragraph component but the selection is not a TextSelection. Node: ${node.id}, Selection: ${nodeSelection.nodeSelection}');
-      }
-      final showCaret = _shouldDocumentShowCaret && nodeSelection != null ? nodeSelection.isExtent : false;
-      editorStyleLog.fine("Showing caret? $showCaret");
-      final highlightWhenEmpty =
-          nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
 
-      editorStyleLog.finer(' - ${node.id}: $nodeSelection');
-      if (showCaret) {
-        editorStyleLog.finer('   - ^ showing caret');
-      }
-
-      editorStyleLog.finer(' - building a paragraph with selection:');
-      editorStyleLog.finer('   - base: ${textSelection?.base}');
-      editorStyleLog.finer('   - extent: ${textSelection?.extent}');
-
-      if (viewModel is TextComponentViewModel) {
-        final componentTextColor = viewModel.textStyleBuilder({}).color;
-
-        final textWithSelectionAttributions =
-            textSelection != null && _selectedTextColorStrategy != null && componentTextColor != null
-                ? (viewModel.text.copyText(0)
-                  ..addAttribution(
-                      ColorAttribution(_selectedTextColorStrategy!(
-                        originalTextColor: componentTextColor,
-                        selectionHighlightColor: _selectionStyles.selectionColor,
-                      )),
-                      SpanRange(textSelection.start, textSelection.end - 1)))
-                : viewModel.text;
-
-        viewModel
-          ..text = textWithSelectionAttributions
-          ..selection = textSelection
-          ..selectionColor = _selectionStyles.selectionColor
-          ..highlightWhenEmpty = highlightWhenEmpty;
-      }
+    TextRange? textComposingRegion;
+    if (documentComposingRegion.start.nodeId == documentComposingRegion.end.nodeId &&
+        documentComposingRegion.start.nodeId == node.id) {
+      // There's a composing region and it's entirely within this text node.
+      // TODO: handle the possibility of a composing region extending across multiple nodes.
+      final startPosition = documentComposingRegion.start.nodePosition as TextNodePosition;
+      final endPosition = documentComposingRegion.end.nodePosition as TextNodePosition;
+      textComposingRegion = TextRange(start: startPosition.offset, end: endPosition.offset);
     }
-    if (viewModel is ImageComponentViewModel) {
-      final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
 
-      viewModel
-        ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor;
-    }
-    if (viewModel is HorizontalRuleComponentViewModel) {
-      final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
-
-      viewModel
-        ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor;
-    }
+    // TODO: instead of reporting the composing region to the view model, have the view model
+    //       take a collection of underlines with underline styles.
+    final componentTextColor = viewModel.textStyleBuilder({}).color;
+    viewModel
+      ..composingRegion = textComposingRegion
+      ..showComposingUnderline = true;
 
     return viewModel;
   }
@@ -175,29 +109,29 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   /// Computes the [DocumentNodeSelection] for the individual `nodeId` based on
   /// the total list of selected nodes.
   DocumentNodeSelection? _computeNodeSelection({
-    required DocumentSelection? documentSelection,
+    required DocumentRange? documentRange,
     required List<DocumentNode> selectedNodes,
     required DocumentNode node,
   }) {
-    if (documentSelection == null) {
+    if (documentRange == null) {
       return null;
     }
 
     editorStyleLog.finer('_computeNodeSelection(): ${node.id}');
-    editorStyleLog.finer(' - base: ${documentSelection.base.nodeId}');
-    editorStyleLog.finer(' - extent: ${documentSelection.extent.nodeId}');
+    editorStyleLog.finer(' - start: ${documentRange.start.nodeId}');
+    editorStyleLog.finer(' - end: ${documentRange.end.nodeId}');
 
-    if (documentSelection.base.nodeId == documentSelection.extent.nodeId) {
+    if (documentRange.start.nodeId == documentRange.end.nodeId) {
       editorStyleLog.finer(' - selection is within 1 node.');
-      if (documentSelection.base.nodeId != node.id) {
+      if (documentRange.start.nodeId != node.id) {
         // Only 1 node is selected and its not the node we're interested in. Return.
         editorStyleLog.finer(' - this node is not selected. Returning null.');
         return null;
       }
 
       editorStyleLog.finer(' - this node has the selection');
-      final baseNodePosition = documentSelection.base.nodePosition;
-      final extentNodePosition = documentSelection.extent.nodePosition;
+      final baseNodePosition = documentRange.start.nodePosition;
+      final extentNodePosition = documentRange.end.nodePosition;
       late NodeSelection? nodeSelection;
       try {
         nodeSelection = node.computeSelection(base: baseNodePosition, extent: extentNodePosition);
@@ -238,12 +172,12 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         // Multiple nodes are selected and the node that we're interested in
         // is the top node in that selection. Therefore, this node is
         // selected from a position down to its bottom.
-        final isBase = node.id == documentSelection.base.nodeId;
+        final isBase = node.id == documentRange.start.nodeId;
         return DocumentNodeSelection(
           nodeId: node.id,
           nodeSelection: node.computeSelection(
-            base: isBase ? documentSelection.base.nodePosition : node.endPosition,
-            extent: isBase ? node.endPosition : documentSelection.extent.nodePosition,
+            base: isBase ? documentRange.start.nodePosition : node.endPosition,
+            extent: isBase ? node.endPosition : documentRange.end.nodePosition,
           ),
           isBase: isBase,
           isExtent: !isBase,
@@ -254,12 +188,12 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         // Multiple nodes are selected and the node that we're interested in
         // is the bottom node in that selection. Therefore, this node is
         // selected from the beginning down to some position.
-        final isBase = node.id == documentSelection.base.nodeId;
+        final isBase = node.id == documentRange.start.nodeId;
         return DocumentNodeSelection(
           nodeId: node.id,
           nodeSelection: node.computeSelection(
             base: isBase ? node.beginningPosition : node.beginningPosition,
-            extent: isBase ? documentSelection.base.nodePosition : documentSelection.extent.nodePosition,
+            extent: isBase ? documentRange.start.nodePosition : documentRange.end.nodePosition,
           ),
           isBase: isBase,
           isExtent: !isBase,

@@ -135,6 +135,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     required this.selectionColor,
     this.highlightWhenEmpty = false,
     this.composingRegion,
+    this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   bool isComplete;
@@ -156,6 +157,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   bool highlightWhenEmpty;
   @override
   TextRange? composingRegion;
+  @override
+  bool showComposingUnderline;
 
   @override
   TaskComponentViewModel copy() {
@@ -172,6 +175,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
       composingRegion: composingRegion,
+      showComposingUnderline: showComposingUnderline,
     );
   }
 
@@ -189,7 +193,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
-          composingRegion == other.composingRegion;
+          composingRegion == other.composingRegion &&
+          showComposingUnderline == other.showComposingUnderline;
 
   @override
   int get hashCode =>
@@ -202,7 +207,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       selection.hashCode ^
       selectionColor.hashCode ^
       highlightWhenEmpty.hashCode ^
-      composingRegion.hashCode;
+      composingRegion.hashCode ^
+      showComposingUnderline.hashCode;
 }
 
 /// A document component that displays a complete-able task.
@@ -272,6 +278,7 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
             composingRegion: widget.viewModel.composingRegion,
+            showComposingUnderline: widget.viewModel.showComposingUnderline,
             showDebugPaint: widget.showDebugPaint,
           ),
         ),

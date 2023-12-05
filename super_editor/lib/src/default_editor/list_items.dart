@@ -152,6 +152,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
         composingRegion: componentViewModel.composingRegion,
+        showComposingUnderline: componentViewModel.showComposingUnderline,
       );
     } else if (componentViewModel.type == ListItemType.ordered) {
       return OrderedListItemComponent(
@@ -164,6 +165,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
         composingRegion: componentViewModel.composingRegion,
+        showComposingUnderline: componentViewModel.showComposingUnderline,
       );
     }
 
@@ -189,6 +191,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
     required this.selectionColor,
     this.highlightWhenEmpty = false,
     this.composingRegion,
+    this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   ListItemType type;
@@ -211,6 +214,8 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
   bool highlightWhenEmpty;
   @override
   TextRange? composingRegion;
+  @override
+  bool showComposingUnderline;
 
   @override
   ListItemComponentViewModel copy() {
@@ -227,6 +232,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
       selection: selection,
       selectionColor: selectionColor,
       composingRegion: composingRegion,
+      showComposingUnderline: showComposingUnderline,
     );
   }
 
@@ -244,7 +250,8 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
           textDirection == other.textDirection &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
-          composingRegion == other.composingRegion;
+          composingRegion == other.composingRegion &&
+          showComposingUnderline == other.showComposingUnderline;
 
   @override
   int get hashCode =>
@@ -257,7 +264,8 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
       textDirection.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
-      composingRegion.hashCode;
+      composingRegion.hashCode ^
+      showComposingUnderline.hashCode;
 }
 
 /// Displays a un-ordered list item in a document.
@@ -278,6 +286,7 @@ class UnorderedListItemComponent extends StatelessWidget {
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
     this.composingRegion,
+    this.showComposingUnderline = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -293,6 +302,7 @@ class UnorderedListItemComponent extends StatelessWidget {
   final Color caretColor;
   final bool highlightWhenEmpty;
   final TextRange? composingRegion;
+  final bool showComposingUnderline;
   final bool showDebugPaint;
 
   @override
@@ -327,6 +337,7 @@ class UnorderedListItemComponent extends StatelessWidget {
             selectionColor: selectionColor,
             highlightWhenEmpty: highlightWhenEmpty,
             composingRegion: composingRegion,
+            showComposingUnderline: showComposingUnderline,
             showDebugPaint: showDebugPaint,
           ),
         ),
@@ -371,6 +382,7 @@ class OrderedListItemComponent extends StatelessWidget {
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
     this.composingRegion,
+    this.showComposingUnderline = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -387,6 +399,7 @@ class OrderedListItemComponent extends StatelessWidget {
   final Color caretColor;
   final bool highlightWhenEmpty;
   final TextRange? composingRegion;
+  final bool showComposingUnderline;
   final bool showDebugPaint;
 
   @override
@@ -420,6 +433,7 @@ class OrderedListItemComponent extends StatelessWidget {
             selectionColor: selectionColor,
             highlightWhenEmpty: highlightWhenEmpty,
             composingRegion: composingRegion,
+            showComposingUnderline: showComposingUnderline,
             showDebugPaint: showDebugPaint,
           ),
         ),

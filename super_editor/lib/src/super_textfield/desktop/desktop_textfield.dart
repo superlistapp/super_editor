@@ -66,6 +66,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.inputSource = TextInputSource.keyboard,
     this.textInputAction,
     this.imeConfiguration,
+    this.showComposingUnderline,
     this.selectorHandlers,
     List<TextFieldKeyboardHandler>? keyboardHandlers,
   })  : keyboardHandlers = keyboardHandlers ??
@@ -141,6 +142,10 @@ class SuperDesktopTextField extends StatefulWidget {
 
   /// Preferences for how the platform IME should look and behave during editing.
   final TextInputConfiguration? imeConfiguration;
+
+  /// Whether to show an underline beneath the text in the composing region, or `null`
+  /// to let [SuperDesktopTextField] decide when to show the underline.
+  final bool? showComposingUnderline;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
@@ -347,6 +352,9 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     return _estimatedLineHeight.calculate(defaultStyle, _textScaler);
   }
 
+  bool get _shouldShowComposingUnderline =>
+      widget.showComposingUnderline ?? defaultTargetPlatform == TargetPlatform.macOS;
+
   @override
   Widget build(BuildContext context) {
     if (_textKey.currentContext == null) {
@@ -464,7 +472,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                   selection: widget.textController?.selection,
                 ),
               // Underline beneath the composing region.
-              if (widget.textController?.composingRegion.isValid == true)
+              if (widget.textController?.composingRegion.isValid == true && _shouldShowComposingUnderline)
                 TextUnderlineLayer(
                   textLayout: textLayout,
                   underlines: [
