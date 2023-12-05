@@ -259,17 +259,6 @@ class SuperEditorAndroidControlsController {
   /// If [expandedHandlesBuilder] is `null`, default Android handles are displayed.
   final DocumentExpandedHandlesBuilder? expandedHandlesBuilder;
 
-  /// Auto-scroller that operates based on drag handle offsets.
-  ///
-  /// The [handleAutoScroller] is set and cleared by the editor's internal Android gesture system.
-  // TODO: Try to remove this. The Android controls configuration has a handle auto scroller
-  //       when the iOS version doesn't, because the iOS version has handles built into the document
-  //       layer whereas Android displays handles in the overlay. Therefore, the overlay handles need
-  //       access to an auto-scroller. But this auto-scroller exposes an internal editor implementation
-  //       in the public scope interface. We'd rather not have this here. Once the Android composition
-  //       configuration work is done in #1509, try to remove this from the public interface.
-  // final handleAutoScroller = ValueNotifier<DragHandleAutoScroller?>(null);
-
   /// Whether the Android magnifier should be displayed right now.
   ValueListenable<bool> get shouldShowMagnifier => _shouldShowMagnifier;
   final _shouldShowMagnifier = ValueNotifier<bool>(false);

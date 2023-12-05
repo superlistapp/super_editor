@@ -552,9 +552,6 @@ Future<void> _pumpEditorWithUnselectableHrsAndFakeToolbar(
   await tester //
       .createDocument()
       .withCustomContent(paragraphThenHrThenParagraphDoc())
-      .withGestureMode(debugDefaultTargetPlatformOverride == TargetPlatform.android
-          ? DocumentGestureMode.android
-          : DocumentGestureMode.iOS)
       .withComponentBuilders(const [
         _UnselectableHrComponentBuilder(),
         ...defaultComponentBuilders,

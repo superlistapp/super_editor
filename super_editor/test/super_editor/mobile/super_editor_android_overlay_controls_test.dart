@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../../test_runners.dart';
@@ -37,7 +38,7 @@ void main() {
 
       // Resolve the gesture so that we don't have pending gesture timers.
       await gesture.up();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(kTapMinTime);
     });
 
     testWidgetsOnAndroid("shows magnifier when dragging the collapsed handle", (tester) async {
@@ -59,7 +60,7 @@ void main() {
 
       // Resolve the gesture so that we don't have pending gesture timers.
       await gesture.up();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(kTapMinTime);
     });
 
     testWidgetsOnAndroid("shows toolbar when selection is expanded", (tester) async {
@@ -110,7 +111,7 @@ void main() {
 
       // Resolve the gesture so that we don't have pending gesture timers.
       await gesture.up();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(kTapMinTime);
     });
 
     group("on device and web > shows", () {

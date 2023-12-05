@@ -79,7 +79,7 @@ typedef DocumentExpandedHandlesBuilder = Widget Function(
 ///
 /// The [mobileToolbarKey] is used to find the toolbar in the widget tree for various purposes,
 /// e.g., within tests to verify the presence or absence of a toolbar. If your builder chooses
-/// not to build a toolbar, e.g., returns a `SizedBox()` instead of a toolbar, then the
+/// not to build a toolbar, e.g., returns a `SizedBox()` instead of a toolbar, then
 /// you shouldn't use the [mobileToolbarKey].
 ///
 /// The [mobileToolbarKey] must be attached to the toolbar, not the top-level widget returned
@@ -110,7 +110,7 @@ typedef DocumentFloatingToolbarBuilder = Widget Function(
 ///
 /// The [magnifierKey] is used to find the magnifier in the widget tree for various purposes,
 /// e.g., within tests to verify the presence or absence of a magnifier. If your builder chooses
-/// not to build a magnifier, e.g., returns a `SizedBox()` instead of a magnifier, then the
+/// not to build a magnifier, e.g., returns a `SizedBox()` instead of a magnifier, then
 /// you shouldn't use the [magnifierKey].
 ///
 /// The [magnifierKey] must be attached to the magnifier, not the top-level widget returned
