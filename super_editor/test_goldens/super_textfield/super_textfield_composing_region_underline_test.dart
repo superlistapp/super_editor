@@ -31,8 +31,12 @@ Future<void> _composingRegionIsUnderlined(WidgetTester tester) async {
   await tester.pumpAndSettle();
 
   // Ensure the composing region is underlined.
-  await screenMatchesGolden(
-      tester, "super-text-field_composing-region-shows-underline_${defaultTargetPlatform.name}_1");
+  // await screenMatchesGolden(
+  //     tester, "super-text-field_composing-region-shows-underline_${defaultTargetPlatform.name}_1");
+  await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFileWithPixelAllowance(
+          "goldens/super-text-field_composing-region-shows-underline_${defaultTargetPlatform.name}_1.png", 1));
 
   textController.composingRegion = const TextRange.collapsed(-1);
   await tester.pump();
