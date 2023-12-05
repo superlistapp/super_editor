@@ -25,6 +25,7 @@ import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
@@ -272,20 +273,24 @@ class SuperEditor extends StatefulWidget {
   final Map<String, SuperEditorSelectorHandler>? selectorHandlers;
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
+  @Deprecated(
+      "To configure overlay controls, surround SuperEditor with a SuperEditorIosControlsScope and/or SuperEditorAndroidControlsScope")
   final MagnifierAndToolbarController? overlayController;
 
   /// Color of the text selection drag handles on Android.
+  @Deprecated("To configure handle color, surround SuperEditor with a SuperEditorAndroidControlsScope, instead")
   final Color? androidHandleColor;
 
   /// Builder that creates a floating toolbar when running on Android.
+  @Deprecated("To configure a toolbar builder, surround SuperEditor with a SuperEditorAndroidControlsScope, instead")
   final WidgetBuilder? androidToolbarBuilder;
 
   /// Color of the text selection drag handles on iOS.
-  @Deprecated("To configure handle color, surround SuperEditor with an IosEditorControlsScope, instead")
+  @Deprecated("To configure handle color, surround SuperEditor with a SuperEditorIosControlsScope, instead")
   final Color? iOSHandleColor;
 
   /// Builder that creates a floating toolbar when running on iOS.
-  @Deprecated("To configure a toolbar builder, surround SuperEditor with an IosEditorControlsScope, instead")
+  @Deprecated("To configure a toolbar builder, surround SuperEditor with a SuperEditorIosControlsScope, instead")
   final WidgetBuilder? iOSToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, like drag
@@ -295,7 +300,8 @@ class SuperEditor extends StatefulWidget {
   /// If no clipper factory method is provided, then the overlay controls
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
-  // TODO: remove this once both iOS and Android overlay controls are moved to ancestor scopes.
+  @Deprecated(
+      "To configure an overlay clipper, surround SuperEditor with a SuperEditorIosControlsScope and/or a SuperEditorAndroidControlsScope")
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
   /// Plugins that add sets of behaviors to the editing experience.
@@ -340,11 +346,19 @@ class SuperEditorState extends State<SuperEditor> {
 
   ContentTapDelegate? _contentTapDelegate;
 
-  // GlobalKey for the iOS editor controls context so that the context data doesn't
+  final _dragHandleAutoScroller = ValueNotifier<DragHandleAutoScroller?>(null);
+
+  // GlobalKey for the iOS editor controls scope so that the scope's controller doesn't
   // continuously replace itself every time we rebuild. We want to retain the same
   // controls because they're shared throughout a number of disconnected widgets.
   final _iosControlsContextKey = GlobalKey();
   final _iosControlsController = SuperEditorIosControlsController();
+
+  // GlobalKey for the Android editor controls scope so that the scope's controller doesn't
+  // continuously replace itself every time we rebuild. We want to retain the same
+  // controls because they're shared throughout a number of disconnected widgets.
+  final _androidControlsContextKey = GlobalKey();
+  final _androidControlsController = SuperEditorAndroidControlsController();
 
   // Leader links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
@@ -431,6 +445,7 @@ class SuperEditorState extends State<SuperEditor> {
     _contentTapDelegate?.dispose();
 
     _iosControlsController.dispose();
+    _androidControlsController.dispose();
 
     widget.editor.context.remove(Editor.layoutKey);
 
@@ -612,23 +627,28 @@ class SuperEditorState extends State<SuperEditor> {
     );
   }
 
-  /// Builds an [InheritedWidget] that holds a shared context for editor controls,
+  /// Build an [InheritedWidget] that holds a shared controller scope for editor controls,
   /// e.g., caret, handles, magnifier, toolbar.
   ///
-  /// This context may be shared by multiple widgets within [SuperEditor]. It's also
-  /// possible that a client app has wrapped [SuperEditor] with its own context
-  /// [InheritedWidget], in which case the context is shared with widgets inside
+  /// This controller may be shared by multiple widgets within [SuperEditor]. It's also
+  /// possible that a client app has wrapped [SuperEditor] with its own controller scope
+  /// [InheritedWidget], in which case the controller is shared with widgets inside
   /// of [SuperEditor], and widgets outside of [SuperEditor].
+  ///
+  /// The specific scope that's added to the widget tree is selected by the given [gestureMode].
   Widget _buildGestureControlsScope({
     required Widget child,
   }) {
     switch (gestureMode) {
-      // case DocumentGestureMode.mouse:
-      //   // TODO: create context for mouse mode (#1533)
-      // case DocumentGestureMode.android:
-      //   // TODO: create context for Android (#1509)
+      case DocumentGestureMode.mouse:
+        return child;
+      case DocumentGestureMode.android:
+        return SuperEditorAndroidControlsScope(
+          key: _androidControlsContextKey,
+          controller: _androidControlsController,
+          child: child,
+        );
       case DocumentGestureMode.iOS:
-      default:
         return SuperEditorIosControlsScope(
           key: _iosControlsContextKey,
           controller: _iosControlsController,
@@ -707,9 +727,25 @@ class SuperEditorState extends State<SuperEditor> {
             ),
           ),
         );
-      case DocumentGestureMode.mouse:
       case DocumentGestureMode.android:
-      default:
+        return SuperEditorAndroidControlsOverlayManager(
+          document: editContext.document,
+          getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+          selection: _composer.selectionNotifier,
+          setSelection: (newSelection) => editContext.editor.execute([
+            ChangeSelectionRequest(newSelection, SelectionChangeType.pushCaret, SelectionReason.userInteraction),
+          ]),
+          scrollChangeSignal: _scrollChangeSignal,
+          dragHandleAutoScroller: _dragHandleAutoScroller,
+          defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultAndroidEditorToolbarBuilder(
+            overlayContext,
+            mobileToolbarKey,
+            editContext.commonOps,
+            SuperEditorAndroidControlsScope.rootOf(context),
+          ),
+          child: child,
+        );
+      case DocumentGestureMode.mouse:
         return child;
     }
   }
@@ -737,13 +773,7 @@ class SuperEditorState extends State<SuperEditor> {
           selection: editContext.composer.selectionNotifier,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
-          documentKey: _docLayoutKey,
-          documentLayoutLink: _documentLayoutLink,
-          selectionLinks: _selectionLinks,
-          handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
-          createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          overlayController: widget.overlayController,
+          dragHandleAutoScroller: _dragHandleAutoScroller,
           showDebugPaint: widget.debugPaint.gestures,
         );
       case DocumentGestureMode.iOS:
@@ -755,6 +785,7 @@ class SuperEditorState extends State<SuperEditor> {
           selection: editContext.composer.selectionNotifier,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
+          dragHandleAutoScroller: _dragHandleAutoScroller,
           showDebugPaint: widget.debugPaint.gestures,
         );
     }
@@ -820,6 +851,65 @@ class DefaultIosEditorToolbar extends StatelessWidget {
 
   void _paste() {
     editorOps.paste();
+    editorControlsController.hideToolbar();
+  }
+}
+
+/// Builds a standard editor-style Android floating toolbar.
+Widget defaultAndroidEditorToolbarBuilder(
+  BuildContext context,
+  Key floatingToolbarKey,
+  CommonEditorOperations editorOps,
+  SuperEditorAndroidControlsController editorControlsController,
+) {
+  return DefaultAndroidEditorToolbar(
+    floatingToolbarKey: floatingToolbarKey,
+    editorOps: editorOps,
+    editorControlsController: editorControlsController,
+  );
+}
+
+/// An Android floating toolbar, which includes standard buttons for an editor use-case.
+class DefaultAndroidEditorToolbar extends StatelessWidget {
+  const DefaultAndroidEditorToolbar({
+    super.key,
+    this.floatingToolbarKey,
+    required this.editorOps,
+    required this.editorControlsController,
+  });
+
+  final Key? floatingToolbarKey;
+  final CommonEditorOperations editorOps;
+  final SuperEditorAndroidControlsController editorControlsController;
+
+  @override
+  Widget build(BuildContext context) {
+    return AndroidTextEditingFloatingToolbar(
+      floatingToolbarKey: floatingToolbarKey,
+      onCopyPressed: _copy,
+      onCutPressed: _cut,
+      onPastePressed: _paste,
+      onSelectAllPressed: _selectAll,
+    );
+  }
+
+  void _cut() {
+    editorOps.cut();
+    editorControlsController.hideToolbar();
+  }
+
+  void _copy() {
+    editorOps.copy();
+    editorControlsController.hideToolbar();
+  }
+
+  void _paste() {
+    editorOps.paste();
+    editorControlsController.hideToolbar();
+  }
+
+  void _selectAll() {
+    editorOps.selectAll();
     editorControlsController.hideToolbar();
   }
 }
@@ -1029,6 +1119,13 @@ const defaultSuperEditorDocumentOverlayBuilders = [
   SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
   // Displays caret and drag handles, specifically for iOS.
   SuperEditorIosHandlesDocumentLayerBuilder(),
+
+  // Adds a Leader around the document selection at a focal point for the
+  // Android floating toolbar.
+  SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
+  // Displays caret and drag handles, specifically for Android.
+  SuperEditorAndroidHandlesDocumentLayerBuilder(),
+
   // Displays caret for typical desktop use-cases.
   DefaultCaretOverlayBuilder(),
 ];

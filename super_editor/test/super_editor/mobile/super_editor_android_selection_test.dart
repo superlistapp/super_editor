@@ -459,7 +459,11 @@ Future<void> _pumpAppWithLongText(WidgetTester tester) async {
       .createDocument()
       // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
       .withSingleParagraph()
-      .withAndroidToolbarBuilder((context) => const AndroidTextEditingFloatingToolbar())
+      .withAndroidToolbarBuilder(
+        (context, key, leaderLink) => AndroidTextEditingFloatingToolbar(
+          floatingToolbarKey: key,
+        ),
+      )
       .pump();
 }
 
@@ -513,25 +517,26 @@ const _wordIncididuntStart = 79;
 const _wordIncididuntEnd = 89;
 
 void _expectNoControlsAreVisible() {
-  expect(find.byType(AndroidSelectionHandle), findsNothing);
+  expect(find.byType(AndroidSelectionHandle).hitTestable(), findsNothing);
   expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
   expect(find.byType(AndroidMagnifyingGlass), findsNothing);
 }
 
 void _expectOnlyToolbar() {
-  expect(find.byType(AndroidSelectionHandle), findsNothing);
+  expect(find.byType(AndroidSelectionHandle).hitTestable(), findsNothing);
   expect(find.byType(AndroidTextEditingFloatingToolbar), findsOne);
   expect(find.byType(AndroidMagnifyingGlass), findsNothing);
 }
 
 void _expectOnlyMagnifier() {
-  expect(find.byType(AndroidSelectionHandle), findsNothing);
+  expect(find.byType(AndroidSelectionHandle).hitTestable(), findsNothing);
   expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
   expect(find.byType(AndroidMagnifyingGlass), findsOne);
 }
 
 void _expectHandlesAndToolbar() {
-  expect(find.byType(AndroidSelectionHandle), findsExactly(2));
+  expect(find.byKey(DocumentKeys.upstreamHandle), findsOneWidget);
+  expect(find.byKey(DocumentKeys.downstreamHandle), findsOneWidget);
   expect(find.byType(AndroidTextEditingFloatingToolbar), findsOne);
   expect(find.byType(AndroidMagnifyingGlass), findsNothing);
 }

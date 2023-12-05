@@ -556,6 +556,7 @@ class SplitExistingTaskCommand implements EditCommand {
     composer.setComposingRegion(null);
 
     executor.logChanges([
+      SplitTaskIntention.start(),
       DocumentEdit(
         NodeChangeEvent(node.id),
       ),
@@ -572,6 +573,13 @@ class SplitExistingTaskCommand implements EditCommand {
         oldComposingRegion: oldComposingRegion,
         newComposingRegion: null,
       ),
+      SplitTaskIntention.end(),
     ]);
   }
+}
+
+class SplitTaskIntention extends Intention {
+  SplitTaskIntention.start() : super.start();
+
+  SplitTaskIntention.end() : super.end();
 }

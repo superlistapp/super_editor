@@ -82,24 +82,11 @@ class SuperEditorInspector {
 
   /// Returns the (x,y) offset for the caret that's currently visible in the document.
   static Offset findCaretOffsetInDocument([Finder? finder]) {
-    final desktopCaretBox = find.byKey(primaryCaretKey).evaluate().singleOrNull?.renderObject as RenderBox?;
-    if (desktopCaretBox != null) {
-      final globalCaretOffset = desktopCaretBox.localToGlobal(Offset.zero);
+    final caret = find.byKey(DocumentKeys.caret).evaluate().singleOrNull?.renderObject as RenderBox?;
+    if (caret != null) {
+      final globalCaretOffset = caret.localToGlobal(Offset.zero);
       final documentLayout = _findDocumentLayout(finder);
-      final globalToDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
-      return globalCaretOffset - globalToDocumentOffset;
-    }
-
-    final androidControls = find.byType(AndroidDocumentTouchEditingControls).evaluate().lastOrNull?.widget
-        as AndroidDocumentTouchEditingControls?;
-    if (androidControls != null) {
-      return androidControls.editingController.caretTop!;
-    }
-
-    final iOSControls = (find.byType(IosHandlesDocumentLayer).evaluate().lastOrNull as StatefulElement?)?.state
-        as IosControlsDocumentLayerState?;
-    if (iOSControls != null && iOSControls.caret != null) {
-      return iOSControls.caret!.topCenter;
+      return documentLayout.getDocumentOffsetFromAncestorOffset(globalCaretOffset);
     }
 
     throw Exception('Could not locate caret in document');
@@ -269,14 +256,27 @@ class SuperEditorInspector {
   ///    [wantsMobileToolbarToBeVisible] is `true`, but [isMobileToolbarVisible]
   ///    is `false`.
   static bool wantsMobileToolbarToBeVisible([Finder? superEditorFinder]) {
-    // TODO: add Android support
-    final toolbarManager = find.state<SuperEditorIosToolbarOverlayManagerState>(superEditorFinder);
-    if (toolbarManager == null) {
-      throw Exception(
-          "Tried to verify that SuperEditor wants mobile toolbar to be visible, but couldn't find the toolbar manager widget.");
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        final toolbarManager = find.state<SuperEditorAndroidControlsOverlayManagerState>(superEditorFinder);
+        if (toolbarManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile toolbar to be visible on Android, but couldn't find the toolbar manager widget.");
+        }
+        return toolbarManager.wantsToDisplayToolbar;
+      case TargetPlatform.iOS:
+        final toolbarManager = find.state<SuperEditorIosToolbarOverlayManagerState>(superEditorFinder);
+        if (toolbarManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile toolbar to be visible on iOS, but couldn't find the toolbar manager widget.");
+        }
+        return toolbarManager.wantsToDisplayToolbar;
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.fuchsia:
+        return false;
     }
-
-    return toolbarManager.wantsToDisplayToolbar;
   }
 
   /// Returns `true` if the mobile floating toolbar is currently visible, or `false`
@@ -308,14 +308,29 @@ class SuperEditorInspector {
   ///    [wantsMobileMagnifierToBeVisible] is `true`, but [isMobileMagnifierVisible]
   ///    is `false`.
   static bool wantsMobileMagnifierToBeVisible([Finder? superEditorFinder]) {
-    // TODO: add Android support
-    final magnifierManager = find.state<SuperEditorIosMagnifierOverlayManagerState>(superEditorFinder);
-    if (magnifierManager == null) {
-      throw Exception(
-          "Tried to verify that SuperEditor wants mobile magnifier to be visible, but couldn't find the magnifier manager widget.");
-    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        final magnifierManager = find.state<SuperEditorAndroidControlsOverlayManagerState>(superEditorFinder);
+        if (magnifierManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile magnifier to be visible on Android, but couldn't find the magnifier manager widget.");
+        }
 
-    return magnifierManager.wantsToDisplayMagnifier;
+        return magnifierManager.wantsToDisplayMagnifier;
+      case TargetPlatform.iOS:
+        final magnifierManager = find.state<SuperEditorIosMagnifierOverlayManagerState>(superEditorFinder);
+        if (magnifierManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile magnifier to be visible on iOS, but couldn't find the magnifier manager widget.");
+        }
+
+        return magnifierManager.wantsToDisplayMagnifier;
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.fuchsia:
+        return false;
+    }
   }
 
   /// Returns `true` if a mobile magnifier is currently visible, or `false` if it's
@@ -357,7 +372,7 @@ class SuperEditorInspector {
       case TargetPlatform.iOS:
         return find.byWidgetPredicate(
           (widget) =>
-              widget.key == DocumentKeys.iOsCaret ||
+              widget.key == DocumentKeys.caret ||
               widget.key == DocumentKeys.upstreamHandle ||
               widget.key == DocumentKeys.downstreamHandle,
         );
@@ -372,9 +387,8 @@ class SuperEditorInspector {
   static Finder findMobileCaret([Finder? superEditorFinder]) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return find.byKey(DocumentKeys.androidCaret);
       case TargetPlatform.iOS:
-        return find.byKey(DocumentKeys.iOsCaret);
+        return find.byKey(DocumentKeys.caret);
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:
@@ -388,7 +402,7 @@ class SuperEditorInspector {
       case TargetPlatform.android:
         return find.byKey(DocumentKeys.androidCaretHandle);
       case TargetPlatform.iOS:
-        return find.byKey(DocumentKeys.iOsCaret);
+        return find.byKey(DocumentKeys.caret);
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:

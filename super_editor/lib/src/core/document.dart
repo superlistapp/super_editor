@@ -240,6 +240,18 @@ class DocumentPosition {
   /// For example: a paragraph node might use a [TextNodePosition].
   final NodePosition nodePosition;
 
+  /// Whether this position within the document is equivalent to the given
+  /// [other] [DocumentPosition].
+  ///
+  /// Equivalency is determined by the [NodePosition]. For example, given two
+  /// [TextNodePosition]s, if both of them point to the same character, but one
+  /// has an upstream affinity and the other a downstream affinity, the two
+  /// [TextNodePosition]s are considered "non-equal", but they're considered
+  /// "equivalent" because both [TextNodePosition]s point to the same location
+  /// within the document.
+  bool isEquivalentTo(DocumentPosition other) =>
+      nodeId == other.nodeId && nodePosition.isEquivalentTo(other.nodePosition);
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
