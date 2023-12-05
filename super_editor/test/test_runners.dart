@@ -111,6 +111,17 @@ void testWidgetsOnWebIos(
 }
 
 @isTestGroup
+void testWidgetsOnAndroidDeviceAndWeb(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgetsOnAndroid(description, test, skip: skip, variant: variant);
+  testWidgetsOnWebAndroid(description, test, skip: skip, variant: variant);
+}
+
+@isTestGroup
 void testWidgetsOnWebAndroid(
   String description,
   WidgetTesterCallback test, {

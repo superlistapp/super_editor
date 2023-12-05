@@ -52,7 +52,7 @@ class SuperEditorIosControlsScope extends InheritedWidget {
     final data = maybeRootOf(context);
 
     if (data == null) {
-      throw Exception("Tried to depend upon the root IOSEditorControlsContext but no such ancestor widget exists.");
+      throw Exception("Tried to depend upon the root SuperEditorIosControlsScope but no such ancestor widget exists.");
     }
 
     return data;
@@ -227,6 +227,7 @@ class IosDocumentTouchInteractor extends StatefulWidget {
     required this.getDocumentLayout,
     required this.selection,
     required this.scrollController,
+    required this.dragHandleAutoScroller,
     this.contentTapHandler,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     this.showDebugPaint = false,
@@ -245,6 +246,8 @@ class IosDocumentTouchInteractor extends StatefulWidget {
   final ContentTapDelegate? contentTapHandler;
 
   final ScrollController scrollController;
+
+  final ValueNotifier<DragHandleAutoScroller?> dragHandleAutoScroller;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -274,7 +277,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   SuperEditorIosControlsController? _controlsController;
   late FloatingCursorListener _floatingCursorListener;
 
-  late DragHandleAutoScroller _handleAutoScrolling;
   Offset? _globalStartDragOffset;
   Offset? _dragStartInDoc;
   Offset? _startDragPositionOffset;
@@ -299,7 +301,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   void initState() {
     super.initState();
 
-    _handleAutoScrolling = DragHandleAutoScroller(
+    widget.dragHandleAutoScroller.value = DragHandleAutoScroller(
       vsync: this,
       dragAutoScrollBoundary: widget.dragAutoScrollBoundary,
       getScrollPosition: () => scrollPosition,
@@ -378,7 +380,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     _teardownScrollController();
 
-    _handleAutoScrolling.dispose();
+    widget.dragHandleAutoScroller.value?.dispose();
 
     super.dispose();
   }
@@ -436,7 +438,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         ? _documentOffsetToViewportOffset(selectionRectInDocumentLayout.bottomCenter)
         : _documentOffsetToViewportOffset(selectionRectInDocumentLayout.topCenter);
 
-    _handleAutoScrolling.ensureOffsetIsVisible(extentOffsetInViewport);
+    widget.dragHandleAutoScroller.value?.ensureOffsetIsVisible(extentOffsetInViewport);
   }
 
   void _onDocumentChange(_) {
@@ -874,7 +876,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     // finger/mouse position hasn't changed.
     _dragStartScrollOffset = scrollPosition.pixels;
 
-    _handleAutoScrolling.startAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.startAutoScrollHandleMonitoring();
 
     scrollPosition.addListener(_onAutoScrollChange);
   }
@@ -885,7 +887,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return false;
     }
 
-    final extentRect = _docLayout.getRectForPosition(collapsedPosition)!;
+    // TODO: Replace "getRectForSelection()" with "getRectForPosition()" after #1614
+    final extentRect = _docLayout.getRectForSelection(collapsedPosition, collapsedPosition)!;
     final caretRect = Rect.fromLTWH(extentRect.left - 1, extentRect.center.dy, 1, 1).inflate(24);
 
     final docOffset = _interactorOffsetToDocumentOffset(interactorOffset);
@@ -948,7 +951,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     // Auto-scroll, if needed, for either handle dragging or long press dragging.
-    _handleAutoScrolling.updateAutoScrollHandleMonitoring(
+    widget.dragHandleAutoScroller.value?.updateAutoScrollHandleMonitoring(
       dragEndInViewport: dragEndInViewport,
     );
 
@@ -1048,7 +1051,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _onHandleDragEnd();
     }
 
-    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
     scrollPosition.removeListener(_onAutoScrollChange);
   }
 
@@ -1185,7 +1188,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _handleAutoScrolling.startAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.startAutoScrollHandleMonitoring();
   }
 
   void _onFloatingCursorGeometryChange() {
@@ -1194,13 +1197,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _handleAutoScrolling.updateAutoScrollHandleMonitoring(
+    widget.dragHandleAutoScroller.value?.updateAutoScrollHandleMonitoring(
       dragEndInViewport: cursorGeometry.center,
     );
   }
 
   void _onFloatingCursorStop() {
-    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
   }
 
   void _selectPosition(DocumentPosition position) {
@@ -1373,17 +1376,14 @@ class SuperEditorIosToolbarOverlayManager extends StatefulWidget {
 
 @visibleForTesting
 class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolbarOverlayManager> {
-  SuperEditorIosControlsController? _controlsContext;
+  SuperEditorIosControlsController? _controlsController;
   OverlayEntry? _toolbarOverlayEntry;
-
-  @visibleForTesting
-  bool get wantsToDisplayToolbar => _controlsContext!.shouldShowToolbar.value;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = SuperEditorIosControlsScope.rootOf(context);
+    _controlsController = SuperEditorIosControlsScope.rootOf(context);
 
     // Add our overlay on the next frame. If we did it immediately, it would
     // cause a setState() to be called during didChangeDependencies, which is
@@ -1399,6 +1399,9 @@ class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolb
     super.dispose();
   }
 
+  @visibleForTesting
+  bool get wantsToDisplayToolbar => _controlsController!.shouldShowToolbar.value;
+
   void _addToolbarOverlay() {
     if (_toolbarOverlayEntry != null) {
       return;
@@ -1406,11 +1409,11 @@ class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolb
 
     _toolbarOverlayEntry = OverlayEntry(builder: (overlayContext) {
       return IosFloatingToolbarOverlay(
-        shouldShowToolbar: _controlsContext!.shouldShowToolbar,
-        toolbarFocalPoint: _controlsContext!.toolbarFocalPoint,
+        shouldShowToolbar: _controlsController!.shouldShowToolbar,
+        toolbarFocalPoint: _controlsController!.toolbarFocalPoint,
         floatingToolbarBuilder:
-            _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
-        createOverlayControlsClipper: _controlsContext!.createOverlayControlsClipper,
+            _controlsController!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
+        createOverlayControlsClipper: _controlsController!.createOverlayControlsClipper,
         showDebugPaint: false,
       );
     });
@@ -1449,11 +1452,8 @@ class SuperEditorIosMagnifierOverlayManager extends StatefulWidget {
 
 @visibleForTesting
 class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMagnifierOverlayManager> {
-  SuperEditorIosControlsController? _controlsContext;
+  SuperEditorIosControlsController? _controlsController;
   OverlayEntry? _magnifierOverlayEntry;
-
-  @visibleForTesting
-  bool get wantsToDisplayMagnifier => _controlsContext!.shouldShowMagnifier.value;
 
   @override
   void initState() {
@@ -1471,7 +1471,7 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = SuperEditorIosControlsScope.rootOf(context);
+    _controlsController = SuperEditorIosControlsScope.rootOf(context);
   }
 
   @override
@@ -1479,6 +1479,9 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     _removeMagnifierOverlay();
     super.dispose();
   }
+
+  @visibleForTesting
+  bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
   void _addMagnifierOverlay() {
     if (_magnifierOverlayEntry != null) {
@@ -1510,7 +1513,7 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     // position a Leader with a LeaderLink. This magnifier follows that Leader
     // via the LeaderLink.
     return ValueListenableBuilder(
-      valueListenable: _controlsContext!.shouldShowMagnifier,
+      valueListenable: _controlsController!.shouldShowMagnifier,
       builder: (context, shouldShowMagnifier, child) {
         if (!shouldShowMagnifier) {
           return const SizedBox();
@@ -1518,9 +1521,10 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
 
         return child!;
       },
-      child: _controlsContext!.magnifierBuilder != null //
-          ? _controlsContext!.magnifierBuilder!(context, DocumentKeys.magnifier, _controlsContext!.magnifierFocalPoint)
-          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, _controlsContext!.magnifierFocalPoint),
+      child: _controlsController!.magnifierBuilder != null //
+          ? _controlsController!.magnifierBuilder!(
+              context, DocumentKeys.magnifier, _controlsController!.magnifierFocalPoint)
+          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, _controlsController!.magnifierFocalPoint),
     );
   }
 
@@ -1824,6 +1828,12 @@ class SuperEditorIosToolbarFocalPointDocumentLayerBuilder implements SuperEditor
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editorContext) {
+    if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
+      // There's no controls scope. This probably means SuperEditor is configured with
+      // a non-iOS gesture mode. Build nothing.
+      return const ContentLayerProxyWidget(child: SizedBox());
+    }
+
     return IosToolbarFocalPointDocumentLayer(
       document: editorContext.document,
       selection: editorContext.composer.selectionNotifier,
@@ -1844,7 +1854,9 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
-    if (defaultTargetPlatform != TargetPlatform.iOS) {
+    if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
+      // There's no controls scope. This probably means SuperEditor is configured with
+      // a non-iOS gesture mode. Build nothing.
       return const ContentLayerProxyWidget(child: SizedBox());
     }
 
