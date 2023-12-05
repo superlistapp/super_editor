@@ -266,6 +266,16 @@ extension SuperEditorRobot on WidgetTester {
     await pumpAndSettle();
   }
 
+  Future<TestGesture> pressDownOnCollapsedMobileHandle() async {
+    final handleElement = find.byKey(DocumentKeys.androidCaretHandle).evaluate().firstOrNull;
+    assert(handleElement != null, "Tried to press down on Android collapsed handle but no handle was found.");
+    final renderHandle = handleElement!.renderObject as RenderBox;
+    final handleCenter = renderHandle.localToGlobal(renderHandle.size.center(Offset.zero));
+
+    final gesture = await startGesture(handleCenter);
+    return gesture;
+  }
+
   Future<TestGesture> pressDownOnUpstreamMobileHandle() async {
     final handleElement = find.byKey(DocumentKeys.upstreamHandle).evaluate().firstOrNull;
     assert(handleElement != null, "Tried to press down on upstream handle but no handle was found.");

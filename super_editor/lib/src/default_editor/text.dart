@@ -567,10 +567,15 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
 
     if (selection.isCollapsed) {
       // A collapsed selection reports no boxes, but we want to return a rect at the
-      // selection's x-offset, and with a height that matches the text. Try to calculate
+      // selection's x-offset with a height that matches the text. Try to calculate
       // a selection rectangle based on the character that's either after, or before, the
       // collapsed selection position.
-      TextBox? characterBox = textLayout.getCharacterBox(selection.extent);
+      final rectForPosition = getRectForPosition(extentNodePosition);
+      if (rectForPosition.height > 0) {
+        return rectForPosition;
+      }
+
+      TextBox? characterBox = textLayout.getCharacterBox(extentNodePosition);
       if (characterBox != null) {
         final rect = characterBox.toRect();
         return Rect.fromLTWH(rect.left, rect.top, 0, rect.height);
@@ -578,8 +583,8 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
 
       // We didn't find a character at the given offset. That offset might be at the end
       // of the text. Try looking one character upstream.
-      characterBox = selection.extent.offset > 0
-          ? textLayout.getCharacterBox(TextPosition(offset: selection.extent.offset - 1))
+      characterBox = extentNodePosition.offset > 0
+          ? textLayout.getCharacterBox(TextPosition(offset: extentNodePosition.offset - 1))
           : null;
       if (characterBox != null) {
         final rect = characterBox.toRect();
