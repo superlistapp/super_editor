@@ -542,8 +542,10 @@ class _RebuildableWidget extends StatefulWidget {
     Key? key,
     this.rebuildSignal,
     this.buildTracker,
+    // ignore: unused_element
     this.elementTracker,
     this.onBuildScheduled,
+    // ignore: unused_element
     this.onBuild,
     this.builder,
     this.child,
@@ -638,6 +640,7 @@ class _RebuildableContentLayerWidget extends ContentLayerStatefulWidget {
     this.rebuildSignal,
     this.buildTracker,
     this.elementTracker,
+    // ignore: unused_element
     this.onBuildScheduled,
     this.onBuild,
     this.builder,
