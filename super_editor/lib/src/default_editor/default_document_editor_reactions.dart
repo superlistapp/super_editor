@@ -15,6 +15,7 @@ import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
@@ -487,7 +488,8 @@ class LinkifyReaction implements EditReaction {
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> edits) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
     TextInsertionEvent? linkifyCandidate;
-    for (final edit in edits) {
+    for (int i = 0; i < edits.length; i++) {
+      final edit = edits[i];
       if (edit is DocumentEdit) {
         final change = edit.change;
         if (change is TextInsertionEvent && change.text.text == " ") {
@@ -528,42 +530,66 @@ class LinkifyReaction implements EditReaction {
         // The caret sits directly after an inserted space. Get the word before
         // the space from the document, and linkify, if it fits a schema.
         final textNode = document.getNodeById(linkifyCandidate.nodeId) as TextNode;
-        final text = textNode.text.text;
-        final wordStartOffset = _moveOffsetByWord(text, linkifyCandidate.offset, true) ?? 0;
-        final word = text.substring(wordStartOffset, linkifyCandidate.offset);
+        _extractUpstreamWordAndLinkify(textNode.text, linkifyCandidate.offset);
+      } else if ((edit is SubmitParagraphIntention && edit.isStart) ||
+          (edit is SplitParagraphIntention && edit.isStart) ||
+          (edit is SplitListItemIntention && edit.isStart) ||
+          (edit is SplitTaskIntention && edit.isStart)) {
+        // The user is splitting a node or submit a paragraph. For example, by pressing ENTER.
+        // Get the nodeId on the next change to try to linkify the text.
 
-        // Ensure that the preceding word doesn't already contain a full or partial
-        // link attribution.
-        if (textNode.text
-            .getAttributionSpansInRange(
-              attributionFilter: (attribution) => attribution is LinkAttribution,
-              range: SpanRange(wordStartOffset, linkifyCandidate.offset),
-            )
-            .isNotEmpty) {
-          // There are link attributions in the preceding word. We don't want to mess with them.
+        if (i >= edits.length - 1) {
+          // The current edit is the last on the list.
+          // We can't get the node id.
           continue;
         }
 
-        final extractedLinks = linkify(
-          word,
-          options: const LinkifyOptions(
-            humanize: false,
-            looseUrl: true,
-          ),
-        );
-        final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-        if (linkCount == 1) {
-          // The word is a single URL. Linkify it.
-          final uri = word.startsWith("http://") || word.startsWith("https://") //
-              ? Uri.parse(word)
-              : Uri.parse("https://$word");
-
-          textNode.text.addAttribution(
-            LinkAttribution(url: uri),
-            SpanRange(wordStartOffset, linkifyCandidate.offset - 1),
-          );
+        final nextEdit = edits[i + 1];
+        if (nextEdit is DocumentEdit && nextEdit.change is NodeChangeEvent) {
+          final editedNode = document.getNodeById((nextEdit.change as NodeChangeEvent).nodeId);
+          if (editedNode is TextNode) {
+            _extractUpstreamWordAndLinkify(editedNode.text, editedNode.text.text.length);
+          }
         }
       }
+    }
+  }
+
+  /// Extracts a word ending at [endOffset] tries to linkify it.
+  void _extractUpstreamWordAndLinkify(AttributedText text, int endOffset) {
+    final wordStartOffset = _moveOffsetByWord(text.text, endOffset, true) ?? 0;
+    final word = text.substring(wordStartOffset, endOffset);
+
+    // Ensure that the preceding word doesn't already contain a full or partial
+    // link attribution.
+    if (text
+        .getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution is LinkAttribution,
+          range: SpanRange(wordStartOffset, endOffset),
+        )
+        .isNotEmpty) {
+      // There are link attributions in the preceding word. We don't want to mess with them.
+      return;
+    }
+
+    final extractedLinks = linkify(
+      word,
+      options: const LinkifyOptions(
+        humanize: false,
+        looseUrl: true,
+      ),
+    );
+    final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+    if (linkCount == 1) {
+      // The word is a single URL. Linkify it.
+      final uri = word.startsWith("http://") || word.startsWith("https://") //
+          ? Uri.parse(word)
+          : Uri.parse("https://$word");
+
+      text.addAttribution(
+        LinkAttribution(url: uri),
+        SpanRange(wordStartOffset, endOffset - 1),
+      );
     }
   }
 

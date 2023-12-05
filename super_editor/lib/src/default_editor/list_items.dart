@@ -701,14 +701,22 @@ class SplitListItemCommand implements EditCommand {
     _log.log('SplitListItemCommand', ' - inserted new node: ${newNode.id} after old one: ${node.id}');
 
     executor.logChanges([
+      SplitListItemIntention.start(),
       DocumentEdit(
         NodeChangeEvent(nodeId),
       ),
       DocumentEdit(
         NodeInsertedEvent(newNodeId, document.getNodeIndexById(newNodeId)),
       ),
+      SplitListItemIntention.end(),
     ]);
   }
+}
+
+class SplitListItemIntention extends Intention {
+  SplitListItemIntention.start() : super.start();
+
+  SplitListItemIntention.end() : super.end();
 }
 
 ExecutionInstruction tabToIndentListItem({

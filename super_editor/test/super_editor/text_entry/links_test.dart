@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
@@ -49,6 +50,1044 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    testWidgetsOnAllPlatforms(
+        'recognizes a URL and converts it to a link when pressing ENTER at the end of a paragraph', (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Place the caret at the beginning of the empty document.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph("1");
+
+      expect(text.text, "https://www.google.com");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: SpanRange(0, text.text.length - 1),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new paragraph.
+      await tester.pressEnter();
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph("1");
+
+      expect(text.text, "https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(0, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we added a new empty paragraph.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ParagraphNode>());
+      expect((textContext.document.nodes[1] as ParagraphNode).text.text, "");
+    });
+
+    testWidgetsOnAllPlatforms(
+        'recognizes a URL and converts it to a link when pressing ENTER at the middle of a paragraph', (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .fromMarkdown('Before link after link')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = textContext.document.nodes.first.id;
+
+      // Place the caret at "Before link |after link".
+      await tester.placeCaretInParagraph(nodeId, 12);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.comafter link");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: const SpanRange(12, 34),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and split the paragraph.
+      await tester.pressEnter();
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(12, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we split the paragraph.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ParagraphNode>());
+      expect((textContext.document.nodes[1] as ParagraphNode).text.text, "after link");
+    });
+
+    testWidgetsOnAndroid(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the end of a paragraph (on Android)',
+        (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Place the caret at the beginning of the empty document.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph("1");
+
+      expect(text.text, "https://www.google.com");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: SpanRange(0, text.text.length - 1),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new paragraph.
+      // On Android, pressing ENTER generates a "\n" insertion.
+      await tester.typeImeText('\n');
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph("1");
+
+      expect(text.text, "https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(0, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we added a new empty paragraph.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ParagraphNode>());
+      expect((textContext.document.nodes[1] as ParagraphNode).text.text, "");
+    });
+
+    testWidgetsOnAndroid(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the middle of a paragraph (on Android)',
+        (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .fromMarkdown('Before link after link')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = textContext.document.nodes.first.id;
+
+      // Place the caret at "Before link |after link".
+      await tester.placeCaretInParagraph(nodeId, 12);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.comafter link");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: const SpanRange(12, 34),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and split the paragraph.
+      // On Android, pressing ENTER generates a "\n" insertion.
+      await tester.typeImeText('\n');
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(12, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we split the paragraph.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ParagraphNode>());
+      expect((textContext.document.nodes[1] as ParagraphNode).text.text, "after link");
+    });
+
+    testWidgetsOnIos(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the end of a paragraph (on iOS)',
+        (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Place the caret at the beginning of the empty document.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph("1");
+
+      expect(text.text, "https://www.google.com");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: SpanRange(0, text.text.length - 1),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new paragraph.
+      // On iOS, pressing ENTER generates a newline action.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pump();
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph("1");
+
+      expect(text.text, "https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(0, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we added a new empty line.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ParagraphNode>());
+      expect((textContext.document.nodes[1] as ParagraphNode).text.text, "");
+    });
+
+    testWidgetsOnIos(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the middle of a paragraph (on iOS)',
+        (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .fromMarkdown('Before link after link')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = textContext.document.nodes.first.id;
+
+      // Place the caret at "Before link |after link".
+      await tester.placeCaretInParagraph(nodeId, 12);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.comafter link");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: const SpanRange(12, 34),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and split the paragraph.
+      // On iOS, pressing ENTER generates a newline action.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pump();
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(12, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we split the paragraph.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ParagraphNode>());
+      expect((textContext.document.nodes[1] as ParagraphNode).text.text, "after link");
+    });
+
+    testWidgetsOnAllPlatforms(
+        'recognizes a URL and converts it to a link when pressing ENTER at the end of a list item', (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .fromMarkdown('* Item')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = textContext.document.nodes.first.id;
+
+      // Place the caret at the end of the list item.
+      await tester.placeCaretInParagraph(nodeId, 4);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText(" https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Item https://www.google.com");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: SpanRange(5, text.text.length - 1),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new list item.
+      await tester.pressEnter();
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Item https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(5, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we added a new empty list item.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ListItemNode>());
+      expect((textContext.document.nodes[1] as ListItemNode).text.text, "");
+    });
+
+    testWidgetsOnAllPlatforms(
+        'recognizes a URL and converts it to a link when pressing ENTER at the middle of a list item', (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .fromMarkdown('* Before link after link')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = textContext.document.nodes.first.id;
+
+      // Place the caret at "Before link |after link".
+      await tester.placeCaretInParagraph(nodeId, 12);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.comafter link");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: const SpanRange(12, 34),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new list item.
+      await tester.pressEnter();
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(12, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we split the list item.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ListItemNode>());
+      expect((textContext.document.nodes[1] as ListItemNode).text.text, "after link");
+    });
+
+    testWidgetsOnAndroid(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the end of a list item (on Android)',
+        (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .fromMarkdown('* Item')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = textContext.document.nodes.first.id;
+
+      // Place the caret at the end of the list item.
+      await tester.placeCaretInParagraph(nodeId, 4);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText(" https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Item https://www.google.com");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: SpanRange(5, text.text.length - 1),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new list item.
+      // On Android, pressing ENTER generates a "\n" insertion.
+      await tester.typeImeText('\n');
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Item https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(5, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we added a new empty list item.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ListItemNode>());
+      expect((textContext.document.nodes[1] as ListItemNode).text.text, "");
+    });
+
+    testWidgetsOnAndroid(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the middle of a list item (on Android)',
+        (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .fromMarkdown('* Before link after link')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = textContext.document.nodes.first.id;
+
+      // Place the caret at "Before link |after link".
+      await tester.placeCaretInParagraph(nodeId, 12);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.comafter link");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: const SpanRange(12, 34),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and split the list item.
+      // On Android, pressing ENTER generates a "\n" insertion.
+      await tester.typeImeText('\n');
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(12, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we split the list item.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ListItemNode>());
+      expect((textContext.document.nodes[1] as ListItemNode).text.text, "after link");
+    });
+
+    testWidgetsOnIos(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the end of a list item (on iOS)',
+        (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .fromMarkdown('* Item')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = textContext.document.nodes.first.id;
+
+      // Place the caret at the end of the list item.
+      await tester.placeCaretInParagraph(nodeId, 4);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText(" https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Item https://www.google.com");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: SpanRange(5, text.text.length - 1),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new list item.
+      // On iOS, pressing ENTER generates a newline action.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pump();
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Item https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(5, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we added a new empty list item.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ListItemNode>());
+      expect((textContext.document.nodes[1] as ListItemNode).text.text, "");
+    });
+
+    testWidgetsOnIos(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the middle of a list item (on iOS)',
+        (tester) async {
+      final textContext = await tester //
+          .createDocument()
+          .fromMarkdown('* Before link after link')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = textContext.document.nodes.first.id;
+
+      // Place the caret at "Before link |after link".
+      await tester.placeCaretInParagraph(nodeId, 12);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.comafter link");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: const SpanRange(12, 34),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new list item.
+      // On iOS, pressing ENTER generates a newline action.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pump();
+
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      expect(text.text, "Before link https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(12, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we split the list item.
+      expect(textContext.document.nodes.length, 2);
+      expect(textContext.document.nodes[1], isA<ListItemNode>());
+      expect((textContext.document.nodes[1] as ListItemNode).text.text, "after link");
+    });
+
+    testWidgetsOnAllPlatforms('recognizes a URL and converts it to a link when pressing ENTER at the end of a task',
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText("This is a task "), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      final task = document.getNodeAt(0) as TaskNode;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the end of the task.
+      await tester.placeCaretInParagraph("1", 15);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = task.text;
+
+      expect(text.text, "This is a task https://www.google.com");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: SpanRange(15, text.text.length - 1),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new task.
+      await tester.pressEnter();
+
+      // Ensure it's linkified.
+      text = task.text;
+
+      expect(text.text, "This is a task https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(15, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we added a new empty task.
+      expect(document.nodes.length, 2);
+      expect(document.nodes[1], isA<TaskNode>());
+      expect((document.nodes[1] as TaskNode).text.text, "");
+    });
+
+    testWidgetsOnAllPlatforms('recognizes a URL and converts it to a link when pressing ENTER at the middle of a task',
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText("Before link after link"), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      final task = document.getNodeAt(0) as TaskNode;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at "Before link |after link".
+      await tester.placeCaretInParagraph("1", 12);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = task.text;
+
+      expect(text.text, "Before link https://www.google.comafter link");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: const SpanRange(12, 34),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and split the task.
+      await tester.pressEnter();
+
+      // Ensure it's linkified.
+      text = task.text;
+
+      expect(text.text, "Before link https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(12, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we split the task
+      expect(document.nodes.length, 2);
+      expect(document.nodes[1], isA<TaskNode>());
+      expect((document.nodes[1] as TaskNode).text.text, "after link");
+    });
+
+    testWidgetsOnAndroid(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the end of a task (on Android)',
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText("This is a task "), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      final task = document.getNodeAt(0) as TaskNode;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the end of the task.
+      await tester.placeCaretInParagraph("1", 15);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = task.text;
+
+      expect(text.text, "This is a task https://www.google.com");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: SpanRange(15, text.text.length - 1),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new task.
+      // On Android, pressing ENTER generates a "\n" insertion.
+      await tester.typeImeText('\n');
+
+      // Ensure it's linkified.
+      text = task.text;
+
+      expect(text.text, "This is a task https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(15, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we added a new empty task.
+      expect(document.nodes.length, 2);
+      expect(document.nodes[1], isA<TaskNode>());
+      expect((document.nodes[1] as TaskNode).text.text, "");
+    });
+
+    testWidgetsOnAndroid(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the middle of a task (on Android)',
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText("Before link after link"), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      final task = document.getNodeAt(0) as TaskNode;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at "Before link |after link".
+      await tester.placeCaretInParagraph("1", 12);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = task.text;
+
+      expect(text.text, "Before link https://www.google.comafter link");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: const SpanRange(12, 34),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new task.
+      // On Android, pressing ENTER generates a "\n" insertion.
+      await tester.typeImeText('\n');
+
+      // Ensure it's linkified.
+      text = task.text;
+
+      expect(text.text, "Before link https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(12, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we split the task.
+      expect(document.nodes.length, 2);
+      expect(document.nodes[1], isA<TaskNode>());
+      expect((document.nodes[1] as TaskNode).text.text, "after link");
+    });
+
+    testWidgetsOnIos(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the end of a task (on iOS)',
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText("This is a task "), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      final task = document.getNodeAt(0) as TaskNode;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the end of the task.
+      await tester.placeCaretInParagraph("1", 15);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = task.text;
+
+      expect(text.text, "This is a task https://www.google.com");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: SpanRange(15, text.text.length - 1),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and insert a new task.
+      // On iOS, pressing ENTER generates a newline action.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pump();
+
+      // Ensure it's linkified.
+      text = task.text;
+
+      expect(text.text, "This is a task https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(15, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we added a new empty task.
+      expect(document.nodes.length, 2);
+      expect(document.nodes[1], isA<TaskNode>());
+      expect((document.nodes[1] as TaskNode).text.text, "");
+    });
+
+    testWidgetsOnIos(
+        'recognizes a URL and converts it to a link when pressing the newline button on the software keyboard at the middle of a task (on iOS)',
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText("Before link after link"), isComplete: false),
+        ],
+      );
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+      final task = document.getNodeAt(0) as TaskNode;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              componentBuilders: [
+                TaskComponentBuilder(editor),
+                ...defaultComponentBuilders,
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at "Before link |after link".
+      await tester.placeCaretInParagraph("1", 12);
+
+      // Type a URL. It shouldn't linkify until the user presses ENTER.
+      await tester.typeImeText("https://www.google.com");
+
+      // Ensure it's not linkified yet.
+      var text = task.text;
+
+      expect(text.text, "Before link https://www.google.comafter link");
+      expect(
+        text.getAttributionSpansInRange(
+          attributionFilter: (attribution) => true,
+          range: const SpanRange(12, 34),
+        ),
+        isEmpty,
+      );
+
+      // Press enter to linkify the URL and split the task.
+      // On iOS, pressing ENTER generates a newline action.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pump();
+
+      // Ensure it's linkified.
+      text = task.text;
+
+      expect(text.text, "Before link https://www.google.com");
+      expect(
+        text.hasAttributionsThroughout(
+          attributions: {
+            LinkAttribution(url: Uri.parse("https://www.google.com")),
+          },
+          range: SpanRange(12, text.text.length - 1),
+        ),
+        isTrue,
+      );
+
+      // Ensure we split the task.
+      expect(document.nodes.length, 2);
+      expect(document.nodes[1], isA<TaskNode>());
+      expect((document.nodes[1] as TaskNode).text.text, "after link");
     });
 
     testWidgetsOnAllPlatforms('recognizes a second URL when typing and converts it to a link', (tester) async {
