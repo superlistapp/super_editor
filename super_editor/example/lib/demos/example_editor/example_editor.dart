@@ -385,8 +385,14 @@ class _ExampleEditorState extends State<ExampleEditor> {
                 DefaultCaretOverlayBuilder(
                   caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
                 ),
-                SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
-                SuperEditorIosHandlesDocumentLayerBuilder(),
+                if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                  SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
+                  SuperEditorAndroidHandlesDocumentLayerBuilder(),
+                ],
+                if (defaultTargetPlatform == TargetPlatform.android) ...[
+                  SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
+                  SuperEditorAndroidHandlesDocumentLayerBuilder(),
+                ],
               ],
               selectionLayerLinks: _selectionLayerLinks,
               selectionStyle: isLight

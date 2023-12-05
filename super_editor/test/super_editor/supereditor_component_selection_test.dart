@@ -549,34 +549,16 @@ Future<void> _pumpEditorWithUnselectableHrsAndFakeToolbar(
   WidgetTester tester, {
   required GlobalKey toolbarKey,
 }) async {
-  final document = paragraphThenHrThenParagraphDoc();
-  final composer = MutableDocumentComposer();
-  final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: SuperEditorIosControlsScope(
-          controller: SuperEditorIosControlsController(
-            toolbarBuilder: (_, __, ___) => SizedBox(key: toolbarKey),
-          ),
-          child: SuperEditor(
-            editor: editor,
-            document: document,
-            composer: composer,
-            gestureMode: debugDefaultTargetPlatformOverride == TargetPlatform.android
-                ? DocumentGestureMode.android
-                : DocumentGestureMode.iOS,
-            androidToolbarBuilder: (_) => SizedBox(key: toolbarKey),
-            componentBuilders: const [
-              _UnselectableHrComponentBuilder(),
-              ...defaultComponentBuilders,
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
+  await tester //
+      .createDocument()
+      .withCustomContent(paragraphThenHrThenParagraphDoc())
+      .withComponentBuilders(const [
+        _UnselectableHrComponentBuilder(),
+        ...defaultComponentBuilders,
+      ])
+      .withAndroidToolbarBuilder((context, mobileToolbarKey, focalPoint) => SizedBox(key: toolbarKey))
+      .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => SizedBox(key: toolbarKey))
+      .pump();
 }
 
 /// SuperEditor [ComponentBuilder] that builds a horizontal rule that is

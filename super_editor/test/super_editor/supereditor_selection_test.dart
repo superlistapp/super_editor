@@ -1,10 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -1145,9 +1143,5 @@ class _UnselectableHorizontalRuleComponent extends StatelessWidget {
 }
 
 Finder _caretFinder() {
-  if (debugDefaultTargetPlatformOverride == TargetPlatform.iOS ||
-      debugDefaultTargetPlatformOverride == TargetPlatform.android) {
-    return find.byType(BlinkingCaret);
-  }
-  return find.byKey(primaryCaretKey);
+  return find.byKey(DocumentKeys.caret);
 }

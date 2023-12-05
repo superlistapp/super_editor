@@ -4,12 +4,14 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
@@ -18,10 +20,16 @@ import 'package:super_editor/src/infrastructure/flutter/overlay_with_groups.dart
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/long_press_selection.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
+import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_textfield/metrics.dart';
+import 'package:super_text_layout/super_text_layout.dart';
+
+import '../infrastructure/text_input.dart';
 
 /// Read-only document gesture interactor that's designed for Android touch input, e.g.,
 /// drag to scroll, and handles to control selection.
@@ -817,12 +825,14 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
         // no-op for read-only documents
         break;
       case HandleType.upstream:
-        _handleType =
-            selectionAffinity == TextAffinity.downstream ? SelectionHandleType.base : SelectionHandleType.extent;
+        _handleType = selectionAffinity == TextAffinity.downstream
+            ? SelectionHandleType.upstream
+            : SelectionHandleType.downstream;
         break;
       case HandleType.downstream:
-        _handleType =
-            selectionAffinity == TextAffinity.downstream ? SelectionHandleType.extent : SelectionHandleType.base;
+        _handleType = selectionAffinity == TextAffinity.downstream
+            ? SelectionHandleType.downstream
+            : SelectionHandleType.upstream;
         break;
     }
 
@@ -833,7 +843,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
-          _handleType == SelectionHandleType.base ? widget.selection.value!.base : widget.selection.value!.extent,
+          _handleType == SelectionHandleType.upstream ? widget.selection.value!.base : widget.selection.value!.extent,
         )!
         .center;
 
@@ -876,11 +886,11 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
-    if (_handleType == SelectionHandleType.base) {
+    if (_handleType == SelectionHandleType.upstream) {
       widget.selection.value = widget.selection.value!.copyWith(
         base: docDragPosition,
       );
-    } else if (_handleType == SelectionHandleType.extent) {
+    } else if (_handleType == SelectionHandleType.downstream) {
       widget.selection.value = widget.selection.value!.copyWith(
         extent: docDragPosition,
       );
@@ -930,11 +940,11 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       case SelectionHandleType.collapsed:
         // no-op for read-only documents
         return;
-      case SelectionHandleType.base:
+      case SelectionHandleType.upstream:
         basePosition = dragPosition;
         extentPosition = widget.selection.value!.extent;
         break;
-      case SelectionHandleType.extent:
+      case SelectionHandleType.downstream:
         basePosition = widget.selection.value!.base;
         extentPosition = dragPosition;
         break;
@@ -1097,5 +1107,459 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
             showDebugPaint: false,
           );
         });
+  }
+}
+
+// TODO: This was moved here from the SuperEditor side. We've removed the need for this from SuperEditor, remove it from SuperReader, too.
+class AndroidDocumentTouchEditingControls extends StatefulWidget {
+  const AndroidDocumentTouchEditingControls({
+    Key? key,
+    required this.editingController,
+    required this.documentKey,
+    required this.documentLayout,
+    required this.handleColor,
+    this.onHandleDragStart,
+    this.onHandleDragUpdate,
+    this.onHandleDragEnd,
+    required this.popoverToolbarBuilder,
+    this.createOverlayControlsClipper,
+    required this.longPressMagnifierGlobalOffset,
+    this.showDebugPaint = false,
+  }) : super(key: key);
+
+  final AndroidDocumentGestureEditingController editingController;
+
+  final GlobalKey documentKey;
+
+  final DocumentLayout documentLayout;
+
+  /// Creates a clipper that applies to overlay controls, preventing
+  /// the overlay controls from appearing outside the given clipping
+  /// region.
+  ///
+  /// If no clipper factory method is provided, then the overlay controls
+  /// will be allowed to appear anywhere in the overlay in which they sit
+  /// (probably the entire screen).
+  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
+
+  /// The color of the Android-style drag handles.
+  final Color handleColor;
+
+  final void Function(HandleType handleType, Offset globalOffset)? onHandleDragStart;
+
+  final void Function(Offset globalOffset)? onHandleDragUpdate;
+
+  final void Function()? onHandleDragEnd;
+
+  /// Builder that constructs the popover toolbar that's displayed above
+  /// selected text.
+  ///
+  /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
+  final WidgetBuilder popoverToolbarBuilder;
+
+  final ValueNotifier<Offset?> longPressMagnifierGlobalOffset;
+
+  final bool showDebugPaint;
+
+  @override
+  State createState() => _AndroidDocumentTouchEditingControlsState();
+}
+
+class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTouchEditingControls>
+    with SingleTickerProviderStateMixin {
+  // These global keys are assigned to each draggable handle to
+  // prevent a strange dragging issue.
+  //
+  // Without these keys, if the user drags into the auto-scroll area
+  // of the text field for a period of time, we never receive a
+  // "pan end" or "pan cancel" callback. I have no idea why this is
+  // the case. These handles sit in an Overlay, so it's not as if they
+  // suffered some conflict within a ScrollView. I tried many adjustments
+  // to recover the end/cancel callbacks. Finally, I tried adding these
+  // global keys based on a hunch that perhaps the gesture detector was
+  // somehow getting switched out, or assigned to a different widget, and
+  // that was somehow disrupting the callback series. For now, these keys
+  // seem to solve the problem.
+  final _collapsedHandleKey = GlobalKey();
+  final _upstreamHandleKey = GlobalKey();
+  final _downstreamHandleKey = GlobalKey();
+
+  bool _isDraggingExpandedHandle = false;
+  bool _isDraggingHandle = false;
+  Offset? _localDragOffset;
+
+  late BlinkController _caretBlinkController;
+  Offset? _prevCaretOffset;
+
+  @override
+  void initState() {
+    super.initState();
+    _caretBlinkController = BlinkController(tickerProvider: this);
+    _prevCaretOffset = widget.editingController.caretTop;
+    widget.editingController.addListener(_onEditingControllerChange);
+
+    if (widget.editingController.shouldDisplayCollapsedHandle) {
+      widget.editingController.startCollapsedHandleAutoHideCountdown();
+    }
+  }
+
+  @override
+  void didUpdateWidget(AndroidDocumentTouchEditingControls oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.editingController != oldWidget.editingController) {
+      oldWidget.editingController.removeListener(_onEditingControllerChange);
+      widget.editingController.addListener(_onEditingControllerChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.editingController.removeListener(_onEditingControllerChange);
+    _caretBlinkController.dispose();
+    super.dispose();
+  }
+
+  void _onEditingControllerChange() {
+    if (_prevCaretOffset != widget.editingController.caretTop) {
+      if (widget.editingController.caretTop == null) {
+        _caretBlinkController.stopBlinking();
+      } else {
+        _caretBlinkController.jumpToOpaque();
+      }
+
+      _prevCaretOffset = widget.editingController.caretTop;
+    }
+  }
+
+  void _onCollapsedPanStart(DragStartDetails details) {
+    editorGesturesLog.fine('_onCollapsedPanStart');
+
+    setState(() {
+      _isDraggingExpandedHandle = false;
+      _isDraggingHandle = true;
+      // We map global to local instead of using  details.localPosition because
+      // this drag event started in a handle, not within this overall widget.
+      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
+    });
+
+    widget.onHandleDragStart?.call(HandleType.collapsed, details.globalPosition);
+  }
+
+  void _onUpstreamHandlePanStart(DragStartDetails details) {
+    _onExpandedHandleDragStart(details);
+    widget.onHandleDragStart?.call(HandleType.upstream, details.globalPosition);
+  }
+
+  void _onDownstreamHandlePanStart(DragStartDetails details) {
+    _onExpandedHandleDragStart(details);
+    widget.onHandleDragStart?.call(HandleType.downstream, details.globalPosition);
+  }
+
+  void _onExpandedHandleDragStart(DragStartDetails details) {
+    setState(() {
+      _isDraggingExpandedHandle = true;
+      _isDraggingHandle = true;
+      // We map global to local instead of using  details.localPosition because
+      // this drag event started in a handle, not within this overall widget.
+      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
+    });
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    editorGesturesLog.fine('_onPanUpdate');
+
+    widget.onHandleDragUpdate?.call(details.globalPosition);
+
+    setState(() {
+      _localDragOffset = _localDragOffset! + details.delta;
+    });
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    editorGesturesLog.fine('_onPanEnd');
+    _onHandleDragEnd();
+  }
+
+  void _onPanCancel() {
+    editorGesturesLog.fine('_onPanCancel');
+    _onHandleDragEnd();
+  }
+
+  void _onHandleDragEnd() {
+    editorGesturesLog.fine('_onHandleDragEnd()');
+
+    // TODO: ensure that extent is visible
+
+    setState(() {
+      _isDraggingExpandedHandle = false;
+      _isDraggingHandle = false;
+      _localDragOffset = null;
+    });
+
+    widget.onHandleDragEnd?.call();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.editingController,
+      builder: (context, _) {
+        return Padding(
+          // Remove the keyboard from the space that we occupy so that
+          // clipping calculations apply to the expected visual borders,
+          // instead of applying underneath the keyboard.
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: ClipRect(
+            clipper: widget.createOverlayControlsClipper?.call(context),
+            child: SizedBox(
+              // ^ SizedBox tries to be as large as possible, because
+              // a Stack will collapse into nothing unless something
+              // expands it.
+              width: double.infinity,
+              height: double.infinity,
+              child: Stack(
+                children: [
+                  // Build the caret
+                  _buildCaret(),
+                  // Build the drag handles (if desired).
+                  // We don't show handles on web because the browser already displays the native handles.
+                  if (!isWeb) //
+                    ..._buildHandles(),
+                  // Build the focal point for the magnifier
+                  if (_isDraggingHandle || widget.longPressMagnifierGlobalOffset.value != null)
+                    _buildMagnifierFocalPoint(),
+                  // Build the magnifier (this needs to be done before building
+                  // the handles so that the magnifier doesn't show the handles.
+                  // We don't show magnifier on web because the browser already displays the native magnifier.
+                  if (!isWeb && widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
+                  // Build the editing toolbar.
+                  // We don't show toolbar on web because the browser already displays the native toolbar.
+                  if (!isWeb &&
+                      widget.editingController.shouldDisplayToolbar &&
+                      widget.editingController.isToolbarPositioned)
+                    _buildToolbar(context),
+                  // Build a UI that's useful for debugging, if desired.
+                  if (widget.showDebugPaint)
+                    IgnorePointer(
+                      child: Container(
+                        width: double.infinity,
+                        height: double.infinity,
+                        color: Colors.yellow.withOpacity(0.2),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCaret() {
+    if (!widget.editingController.hasCaret) {
+      return const SizedBox();
+    }
+
+    return Follower.withOffset(
+      link: widget.editingController.selectionLinks.caretLink,
+      leaderAnchor: Alignment.topCenter,
+      followerAnchor: Alignment.topCenter,
+      showWhenUnlinked: false,
+      child: IgnorePointer(
+        child: BlinkingCaret(
+          controller: _caretBlinkController,
+          caretOffset: const Offset(0, 0),
+          caretHeight: widget.editingController.caretHeight!,
+          width: 2,
+          color: widget.showDebugPaint ? Colors.green : widget.handleColor,
+          borderRadius: BorderRadius.zero,
+          isTextEmpty: false,
+          showCaret: true,
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildHandles() {
+    if (!widget.editingController.shouldDisplayCollapsedHandle &&
+        !widget.editingController.shouldDisplayExpandedHandles) {
+      editorGesturesLog.finer('Not building overlay handles because there is no selection');
+      // There is no selection. Draw nothing.
+      return [];
+    }
+
+    if (widget.editingController.shouldDisplayCollapsedHandle && !_isDraggingExpandedHandle) {
+      // Note: we don't build the collapsed handle if we're currently dragging
+      //       the base or extent because, if we did, then when the user drags
+      //       crosses the base and extent, we'd suddenly jump from an expanded
+      //       selection to a collapsed selection.
+      return [
+        _buildCollapsedHandle(),
+      ];
+    } else {
+      return _buildExpandedHandles();
+    }
+  }
+
+  Widget _buildCollapsedHandle() {
+    return _buildHandle(
+      handleKey: _collapsedHandleKey,
+      handleLink: widget.editingController.selectionLinks.caretLink,
+      leaderAnchor: Alignment.bottomCenter,
+      followerAnchor: Alignment.topCenter,
+      handleOffset: const Offset(-0.5, 5), // Chosen experimentally
+      handleType: HandleType.collapsed,
+      debugColor: Colors.green,
+      onPanStart: _onCollapsedPanStart,
+    );
+  }
+
+  List<Widget> _buildExpandedHandles() {
+    return [
+      // upstream-bounding (left side of a RTL line of text) handle touch target
+      _buildHandle(
+        handleKey: _upstreamHandleKey,
+        handleLink: widget.editingController.selectionLinks.upstreamLink,
+        leaderAnchor: Alignment.bottomLeft,
+        followerAnchor: Alignment.topRight,
+        handleOffset: const Offset(0, 2), // Chosen experimentally
+        handleType: HandleType.upstream,
+        debugColor: Colors.green,
+        onPanStart: _onUpstreamHandlePanStart,
+      ),
+      // downstream-bounding (right side of a RTL line of text) handle touch target
+      _buildHandle(
+        handleKey: _downstreamHandleKey,
+        handleLink: widget.editingController.selectionLinks.downstreamLink,
+        leaderAnchor: Alignment.bottomRight,
+        followerAnchor: Alignment.topLeft,
+        handleOffset: const Offset(-1, 2), // Chosen experimentally
+        handleType: HandleType.downstream,
+        debugColor: Colors.red,
+        onPanStart: _onDownstreamHandlePanStart,
+      ),
+    ];
+  }
+
+  Widget _buildHandle({
+    required Key handleKey,
+    required LeaderLink handleLink,
+    required Alignment leaderAnchor,
+    required Alignment followerAnchor,
+    Offset? handleOffset,
+    Offset handleFractionalTranslation = Offset.zero,
+    required HandleType handleType,
+    required Color debugColor,
+    required void Function(DragStartDetails) onPanStart,
+  }) {
+    return Follower.withOffset(
+      key: handleKey,
+      link: handleLink,
+      leaderAnchor: leaderAnchor,
+      followerAnchor: followerAnchor,
+      offset: handleOffset ?? Offset.zero,
+      showWhenUnlinked: false,
+      child: FractionalTranslation(
+        translation: handleFractionalTranslation,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onPanStart: onPanStart,
+          onPanUpdate: _onPanUpdate,
+          onPanEnd: _onPanEnd,
+          onPanCancel: _onPanCancel,
+          child: Container(
+            color: widget.showDebugPaint ? Colors.green : Colors.transparent,
+            child: AnimatedOpacity(
+              opacity: handleType == HandleType.collapsed && widget.editingController.isCollapsedHandleAutoHidden
+                  ? 0.0
+                  : 1.0,
+              duration: const Duration(milliseconds: 150),
+              child: AndroidSelectionHandle(
+                handleType: handleType,
+                color: widget.handleColor,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMagnifierFocalPoint() {
+    late Offset magnifierOffset;
+    if (widget.longPressMagnifierGlobalOffset.value != null) {
+      // The user is long-pressing, the magnifier should go at the selection
+      // extent.
+      magnifierOffset = widget.longPressMagnifierGlobalOffset.value!;
+    } else {
+      // The user is dragging a handle. The magnifier should go wherever the user
+      // places his finger.
+      //
+      // Also, pull the magnifier up a little bit because the Android drag handles
+      // sit below the content they refer to.
+      magnifierOffset = _localDragOffset! - const Offset(0, 20);
+    }
+
+    // When the user is dragging a handle in this overlay, we
+    // are responsible for positioning the focal point for the
+    // magnifier to follow. We do that here.
+    return Positioned(
+      left: magnifierOffset.dx,
+      // TODO: select focal position based on type of content
+      top: magnifierOffset.dy,
+      child: CompositedTransformTarget(
+        link: widget.editingController.magnifierFocalPointLink,
+        child: const SizedBox(width: 1, height: 1),
+      ),
+    );
+  }
+
+  Widget _buildMagnifier() {
+    // Display a magnifier that tracks a focal point.
+    //
+    // When the user is dragging an overlay handle, we place a LayerLink
+    // target. This magnifier follows that target.
+    return Center(
+      child: AndroidFollowingMagnifier(
+        layerLink: widget.editingController.magnifierFocalPointLink,
+        offsetFromFocalPoint: const Offset(0, -72),
+      ),
+    );
+  }
+
+  Widget _buildToolbar(BuildContext context) {
+    // TODO: figure out why this approach works. Why isn't the text field's
+    //       RenderBox offset stale when the keyboard opens or closes? Shouldn't
+    //       we end up with the previous offset because no rebuild happens?
+    //
+    //       Disproven theory: CompositedTransformFollower's link causes a rebuild of its
+    //       subtree whenever the linked transform changes.
+    //
+    //       Theory:
+    //         - Keyboard only effects vertical offsets, so global x offset
+    //           was never at risk
+    //         - The global y offset isn't used in the calculation at all
+    //         - If this same approach were used in a situation where the
+    //           distance between the left edge of the available space and the
+    //           text field changed, I think it would fail.
+    return CustomSingleChildLayout(
+      delegate: ToolbarPositionDelegate(
+        // TODO: handle situation where document isn't full screen
+        textFieldGlobalOffset: Offset.zero,
+        desiredTopAnchorInTextField: widget.editingController.toolbarTopAnchor!, //toolbarTopAnchor,
+        desiredBottomAnchorInTextField: widget.editingController.toolbarBottomAnchor!, //toolbarBottomAnchor,
+        screenPadding: widget.editingController.screenPadding,
+      ),
+      child: IgnorePointer(
+        ignoring: !widget.editingController.shouldDisplayToolbar,
+        child: AnimatedOpacity(
+          opacity: widget.editingController.shouldDisplayToolbar ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 150),
+          child: Builder(builder: widget.popoverToolbarBuilder),
+        ),
+      ),
+    );
   }
 }
