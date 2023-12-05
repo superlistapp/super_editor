@@ -73,7 +73,7 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
 
     editorStyleLog.fine("Applying composing region styles to node: ${node.id}");
 
-    DocumentNodeSelection? nodeSelection;
+    _DocumentNodeSelection? nodeSelection;
     final nodesWithComposingRegion = _document.getNodesInside(
       documentComposingRegion.start,
       documentComposingRegion.end,
@@ -106,9 +106,9 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
     return viewModel;
   }
 
-  /// Computes the [DocumentNodeSelection] for the individual `nodeId` based on
+  /// Computes the [_DocumentNodeSelection] for the individual `nodeId` based on
   /// the total list of selected nodes.
-  DocumentNodeSelection? _computeNodeSelection({
+  _DocumentNodeSelection? _computeNodeSelection({
     required DocumentRange? documentRange,
     required List<DocumentNode> selectedNodes,
     required DocumentNode node,
@@ -148,7 +148,7 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
       }
       editorStyleLog.finer(' - node selection: $nodeSelection');
 
-      return DocumentNodeSelection(
+      return _DocumentNodeSelection(
         nodeId: node.id,
         nodeSelection: nodeSelection,
         isBase: true,
@@ -173,7 +173,7 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
         // is the top node in that selection. Therefore, this node is
         // selected from a position down to its bottom.
         final isBase = node.id == documentRange.start.nodeId;
-        return DocumentNodeSelection(
+        return _DocumentNodeSelection(
           nodeId: node.id,
           nodeSelection: node.computeSelection(
             base: isBase ? documentRange.start.nodePosition : node.endPosition,
@@ -189,7 +189,7 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
         // is the bottom node in that selection. Therefore, this node is
         // selected from the beginning down to some position.
         final isBase = node.id == documentRange.start.nodeId;
-        return DocumentNodeSelection(
+        return _DocumentNodeSelection(
           nodeId: node.id,
           nodeSelection: node.computeSelection(
             base: isBase ? node.beginningPosition : node.beginningPosition,
@@ -203,7 +203,7 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
         editorStyleLog.finer(' - this node is fully selected within the selection');
         // Multiple nodes are selected and this node is neither the top
         // or the bottom node, therefore this entire node is selected.
-        return DocumentNodeSelection(
+        return _DocumentNodeSelection(
           nodeId: node.id,
           nodeSelection: node.computeSelection(
             base: node.beginningPosition,
@@ -226,8 +226,8 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
 /// The [SelectionType] is a generic subtype of [NodeSelection], e.g., a
 /// [TextNodeSelection] that describes which characters of text are
 /// selected within the text node.
-class DocumentNodeSelection<SelectionType extends NodeSelection> {
-  DocumentNodeSelection({
+class _DocumentNodeSelection<SelectionType extends NodeSelection> {
+  _DocumentNodeSelection({
     required this.nodeId,
     required this.nodeSelection,
     this.isBase = false,
@@ -241,19 +241,19 @@ class DocumentNodeSelection<SelectionType extends NodeSelection> {
   /// The selection within the given node.
   final SelectionType? nodeSelection;
 
-  /// Whether this [DocumentNodeSelection] forms the base position of a larger
+  /// Whether this [_DocumentNodeSelection] forms the base position of a larger
   /// document selection, `false` otherwise.
   ///
   /// [isBase] is `true` iff [nodeId] is the same as [DocumentSelection.base.nodeId].
   final bool isBase;
 
-  /// Whether this [DocumentNodeSelection] forms the extent position of a
+  /// Whether this [_DocumentNodeSelection] forms the extent position of a
   /// larger document selection, `false` otherwise.
   ///
   /// [isExtent] is `true` iff [nodeId] is the same as [DocumentSelection.extent.nodeId].
   final bool isExtent;
 
-  /// Whether the component rendering this [DocumentNodeSelection] should
+  /// Whether the component rendering this [_DocumentNodeSelection] should
   /// paint a highlight even when the given node has no content, `false`
   /// otherwise.
   ///
@@ -265,7 +265,7 @@ class DocumentNodeSelection<SelectionType extends NodeSelection> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is DocumentNodeSelection &&
+      other is _DocumentNodeSelection &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           nodeSelection == other.nodeSelection;
