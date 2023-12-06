@@ -492,9 +492,7 @@ class MutableDocument implements Document, Editable {
   /// if provided, or empty content otherwise.
   MutableDocument({
     List<DocumentNode>? nodes,
-  }) : _nodes = nodes ?? [] {
-    _refreshNodeIdCaches();
-  }
+  }) : _nodes = nodes ?? [];
 
   void dispose() {
     _listeners.clear();
@@ -505,17 +503,16 @@ class MutableDocument implements Document, Editable {
   @override
   List<DocumentNode> get nodes => UnmodifiableListView(_nodes);
 
-  /// Maps a node id to its index in the node list.
-  final Map<String, int> _nodeIndicesById = {};
-
-  /// Maps a node id to its node.
-  final Map<String, DocumentNode> _nodesById = {};
-
   final _listeners = <DocumentChangeListener>[];
+
+  _Index? _index;
+  _Index _indexInit() {
+    return _index ??= _Index.fromNodes(nodes);
+  }
 
   @override
   DocumentNode? getNodeById(String nodeId) {
-    return _nodesById[nodeId];
+    return _indexInit().nodeFor(nodeId);
   }
 
   @override
@@ -530,7 +527,7 @@ class MutableDocument implements Document, Editable {
   @override
   @Deprecated("Use getNodeIndexById() instead")
   int getNodeIndex(DocumentNode node) {
-    final index = _nodeIndicesById[node.id] ?? -1;
+    final index = _indexInit().indexFor(node.id) ?? -1;
     if (index < 0) {
       return -1;
     }
@@ -545,7 +542,7 @@ class MutableDocument implements Document, Editable {
 
   @override
   int getNodeIndexById(String nodeId) {
-    return _nodeIndicesById[nodeId] ?? -1;
+    return _indexInit().indexFor(nodeId) ?? -1;
   }
 
   @override
@@ -725,17 +722,10 @@ class MutableDocument implements Document, Editable {
     }
   }
 
-  /// Updates all the maps which use the node id as the key.
-  ///
-  /// All the maps are cleared and re-populated.
+  /// Disposes the index and schedules a lazy computation for it
   void _refreshNodeIdCaches() {
-    _nodeIndicesById.clear();
-    _nodesById.clear();
-    for (int i = 0; i < _nodes.length; i++) {
-      final node = _nodes[i];
-      _nodeIndicesById[node.id] = i;
-      _nodesById[node.id] = node;
-    }
+    _index?.dispose();
+    _index = null;
   }
 
   @override
@@ -747,4 +737,33 @@ class MutableDocument implements Document, Editable {
 
   @override
   int get hashCode => _nodes.hashCode;
+}
+
+class _Index {
+  /// Maps a node id to its index in the node list.
+  final Map<String, int> _nodeIndicesById = {};
+
+  /// Maps a node id to its node.
+  final Map<String, DocumentNode> _nodesById = {};
+
+  _Index.fromNodes(List<DocumentNode> nodes) {
+    for (int i = 0; i < nodes.length; i++) {
+      final node = nodes[i];
+      _nodeIndicesById[node.id] = i;
+      _nodesById[node.id] = node;
+    }
+  }
+
+  int? indexFor(String id) {
+    return _nodeIndicesById[id];
+  }
+
+  DocumentNode? nodeFor(String id) {
+    return _nodesById[id];
+  }
+
+  void dispose() {
+    _nodeIndicesById.clear();
+    _nodesById.clear();
+  }
 }
