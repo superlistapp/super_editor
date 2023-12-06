@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
+import 'package:super_editor/src/infrastructure/flutter/material_scrollbar.dart';
 import 'package:super_editor/src/infrastructure/scrolling_diagnostics/_scrolling_minimap.dart';
 
 import '../infrastructure/document_gestures.dart';
@@ -210,10 +211,18 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
   Widget _buildScroller({
     required Widget child,
   }) {
-    return SingleChildScrollView(
+    final scrollBehavior = ScrollConfiguration.of(context);
+    return ScrollbarWithCustomPhysics(
       controller: _scrollController,
-      physics: const NeverScrollableScrollPhysics(),
-      child: child,
+      physics: scrollBehavior.getScrollPhysics(context),
+      child: ScrollConfiguration(
+        behavior: scrollBehavior.copyWith(scrollbars: false),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          physics: const NeverScrollableScrollPhysics(),
+          child: child,
+        ),
+      ),
     );
   }
 
