@@ -24,7 +24,12 @@ class DocumentImeSerializer {
     this._doc,
     this.selection,
     this.composingRegion, [
-    this._prependedCharacterPolicy = PrependedCharacterPolicy.automatic,
+    // Always prepend the placeholder characters because
+    // changing the editing value when the IME is composing
+    // causes the IME composition to restart.
+    //
+    // See https://github.com/superlistapp/super_editor/issues/1641 for details.
+    this._prependedCharacterPolicy = PrependedCharacterPolicy.include,
   ]) {
     _serialize();
   }

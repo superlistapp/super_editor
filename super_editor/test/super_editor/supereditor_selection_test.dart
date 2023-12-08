@@ -1002,9 +1002,9 @@ Second Paragraph
       await tester.ime.sendDeltas(
         [
           TextEditingDeltaNonTextUpdate(
-            oldText: text,
-            selection: const TextSelection.collapsed(offset: 6),
-            composing: const TextSelection.collapsed(offset: 6),
+            oldText: '. $text',
+            selection: const TextSelection.collapsed(offset: 8),
+            composing: const TextSelection.collapsed(offset: 8),
           )
         ],
         getter: imeClientGetter,
