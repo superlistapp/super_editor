@@ -383,10 +383,22 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final trimmedRange = _trimTextRangeWhitespace(text, selectionRange);
 
     final linkAttribution = LinkAttribution(url: Uri.parse(url));
-    text.addAttribution(
-      linkAttribution,
-      trimmedRange,
-    );
+
+    widget.editor!.execute([
+      AddTextAttributionsRequest(
+        documentRange: DocumentRange(
+          start: DocumentPosition(
+            nodeId: textNode.id,
+            nodePosition: TextNodePosition(offset: trimmedRange.start),
+          ),
+          end: DocumentPosition(
+            nodeId: textNode.id,
+            nodePosition: TextNodePosition(offset: trimmedRange.end),
+          ),
+        ),
+        attributions: {linkAttribution},
+      ),
+    ]);
 
     // Clear the field and hide the URL bar
     _urlController!.clear();
@@ -411,7 +423,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
       endOffset -= 1;
     }
 
-    return SpanRange(startOffset, endOffset);
+    // Add 1 to the end offset because SpanRange treats the end offset to be exclusive.
+    return SpanRange(startOffset, endOffset + 1);
   }
 
   /// Changes the alignment of the current selected text node
