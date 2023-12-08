@@ -33,7 +33,7 @@ class SuperEditorDemoTextItemSelector extends StatefulWidget {
     super.key,
     this.parentFocusNode,
     this.boundaryKey,
-    this.value,
+    this.id,
     required this.items,
     required this.onSelected,
   });
@@ -68,7 +68,7 @@ class SuperEditorDemoTextItemSelector extends StatefulWidget {
   /// The currently selected value or `null` if no item is selected.
   ///
   /// This value is used to build the button.
-  final SuperEditorDemoTextItem? value;
+  final SuperEditorDemoTextItem? id;
 
   /// The items that will be displayed in the popover list.
   ///
@@ -96,6 +96,11 @@ class _SuperEditorDemoTextItemSelectorState extends State<SuperEditorDemoTextIte
     super.dispose();
   }
 
+  void _onItemSelected(SuperEditorDemoTextItem? value) {
+    _popoverController.close();
+    widget.onSelected(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopoverScaffold(
@@ -105,15 +110,31 @@ class _SuperEditorDemoTextItemSelectorState extends State<SuperEditorDemoTextIte
       boundaryKey: widget.boundaryKey,
       popoverBuilder: (context) => PopoverShape(
         child: ItemSelectionList<SuperEditorDemoTextItem>(
-          value: widget.value,
+          focusNode: _popoverFocusNode,
+          parentFocusNode: widget.parentFocusNode,
+          value: widget.id,
           items: widget.items,
           itemBuilder: _buildPopoverListItem,
           onItemSelected: _onItemSelected,
           onCancel: () => _popoverController.close(),
-          focusNode: _popoverFocusNode,
-          parentFocusNode: widget.parentFocusNode,
         ),
       ),
+    );
+  }
+
+  Widget _buildButton(BuildContext context) {
+    return SuperEditorPopoverButton(
+      padding: const EdgeInsets.only(left: 16.0, right: 24),
+      onTap: () => _popoverController.open(),
+      child: widget.id == null //
+          ? const SizedBox()
+          : Text(
+              widget.id!.label,
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 12,
+              ),
+            ),
     );
   }
 
@@ -139,51 +160,29 @@ class _SuperEditorDemoTextItemSelectorState extends State<SuperEditorDemoTextIte
       ),
     );
   }
-
-  Widget _buildButton(BuildContext context) {
-    return SuperEditorPopoverButton(
-      onTap: () => _popoverController.open(),
-      padding: const EdgeInsets.only(left: 16.0, right: 24),
-      child: widget.value == null //
-          ? const SizedBox()
-          : Text(
-              widget.value!.label,
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 12,
-              ),
-            ),
-    );
-  }
-
-  void _onItemSelected(SuperEditorDemoTextItem? value) {
-    _popoverController.close();
-    widget.onSelected(value);
-  }
 }
 
 /// An option that is displayed as text by a [SuperEditorDemoTextItemSelector].
 ///
-/// Two [SuperEditorDemoTextItem]s are considered to be equal if they have the same [value].
+/// Two [SuperEditorDemoTextItem]s are considered to be equal if they have the same [id].
 class SuperEditorDemoTextItem {
   const SuperEditorDemoTextItem({
-    required this.value,
+    required this.id,
     required this.label,
   });
 
   /// The value that identifies this item.
-  final String value;
+  final String id;
 
   /// The text that is displayed.
   final String label;
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SuperEditorDemoTextItem && runtimeType == other.runtimeType && value == other.value;
+      identical(this, other) || other is SuperEditorDemoTextItem && runtimeType == other.runtimeType && id == other.id;
 
   @override
-  int get hashCode => value.hashCode;
+  int get hashCode => id.hashCode;
 }
 
 /// A selection control, which displays a button with the selected item, and upon tap, displays a
@@ -335,26 +334,25 @@ class _SuperEditorDemoIconItemSelectorState extends State<SuperEditorDemoIconIte
 
 /// An option that is displayed as an icon by a [SuperEditorDemoIconItemSelector].
 ///
-/// Two [SuperEditorDemoIconItem]s are considered to be equal if they have the same [value].
+/// Two [SuperEditorDemoIconItem]s are considered to be equal if they have the same [id].
 class SuperEditorDemoIconItem {
   const SuperEditorDemoIconItem({
+    required this.id,
     required this.icon,
-    required this.value,
   });
 
   /// The value that identifies this item.
-  final String value;
+  final String id;
 
   /// The icon that is displayed.
   final IconData icon;
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SuperEditorDemoIconItem && runtimeType == other.runtimeType && value == other.value;
+      identical(this, other) || other is SuperEditorDemoIconItem && runtimeType == other.runtimeType && id == other.id;
 
   @override
-  int get hashCode => value.hashCode;
+  int get hashCode => id.hashCode;
 }
 
 /// A button with a center-left aligned [child] and a right aligned arrow icon.
@@ -363,16 +361,16 @@ class SuperEditorDemoIconItem {
 class SuperEditorPopoverButton extends StatelessWidget {
   const SuperEditorPopoverButton({
     super.key,
-    required this.onTap,
     this.padding,
+    required this.onTap,
     this.child,
   });
 
-  /// Called when the user taps the button.
-  final VoidCallback onTap;
-
   /// Padding around the [child].
   final EdgeInsets? padding;
+
+  /// Called when the user taps the button.
+  final VoidCallback onTap;
 
   /// The Widget displayed inside this button.
   ///

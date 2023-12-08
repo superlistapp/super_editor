@@ -2,35 +2,177 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
-import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// A selection control, which displays a selected item, and upon tap, displays a
-/// popover list of available options, from which the user can select a different
-/// option.
+/// A scaffold, which builds a popover selection system, comprised of a button and a popover
+/// that's positioned near the button.
 ///
-/// Unlike Flutter `DropdownButton`, which displays the popover list in a separate route,
-/// this widget displays its popover list in an `Overlay`. By using an `Overlay`, focus can be shared
-/// with the [parentFocusNode]. This means that when the popover list requests focus, [parentFocusNode]
-/// still has non-primary focus.
+/// Unlike Flutter `DropdownButton`, which displays the popover in a separate route,
+/// this widget displays its popover in an `Overlay`. By using an `Overlay`, focus can be shared
+/// between the popover's `FocusNode` and an arbitrary parent `FocusNode`.
 ///
-/// The popover list is positioned based on the following rules:
+/// The popover visibility is changed by calling [PopoverController.open] or [PopoverController.close].
+/// The popover is automatically closed when the user taps outside of its bounds.
 ///
-///    1. The popover is displayed below the selected item, if there's enough room, or
-///    2. The popover is displayed above the selected item, if there's enough room, or
-///    3. The popover is displayed with its bottom aligned with the bottom of
-///         the given boundary, and it covers the selected item.
+/// Provide a [popoverGeometry] to control the size and position of the popover. The popover
+/// is first sized given the [PopoverGeometry.constraints] and then positioned using the
+/// [PopoverGeometry.align].
 ///
-/// The popover list height is based on the following rules:
-///
-///    1. The popover height is constrained by [popoverGeometry.contraints], if provided,
-///       becoming scrollable if there isn't enough room to display all items, or
-///    2. The popover is displayed as tall as all items in the list, if there's enough room, or
-///    3. The popover is displayed as tall as the available space and becomes scrollable.
-///
+/// When the popover is displayed it requests focus to itself, so the user can
+/// interact with the content using the keyboard.
+class PopoverScaffold extends StatefulWidget {
+  const PopoverScaffold({
+    super.key,
+    required this.controller,
+    required this.buttonBuilder,
+    required this.popoverBuilder,
+    this.popoverGeometry = const PopoverGeometry(),
+    this.popoverFocusNode,
+    this.boundaryKey,
+  });
 
+  /// Shows and hides the popover.
+  final PopoverController controller;
+
+  /// Builds a button that is always displayed.
+  final WidgetBuilder buttonBuilder;
+
+  /// Builds the content of the popover.
+  final WidgetBuilder popoverBuilder;
+
+  /// Controls the size and position of the popover.
+  ///
+  /// The popover is first sized, then positioned.
+  final PopoverGeometry popoverGeometry;
+
+  /// The [FocusNode] which is bound to the popover.
+  ///
+  /// Focus will be requested to this [FocusNode] when the popover is displayed.
+  final FocusNode? popoverFocusNode;
+
+  /// A [GlobalKey] to a widget that determines the bounds where the popover can be displayed.
+  ///
+  /// Passing a [boundaryKey] causes the popover to be confined to the bounds of the widget
+  /// bound to the [boundaryKey].
+  ///
+  /// If `null`, the popover is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
+  final GlobalKey? boundaryKey;
+
+  @override
+  State<PopoverScaffold> createState() => _PopoverScaffoldState();
+}
+
+class _PopoverScaffoldState extends State<PopoverScaffold> {
+  final OverlayPortalController _overlayController = OverlayPortalController();
+  final LeaderLink _popoverLink = LeaderLink();
+
+  late FollowerBoundary _screenBoundary;
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.controller.addListener(_onPopoverControllerChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateFollowerBoundary();
+  }
+
+  @override
+  void didUpdateWidget(covariant PopoverScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onPopoverControllerChanged);
+      widget.controller.addListener(_onPopoverControllerChanged);
+    }
+
+    if (oldWidget.boundaryKey != widget.boundaryKey) {
+      _updateFollowerBoundary();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onPopoverControllerChanged);
+    _popoverLink.dispose();
+
+    super.dispose();
+  }
+
+  void _updateFollowerBoundary() {
+    if (widget.boundaryKey != null) {
+      _screenBoundary = WidgetFollowerBoundary(
+        boundaryKey: widget.boundaryKey,
+        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+      );
+    } else {
+      _screenBoundary = ScreenFollowerBoundary(
+        screenSize: MediaQuery.sizeOf(context),
+        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+      );
+    }
+  }
+
+  void _onPopoverControllerChanged() {
+    if (widget.controller.shouldShow) {
+      _overlayController.show();
+      if (widget.popoverFocusNode != null) {
+        onNextFrame((timeStamp) {
+          widget.popoverFocusNode!.requestFocus();
+        });
+      }
+    } else {
+      _overlayController.hide();
+    }
+  }
+
+  void _onTapOutsideOfDropdown(PointerDownEvent e) {
+    widget.controller.close();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OverlayPortal(
+      controller: _overlayController,
+      overlayChildBuilder: _buildDropdown,
+      child: Leader(
+        link: _popoverLink,
+        child: widget.buttonBuilder(context),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(BuildContext context) {
+    return TapRegion(
+      onTapOutside: _onTapOutsideOfDropdown,
+      child: Actions(
+        actions: disabledMacIntents,
+        child: Follower.withAligner(
+          link: _popoverLink,
+          boundary: _screenBoundary,
+          aligner: FunctionalAligner(
+            delegate: (globalLeaderRect, followerSize) =>
+                widget.popoverGeometry.align(globalLeaderRect, followerSize, widget.boundaryKey),
+          ),
+          child: ConstrainedBox(
+            constraints: widget.popoverGeometry.constraints ?? const BoxConstraints(),
+            child: widget.popoverBuilder(context),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A list where the user can navigate between its items and select one of them.
 ///
-/// The popover list includes keyboard selection behaviors:
+/// This widget shares focus with its [parentFocusNode]. This means that when the list requests focus,
+/// [parentFocusNode] still has non-primary focus.
+///
+/// Includes the following keyboard selection behaviors:
 ///
 ///   * Pressing UP/DOWN moves the "active" item selection up/down.
 ///   * Pressing UP with the first item active moves the active item selection to the last item.
@@ -50,8 +192,6 @@ class ItemSelectionList<T> extends StatefulWidget {
   });
 
   /// The currently selected value or `null` if no item is selected.
-  ///
-  /// This value is passed to [buttonBuilder] to build the visual representation of the selected item.
   final T? value;
 
   /// The items that will be displayed in the popover list.
@@ -87,6 +227,12 @@ class ItemSelectionList<T> extends StatefulWidget {
   final FocusNode? focusNode;
 
   /// The [FocusNode], to which the list's [FocusNode] will be added as a child.
+  ///
+  /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
+  /// entire ancestor path to "have focus", but only the lowest level descendant
+  /// in that path has "primary focus". This path is important because various
+  /// widgets alter their presentation or behavior based on whether or not they
+  /// currently have focus, even if they only have "non-primary focus".
   final FocusNode? parentFocusNode;
 
   @override
@@ -95,16 +241,17 @@ class ItemSelectionList<T> extends StatefulWidget {
 
 @visibleForTesting
 class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleTickerProviderStateMixin {
-  int? _activeIndex;
-
-  @visibleForTesting
-  ScrollController get scrollController => _scrollController;
-  final ScrollController _scrollController = ScrollController();
-
   final GlobalKey _scrollableKey = GlobalKey();
 
+  @visibleForTesting
+  final ScrollController scrollController = ScrollController();
+
   /// Holds keys to each item on the list.
+  ///
+  /// Used to scroll the list to reveal the active item.
   final List<GlobalKey> _itemKeys = [];
+
+  int? _activeIndex;
 
   @override
   void initState() {
@@ -114,7 +261,7 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    scrollController.dispose();
 
     super.dispose();
   }
@@ -128,37 +275,40 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
     }
 
     int selectedItemIndex = widget.items.indexOf(selectedItem);
-    if (selectedItemIndex > -1) {
-      // We just opened the popover.
-      // Jump to the active item without animation.
-      _activateItem(selectedItemIndex, Duration.zero);
-    } else {
+    if (selectedItemIndex < 0) {
       // A selected item was provided, but it isn't included in the list of items.
       _activeIndex = null;
+      return;
     }
-  }
 
-  /// Called when the user taps an item or presses ENTER with an active item.
-  void _selectItem(T? item) {
-    widget.onItemSelected(item);
+    // We just opened the popover.
+    // Jump to the active item without animation.
+    _activateItem(selectedItemIndex, animationDuration: Duration.zero);
   }
 
   /// Activates the item at [itemIndex] and ensure it's visible on screen.
-  void _activateItem(int? itemIndex, Duration animationDuration) {
+  ///
+  /// The active item is selected when the user presses ENTER.
+  void _activateItem(int? itemIndex, {required Duration animationDuration}) {
     _activeIndex = itemIndex;
     if (itemIndex != null) {
       widget.onItemActivated?.call(widget.items[itemIndex]);
     }
 
-    // Scrolls on the next frame to let the popover to be
-    // laid-out first, so we can access its RenderBox.
+    // This method might be called before the widget was rendered.
+    // For example, when the widget is created with a selected item,
+    // this item is immediately activated, before the rendering pipeline is
+    // executed. Therefore, the RenderBox won't be available at the same frame.
+    //
+    // Scrolls on the next frame to let the popover be laid-out first,
+    // so we can access its RenderBox.
     onNextFrame((timeStamp) {
-      _ensureActiveItemIsVisible(animationDuration);
+      _scrollToShowActiveItem(animationDuration);
     });
   }
 
   /// Scrolls the popover scrollable to display the selected item.
-  void _ensureActiveItemIsVisible(Duration animationDuration) {
+  void _scrollToShowActiveItem(Duration animationDuration) {
     if (_activeIndex == null) {
       return;
     }
@@ -178,7 +328,7 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
   }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
 
@@ -200,15 +350,17 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
     if (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter) {
       if (_activeIndex == null) {
         // The user pressed ENTER without an active item.
-        _selectItem(null);
+        // Clear the selected item.
+        widget.onItemSelected(null);
         return KeyEventResult.handled;
       }
 
-      _selectItem(widget.items[_activeIndex!]);
+      widget.onItemSelected(widget.items[_activeIndex!]);
 
       return KeyEventResult.handled;
     }
 
+    // The user pressed an arrow key. Update the active item.
     int? newActiveIndex;
     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
       if (_activeIndex == null || _activeIndex! >= widget.items.length - 1) {
@@ -231,7 +383,7 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
     }
 
     setState(() {
-      _activateItem(newActiveIndex, const Duration(milliseconds: 100));
+      _activateItem(newActiveIndex, animationDuration: const Duration(milliseconds: 100));
     });
 
     return KeyEventResult.handled;
@@ -239,23 +391,11 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
 
   @override
   Widget build(BuildContext context) {
-    final children = <Widget>[];
     _itemKeys.clear();
 
     for (int i = 0; i < widget.items.length; i++) {
-      final key = GlobalKey();
-      children.add(Container(
-        key: key,
-        child: widget.itemBuilder(
-          context,
-          widget.items[i],
-          i == _activeIndex,
-          () => _selectItem(widget.items[i]),
-        ),
-      ));
-      _itemKeys.add(key);
+      _itemKeys.add(GlobalKey());
     }
-
     return Focus(
       focusNode: widget.focusNode,
       parentNode: widget.parentFocusNode,
@@ -267,7 +407,7 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
           physics: const ClampingScrollPhysics(),
         ),
         child: PrimaryScrollController(
-          controller: _scrollController,
+          controller: scrollController,
           child: Scrollbar(
             thumbVisibility: true,
             child: SingleChildScrollView(
@@ -276,7 +416,18 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
               child: IntrinsicWidth(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: children,
+                  children: [
+                    for (int i = 0; i < widget.items.length; i++)
+                      KeyedSubtree(
+                        key: _itemKeys[i],
+                        child: widget.itemBuilder(
+                          context,
+                          widget.items[i],
+                          i == _activeIndex,
+                          () => widget.onItemSelected(widget.items[i]),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -335,184 +486,6 @@ class _PopoverShapeState extends State<PopoverShape> with SingleTickerProviderSt
       child: FadeTransition(
         opacity: _containerFadeInAnimation,
         child: widget.child,
-      ),
-    );
-  }
-}
-
-/// A widget used to build UI controls that display a following popover.
-///
-/// The popover is displayed in an `Overlay` and its visibility is changed by calling
-/// [PopoverController.open] or [PopoverController.close]. The popover is automatically closed
-/// when the user taps outside of its bounds.
-///
-/// Provide a [popoverGeometry] to control the size and position of the popover. The popover
-/// is first sized given the [PopoverGeometry.constraints] and then positioned using the
-/// [PopoverGeometry.align].
-///
-/// When the popover is displayed it requests focus to itself, so the user can
-/// interact with the content using the keyboard.
-class PopoverScaffold extends StatefulWidget {
-  const PopoverScaffold({
-    super.key,
-    required this.controller,
-    required this.buttonBuilder,
-    required this.popoverBuilder,
-    this.popoverGeometry = const PopoverGeometry(),
-    this.onKeyEvent,
-    this.popoverFocusNode,
-    this.boundaryKey,
-  });
-
-  /// Shows and hides the popover.
-  final PopoverController controller;
-
-  /// Builds a button that is always displayed.
-  final WidgetBuilder buttonBuilder;
-
-  /// Builds the content of the popover.
-  final WidgetBuilder popoverBuilder;
-
-  /// Controls the size and position of the popover.
-  ///
-  /// The popover is first sized, then positioned.
-  final PopoverGeometry popoverGeometry;
-
-  /// Called at each key press while the popover has focus.
-  final FocusOnKeyEventCallback? onKeyEvent;
-
-  /// [FocusNode] which will share focus with the popover.
-  final FocusNode? popoverFocusNode;
-
-  /// A [GlobalKey] to a widget that determines the bounds where the popover can be displayed.
-  ///
-  /// As the popover follows the selected item, it can be displayed off-screen if this [PopoverScaffold]
-  /// is close to the bottom of the screen.
-  ///
-  /// Passing a [boundaryKey] causes the popover to be confined to the bounds of the widget
-  /// bound to the [boundaryKey].
-  ///
-  /// If `null`, the popover is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
-  final GlobalKey? boundaryKey;
-
-  @override
-  State<PopoverScaffold> createState() => _PopoverScaffoldState();
-}
-
-class _PopoverScaffoldState extends State<PopoverScaffold> {
-  final OverlayPortalController _overlayController = OverlayPortalController();
-  final LeaderLink _popoverLink = LeaderLink();
-  late FocusNode _popoverFocusNode;
-
-  late FollowerBoundary _screenBoundary;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _popoverFocusNode = widget.popoverFocusNode ?? FocusNode();
-    widget.controller.addListener(_onPopoverControllerChanged);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _updateFollowerBoundary();
-  }
-
-  @override
-  void didUpdateWidget(covariant PopoverScaffold oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) {
-      oldWidget.controller.removeListener(_onPopoverControllerChanged);
-      widget.controller.addListener(_onPopoverControllerChanged);
-    }
-
-    if (oldWidget.popoverFocusNode != widget.popoverFocusNode) {
-      if (oldWidget.popoverFocusNode == null) {
-        _popoverFocusNode.dispose();
-      }
-
-      _popoverFocusNode = widget.popoverFocusNode ?? FocusNode();
-    }
-
-    if (oldWidget.boundaryKey != widget.boundaryKey) {
-      _updateFollowerBoundary();
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onPopoverControllerChanged);
-    _popoverLink.dispose();
-
-    if (widget.popoverFocusNode == null) {
-      _popoverFocusNode.dispose();
-    }
-
-    super.dispose();
-  }
-
-  void _updateFollowerBoundary() {
-    if (widget.boundaryKey != null) {
-      _screenBoundary = WidgetFollowerBoundary(
-        boundaryKey: widget.boundaryKey,
-        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
-      );
-    } else {
-      _screenBoundary = ScreenFollowerBoundary(
-        screenSize: MediaQuery.sizeOf(context),
-        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
-      );
-    }
-  }
-
-  void _onPopoverControllerChanged() {
-    if (widget.controller.shouldShow) {
-      _overlayController.show();
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        // Wait until next frame to request focus, so that the parent relationship
-        // can be established between our focus node and the parent focus node.
-        _popoverFocusNode.requestFocus();
-      });
-    } else {
-      _overlayController.hide();
-    }
-  }
-
-  void _onTapOutsideOfDropdown(PointerDownEvent e) {
-    widget.controller.close();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return OverlayPortal(
-      controller: _overlayController,
-      overlayChildBuilder: _buildDropdown,
-      child: Leader(
-        link: _popoverLink,
-        child: widget.buttonBuilder(context),
-      ),
-    );
-  }
-
-  Widget _buildDropdown(BuildContext context) {
-    return TapRegion(
-      onTapOutside: _onTapOutsideOfDropdown,
-      child: Actions(
-        actions: disabledMacIntents,
-        child: Follower.withAligner(
-          link: _popoverLink,
-          boundary: _screenBoundary,
-          aligner: FunctionalAligner(
-            delegate: (globalLeaderRect, followerSize) =>
-                widget.popoverGeometry.align(globalLeaderRect, followerSize, widget.boundaryKey),
-          ),
-          child: ConstrainedBox(
-            constraints: widget.popoverGeometry.constraints ?? const BoxConstraints(),
-            child: widget.popoverBuilder(context),
-          ),
-        ),
       ),
     );
   }

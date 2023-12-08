@@ -102,16 +102,20 @@ class _EditorToolbarState extends State<EditorToolbar> {
     // because we need to access `AppLocalizations.of`, which isn't
     // available in initState.
     final currentBlockType = _getCurrentTextType();
-    _selectedBlockType = SuperEditorDemoTextItem(
-      value: currentBlockType.name,
-      label: _getTextTypeName(currentBlockType),
-    );
+    _selectedBlockType = currentBlockType != null
+        ? SuperEditorDemoTextItem(
+            id: currentBlockType.name,
+            label: _getTextTypeName(currentBlockType),
+          )
+        : null;
 
     final currentAlignment = _getCurrentTextAlignment();
-    _selectedAlignment = SuperEditorDemoIconItem(
-      value: currentAlignment.name,
-      icon: _buildTextAlignIcon(currentAlignment),
-    );
+    _selectedAlignment = currentAlignment != null
+        ? SuperEditorDemoIconItem(
+            id: currentAlignment.name,
+            icon: _buildTextAlignIcon(currentAlignment),
+          )
+        : null;
   }
 
   @override
@@ -139,8 +143,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Returns the block type of the currently selected text node.
   ///
-  /// Throws an exception if the currently selected node is not a text node.
-  _TextType _getCurrentTextType() {
+  /// Returns `null` if the currently selected node is not a text node.
+  _TextType? _getCurrentTextType() {
     final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final type = selectedNode.getMetadataValue('blockType');
@@ -159,14 +163,14 @@ class _EditorToolbarState extends State<EditorToolbar> {
     } else if (selectedNode is ListItemNode) {
       return selectedNode.type == ListItemType.ordered ? _TextType.orderedListItem : _TextType.unorderedListItem;
     } else {
-      throw Exception('Invalid node type: $selectedNode');
+      return null;
     }
   }
 
   /// Returns the text alignment of the currently selected text node.
   ///
-  /// Throws an exception if the currently selected node is not a text node.
-  TextAlign _getCurrentTextAlignment() {
+  /// Returns `null` if the currently selected node is not a text node.
+  TextAlign? _getCurrentTextAlignment() {
     final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final align = selectedNode.getMetadataValue('textAlign');
@@ -183,7 +187,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
           return TextAlign.left;
       }
     } else {
-      throw Exception('Alignment does not apply to node of type: $selectedNode');
+      return null;
     }
   }
 
@@ -495,7 +499,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       setState(() {
         _selectedBlockType = selectedItem;
         _convertTextToNewType(_TextType.values //
-            .where((e) => e.name == selectedItem.value)
+            .where((e) => e.name == selectedItem.id)
             .first);
       });
     }
@@ -506,7 +510,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     if (selectedItem != null) {
       setState(() {
         _selectedAlignment = selectedItem;
-        _changeAlignment(TextAlign.values.firstWhere((e) => e.name == selectedItem.value));
+        _changeAlignment(TextAlign.values.firstWhere((e) => e.name == selectedItem.id));
       });
     }
   }
@@ -637,9 +641,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
       value: _selectedAlignment,
       items: TextAlign.values
           .map(
-            (e) => SuperEditorDemoIconItem(
-              icon: _buildTextAlignIcon(e),
-              value: e.name,
+            (alignment) => SuperEditorDemoIconItem(
+              icon: _buildTextAlignIcon(alignment),
+              id: alignment.name,
             ),
           )
           .toList(),
@@ -651,12 +655,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
     return SuperEditorDemoTextItemSelector(
       parentFocusNode: widget.editorFocusNode,
       boundaryKey: widget.editorViewportKey,
-      value: _selectedBlockType,
+      id: _selectedBlockType,
       items: _TextType.values
           .map(
-            (e) => SuperEditorDemoTextItem(
-              value: e.name,
-              label: _getTextTypeName(e),
+            (blockType) => SuperEditorDemoTextItem(
+              id: blockType.name,
+              label: _getTextTypeName(blockType),
             ),
           )
           .toList(),
