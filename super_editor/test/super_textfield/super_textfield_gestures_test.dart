@@ -182,7 +182,7 @@ void main() {
         await gesture.removePointer();
       });
 
-      testWidgetsOnDesktop("scrolls the content when dragging with trackpad (downstream)", (tester) async {
+      testWidgetsOnDesktop("scrolls the content when dragging with trackpad down", (tester) async {
         final controller = AttributedTextEditingController(
           text: AttributedText('''
 SuperTextField with a
@@ -240,8 +240,8 @@ a trackpad
         await gesture.moveBy(const Offset(0, -300));
         await tester.pump();
 
-        // Ensure the content scrolled down.
-        expect(scrollState.position.pixels, greaterThan(0));
+        // Ensure the content scrolled to the end of the content.
+        expect(scrollState.position.pixels, moreOrLessEquals(80.0));
 
         // Ensure that the selection didn't change.
         expect(
@@ -250,7 +250,7 @@ a trackpad
         );
       });
 
-      testWidgetsOnDesktop("scrolls the content when dragging with trackpad (upstream)", (tester) async {
+      testWidgetsOnDesktop("scrolls the content when dragging with trackpad up", (tester) async {
         final controller = AttributedTextEditingController(
           text: AttributedText('''
 SuperTextField with a
@@ -309,7 +309,7 @@ a trackpad
         await gesture.moveBy(const Offset(0, 300));
         await tester.pump();
 
-        // Ensure the content scrolled up.
+        // Ensure the content scrolled to the beginning of the content.
         expect(scrollState.position.pixels, 0.0);
 
         // Ensure that the selection didn't change.
@@ -319,7 +319,7 @@ a trackpad
         );
       });
 
-      testWidgetsOnDesktop("scrolls the content when dragging the scrollbar (downstream)", (tester) async {
+      testWidgetsOnDesktop("scrolls the content when dragging the scrollbar down", (tester) async {
         final controller = AttributedTextEditingController(
           text: AttributedText('''
 SuperTextField with a
@@ -382,8 +382,8 @@ a scrollbar
         await tester.sendEventToBinding(testPointer.up());
         await tester.pump();
 
-        // Ensure the content scrolled down.
-        expect(scrollState.position.pixels, greaterThan(0));
+        // Ensure the content scrolled to the end of the content.
+        expect(scrollState.position.pixels, moreOrLessEquals(80.0));
 
         // Ensure that the selection didn't change.
         expect(
@@ -392,7 +392,7 @@ a scrollbar
         );
       });
 
-      testWidgetsOnMac("scrolls the content when dragging the scrollbar (upstream)", (tester) async {
+      testWidgetsOnMac("scrolls the content when dragging the scrollbar up", (tester) async {
         final controller = AttributedTextEditingController(
           text: AttributedText('''
 SuperTextField with a
