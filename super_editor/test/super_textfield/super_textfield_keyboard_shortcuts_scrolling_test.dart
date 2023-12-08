@@ -12,7 +12,7 @@ import 'super_textfield_robot.dart';
 
 void main() {
   group("SuperTextField", () {
-    group("text field scrolling", () {
+    group("scrolling", () {
       group("without ancestor scrollable", () {
         testWidgetsOnDesktopAndWeb(
           'PAGE DOWN scrolls down by the viewport height',
@@ -920,7 +920,7 @@ void main() {
       });
     });
 
-    group("text field scrolling within ancestor scrollable", () {
+    group("scrolling within ancestor scrollable", () {
       group('''scrolls from top->bottom of textfiled and then towards bottom of 
         the page and back to the top of the page''', () {
         testWidgetsOnDesktop(
