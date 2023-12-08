@@ -71,9 +71,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
   late FocusNode _urlFocusNode;
   ImeAttributedTextEditingController? _urlController;
 
-  SuperEditorDemoTextItem? _selectedBlockType;
-  SuperEditorDemoIconItem? _selectedAlignment;
-
   @override
   void initState() {
     super.initState();
@@ -97,25 +94,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
       boundaryKey: widget.editorViewportKey,
       devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
     );
-
-    // We assign the selected block type here instead of initState
-    // because we need to access `AppLocalizations.of`, which isn't
-    // available in initState.
-    final currentBlockType = _getCurrentTextType();
-    _selectedBlockType = currentBlockType != null
-        ? SuperEditorDemoTextItem(
-            id: currentBlockType.name,
-            label: _getTextTypeName(currentBlockType),
-          )
-        : null;
-
-    final currentAlignment = _getCurrentTextAlignment();
-    _selectedAlignment = currentAlignment != null
-        ? SuperEditorDemoIconItem(
-            id: currentAlignment.name,
-            icon: _buildTextAlignIcon(currentAlignment),
-          )
-        : null;
   }
 
   @override
@@ -143,8 +121,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Returns the block type of the currently selected text node.
   ///
-  /// Returns `null` if the currently selected node is not a text node.
-  _TextType? _getCurrentTextType() {
+  /// Throws an exception if the currently selected node is not a text node.
+  _TextType _getCurrentTextType() {
     final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final type = selectedNode.getMetadataValue('blockType');
@@ -163,14 +141,14 @@ class _EditorToolbarState extends State<EditorToolbar> {
     } else if (selectedNode is ListItemNode) {
       return selectedNode.type == ListItemType.ordered ? _TextType.orderedListItem : _TextType.unorderedListItem;
     } else {
-      return null;
+      throw Exception('Alignment does not apply to node of type: $selectedNode');
     }
   }
 
   /// Returns the text alignment of the currently selected text node.
   ///
-  /// Returns `null` if the currently selected node is not a text node.
-  TextAlign? _getCurrentTextAlignment() {
+  /// Throws an exception if the currently selected node is not a text node.
+  TextAlign _getCurrentTextAlignment() {
     final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final align = selectedNode.getMetadataValue('textAlign');
@@ -187,7 +165,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
           return TextAlign.left;
       }
     } else {
-      return null;
+      throw Exception('Invalid node type: $selectedNode');
     }
   }
 
@@ -497,7 +475,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _onBlockTypeSelected(SuperEditorDemoTextItem? selectedItem) {
     if (selectedItem != null) {
       setState(() {
-        _selectedBlockType = selectedItem;
         _convertTextToNewType(_TextType.values //
             .where((e) => e.name == selectedItem.id)
             .first);
@@ -509,7 +486,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _onAlignmentSelected(SuperEditorDemoIconItem? selectedItem) {
     if (selectedItem != null) {
       setState(() {
-        _selectedAlignment = selectedItem;
         _changeAlignment(TextAlign.values.firstWhere((e) => e.name == selectedItem.id));
       });
     }
@@ -635,10 +611,14 @@ class _EditorToolbarState extends State<EditorToolbar> {
   }
 
   Widget _buildAlignmentSelector() {
+    final alignment = _getCurrentTextAlignment();
     return SuperEditorDemoIconItemSelector(
       parentFocusNode: widget.editorFocusNode,
       boundaryKey: widget.editorViewportKey,
-      value: _selectedAlignment,
+      value: SuperEditorDemoIconItem(
+        id: alignment.name,
+        icon: _buildTextAlignIcon(alignment),
+      ),
       items: TextAlign.values
           .map(
             (alignment) => SuperEditorDemoIconItem(
@@ -652,10 +632,14 @@ class _EditorToolbarState extends State<EditorToolbar> {
   }
 
   Widget _buildBlockTypeSelector() {
+    final currentBlockType = _getCurrentTextType();
     return SuperEditorDemoTextItemSelector(
       parentFocusNode: widget.editorFocusNode,
       boundaryKey: widget.editorViewportKey,
-      id: _selectedBlockType,
+      id: SuperEditorDemoTextItem(
+        id: currentBlockType.name,
+        label: _getTextTypeName(currentBlockType),
+      ),
       items: _TextType.values
           .map(
             (blockType) => SuperEditorDemoTextItem(
