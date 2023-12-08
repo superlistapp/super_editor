@@ -230,8 +230,8 @@ void main() {
         await tester.ime.sendDeltas(
           [
             const TextEditingDeltaNonTextUpdate(
-              oldText: "This text should be",
-              selection: TextSelection.collapsed(offset: 19, affinity: TextAffinity.downstream),
+              oldText: ". This text should be",
+              selection: TextSelection.collapsed(offset: 21, affinity: TextAffinity.downstream),
               composing: TextRange.empty,
             ),
           ],
