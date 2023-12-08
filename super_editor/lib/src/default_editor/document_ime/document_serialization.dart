@@ -24,7 +24,7 @@ class DocumentImeSerializer {
     this._doc,
     this.selection,
     this.composingRegion, [
-    this._prependedCharacterPolicy = PrependedCharacterPolicy.automatic,
+    this._prependedCharacterPolicy = PrependedCharacterPolicy.include,
   ]) {
     _serialize();
   }
