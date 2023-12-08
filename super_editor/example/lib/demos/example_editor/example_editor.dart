@@ -386,8 +386,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
                   caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
                 ),
                 if (defaultTargetPlatform == TargetPlatform.iOS) ...[
-                  SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
-                  SuperEditorAndroidHandlesDocumentLayerBuilder(),
+                  SuperEditorIosHandlesDocumentLayerBuilder(),
+                  SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
                 ],
                 if (defaultTargetPlatform == TargetPlatform.android) ...[
                   SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
