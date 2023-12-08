@@ -29,7 +29,7 @@ class PopoverScaffold extends StatefulWidget {
     this.popoverGeometry = const PopoverGeometry(),
     this.popoverFocusNode,
     this.boundaryKey,
-    this.onTapOutSide,
+    this.onTapOutside = _defaultPopoverOnTapOutside,
   });
 
   /// Shows and hides the popover.
@@ -62,7 +62,7 @@ class PopoverScaffold extends StatefulWidget {
   /// Called when the user taps outside of the popover.
   ///
   /// If `null`, tapping outside closes the popover.
-  final VoidCallback? onTapOutSide;
+  final void Function(PopoverController) onTapOutside;
 
   @override
   State<PopoverScaffold> createState() => _PopoverScaffoldState();
@@ -136,11 +136,7 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
   }
 
   void _onTapOutsideOfPopover(PointerDownEvent e) {
-    if (widget.onTapOutSide != null) {
-      widget.onTapOutSide!();
-    } else {
-      widget.controller.close();
-    }
+    widget.onTapOutside(widget.controller);
   }
 
   @override
@@ -549,6 +545,11 @@ class PopoverGeometry {
   ///
   /// If `null`, the popover can use all the available space.
   final BoxConstraints? constraints;
+}
+
+/// Closes the popover when tapping outside.
+void _defaultPopoverOnTapOutside(PopoverController controller) {
+  controller.close();
 }
 
 /// Computes the position of a popover list relative to the dropdown button.
