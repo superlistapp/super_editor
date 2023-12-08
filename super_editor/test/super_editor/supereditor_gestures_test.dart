@@ -541,7 +541,7 @@ spans multiple lines.''',
       await tester.sendEventToBinding(testPointer.up());
       await tester.pump();
 
-      // Ensure the content scrolled down.
+      // Ensure the content scrolled to the end of the document.
       expect(scrollController.position.pixels, moreOrLessEquals(770.0));
 
       // Ensure the selection didn't change.
@@ -599,7 +599,7 @@ spans multiple lines.''',
       await tester.sendEventToBinding(testPointer.up());
       await tester.pump();
 
-      // Ensure the content scrolled up.
+      // Ensure the content scrolled to the beginning of the document.
       expect(scrollController.position.pixels, 0);
 
       // Ensure the selection didn't change.

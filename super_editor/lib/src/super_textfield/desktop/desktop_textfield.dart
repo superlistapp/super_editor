@@ -1716,6 +1716,14 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
   Widget build(BuildContext context) {
     return SizedBox(
       height: widget.viewportHeight,
+      // As we handle the scrolling gestures ourselves,
+      // we use NeverScrollableScrollPhysics to prevent SingleChildScrollView
+      // from scrolling. This also prevents the user from interacting
+      // with the scrollbar.
+      // We use a modified version of Flutter's Scrollbar that allows
+      // configuring it with a different scroll physics.
+      //
+      // See https://github.com/superlistapp/super_editor/issues/1628 for more details.
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
         child: SingleChildScrollView(
