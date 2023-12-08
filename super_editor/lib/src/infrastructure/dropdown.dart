@@ -29,6 +29,7 @@ class PopoverScaffold extends StatefulWidget {
     this.popoverGeometry = const PopoverGeometry(),
     this.popoverFocusNode,
     this.boundaryKey,
+    this.onTapOutSide,
   });
 
   /// Shows and hides the popover.
@@ -57,6 +58,11 @@ class PopoverScaffold extends StatefulWidget {
   ///
   /// If `null`, the popover is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
   final GlobalKey? boundaryKey;
+
+  /// Called when the user taps outside of the popover.
+  ///
+  /// If `null`, tapping outside closes the popover.
+  final VoidCallback? onTapOutSide;
 
   @override
   State<PopoverScaffold> createState() => _PopoverScaffoldState();
@@ -129,15 +135,19 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
     }
   }
 
-  void _onTapOutsideOfDropdown(PointerDownEvent e) {
-    widget.controller.close();
+  void _onTapOutsideOfPopover(PointerDownEvent e) {
+    if (widget.onTapOutSide != null) {
+      widget.onTapOutSide!();
+    } else {
+      widget.controller.close();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return OverlayPortal(
       controller: _overlayController,
-      overlayChildBuilder: _buildDropdown,
+      overlayChildBuilder: _buildPopover,
       child: Leader(
         link: _popoverLink,
         child: widget.buttonBuilder(context),
@@ -145,9 +155,9 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
     );
   }
 
-  Widget _buildDropdown(BuildContext context) {
+  Widget _buildPopover(BuildContext context) {
     return TapRegion(
-      onTapOutside: _onTapOutsideOfDropdown,
+      onTapOutside: _onTapOutsideOfPopover,
       child: Actions(
         actions: disabledMacIntents,
         child: Follower.withAligner(
@@ -579,7 +589,7 @@ FollowerAlignment defaultPopoverAligner(Rect globalLeaderRect, Size followerSize
     );
   } else {
     // There isn't enough room to fully display the follower below or above the leader.
-    // Pin the dropdown list to the bottom, letting the follower cover the leader.
+    // Pin the popover list to the bottom, letting the follower cover the leader.
     alignment = const FollowerAlignment(
       leaderAnchor: Alignment.bottomCenter,
       followerAnchor: Alignment.topCenter,
