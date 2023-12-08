@@ -921,8 +921,8 @@ void main() {
     });
 
     group("scrolling within ancestor scrollable", () {
-      group('''scrolls from top->bottom of textfiled and then towards bottom of 
-        the page and back to the top of the page''', () {
+      group("scrolls from the text field's top to bottom and then towards the page bottom and back to the page top",
+          () {
         testWidgetsOnDesktop(
           "using CMD + HOME/END on mac and CTRL + HOME/END on other platforms",
           (tester) async {
@@ -1004,6 +1004,7 @@ void main() {
           },
           variant: _textFieldInputSourceVariant,
         );
+
         _testWidgetsOnMacAndWebDesktop(
           "using HOME and END on mac and web desktop",
           (tester) async {
@@ -1070,8 +1071,9 @@ void main() {
         );
       });
 
-      group('''when placed at bottom of page, scrolls all the way from top of the text field to 
-        bottom of the page and back to the top of the page''', () {
+      group(
+          "when placed at the page bottom, scrolls from the text field's top to the page bottom and back to the page top",
+          () {
         testWidgetsOnDesktop(
           "using CMD + HOME/END on mac and CTRL + HOME/END on other platforms",
           (tester) async {
@@ -1216,8 +1218,9 @@ void main() {
         );
       });
 
-      group('''when placed at the center of page, scrolls all the way from top to bottom of 
-        text field and page, and then back to the top of the page''', () {
+      group(
+          "when placed at the page center, scrolls from text field's top to the page bottom, and then back to the page top",
+          () {
         testWidgetsOnDesktop(
           "using CMD + HOME/END on mac and CTRL + HOME/END on other platforms",
           (tester) async {
