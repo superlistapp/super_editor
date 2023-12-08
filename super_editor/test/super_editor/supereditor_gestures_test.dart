@@ -497,7 +497,7 @@ spans multiple lines.''',
       expect(find.byType(IosFloatingToolbarOverlay), findsNothing);
     });
 
-    testWidgetsOnDesktop('scrolls the content when dragging the scrollbar (downstream)', (tester) async {
+    testWidgetsOnDesktop('scrolls the content when dragging the scrollbar down', (tester) async {
       final scrollController = ScrollController();
       await tester //
           .createDocument()
@@ -509,7 +509,8 @@ spans multiple lines.''',
       // Ensure the editor didn't start scrolled.
       expect(scrollController.position.pixels, 0.0);
 
-      // Double tap to select "Lorem".
+      // Double tap to select "Lorem" to ensure the selection don't change
+      // when dragging the scrollbar.
       await tester.doubleTapInParagraph('1', 0);
       expect(
         SuperEditorInspector.findDocumentSelection(),
@@ -520,20 +521,20 @@ spans multiple lines.''',
       );
 
       // Find the approximate position of the scrollbar thumb.
-      final startingDragLocation = tester.getTopRight(find.byType(SuperEditor)) + const Offset(-10, 10);
+      final thumbLocation = tester.getTopRight(find.byType(SuperEditor)) + const Offset(-10, 10);
 
+      // Hover to make the thumb visible with a duration long enough to run the fade in animation.
       final testPointer = TestPointer(1, PointerDeviceKind.mouse);
 
-      // Hover to make the thumb visible with a duration long enough to run the fade animation.
-      await tester.sendEventToBinding(testPointer.hover(startingDragLocation, timeStamp: const Duration(seconds: 1)));
+      await tester.sendEventToBinding(testPointer.hover(thumbLocation, timeStamp: const Duration(seconds: 1)));
       await tester.pumpAndSettle();
 
-      // Tap and hold the thumb.
-      await tester.sendEventToBinding(testPointer.down(startingDragLocation));
+      // Press the thumb.
+      await tester.sendEventToBinding(testPointer.down(thumbLocation));
       await tester.pump(kTapMinTime);
 
       // Move the thumb down.
-      await tester.sendEventToBinding(testPointer.move(startingDragLocation + const Offset(0, 300)));
+      await tester.sendEventToBinding(testPointer.move(thumbLocation + const Offset(0, 300)));
       await tester.pump();
 
       // Release the pointer.
@@ -541,7 +542,7 @@ spans multiple lines.''',
       await tester.pump();
 
       // Ensure the content scrolled down.
-      expect(scrollController.position.pixels, greaterThan(0));
+      expect(scrollController.position.pixels, moreOrLessEquals(770.0));
 
       // Ensure the selection didn't change.
       expect(
@@ -553,7 +554,7 @@ spans multiple lines.''',
       );
     });
 
-    testWidgetsOnDesktop('scrolls the content when dragging the scrollbar (upstream)', (tester) async {
+    testWidgetsOnDesktop('scrolls the content when dragging the scrollbar up', (tester) async {
       final scrollController = ScrollController();
       await tester //
           .createDocument()
@@ -562,7 +563,8 @@ spans multiple lines.''',
           .withScrollController(scrollController)
           .pump();
 
-      // Double tap to select "Lorem".
+      // Double tap to select "Lorem" to ensure the selection don't change
+      // when dragging the scrollbar.
       await tester.doubleTapInParagraph('1', 0);
       expect(
         SuperEditorInspector.findDocumentSelection(),
@@ -577,20 +579,20 @@ spans multiple lines.''',
       await tester.pump();
 
       // Find the approximate position of the scrollbar thumb.
-      final startingDragLocation = tester.getBottomRight(find.byType(SuperEditor)) - const Offset(10, 10);
+      final thumbLocation = tester.getBottomRight(find.byType(SuperEditor)) - const Offset(10, 10);
 
+      // Hover to make the thumb visible with a duration long enough to run the fade in animation.
       final testPointer = TestPointer(1, PointerDeviceKind.mouse);
 
-      // Hover to make the thumb visible with a duration long enough to run the fade animation.
-      await tester.sendEventToBinding(testPointer.hover(startingDragLocation, timeStamp: const Duration(seconds: 1)));
+      await tester.sendEventToBinding(testPointer.hover(thumbLocation, timeStamp: const Duration(seconds: 1)));
       await tester.pumpAndSettle();
 
-      // Tap and hold the thumb.
-      await tester.sendEventToBinding(testPointer.down(startingDragLocation));
+      // Press the thumb.
+      await tester.sendEventToBinding(testPointer.down(thumbLocation));
       await tester.pump(kTapMinTime);
 
       // Move the thumb up.
-      await tester.sendEventToBinding(testPointer.move(startingDragLocation - const Offset(0, 300)));
+      await tester.sendEventToBinding(testPointer.move(thumbLocation - const Offset(0, 300)));
       await tester.pump();
 
       // Release the pointer.
