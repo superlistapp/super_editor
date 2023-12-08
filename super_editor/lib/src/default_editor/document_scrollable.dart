@@ -212,6 +212,14 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     required Widget child,
   }) {
     final scrollBehavior = ScrollConfiguration.of(context);
+    // As we handle the scrolling gestures ourselves,
+    // we use NeverScrollableScrollPhysics to prevent SingleChildScrollView
+    // from scrolling. This also prevents the user from interacting
+    // with the scrollbar.
+    // We use a modified version of Flutter's Scrollbar that allows
+    // configuring it with a different scroll physics.
+    //
+    // See https://github.com/superlistapp/super_editor/issues/1628 for more details.
     return ScrollbarWithCustomPhysics(
       controller: _scrollController,
       physics: scrollBehavior.getScrollPhysics(context),
