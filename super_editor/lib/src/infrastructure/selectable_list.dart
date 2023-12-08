@@ -40,7 +40,7 @@ class ItemSelectionList<T> extends StatefulWidget {
   /// This method is called for each item in [items], to build its visual representation.
   ///
   /// The provided `onTap` must be called when the item is tapped.
-  final PopoverListItemBuilder<T> itemBuilder;
+  final SelectableListItemBuilder<T> itemBuilder;
 
   /// Called when the user activates an item on the popover list.
   ///
@@ -279,9 +279,4 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
 /// [isActive] is `true` if [item] is the currently active item on the list, or `false` otherwise.
 ///
 /// The provided [onTap] must be called when the button is tapped.
-typedef PopoverListItemBuilder<T> = Widget Function(BuildContext context, T item, bool isActive, VoidCallback onTap);
-
-/// Builds a button is an [ItemSelectionList].
-///
-/// The provided [onTap] must be called when the button is tapped.
-typedef PopoverListButtonBuilder<T> = Widget Function(BuildContext context, T? selectedItem, VoidCallback onTap);
+typedef SelectableListItemBuilder<T> = Widget Function(BuildContext context, T item, bool isActive, VoidCallback onTap);

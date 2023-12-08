@@ -28,7 +28,7 @@ class PopoverScaffold extends StatefulWidget {
     this.popoverGeometry = const PopoverGeometry(),
     this.popoverFocusNode,
     this.boundaryKey,
-    this.onTapOutside = closePopoverOnTapOutside,
+    this.onTapOutside = _PopoverScaffoldState.closePopoverOnTapOutside,
   });
 
   /// Shows and hides the popover.
@@ -72,6 +72,11 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
   final LeaderLink _popoverLink = LeaderLink();
 
   late FollowerBoundary _screenBoundary;
+
+  /// Closes the popover when tapping outside.
+  static void closePopoverOnTapOutside(PopoverController controller) {
+    controller.close();
+  }
 
   @override
   void initState() {
@@ -222,10 +227,10 @@ class PopoverGeometry {
   final BoxConstraints? constraints;
 }
 
-/// Closes the popover when tapping outside.
-void closePopoverOnTapOutside(PopoverController controller) {
-  controller.close();
-}
+/// A function to align a Widget following a leader Widget.
+///
+/// If a [boundaryKey] is given, the alignment must be within the bounds of its `RenderBox`.
+typedef PopoverAligner = FollowerAlignment Function(Rect globalLeaderRect, Size followerSize, GlobalKey? boundaryKey);
 
 /// Computes the position of a popover list relative to the dropdown button.
 ///
@@ -275,8 +280,3 @@ FollowerAlignment defaultPopoverAligner(Rect globalLeaderRect, Size followerSize
 
   return alignment;
 }
-
-/// A function to align a Widget following a leader Widget.
-///
-/// If a [boundaryKey] is given, the alignment must be within the bounds of its `RenderBox`.
-typedef PopoverAligner = FollowerAlignment Function(Rect globalLeaderRect, Size followerSize, GlobalKey? boundaryKey);
