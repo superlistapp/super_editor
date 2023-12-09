@@ -216,7 +216,6 @@ void main() {
                 ],
               ),
             )
-            .withInputSource(TextInputSource.ime)
             .pump();
 
         final superText = tester.widget<SuperText>(find.byType(SuperText));
@@ -227,6 +226,7 @@ void main() {
           Colors.orange,
         );
       });
+
       testWidgetsOnAllPlatforms("to partial text", (tester) async {
         await tester //
             .createDocument()
@@ -256,7 +256,6 @@ void main() {
                 ],
               ),
             )
-            .withInputSource(TextInputSource.ime)
             .pump();
 
         final superText = tester.widget<SuperText>(find.byType(SuperText));
