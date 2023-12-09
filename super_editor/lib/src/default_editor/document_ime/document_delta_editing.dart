@@ -67,6 +67,7 @@ class TextDeltasDocumentEditor {
       selection: selection.value != null
           ? _serializedDoc.documentToImeSelection(selection.value!)
           : const TextSelection.collapsed(offset: -1),
+      composing: _serializedDoc.documentToImeRange(_serializedDoc.composingRegion),
     );
 
     for (final delta in textEditingDeltas) {
@@ -163,6 +164,13 @@ class TextDeltasDocumentEditor {
       composingRegion.value,
       _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
     )..imeText = _previousImeValue.text;
+
+    // The delta's composing region is based on the content after insertion, so we
+    // apply the composing region here instead of during insertion operation above.
+    final insertionComposingRegion = _serializedDoc.imeToDocumentRange(delta.composing);
+    editor.execute([
+      ChangeComposingRegionRequest(insertionComposingRegion),
+    ]);
   }
 
   void _applyReplacement(TextEditingDeltaReplacement delta) {
@@ -206,6 +214,13 @@ class TextDeltasDocumentEditor {
       composingRegion.value,
       _serializedDoc.didPrependPlaceholder ? PrependedCharacterPolicy.include : PrependedCharacterPolicy.exclude,
     )..imeText = _previousImeValue.text;
+
+    // The delta's composing region is based on the content after insertion, so we
+    // apply the composing region here instead of during the replacement operation above.
+    final insertionComposingRegion = _serializedDoc.imeToDocumentRange(delta.composing);
+    editor.execute([
+      ChangeComposingRegionRequest(insertionComposingRegion),
+    ]);
   }
 
   void _applyDeletion(TextEditingDeltaDeletion delta) {
@@ -230,6 +245,7 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine("OS-side composing - ${delta.composing}");
 
     final docSelection = _serializedDoc.imeToDocumentSelection(delta.selection);
+    final docComposingRegion = _serializedDoc.imeToDocumentRange(delta.composing);
     if (docSelection != null) {
       // We got a selection from the platform.
       // This could happen in some software keyboards, like GBoard,
@@ -240,6 +256,7 @@ class TextDeltasDocumentEditor {
           docSelection.isCollapsed ? SelectionChangeType.placeCaret : SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
+        ChangeComposingRegionRequest(docComposingRegion),
       ]);
     }
 
