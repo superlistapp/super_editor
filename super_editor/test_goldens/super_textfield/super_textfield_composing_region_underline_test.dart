@@ -31,6 +31,7 @@ Future<void> _composingRegionIsUnderlined(WidgetTester tester) async {
   await tester.pumpAndSettle();
 
   // Ensure the composing region is underlined.
+  // TODO: bring back the following golden matcher when we figure out why these tests are failing in CI but not in Docker.
   // await screenMatchesGolden(
   //     tester, "super-text-field_composing-region-shows-underline_${defaultTargetPlatform.name}_1");
   await expectLater(
