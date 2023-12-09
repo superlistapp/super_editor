@@ -16,6 +16,7 @@ import 'package:super_editor/src/default_editor/debug_visualization.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
+import 'package:super_editor/src/default_editor/layout_single_column/_styler_composing_region.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -504,6 +505,10 @@ class SuperEditorState extends State<SuperEditor> {
       selectedTextColorStrategy: widget.stylesheet.selectedTextColorStrategy,
     );
 
+    final showComposingUnderline = defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.android;
+
     _docLayoutPresenter = SingleColumnLayoutPresenter(
       document: document,
       componentBuilders: widget.componentBuilders,
@@ -511,6 +516,12 @@ class SuperEditorState extends State<SuperEditor> {
         _docStylesheetStyler,
         _docLayoutPerComponentBlockStyler,
         ...widget.customStylePhases,
+        if (showComposingUnderline)
+          SingleColumnLayoutComposingRegionStyler(
+            document: document,
+            composingRegion: editContext.composer.composingRegion,
+            showComposingUnderline: true,
+          ),
         // Selection changes are very volatile. Put that phase last
         // to minimize view model recalculations.
         _docLayoutSelectionStyler,

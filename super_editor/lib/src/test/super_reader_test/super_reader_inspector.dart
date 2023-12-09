@@ -116,12 +116,12 @@ class SuperReaderInspector {
     final documentLayout = _findDocumentLayout(superDocumentFinder);
 
     final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
-    final superTextWithSelection = find
-        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperTextWithSelection))
+    final superText = find
+        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
         .evaluate()
         .single
-        .widget as SuperTextWithSelection;
-    return superTextWithSelection.richText.style;
+        .widget as SuperText;
+    return superText.richText.style;
   }
 
   /// Returns the [DocumentNode] at given the [index].

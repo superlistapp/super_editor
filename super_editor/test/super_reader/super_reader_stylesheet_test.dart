@@ -37,7 +37,7 @@ void main() {
 }
 
 Finder _findTextWithAlignment(TextAlign textAlign) =>
-    find.byWidgetPredicate((widget) => (widget is SuperTextWithSelection) && widget.textAlign == textAlign);
+    find.byWidgetPredicate((widget) => (widget is SuperText) && widget.textAlign == textAlign);
 
 Future<void> _pumpReader(
   WidgetTester tester, {

@@ -12,10 +12,10 @@ final _log = scrollingTextFieldLog;
 
 /// A scrollable that positions its [child] based on text metrics.
 ///
-/// The [child] must contain a [SuperTextWithSelection] in its tree,
-/// [textKey] must refer to that [SuperTextWithSelection], and the
+/// The [child] must contain a [SuperText] in its tree,
+/// [textKey] must refer to that [SuperText], and the
 /// dimensions of the [child] subtree should match the dimensions
-/// of the [SuperTextWithSelection] so that there are no surprises
+/// of the [SuperText] so that there are no surprises
 /// when the scroll offset is configured based on where a given
 /// character appears in the [child] layout.
 ///
@@ -897,9 +897,9 @@ enum _AutoScrollDirection {
 /// Sizes the [child] so its height falls within [minLines] and [maxLines], multiplied by the
 /// given [lineHeight].
 ///
-/// The [child] must contain a [SuperTextWithSelection] in its tree,
+/// The [child] must contain a [SuperText] in its tree,
 /// and the dimensions of the [child] subtree should match the dimensions
-/// of the [SuperTextWithSelection]. The given [textKey] must be bound to the [SuperTextWithSelection]
+/// of the [SuperText]. The given [textKey] must be bound to the [SuperText]
 /// within the [child]'s subtree.
 class _TextLinesLimiter extends SingleChildRenderObjectWidget {
   const _TextLinesLimiter({
@@ -911,7 +911,7 @@ class _TextLinesLimiter extends SingleChildRenderObjectWidget {
     required super.child,
   });
 
-  /// [GlobalKey] that references the [SuperTextWithSelection] within the [child]'s subtree.
+  /// [GlobalKey] that references the [SuperText] within the [child]'s subtree.
   final GlobalKey<ProseTextState> textKey;
 
   /// The minimum height of this text scroll view, represented as a

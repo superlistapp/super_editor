@@ -19,6 +19,9 @@ void main() {
             .createDocument() //
             .fromMarkdown("This is some text to select.") //
             .useAppTheme(ThemeData(primaryColor: Colors.red)) //
+            // Don't build a floating toolbar. It's a distraction for the details we care to verify.
+            .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
+            .withAndroidToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .pump();
         final nodeId = testContext.findEditContext().document.nodes.first.id;
 
@@ -35,6 +38,9 @@ void main() {
             .createDocument() //
             .fromMarkdown("This is some text to select.") //
             .useAppTheme(ThemeData(primaryColor: Colors.red)) //
+            // Don't build a floating toolbar. It's a distraction for the details we care to verify.
+            .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
+            .withAndroidToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .pump();
         final nodeId = testContext.findEditContext().document.nodes.first.id;
 
@@ -51,6 +57,9 @@ void main() {
             .createDocument() //
             .fromMarkdown("This is some text to select.") //
             .useAppTheme(ThemeData(primaryColor: Colors.red)) //
+            // Don't build a floating toolbar. It's a distraction for the details we care to verify.
+            .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
+            .withAndroidToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .pump();
         final nodeId = testContext.findEditContext().document.nodes.first.id;
 
@@ -67,6 +76,9 @@ void main() {
             .createDocument() //
             .fromMarkdown("This is some text to select.") //
             .useAppTheme(ThemeData(primaryColor: Colors.red)) //
+            // Don't build a floating toolbar. It's a distraction for the details we care to verify.
+            .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
+            .withAndroidToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .pump();
         final nodeId = testContext.findEditContext().document.nodes.first.id;
 
@@ -281,10 +293,10 @@ void main() {
             await tester.doubleTapAt(
               docBox.localToGlobal(characterBoxStart.center),
             );
-
             await tester.pumpAndSettle();
 
-            final handleFinder = find.byType(AndroidSelectionHandle);
+            // final handleFinder = find.byType(AndroidSelectionHandle);
+            final handleFinder = find.byKey(DocumentKeys.upstreamHandle);
             final handleBox = handleFinder.evaluate().first.renderObject as RenderBox;
             final handleRectGlobal = Rect.fromPoints(
               handleBox.localToGlobal(Offset.zero),
@@ -300,6 +312,9 @@ void main() {
 
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
+            // FIXME: This is failing at least as of Dec, 2023 because the handle offset
+            //        lookup is wrong, probably due to the Follower not correctly reporting
+            //        offsets to descendants.
             expect(
               SuperEditorInspector.findDocumentSelection(),
               const DocumentSelection(
@@ -858,6 +873,7 @@ Future<void> _runParagraphSelectionTest(
       ))
       // Don't build a floating toolbar. It's a distraction for the details we care to verify.
       .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
+      .withAndroidToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
       .withCustomWidgetTreeBuilder(
     (superEditor) {
       return _buildScaffold(

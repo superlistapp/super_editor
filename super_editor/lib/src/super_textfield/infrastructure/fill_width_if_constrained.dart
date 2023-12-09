@@ -6,7 +6,7 @@ import 'package:flutter/rendering.dart';
 /// is sized by its intrinsic width.
 ///
 /// This widget is used to correctly align the text of a multiline
-/// [SuperTextWithSelection] with a constrained width.
+/// [SuperText] with a constrained width.
 class FillWidthIfConstrained extends SingleChildRenderObjectWidget {
   const FillWidthIfConstrained({
     required Widget child,

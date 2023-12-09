@@ -249,8 +249,8 @@ InlineSpan _findSpanAtOffset(
   WidgetTester tester, {
   required int offset,
 }) {
-  final superTextWithSelection = tester.widget<SuperTextWithSelection>(find.byType(SuperTextWithSelection));
-  return superTextWithSelection.richText.getSpanForPosition(TextPosition(offset: offset))!;
+  final superText = tester.widget<SuperText>(find.byType(SuperText));
+  return superText.richText.getSpanForPosition(TextPosition(offset: offset))!;
 }
 
 final _stylesheetWithNodePositionRule = Stylesheet(

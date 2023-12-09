@@ -6,6 +6,23 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 
+/// Runs one golden test for every platform, e.g., Android, iOS, Web, Mac, Windows, Linux.
+///
+/// It's the job of the test implementation to include the platform name in the golden
+/// file name - if this is not done, all tests will overwrite the same golden file(s).
+@isTest
+void testGoldensOnAllPlatforms(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+}) {
+  testGoldensOnAndroid(description, test, skip: skip);
+  testGoldensOniOS(description, test, skip: skip);
+  testGoldensOnMac(description, test, skip: skip);
+  testGoldensOnWindows(description, test, skip: skip);
+  testGoldensOnLinux(description, test, skip: skip);
+}
+
 /// A golden test that configures itself as a Android platform before executing the
 /// given [test], and nullifies the Android configuration when the test is done.
 @isTest

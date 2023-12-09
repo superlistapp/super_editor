@@ -523,8 +523,9 @@ void main() {
         //  - node change event: node 1
         //  - node inserted event
         //  - selection change event
+        //  - composing region change event
         //  - submit paragraph intention: end
-        expect(changeEventCount, 5);
+        expect(changeEventCount, 6);
       });
 
       test('moves a document node to a higher index', () {

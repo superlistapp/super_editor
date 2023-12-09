@@ -66,6 +66,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.inputSource = TextInputSource.keyboard,
     this.textInputAction,
     this.imeConfiguration,
+    this.showComposingUnderline,
     this.selectorHandlers,
     List<TextFieldKeyboardHandler>? keyboardHandlers,
   })  : keyboardHandlers = keyboardHandlers ??
@@ -141,6 +142,10 @@ class SuperDesktopTextField extends StatefulWidget {
 
   /// Preferences for how the platform IME should look and behave during editing.
   final TextInputConfiguration? imeConfiguration;
+
+  /// Whether to show an underline beneath the text in the composing region, or `null`
+  /// to let [SuperDesktopTextField] decide when to show the underline.
+  final bool? showComposingUnderline;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
@@ -347,6 +352,9 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     return _estimatedLineHeight.calculate(defaultStyle, _textScaler);
   }
 
+  bool get _shouldShowComposingUnderline =>
+      widget.showComposingUnderline ?? defaultTargetPlatform == TargetPlatform.macOS;
+
   @override
   Widget build(BuildContext context) {
     if (_textKey.currentContext == null) {
@@ -448,18 +456,50 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   Widget _buildSelectableText() {
     return FillWidthIfConstrained(
-      child: SuperTextWithSelection.single(
+      child: SuperText(
         key: _textKey,
         richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
         textAlign: widget.textAlign,
         textScaler: _textScaler,
-        userSelection: UserSelection(
-          highlightStyle: widget.selectionHighlightStyle,
-          caretStyle: widget.caretStyle,
-          selection: _controller.selection,
-          hasCaret: _focusNode.hasFocus,
-          blinkTimingMode: widget.blinkTimingMode,
-        ),
+        layerBeneathBuilder: (context, textLayout) {
+          return Stack(
+            children: [
+              if (widget.textController?.selection.isValid == true)
+                // Selection highlight beneath the text.
+                TextLayoutSelectionHighlight(
+                  textLayout: textLayout,
+                  style: widget.selectionHighlightStyle,
+                  selection: widget.textController?.selection,
+                ),
+              // Underline beneath the composing region.
+              if (widget.textController?.composingRegion.isValid == true && _shouldShowComposingUnderline)
+                TextUnderlineLayer(
+                  textLayout: textLayout,
+                  underlines: [
+                    TextLayoutUnderline(
+                      style: UnderlineStyle(
+                        color: widget.textStyleBuilder({}).color ?? //
+                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                      ),
+                      range: widget.textController!.composingRegion,
+                    ),
+                  ],
+                ),
+            ],
+          );
+        },
+        layerAboveBuilder: (context, textLayout) {
+          if (!_focusNode.hasFocus) {
+            return const SizedBox();
+          }
+
+          return TextLayoutCaret(
+            textLayout: textLayout,
+            style: widget.caretStyle,
+            position: _controller.selection.extent,
+            blinkTimingMode: widget.blinkTimingMode,
+          );
+        },
       ),
     );
   }
