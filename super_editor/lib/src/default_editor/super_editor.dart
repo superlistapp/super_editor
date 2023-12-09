@@ -325,7 +325,6 @@ class SuperEditorState extends State<SuperEditor> {
   late SingleColumnStylesheetStyler _docStylesheetStyler;
   late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
   late SingleColumnLayoutSelectionStyler _docLayoutSelectionStyler;
-  late SingleColumnLayoutComposingRegionStyler _docLayoutComposingRegionStyler;
 
   @visibleForTesting
   FocusNode get focusNode => _focusNode;
@@ -506,13 +505,9 @@ class SuperEditorState extends State<SuperEditor> {
       selectedTextColorStrategy: widget.stylesheet.selectedTextColorStrategy,
     );
 
-    _docLayoutComposingRegionStyler = SingleColumnLayoutComposingRegionStyler(
-      document: document,
-      composingRegion: editContext.composer.composingRegion,
-      showComposingUnderline: defaultTargetPlatform == TargetPlatform.macOS ||
-          defaultTargetPlatform == TargetPlatform.iOS ||
-          defaultTargetPlatform == TargetPlatform.android,
-    );
+    final showComposingUnderline = defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.android;
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
       document: document,
@@ -521,7 +516,12 @@ class SuperEditorState extends State<SuperEditor> {
         _docStylesheetStyler,
         _docLayoutPerComponentBlockStyler,
         ...widget.customStylePhases,
-        _docLayoutComposingRegionStyler,
+        if (showComposingUnderline)
+          SingleColumnLayoutComposingRegionStyler(
+            document: document,
+            composingRegion: editContext.composer.composingRegion,
+            showComposingUnderline: true,
+          ),
         // Selection changes are very volatile. Put that phase last
         // to minimize view model recalculations.
         _docLayoutSelectionStyler,
