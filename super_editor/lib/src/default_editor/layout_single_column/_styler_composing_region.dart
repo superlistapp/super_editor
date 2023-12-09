@@ -98,7 +98,6 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
 
     // TODO: instead of reporting the composing region to the view model, have the view model
     //       take a collection of underlines with underline styles.
-    final componentTextColor = viewModel.textStyleBuilder({}).color;
     viewModel
       ..composingRegion = textComposingRegion
       ..showComposingUnderline = true;
@@ -151,8 +150,6 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
       return _DocumentNodeSelection(
         nodeId: node.id,
         nodeSelection: nodeSelection,
-        isBase: true,
-        isExtent: true,
       );
     } else {
       // Log all the selected nodes.
@@ -179,9 +176,6 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
             base: isBase ? documentRange.start.nodePosition : node.endPosition,
             extent: isBase ? node.endPosition : documentRange.end.nodePosition,
           ),
-          isBase: isBase,
-          isExtent: !isBase,
-          highlightWhenEmpty: isBase,
         );
       } else if (selectedNodes.last.id == node.id) {
         editorStyleLog.finer(' - this is the last node in the selection');
@@ -195,9 +189,6 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
             base: isBase ? node.beginningPosition : node.beginningPosition,
             extent: isBase ? documentRange.start.nodePosition : documentRange.end.nodePosition,
           ),
-          isBase: isBase,
-          isExtent: !isBase,
-          highlightWhenEmpty: isBase,
         );
       } else {
         editorStyleLog.finer(' - this node is fully selected within the selection');
@@ -209,7 +200,6 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
             base: node.beginningPosition,
             extent: node.endPosition,
           ),
-          highlightWhenEmpty: true,
         );
       }
     }
@@ -230,9 +220,6 @@ class _DocumentNodeSelection<SelectionType extends NodeSelection> {
   _DocumentNodeSelection({
     required this.nodeId,
     required this.nodeSelection,
-    this.isBase = false,
-    this.isExtent = false,
-    this.highlightWhenEmpty = false,
   });
 
   /// The ID of the node that's selected.
@@ -240,27 +227,6 @@ class _DocumentNodeSelection<SelectionType extends NodeSelection> {
 
   /// The selection within the given node.
   final SelectionType? nodeSelection;
-
-  /// Whether this [_DocumentNodeSelection] forms the base position of a larger
-  /// document selection, `false` otherwise.
-  ///
-  /// [isBase] is `true` iff [nodeId] is the same as [DocumentSelection.base.nodeId].
-  final bool isBase;
-
-  /// Whether this [_DocumentNodeSelection] forms the extent position of a
-  /// larger document selection, `false` otherwise.
-  ///
-  /// [isExtent] is `true` iff [nodeId] is the same as [DocumentSelection.extent.nodeId].
-  final bool isExtent;
-
-  /// Whether the component rendering this [_DocumentNodeSelection] should
-  /// paint a highlight even when the given node has no content, `false`
-  /// otherwise.
-  ///
-  /// For example: the user selects across multiple paragraphs. One of those
-  /// inner paragraphs is empty. We want to paint a small highlight where that
-  /// empty paragraph sits.
-  final bool highlightWhenEmpty;
 
   @override
   bool operator ==(Object other) =>
