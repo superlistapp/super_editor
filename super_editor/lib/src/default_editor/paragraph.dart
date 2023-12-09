@@ -105,6 +105,8 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       textSelection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
+      composingRegion: componentViewModel.composingRegion,
+      showComposingUnderline: componentViewModel.showComposingUnderline,
     );
   }
 }
@@ -122,6 +124,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
+    this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   Attribution? blockType;
@@ -140,6 +144,10 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
+  @override
+  TextRange? composingRegion;
+  @override
+  bool showComposingUnderline;
 
   @override
   ParagraphComponentViewModel copy() {
@@ -155,6 +163,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
+      composingRegion: composingRegion,
+      showComposingUnderline: showComposingUnderline,
     );
   }
 
@@ -171,7 +181,9 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           textAlignment == other.textAlignment &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+          highlightWhenEmpty == other.highlightWhenEmpty &&
+          composingRegion == other.composingRegion &&
+          showComposingUnderline == other.showComposingUnderline;
 
   @override
   int get hashCode =>
@@ -183,7 +195,9 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       textAlignment.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+      highlightWhenEmpty.hashCode ^
+      composingRegion.hashCode ^
+      showComposingUnderline.hashCode;
 }
 
 class ChangeParagraphBlockTypeRequest implements EditRequest {
@@ -456,10 +470,12 @@ class SplitParagraphCommand implements EditCommand {
       SelectionChangeEvent(
         oldSelection: oldSelection,
         newSelection: newSelection,
-        oldComposingRegion: oldComposingRegion,
-        newComposingRegion: null,
         changeType: SelectionChangeType.insertContent,
         reason: SelectionReason.userInteraction,
+      ),
+      ComposingRegionChangeEvent(
+        oldComposingRegion: oldComposingRegion,
+        newComposingRegion: null,
       ),
     ];
 

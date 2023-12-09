@@ -373,6 +373,12 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   bool get highlightWhenEmpty;
   set highlightWhenEmpty(bool highlight);
 
+  TextRange? get composingRegion;
+  set composingRegion(TextRange? composingRegion);
+
+  bool get showComposingUnderline;
+  set showComposingUnderline(bool showComposingUnderline);
+
   @override
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
@@ -405,6 +411,8 @@ class TextWithHintComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
+    this.showComposingUnderline = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -418,6 +426,8 @@ class TextWithHintComponent extends StatefulWidget {
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool highlightWhenEmpty;
+  final TextRange? composingRegion;
+  final bool showComposingUnderline;
   final bool showDebugPaint;
 
   @override
@@ -466,6 +476,8 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
           textSelection: widget.textSelection,
           selectionColor: widget.selectionColor,
           highlightWhenEmpty: widget.highlightWhenEmpty,
+          composingRegion: widget.composingRegion,
+          showComposingUnderline: widget.showComposingUnderline,
           showDebugPaint: widget.showDebugPaint,
         ),
       ],
@@ -488,23 +500,43 @@ class TextComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
+    this.showComposingUnderline = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
   final AttributedText text;
+
   final TextAlign? textAlign;
+
   final TextDirection? textDirection;
-  final AttributionStyleBuilder textStyleBuilder;
-  final Map<String, dynamic> metadata;
-  final TextSelection? textSelection;
-  final Color selectionColor;
-  final bool highlightWhenEmpty;
-  final bool showDebugPaint;
 
   /// The text scaling policy.
   ///
   /// Defaults to `MediaQuery.textScalerOf()`.
   final TextScaler? textScaler;
+
+  final AttributionStyleBuilder textStyleBuilder;
+
+  final Map<String, dynamic> metadata;
+
+  final TextSelection? textSelection;
+
+  final Color selectionColor;
+
+  final bool highlightWhenEmpty;
+
+  /// The span of text that's currently sitting in the IME's composing region,
+  /// which is underlined by this component.
+  final TextRange? composingRegion;
+
+  /// Whether to underline the [composingRegion].
+  ///
+  /// Showing the underline is optional because the behavior differs between
+  /// platforms, e.g., Mac shows an underline but Windows and Linux don't.
+  final bool showComposingUnderline;
+
+  final bool showDebugPaint;
 
   @override
   TextComponentState createState() => TextComponentState();
@@ -525,9 +557,6 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
     //       API for nearest position and then let clients pick the one that's
     //       right for them.
     final textPosition = textLayout.getPositionNearestToOffset(localOffset);
-    // if (textPosition == null) {
-    //   return null;
-    // }
 
     return TextNodePosition.fromTextPosition(textPosition);
   }
@@ -910,20 +939,48 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
 
     return IgnorePointer(
-      child: SuperTextWithSelection.single(
+      child: SuperText(
         key: _textKey,
         richText: widget.text.computeTextSpan(_textStyleWithBlockType),
         textAlign: widget.textAlign ?? TextAlign.left,
         textDirection: widget.textDirection ?? TextDirection.ltr,
         textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
-        userSelection: UserSelection(
-          highlightStyle: SelectionHighlightStyle(
-            color: widget.selectionColor,
-          ),
-          selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
-          highlightWhenEmpty: widget.highlightWhenEmpty,
-          hasCaret: false,
-        ),
+        layerBeneathBuilder: (context, textLayout) {
+          return Stack(
+            children: [
+              // Selection highlight beneath the text.
+              if (widget.text.length > 0)
+                TextLayoutSelectionHighlight(
+                  textLayout: textLayout,
+                  style: SelectionHighlightStyle(
+                    color: widget.selectionColor,
+                  ),
+                  selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
+                )
+              else if (widget.highlightWhenEmpty)
+                TextLayoutEmptyHighlight(
+                  textLayout: textLayout,
+                  style: SelectionHighlightStyle(
+                    color: widget.selectionColor,
+                  ),
+                ),
+              // Underline beneath the composing region.
+              if (widget.composingRegion != null)
+                TextUnderlineLayer(
+                  textLayout: textLayout,
+                  underlines: [
+                    TextLayoutUnderline(
+                      style: UnderlineStyle(
+                        color: widget.textStyleBuilder({}).color ?? //
+                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                      ),
+                      range: widget.composingRegion!,
+                    ),
+                  ],
+                ),
+            ],
+          );
+        },
       ),
     );
   }
