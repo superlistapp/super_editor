@@ -1376,63 +1376,38 @@ class SuperEditorIosToolbarOverlayManager extends StatefulWidget {
 
 @visibleForTesting
 class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolbarOverlayManager> {
+  final OverlayPortalController _overlayPortalController = OverlayPortalController();
   SuperEditorIosControlsController? _controlsController;
-  OverlayEntry? _toolbarOverlayEntry;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     _controlsController = SuperEditorIosControlsScope.rootOf(context);
-
-    // Add our overlay on the next frame. If we did it immediately, it would
-    // cause a setState() to be called during didChangeDependencies, which is
-    // a framework violation.
-    onNextFrame((timeStamp) {
-      _addToolbarOverlay();
-    });
-  }
-
-  @override
-  void dispose() {
-    _removeToolbarOverlay();
-    super.dispose();
+    _overlayPortalController.show();
   }
 
   @visibleForTesting
   bool get wantsToDisplayToolbar => _controlsController!.shouldShowToolbar.value;
 
-  void _addToolbarOverlay() {
-    if (_toolbarOverlayEntry != null) {
-      return;
-    }
-
-    _toolbarOverlayEntry = OverlayEntry(builder: (overlayContext) {
-      return IosFloatingToolbarOverlay(
-        shouldShowToolbar: _controlsController!.shouldShowToolbar,
-        toolbarFocalPoint: _controlsController!.toolbarFocalPoint,
-        floatingToolbarBuilder:
-            _controlsController!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
-        createOverlayControlsClipper: _controlsController!.createOverlayControlsClipper,
-        showDebugPaint: false,
-      );
-    });
-
-    Overlay.of(context).insert(_toolbarOverlayEntry!);
-  }
-
-  void _removeToolbarOverlay() {
-    if (_toolbarOverlayEntry == null) {
-      return;
-    }
-
-    _toolbarOverlayEntry!.remove();
-    _toolbarOverlayEntry = null;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return widget.child ?? const SizedBox();
+    return OverlayPortal(
+      controller: _overlayPortalController,
+      overlayChildBuilder: _buildToolbar,
+      child: widget.child ?? const SizedBox(),
+    );
+  }
+
+  Widget _buildToolbar(BuildContext context) {
+    return IosFloatingToolbarOverlay(
+      shouldShowToolbar: _controlsController!.shouldShowToolbar,
+      toolbarFocalPoint: _controlsController!.toolbarFocalPoint,
+      floatingToolbarBuilder:
+          _controlsController!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
+      createOverlayControlsClipper: _controlsController!.createOverlayControlsClipper,
+      showDebugPaint: false,
+    );
   }
 }
 
@@ -1452,61 +1427,30 @@ class SuperEditorIosMagnifierOverlayManager extends StatefulWidget {
 
 @visibleForTesting
 class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMagnifierOverlayManager> {
+  final OverlayPortalController _overlayPortalController = OverlayPortalController();
   SuperEditorIosControlsController? _controlsController;
-  OverlayEntry? _magnifierOverlayEntry;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Add our overlay on the next frame. If we did it immediately, it would
-    // cause a setState() to be called during didChangeDependencies, which is
-    // a framework violation.
-    onNextFrame((timeStamp) {
-      _addMagnifierOverlay();
-    });
-  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     _controlsController = SuperEditorIosControlsScope.rootOf(context);
-  }
-
-  @override
-  void dispose() {
-    _removeMagnifierOverlay();
-    super.dispose();
+    _overlayPortalController.show();
   }
 
   @visibleForTesting
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
-  void _addMagnifierOverlay() {
-    if (_magnifierOverlayEntry != null) {
-      return;
-    }
-
-    _magnifierOverlayEntry = OverlayEntry(builder: (_) => _buildMagnifier());
-    Overlay.of(context).insert(_magnifierOverlayEntry!);
-  }
-
-  void _removeMagnifierOverlay() {
-    if (_magnifierOverlayEntry == null) {
-      return;
-    }
-
-    _magnifierOverlayEntry!.remove();
-    _magnifierOverlayEntry = null;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return widget.child ?? const SizedBox();
+    return OverlayPortal(
+      controller: _overlayPortalController,
+      overlayChildBuilder: _buildMagnifier,
+      child: widget.child ?? const SizedBox(),
+    );
   }
 
-  Widget _buildMagnifier() {
+  Widget _buildMagnifier(BuildContext context) {
     // Display a magnifier that tracks a focal point.
     //
     // When the user is dragging an overlay handle, SuperEditor
