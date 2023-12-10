@@ -61,6 +61,26 @@ extension SuperEditorRobot on WidgetTester {
     return await startGesture(globalTapOffset);
   }
 
+  Future<TestGesture> doubleTapDownInParagraph(
+    String nodeId,
+    int offset, {
+    TextAffinity affinity = TextAffinity.downstream,
+    Finder? superEditorFinder,
+  }) async {
+    // Calculate the global tap position based on the TextLayout and desired TextPosition.
+    final globalTapOffset = _findGlobalOffsetForTextPosition(nodeId, offset, affinity, superEditorFinder);
+
+    final gesture = await startGesture(globalTapOffset);
+    await gesture.up();
+    await pump(kTapMinTime + const Duration(milliseconds: 1));
+
+    await gesture.down(globalTapOffset);
+    await pump(kTapMinTime + const Duration(milliseconds: 1));
+    await pump();
+
+    return gesture;
+  }
+
   /// Simulates a long-press at the given text [offset] within the paragraph
   /// with the given [nodeId].
   Future<void> longPressInParagraph(

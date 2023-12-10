@@ -180,7 +180,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
     if (tracker == null && _firstTap != null && _firstTap!.pointer == pointer) {
       tracker = _firstTap;
     }
-    // If tracker is still null, check if this is the first tap tracker
+    // If tracker is still null, check if this is the second tap tracker
     if (tracker == null && _secondTap != null && _secondTap!.pointer == pointer) {
       tracker = _secondTap;
     }
@@ -191,6 +191,10 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
   }
 
   void _reject(_TapTracker tracker) {
+    if (!_trackers.containsKey(tracker.pointer)) {
+      return;
+    }
+
     _trackers.remove(tracker.pointer);
     tracker.entry.resolve(GestureDisposition.rejected);
     _freezeTracker(tracker);
