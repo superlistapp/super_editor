@@ -14,6 +14,7 @@ TextStyle defaultTextFieldStyleBuilder(Set<Attribution> attributions) {
   TextStyle newStyle = const TextStyle(
     fontSize: 16,
     height: 1,
+    color: Colors.black,
   );
 
   for (final attribution in attributions) {
@@ -36,6 +37,10 @@ TextStyle defaultTextFieldStyleBuilder(Set<Attribution> attributions) {
         decoration: newStyle.decoration == null
             ? TextDecoration.lineThrough
             : TextDecoration.combine([TextDecoration.lineThrough, newStyle.decoration!]),
+      );
+    } else if (attribution is ColorAttribution) {
+      newStyle = newStyle.copyWith(
+        color: attribution.color,
       );
     } else if (attribution is LinkAttribution) {
       newStyle = newStyle.copyWith(
