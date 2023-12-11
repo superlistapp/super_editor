@@ -11,6 +11,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
+import 'package:super_editor/src/infrastructure/flutter/material_scrollbar.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_input_configuration.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
@@ -373,46 +374,58 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       groupId: widget.tapRegionGroupId,
       child: _buildTextInputSystem(
         isMultiline: isMultiline,
-        child: SuperTextFieldGestureInteractor(
-          focusNode: _focusNode,
-          textController: _controller,
-          textKey: _textKey,
-          textScrollKey: _textScrollKey,
-          isMultiline: isMultiline,
-          onRightClick: widget.onRightClick,
-          child: MultiListenableBuilder(
-            listenables: {
-              _focusNode,
-              _controller,
-            },
-            builder: (context) {
-              final isTextEmpty = _controller.text.text.isEmpty;
-              final showHint = widget.hintBuilder != null &&
-                  ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                      (isTextEmpty &&
-                          !_focusNode.hasFocus &&
-                          widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+        // As we handle the scrolling gestures ourselves,
+        // we use NeverScrollableScrollPhysics to prevent SingleChildScrollView
+        // from scrolling. This also prevents the user from interacting
+        // with the scrollbar.
+        // We use a modified version of Flutter's Scrollbar that allows
+        // configuring it with a different scroll physics.
+        //
+        // See https://github.com/superlistapp/super_editor/issues/1628 for more details.
+        child: ScrollbarWithCustomPhysics(
+          controller: _scrollController,
+          physics: ScrollConfiguration.of(context).getScrollPhysics(context),
+          child: SuperTextFieldGestureInteractor(
+            focusNode: _focusNode,
+            textController: _controller,
+            textKey: _textKey,
+            textScrollKey: _textScrollKey,
+            isMultiline: isMultiline,
+            onRightClick: widget.onRightClick,
+            child: MultiListenableBuilder(
+              listenables: {
+                _focusNode,
+                _controller,
+              },
+              builder: (context) {
+                final isTextEmpty = _controller.text.text.isEmpty;
+                final showHint = widget.hintBuilder != null &&
+                    ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                        (isTextEmpty &&
+                            !_focusNode.hasFocus &&
+                            widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-              return _buildDecoration(
-                child: SuperTextFieldScrollview(
-                  key: _textScrollKey,
-                  textKey: _textKey,
-                  textController: _controller,
-                  textAlign: widget.textAlign,
-                  scrollController: _scrollController,
-                  viewportHeight: _viewportHeight,
-                  estimatedLineHeight: _getEstimatedLineHeight(),
-                  padding: widget.padding,
-                  isMultiline: isMultiline,
-                  child: Stack(
-                    children: [
-                      if (showHint) widget.hintBuilder!(context),
-                      _buildSelectableText(),
-                    ],
+                return _buildDecoration(
+                  child: SuperTextFieldScrollview(
+                    key: _textScrollKey,
+                    textKey: _textKey,
+                    textController: _controller,
+                    textAlign: widget.textAlign,
+                    scrollController: _scrollController,
+                    viewportHeight: _viewportHeight,
+                    estimatedLineHeight: _getEstimatedLineHeight(),
+                    padding: widget.padding,
+                    isMultiline: isMultiline,
+                    child: Stack(
+                      children: [
+                        if (showHint) widget.hintBuilder!(context),
+                        _buildSelectableText(),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -572,6 +585,9 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   final _dragGutterExtent = 24;
   final _maxDragSpeed = 20;
 
+  /// Holds which kind of device started a pan gesture, e.g., a mouse or a trackpad.
+  PointerDeviceKind? _panGestureDevice;
+
   ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
 
   SuperTextFieldScrollviewState get _textScroll => widget.textScrollKey.currentState!;
@@ -651,6 +667,14 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onPanStart(DragStartDetails details) {
+    _panGestureDevice = details.kind;
+
+    if (_panGestureDevice == PointerDeviceKind.trackpad) {
+      // After flutter 3.3, dragging with two fingers on a trackpad triggers a pan gesture.
+      // This gesture should scroll the content and keep the selection unchanged.
+      return;
+    }
+
     _log.fine("User started pan");
     _dragStartInViewport = details.localPosition;
     _dragStartInText = _getTextOffset(_dragStartInViewport!);
@@ -662,6 +686,17 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
   void _onPanUpdate(DragUpdateDetails details) {
     _log.finer("User moved during pan");
+
+    if (_panGestureDevice == PointerDeviceKind.trackpad) {
+      // The user dragged using two fingers on a trackpad.
+      // Scroll the content and keep the selection unchanged.
+      // We multiply by -1 because the scroll should be in the opposite
+      // direction of the drag, e.g., dragging up on a trackpad scrolls
+      // the content to downstream direction.
+      _scrollVertically(details.delta.dy * -1);
+      return;
+    }
+
     setState(() {
       _dragEndInViewport = details.localPosition;
       _dragEndInText = _getTextOffset(_dragEndInViewport!);
@@ -675,6 +710,14 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
   void _onPanEnd(DragEndDetails details) {
     _log.finer("User ended a pan");
+
+    if (_panGestureDevice == PointerDeviceKind.trackpad) {
+      // The user ended a pan gesture with two fingers on a trackpad.
+      // We already scrolled the document.
+      _textScroll.goBallistic(-details.velocity.pixelsPerSecond.dy);
+      return;
+    }
+
     setState(() {
       _dragStartInText = null;
       _dragEndInText = null;
@@ -762,12 +805,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   /// form of mouse scrolling.
   void _onPointerSignal(PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
-      // TODO: remove access to _textScroll.widget
-      final newScrollOffset = (_textScroll.widget.scrollController.offset + event.scrollDelta.dy)
-          .clamp(0.0, _textScroll.widget.scrollController.position.maxScrollExtent);
-      _textScroll.widget.scrollController.jumpTo(newScrollOffset);
-
-      _updateDragSelection();
+      _scrollVertically(event.scrollDelta.dy);
     }
   }
 
@@ -855,6 +893,22 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     _textScroll.stopScrollingToEnd();
   }
 
+  /// Scrolls the document vertically by [delta] pixels.
+  void _scrollVertically(double delta) {
+    // TODO: remove access to _textScroll.widget
+    final newScrollOffset = (_textScroll.widget.scrollController.offset + delta)
+        .clamp(0.0, _textScroll.widget.scrollController.position.maxScrollExtent);
+    _textScroll.widget.scrollController.jumpTo(newScrollOffset);
+    _updateDragSelection();
+  }
+
+  /// Beginning with Flutter 3.3.3, we are responsible for starting and
+  /// stopping scroll momentum. This method cancels any scroll momentum
+  /// in our scroll controller.
+  void _cancelScrollMomentum() {
+    _textScroll.goIdle();
+  }
+
   TextPosition? _getPositionAtOffset(Offset textFieldOffset) {
     final textOffset = _getTextOffset(textFieldOffset);
     final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
@@ -881,6 +935,9 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return Listener(
       onPointerSignal: _onPointerSignal,
+      onPointerHover: (event) => _cancelScrollMomentum(),
+      onPointerDown: (event) => _cancelScrollMomentum(),
+      onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: GestureDetector(
         onSecondaryTapUp: _onRightClick,
         child: RawGestureDetector(
@@ -899,9 +956,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               },
             ),
             PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-              () => PanGestureRecognizer(
-                supportedDevices: {PointerDeviceKind.mouse},
-              ),
+              () => PanGestureRecognizer(),
               (PanGestureRecognizer recognizer) {
                 recognizer
                   ..onStart = _onPanStart
@@ -1665,6 +1720,30 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     widget.scrollController.position.jumpTo(widget.scrollController.offset + _scrollAmountPerFrame);
   }
 
+  /// Animates the scroll position like a ballistic particle with friction, beginning
+  /// with the given [pixelsPerSecond] velocity.
+  void goBallistic(double pixelsPerSecond) {
+    final pos = widget.scrollController.position;
+
+    if (pos is ScrollPositionWithSingleContext) {
+      if (pos.maxScrollExtent > 0) {
+        pos.goBallistic(pixelsPerSecond);
+      }
+      pos.context.setIgnorePointer(false);
+    }
+  }
+
+  /// Immediately stops scrolling animation/momentum.
+  void goIdle() {
+    final pos = widget.scrollController.position;
+
+    if (pos is ScrollPositionWithSingleContext) {
+      if (pos.pixels > pos.minScrollExtent && pos.pixels < pos.maxScrollExtent) {
+        pos.goIdle();
+      }
+    }
+  }
+
   void _onTick(elapsedTime) {
     if (_scrollToStartOnTick) {
       scrollToStart();
@@ -1678,13 +1757,24 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
   Widget build(BuildContext context) {
     return SizedBox(
       height: widget.viewportHeight,
-      child: SingleChildScrollView(
-        controller: widget.scrollController,
-        physics: const NeverScrollableScrollPhysics(),
-        scrollDirection: widget.isMultiline ? Axis.vertical : Axis.horizontal,
-        child: Padding(
-          padding: widget.padding,
-          child: widget.child,
+      // As we handle the scrolling gestures ourselves,
+      // we use NeverScrollableScrollPhysics to prevent SingleChildScrollView
+      // from scrolling. This also prevents the user from interacting
+      // with the scrollbar.
+      // We use a modified version of Flutter's Scrollbar that allows
+      // configuring it with a different scroll physics.
+      //
+      // See https://github.com/superlistapp/super_editor/issues/1628 for more details.
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+        child: SingleChildScrollView(
+          controller: widget.scrollController,
+          physics: const NeverScrollableScrollPhysics(),
+          scrollDirection: widget.isMultiline ? Axis.vertical : Axis.horizontal,
+          child: Padding(
+            padding: widget.padding,
+            child: widget.child,
+          ),
         ),
       ),
     );
