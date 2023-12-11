@@ -24,6 +24,17 @@ class SuperTextFieldInspector {
     return state.controller.text;
   }
 
+  /// Finds and returns the [RichText] within a [SuperTextField].
+  ///
+  /// {@macro supertextfield_finder}
+  static InlineSpan findRichText([Finder? superTextFieldFinder]) {
+    final resolvedSuperTextFieldFinder = superTextFieldFinder ?? find.byType(SuperTextField);
+    final superText = find.descendant(of: resolvedSuperTextFieldFinder, matching: find.byType(SuperText));
+    final element = superText.evaluate().single as StatefulElement;
+    final state = element.state as SuperTextState;
+    return state.widget.richText;
+  }
+
   /// Finds and returns the [TextSelection] within a [SuperTextField].
   ///
   /// {@macro supertextfield_finder}
