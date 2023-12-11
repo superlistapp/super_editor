@@ -93,6 +93,13 @@ jobs:
       # Run all golden tests
       - run: flutter test test_goldens
 
+      # Archive golden failures
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: golden-failures
+          path: "**/failures/**/*.png"
+
   test_super_editor_markdown:
     runs-on: ubuntu-latest
     defaults:
@@ -159,6 +166,13 @@ jobs:
 
       # Run all golden tests
       - run: flutter test test_goldens
+
+      # Archive golden failures
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: golden-failures
+          path: "**/failures/**/*.png"
 
   test_attributed_text:
     runs-on: ubuntu-latest
