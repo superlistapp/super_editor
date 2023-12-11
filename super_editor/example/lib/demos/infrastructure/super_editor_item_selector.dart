@@ -107,11 +107,11 @@ class _SuperEditorDemoTextItemSelectorState extends State<SuperEditorDemoTextIte
       controller: _popoverController,
       buttonBuilder: _buildButton,
       popoverFocusNode: _popoverFocusNode,
+      parentFocusNode: widget.parentFocusNode,
       boundaryKey: widget.boundaryKey,
       popoverBuilder: (context) => RoundedRectanglePopoverAppearance(
         child: ItemSelectionList<SuperEditorDemoTextItem>(
           focusNode: _popoverFocusNode,
-          parentFocusNode: widget.parentFocusNode,
           value: widget.id,
           items: widget.items,
           itemBuilder: _buildPopoverListItem,
@@ -285,6 +285,7 @@ class _SuperEditorDemoIconItemSelectorState extends State<SuperEditorDemoIconIte
       controller: _popoverController,
       buttonBuilder: _buildButton,
       popoverFocusNode: _popoverFocusNode,
+      parentFocusNode: widget.parentFocusNode,
       popoverBuilder: (context) => RoundedRectanglePopoverAppearance(
         child: ItemSelectionList<SuperEditorDemoIconItem>(
           value: widget.value,
@@ -292,7 +293,6 @@ class _SuperEditorDemoIconItemSelectorState extends State<SuperEditorDemoIconIte
           itemBuilder: _buildItem,
           onItemSelected: _onItemSelected,
           onCancel: () => _popoverController.close(),
-          parentFocusNode: widget.parentFocusNode,
           focusNode: _popoverFocusNode,
         ),
       ),

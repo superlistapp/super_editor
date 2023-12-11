@@ -27,6 +27,7 @@ class PopoverScaffold extends StatefulWidget {
     required this.popoverBuilder,
     this.popoverGeometry = const PopoverGeometry(),
     this.popoverFocusNode,
+    this.parentFocusNode,
     this.boundaryKey,
     this.onTapOutside = _PopoverScaffoldState.closePopoverOnTapOutside,
   });
@@ -50,6 +51,22 @@ class PopoverScaffold extends StatefulWidget {
   /// Focus will be requested to this [FocusNode] when the popover is displayed.
   final FocusNode? popoverFocusNode;
 
+  /// The [FocusNode], to which the popover [FocusNode] will be added as a child.
+  ///
+  /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
+  /// entire ancestor path to "have focus", but only the lowest level descendant
+  /// in that path has "primary focus". This path is important because various
+  /// widgets alter their presentation or behavior based on whether or not they
+  /// currently have focus, even if they only have "non-primary focus".
+  ///
+  /// When the popover is visible, it will have primary focus.
+  /// Moreover, because the popover is built in an `Overlay`, none of your
+  /// widgets are in the natural focus path for that popover. Therefore, if you
+  /// need your widget tree to retain focus while the popover is visible, then
+  /// you need to provide the [FocusNode] that the popover should use as its
+  /// parent, thereby retaining focus for your widgets.
+  final FocusNode? parentFocusNode;
+
   /// A [GlobalKey] to a widget that determines the bounds where the popover can be displayed.
   ///
   /// Passing a [boundaryKey] causes the popover to be confined to the bounds of the widget
@@ -70,6 +87,7 @@ class PopoverScaffold extends StatefulWidget {
 class _PopoverScaffoldState extends State<PopoverScaffold> {
   final OverlayPortalController _overlayController = OverlayPortalController();
   final LeaderLink _popoverLink = LeaderLink();
+  final FocusNode _scaffoldFocusNode = FocusNode();
 
   late FollowerBoundary _screenBoundary;
 
@@ -108,6 +126,7 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
   void dispose() {
     widget.controller.removeListener(_onPopoverControllerChanged);
     _popoverLink.dispose();
+    _scaffoldFocusNode.dispose();
 
     super.dispose();
   }
@@ -169,7 +188,10 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
           ),
           child: ConstrainedBox(
             constraints: widget.popoverGeometry.constraints ?? const BoxConstraints(),
-            child: widget.popoverBuilder(context),
+            child: Focus(
+              parentNode: widget.parentFocusNode,
+              child: widget.popoverBuilder(context),
+            ),
           ),
         ),
       ),

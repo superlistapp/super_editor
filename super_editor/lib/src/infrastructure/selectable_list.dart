@@ -5,9 +5,6 @@ import 'package:super_editor/super_editor.dart';
 
 /// A list where the user can navigate between its items and select one of them.
 ///
-/// This widget shares focus with its [parentFocusNode]. This means that when the list requests focus,
-/// [parentFocusNode] still has non-primary focus.
-///
 /// Includes the following keyboard selection behaviors:
 ///
 ///   * Pressing UP/DOWN moves the "active" item selection up/down.
@@ -24,7 +21,6 @@ class ItemSelectionList<T> extends StatefulWidget {
     required this.onItemSelected,
     this.onCancel,
     this.focusNode,
-    this.parentFocusNode,
   });
 
   /// The currently selected value or `null` if no item is selected.
@@ -61,15 +57,6 @@ class ItemSelectionList<T> extends StatefulWidget {
 
   /// The [FocusNode] of the list.
   final FocusNode? focusNode;
-
-  /// The [FocusNode], to which the list's [FocusNode] will be added as a child.
-  ///
-  /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
-  /// entire ancestor path to "have focus", but only the lowest level descendant
-  /// in that path has "primary focus". This path is important because various
-  /// widgets alter their presentation or behavior based on whether or not they
-  /// currently have focus, even if they only have "non-primary focus".
-  final FocusNode? parentFocusNode;
 
   @override
   State<ItemSelectionList<T>> createState() => ItemSelectionListState<T>();
@@ -234,7 +221,6 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
     }
     return Focus(
       focusNode: widget.focusNode,
-      parentNode: widget.parentFocusNode,
       onKeyEvent: _onKeyEvent,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
