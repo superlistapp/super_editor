@@ -338,7 +338,7 @@ a scrollbar
                 constraints: const BoxConstraints(minWidth: 300),
                 child: SuperTextField(
                   textController: controller,
-                  maxLines: 2,
+                  maxLines: 4,
                 ),
               ),
             ),
@@ -362,20 +362,19 @@ a scrollbar
         expect(scrollState.position.pixels, 0.0);
 
         // Find the approximate position of the scrollbar thumb.
-        final startingDragLocation = tester.getTopRight(find.byType(SuperTextField)) + const Offset(-10, 10);
+        final thumbLocation = tester.getTopRight(find.byType(SuperTextField)) + const Offset(-10, 10);
 
+        // Hover to make the thumb visible with a duration long enough to run the fade in animation.
         final testPointer = TestPointer(1, PointerDeviceKind.mouse);
-
-        // Hover to make the thumb visible with a duration long enough to run the fade animation.
-        await tester.sendEventToBinding(testPointer.hover(startingDragLocation, timeStamp: const Duration(seconds: 1)));
+        await tester.sendEventToBinding(testPointer.hover(thumbLocation, timeStamp: const Duration(seconds: 1)));
         await tester.pumpAndSettle();
 
-        // Tap and hold the thumb.
-        await tester.sendEventToBinding(testPointer.down(startingDragLocation));
+        // Press the thumb.
+        await tester.sendEventToBinding(testPointer.down(thumbLocation));
         await tester.pump(kTapMinTime);
 
-        // Move the thumb down.
-        await tester.sendEventToBinding(testPointer.move(startingDragLocation + const Offset(0, 300)));
+        // Move the thumb down a distance equals to the max scroll extent.
+        await tester.sendEventToBinding(testPointer.move(thumbLocation + const Offset(0, 48)));
         await tester.pump();
 
         // Release the pointer.
@@ -383,7 +382,7 @@ a scrollbar
         await tester.pump();
 
         // Ensure the content scrolled to the end of the content.
-        expect(scrollState.position.pixels, moreOrLessEquals(80.0));
+        expect(scrollState.position.pixels, moreOrLessEquals(scrollState.position.maxScrollExtent));
 
         // Ensure that the selection didn't change.
         expect(
@@ -392,7 +391,7 @@ a scrollbar
         );
       });
 
-      testWidgetsOnMac("scrolls the content when dragging the scrollbar up", (tester) async {
+      testWidgetsOnDesktop("scrolls the content when dragging the scrollbar up", (tester) async {
         final controller = AttributedTextEditingController(
           text: AttributedText('''
 SuperTextField with a
@@ -411,7 +410,7 @@ a scrollbar
                 constraints: const BoxConstraints(minWidth: 300),
                 child: SuperTextField(
                   textController: controller,
-                  maxLines: 2,
+                  maxLines: 4,
                 ),
               ),
             ),
@@ -436,27 +435,26 @@ a scrollbar
         await tester.pump();
 
         // Find the approximate position of the scrollbar thumb.
-        final startingDragLocation = tester.getBottomRight(find.byType(SuperTextField)) - const Offset(10, 10);
+        final thumbLocation = tester.getBottomRight(find.byType(SuperTextField)) - const Offset(10, 10);
 
+        // Hover to make the thumb visible with a duration long enough to run the fade in animation.
         final testPointer = TestPointer(1, PointerDeviceKind.mouse);
-
-        // Hover to make the thumb visible with a duration long enough to run the fade animation.
-        await tester.sendEventToBinding(testPointer.hover(startingDragLocation, timeStamp: const Duration(seconds: 1)));
+        await tester.sendEventToBinding(testPointer.hover(thumbLocation, timeStamp: const Duration(seconds: 1)));
         await tester.pumpAndSettle();
 
-        // Tap and hold the thumb.
-        await tester.sendEventToBinding(testPointer.down(startingDragLocation));
+        // Press the thumb.
+        await tester.sendEventToBinding(testPointer.down(thumbLocation));
         await tester.pump(kTapMinTime);
 
-        // Move the thumb up.
-        await tester.sendEventToBinding(testPointer.move(startingDragLocation - const Offset(0, 300)));
+        // Move the thumb up a distance equals to the max scroll extent.
+        await tester.sendEventToBinding(testPointer.move(thumbLocation - const Offset(0, 48)));
         await tester.pump();
 
         // Release the pointer.
         await tester.sendEventToBinding(testPointer.up());
         await tester.pump();
 
-        // Ensure the content scrolled up.
+        // Ensure the content scrolled to the beginning of the content.
         expect(scrollState.position.pixels, 0.0);
 
         // Ensure that the selection didn't change.
