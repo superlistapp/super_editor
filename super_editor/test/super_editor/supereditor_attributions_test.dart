@@ -3,16 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/test/ime.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_text_layout/super_text_layout.dart';
 
-import '../super_textfield/super_textfield_inspector.dart';
 import 'supereditor_test_tools.dart';
 import 'test_documents.dart';
 
@@ -199,7 +194,7 @@ void main() {
 
         // Ensure the text is colored orange.
         expect(
-          SuperTextFieldInspector.findRichText().style?.color,
+          SuperEditorInspector.findRichTextInParagraph("1").style?.color,
           Colors.orange,
         );
       });
@@ -214,13 +209,19 @@ void main() {
 
         // Ensure the first span is colored black.
         expect(
-          SuperTextFieldInspector.findRichText().getSpanForPosition(const TextPosition(offset: 0))!.style!.color,
+          SuperEditorInspector.findRichTextInParagraph("1")
+              .getSpanForPosition(const TextPosition(offset: 0))!
+              .style!
+              .color,
           Colors.black,
         );
 
         // Ensure the second span is colored orange.
         expect(
-          SuperTextFieldInspector.findRichText().getSpanForPosition(const TextPosition(offset: 5))!.style!.color,
+          SuperEditorInspector.findRichTextInParagraph("1")
+              .getSpanForPosition(const TextPosition(offset: 5))!
+              .style!
+              .color,
           Colors.orange,
         );
       });
