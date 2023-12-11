@@ -90,6 +90,10 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   Offset? _dragStartGlobal;
   Offset? _dragEndGlobal;
   bool _expandSelectionDuringDrag = false;
+  // When selecting by word, this is the initial word's upstream position.
+  DocumentPosition? _wordSelectionUpstream;
+  // When selecting by word, this is the initial word's downstream position.
+  DocumentPosition? _wordSelectionDownstream;
 
   /// Holds which kind of device started a pan gesture, e.g., a mouse or a trackpad.
   PointerDeviceKind? _panGestureDevice;
@@ -319,6 +323,12 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         docPosition: docPosition,
         docLayout: _docLayout,
       );
+      if (didSelectContent) {
+        // We selected a word - store the word bounds so that we can correctly
+        // select by word when moving upstream or downstream from this word.
+        _wordSelectionUpstream = widget.selectionNotifier.value!.start;
+        _wordSelectionDownstream = widget.selectionNotifier.value!.end;
+      }
 
       if (!didSelectContent) {
         didSelectContent = _selectBlockAt(docPosition);
@@ -537,6 +547,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       _dragStartGlobal = null;
       _dragEndGlobal = null;
       _expandSelectionDuringDrag = false;
+      _wordSelectionUpstream = null;
+      _wordSelectionDownstream = null;
     });
 
     widget.autoScroller.disableAutoScrolling();
@@ -642,15 +654,14 @@ Updating drag selection:
           ? extentParagraphSelection.extent
           : extentParagraphSelection.base;
     } else if (selectionType == SelectionType.word) {
-      final baseWordSelection = getWordSelection(
-        docPosition: basePosition,
-        docLayout: documentLayout,
+      final dragDirection = widget.document.getAffinityBetween(
+        base: _wordSelectionUpstream!,
+        extent: selection!.extent,
       );
-      if (baseWordSelection == null) {
-        _clearSelection();
-        return;
-      }
-      basePosition = baseWordSelection.base;
+
+      basePosition = dragDirection == TextAffinity.downstream //
+          ? _wordSelectionUpstream!
+          : _wordSelectionDownstream!;
 
       final extentWordSelection = getWordSelection(
         docPosition: extentPosition,
@@ -660,7 +671,9 @@ Updating drag selection:
         _clearSelection();
         return;
       }
-      extentPosition = extentWordSelection.extent;
+      extentPosition = dragDirection == TextAffinity.downstream //
+          ? extentWordSelection.end
+          : extentWordSelection.start;
     }
 
     widget.editor.execute([
