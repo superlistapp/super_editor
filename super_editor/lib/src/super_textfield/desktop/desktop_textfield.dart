@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_input_configuration.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
@@ -1786,6 +1787,12 @@ TextFieldKeyboardHandler ignoreTextFieldKeyCombos(List<ShortcutActivator> keys) 
 /// );
 /// ```
 const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageUp,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageDown,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToBeginningOfDocumentOnCtrlOrCmdAndHome,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToEndOfDocumentOnCtrlOrCmdAndEnd,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToBeginningOfDocumentOnHomeOnMacOrWeb,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToEndOfDocumentOnEndOnMacOrWeb,
   DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
@@ -1798,6 +1805,7 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.blockControlKeys,
   DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed,
 ];
 
@@ -1826,11 +1834,17 @@ const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToBeginningOfDocumentOnCtrlOrCmdAndHome,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToEndOfDocumentOnCtrlOrCmdAndEnd,
   // WARNING: No keyboard handlers below this point will run on Mac. On Mac, most
   // common shortcuts are recognized by the OS. This line short circuits SuperTextField
   // handlers, passing the key combo to the OS on Mac. Place all custom Mac key
   // combos above this handler.
   DefaultSuperTextFieldKeyboardHandlers.sendKeyEventToMacOs,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageUp,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageDown,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToBeginningOfDocumentOnHomeOnMacOrWeb,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToEndOfDocumentOnEndOnMacOrWeb,
   DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
   DefaultSuperTextFieldKeyboardHandlers.moveToLineStartWithHome,
@@ -2268,6 +2282,199 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.notHandled;
   }
 
+  /// Scrolls up by the viewport height, or as high as possible,
+  /// when the user presses the Page Up key.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls the
+  /// ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollOnPageUp({
+    required SuperTextFieldContext textFieldContext,
+    required KeyEvent keyEvent,
+  }) {
+    if (keyEvent is! KeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.pageUp) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollPageUp(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls down by the viewport height, or as far as possible,
+  /// when the user presses the Page Down key.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls the
+  /// ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollOnPageDown({
+    required SuperTextFieldContext textFieldContext,
+    required KeyEvent keyEvent,
+  }) {
+    if (keyEvent is! KeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.pageDown) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollPageDown(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls the viewport to the top of the content, when the user presses
+  /// CMD + HOME on Mac, or CTRL + HOME on all other platforms.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls to the
+  /// top of the ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollToBeginningOfDocumentOnCtrlOrCmdAndHome({
+    required SuperTextFieldContext textFieldContext,
+    required KeyEvent keyEvent,
+  }) {
+    if (keyEvent is! KeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.home) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
+    if (isMacOrIos && !HardwareKeyboard.instance.isMetaPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (!isMacOrIos && !HardwareKeyboard.instance.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollToBeginningOfDocument(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls the viewport to the bottom of the content, when the user presses
+  /// CMD + END on Mac, or CTRL + END on all other platforms.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls to the
+  /// bottom of the ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollToEndOfDocumentOnCtrlOrCmdAndEnd({
+    required SuperTextFieldContext textFieldContext,
+    required KeyEvent keyEvent,
+  }) {
+    if (keyEvent is! KeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.end) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
+    if (isMacOrIos && !HardwareKeyboard.instance.isMetaPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (!isMacOrIos && !HardwareKeyboard.instance.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollToEndOfDocument(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls the viewport to the top of the content, when the user presses
+  /// HOME on Mac or web.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls to the
+  /// top of the ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollToBeginningOfDocumentOnHomeOnMacOrWeb({
+    required SuperTextFieldContext textFieldContext,
+    required KeyEvent keyEvent,
+  }) {
+    if (keyEvent is! KeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.home) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (defaultTargetPlatform != TargetPlatform.macOS && !isWeb) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollToBeginningOfDocument(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls the viewport to the bottom of the content, when the user presses
+  /// END on Mac or web.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls to the
+  /// bottom of the ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollToEndOfDocumentOnEndOnMacOrWeb({
+    required SuperTextFieldContext textFieldContext,
+    required KeyEvent keyEvent,
+  }) {
+    if (keyEvent is! KeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.end) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (defaultTargetPlatform != TargetPlatform.macOS && !isWeb) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollToEndOfDocument(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Halt execution of the current key event if the key pressed is one of
+  /// the functions keys (F1, F2, F3, etc.), or the Page Up/Down, Home/End key.
+  ///
+  /// Without this action in place pressing one of the above mentioned keys
+  /// would display an unknown '?' character in the textfield.
+  static TextFieldKeyboardHandlerResult blockControlKeys({
+    required SuperTextFieldContext textFieldContext,
+    required KeyEvent keyEvent,
+  }) {
+    if (keyEvent.logicalKey == LogicalKeyboardKey.escape ||
+        keyEvent.logicalKey == LogicalKeyboardKey.pageUp ||
+        keyEvent.logicalKey == LogicalKeyboardKey.pageDown ||
+        keyEvent.logicalKey == LogicalKeyboardKey.home ||
+        keyEvent.logicalKey == LogicalKeyboardKey.end ||
+        (keyEvent.logicalKey.keyId >= LogicalKeyboardKey.f1.keyId &&
+            keyEvent.logicalKey.keyId <= LogicalKeyboardKey.f23.keyId)) {
+      return TextFieldKeyboardHandlerResult.blocked;
+    }
+
+    return TextFieldKeyboardHandlerResult.notHandled;
+  }
+
   DefaultSuperTextFieldKeyboardHandlers._();
 }
 
@@ -2351,6 +2558,12 @@ const defaultTextFieldSelectorHandlers = <String, SuperTextFieldSelectorHandler>
   MacOsSelectors.deleteToBeginningOfLine: _deleteToBeginningOfLine,
   MacOsSelectors.deleteToEndOfLine: _deleteToEndOfLine,
   MacOsSelectors.deleteBackwardByDecomposingPreviousCharacter: _deleteUpstream,
+
+  // Scrolling.
+  MacOsSelectors.scrollToBeginningOfDocument: _scrollToBeginningOfDocument,
+  MacOsSelectors.scrollToEndOfDocument: _scrollToEndOfDocument,
+  MacOsSelectors.scrollPageUp: _scrollPageUp,
+  MacOsSelectors.scrollPageDown: _scrollPageDown,
 };
 
 void _giveUpFocus({
@@ -2627,4 +2840,196 @@ void _deleteToEndOfLine({
   }
 
   textFieldContext.controller.deleteTextOnLineAfterCaret(textLayout: textFieldContext.getTextLayout());
+}
+
+/// Scrolls to the top of the textfield.
+///
+/// In absence of scrollable content within textfield, tries to scroll the ancestor
+/// scrollable to its top.
+///
+/// Returns `true` if the scroll is performed, otherwise 'false'.
+bool _scrollToBeginningOfDocument({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final TextFieldScroller textFieldScroller = textFieldContext.scroller;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
+
+  if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
+    // The text field doesn't have any scrollable content. There is no ancestor
+    // scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  if (textFieldScroller.scrollOffset > 0) {
+    // The text field has more content than can fit, and the text field is partially
+    // scrolled downward. Scroll back to the top of the text field.
+    textFieldScroller.animateTo(
+      textFieldScroller.minScrollExtent,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+
+    return true;
+  }
+
+  if (ancestorScrollable == null) {
+    // There is no ancestor scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  // Scroll to the top of the ancestor scrollable.
+  ancestorScrollable.animateTo(
+    ancestorScrollable.minScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return true;
+}
+
+/// Scrolls to the end of the textfield.
+///
+/// In absence of scrollable content within textfield, tries to scroll the ancestor
+/// scrollable to its end.
+///
+/// Returns `true` if the scroll is performed, otherwise false.
+bool _scrollToEndOfDocument({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final TextFieldScroller textFieldScroller = textFieldContext.scroller;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
+
+  if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
+    // The text field doesn't have any scrollable content. There is no ancestor
+    // scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  if (textFieldScroller.scrollOffset < textFieldScroller.maxScrollExtent) {
+    // The text field has more content than can fit, and the text field is partially
+    // scrolled upward. Scroll back to the bottom of the text field.
+    textFieldScroller.animateTo(
+      textFieldScroller.maxScrollExtent,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+
+    return true;
+  }
+
+  if (ancestorScrollable == null) {
+    // There is no ancestor scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  if (!ancestorScrollable.maxScrollExtent.isFinite) {
+    // We want to scroll to the end of the ancestor scrollable, but it's infinitely long,
+    // so we can't. Fizzle.
+    return false;
+  }
+
+  // Scroll to the end of the ancestor scrollable.
+  ancestorScrollable.animateTo(
+    ancestorScrollable.maxScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return true;
+}
+
+/// Scrolls up textfield by viewport height.
+///
+/// In absence of scrollable content within textfield, tries to scroll the ancestor
+/// scrollable up by its viewport height.
+///
+/// Returns `true` if the scroll is performed, otherwise false.
+bool _scrollPageUp({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final TextFieldScroller textFieldScroller = textFieldContext.scroller;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
+
+  if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
+    // No scrollable content within `SuperDesktopField` and ancestor scrollable
+    // is absent, give other handlers opportunity to handle the key event.
+    return false;
+  }
+
+  if (textFieldScroller.scrollOffset > 0) {
+    // The text field has more content than can fit. Scroll up text field by viewport height.
+    textFieldScroller.animateTo(
+      max(
+        textFieldScroller.scrollOffset - textFieldScroller.viewportDimension,
+        textFieldScroller.minScrollExtent,
+      ),
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+    return true;
+  }
+
+  if (ancestorScrollable == null) {
+    // There is no ancestor scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  // Scroll up ancestor scrollable by viewport height.
+  ancestorScrollable.animateTo(
+    max(ancestorScrollable.pixels - ancestorScrollable.viewportDimension, ancestorScrollable.minScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return true;
+}
+
+/// Scrolls down textfield by viewport height.
+///
+/// In absence of scrollable content within textfield, tries to scroll the ancestor
+/// scrollable down by its viewport height.
+///
+/// Returns `true` if the scroll is performed, otherwise false.
+bool _scrollPageDown({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final TextFieldScroller textFieldScroller = textFieldContext.scroller;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
+
+  if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
+    // No scrollable content within `SuperDesktopField` and ancestor scrollable
+    // is absent, give other handlers opportunity to handle the key event.
+    return false;
+  }
+
+  if (textFieldScroller.scrollOffset < textFieldScroller.maxScrollExtent) {
+    // The text field has more content than can fit. Scroll down text field by viewport height.
+    textFieldScroller.animateTo(
+      min(
+        textFieldScroller.scrollOffset + textFieldScroller.viewportDimension,
+        textFieldScroller.maxScrollExtent,
+      ),
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+    return true;
+  }
+
+  if (ancestorScrollable == null) {
+    // There is no ancestor scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  // Scroll down ancestor scrollable by viewport height.
+  ancestorScrollable.animateTo(
+    min(ancestorScrollable.pixels + ancestorScrollable.viewportDimension, ancestorScrollable.maxScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return true;
 }

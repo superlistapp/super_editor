@@ -13,6 +13,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
@@ -285,7 +286,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
     _controlsController = SuperReaderIosControlsScope.rootOf(context);
 
-    _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
+    _ancestorScrollPosition = context.findAncestorScrollableWithVerticalScroll?.position;
 
     // On the next frame, check if our active scroll position changed to a
     // different instance. If it did, move our listener to the new one.
@@ -414,7 +415,8 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
   RenderBox get viewportBox =>
-      (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+      (context.findAncestorScrollableWithVerticalScroll?.context.findRenderObject() ?? context.findRenderObject())
+          as RenderBox;
 
   RenderBox get interactorBox => context.findRenderObject() as RenderBox;
 
@@ -863,22 +865,6 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
   void _select(DocumentSelection newSelection) {
     widget.selection.value = newSelection;
-  }
-
-  ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.maybeOf(context);
-    if (ancestorScrollable == null) {
-      return null;
-    }
-
-    final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar
-    // or a horizontal ListView, so we can't use the ancestor scrollable
-    if (direction == AxisDirection.left || direction == AxisDirection.right) {
-      return null;
-    }
-
-    return ancestorScrollable;
   }
 
   void _onAutoScrollChange() {

@@ -1600,9 +1600,9 @@ void main() {
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdHome(tester);
+            await tester.pressCmdHome(tester);
           } else {
-            await _pressCtrlHome(tester);
+            await tester.pressCtrlHome(tester);
           }
 
           // Ensure we scrolled to the top of the viewport.
@@ -1632,9 +1632,9 @@ void main() {
           scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdHome(tester);
+            await tester.pressCmdHome(tester);
           } else {
-            await _pressCtrlHome(tester);
+            await tester.pressCtrlHome(tester);
           }
 
           // Ensure we didn't scroll past the top of the viewport.
@@ -1656,9 +1656,9 @@ void main() {
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdEnd(tester);
+            await tester.pressCmdEnd(tester);
           } else {
-            await _pressCtrlEnd(tester);
+            await tester.pressCtrlEnd(tester);
           }
 
           // Ensure we scrolled to the bottom of the viewport.
@@ -1685,9 +1685,9 @@ void main() {
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdEnd(tester);
+            await tester.pressCmdEnd(tester);
           } else {
-            await _pressCtrlEnd(tester);
+            await tester.pressCtrlEnd(tester);
           }
 
           // Ensure we didn't scroll past the bottom of the viewport.
@@ -1866,38 +1866,6 @@ Future<TestDocumentContext> _pumpPageScrollSliverTestSetup(
       debugShowCheckedModeBanner: false,
     );
   }).pump();
-}
-
-Future<void> _pressCmdHome(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressCmdEnd(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressCtrlHome(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressCtrlEnd(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.pumpAndSettle();
 }
 
 Future<void> _pressShiftAltUpArrow(WidgetTester tester) async {
