@@ -118,12 +118,12 @@ class SuperReaderInspector {
     final documentLayout = _findDocumentLayout(superReaderFinder);
 
     final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
-    final superTextWithSelection = find
+    final superText = find
         .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
         .evaluate()
         .single
         .widget as SuperText;
-    return superTextWithSelection.richText as TextSpan;
+    return superText.richText as TextSpan;
   }
 
   /// Finds and returns the [TextStyle] that's applied to the top-level of the [TextSpan]
