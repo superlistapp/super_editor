@@ -119,10 +119,10 @@ class SuperReaderInspector {
 
     final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
     final superTextWithSelection = find
-        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperTextWithSelection))
+        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
         .evaluate()
         .single
-        .widget as SuperTextWithSelection;
+        .widget as SuperText;
     return superTextWithSelection.richText as TextSpan;
   }
 
