@@ -1,15 +1,15 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/test/ime.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
+import 'package:super_editor/super_editor.dart';
 
 import 'supereditor_test_tools.dart';
+import 'test_documents.dart';
 
 void main() {
   group("SuperEditor", () {
@@ -180,6 +180,50 @@ void main() {
           // Ensure the link attribution was applied to the inserted text.
           expect(doc, equalsMarkdown("[This is a linnk](https://google.com) pointing to google"));
         });
+      });
+    });
+
+    group("applies color attributions", () {
+      testWidgetsOnAllPlatforms("to full text", (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(
+              singleParagraphFullColor(),
+            )
+            .pump();
+
+        // Ensure the text is colored orange.
+        expect(
+          SuperEditorInspector.findRichTextInParagraph("1").style?.color,
+          Colors.orange,
+        );
+      });
+
+      testWidgetsOnAllPlatforms("to partial text", (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(
+              singleParagraphWithPartialColor(),
+            )
+            .pump();
+
+        // Ensure the first span is colored black.
+        expect(
+          SuperEditorInspector.findRichTextInParagraph("1")
+              .getSpanForPosition(const TextPosition(offset: 0))!
+              .style!
+              .color,
+          Colors.black,
+        );
+
+        // Ensure the second span is colored orange.
+        expect(
+          SuperEditorInspector.findRichTextInParagraph("1")
+              .getSpanForPosition(const TextPosition(offset: 5))!
+              .style!
+              .color,
+          Colors.orange,
+        );
       });
     });
 
