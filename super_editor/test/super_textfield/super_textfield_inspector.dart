@@ -29,10 +29,40 @@ class SuperTextFieldInspector {
   /// {@macro supertextfield_finder}
   static InlineSpan findRichText([Finder? superTextFieldFinder]) {
     final resolvedSuperTextFieldFinder = superTextFieldFinder ?? find.byType(SuperTextField);
-    final superText = find.descendant(of: resolvedSuperTextFieldFinder, matching: find.byType(SuperText));
-    final element = superText.evaluate().single as StatefulElement;
-    final state = element.state as SuperTextState;
-    return state.widget.richText;
+
+    // Try to find a SuperTextField that contains a SuperText. It's possible
+    // that a SuperTextField uses a SuperTextWithSelection instead of a SuperText,
+    // that condition is handled later.
+    final superTextFinder = find.descendant(of: resolvedSuperTextFieldFinder, matching: find.byType(SuperText));
+    final superTextElements = superTextFinder.evaluate();
+
+    if (superTextElements.length > 1) {
+      throw Exception("Found more than 1 super text field match with finder: $resolvedSuperTextFieldFinder");
+    }
+
+    if (superTextElements.length == 1) {
+      final element = superTextFinder.evaluate().single as StatefulElement;
+      final state = element.state as SuperTextState;
+      return state.widget.richText;
+    }
+
+    // We didn't find a SuperTextField with a SuperText. Now we'll search for a
+    // SuperTextField with a selection.
+    final superTextWithSelectionFinder =
+        find.descendant(of: resolvedSuperTextFieldFinder, matching: find.byType(SuperTextWithSelection));
+    final superTextWithSelectionElements = superTextWithSelectionFinder.evaluate();
+
+    if (superTextWithSelectionElements.length > 1) {
+      throw Exception("Found more than 1 super text field match with finder: $resolvedSuperTextFieldFinder");
+    }
+
+    if (superTextWithSelectionElements.length == 1) {
+      final element = superTextWithSelectionFinder.evaluate().single as StatefulElement;
+      final state = element.state as SuperTextState;
+      return state.widget.richText;
+    }
+
+    throw Exception("Couldn't find a super text field variant with the given finder: $resolvedSuperTextFieldFinder");
   }
 
   /// Finds and returns the [TextSelection] within a [SuperTextField].
