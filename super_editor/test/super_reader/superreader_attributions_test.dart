@@ -4,6 +4,8 @@ import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../super_editor/test_documents.dart';
+import '../super_textfield/super_textfield_inspector.dart';
 import 'reader_test_tools.dart';
 
 void main() {
@@ -13,38 +15,13 @@ void main() {
         await tester //
             .createDocument()
             .withCustomContent(
-              MutableDocument(
-                nodes: [
-                  ParagraphNode(
-                    id: '1',
-                    text: AttributedText(
-                      'abcdefghij',
-                      AttributedSpans(
-                        attributions: [
-                          const SpanMarker(
-                            attribution: ColorAttribution(Colors.orange),
-                            offset: 0,
-                            markerType: SpanMarkerType.start,
-                          ),
-                          const SpanMarker(
-                            attribution: ColorAttribution(Colors.orange),
-                            offset: 9,
-                            markerType: SpanMarkerType.end,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                ],
-              ),
+              singleParagraphFullColor(),
             )
             .pump();
 
-        final superText = tester.widget<SuperText>(find.byType(SuperText));
-
         // Ensure the text is colored orange.
         expect(
-          superText.richText.style!.color,
+          SuperTextFieldInspector.findRichText().style!.color,
           Colors.orange,
         );
       });
@@ -53,44 +30,19 @@ void main() {
         await tester //
             .createDocument()
             .withCustomContent(
-              MutableDocument(
-                nodes: [
-                  ParagraphNode(
-                    id: '1',
-                    text: AttributedText(
-                      'abcdefghij',
-                      AttributedSpans(
-                        attributions: [
-                          const SpanMarker(
-                            attribution: ColorAttribution(Colors.orange),
-                            offset: 5,
-                            markerType: SpanMarkerType.start,
-                          ),
-                          const SpanMarker(
-                            attribution: ColorAttribution(Colors.orange),
-                            offset: 9,
-                            markerType: SpanMarkerType.end,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                ],
-              ),
+              singleParagraphWithPartialColor(),
             )
             .pump();
 
-        final superText = tester.widget<SuperText>(find.byType(SuperText));
-
         // Ensure the first span is colored black.
         expect(
-          superText.richText.getSpanForPosition(const TextPosition(offset: 0))!.style!.color,
+          SuperTextFieldInspector.findRichText().getSpanForPosition(const TextPosition(offset: 0))!.style!.color,
           Colors.black,
         );
 
         // Ensure the second span is colored orange.
         expect(
-          superText.richText.getSpanForPosition(const TextPosition(offset: 5))!.style!.color,
+          SuperTextFieldInspector.findRichText().getSpanForPosition(const TextPosition(offset: 5))!.style!.color,
           Colors.orange,
         );
       });

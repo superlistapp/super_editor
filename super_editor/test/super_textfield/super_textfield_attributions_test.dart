@@ -4,6 +4,8 @@ import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import 'super_textfield_inspector.dart';
+
 void main() {
   group("SuperTextField", () {
     group("applies color attributions", () {
@@ -29,11 +31,9 @@ void main() {
           ),
         );
 
-        final superText = tester.widget<SuperText>(find.byType(SuperText));
-
         // Ensure the text is colored orange.
         expect(
-          superText.richText.style!.color,
+          SuperTextFieldInspector.findRichText().style!.color,
           Colors.orange,
         );
       });
@@ -60,17 +60,15 @@ void main() {
           ),
         );
 
-        final superText = tester.widget<SuperText>(find.byType(SuperText));
-
         // Ensure the first span is colored black.
         expect(
-          superText.richText.getSpanForPosition(const TextPosition(offset: 0))!.style!.color,
+          SuperTextFieldInspector.findRichText().getSpanForPosition(const TextPosition(offset: 0))!.style!.color,
           Colors.black,
         );
 
         // Ensure the second span is colored orange.
         expect(
-          superText.richText.getSpanForPosition(const TextPosition(offset: 5))!.style!.color,
+          SuperTextFieldInspector.findRichText().getSpanForPosition(const TextPosition(offset: 5))!.style!.color,
           Colors.orange,
         );
       });
