@@ -13,6 +13,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'supereditor_test_tools.dart';
+import 'test_documents.dart';
 
 void main() {
   group("SuperEditor", () {
@@ -191,30 +192,7 @@ void main() {
         await tester //
             .createDocument()
             .withCustomContent(
-              MutableDocument(
-                nodes: [
-                  ParagraphNode(
-                    id: '1',
-                    text: AttributedText(
-                      'abcdefghij',
-                      AttributedSpans(
-                        attributions: [
-                          const SpanMarker(
-                            attribution: ColorAttribution(Colors.orange),
-                            offset: 0,
-                            markerType: SpanMarkerType.start,
-                          ),
-                          const SpanMarker(
-                            attribution: ColorAttribution(Colors.orange),
-                            offset: 9,
-                            markerType: SpanMarkerType.end,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                ],
-              ),
+              singleParagraphFullColor(),
             )
             .pump();
 
@@ -231,30 +209,7 @@ void main() {
         await tester //
             .createDocument()
             .withCustomContent(
-              MutableDocument(
-                nodes: [
-                  ParagraphNode(
-                    id: '1',
-                    text: AttributedText(
-                      'abcdefghij',
-                      AttributedSpans(
-                        attributions: [
-                          const SpanMarker(
-                            attribution: ColorAttribution(Colors.orange),
-                            offset: 5,
-                            markerType: SpanMarkerType.start,
-                          ),
-                          const SpanMarker(
-                            attribution: ColorAttribution(Colors.orange),
-                            offset: 9,
-                            markerType: SpanMarkerType.end,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                ],
-              ),
+              singleParagraphWithPartialColor(),
             )
             .pump();
 
