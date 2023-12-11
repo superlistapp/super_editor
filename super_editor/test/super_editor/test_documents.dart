@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
 MutableDocument paragraphThenHrThenParagraphDoc() => MutableDocument(
@@ -228,5 +229,55 @@ MutableDocument longDoc() => MutableDocument(
             'Etiam id lacus interdum, efficitur ex convallis, accumsan ipsum. Integer faucibus mollis mauris, a suscipit ante mollis vitae. Fusce justo metus, congue non lectus ac, luctus rhoncus tellus. Phasellus vitae fermentum orci, sit amet sodales orci. Fusce at ante iaculis nunc aliquet pharetra. Nam placerat, nisl in gravida lacinia, nisl nibh feugiat nunc, in sagittis nisl sapien nec arcu. Nunc gravida faucibus massa, sit amet accumsan dolor feugiat in. Mauris ut elementum leo.',
           ),
         ),
+      ],
+    );
+
+MutableDocument singleParagraphWithPartialColor() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: '1',
+          text: AttributedText(
+            'abcdefghij',
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 5,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 9,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        )
+      ],
+    );
+
+MutableDocument singleParagraphFullColor() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: '1',
+          text: AttributedText(
+            'abcdefghij',
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 9,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        )
       ],
     );
