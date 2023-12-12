@@ -79,6 +79,18 @@ void testWidgetsOnMacWeb(
   }, variant: variant, skip: skip);
 }
 
+/// A widget test that runs a variant for Mac and iOS.
+@isTestGroup
+void testWidgetsOnMacAndIos(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  TestVariant<Object?> variant = const DefaultTestVariant(),
+}) {
+  testWidgetsOnMac(description, test, variant: variant, skip: skip);
+  testWidgetsOnIos(description, test, variant: variant, skip: skip);
+}
+
 @isTestGroup
 void testWidgetsOnIosDeviceAndWeb(
   String description,
@@ -218,6 +230,30 @@ void testAllInputsOnMac(
   }, skip: skip);
 
   testWidgetsOnMac("$description (IME)", (WidgetTester tester) async {
+    await test(tester, inputSource: TextInputSource.ime);
+  }, skip: skip);
+}
+
+/// A widget test that runs as a Mac and iOS, and for all [TextInputSource]s.
+@isTestGroup
+void testAllInputsOnMacAndIos(
+  String description,
+  InputModeTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnMac("$description (keyboard)", (WidgetTester tester) async {
+    await test(tester, inputSource: TextInputSource.keyboard);
+  }, skip: skip);
+
+  testWidgetsOnMac("$description (IME)", (WidgetTester tester) async {
+    await test(tester, inputSource: TextInputSource.ime);
+  }, skip: skip);
+
+  testWidgetsOnIos("$description (keyboard)", (WidgetTester tester) async {
+    await test(tester, inputSource: TextInputSource.keyboard);
+  }, skip: skip);
+
+  testWidgetsOnIos("$description (IME)", (WidgetTester tester) async {
     await test(tester, inputSource: TextInputSource.ime);
   }, skip: skip);
 }

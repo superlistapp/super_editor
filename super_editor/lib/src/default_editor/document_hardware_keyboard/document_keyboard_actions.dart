@@ -221,7 +221,9 @@ ExecutionInstruction deleteDownstreamCharacterWithCtrlDeleteOnMac({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
 }) {
-  if (defaultTargetPlatform != TargetPlatform.macOS) {
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
+  if (!isMacOrIos) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -523,25 +525,28 @@ ExecutionInstruction moveUpAndDownWithArrowKeys({
     return ExecutionInstruction.continueExecution;
   }
 
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
-    if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
+    if (isMacOrIos && HardwareKeyboard.instance.isAltPressed) {
       didMove = editContext.commonOps.moveCaretUpstream(
         expand: HardwareKeyboard.instance.isShiftPressed,
         movementModifier: MovementModifier.paragraph,
       );
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
-      didMove = editContext.commonOps.moveSelectionToBeginningOfDocument(expand: HardwareKeyboard.instance.isShiftPressed);
+    } else if (isMacOrIos && HardwareKeyboard.instance.isMetaPressed) {
+      didMove =
+          editContext.commonOps.moveSelectionToBeginningOfDocument(expand: HardwareKeyboard.instance.isShiftPressed);
     } else {
       didMove = editContext.commonOps.moveCaretUp(expand: HardwareKeyboard.instance.isShiftPressed);
     }
   } else {
-    if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
+    if (isMacOrIos && HardwareKeyboard.instance.isAltPressed) {
       didMove = editContext.commonOps.moveCaretDownstream(
         expand: HardwareKeyboard.instance.isShiftPressed,
         movementModifier: MovementModifier.paragraph,
       );
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
+    } else if (isMacOrIos && HardwareKeyboard.instance.isMetaPressed) {
       didMove = editContext.commonOps.moveSelectionToEndOfDocument(expand: HardwareKeyboard.instance.isShiftPressed);
     } else {
       didMove = editContext.commonOps.moveCaretDown(expand: HardwareKeyboard.instance.isShiftPressed);
@@ -580,14 +585,16 @@ ExecutionInstruction moveLeftAndRightWithArrowKeys({
     return ExecutionInstruction.continueExecution;
   }
 
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
   bool didMove = false;
   MovementModifier? movementModifier;
   if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
       HardwareKeyboard.instance.isControlPressed) {
     movementModifier = MovementModifier.word;
-  } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
+  } else if (isMacOrIos && HardwareKeyboard.instance.isMetaPressed) {
     movementModifier = MovementModifier.line;
-  } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
+  } else if (isMacOrIos && HardwareKeyboard.instance.isAltPressed) {
     movementModifier = MovementModifier.word;
   }
 
@@ -762,7 +769,9 @@ ExecutionInstruction deleteToStartOfLineWithCmdBackspaceOnMac({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform != TargetPlatform.macOS) {
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
+  if (!isMacOrIos) {
     return ExecutionInstruction.continueExecution;
   }
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
@@ -794,8 +803,9 @@ ExecutionInstruction deleteToEndOfLineWithCmdDeleteOnMac({
   if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
 
-  if (defaultTargetPlatform != TargetPlatform.macOS) {
+  if (!isMacOrIos) {
     return ExecutionInstruction.continueExecution;
   }
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {
@@ -827,8 +837,9 @@ ExecutionInstruction deleteWordUpstreamWithAltBackspaceOnMac({
   if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
 
-  if (defaultTargetPlatform != TargetPlatform.macOS) {
+  if (!isMacOrIos) {
     return ExecutionInstruction.continueExecution;
   }
   if (!HardwareKeyboard.instance.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
@@ -893,8 +904,9 @@ ExecutionInstruction deleteWordDownstreamWithAltDeleteOnMac({
   if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
 
-  if (defaultTargetPlatform != TargetPlatform.macOS) {
+  if (!isMacOrIos) {
     return ExecutionInstruction.continueExecution;
   }
   if (!HardwareKeyboard.instance.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {

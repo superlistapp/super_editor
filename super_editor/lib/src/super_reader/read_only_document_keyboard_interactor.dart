@@ -236,12 +236,13 @@ final expandSelectionWithRightArrow = createShortcut(
 );
 
 MovementModifier? _getHorizontalMovementModifier(KeyEvent keyEvent) {
+  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
   if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
       HardwareKeyboard.instance.isControlPressed) {
     return MovementModifier.word;
-  } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
+  } else if (isMacOrIos && HardwareKeyboard.instance.isMetaPressed) {
     return MovementModifier.line;
-  } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
+  } else if (isMacOrIos && HardwareKeyboard.instance.isAltPressed) {
     return MovementModifier.word;
   }
 
