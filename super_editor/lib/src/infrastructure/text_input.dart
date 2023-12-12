@@ -15,6 +15,9 @@ bool get isWeb => debugIsWebOverride == null //
     ? kIsWeb
     : debugIsWebOverride == WebPlatformOverride.web;
 
+/// Whether or not we are running on an Apple device (MacOS or iOS).
+bool get isApple => defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+
 /// Overrides the value of [isWeb].
 ///
 /// This is intended to be used in tests.

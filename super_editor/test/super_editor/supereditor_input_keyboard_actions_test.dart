@@ -16,7 +16,7 @@ void main() {
     group("movement >", () {
       group("Mac and iOS >", () {
         group("jumps to", () {
-          testWidgetsOnMacAndIos('beginning of line with CMD + LEFT ARROW', (tester) async {
+          testWidgetsOnApple('beginning of line with CMD + LEFT ARROW', (tester) async {
             // Start the user's selection somewhere after the beginning of the first
             // line in the first node.
             await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -35,7 +35,7 @@ void main() {
             );
           });
 
-          testWidgetsOnMacAndIos('end of line with CMD + RIGHT ARROW', (tester) async {
+          testWidgetsOnApple('end of line with CMD + RIGHT ARROW', (tester) async {
             // Start the user's selection somewhere before the end of the first line
             // in the first node.
             await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -56,7 +56,7 @@ void main() {
             );
           });
 
-          testWidgetsOnMacAndIos('beginning of word with ALT + LEFT ARROW', (tester) async {
+          testWidgetsOnApple('beginning of word with ALT + LEFT ARROW', (tester) async {
             // Start the user's selection somewhere in the middle of a word.
             await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -74,7 +74,7 @@ void main() {
             );
           });
 
-          testWidgetsOnMacAndIos('end of word with ALT + RIGHT ARROW', (tester) async {
+          testWidgetsOnApple('end of word with ALT + RIGHT ARROW', (tester) async {
             // Start the user's selection somewhere in the middle of a word.
             await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -92,7 +92,7 @@ void main() {
             );
           });
 
-          testWidgetsOnMacAndIos('beginning of paragraph with OPTION + UP ARROW', (tester) async {
+          testWidgetsOnApple('beginning of paragraph with OPTION + UP ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -116,7 +116,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMacAndIos('end of paragraph with OPTION + DOWN ARROW', (tester) async {
+          testWidgetsOnApple('end of paragraph with OPTION + DOWN ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -140,7 +140,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMacAndIos('beginning of document with CMD + UP ARROW', (tester) async {
+          testWidgetsOnApple('beginning of document with CMD + UP ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -163,7 +163,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMacAndIos('end of document with CMD + DOWN ARROW', (tester) async {
+          testWidgetsOnApple('end of document with CMD + DOWN ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -188,7 +188,7 @@ void main() {
         });
 
         group("expands to", () {
-          testWidgetsOnMacAndIos('beginning of paragraph with SHIFT + OPTION + UP ARROW', (tester) async {
+          testWidgetsOnApple('beginning of paragraph with SHIFT + OPTION + UP ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -216,7 +216,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMacAndIos('end of paragraph with SHIFT + OPTION + DOWN ARROW', (tester) async {
+          testWidgetsOnApple('end of paragraph with SHIFT + OPTION + DOWN ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -244,7 +244,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMacAndIos('beginning of document with SHIFT + CMD + UP ARROW', (tester) async {
+          testWidgetsOnApple('beginning of document with SHIFT + CMD + UP ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -271,7 +271,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMacAndIos('end of document with SHIFT + CMD + DOWN ARROW', (tester) async {
+          testWidgetsOnApple('end of document with SHIFT + CMD + DOWN ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -299,7 +299,7 @@ void main() {
           }, variant: inputSourceVariant);
         });
 
-        testWidgetsOnMacAndIos("option + backspace: deletes a word upstream", (tester) async {
+        testWidgetsOnApple("option + backspace: deletes a word upstream", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -328,7 +328,7 @@ void main() {
           );
         }, variant: inputSourceVariant);
 
-        testWidgetsOnMacAndIos("option + backspace: deletes a word upstream (after a space)", (tester) async {
+        testWidgetsOnApple("option + backspace: deletes a word upstream (after a space)", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -357,7 +357,7 @@ void main() {
           );
         }, variant: inputSourceVariant);
 
-        testWidgetsOnMacAndIos("option + delete: deletes a word downstream", (tester) async {
+        testWidgetsOnApple("option + delete: deletes a word downstream", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -386,7 +386,7 @@ void main() {
           );
         }, variant: inputSourceVariant);
 
-        testWidgetsOnMacAndIos("option + delete: deletes a word downstream (before a space)", (tester) async {
+        testWidgetsOnApple("option + delete: deletes a word downstream (before a space)", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -415,7 +415,7 @@ void main() {
           );
         }, variant: inputSourceVariant);
 
-        testWidgetsOnMacAndIos("control + backspace: deletes a single upstream character", (tester) async {
+        testWidgetsOnApple("control + backspace: deletes a single upstream character", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -442,7 +442,7 @@ void main() {
           );
         }, variant: inputSourceVariant);
 
-        testWidgetsOnMacAndIos("control + delete: deletes a single downstream character", (tester) async {
+        testWidgetsOnApple("control + delete: deletes a single downstream character", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -1060,7 +1060,7 @@ void main() {
     });
 
     group('CMD + A to select all', () {
-      testWidgetsOnMacAndIos('does nothing when CMD key is pressed but A-key is not pressed', (tester) async {
+      testWidgetsOnApple('does nothing when CMD key is pressed but A-key is not pressed', (tester) async {
         await tester //
             .createDocument()
             .withSingleParagraph()
@@ -1083,7 +1083,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMacAndIos('does nothing when A-key is pressed but meta key is not pressed', (tester) async {
+      testWidgetsOnApple('does nothing when A-key is pressed but meta key is not pressed', (tester) async {
         await tester //
             .createDocument()
             .withSingleParagraph()
@@ -1106,7 +1106,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMacAndIos('does nothing when CMD+A is pressed but the document is empty', (tester) async {
+      testWidgetsOnApple('does nothing when CMD+A is pressed but the document is empty', (tester) async {
         await tester //
             .createDocument()
             .withSingleEmptyParagraph()
@@ -1128,7 +1128,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMacAndIos('selects all when CMD+A is pressed with a single-node document', (tester) async {
+      testWidgetsOnApple('selects all when CMD+A is pressed with a single-node document', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(MutableDocument(
@@ -1161,7 +1161,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMacAndIos('selects all when CMD+A is pressed with a two-node document', (tester) async {
+      testWidgetsOnApple('selects all when CMD+A is pressed with a two-node document', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1200,7 +1200,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMacAndIos('selects all when CMD+A is pressed with a three-node document', (tester) async {
+      testWidgetsOnApple('selects all when CMD+A is pressed with a three-node document', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1246,7 +1246,7 @@ void main() {
     });
 
     group('key pressed with selection', () {
-      testWidgetsOnMacAndIos('deletes selection if backspace is pressed', (tester) async {
+      testWidgetsOnApple('deletes selection if backspace is pressed', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1294,7 +1294,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMacAndIos('deletes selection if delete is pressed', (tester) async {
+      testWidgetsOnApple('deletes selection if delete is pressed', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1342,7 +1342,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMacAndIos('replaces selected content with character when character key is pressed', (tester) async {
+      testWidgetsOnApple('replaces selected content with character when character key is pressed', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1391,7 +1391,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMacAndIos('collapses selection if escape is pressed', (tester) async {
+      testWidgetsOnApple('collapses selection if escape is pressed', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1440,7 +1440,7 @@ void main() {
       });
     });
 
-    testWidgetsOnMacAndIos('does nothing when escape is pressed if the selection is collapsed', (tester) async {
+    testWidgetsOnApple('does nothing when escape is pressed if the selection is collapsed', (tester) async {
       await tester //
           .createDocument()
           .withCustomContent(

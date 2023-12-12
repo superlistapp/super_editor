@@ -56,7 +56,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 3));
         });
 
-        testAllInputsOnMacAndIos("to beginning of word when ALT + LEFT_ARROW is pressed", (
+        testAllInputsOnApple("to beginning of word when ALT + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -67,7 +67,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 8));
         });
 
-        testAllInputsOnMacAndIos("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
+        testAllInputsOnApple("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -78,7 +78,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
         });
 
-        testAllInputsOnMacAndIos("to end of word when ALT + RIGHT_ARROW is pressed", (
+        testAllInputsOnApple("to end of word when ALT + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -89,7 +89,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
         });
 
-        testAllInputsOnMacAndIos("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
+        testAllInputsOnApple("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -100,7 +100,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
         });
 
-        testAllInputsOnMacAndIos("to beginning of line when CMD + LEFT_ARROW is pressed", (
+        testAllInputsOnApple("to beginning of line when CMD + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -111,7 +111,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 0));
         });
 
-        testAllInputsOnMacAndIos("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
+        testAllInputsOnApple("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -122,7 +122,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 0));
         });
 
-        testAllInputsOnMacAndIos("to end of line when CMD + RIGHT_ARROW is pressed", (
+        testAllInputsOnApple("to end of line when CMD + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -133,7 +133,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 26, TextAffinity.upstream));
         });
 
-        testAllInputsOnMacAndIos("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
+        testAllInputsOnApple("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {

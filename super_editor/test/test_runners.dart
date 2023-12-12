@@ -81,7 +81,7 @@ void testWidgetsOnMacWeb(
 
 /// A widget test that runs a variant for Mac and iOS.
 @isTestGroup
-void testWidgetsOnMacAndIos(
+void testWidgetsOnApple(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
@@ -236,7 +236,7 @@ void testAllInputsOnMac(
 
 /// A widget test that runs as a Mac and iOS, and for all [TextInputSource]s.
 @isTestGroup
-void testAllInputsOnMacAndIos(
+void testAllInputsOnApple(
   String description,
   InputModeTesterCallback test, {
   bool skip = false,

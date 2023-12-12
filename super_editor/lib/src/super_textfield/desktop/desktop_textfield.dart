@@ -2437,13 +2437,11 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
-
-    if (isMacOrIos && !HardwareKeyboard.instance.isMetaPressed) {
+    if (isApple && !HardwareKeyboard.instance.isMetaPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (!isMacOrIos && !HardwareKeyboard.instance.isControlPressed) {
+    if (!isApple && !HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2470,13 +2468,12 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey != LogicalKeyboardKey.end) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
-    final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
 
-    if (isMacOrIos && !HardwareKeyboard.instance.isMetaPressed) {
+    if (isApple && !HardwareKeyboard.instance.isMetaPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (!isMacOrIos && !HardwareKeyboard.instance.isControlPressed) {
+    if (!isApple && !HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 

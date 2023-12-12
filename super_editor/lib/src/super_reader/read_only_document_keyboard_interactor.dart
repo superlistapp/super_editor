@@ -5,6 +5,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 
 import 'reader_context.dart';
 
@@ -236,13 +237,12 @@ final expandSelectionWithRightArrow = createShortcut(
 );
 
 MovementModifier? _getHorizontalMovementModifier(KeyEvent keyEvent) {
-  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
   if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
       HardwareKeyboard.instance.isControlPressed) {
     return MovementModifier.word;
-  } else if (isMacOrIos && HardwareKeyboard.instance.isMetaPressed) {
+  } else if (isApple && HardwareKeyboard.instance.isMetaPressed) {
     return MovementModifier.line;
-  } else if (isMacOrIos && HardwareKeyboard.instance.isAltPressed) {
+  } else if (isApple && HardwareKeyboard.instance.isAltPressed) {
     return MovementModifier.word;
   }
 

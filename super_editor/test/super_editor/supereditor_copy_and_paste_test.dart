@@ -9,7 +9,7 @@ import 'supereditor_test_tools.dart';
 
 void main() {
   group('SuperEditor copy and paste > ', () {
-    testWidgetsOnMacAndIos('pastes within a paragraph', (tester) async {
+    testWidgetsOnApple('pastes within a paragraph', (tester) async {
       await tester //
           .createDocument()
           .withSingleEmptyParagraph()
@@ -34,7 +34,7 @@ void main() {
       expect(SuperEditorInspector.findTextInParagraph(nodeId).text, "Pasted text: This was pasted here");
     });
 
-    testWidgetsOnMacAndIos('pastes within a list item', (tester) async {
+    testWidgetsOnApple('pastes within a list item', (tester) async {
       await tester //
           .createDocument()
           .fromMarkdown(" * Pasted text:")
