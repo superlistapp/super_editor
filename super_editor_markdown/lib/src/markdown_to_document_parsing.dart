@@ -19,6 +19,7 @@ MutableDocument deserializeMarkdownToDocument(
   MarkdownSyntax syntax = MarkdownSyntax.superEditor,
   List<md.BlockSyntax> customBlockSyntax = const [],
   List<ElementToNodeConverter> customElementToNodeConverters = const [],
+  bool encodeHtml = false,
 }) {
   final markdownLines = const LineSplitter().convert(markdown);
 
@@ -39,7 +40,7 @@ MutableDocument deserializeMarkdownToDocument(
   final markdownNodes = blockParser.parseLines();
 
   // Convert structured markdown to a Document.
-  final nodeVisitor = _MarkdownToDocument(customElementToNodeConverters);
+  final nodeVisitor = _MarkdownToDocument(customElementToNodeConverters, encodeHtml);
   for (final node in markdownNodes) {
     node.accept(nodeVisitor);
   }
@@ -67,7 +68,7 @@ MutableDocument deserializeMarkdownToDocument(
 /// contains [DocumentNode]s that correspond to the visited
 /// markdown content.
 class _MarkdownToDocument implements md.NodeVisitor {
-  _MarkdownToDocument([this._elementToNodeConverters = const []]);
+  _MarkdownToDocument([this._elementToNodeConverters = const [], this._encodeHtml = false]);
 
   final List<ElementToNodeConverter> _elementToNodeConverters;
 
@@ -75,6 +76,12 @@ class _MarkdownToDocument implements md.NodeVisitor {
   List<DocumentNode> get content => _content;
 
   final _listItemTypeStack = <ListItemType>[];
+
+  /// If `true`, special HTML symbols are encoded with HTML escape codes, otherwise those
+  /// symbols are left as-is.
+  ///
+  /// Example: "&" -> "&amp;", "<" -> "&lt;", ">" -> "&gt;"
+  final bool _encodeHtml;
 
   @override
   bool visitElementBefore(md.Element element) {
@@ -317,6 +324,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
           md.StrikethroughSyntax(),
           UnderlineSyntax(),
         ],
+        encodeHtml: _encodeHtml,
       ),
     );
     final inlineVisitor = _InlineMarkdownToDocument();
