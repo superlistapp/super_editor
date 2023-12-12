@@ -611,7 +611,9 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           return TextLayoutCaret(
             textLayout: textLayout,
             style: widget.caretStyle,
-            position: _textEditingController.selection.extent,
+            position: _textEditingController.selection.isCollapsed //
+                ? _textEditingController.selection.extent
+                : null,
             blinkTimingMode: widget.blinkTimingMode,
           );
         },
