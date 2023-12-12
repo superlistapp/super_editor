@@ -101,7 +101,7 @@ void main() {
       expect(_isCaretPresent(tester), isFalse);
     });
 
-    testWidgetsOnAllPlatforms("is displayed with focus and a text selection", (tester) async {
+    testWidgetsOnAllPlatforms("is displayed with focus and a collapsed text selection", (tester) async {
       final controller = AttributedTextEditingController(
         selection: const TextSelection.collapsed(offset: 0),
       );
@@ -117,6 +117,25 @@ void main() {
       await tester.pump();
 
       expect(_isCaretPresent(tester), isTrue);
+    });
+
+    testWidgetsOnMobile("is NOT displayed with focus and an expanded text selection", (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText("Hello, world!"),
+        selection: const TextSelection(baseOffset: 0, extentOffset: 5),
+      );
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            focusNode: FocusNode()..requestFocus(),
+            textController: controller,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(_isCaretPresent(tester), isFalse);
     });
 
     testWidgetsOnAllPlatforms("uses the given caretStyle", (tester) async {
