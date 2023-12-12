@@ -842,6 +842,32 @@ This is some code
         expect(styledText.getAllAttributionsAt(40).single, LinkAttribution(url: Uri.https('example.org', '')));
       });
 
+      test('paragraph with special HTML symbols keeps the symbols by default', () {
+        const markdown = 'Preserves symbols like &, <, and >, rather than use HTML escape codes.';
+
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first, isA<ParagraphNode>());
+
+        final paragraph = document.nodes.first as ParagraphNode;
+        final styledText = paragraph.text;
+        expect(styledText.text, 'Preserves symbols like &, <, and >, rather than use HTML escape codes.');
+      });
+
+      test('paragraph with special HTML symbols can escape them', () {
+        const markdown = 'Escapes HTML symbols like &, <, and >, when requested.';
+
+        final document = deserializeMarkdownToDocument(markdown, encodeHtml: true);
+
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first, isA<ParagraphNode>());
+
+        final paragraph = document.nodes.first as ParagraphNode;
+        final styledText = paragraph.text;
+        expect(styledText.text, 'Escapes HTML symbols like &amp;, &lt;, and &gt;, when requested.');
+      });
+
       test('link within multiple styles', () {
         const markdown = 'This is **some *styled [link](https://example.org) text***';
 
