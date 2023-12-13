@@ -32,6 +32,7 @@ import 'package:super_editor/src/infrastructure/documents/selection_leader_docum
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
 import '../infrastructure/text_input.dart';
@@ -517,7 +518,7 @@ Widget defaultIosReaderToolbarBuilder(
   ValueListenable<DocumentSelection?> selection,
   SuperReaderIosControlsController editorControlsController,
 ) {
-  if (isWeb) {
+  if (CurrentPlatform.isWeb) {
     // On web, we defer to the browser's internal overlay controls for mobile.
     return const SizedBox();
   }

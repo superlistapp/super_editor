@@ -5,6 +5,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
 import 'reader_context.dart';
 
@@ -239,9 +240,9 @@ MovementModifier? _getHorizontalMovementModifier(RawKeyEvent keyEvent) {
   if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
       keyEvent.isControlPressed) {
     return MovementModifier.word;
-  } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+  } else if (CurrentPlatform.isApple && keyEvent.isMetaPressed) {
     return MovementModifier.line;
-  } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+  } else if (CurrentPlatform.isApple && keyEvent.isAltPressed) {
     return MovementModifier.word;
   }
 
