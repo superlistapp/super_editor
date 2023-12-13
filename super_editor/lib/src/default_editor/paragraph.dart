@@ -14,7 +14,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
-import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
 import 'layout_single_column/layout_single_column.dart';
 import 'text_tools.dart';
@@ -843,7 +843,7 @@ ExecutionInstruction doNothingWithEnterOnWeb({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (isWeb) {
+  if (CurrentPlatform.isWeb) {
     // On web, pressing enter generates both a key event and a `TextInputAction.newline` action.
     // We handle the newline action and ignore the key event.
     // We return blocked so the OS can process it.
@@ -865,7 +865,7 @@ ExecutionInstruction doNothingWithBackspaceOnWeb({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (isWeb) {
+  if (CurrentPlatform.isWeb) {
     // On web, pressing backspace generates both a key event and a deletion delta.
     // We handle the deletion delta and ignore the key event.
     // We return blocked so the OS can process it.
@@ -887,7 +887,7 @@ ExecutionInstruction doNothingWithDeleteOnWeb({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (isWeb) {
+  if (CurrentPlatform.isWeb) {
     // On web, pressing delete generates both a key event and a deletion delta.
     // We handle the deletion delta and ignore the key event.
     // We return blocked so the OS can process it.
