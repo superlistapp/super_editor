@@ -321,12 +321,24 @@ class SelectionStyles {
 
 /// The keys to the style metadata used by a [StyleRule].
 class Styles {
-  /// Key to apply a [TextStyle] to the content.
+  /// Applies a [TextStyle] to the content.
   static const String textStyle = 'textStyle';
 
-  /// Key to apply a [CascadingPadding] around the content.
+  /// Applies a [CascadingPadding] around the content.
   static const String padding = 'padding';
 
   /// Key to a `double` that defines the maximum width of the node.
   static const String maxWidth = 'maxWidth';
+
+  /// Applies a background [Color] to a blockquote.
+  static const String backgroundColor = 'backgroundColor';
+
+  /// Applies a [BorderRadius] to a blockquote.
+  static const String borderRadius = 'borderRadius';
+
+  /// Applies a [TextAlign] to a text node.
+  static const String textAlign = 'textAlign';
+
+  /// Applies a [AttributionStyleAdjuster] to a text node.
+  static const String inlineTextStyler = 'inlineTextStyler';
 }
