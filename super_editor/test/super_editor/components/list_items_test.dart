@@ -850,7 +850,7 @@ final _styleSheet = Stylesheet(
       const BlockSelector("paragraph"),
       (doc, docNode) {
         return {
-          "textStyle": const TextStyle(
+          Styles.textStyle: const TextStyle(
             color: Colors.red,
             fontSize: 16,
           ),
@@ -861,7 +861,7 @@ final _styleSheet = Stylesheet(
       const BlockSelector("listItem"),
       (doc, docNode) {
         return {
-          "textStyle": const TextStyle(
+          Styles.textStyle: const TextStyle(
             color: Colors.blue,
             fontSize: 16,
           ),

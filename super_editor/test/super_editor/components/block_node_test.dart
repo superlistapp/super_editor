@@ -643,7 +643,7 @@ Widget _buildHardwareKeyboardEditor(MutableDocument document, MutableDocumentCom
           addRulesAfter: [
             StyleRule(BlockSelector.all, (doc, node) {
               return {
-                "textStyle": const TextStyle(
+                Styles.textStyle: const TextStyle(
                   fontSize: 12,
                 ),
               };

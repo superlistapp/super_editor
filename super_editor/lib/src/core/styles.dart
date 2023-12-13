@@ -92,6 +92,8 @@ class StyleRule {
 }
 
 /// Generates style metadata for the given [DocumentNode] within the [Document].
+///
+/// See [Styles] for the list of available keys.
 typedef Styler = Map<String, dynamic> Function(Document, DocumentNode);
 
 /// Selects blocks in a document that matches a given rule.
@@ -315,4 +317,16 @@ class SelectionStyles {
 
   @override
   int get hashCode => selectionColor.hashCode ^ highlightEmptyTextBlocks.hashCode;
+}
+
+/// The keys to the style metadata used by a [StyleRule].
+class Styles {
+  /// Key to apply a [TextStyle] to the content.
+  static const String textStyle = 'textStyle';
+
+  /// Key to apply a [CascadingPadding] around the content.
+  static const String padding = 'padding';
+
+  /// Key to a `double` that defines the maximum width of the node.
+  static const String maxWidth = 'maxWidth';
 }

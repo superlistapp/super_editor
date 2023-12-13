@@ -40,7 +40,7 @@ final _styleSheet = Stylesheet(
       const BlockSelector("blockquote"),
       (doc, docNode) {
         return {
-          "textStyle": const TextStyle(color: Colors.blue, fontSize: 16),
+          Styles.textStyle: const TextStyle(color: Colors.blue, fontSize: 16),
         };
       },
     ),
