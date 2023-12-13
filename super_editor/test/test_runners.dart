@@ -206,6 +206,23 @@ void testAllInputsOnDesktop(
   }, skip: skip);
 }
 
+/// A widget test that runs a variant for every platform
+/// and for all [TextInputSource]s.
+@isTestGroup
+void testAllInputsOnAllPlatforms(
+  String description,
+  InputModeTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnAllPlatforms("$description (keyboard)", (WidgetTester tester) async {
+    await test(tester, inputSource: TextInputSource.keyboard);
+  }, skip: skip);
+
+  testWidgetsOnAllPlatforms("$description (IME)", (WidgetTester tester) async {
+    await test(tester, inputSource: TextInputSource.ime);
+  }, skip: skip);
+}
+
 /// A widget test that runs as a Mac, and for all [TextInputSource]s.
 @isTestGroup
 void testAllInputsOnMac(
