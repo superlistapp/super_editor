@@ -13,7 +13,7 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
-import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
 /// Scrolls up by the viewport height, or as high as possible,
 /// when the user presses the Page Up key.
@@ -79,13 +79,11 @@ ExecutionInstruction scrollOnCtrlOrCmdAndHomeKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
-
-  if (isMacOrIos && !HardwareKeyboard.instance.isMetaPressed) {
+  if (CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!isMacOrIos && !HardwareKeyboard.instance.isControlPressed) {
+  if (!CurrentPlatform.isApple && !HardwareKeyboard.instance.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -114,13 +112,11 @@ ExecutionInstruction scrollOnCtrlOrCmdAndEndKeyPress({
     return ExecutionInstruction.continueExecution;
   }
 
-  final isMacOrIos = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
-
-  if (isMacOrIos && !HardwareKeyboard.instance.isMetaPressed) {
+  if (CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!isMacOrIos && !HardwareKeyboard.instance.isControlPressed) {
+  if (!CurrentPlatform.isApple && !HardwareKeyboard.instance.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -204,7 +200,7 @@ ExecutionInstruction sendKeyEventToMacOs({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
 }) {
-  if (defaultTargetPlatform == TargetPlatform.macOS && !isWeb) {
+  if (defaultTargetPlatform == TargetPlatform.macOS && !CurrentPlatform.isWeb) {
     // On macOS, we let the IME handle all key events. Then, the IME might generate
     // selectors which express the user intent, e.g, moveLeftAndModifySelection:.
     //
@@ -221,7 +217,7 @@ ExecutionInstruction deleteDownstreamCharacterWithCtrlDeleteOnMac({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
 }) {
-  if (defaultTargetPlatform != TargetPlatform.macOS) {
+  if (!CurrentPlatform.isApple) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -506,7 +502,7 @@ ExecutionInstruction moveUpAndDownWithArrowKeys({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (isWeb && (editContext.composer.composingRegion.value != null)) {
+  if (CurrentPlatform.isWeb && (editContext.composer.composingRegion.value != null)) {
     // We are composing a character on web. It's possible that a native element is being displayed,
     // like an emoji picker or a character selection panel.
     // We need to let the OS handle the key so the user can navigate
@@ -525,23 +521,24 @@ ExecutionInstruction moveUpAndDownWithArrowKeys({
 
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
-    if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
+    if (CurrentPlatform.isApple && HardwareKeyboard.instance.isAltPressed) {
       didMove = editContext.commonOps.moveCaretUpstream(
         expand: HardwareKeyboard.instance.isShiftPressed,
         movementModifier: MovementModifier.paragraph,
       );
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
-      didMove = editContext.commonOps.moveSelectionToBeginningOfDocument(expand: HardwareKeyboard.instance.isShiftPressed);
+    } else if (CurrentPlatform.isApple && HardwareKeyboard.instance.isMetaPressed) {
+      didMove =
+          editContext.commonOps.moveSelectionToBeginningOfDocument(expand: HardwareKeyboard.instance.isShiftPressed);
     } else {
       didMove = editContext.commonOps.moveCaretUp(expand: HardwareKeyboard.instance.isShiftPressed);
     }
   } else {
-    if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
+    if (CurrentPlatform.isApple && HardwareKeyboard.instance.isAltPressed) {
       didMove = editContext.commonOps.moveCaretDownstream(
         expand: HardwareKeyboard.instance.isShiftPressed,
         movementModifier: MovementModifier.paragraph,
       );
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
+    } else if (CurrentPlatform.isApple && HardwareKeyboard.instance.isMetaPressed) {
       didMove = editContext.commonOps.moveSelectionToEndOfDocument(expand: HardwareKeyboard.instance.isShiftPressed);
     } else {
       didMove = editContext.commonOps.moveCaretDown(expand: HardwareKeyboard.instance.isShiftPressed);
@@ -567,7 +564,7 @@ ExecutionInstruction moveLeftAndRightWithArrowKeys({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (isWeb && (editContext.composer.composingRegion.value != null)) {
+  if (CurrentPlatform.isWeb && (editContext.composer.composingRegion.value != null)) {
     // We are composing a character on web. It's possible that a native element is being displayed,
     // like an emoji picker or a character selection panel.
     // We need to let the OS handle the key so the user can navigate
@@ -585,9 +582,9 @@ ExecutionInstruction moveLeftAndRightWithArrowKeys({
   if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
       HardwareKeyboard.instance.isControlPressed) {
     movementModifier = MovementModifier.word;
-  } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
+  } else if (CurrentPlatform.isApple && HardwareKeyboard.instance.isMetaPressed) {
     movementModifier = MovementModifier.line;
-  } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
+  } else if (CurrentPlatform.isApple && HardwareKeyboard.instance.isAltPressed) {
     movementModifier = MovementModifier.word;
   }
 
@@ -612,7 +609,7 @@ ExecutionInstruction doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
 }) {
-  if (!isWeb) {
+  if (!CurrentPlatform.isWeb) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -762,7 +759,7 @@ ExecutionInstruction deleteToStartOfLineWithCmdBackspaceOnMac({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform != TargetPlatform.macOS) {
+  if (!CurrentPlatform.isApple) {
     return ExecutionInstruction.continueExecution;
   }
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
@@ -795,7 +792,7 @@ ExecutionInstruction deleteToEndOfLineWithCmdDeleteOnMac({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform != TargetPlatform.macOS) {
+  if (!CurrentPlatform.isApple) {
     return ExecutionInstruction.continueExecution;
   }
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {
@@ -828,7 +825,7 @@ ExecutionInstruction deleteWordUpstreamWithAltBackspaceOnMac({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform != TargetPlatform.macOS) {
+  if (!CurrentPlatform.isApple) {
     return ExecutionInstruction.continueExecution;
   }
   if (!HardwareKeyboard.instance.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
@@ -894,7 +891,7 @@ ExecutionInstruction deleteWordDownstreamWithAltDeleteOnMac({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform != TargetPlatform.macOS) {
+  if (!CurrentPlatform.isApple) {
     return ExecutionInstruction.continueExecution;
   }
   if (!HardwareKeyboard.instance.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.delete) {
