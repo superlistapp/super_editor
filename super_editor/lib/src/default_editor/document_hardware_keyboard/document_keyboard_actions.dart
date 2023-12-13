@@ -582,6 +582,7 @@ ExecutionInstruction moveLeftAndRightWithArrowKeys({
       keyEvent.isControlPressed) {
     movementModifier = MovementModifier.word;
   } else if (CurrentPlatform.isApple && keyEvent.isMetaPressed) {
+    movementModifier = MovementModifier.line;
   } else if (CurrentPlatform.isApple && keyEvent.isAltPressed) {
     movementModifier = MovementModifier.word;
   }
