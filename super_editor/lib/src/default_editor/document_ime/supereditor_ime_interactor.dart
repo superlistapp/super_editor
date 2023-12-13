@@ -13,7 +13,7 @@ import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
-import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
 import '../document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_delta_editing.dart';
@@ -315,7 +315,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     late Size size;
     late Matrix4 transform;
 
-    if (isWeb) {
+    if (CurrentPlatform.isWeb) {
       // On web, we can't set the caret rect.
       // To display the IME panels at the correct position,
       // instead of reporting the whole editor size and transform,
@@ -337,7 +337,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   }
 
   void _reportCaretRectToIme() {
-    if (isWeb) {
+    if (CurrentPlatform.isWeb) {
       // On web, setting the caret rect isn't supported.
       // To position the IME popovers, we report the size, transform and style
       // of the selected component and let the browser position the popovers.
@@ -359,7 +359,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   ///
   /// TODO: update this after https://github.com/flutter/flutter/issues/134265 is resolved.
   void _reportTextStyleToIme() {
-    if (!isWeb) {
+    if (!CurrentPlatform.isWeb) {
       // If we are not on the web, we can position the caret rect without the need
       // to send the text styles to the IME.
       return;
@@ -645,7 +645,7 @@ void unIndentListItem(SuperEditorContext context) {
 }
 
 void insertNewLine(SuperEditorContext context) {
-  if (isWeb) {
+  if (CurrentPlatform.isWeb) {
     return;
   }
   context.commonOps.insertBlockLevelNewline();
@@ -704,14 +704,14 @@ void deleteToEndOfLine(SuperEditorContext context) {
 }
 
 void deleteBackward(SuperEditorContext context) {
-  if (isWeb) {
+  if (CurrentPlatform.isWeb) {
     return;
   }
   context.commonOps.deleteUpstream();
 }
 
 void deleteForward(SuperEditorContext context) {
-  if (isWeb) {
+  if (CurrentPlatform.isWeb) {
     return;
   }
   context.commonOps.deleteDownstream();

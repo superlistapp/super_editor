@@ -4,6 +4,7 @@ import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:logging/logging.dart' as logging;
 import 'package:meta/meta.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 
 @isTestGroup

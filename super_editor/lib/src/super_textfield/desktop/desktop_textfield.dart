@@ -19,6 +19,7 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_field_scroller.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
@@ -1332,7 +1333,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   }
 
   void _reportCaretRectToIme() {
-    if (isWeb) {
+    if (CurrentPlatform.isWeb) {
       // On web, setting the caret rect isn't supported.
       // To position the IME popovers, we report our size, transform and text style
       // and let the browser position the popovers.
@@ -2062,7 +2063,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (isWeb && (textFieldContext.controller.composingRegion.isValid)) {
+    if (CurrentPlatform.isWeb && (textFieldContext.controller.composingRegion.isValid)) {
       // We are composing a character on web. It's possible that a native element is being displayed,
       // like an emoji picker or a character selection panel.
       // We need to let the OS handle the key so the user can navigate
@@ -2359,7 +2360,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required SuperTextFieldContext textFieldContext,
     required KeyEvent keyEvent,
   }) {
-    if (defaultTargetPlatform == TargetPlatform.macOS && !isWeb) {
+    if (defaultTargetPlatform == TargetPlatform.macOS && !CurrentPlatform.isWeb) {
       // On macOS, we let the IME handle all key events. Then, the IME might generate
       // selectors which express the user intent, e.g, moveLeftAndModifySelection:.
       //
@@ -2437,11 +2438,11 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (isApple && !HardwareKeyboard.instance.isMetaPressed) {
+    if (CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (!isApple && !HardwareKeyboard.instance.isControlPressed) {
+    if (!CurrentPlatform.isApple && !HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2469,11 +2470,11 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (isApple && !HardwareKeyboard.instance.isMetaPressed) {
+    if (CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (!isApple && !HardwareKeyboard.instance.isControlPressed) {
+    if (!CurrentPlatform.isApple && !HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2501,7 +2502,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (defaultTargetPlatform != TargetPlatform.macOS && !isWeb) {
+    if (defaultTargetPlatform != TargetPlatform.macOS && !CurrentPlatform.isWeb) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2529,7 +2530,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (defaultTargetPlatform != TargetPlatform.macOS && !isWeb) {
+    if (defaultTargetPlatform != TargetPlatform.macOS && !CurrentPlatform.isWeb) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
