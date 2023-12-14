@@ -283,12 +283,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
-      ]);
-
-      // Clear the composing region to close any IME popovers.
-      // Use a separate request, because the tags plugin expects a changelist
-      // containing only a selection change in order to run.
-      widget.editor.execute([
+        // Clear the composing region to close any IME popovers.
         ChangeComposingRegionRequest(null),
       ]);
     } else {
@@ -475,12 +470,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
-    ]);
-
-    // Clear the composing region to close any IME popovers.
-    // Use a separate request, because the tags plugin expects a changelist
-    // containing only a selection change in order to run.
-    widget.editor.execute([
+      // Clear the composing region to close any IME popovers.
       ChangeComposingRegionRequest(null),
     ]);
   }
