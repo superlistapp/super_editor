@@ -70,6 +70,13 @@ bool moveSelectionToNearestSelectableNode({
         SelectionReason.userInteraction,
       ),
     ]);
+
+    // Clear the composing region to close any IME popovers.
+    // Use a separate request, because the tags plugin expects a changelist
+    // containing only a selection change in order to run.
+    editor.execute([
+      ChangeComposingRegionRequest(null),
+    ]);
   } else {
     // Selection should be replaced by new collapsed position.
     editor.execute([
@@ -78,6 +85,13 @@ bool moveSelectionToNearestSelectableNode({
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
+    ]);
+
+    // Clear the composing region to close any IME popovers.
+    // Use a separate request, because the tags plugin expects a changelist
+    // containing only a selection change in order to run.
+    editor.execute([
+      ChangeComposingRegionRequest(null),
     ]);
   }
 
