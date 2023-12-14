@@ -82,7 +82,7 @@ class _SelectedTextColorsDemoState extends State<SelectedTextColorsDemo> {
             BlockSelector.all,
             (doc, docNode) {
               return {
-                "textStyle": TextStyle(
+                Styles.textStyle: TextStyle(
                   color: _regularTextColor,
                 ),
               };

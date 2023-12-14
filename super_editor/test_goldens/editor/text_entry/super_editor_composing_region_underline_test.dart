@@ -194,7 +194,7 @@ final _stylesheet = defaultStylesheet.copyWith(
   addRulesAfter: [
     StyleRule(BlockSelector.all, (doc, node) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           fontFamily: 'Roboto',
         ),
       };

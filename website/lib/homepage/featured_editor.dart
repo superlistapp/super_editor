@@ -312,13 +312,13 @@ final _compactStylesheet = defaultStylesheet.copyWith(
     StyleRule(BlockSelector.all, (doc, docNode) => {'textStyle': _baseTextStyle}),
     StyleRule(
       BlockSelector.all.after(header1Attribution.name),
-      (doc, docNode) => {'padding': const CascadingPadding.only(top: 24)},
+      (doc, docNode) => {Styles.padding: const CascadingPadding.only(top: 24)},
     ),
     StyleRule(
       BlockSelector(header1Attribution.name),
       (doc, docNode) {
         return {
-          'textStyle': _baseTextStyle.copyWith(
+          Styles.textStyle: _baseTextStyle.copyWith(
             fontSize: 32,
             fontWeight: FontWeight.w700,
             height: 1.2,
@@ -328,7 +328,7 @@ final _compactStylesheet = defaultStylesheet.copyWith(
     ),
     StyleRule(BlockSelector(header2Attribution.name), (doc, docNode) {
       return {
-        'textStyle': _baseTextStyle.copyWith(
+        Styles.textStyle: _baseTextStyle.copyWith(
           fontSize: 32,
           fontWeight: FontWeight.w700,
           height: 1.2,
@@ -337,7 +337,7 @@ final _compactStylesheet = defaultStylesheet.copyWith(
     }),
     StyleRule(BlockSelector(header3Attribution.name), (doc, docNode) {
       return {
-        'textStyle': _baseTextStyle.copyWith(
+        Styles.textStyle: _baseTextStyle.copyWith(
           fontSize: 26,
           fontWeight: FontWeight.w700,
           height: 1.2,
@@ -346,7 +346,7 @@ final _compactStylesheet = defaultStylesheet.copyWith(
     }),
     StyleRule(BlockSelector(blockquoteAttribution.name), (doc, docNode) {
       return {
-        'textStyle': _baseTextStyle.copyWith(
+        Styles.textStyle: _baseTextStyle.copyWith(
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: Colors.black54,
@@ -360,16 +360,16 @@ final _compactStylesheet = defaultStylesheet.copyWith(
 final _wideStylesheet = defaultStylesheet.copyWith(
   documentPadding: const EdgeInsets.symmetric(horizontal: 54, vertical: 60),
   addRulesAfter: [
-    StyleRule(BlockSelector.all, (doc, docNode) => {'textStyle': _baseTextStyle}),
+    StyleRule(BlockSelector.all, (doc, docNode) => {Styles.textStyle: _baseTextStyle}),
     StyleRule(
       BlockSelector.all.after(header1Attribution.name),
-      (doc, docNode) => {'padding': const CascadingPadding.only(top: 48)},
+      (doc, docNode) => {Styles.padding: const CascadingPadding.only(top: 48)},
     ),
     StyleRule(
       BlockSelector(header1Attribution.name),
       (doc, docNode) {
         return {
-          'textStyle': _baseTextStyle.copyWith(
+          Styles.textStyle: _baseTextStyle.copyWith(
             fontSize: 40,
             fontWeight: FontWeight.w700,
             height: 1.2,
@@ -381,7 +381,7 @@ final _wideStylesheet = defaultStylesheet.copyWith(
       BlockSelector(header2Attribution.name),
       (doc, docNode) {
         return {
-          'textStyle': _baseTextStyle.copyWith(
+          Styles.textStyle: _baseTextStyle.copyWith(
             fontSize: 32,
             fontWeight: FontWeight.w700,
             height: 1.2,
@@ -393,7 +393,7 @@ final _wideStylesheet = defaultStylesheet.copyWith(
       BlockSelector(header3Attribution.name),
       (doc, docNode) {
         return {
-          'textStyle': _baseTextStyle.copyWith(
+          Styles.textStyle: _baseTextStyle.copyWith(
             fontSize: 36,
             fontWeight: FontWeight.w700,
             height: 1.2,
@@ -405,7 +405,7 @@ final _wideStylesheet = defaultStylesheet.copyWith(
       BlockSelector(blockquoteAttribution.name),
       (doc, docNode) {
         return {
-          'textStyle': _baseTextStyle.copyWith(
+          Styles.textStyle: _baseTextStyle.copyWith(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.black54,

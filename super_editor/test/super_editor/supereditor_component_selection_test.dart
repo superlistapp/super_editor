@@ -611,7 +611,7 @@ final _testStylesheet = defaultStylesheet.copyWith(
   addRulesAfter: [
     StyleRule(BlockSelector.all, (doc, node) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           fontSize: 12,
         ),
       };
