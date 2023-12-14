@@ -64,7 +64,7 @@ final taskStyles = StyleRule(
     }
 
     return {
-      "padding": const CascadingPadding.only(top: 24),
+      Styles.padding: const CascadingPadding.only(top: 24),
     };
   },
 );

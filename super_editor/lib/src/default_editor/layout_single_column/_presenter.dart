@@ -465,8 +465,8 @@ abstract class SingleColumnLayoutComponentViewModel {
   EdgeInsetsGeometry padding;
 
   void applyStyles(Map<String, dynamic> styles) {
-    maxWidth = styles["maxWidth"] ?? double.infinity;
-    padding = (styles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero;
+    maxWidth = styles[Styles.maxWidth] ?? double.infinity;
+    padding = (styles[Styles.padding] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero;
   }
 
   SingleColumnLayoutComponentViewModel copy();

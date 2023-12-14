@@ -208,7 +208,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
               StyleRule(
                   BlockSelector.all,
                   (doc, node) => {
-                        "padding": const CascadingPadding.all(0.0),
+                        Styles.padding: const CascadingPadding.all(0.0),
                       }),
             ],
             inlineTextStyler: (attributions, style) => _textStyleBuilder(attributions),
