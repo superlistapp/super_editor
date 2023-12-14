@@ -376,12 +376,7 @@ class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerB
       changeSelection: (newSelection, changeType, reason) {
         editContext.editor.execute([
           ChangeSelectionRequest(newSelection, changeType, reason),
-        ]);
-
-        // Clear the composing region to close any IME popovers.
-        // Use a separate request, because the tags plugin expects a changelist
-        // containing only a selection change in order to run.
-        editContext.editor.execute([
+          // Clear the composing region to close any IME popovers.
           ChangeComposingRegionRequest(null),
         ]);
       },
@@ -870,12 +865,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
-    ]);
-
-    // Clear the composing region to close any IME popovers.
-    // Use a separate request, because the tags plugin expects a changelist
-    // containing only a selection change in order to run.
-    widget.editor.execute([
+      // Clear the composing region to close any IME popovers.
       ChangeComposingRegionRequest(null),
     ]);
 
@@ -1174,12 +1164,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
-      ]);
-
-      // Clear the composing region to close any IME popovers.
-      // Use a separate request, because the tags plugin expects a changelist
-      // containing only a selection change in order to run.
-      widget.editor.execute([
+        // Clear the composing region to close any IME popovers.
         ChangeComposingRegionRequest(null),
       ]);
       return true;
@@ -1200,12 +1185,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
-      ]);
-
-      // Clear the composing region to close any IME popovers.
-      // Use a separate request, because the tags plugin expects a changelist
-      // containing only a selection change in order to run.
-      widget.editor.execute([
+        // Clear the composing region to close any IME popovers.
         ChangeComposingRegionRequest(null),
       ]);
       return true;
@@ -1224,12 +1204,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
-    ]);
-
-    // Clear the composing region to close any IME popovers.
-    // Use a separate request, because the tags plugin expects a changelist
-    // containing only a selection change in order to run.
-    widget.editor.execute([
+      // Clear the composing region to close any IME popovers.
       ChangeComposingRegionRequest(null),
     ]);
   }
@@ -1241,12 +1216,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         SelectionChangeType.expandSelection,
         SelectionReason.userInteraction,
       ),
-    ]);
-
-    // Clear the composing region to close any IME popovers.
-    // Use a separate request, because the tags plugin expects a changelist
-    // containing only a selection change in order to run.
-    widget.editor.execute([
+      // Clear the composing region to close any IME popovers.
       ChangeComposingRegionRequest(null),
     ]);
   }
