@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/widgets.dart';
 
 import 'super_text.dart';
@@ -47,7 +48,11 @@ abstract class TextLayout {
   double? getHeightForCaret(TextPosition position);
 
   /// Returns a [List] of [TextBox]es that contain the given [selection].
-  List<TextBox> getBoxesForSelection(TextSelection selection);
+  List<TextBox> getBoxesForSelection(
+    TextSelection selection, {
+    BoxHeightStyle boxHeightStyle = BoxHeightStyle.tight,
+    BoxWidthStyle boxWidthStyle = BoxWidthStyle.tight,
+  });
 
   /// Returns a bounding [TextBox] for the character at the given [position] or `null`
   /// if a character box couldn't be found.
@@ -295,12 +300,20 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
   }
 
   @override
-  List<TextBox> getBoxesForSelection(TextSelection selection) {
+  List<TextBox> getBoxesForSelection(
+    TextSelection selection, {
+    BoxHeightStyle boxHeightStyle = BoxHeightStyle.tight,
+    BoxWidthStyle boxWidthStyle = BoxWidthStyle.tight,
+  }) {
     if (_renderParagraph.needsLayout) {
       return [];
     }
 
-    return _renderParagraph.getBoxesForSelection(selection);
+    return _renderParagraph.getBoxesForSelection(
+      selection,
+      boxHeightStyle: boxHeightStyle,
+      boxWidthStyle: boxWidthStyle,
+    );
   }
 
   @override
