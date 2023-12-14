@@ -92,6 +92,8 @@ class StyleRule {
 }
 
 /// Generates style metadata for the given [DocumentNode] within the [Document].
+///
+/// See [Styles] for the list of available keys.
 typedef Styler = Map<String, dynamic> Function(Document, DocumentNode);
 
 /// Selects blocks in a document that matches a given rule.
@@ -315,4 +317,28 @@ class SelectionStyles {
 
   @override
   int get hashCode => selectionColor.hashCode ^ highlightEmptyTextBlocks.hashCode;
+}
+
+/// The keys to the style metadata used by a [StyleRule].
+class Styles {
+  /// Applies a [TextStyle] to the content.
+  static const String textStyle = 'textStyle';
+
+  /// Applies a [CascadingPadding] around the content.
+  static const String padding = 'padding';
+
+  /// Key to a `double` that defines the maximum width of the node.
+  static const String maxWidth = 'maxWidth';
+
+  /// Applies a background [Color] to a blockquote.
+  static const String backgroundColor = 'backgroundColor';
+
+  /// Applies a [BorderRadius] to a blockquote.
+  static const String borderRadius = 'borderRadius';
+
+  /// Applies a [TextAlign] to a text node.
+  static const String textAlign = 'textAlign';
+
+  /// Applies a [AttributionStyleAdjuster] to a text node.
+  static const String inlineTextStyler = 'inlineTextStyler';
 }

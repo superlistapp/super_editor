@@ -90,7 +90,7 @@ final darkModeStyles = [
     BlockSelector.all,
     (doc, docNode) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Color(0xFFCCCCCC),
           fontSize: 32,
         ),
@@ -101,7 +101,7 @@ final darkModeStyles = [
     const BlockSelector("header1"),
     (doc, docNode) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Color(0xFF888888),
           fontSize: 48,
         ),
@@ -112,7 +112,7 @@ final darkModeStyles = [
     const BlockSelector("header2"),
     (doc, docNode) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Color(0xFF888888),
           fontSize: 42,
         ),
@@ -123,7 +123,7 @@ final darkModeStyles = [
     const BlockSelector("header3"),
     (doc, docNode) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Color(0xFF888888),
           fontSize: 36,
         ),

@@ -1287,9 +1287,9 @@ final defaultStylesheet = Stylesheet(
       BlockSelector.all,
       (doc, docNode) {
         return {
-          "maxWidth": 640.0,
-          "padding": const CascadingPadding.symmetric(horizontal: 24),
-          "textStyle": const TextStyle(
+          Styles.maxWidth: 640.0,
+          Styles.padding: const CascadingPadding.symmetric(horizontal: 24),
+          Styles.textStyle: const TextStyle(
             color: Colors.black,
             fontSize: 18,
             height: 1.4,
@@ -1301,8 +1301,8 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("header1"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 40),
-          "textStyle": const TextStyle(
+          Styles.padding: const CascadingPadding.only(top: 40),
+          Styles.textStyle: const TextStyle(
             color: Color(0xFF333333),
             fontSize: 38,
             fontWeight: FontWeight.bold,
@@ -1314,8 +1314,8 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("header2"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 32),
-          "textStyle": const TextStyle(
+          Styles.padding: const CascadingPadding.only(top: 32),
+          Styles.textStyle: const TextStyle(
             color: Color(0xFF333333),
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -1327,8 +1327,8 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("header3"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 28),
-          "textStyle": const TextStyle(
+          Styles.padding: const CascadingPadding.only(top: 28),
+          Styles.textStyle: const TextStyle(
             color: Color(0xFF333333),
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -1340,7 +1340,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("paragraph"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 24),
+          Styles.padding: const CascadingPadding.only(top: 24),
         };
       },
     ),
@@ -1348,7 +1348,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("paragraph").after("header1"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 0),
+          Styles.padding: const CascadingPadding.only(top: 0),
         };
       },
     ),
@@ -1356,7 +1356,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("paragraph").after("header2"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 0),
+          Styles.padding: const CascadingPadding.only(top: 0),
         };
       },
     ),
@@ -1364,7 +1364,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("paragraph").after("header3"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 0),
+          Styles.padding: const CascadingPadding.only(top: 0),
         };
       },
     ),
@@ -1372,7 +1372,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("listItem"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 24),
+          Styles.padding: const CascadingPadding.only(top: 24),
         };
       },
     ),
@@ -1380,7 +1380,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("blockquote"),
       (doc, docNode) {
         return {
-          "textStyle": const TextStyle(
+          Styles.textStyle: const TextStyle(
             color: Colors.grey,
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -1393,7 +1393,7 @@ final defaultStylesheet = Stylesheet(
       BlockSelector.all.last(),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(bottom: 96),
+          Styles.padding: const CascadingPadding.only(bottom: 96),
         };
       },
     ),

@@ -502,7 +502,7 @@ final _darkModeStyles = [
     BlockSelector.all,
     (doc, docNode) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Color(0xFFCCCCCC),
         ),
       };
@@ -512,7 +512,7 @@ final _darkModeStyles = [
     const BlockSelector("header1"),
     (doc, docNode) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Color(0xFF888888),
         ),
       };
@@ -522,7 +522,7 @@ final _darkModeStyles = [
     const BlockSelector("header2"),
     (doc, docNode) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Color(0xFF888888),
         ),
       };
