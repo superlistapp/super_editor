@@ -225,6 +225,12 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       // The given FocusNode already has focus, we need to update selection and attach to IME.
       onNextFrame((_) => _updateSelectionAndImeConnectionOnFocusChange());
     }
+
+    if (_textEditingController.selection.isValid) {
+      // The text field was initialized with a selection - immediately ensure that the
+      // extent is visible.
+      onNextFrame((_) => _textScrollController.ensureExtentIsVisible());
+    }
   }
 
   @override
@@ -389,7 +395,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     if (_textEditingController.selection.isCollapsed) {
       _editingOverlayController.hideToolbar();
     }
-    _textScrollController.ensureExtentIsVisible();
+    // _textScrollController.ensureExtentIsVisible();
   }
 
   void _onTextScrollChange() {

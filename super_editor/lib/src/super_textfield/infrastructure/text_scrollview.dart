@@ -191,15 +191,20 @@ class _TextScrollViewState extends State<TextScrollView>
 
   @override
   double get endScrollOffset {
+    final viewportWidth = this.viewportWidth;
     final viewportHeight = this.viewportHeight;
-    if (viewportHeight == null) {
+    if (viewportWidth == null || viewportHeight == null) {
       return 0;
     }
 
     final lastCharacterPosition = TextPosition(offset: widget.textEditingController.text.text.length - 1);
-    return (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) -
-        viewportHeight +
-        (widget.padding?.vertical ?? 0.0);
+    return isMultiline
+        ? (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) -
+            viewportHeight +
+            (widget.padding?.vertical ?? 0.0)
+        : _textLayout.getCharacterBox(lastCharacterPosition)!.right -
+            viewportWidth +
+            (widget.padding?.horizontal ?? 0.0);
   }
 
   @override
@@ -485,6 +490,10 @@ class TextScrollController with ChangeNotifier {
 
   Duration _timeOfNextAutoScroll = Duration.zero;
 
+  double get startScrollOffset => _delegate!.startScrollOffset;
+
+  double get endScrollOffset => _delegate!.endScrollOffset;
+
   bool isTextPositionVisible(TextPosition position) => _delegate!.isTextPositionVisible(position);
 
   void jumpToStart() {
@@ -563,8 +572,9 @@ class TextScrollController with ChangeNotifier {
   /// If auto-scrolling to the start, that auto-scroll is
   /// cancelled and replaced by auto-scrolling to the end.
   void startScrollingToEnd() {
+    print("startScrollingToEnd()");
     if (_autoScrollDirection == _AutoScrollDirection.end) {
-      // Already scrolling to start. Return.
+      // Already scrolling to end. Return.
       return;
     }
 
@@ -593,6 +603,7 @@ class TextScrollController with ChangeNotifier {
   /// If a line is scrolled, resets the time until the next
   /// auto scroll movement.
   void _autoScrollTick(Duration elapsedTime) {
+    print("_autoScrollTick() - elapsed time: $elapsedTime");
     if (_delegate == null) {
       _log.warning('auto-scroll delegate was null in _autoScrollTick()');
       stopScrolling();
@@ -624,6 +635,7 @@ class TextScrollController with ChangeNotifier {
       if (_autoScrollDirection == _AutoScrollDirection.start) {
         _autoScrollOneCharacterLeft();
       } else {
+        print("Auto-scrolling one character to the right");
         _autoScrollOneCharacterRight();
       }
     }
@@ -778,6 +790,7 @@ class TextScrollController with ChangeNotifier {
   ///
   /// Does nothing if the extent position is already visible.
   void ensureExtentIsVisible() {
+    print("Text scrollview - ensureExtentIsVisible()");
     if (_delegate == null) {
       _log.warning("Can't make extent selection visible. The scroll delegate is null.");
       return;
@@ -800,6 +813,7 @@ class TextScrollController with ChangeNotifier {
     final extentCharacterRectInContentSpace =
         _delegate!.getCharacterRectAtPosition(TextPosition(offset: characterIndex));
 
+    print("Character index: $characterIndex, extent rect: $extentCharacterRectInContentSpace");
     _ensureRectIsVisible(extentCharacterRectInContentSpace);
   }
 
@@ -840,6 +854,7 @@ class TextScrollController with ChangeNotifier {
         // Scroll the content left.
         _scrollOffset = rectInContentSpace.right - _delegate!.viewportWidth!;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
+        print("Scrolled to the right to $_scrollOffset");
       }
     }
 

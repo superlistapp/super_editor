@@ -21,23 +21,27 @@ extension SuperTextFieldRobot on WidgetTester {
         SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
     final match = fieldFinder.evaluate().single.widget;
     bool found = false;
+    final scrollDelta = SuperTextFieldInspector.findScrollOffset(superTextFieldFinder)!;
+    final scrollOffset =
+        SuperTextFieldInspector.isSingleLine(superTextFieldFinder) ? Offset(scrollDelta, 0) : Offset(0, scrollDelta);
 
     if (match is SuperDesktopTextField) {
-      final didTap =
-          await _tapAtTextPositionOnDesktop(state<SuperDesktopTextFieldState>(fieldFinder), offset, affinity);
+      final didTap = await _tapAtTextPositionOnDesktop(
+          state<SuperDesktopTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
       found = true;
     } else if (match is SuperAndroidTextField) {
-      final didTap =
-          await _tapAtTextPositionOnAndroid(state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity);
+      final didTap = await _tapAtTextPositionOnAndroid(
+          state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
       found = true;
     } else if (match is SuperIOSTextField) {
-      final didTap = await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity);
+      final didTap =
+          await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
@@ -51,6 +55,29 @@ extension SuperTextFieldRobot on WidgetTester {
     }
   }
 
+  Future<TestGesture> dragCaretByDistanceInSuperTextField(Offset delta, [Finder? superTextFieldFinder]) async {
+    final caretLayerFinder = find.descendant(
+      of: superTextFieldFinder ?? find.byType(SuperTextField),
+      matching: find.byType(TextLayoutCaret),
+    );
+    expect(caretLayerFinder, findsOne);
+
+    final caretLayerElement = caretLayerFinder.evaluate().first as StatefulElement;
+    final caretLayerState = caretLayerElement.state as TextLayoutCaretState;
+    final caretGeometry = caretLayerState.globalCaretGeometry!;
+
+    print("Caret geometry: $caretGeometry");
+    final gesture = await startGesture(caretGeometry.center);
+    await pump(kTapMinTime);
+
+    for (int i = 0; i < 50; i += 1) {
+      await gesture.moveBy(delta / 50);
+      await pump(const Duration(milliseconds: 50));
+    }
+
+    return gesture;
+  }
+
   /// Double taps in a [SuperTextField] at the given [offset]
   ///
   /// {@macro supertextfield_finder}
@@ -60,17 +87,20 @@ extension SuperTextFieldRobot on WidgetTester {
     final fieldFinder =
         SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
     final match = fieldFinder.evaluate().single.widget;
+    final scrollDelta = SuperTextFieldInspector.findScrollOffset(superTextFieldFinder)!;
+    final scrollOffset =
+        SuperTextFieldInspector.isSingleLine(superTextFieldFinder) ? Offset(scrollDelta, 0) : Offset(0, scrollDelta);
 
     if (match is SuperDesktopTextField) {
       final superDesktopTextField = state<SuperDesktopTextFieldState>(fieldFinder);
 
-      bool didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity);
+      bool didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity, scrollOffset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
       await pump(kDoubleTapMinTime);
 
-      didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity);
+      didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity, scrollOffset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
@@ -81,13 +111,15 @@ extension SuperTextFieldRobot on WidgetTester {
     }
 
     if (match is SuperAndroidTextField) {
-      bool didTap = await _tapAtTextPositionOnAndroid(state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity);
+      bool didTap = await _tapAtTextPositionOnAndroid(
+          state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
       await pump(kDoubleTapMinTime);
 
-      didTap = await _tapAtTextPositionOnAndroid(state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity);
+      didTap = await _tapAtTextPositionOnAndroid(
+          state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
@@ -98,13 +130,15 @@ extension SuperTextFieldRobot on WidgetTester {
     }
 
     if (match is SuperIOSTextField) {
-      bool didTap = await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity);
+      bool didTap =
+          await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
       await pump(kDoubleTapMinTime);
 
-      didTap = await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity);
+      didTap =
+          await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity, scrollOffset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
@@ -117,35 +151,69 @@ extension SuperTextFieldRobot on WidgetTester {
     throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
   }
 
-  Future<bool> _tapAtTextPositionOnDesktop(SuperDesktopTextFieldState textField, int offset,
-      [TextAffinity textAffinity = TextAffinity.downstream]) async {
+  Future<bool> _tapAtTextPositionOnDesktop(
+    SuperDesktopTextFieldState textField,
+    int offset, [
+    TextAffinity textAffinity = TextAffinity.downstream,
+    Offset scrollOffset = Offset.zero,
+  ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
-    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity);
+    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity, scrollOffset);
   }
 
-  Future<bool> _tapAtTextPositionOnAndroid(SuperAndroidTextFieldState textField, int offset,
-      [TextAffinity textAffinity = TextAffinity.downstream]) async {
+  Future<bool> _tapAtTextPositionOnAndroid(
+    SuperAndroidTextFieldState textField,
+    int offset, [
+    TextAffinity textAffinity = TextAffinity.downstream,
+    Offset scrollOffset = Offset.zero,
+  ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
-    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity);
+    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity, scrollOffset);
   }
 
-  Future<bool> _tapAtTextPositionOnIOS(SuperIOSTextFieldState textField, int offset,
-      [TextAffinity textAffinity = TextAffinity.downstream]) async {
+  Future<bool> _tapAtTextPositionOnIOS(
+    SuperIOSTextFieldState textField,
+    int offset, [
+    TextAffinity textAffinity = TextAffinity.downstream,
+    Offset scrollOffset = Offset.zero,
+  ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
-    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity);
+    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity, scrollOffset);
   }
 
-  Future<bool> _tapAtTextPositionInTextLayout(TextLayout textLayout, RenderBox textFieldBox, int offset,
-      [TextAffinity textAffinity = TextAffinity.downstream]) async {
+  Future<bool> _tapAtTextPositionInTextLayout(
+    TextLayout textLayout,
+    RenderBox textFieldBox,
+    int offset, [
+    TextAffinity textAffinity = TextAffinity.downstream,
+    Offset scrollOffset = Offset.zero,
+  ]) async {
     final textPositionOffset = textLayout.getOffsetForCaret(
       TextPosition(offset: offset, affinity: textAffinity),
     );
+
+    print("Text position $offset, offset: ${textLayout.getOffsetForCaret(
+      TextPosition(offset: offset, affinity: textAffinity),
+    )}");
+    print("Text position ${offset + 1}, offset: ${textLayout.getOffsetForCaret(
+      TextPosition(offset: offset + 1, affinity: textAffinity),
+    )}");
+    print("Text position ${offset + 2}, offset: ${textLayout.getOffsetForCaret(
+      TextPosition(offset: offset + 2, affinity: textAffinity),
+    )}");
+    print("Text position ${offset + 3}, offset: ${textLayout.getOffsetForCaret(
+      TextPosition(offset: offset + 3, affinity: textAffinity),
+    )}");
+
+    // Adjust the text offset from text layout coordinates to text field viewport coordinates
+    // by adding the scroll offset.
+    Offset adjustedOffset = textPositionOffset - scrollOffset;
 
     // When upgrading Superlist to Flutter 3, some tests showed a caret offset
     // dy of -0.2. This didn't happen everywhere, but it did happen some places.
     // Until we get to the bottom of this issue, we'll add a constant offset to
     // make up for this.
-    Offset adjustedOffset = textPositionOffset + const Offset(0, 0.2);
+    adjustedOffset += const Offset(0, 0.2);
 
     // There's a problem on Windows and Linux where we get -0.0 instead of 0.0.
     // We adjust the offset to get rid of the -0.0, because a -0.0 fails the
@@ -163,9 +231,9 @@ extension SuperTextFieldRobot on WidgetTester {
     }
 
     if (!textFieldBox.size.contains(adjustedOffset)) {
-      // ignore: avoid_print
-      print("Couldn't tap at $adjustedOffset in text field with size ${textFieldBox.size}");
-      return false;
+      throw Exception(
+        "Couldn't tap at text position because it's not visible. Text field viewport size: ${textFieldBox.size}, text offset in viewport $adjustedOffset. Raw text offset: $textPositionOffset). Text field scroll offset: $scrollOffset",
+      );
     }
 
     final globalTapOffset = adjustedOffset + textFieldBox.localToGlobal(Offset.zero);

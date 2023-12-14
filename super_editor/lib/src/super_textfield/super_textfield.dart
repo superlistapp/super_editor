@@ -33,6 +33,8 @@ export 'super_textfield_context.dart';
 /// instead of regular `String`s or `InlineSpan`s, which makes it easier to style
 /// text and edit other text metadata.
 
+export "super_text_field_keys.dart";
+
 /// Text field that supports styled text.
 ///
 /// [SuperTextField] adapts to the expectations of the current platform, or

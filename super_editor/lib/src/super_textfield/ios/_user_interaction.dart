@@ -251,6 +251,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   }
 
   void _onPanStart(DragStartDetails details) {
+    print("iOS text field - _onPanStart()");
     _log.fine('_onPanStart()');
     setState(() {
       _isDraggingCaret = true;
@@ -263,6 +264,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
+    print("iOS text field - _onPanUpdate(): ${details.delta}");
     _log.fine('_onPanUpdate handle mode');
 
     if (_isDraggingCaret) {
@@ -284,6 +286,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   }
 
   void _onPanEnd(DragEndDetails details) {
+    print("iOS text field - _onPanEnd()");
     _log.fine('_onPanEnd()');
     _onHandleDragEnd();
   }
