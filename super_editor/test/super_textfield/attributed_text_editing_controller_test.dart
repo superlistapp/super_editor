@@ -886,7 +886,11 @@ class _NoOpTextLayout implements ProseTextLayout {
   }
 
   @override
-  List<TextBox> getBoxesForSelection(TextSelection selection) {
+  List<TextBox> getBoxesForSelection(
+    TextSelection selection, {
+    BoxHeightStyle boxHeightStyle = BoxHeightStyle.tight,
+    BoxWidthStyle boxWidthStyle = BoxWidthStyle.tight,
+  }) {
     throw UnimplementedError();
   }
 

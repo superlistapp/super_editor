@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 
@@ -32,6 +34,7 @@ class TextUnderlineLayerState extends State<TextUnderlineLayer> with TickerProvi
       // Convert selection bounding boxes into underline paths.
       final boxes = widget.textLayout.getBoxesForSelection(
         TextSelection(baseOffset: underline.range.start, extentOffset: underline.range.end),
+        boxHeightStyle: BoxHeightStyle.max,
       );
       final lines = <Path>[];
       for (final box in boxes) {
