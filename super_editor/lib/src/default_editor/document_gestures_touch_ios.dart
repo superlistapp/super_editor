@@ -755,6 +755,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       ),
     ]);
 
+    // Clear the composing region to close any IME popovers.
+    // Use a separate request, because the tags plugin expects a changelist
+    // containing only a selection change in order to run.
+    widget.editor.execute([
+      ChangeComposingRegionRequest(null),
+    ]);
+
     return true;
   }
 
@@ -979,6 +986,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionReason.userInteraction,
         ),
       ]);
+
+      // Clear the composing region to close any IME popovers.
+      // Use a separate request, because the tags plugin expects a changelist
+      // containing only a selection change in order to run.
+      widget.editor.execute([
+        ChangeComposingRegionRequest(null),
+      ]);
     } else if (_dragHandleType == HandleType.upstream) {
       widget.editor.execute([
         ChangeSelectionRequest(
@@ -989,6 +1003,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionReason.userInteraction,
         ),
       ]);
+
+      // Clear the composing region to close any IME popovers.
+      // Use a separate request, because the tags plugin expects a changelist
+      // containing only a selection change in order to run.
+      widget.editor.execute([
+        ChangeComposingRegionRequest(null),
+      ]);
     } else if (_dragHandleType == HandleType.downstream) {
       widget.editor.execute([
         ChangeSelectionRequest(
@@ -998,6 +1019,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
+      ]);
+
+      // Clear the composing region to close any IME popovers.
+      // Use a separate request, because the tags plugin expects a changelist
+      // containing only a selection change in order to run.
+      widget.editor.execute([
+        ChangeComposingRegionRequest(null),
       ]);
     }
   }
@@ -1139,6 +1167,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         SelectionReason.userInteraction,
       ),
     ]);
+
+    // Clear the composing region to close any IME popovers.
+    // Use a separate request, because the tags plugin expects a changelist
+    // containing only a selection change in order to run.
+    widget.editor.execute([
+      ChangeComposingRegionRequest(null),
+    ]);
     editorGesturesLog.fine("Selected region: ${widget.selection.value}");
   }
 
@@ -1163,6 +1198,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         SelectionReason.userInteraction,
       ),
     ]);
+
+    // Clear the composing region to close any IME popovers.
+    // Use a separate request, because the tags plugin expects a changelist
+    // containing only a selection change in order to run.
+    widget.editor.execute([
+      ChangeComposingRegionRequest(null),
+    ]);
   }
 
   bool _selectParagraphAt({
@@ -1177,6 +1219,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
+      ]);
+
+      // Clear the composing region to close any IME popovers.
+      // Use a separate request, because the tags plugin expects a changelist
+      // containing only a selection change in order to run.
+      widget.editor.execute([
+        ChangeComposingRegionRequest(null),
       ]);
       return true;
     } else {
@@ -1218,6 +1267,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
+    ]);
+
+    // Clear the composing region to close any IME popovers.
+    // Use a separate request, because the tags plugin expects a changelist
+    // containing only a selection change in order to run.
+    widget.editor.execute([
+      ChangeComposingRegionRequest(null),
     ]);
   }
 
@@ -1701,6 +1757,13 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
         SelectionReason.userInteraction,
       ),
     ]);
+
+    // Clear the composing region to close any IME popovers.
+    // Use a separate request, because the tags plugin expects a changelist
+    // containing only a selection change in order to run.
+    widget.editor.execute([
+      ChangeComposingRegionRequest(null),
+    ]);
   }
 
   void _onFloatingCursorStop() {
@@ -1797,6 +1860,13 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
       changeSelection: (newSelection, changeType, reason) {
         editContext.editor.execute([
           ChangeSelectionRequest(newSelection, changeType, reason),
+        ]);
+
+        // Clear the composing region to close any IME popovers.
+        // Use a separate request, because the tags plugin expects a changelist
+        // containing only a selection change in order to run.
+        editContext.editor.execute([
+          ChangeComposingRegionRequest(null),
         ]);
       },
       handleColor: handleColor ??

@@ -420,6 +420,63 @@ void main() {
           expect(SuperTextFieldInspector.findText().text, "is long enough to be multiline in the available space");
         });
       });
+
+      testWidgetsOnAllPlatforms('clears composing region after selection changes', (tester) async {
+        final controller = ImeAttributedTextEditingController();
+        await _pumpSuperTextField(tester, controller);
+
+        // Place the caret at the beginning of the textfield.
+        await tester.placeCaretInSuperTextField(0);
+
+        // Type something to have some text to tap on.
+        await tester.typeImeText('Composing: ');
+
+        // Ensure we don't have a composing region.
+        expect(controller.composingRegion, TextRange.empty);
+
+        // Simulate an insertion containing a composing region.
+        await tester.ime.sendDeltas(
+          [
+            const TextEditingDeltaInsertion(
+              oldText: 'Composing: ',
+              textInserted: "あs",
+              insertionOffset: 11,
+              selection: TextSelection.collapsed(offset: 13),
+              composing: TextRange(start: 11, end: 13),
+            ),
+          ],
+          getter: imeClientGetter,
+        );
+
+        // Ensure the textfield applied the composing region.
+        expect(controller.composingRegion, const TextRange(start: 11, end: 13));
+
+        int? composingBase;
+        int? composingExtent;
+
+        // Intercept the setEditingState message sent to the platform to check if we
+        // cleared the IME composing region when changing the selection.
+        tester
+            .interceptChannel(SystemChannels.textInput.name) //
+            .interceptMethod(
+          'TextInput.setEditingState',
+          (methodCall) {
+            composingBase = methodCall.arguments["composingBase"];
+            composingExtent = methodCall.arguments["composingExtent"];
+            return null;
+          },
+        );
+
+        // Place the caret at the beginning of the textfield.
+        await tester.placeCaretInSuperTextField(0);
+
+        // Ensure we cleared the composing region.
+        expect(composingBase, -1);
+        expect(composingExtent, -1);
+
+        // Ensure the textfield composing region was cleared.
+        expect(controller.composingRegion, TextRange.empty);
+      });
     });
 
     testWidgetsOnMobile('configures the software keyboard action button', (tester) async {

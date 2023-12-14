@@ -208,6 +208,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
           ? TextSelection.collapsed(offset: tapTextPosition.offset)
           : const TextSelection.collapsed(offset: 0);
     }
+    widget.textController.composingRegion = TextRange.empty;
 
     widget.editingOverlayController.showHandles();
   }

@@ -284,6 +284,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
           SelectionReason.userInteraction,
         ),
       ]);
+
+      // Clear the composing region to close any IME popovers.
+      // Use a separate request, because the tags plugin expects a changelist
+      // containing only a selection change in order to run.
+      widget.editor.execute([
+        ChangeComposingRegionRequest(null),
+      ]);
     } else {
       // Place the document selection at the location where the
       // user tapped.
@@ -468,6 +475,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
+    ]);
+
+    // Clear the composing region to close any IME popovers.
+    // Use a separate request, because the tags plugin expects a changelist
+    // containing only a selection change in order to run.
+    widget.editor.execute([
+      ChangeComposingRegionRequest(null),
     ]);
   }
 
@@ -695,6 +709,8 @@ Updating drag selection:
     editorGesturesLog.fine("Clearing document selection");
     widget.editor.execute([
       const ClearSelectionRequest(),
+      // Clear the composing region to close any IME popovers.
+      ChangeComposingRegionRequest(null),
     ]);
   }
 
