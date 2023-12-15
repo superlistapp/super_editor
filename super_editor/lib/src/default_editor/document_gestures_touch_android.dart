@@ -1262,6 +1262,7 @@ class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
     required this.setSelection,
     required this.scrollChangeSignal,
     required this.dragHandleAutoScroller,
+    this.tapRegionGroupId,
     this.defaultToolbarBuilder,
     this.child,
   });
@@ -1276,6 +1277,9 @@ class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
   final ValueListenable<DragHandleAutoScroller?> dragHandleAutoScroller;
 
   final DocumentFloatingToolbarBuilder? defaultToolbarBuilder;
+
+  /// {@macro super_editor_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   final Widget? child;
 
@@ -1512,16 +1516,19 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   }
 
   Widget _buildOverlay(BuildContext context) {
-    return Stack(
-      children: [
-        _buildMagnifierFocalPoint(),
-        _buildDebugSelectionFocalPoint(),
-        _buildMagnifier(),
-        // Handles and toolbar are built after the magnifier so that they don't appear in the magnifier.
-        _buildCollapsedHandle(),
-        ..._buildExpandedHandles(),
-        _buildToolbar(),
-      ],
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: Stack(
+        children: [
+          _buildMagnifierFocalPoint(),
+          _buildDebugSelectionFocalPoint(),
+          _buildMagnifier(),
+          // Handles and toolbar are built after the magnifier so that they don't appear in the magnifier.
+          _buildCollapsedHandle(),
+          ..._buildExpandedHandles(),
+          _buildToolbar(),
+        ],
+      ),
     );
   }
 

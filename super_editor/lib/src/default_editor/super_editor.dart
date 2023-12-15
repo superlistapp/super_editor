@@ -118,6 +118,7 @@ class SuperEditor extends StatefulWidget {
     this.selectorHandlers,
     this.gestureMode,
     this.contentTapDelegateFactory = superEditorLaunchLinkTapHandlerFactory,
+    this.tapRegionGroupId,
     this.selectionLayerLinks,
     this.documentUnderlayBuilders = const [],
     this.documentOverlayBuilders = defaultSuperEditorDocumentOverlayBuilders,
@@ -226,6 +227,14 @@ class SuperEditor extends StatefulWidget {
   /// A [ContentTapDelegate] might be used, for example, to launch a URL
   /// when a user taps on a link.
   final SuperEditorContentTapDelegateFactory? contentTapDelegateFactory;
+
+  /// {@template super_editor_tap_region_group_id}
+  /// A group ID for a tap region that surrounds the editor
+  /// and also surrounds any related widgets, such as drag handles and a toolbar.
+  ///
+  /// A [tapRegionGroupId] must be provided when the editor is inside a [TapRegion].
+  /// {@endtemplate}
+  final String? tapRegionGroupId;
 
   /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.
@@ -738,6 +747,7 @@ class SuperEditorState extends State<SuperEditor> {
           ]),
           scrollChangeSignal: _scrollChangeSignal,
           dragHandleAutoScroller: _dragHandleAutoScroller,
+          tapRegionGroupId: widget.tapRegionGroupId,
           defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultAndroidEditorToolbarBuilder(
             overlayContext,
             mobileToolbarKey,

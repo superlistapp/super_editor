@@ -96,6 +96,7 @@ class TestDocumentConfigurator {
   DocumentSelection? _selection;
   WidgetBuilder? _androidToolbarBuilder;
   DocumentFloatingToolbarBuilder? _iOSToolbarBuilder;
+  String? _tapRegionGroupId;
 
   /// Configures the [SuperReader] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -233,6 +234,14 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Configures the [SuperReader] to use the given [tapRegionGroupId].
+  ///
+  /// This DOESN'T wrap the reader with a [TapRegion].
+  TestDocumentConfigurator withTapRegionGroupId(String? tapRegionGroupId) {
+    _tapRegionGroupId = tapRegionGroupId;
+    return this;
+  }
+
   /// Pumps a [SuperReader] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
   /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
@@ -274,6 +283,7 @@ class TestDocumentConfigurator {
             autofocus: _autoFocus,
             scrollController: _scrollController,
             androidToolbarBuilder: _androidToolbarBuilder,
+            tapRegionGroupId: _tapRegionGroupId,
           ),
         ),
       ),

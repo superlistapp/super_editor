@@ -311,6 +311,14 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] to use the given [tapRegionGroupId].
+  ///
+  /// This DOESN'T wrap the editor with a [TapRegion].
+  TestSuperEditorConfigurator withTapRegionGroupId(String? tapRegionGroupId) {
+    _config.tapRegionGroupId = tapRegionGroupId;
+    return this;
+  }
+
   /// Pumps a [SuperEditor] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
   /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
@@ -525,6 +533,7 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       autofocus: widget.testConfiguration.autoFocus,
       scrollController: widget.testConfiguration.scrollController,
       plugins: widget.testConfiguration.plugins,
+      tapRegionGroupId: widget.testConfiguration.tapRegionGroupId,
     );
   }
 }
@@ -559,6 +568,7 @@ class SuperEditorTestConfiguration {
   final addedComponents = <ComponentBuilder>[];
   DocumentFloatingToolbarBuilder? androidToolbarBuilder;
   DocumentFloatingToolbarBuilder? iOSToolbarBuilder;
+  String? tapRegionGroupId;
 
   DocumentSelection? selection;
 

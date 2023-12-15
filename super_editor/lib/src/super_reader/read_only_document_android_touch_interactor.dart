@@ -56,6 +56,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
     this.overlayController,
+    this.tapRegionGroupId,
     this.child,
   }) : super(key: key);
 
@@ -97,6 +98,9 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController? overlayController;
+
+  /// {@macro super_reader_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   final bool showDebugPaint;
 
@@ -1073,7 +1077,9 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   }
 
   Widget _buildControlsOverlay(BuildContext context) {
-    return ListenableBuilder(
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: ListenableBuilder(
         listenable: _overlayPortalRebuildSignal,
         builder: (context, child) {
           return AndroidDocumentTouchEditingControls(
@@ -1089,7 +1095,9 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
             longPressMagnifierGlobalOffset: _longPressMagnifierGlobalOffset,
             showDebugPaint: false,
           );
-        });
+        },
+      ),
+    );
   }
 }
 

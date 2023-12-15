@@ -67,6 +67,7 @@ class SuperReader extends StatefulWidget {
     this.iOSHandleColor,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
+    this.tapRegionGroupId,
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? readOnlyDefaultStylesheet,
         selectionStyles = selectionStyle ?? readOnlyDefaultSelectionStyle,
@@ -188,6 +189,14 @@ class SuperReader extends StatefulWidget {
 
   /// Whether or not the [SuperReader] should autofocus.
   final bool autofocus;
+
+  /// {@template super_reader_tap_region_group_id}
+  /// A group ID for a tap region that surrounds the reader
+  /// and also surrounds any related widgets, such as drag handles and a toolbar.
+  ///
+  /// A [tapRegionGroupId] must be provided when the reader is inside a [TapRegion].
+  /// {@endtemplate}
+  final String? tapRegionGroupId;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging.
@@ -493,6 +502,7 @@ class SuperReaderState extends State<SuperReader> {
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
           overlayController: widget.overlayController,
+          tapRegionGroupId: widget.tapRegionGroupId,
         );
       case DocumentGestureMode.iOS:
         return SuperReaderIosDocumentTouchInteractor(

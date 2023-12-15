@@ -1,4 +1,4 @@
-import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
@@ -208,6 +208,61 @@ void main() {
           // Release the gesture so the test system doesn't complain.
           await gesture.up();
         });
+      });
+
+      testWidgetsOnAndroid("changes selection when dragging expanded handle", (tester) async {
+        const tapRegionGroupId = 'super_editor_group_id';
+        final focusNode = FocusNode();
+
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('Single line document.')
+            .withFocusNode(focusNode)
+            .withTapRegionGroupId(tapRegionGroupId)
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => MaterialApp(
+                home: Scaffold(
+                  body: TapRegion(
+                    groupId: tapRegionGroupId,
+                    onTapOutside: (e) {
+                      // Unfocus on tap outside so that we're sure that the test
+                      // pass when using TapRegion's for focus, because apps should be able
+                      // to do that.
+                      focusNode.unfocus();
+                    },
+                    child: superEditor,
+                  ),
+                ),
+              ),
+            )
+            .pump();
+
+        final nodeId = context.document.nodes.first.id;
+
+        // Double tap to show the expanded handle.
+        await tester.doubleTapInParagraph(nodeId, 0);
+
+        // Drag the downstream handle all the way to the end of the content.
+        final gesture = await tester.pressDownOnDownstreamMobileHandle();
+        await gesture.moveBy(const Offset(500, 0));
+        await tester.pump();
+
+        // Ensure the selection expanded to the end of the document.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: nodeId,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+              extent: DocumentPosition(
+                nodeId: nodeId,
+                nodePosition: const TextNodePosition(offset: 21),
+              ),
+            ),
+          ),
+        );
       });
     });
 
