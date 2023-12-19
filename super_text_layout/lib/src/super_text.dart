@@ -392,15 +392,6 @@ class RenderLayoutAwareParagraph extends RenderParagraph {
   bool _needsLayout = true;
 
   @override
-  set textAlign(TextAlign value) {
-    if (super.textAlign == value) {
-      return;
-    }
-    super.textAlign = value;
-    markNeedsLayout();
-  }
-
-  @override
   void markNeedsLayout() {
     super.markNeedsLayout();
     _needsLayout = true;

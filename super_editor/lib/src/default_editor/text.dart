@@ -533,6 +533,23 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   }
 
   @override
+  void didUpdateWidget(covariant TextComponent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.textAlign != widget.textAlign) {
+      // Text alignment has changed, force a re-layout.
+      invalidateLayout();
+    }
+  }
+
+  /// Invalidates layout for this widget to force a rebuild on the
+  /// parent widget.
+  void invalidateLayout() {
+    final renderObject = context.findRenderObject();
+    renderObject!.markNeedsLayout();
+  }
+
+  @override
   Offset getOffsetForPosition(dynamic nodePosition) {
     if (nodePosition is! TextPosition) {
       throw Exception('Expected nodePosition of type TextPosition but received: $nodePosition');
