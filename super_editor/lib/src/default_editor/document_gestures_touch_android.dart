@@ -1535,6 +1535,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
           link: _controlsController!.collapsedHandleFocalPoint,
           leaderAnchor: Alignment.bottomCenter,
           followerAnchor: Alignment.topCenter,
+          showWhenUnlinked: false,
           child: AnimatedOpacity(
             // When the controller doesn't want the handle to be visible, hide it.
             opacity: shouldShow ? 1.0 : 0.0,
