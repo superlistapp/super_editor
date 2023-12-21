@@ -283,8 +283,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
-        // Clear the composing region to close any IME popovers.
-        ChangeComposingRegionRequest(null),
+        const ClearComposingRegionRequest(),
       ]);
     } else {
       // Place the document selection at the location where the
@@ -470,8 +469,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
-      // Clear the composing region to close any IME popovers.
-      ChangeComposingRegionRequest(null),
+      const ClearComposingRegionRequest(),
     ]);
   }
 
@@ -699,8 +697,7 @@ Updating drag selection:
     editorGesturesLog.fine("Clearing document selection");
     widget.editor.execute([
       const ClearSelectionRequest(),
-      // Clear the composing region to close any IME popovers.
-      ChangeComposingRegionRequest(null),
+      const ClearComposingRegionRequest(),
     ]);
   }
 
