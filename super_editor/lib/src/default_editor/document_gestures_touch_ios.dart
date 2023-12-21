@@ -753,8 +753,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
-      // Clear the composing region to close any IME popovers.
-      ChangeComposingRegionRequest(null),
+      const ClearComposingRegionRequest(),
     ]);
 
     return true;
@@ -980,8 +979,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
-        // Clear the composing region to close any IME popovers.
-        ChangeComposingRegionRequest(null),
+        const ClearComposingRegionRequest(),
       ]);
     } else if (_dragHandleType == HandleType.upstream) {
       widget.editor.execute([
@@ -992,8 +990,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
-        // Clear the composing region to close any IME popovers.
-        ChangeComposingRegionRequest(null),
+        const ClearComposingRegionRequest(),
       ]);
     } else if (_dragHandleType == HandleType.downstream) {
       widget.editor.execute([
@@ -1004,8 +1001,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
-        // Clear the composing region to close any IME popovers.
-        ChangeComposingRegionRequest(null),
+        const ClearComposingRegionRequest(),
       ]);
     }
   }
@@ -1146,8 +1142,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         changeType,
         SelectionReason.userInteraction,
       ),
-      // Clear the composing region to close any IME popovers.
-      ChangeComposingRegionRequest(null),
+      const ClearComposingRegionRequest(),
     ]);
 
     editorGesturesLog.fine("Selected region: ${widget.selection.value}");
@@ -1173,8 +1168,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         SelectionChangeType.expandSelection,
         SelectionReason.userInteraction,
       ),
-      // Clear the composing region to close any IME popovers.
-      ChangeComposingRegionRequest(null),
+      const ClearComposingRegionRequest(),
     ]);
   }
 
@@ -1190,8 +1184,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
-        // Clear the composing region to close any IME popovers.
-        ChangeComposingRegionRequest(null),
+        const ClearComposingRegionRequest(),
       ]);
       return true;
     } else {
@@ -1233,8 +1226,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
-      // Clear the composing region to close any IME popovers.
-      ChangeComposingRegionRequest(null),
+      const ClearComposingRegionRequest(),
     ]);
   }
 
@@ -1717,8 +1709,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
-      // Clear the composing region to close any IME popovers.
-      ChangeComposingRegionRequest(null),
+      const ClearComposingRegionRequest(),
     ]);
   }
 
@@ -1816,8 +1807,7 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
       changeSelection: (newSelection, changeType, reason) {
         editContext.editor.execute([
           ChangeSelectionRequest(newSelection, changeType, reason),
-          // Clear the composing region to close any IME popovers.
-          ChangeComposingRegionRequest(null),
+          const ClearComposingRegionRequest(),
         ]);
       },
       handleColor: handleColor ??

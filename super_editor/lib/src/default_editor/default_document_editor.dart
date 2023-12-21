@@ -46,6 +46,9 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (request) => request is ChangeComposingRegionRequest //
       ? ChangeComposingRegionCommand(request.composingRegion)
       : null,
+  (request) => request is ClearComposingRegionRequest //
+      ? ChangeComposingRegionCommand(null)
+      : null,
   (request) => request is ChangeInteractionModeRequest //
       ? ChangeInteractionModeCommand(isInteractionModeDesired: request.isInteractionModeDesired)
       : null,

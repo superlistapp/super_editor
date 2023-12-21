@@ -69,8 +69,7 @@ bool moveSelectionToNearestSelectableNode({
         SelectionChangeType.expandSelection,
         SelectionReason.userInteraction,
       ),
-      // Clear the composing region to close any IME popovers.
-      ChangeComposingRegionRequest(null),
+      const ClearComposingRegionRequest(),
     ]);
   } else {
     // Selection should be replaced by new collapsed position.
@@ -80,8 +79,7 @@ bool moveSelectionToNearestSelectableNode({
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
-      // Clear the composing region to close any IME popovers.
-      ChangeComposingRegionRequest(null),
+      const ClearComposingRegionRequest(),
     ]);
   }
 
