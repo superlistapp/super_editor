@@ -1174,7 +1174,7 @@ Paragraph two
     testWidgetsOnAllPlatforms('clears composing region after selection changes', (tester) async {
       final testContext = await tester
           .createDocument() //
-          .withSingleEmptyParagraph()
+          .withTwoEmptyParagraphs()
           .withInputSource(TextInputSource.ime)
           .pump();
 
@@ -1224,8 +1224,8 @@ Paragraph two
         },
       );
 
-      // Place the caret at the beginning of the document.
-      await tester.placeCaretInParagraph('1', 0);
+      // Place the caret at the second paragraph.
+      await tester.placeCaretInParagraph('2', 0);
 
       // Ensure the composing region was cleared in the IME.
       expect(composingBase, -1);
