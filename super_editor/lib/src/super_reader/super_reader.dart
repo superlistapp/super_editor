@@ -194,7 +194,9 @@ class SuperReader extends StatefulWidget {
   /// A group ID for a tap region that surrounds the reader
   /// and also surrounds any related widgets, such as drag handles and a toolbar.
   ///
-  /// A [tapRegionGroupId] must be provided when the reader is inside a [TapRegion].
+  /// When the reader is inside a [TapRegion], tapping at a drag handle causes
+  /// [TapRegion.onTapOutside] to be called. To prevent that, provide a
+  /// [tapRegionGroupId] with the same value as the ancestor [TapRegion] groupId.
   /// {@endtemplate}
   final String? tapRegionGroupId;
 
