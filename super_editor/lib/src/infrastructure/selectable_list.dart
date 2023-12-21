@@ -10,7 +10,7 @@ import 'package:super_editor/super_editor.dart';
 ///   * Pressing UP/DOWN moves the "active" item selection up/down.
 ///   * Pressing UP with the first item active moves the active item selection to the last item.
 ///   * Pressing DOWN with the last item active moves the active item selection to the first item.
-///   * Pressing ENTER selects the currently active item and closes the popover list.
+///   * Pressing ENTER selects the currently active item.
 class ItemSelectionList<T> extends StatefulWidget {
   const ItemSelectionList({
     super.key,
@@ -260,9 +260,11 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
   }
 }
 
-/// Builds a popover list item.
+/// Builds a list item.
 ///
 /// [isActive] is `true` if [item] is the currently active item on the list, or `false` otherwise.
+///
+/// The active item is the currently focused item in the list, which can be selected by pressing ENTER.
 ///
 /// The provided [onTap] must be called when the button is tapped.
 typedef SelectableListItemBuilder<T> = Widget Function(BuildContext context, T item, bool isActive, VoidCallback onTap);

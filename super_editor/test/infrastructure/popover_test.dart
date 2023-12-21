@@ -2,19 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 
-import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/default_document_editor.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
-import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/default_popovers.dart';
 import 'package:super_editor/src/infrastructure/popover_scaffold.dart';
 import 'package:super_editor/src/infrastructure/selectable_list.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
-import 'package:super_editor/super_editor_test.dart';
 
 import '../super_editor/test_documents.dart';
 
@@ -96,6 +93,7 @@ void main() {
     });
 
     testWidgetsOnAllPlatforms('enforces the given popover geometry', (tester) async {
+      final buttonKey = GlobalKey();
       final popoverController = PopoverController();
 
       await tester.pumpWidget(
@@ -104,12 +102,17 @@ void main() {
             body: Center(
               child: PopoverScaffold(
                 controller: popoverController,
-                popoverGeometry: const PopoverGeometry(
-                  constraints: BoxConstraints(maxHeight: 10),
+                popoverGeometry: PopoverGeometry(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  align: (globalLeaderRect, followerSize, boundaryKey) => const FollowerAlignment(
+                    leaderAnchor: Alignment.topRight,
+                    followerAnchor: Alignment.topLeft,
+                    followerOffset: Offset(10, 10),
+                  ),
                 ),
-                buttonBuilder: (context) => const SizedBox(),
+                buttonBuilder: (context) => SizedBox(key: buttonKey),
                 popoverBuilder: (context) => const RoundedRectanglePopoverAppearance(
-                  child: SizedBox(height: 100),
+                  child: SizedBox(height: 500),
                 ),
               ),
             ),
@@ -127,81 +130,68 @@ void main() {
       // Ensure the popover is displayed.
       expect(find.byType(RoundedRectanglePopoverAppearance), findsOneWidget);
 
-      // Ensure the maxHeight was honored.
-      expect(tester.getRect(find.byType(RoundedRectanglePopoverAppearance)).height, 10);
+      final buttonRect = tester.getRect(find.byKey(buttonKey));
+      final popoverRect = tester.getRect(find.byType(RoundedRectanglePopoverAppearance));
+
+      // Ensure the given geometry was honored.
+      expect(popoverRect.height, 300);
+      expect(popoverRect.top, buttonRect.top + 10);
+      expect(popoverRect.left, buttonRect.right + 10);
     });
 
-    testWidgetsOnAllPlatforms('shares focus with SuperEditor', (tester) async {
-      final editorFocusNode = FocusNode();
+    testWidgetsOnAllPlatforms('shares focus with other widgets', (tester) async {
+      final parentFocusNode = FocusNode();
       final popoverFocusNode = FocusNode();
+
       final popoverController = PopoverController();
+      final overLayControler = OverlayPortalController();
 
       await tester.pumpWidget(
         MaterialApp(
-          home: _SuperEditorDropdownTestApp(
-            editorFocusNode: editorFocusNode,
-            toolbar: PopoverScaffold(
-              controller: popoverController,
-              parentFocusNode: editorFocusNode,
-              popoverFocusNode: popoverFocusNode,
-              buttonBuilder: (context) => const SizedBox(),
-              popoverBuilder: (context) => Focus(
-                focusNode: popoverFocusNode,
-                child: const SizedBox(),
+          home: Scaffold(
+            body: Focus(
+              focusNode: parentFocusNode,
+              child: OverlayPortal(
+                controller: overLayControler,
+                overlayChildBuilder: (context) => PopoverScaffold(
+                  controller: popoverController,
+                  parentFocusNode: parentFocusNode,
+                  popoverFocusNode: popoverFocusNode,
+                  buttonBuilder: (context) => const SizedBox(),
+                  popoverBuilder: (context) => Focus(
+                    focusNode: popoverFocusNode,
+                    child: const SizedBox(),
+                  ),
+                ),
               ),
             ),
           ),
         ),
       );
 
-      final documentNode = SuperEditorInspector.findDocument()!.nodes.first;
+      // Focus the parent node.
+      parentFocusNode.requestFocus();
+      await tester.pump();
+      expect(parentFocusNode.hasPrimaryFocus, true);
 
-      // Double tap to select the word "Lorem".
-      await tester.doubleTapInParagraph(documentNode.id, 1);
-
-      // Ensure the editor has primary focus and the word "Lorem" is selected.
-      expect(editorFocusNode.hasPrimaryFocus, isTrue);
-      expect(
-        SuperEditorInspector.findDocumentSelection(),
-        DocumentSelection(
-          base: DocumentPosition(
-            nodeId: documentNode.id,
-            nodePosition: const TextNodePosition(offset: 0),
-          ),
-          extent: DocumentPosition(
-            nodeId: documentNode.id,
-            nodePosition: const TextNodePosition(offset: 5),
-          ),
-        ),
-      );
+      // Show the overlay.
+      overLayControler.show();
+      await tester.pumpAndSettle();
 
       // Show the popover.
       popoverController.open();
       await tester.pumpAndSettle();
 
-      // Ensure the editor has non-primary focus.
-      expect(editorFocusNode.hasFocus, true);
-      expect(editorFocusNode.hasPrimaryFocus, isFalse);
+      // Ensure the parent node has non-primary focus.
+      expect(parentFocusNode.hasFocus, true);
+      expect(parentFocusNode.hasPrimaryFocus, isFalse);
 
       // Close the popover.
       popoverController.close();
       await tester.pump();
 
-      // Ensure the editor has primary focus again and selection stays the same.
-      expect(editorFocusNode.hasPrimaryFocus, isTrue);
-      expect(
-        SuperEditorInspector.findDocumentSelection(),
-        DocumentSelection(
-          base: DocumentPosition(
-            nodeId: documentNode.id,
-            nodePosition: const TextNodePosition(offset: 0),
-          ),
-          extent: DocumentPosition(
-            nodeId: documentNode.id,
-            nodePosition: const TextNodePosition(offset: 5),
-          ),
-        ),
-      );
+      // Ensure the parent node has primary focus again.
+      expect(parentFocusNode.hasPrimaryFocus, true);
     });
   });
 
