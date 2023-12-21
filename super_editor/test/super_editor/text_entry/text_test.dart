@@ -5,7 +5,14 @@ import 'package:super_editor/super_editor.dart';
 import '../../test_tools_user_input.dart';
 import '../supereditor_test_tools.dart';
 
-void main() {
+Future<void> main() async {
+  // Replace the default test binding with our fake so we can override the
+  // keyboard modifier state.
+  //
+  // This affects all the tests in this file, and can't be reset, so only tests
+  // that use this binding are in this test file.
+  final FakeServicesBinding fakeServicesBinding = FakeServicesBinding();
+
   group('text.dart', () {
     group('ToggleTextAttributionsCommand', () {
       test('it toggles selected text and nothing more', () {
@@ -51,20 +58,46 @@ void main() {
 
     group('TextComposable text entry', () {
       test('it does nothing when meta is pressed', () {
+        // Make sure we're using our fake binding so we can override keyboard
+        // modifier state.
+        assert(ServicesBinding.instance == fakeServicesBinding);
+
+        // Activate the fake binding.
+        fakeServicesBinding.activate();
+        // Ensure we deactivate the fake binding when we're done.
+        addTearDown(() => fakeServicesBinding.deactivate());
+
         final editContext = _createEditContext();
 
         // Press just the meta key.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.meta,
-              physicalKey: PhysicalKeyboardKey.metaLeft,
-              isMetaPressed: true,
-              isModifierKeyPressed: false,
-            ),
+          keyEvent: const KeyDownEvent(
+            logicalKey: LogicalKeyboardKey.meta,
+            physicalKey: PhysicalKeyboardKey.metaLeft,
+            timeStamp: Duration.zero,
           ),
         );
+
+        // The handler should pass on handling the key.
+        expect(result, ExecutionInstruction.continueExecution);
+
+        // Press "a" + meta key
+        fakeServicesBinding.fakeKeyboard.isMetaPressed = true;
+        expect(HardwareKeyboard.instance.isMetaPressed, isTrue);
+        result = anyCharacterToInsertInTextContent(
+          editContext: editContext,
+          keyEvent: const KeyDownEvent(
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
+          ),
+        );
+
+        fakeServicesBinding.fakeKeyboard.isMetaPressed = false;
+        // The handler should pass on handling the key.
+        expect(result, ExecutionInstruction.continueExecution);
+      });
 
         // The handler should pass on handling the key.
         expect(result, ExecutionInstruction.continueExecution);
