@@ -99,6 +99,10 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
 }
 
 class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor> with TickerProviderStateMixin {
+  /// The maximum horizontal distance that a user can press near the caret to enable
+  /// a caret drag.
+  static const _closeEnoughToDragCaret = 48.0;
+
   final _textViewportOffsetLink = LayerLink();
 
   // Whether the user is dragging a collapsed selection.
@@ -168,9 +172,6 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       _log.finer("Field isn't focused. Ignoring press.");
       return;
     }
-
-    // _selectionBeforeTap = widget.textController.selection;
-    // _selectAtOffset(details.localPosition);
   }
 
   void _onTapUp(TapUpDetails details) {
@@ -275,7 +276,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       // There's no caret, therefore the user shouldn't be able to drag the caret. Fizzle.
       return;
     }
-    if ((globalCaretRect.center - details.globalPosition).dx.abs() > 48) {
+    if ((globalCaretRect.center - details.globalPosition).dx.abs() > _closeEnoughToDragCaret) {
       // There's a caret, but the user's drag offset is far away. Fizzle.
       return;
     }
