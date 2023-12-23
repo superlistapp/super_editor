@@ -55,6 +55,21 @@ extension SuperTextFieldRobot on WidgetTester {
     }
   }
 
+  Future<void> tapOnCaretInSuperTextField([Finder? superTextFieldFinder]) async {
+    final caretLayerFinder = find.descendant(
+      of: superTextFieldFinder ?? find.byType(SuperTextField),
+      matching: find.byType(TextLayoutCaret),
+    );
+    expect(caretLayerFinder, findsOne);
+
+    final caretLayerElement = caretLayerFinder.evaluate().first as StatefulElement;
+    final caretLayerState = caretLayerElement.state as TextLayoutCaretState;
+    final caretGeometry = caretLayerState.globalCaretGeometry!;
+
+    await tapAt(caretGeometry.center);
+    await pump();
+  }
+
   Future<TestGesture> dragCaretByDistanceInSuperTextField(Offset delta, [Finder? superTextFieldFinder]) async {
     final caretLayerFinder = find.descendant(
       of: superTextFieldFinder ?? find.byType(SuperTextField),
@@ -67,6 +82,35 @@ extension SuperTextFieldRobot on WidgetTester {
     final caretGeometry = caretLayerState.globalCaretGeometry!;
 
     final gesture = await startGesture(caretGeometry.center);
+    await pump(kTapMinTime);
+
+    for (int i = 0; i < 50; i += 1) {
+      await gesture.moveBy(delta / 50);
+      await pump(const Duration(milliseconds: 50));
+    }
+
+    return gesture;
+  }
+
+  Future<TestGesture> dragAndroidCollapsedHandleByDistanceInSuperTextField(Offset delta,
+      [Finder? superTextFieldFinder]) async {
+    // Ensure that the collapsed handle is visible.
+    expect(SuperTextFieldInspector.isAndroidCollapsedHandleVisible(superTextFieldFinder), isTrue);
+
+    // TODO: lookup the actual handle size and offset when follow_the_leader correctly reports global bounds for followers
+    // Use our knowledge that the handle sits directly beneath the caret to drag it.
+    final caretLayerFinder = find.descendant(
+      of: superTextFieldFinder ?? find.byType(SuperTextField),
+      matching: find.byType(TextLayoutCaret),
+    );
+    expect(caretLayerFinder, findsOne);
+
+    final caretLayerElement = caretLayerFinder.evaluate().first as StatefulElement;
+    final caretLayerState = caretLayerElement.state as TextLayoutCaretState;
+    final caretBottom = caretLayerState.globalCaretGeometry!.bottomCenter;
+    final handleCenter = caretBottom + const Offset(0, 12);
+
+    final gesture = await startGesture(handleCenter);
     await pump(kTapMinTime);
 
     for (int i = 0; i < 50; i += 1) {

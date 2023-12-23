@@ -115,6 +115,13 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
   // handle appears below the selected line of text, not within the
   // line of text.
   Offset? _touchHandleOffsetFromLineOfText;
+  // Whether the scroll offset has changed this frame, while dragging
+  // a handle. If it has, then we need to compute a new selection based
+  // on the handle location and the new scroll offset. However, we only
+  // want to do that once per frame to prevent cyclical calls between
+  // the text editing controller and the scroll controller. This property
+  // is used to make sure we only sync them once per frame.
+  bool _needToSyncSelectionWithHandleLocation = false;
 
   bool get _shouldShowCollapsedHandle =>
       widget.editingController.textController.selection.isCollapsed && !_isDraggingBase && !_isDraggingExtent;
@@ -198,7 +205,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       userInteractionOffsetInViewport: (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox)
           .globalToLocal(globalOffsetInMiddleOfLine),
     );
-    widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
+    widget.textScrollController.addListener(_updateSelectionForDragHandleAfterScrollChange);
 
     setState(() {
       _isDraggingCollapsed = true;
@@ -230,7 +237,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       userInteractionOffsetInViewport: (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox)
           .globalToLocal(details.globalPosition + _touchHandleOffsetFromLineOfText!),
     );
-    widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
+    widget.textScrollController.addListener(_updateSelectionForDragHandleAfterScrollChange);
     _log.fine(' - updated auto scrolling for touch offset');
 
     setState(() {
@@ -262,7 +269,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       userInteractionOffsetInViewport: (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox)
           .globalToLocal(details.globalPosition + _touchHandleOffsetFromLineOfText!),
     );
-    widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
+    widget.textScrollController.addListener(_updateSelectionForDragHandleAfterScrollChange);
 
     setState(() {
       _isDraggingCollapsed = false;
@@ -278,7 +285,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     // Must set global drag offset before _updateSelectionForNewDragHandleLocation()
     _globalDragOffset = details.globalPosition;
     _log.fine(' - global offset: $_globalDragOffset');
-    _updateSelectionForNewDragHandleLocation();
+    _updateSelectionForCurrentDragHandleOffset();
     _log.fine(' - done updating selection for new drag handle location');
 
     // TODO: de-dup the repeated calculations of the effective focal point: globalPosition + _touchHandleOffsetFromLineOfText
@@ -295,7 +302,29 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     });
   }
 
-  void _updateSelectionForNewDragHandleLocation() {
+  /// Calculates a new text selection based on the handle that the user is dragging
+  /// as well as the current scroll offset, at the end of the current frame.
+  ///
+  /// This method should be called whenever the scroll controller changes while
+  /// dragging a handle.
+  ///
+  /// This method waits until the end of the frame to calculate a new text selection
+  /// so that we don't end up with infinite calls between the scroll controller changing
+  /// and the text editing controller changing, i.e., we throttle the selection changes.
+  void _updateSelectionForDragHandleAfterScrollChange() {
+    _needToSyncSelectionWithHandleLocation = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (!_needToSyncSelectionWithHandleLocation) {
+        return;
+      }
+
+      _updateSelectionForCurrentDragHandleOffset();
+      _needToSyncSelectionWithHandleLocation = false;
+    });
+  }
+
+  void _updateSelectionForCurrentDragHandleOffset() {
     final textBox = (widget.textContentKey.currentContext!.findRenderObject() as RenderBox);
     final textOffset = textBox.globalToLocal(_globalDragOffset! + _touchHandleOffsetFromLineOfText!);
     final textLayout = widget.textContentKey.currentState!.textLayout;
@@ -328,7 +357,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
   void _onHandleDragEnd() {
     _log.fine('_onHandleDragEnd()');
     widget.textScrollController.stopScrolling();
-    widget.textScrollController.removeListener(_updateSelectionForNewDragHandleLocation);
+    widget.textScrollController.removeListener(_updateSelectionForDragHandleAfterScrollChange);
 
     // TODO: ensure that extent is visible
 

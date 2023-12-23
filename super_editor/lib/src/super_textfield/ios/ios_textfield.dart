@@ -411,7 +411,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     if (_textEditingController.selection.isCollapsed) {
       _editingOverlayController.hideToolbar();
     }
-    // _textScrollController.ensureExtentIsVisible();
   }
 
   void _onTextScrollChange() {

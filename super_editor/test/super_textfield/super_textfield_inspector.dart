@@ -216,6 +216,14 @@ class SuperTextFieldInspector {
     return textScrollView.textScrollController;
   }
 
+  static bool isAndroidCollapsedHandleVisible([Finder? superTextFieldFinder]) {
+    final fieldFinder =
+        SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
+    final match = (fieldFinder.evaluate().single as StatefulElement).state as SuperAndroidTextFieldState;
+
+    return match.isCollapsedHandleVisible;
+  }
+
   /// Finds and returns the platform textfield within a [SuperTextField].
   ///
   /// {@macro supertextfield_finder}
