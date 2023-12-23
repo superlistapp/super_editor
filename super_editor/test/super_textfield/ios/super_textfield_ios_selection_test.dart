@@ -9,8 +9,8 @@ import 'package:super_editor/super_text_field.dart';
 import '../super_textfield_inspector.dart';
 
 void main() {
-  group("SuperTextField iOS selection >", () {
-    testWidgetsOnIos("tapping in empty space shows the toolbar", (tester) async {
+  group("SuperTextField > selection >", () {
+    testWidgetsOnIos("tapping on caret toggles the toolbar", (tester) async {
       await _pumpTestApp(tester);
 
       // Ensure there's no selection to begin with, and no toolbar is displayed.

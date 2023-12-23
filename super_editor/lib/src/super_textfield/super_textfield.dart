@@ -210,11 +210,14 @@ class SuperTextField extends StatefulWidget {
 
 class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner {
   final _platformFieldKey = GlobalKey();
+  late FocusNode _focusNode;
   late ImeAttributedTextEditingController _controller;
 
   @override
   void initState() {
     super.initState();
+
+    _focusNode = widget.focusNode ?? FocusNode();
 
     _controller = widget.textController != null
         ? widget.textController is ImeAttributedTextEditingController
@@ -227,6 +230,13 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
   void didUpdateWidget(SuperTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (widget.focusNode != oldWidget.focusNode) {
+      if (oldWidget.focusNode == null) {
+        _focusNode.dispose();
+      }
+      _focusNode = widget.focusNode ?? FocusNode();
+    }
+
     if (widget.textController != oldWidget.textController) {
       _controller = widget.textController != null
           ? widget.textController is ImeAttributedTextEditingController
@@ -235,6 +245,18 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           : ImeAttributedTextEditingController();
     }
   }
+
+  @override
+  void dispose() {
+    if (widget.focusNode == null) {
+      _focusNode.dispose();
+    }
+
+    super.dispose();
+  }
+
+  @visibleForTesting
+  bool get hasFocus => _focusNode.hasFocus;
 
   @visibleForTesting
   AttributedTextEditingController get controller => _controller;
@@ -321,7 +343,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
       case SuperTextFieldPlatformConfiguration.desktop:
         return SuperDesktopTextField(
           key: _platformFieldKey,
-          focusNode: widget.focusNode,
+          focusNode: _focusNode,
           tapRegionGroupId: widget.tapRegionGroupId,
           textController: _controller,
           textAlign: widget.textAlign,
@@ -353,7 +375,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           shortcuts: _scrollShortcutOverrides,
           child: SuperAndroidTextField(
             key: _platformFieldKey,
-            focusNode: widget.focusNode,
+            focusNode: _focusNode,
             tapRegionGroupId: widget.tapRegionGroupId,
             textController: _controller,
             textAlign: widget.textAlign,
@@ -381,7 +403,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           shortcuts: _scrollShortcutOverrides,
           child: SuperIOSTextField(
             key: _platformFieldKey,
-            focusNode: widget.focusNode,
+            focusNode: _focusNode,
             tapRegionGroupId: widget.tapRegionGroupId,
             textController: _controller,
             textAlign: widget.textAlign,

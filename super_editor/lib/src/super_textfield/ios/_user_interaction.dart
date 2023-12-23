@@ -14,8 +14,7 @@ final _log = iosTextFieldLog;
 
 /// iOS text field touch interaction surface.
 ///
-/// This widget is intended to be displayed in the foreground of
-/// a [SuperSelectableText] widget.
+/// This widget is intended to be displayed in the foreground of a [SuperText] widget.
 ///
 /// This widget recognizes and acts upon various user interactions:
 ///
@@ -44,6 +43,7 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
     required this.editingOverlayController,
     required this.textScrollController,
     required this.selectableTextKey,
+    required this.getGlobalCaretRect,
     required this.isMultiline,
     required this.handleColor,
     this.showDebugPaint = false,
@@ -76,6 +76,10 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
   /// [GlobalKey] that references the widget that contains the field's
   /// text.
   final GlobalKey<ProseTextState> selectableTextKey;
+
+  /// A function that returns the current caret global rect, or `null` if no
+  /// caret exists.
+  final Rect? Function() getGlobalCaretRect;
 
   /// Whether the text field that owns this [IOSTextFieldInteractor] is
   /// a multiline text field.
@@ -113,7 +117,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   void initState() {
     super.initState();
 
-    widget.textController.addListener(_onSelectionChange);
+    widget.textController.addListener(_onTextOrSelectionChange);
     widget.textScrollController.addListener(_onScrollChange);
   }
 
@@ -122,8 +126,8 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     super.didUpdateWidget(oldWidget);
 
     if (widget.textController != oldWidget.textController) {
-      oldWidget.textController.removeListener(_onSelectionChange);
-      widget.textController.addListener(_onSelectionChange);
+      oldWidget.textController.removeListener(_onTextOrSelectionChange);
+      widget.textController.addListener(_onTextOrSelectionChange);
     }
     if (widget.textScrollController != oldWidget.textScrollController) {
       oldWidget.textScrollController.removeListener(_onScrollChange);
@@ -134,17 +138,27 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   @override
   void dispose() {
     _toolbarFocusSelectionRect.dispose();
-    widget.textController.removeListener(_onSelectionChange);
+    widget.textController.removeListener(_onTextOrSelectionChange);
     widget.textScrollController.removeListener(_onScrollChange);
     super.dispose();
   }
 
   ProseTextLayout get _textLayout => widget.selectableTextKey.currentState!.textLayout;
 
-  void _onSelectionChange() {
+  void _onTextOrSelectionChange() {
     if (widget.textController.selection != _previousToolbarFocusSelection) {
       // Update the selection bounds focal point
       WidgetsBinding.instance.runAsSoonAsPossible(_computeSelectionRect);
+    }
+
+    if (!_isDraggingCaret) {
+      // The user isn't dragging the caret. Ensure the current selection is visible. The
+      // user may have typed beyond the viewport, or something may have changed the controller's
+      // selection to sit beyond the viewport.
+      //
+      // We don't do this when the user is dragging the caret because the user's finger position
+      // and the auto-scrolling system should control the scroll offset in that case.
+      widget.textScrollController.ensureExtentIsVisible();
     }
   }
 
@@ -155,12 +169,15 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       return;
     }
 
-    _selectionBeforeTap = widget.textController.selection;
-    _selectAtOffset(details.localPosition);
+    // _selectionBeforeTap = widget.textController.selection;
+    // _selectAtOffset(details.localPosition);
   }
 
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
+
+    _selectionBeforeTap = widget.textController.selection;
+    _selectAtOffset(details.localPosition);
 
     if (widget.focusNode.hasFocus && widget.textController.isAttachedToIme) {
       widget.textController.showKeyboard();
@@ -251,8 +268,19 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   }
 
   void _onPanStart(DragStartDetails details) {
-    print("iOS text field - _onPanStart()");
     _log.fine('_onPanStart()');
+
+    final globalCaretRect = widget.getGlobalCaretRect();
+    if (globalCaretRect == null) {
+      // There's no caret, therefore the user shouldn't be able to drag the caret. Fizzle.
+      return;
+    }
+    if ((globalCaretRect.center - details.globalPosition).dx.abs() > 48) {
+      // There's a caret, but the user's drag offset is far away. Fizzle.
+      return;
+    }
+
+    // Let the user drag the caret around.
     setState(() {
       _isDraggingCaret = true;
       _globalDragOffset = details.globalPosition;
@@ -264,16 +292,17 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    print("iOS text field - _onPanUpdate(): ${details.delta}");
     _log.fine('_onPanUpdate handle mode');
 
-    if (_isDraggingCaret) {
-      widget.textController.selection = TextSelection.collapsed(
-        offset: _globalOffsetToTextPosition(details.globalPosition).offset,
-      );
+    if (!_isDraggingCaret) {
+      return;
     }
 
     setState(() {
+      widget.textController.selection = TextSelection.collapsed(
+        offset: _globalOffsetToTextPosition(details.globalPosition).offset,
+      );
+
       _globalDragOffset = _globalDragOffset! + details.delta;
       _dragOffset = _dragOffset! + details.delta;
 
@@ -286,7 +315,6 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   }
 
   void _onPanEnd(DragEndDetails details) {
-    print("iOS text field - _onPanEnd()");
     _log.fine('_onPanEnd()');
     _onHandleDragEnd();
   }

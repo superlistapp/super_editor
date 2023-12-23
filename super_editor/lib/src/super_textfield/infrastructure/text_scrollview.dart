@@ -572,7 +572,6 @@ class TextScrollController with ChangeNotifier {
   /// If auto-scrolling to the start, that auto-scroll is
   /// cancelled and replaced by auto-scrolling to the end.
   void startScrollingToEnd() {
-    print("startScrollingToEnd()");
     if (_autoScrollDirection == _AutoScrollDirection.end) {
       // Already scrolling to end. Return.
       return;
@@ -603,7 +602,6 @@ class TextScrollController with ChangeNotifier {
   /// If a line is scrolled, resets the time until the next
   /// auto scroll movement.
   void _autoScrollTick(Duration elapsedTime) {
-    print("_autoScrollTick() - elapsed time: $elapsedTime");
     if (_delegate == null) {
       _log.warning('auto-scroll delegate was null in _autoScrollTick()');
       stopScrolling();
@@ -635,7 +633,6 @@ class TextScrollController with ChangeNotifier {
       if (_autoScrollDirection == _AutoScrollDirection.start) {
         _autoScrollOneCharacterLeft();
       } else {
-        print("Auto-scrolling one character to the right");
         _autoScrollOneCharacterRight();
       }
     }
@@ -790,7 +787,6 @@ class TextScrollController with ChangeNotifier {
   ///
   /// Does nothing if the extent position is already visible.
   void ensureExtentIsVisible() {
-    print("Text scrollview - ensureExtentIsVisible()");
     if (_delegate == null) {
       _log.warning("Can't make extent selection visible. The scroll delegate is null.");
       return;
@@ -813,7 +809,6 @@ class TextScrollController with ChangeNotifier {
     final extentCharacterRectInContentSpace =
         _delegate!.getCharacterRectAtPosition(TextPosition(offset: characterIndex));
 
-    print("Character index: $characterIndex, extent rect: $extentCharacterRectInContentSpace");
     _ensureRectIsVisible(extentCharacterRectInContentSpace);
   }
 
@@ -830,7 +825,6 @@ class TextScrollController with ChangeNotifier {
           _delegate!.getCharacterRectAtPosition(TextPosition(offset: _textController.text.text.length - 1));
       final isAtLastLine = rectInContentSpace.top == lastCharRect.top;
       final extraSpacingBelowBottom = (isAtLastLine ? rectInContentSpace.height / 2 : 0);
-
       if (rectInContentSpace.top - extraSpacingAboveTop - _scrollOffset < 0) {
         // The character is entirely or partially above the top of the viewport.
         // Scroll the content down.
@@ -849,12 +843,11 @@ class TextScrollController with ChangeNotifier {
         // Scroll the content right.
         _scrollOffset = rectInContentSpace.left;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rectInContentSpace.right > _delegate!.viewportWidth!) {
+      } else if (rectInContentSpace.right - _scrollOffset > _delegate!.viewportWidth!) {
         // The character is entirely or partially after the end of the viewport.
         // Scroll the content left.
         _scrollOffset = rectInContentSpace.right - _delegate!.viewportWidth!;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-        print("Scrolled to the right to $_scrollOffset");
       }
     }
 

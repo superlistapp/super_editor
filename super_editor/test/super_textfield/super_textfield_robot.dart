@@ -49,7 +49,7 @@ extension SuperTextFieldRobot on WidgetTester {
     }
 
     if (found) {
-      await pumpAndSettle();
+      await pumpAndSettle(kTapTimeout);
     } else {
       throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
     }
@@ -66,7 +66,6 @@ extension SuperTextFieldRobot on WidgetTester {
     final caretLayerState = caretLayerElement.state as TextLayoutCaretState;
     final caretGeometry = caretLayerState.globalCaretGeometry!;
 
-    print("Caret geometry: $caretGeometry");
     final gesture = await startGesture(caretGeometry.center);
     await pump(kTapMinTime);
 
@@ -191,19 +190,6 @@ extension SuperTextFieldRobot on WidgetTester {
     final textPositionOffset = textLayout.getOffsetForCaret(
       TextPosition(offset: offset, affinity: textAffinity),
     );
-
-    print("Text position $offset, offset: ${textLayout.getOffsetForCaret(
-      TextPosition(offset: offset, affinity: textAffinity),
-    )}");
-    print("Text position ${offset + 1}, offset: ${textLayout.getOffsetForCaret(
-      TextPosition(offset: offset + 1, affinity: textAffinity),
-    )}");
-    print("Text position ${offset + 2}, offset: ${textLayout.getOffsetForCaret(
-      TextPosition(offset: offset + 2, affinity: textAffinity),
-    )}");
-    print("Text position ${offset + 3}, offset: ${textLayout.getOffsetForCaret(
-      TextPosition(offset: offset + 3, affinity: textAffinity),
-    )}");
 
     // Adjust the text offset from text layout coordinates to text field viewport coordinates
     // by adding the scroll offset.

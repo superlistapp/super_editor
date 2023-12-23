@@ -75,6 +75,16 @@ class SuperTextFieldInspector {
     return state.controller.selection;
   }
 
+  /// Returns `true` if the [SuperTextField] currently has focus.
+  ///
+  /// {@macro supertextfield_finder}
+  static bool hasFocus([Finder? superTextFieldFinder]) {
+    final finder = superTextFieldFinder ?? find.byType(SuperTextField);
+    final element = finder.evaluate().single as StatefulElement;
+    final state = element.state as SuperTextFieldState;
+    return state.hasFocus;
+  }
+
   /// Returns `true` if the given [SuperTextField] is a single-line text field.
   ///
   /// {@macro supertextfield_finder}
