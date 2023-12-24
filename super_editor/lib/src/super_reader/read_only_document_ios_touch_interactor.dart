@@ -1027,9 +1027,13 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 class SuperReaderIosToolbarOverlayManager extends StatefulWidget {
   const SuperReaderIosToolbarOverlayManager({
     super.key,
+    this.tapRegionGroupId,
     this.defaultToolbarBuilder,
     this.child,
   });
+
+  /// {@macro super_reader_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   final DocumentFloatingToolbarBuilder? defaultToolbarBuilder;
 
@@ -1065,13 +1069,16 @@ class SuperReaderIosToolbarOverlayManagerState extends State<SuperReaderIosToolb
   }
 
   Widget _buildToolbar(BuildContext context) {
-    return IosFloatingToolbarOverlay(
-      shouldShowToolbar: _controlsContext!.shouldShowToolbar,
-      toolbarFocalPoint: _controlsContext!.toolbarFocalPoint,
-      floatingToolbarBuilder:
-          _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
-      createOverlayControlsClipper: _controlsContext!.createOverlayControlsClipper,
-      showDebugPaint: false,
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: IosFloatingToolbarOverlay(
+        shouldShowToolbar: _controlsContext!.shouldShowToolbar,
+        toolbarFocalPoint: _controlsContext!.toolbarFocalPoint,
+        floatingToolbarBuilder:
+            _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
+        createOverlayControlsClipper: _controlsContext!.createOverlayControlsClipper,
+        showDebugPaint: false,
+      ),
     );
   }
 }

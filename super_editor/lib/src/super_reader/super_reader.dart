@@ -459,6 +459,7 @@ class SuperReaderState extends State<SuperReader> {
     switch (_gestureMode) {
       case DocumentGestureMode.iOS:
         return SuperReaderIosToolbarOverlayManager(
+          tapRegionGroupId: widget.tapRegionGroupId,
           defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultIosReaderToolbarBuilder(
             overlayContext,
             mobileToolbarKey,
