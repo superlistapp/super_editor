@@ -26,7 +26,7 @@ void main() {
 
       await expectLater(
         find.byType(MaterialApp),
-        matchesGoldenFileWithPixelAllowance("goldens/super_textfield_ios_toolbar_pointing_down.png", 1),
+        matchesGoldenFileWithPixelAllowance("goldens/super_textfield_ios_toolbar_pointing_down_expanded.png", 1),
       );
     });
 
@@ -72,7 +72,7 @@ void main() {
 
       await expectLater(
         find.byType(MaterialApp),
-        matchesGoldenFileWithPixelAllowance("goldens/super_textfield_ios_toolbar_pointing_up.png", 3),
+        matchesGoldenFileWithPixelAllowance("goldens/super_textfield_ios_toolbar_pointing_up_expanded.png", 3),
       );
     });
 
