@@ -463,6 +463,9 @@ class SuperEditorInspector {
     }
   }
 
+  /// Finds the upstream drag handle for a mobile `SuperEditor`.
+  ///
+  /// This handle might be the base handle or the extent handle, depending on selection direction.
   static Finder findMobileUpstreamDragHandle([Finder? superEditorFinder]) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -476,6 +479,9 @@ class SuperEditorInspector {
     }
   }
 
+  /// Finds the downstream drag handle for a mobile `SuperEditor`.
+  ///
+  /// This handle might be the base handle or the extent handle, depending on selection direction.
   static Finder findMobileDownstreamDragHandle([Finder? superEditorFinder]) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -486,6 +492,50 @@ class SuperEditorInspector {
       case TargetPlatform.linux:
       case TargetPlatform.fuchsia:
         return FindsNothing();
+    }
+  }
+
+  /// Finds the base drag handle for a mobile `SuperEditor`.
+  ///
+  /// Keep in mind that the base handle is the handle at the beginning of a selection.
+  /// The beginning of a selection might appear on the left side or right side of a
+  /// selection, depending on the direction that the user dragged to select content.
+  static Finder findMobileBaseDragHandle([Finder? superEditorFinder]) {
+    final selection = findDocumentSelection(superEditorFinder);
+    expect(selection, isNotNull,
+        reason: "Tried to find the mobile handle for the selection base, but the selection is null.");
+
+    if (selection!.isCollapsed) {
+      // When the selection is collapsed, the base and extent are the same. The choice is irrelevant.
+      return findMobileDownstreamDragHandle(superEditorFinder);
+    }
+
+    if (selection.hasDownstreamAffinity(findDocument(superEditorFinder)!)) {
+      return findMobileUpstreamDragHandle(superEditorFinder);
+    } else {
+      return findMobileDownstreamDragHandle(superEditorFinder);
+    }
+  }
+
+  /// Finds the extent drag handle for a mobile `SuperEditor`.
+  ///
+  /// Keep in mind that the extent handle is the handle at the end of a selection.
+  /// The end of a selection might appear on the left side or right side of a
+  /// selection, depending on the direction that the user dragged to select content.
+  static Finder findMobileExtentDragHandle([Finder? superEditorFinder]) {
+    final selection = findDocumentSelection(superEditorFinder);
+    expect(selection, isNotNull,
+        reason: "Tried to find the mobile handle for the selection extent, but the selection is null.");
+
+    if (selection!.isCollapsed) {
+      // When the selection is collapsed, the base and extent are the same. The choice is irrelevant.
+      return findMobileDownstreamDragHandle(superEditorFinder);
+    }
+
+    if (selection.hasDownstreamAffinity(findDocument(superEditorFinder)!)) {
+      return findMobileDownstreamDragHandle(superEditorFinder);
+    } else {
+      return findMobileUpstreamDragHandle(superEditorFinder);
     }
   }
 

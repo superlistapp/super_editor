@@ -110,9 +110,8 @@ void main() {
         await tester.pumpAndSettle();
 
         // Place caret at a position that will move to the next line when the width contracts
-        final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-        await tester.tapAt(tapOffset);
-        await tester.pumpAndSettle();
+        await tester.tapAtDocumentPosition(tapPosition);
+        await tester.pump();
 
         // Ensure that the caret is displayed at the correct (x,y) in the document before resizing the window
         final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
@@ -146,9 +145,8 @@ void main() {
         await tester.pumpAndSettle();
 
         // Place caret at a position that will move to the preceding line when the width expands
-        final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-        await tester.tapAt(tapOffset);
-        await tester.pumpAndSettle();
+        await tester.tapAtDocumentPosition(tapPosition);
+        await tester.pump();
 
         // Ensure that the caret is displayed at the correct (x,y) in the document before resizing the window
         final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
@@ -188,9 +186,8 @@ void main() {
           await tester.pumpAndSettle();
 
           // Place caret at a position that will move to the preceding line when the width expands
-          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-          await tester.tapAt(tapOffset);
-          await tester.pumpAndSettle();
+          await tester.tapAtDocumentPosition(tapPosition);
+          await tester.pump();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
           final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
@@ -226,9 +223,8 @@ void main() {
           await tester.pumpAndSettle();
 
           // Place caret at a position that will move to the next line when the width contracts
-          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-          await tester.tapAt(tapOffset);
-          await tester.pumpAndSettle();
+          await tester.tapAtDocumentPosition(tapPosition);
+          await tester.pump();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
           final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
@@ -266,9 +262,8 @@ void main() {
           await tester.pumpAndSettle();
 
           // Place caret at a position that will move to the preceding line when the width expands
-          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-          await tester.tapAt(tapOffset);
-          await tester.pumpAndSettle();
+          await tester.tapAtDocumentPosition(tapPosition);
+          await tester.pump();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
           final initialOffset = SuperEditorInspector.findCaretOffsetInDocument();
@@ -304,9 +299,8 @@ void main() {
           await tester.pumpAndSettle();
 
           // Place caret at a position that will move to the next line when the width contracts
-          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-          await tester.tapAt(tapOffset);
-          await tester.pumpAndSettle();
+          await tester.tapAtDocumentPosition(tapPosition);
+          await tester.pump();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
           final initialOffset = SuperEditorInspector.findCaretOffsetInDocument();
@@ -383,14 +377,6 @@ Widget _createTestApp({required DocumentGestureMode gestureMode, required Global
       ),
     ),
   );
-}
-
-/// Compute the center (x,y) for the given document [position]
-Offset _getOffsetForPosition(GlobalKey docKey, DocumentPosition position) {
-  final docBox = docKey.currentContext!.findRenderObject() as RenderBox;
-  final docLayout = docKey.currentState as DocumentLayout;
-  final characterBox = docLayout.getRectForPosition(position);
-  return docBox.localToGlobal(characterBox!.center);
 }
 
 /// Given a [textPosition], compute the expected (x,y) for the caret
