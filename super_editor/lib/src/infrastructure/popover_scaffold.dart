@@ -89,6 +89,7 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
   final LeaderLink _popoverLink = LeaderLink();
   final FocusNode _scaffoldFocusNode = FocusNode();
 
+  late Size _screenSize;
   late FollowerBoundary _screenBoundary;
 
   /// Closes the popover when tapping outside.
@@ -132,6 +133,7 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
   }
 
   void _updateFollowerBoundary() {
+    _screenSize = MediaQuery.sizeOf(context);
     if (widget.boundaryKey != null) {
       _screenBoundary = WidgetFollowerBoundary(
         boundaryKey: widget.boundaryKey,
@@ -139,7 +141,7 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
       );
     } else {
       _screenBoundary = ScreenFollowerBoundary(
-        screenSize: MediaQuery.sizeOf(context),
+        screenSize: _screenSize,
         devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
       );
     }
@@ -184,7 +186,7 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
           boundary: _screenBoundary,
           aligner: FunctionalAligner(
             delegate: (globalLeaderRect, followerSize) =>
-                widget.popoverGeometry.align(globalLeaderRect, followerSize, widget.boundaryKey),
+                widget.popoverGeometry.align(globalLeaderRect, followerSize, _screenSize, widget.boundaryKey),
           ),
           child: ConstrainedBox(
             constraints: widget.popoverGeometry.constraints ?? const BoxConstraints(),
@@ -252,28 +254,30 @@ class PopoverGeometry {
 /// A function to align a Widget following a leader Widget.
 ///
 /// If a [boundaryKey] is given, the alignment must be within the bounds of its `RenderBox`.
-typedef PopoverAligner = FollowerAlignment Function(Rect globalLeaderRect, Size followerSize, GlobalKey? boundaryKey);
+typedef PopoverAligner = FollowerAlignment Function(
+    Rect globalLeaderRect, Size followerSize, Size screenSize, GlobalKey? boundaryKey);
 
-/// Computes the position of a popover list relative to the dropdown button.
+/// Computes the position of a popover relative to the button.
 ///
 /// The following rules are applied, in order:
 ///
-/// 1. If there is enough room to display the dropdown list beneath the button,
+/// 1. If there is enough room to display the popover beneath the button,
 /// position it below the button.
 ///
-/// 2. If there is enough room to display the dropdown list above the button,
+/// 2. If there is enough room to display the popover above the button,
 /// position it above the button.
 ///
-/// 3. Pin the dropdown list to the bottom of the `RenderBox` bound to [boundaryKey],
-/// letting the dropdown list cover the button.
-FollowerAlignment defaultPopoverAligner(Rect globalLeaderRect, Size followerSize, GlobalKey? boundaryKey) {
+/// 3. Pin the popover to the bottom of the `RenderBox` bound to [boundaryKey],
+/// letting the popover cover the button.
+FollowerAlignment defaultPopoverAligner(
+    Rect globalLeaderRect, Size followerSize, Size screenSize, GlobalKey? boundaryKey) {
   final boundsBox = boundaryKey?.currentContext?.findRenderObject() as RenderBox?;
   final bounds = boundsBox != null
       ? Rect.fromPoints(
           boundsBox.localToGlobal(Offset.zero),
           boundsBox.localToGlobal(boundsBox.size.bottomRight(Offset.zero)),
         )
-      : Rect.largest;
+      : Offset.zero & screenSize;
   late FollowerAlignment alignment;
 
   if (globalLeaderRect.bottom + followerSize.height < bounds.bottom) {
