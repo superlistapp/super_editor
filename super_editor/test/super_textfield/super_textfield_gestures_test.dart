@@ -505,7 +505,7 @@ a scrollbar
         expect(SuperTextFieldInspector.findSelection()!.isValid, true);
       });
 
-      testWidgetsOnMobile("tap down in focused field moves the caret", (tester) async {
+      testWidgetsOnMobile("tap down in focused field does nothing", (tester) async {
         await _pumpTestApp(tester);
 
         // Tap in empty space to place the caret at the end of the text.
@@ -519,6 +519,25 @@ a scrollbar
         addTearDown(() => gesture.removePointer());
         await tester.pumpAndSettle();
 
+        // Ensure the caret didn't move.
+        expect(SuperTextFieldInspector.findSelection()!.extent.offset, 3);
+      });
+
+      testWidgetsOnMobile("tap up in focused field moves the caret", (tester) async {
+        await _pumpTestApp(tester);
+
+        // Tap in empty space to place the caret at the end of the text.
+        await tester.tapAt(tester.getBottomRight(find.byType(SuperTextField)) - const Offset(10, 10));
+        // Without this 'delay' onTapDown is not called the second time.
+        await tester.pumpAndSettle(const Duration(milliseconds: 200));
+        expect(SuperTextFieldInspector.findSelection()!.extent.offset, greaterThan(0));
+
+        // Tap DOWN at beginning of text to move the caret.
+        final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pump();
+        await gesture.up();
+        await tester.pump(kTapTimeout);
+
         // Ensure the caret moved to the beginning of the text.
         expect(SuperTextFieldInspector.findSelection()!.extent.offset, 0);
       });
@@ -526,6 +545,10 @@ a scrollbar
       // mobile only because precise input (mouse) doesn't use touch slop
       testWidgetsOnMobile("MediaQuery gesture settings are respected", (tester) async {
         bool horizontalDragStartCalled = false;
+        final controller = AttributedTextEditingController(
+          text: AttributedText('a b c'),
+        );
+
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -545,9 +568,7 @@ a scrollbar
                   return MediaQuery(
                     data: data,
                     child: SuperTextField(
-                      textController: AttributedTextEditingController(
-                        text: AttributedText('a b c'),
-                      ),
+                      textController: controller,
                     ),
                   );
                 }),
@@ -564,9 +585,8 @@ a scrollbar
           const TextSelection.collapsed(offset: 0),
         );
 
-        // The gesture should trigger the selection PanGestureRecognizer instead
-        // the HorizontalDragGestureRecognizer below.
-
+        // The following gesture should trigger the selection PanGestureRecognizer instead
+        // of the HorizontalDragGestureRecognizer, thereby moving the caret.
         final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
         addTearDown(() => gesture.removePointer());
         await gesture.moveBy(const Offset(19, 0));
@@ -579,6 +599,7 @@ a scrollbar
           const TextSelection.collapsed(offset: 1),
         );
 
+        // Pump an update with a larger pan slop.
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -598,9 +619,7 @@ a scrollbar
                   return MediaQuery(
                     data: data,
                     child: SuperTextField(
-                      textController: AttributedTextEditingController(
-                        text: AttributedText('a b c'),
-                      ),
+                      textController: controller,
                     ),
                   );
                 }),
@@ -609,18 +628,22 @@ a scrollbar
           ),
         );
 
+        // The following gesture, which moves as much as the previous gesture, should
+        // have no effect on the selection because the pan slop was increased.
         final gesture2 = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
         addTearDown(() => gesture2.removePointer());
         await gesture2.moveBy(const Offset(19, 0));
         await gesture2.up();
         await tester.pumpAndSettle();
 
-        // With default gesture settings the horizontal drag recognizer will
-        // win instead of the selection PanGestureRecognizer.
+        // Ensure that the selection didn't change because the larger pan slop prevented
+        // the selection pan from winning in the gesture arena. Also, ensure that because
+        // the selection pan didn't take the gesture, the horizontal drag detector won
+        // out, instead.
         expect(horizontalDragStartCalled, isTrue);
         expect(
           SuperTextFieldInspector.findSelection(),
-          const TextSelection.collapsed(offset: 0),
+          const TextSelection.collapsed(offset: 1),
         );
       });
 
