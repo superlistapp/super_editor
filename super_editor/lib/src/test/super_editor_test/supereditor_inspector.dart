@@ -85,7 +85,7 @@ class SuperEditorInspector {
     final caret = find.byKey(DocumentKeys.caret).evaluate().singleOrNull?.renderObject as RenderBox?;
     if (caret != null) {
       final globalCaretOffset = caret.localToGlobal(Offset.zero);
-      final documentLayout = _findDocumentLayout(finder);
+      final documentLayout = findDocumentLayout(finder);
       return documentLayout.getDocumentOffsetFromAncestorOffset(globalCaretOffset);
     }
 
@@ -96,7 +96,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static Offset findComponentOffset(String nodeId, Alignment alignment, [Finder? finder]) {
-    final documentLayout = _findDocumentLayout(finder);
+    final documentLayout = findDocumentLayout(finder);
     final component = documentLayout.getComponentByNodeId(nodeId);
     assert(component != null);
     final componentBox = component!.context.findRenderObject() as RenderBox;
@@ -108,7 +108,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static Offset calculateOffsetForCaret(DocumentPosition position, [Finder? finder]) {
-    final documentLayout = _findDocumentLayout(finder);
+    final documentLayout = findDocumentLayout(finder);
     final positionRect = documentLayout.getRectForPosition(position);
     assert(positionRect != null);
     return positionRect!.topLeft;
@@ -119,7 +119,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static bool isPositionVisibleGlobally(DocumentPosition position, Size globalSize, [Finder? finder]) {
-    final documentLayout = _findDocumentLayout(finder);
+    final documentLayout = findDocumentLayout(finder);
     final positionRect = documentLayout.getRectForPosition(position)!;
     final globalDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
     final globalPositionRect = positionRect.translate(globalDocumentOffset.dx, globalDocumentOffset.dy);
@@ -138,7 +138,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static WidgetType findWidgetForComponent<WidgetType>(String nodeId, [Finder? superEditorFinder]) {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final documentLayout = findDocumentLayout(superEditorFinder);
     final widget = (documentLayout.getComponentByNodeId(nodeId) as State).widget;
     if (widget is! WidgetType) {
       throw Exception("Looking for a component's widget. Expected type $WidgetType, but found ${widget.runtimeType}");
@@ -155,7 +155,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static AttributedText findTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final documentLayout = findDocumentLayout(superEditorFinder);
     return (documentLayout.getComponentByNodeId(nodeId) as TextComponentState).widget.text;
   }
 
@@ -166,7 +166,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static TextSpan findRichTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final documentLayout = findDocumentLayout(superEditorFinder);
 
     final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
     final superText = find
@@ -212,7 +212,7 @@ class SuperEditorInspector {
 
   /// Locates the first line break in a text node, or throws an exception if it cannot find one.
   static int findOffsetOfLineBreak(String nodeId, [Finder? superEditorFinder]) {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final documentLayout = findDocumentLayout(superEditorFinder);
 
     final componentState = documentLayout.getComponentByNodeId(nodeId) as State;
     late final GlobalKey textComponentKey;
@@ -232,7 +232,7 @@ class SuperEditorInspector {
   /// Finds the [DocumentLayout] that backs a [SuperEditor] in the widget tree.
   ///
   /// {@macro supereditor_finder}
-  static DocumentLayout _findDocumentLayout([Finder? superEditorFinder]) {
+  static DocumentLayout findDocumentLayout([Finder? superEditorFinder]) {
     late final Finder layoutFinder;
     if (superEditorFinder != null) {
       layoutFinder = find.descendant(of: superEditorFinder, matching: find.byType(SingleColumnDocumentLayout));

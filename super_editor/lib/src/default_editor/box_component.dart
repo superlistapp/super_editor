@@ -196,10 +196,10 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
 
     if (nodePosition.affinity == TextAffinity.upstream) {
       // Vertical line to the left of the component.
-      return Rect.fromLTWH(-1, 0, 1, myBox.size.height);
+      return Rect.fromLTWH(0, 0, 0, myBox.size.height);
     } else {
       // Vertical line to the right of the component.
-      return Rect.fromLTWH(myBox.size.width, 0, 1, myBox.size.height);
+      return Rect.fromLTWH(myBox.size.width, 0, myBox.size.width, myBox.size.height);
     }
   }
 

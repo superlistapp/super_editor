@@ -54,9 +54,13 @@ abstract class DocumentLayout {
   /// [DocumentPosition] for the first character within the paragraph.
   DocumentPosition? getDocumentPositionNearestToOffset(Offset layoutOffset);
 
-  /// Returns the bounding box of the component that renders the given
-  /// [position], or [null] if no corresponding component can be found, or
+  /// Returns the bounding box around the given [position], within the associated
+  /// component, or `null` if no corresponding component can be found, or
   /// the corresponding component has not yet been laid out.
+  ///
+  /// For example, given a document layout that contains a text component that
+  /// says "Hello, world", calling `getRectForPosition()` for the third character
+  /// in that text component would return a bounding box for the character "l".
   Rect? getRectForPosition(DocumentPosition position);
 
   /// Returns a [Rect] that bounds the content selected between
@@ -128,6 +132,10 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// If the given [nodePosition] corresponds to a single (x,y)
   /// offset rather than a [Rect], a [Rect] with zero width and
   /// height may be returned.
+  ///
+  /// For example, requesting the rect for position `3` in a text component
+  /// that says "Hello, world" would return a rectangle that bounds the
+  /// character "l".
   ///
   /// See [Document] for more information about [DocumentNode]s and
   /// node positions.
