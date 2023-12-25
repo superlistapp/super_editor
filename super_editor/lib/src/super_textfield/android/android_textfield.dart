@@ -207,6 +207,12 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       // The given FocusNode already has focus, we need to update selection and attach to IME.
       onNextFrame((_) => _updateSelectionAndImeConnectionOnFocusChange());
     }
+
+    if (_textEditingController.selection.isValid) {
+      // The text field was initialized with a selection - immediately ensure that the
+      // extent is visible.
+      onNextFrame((_) => _textScrollController.ensureExtentIsVisible());
+    }
   }
 
   @override
@@ -327,6 +333,26 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
+  @visibleForTesting
+  bool get isCollapsedHandleVisible =>
+      _editingOverlayController.areHandlesVisible && !_editingOverlayController.isCollapsedHandleAutoHidden;
+
+  Rect? _getGlobalCaretRect() {
+    if (!_textEditingController.selection.isValid || !_textEditingController.selection.isCollapsed) {
+      // Either there's no selection, or the selection is expanded. In either case, there's no caret.
+      return null;
+    }
+
+    final globalTextOffset =
+        (_textContentKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
+
+    final caretPosition = _textEditingController.selection.extent;
+    final caretOffset = textLayout.getOffsetForCaret(caretPosition) + globalTextOffset;
+    final caretHeight = textLayout.getHeightForCaret(caretPosition)!;
+
+    return Rect.fromLTWH(caretOffset.dx, caretOffset.dy, 1, caretHeight);
+  }
+
   @override
   DeltaTextInputClient get imeClient => _textEditingController;
 
@@ -368,7 +394,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     if (_textEditingController.selection.isCollapsed) {
       _editingOverlayController.hideToolbar();
     }
-    _textScrollController.ensureExtentIsVisible();
   }
 
   void _onTextScrollChange() {
@@ -499,6 +524,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           child: AndroidTextFieldTouchInteractor(
             focusNode: _focusNode,
             textKey: _textContentKey,
+            getGlobalCaretRect: _getGlobalCaretRect,
             textFieldLayerLink: _textFieldLayerLink,
             textController: _textEditingController,
             editingOverlayController: _editingOverlayController,

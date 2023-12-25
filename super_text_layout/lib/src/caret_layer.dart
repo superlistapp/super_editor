@@ -91,13 +91,31 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
   @visibleForTesting
   bool get isCaretPresent => widget.position != null && widget.position!.offset >= 0;
 
+  @visibleForTesting
+  Offset? get caretOffset => isCaretPresent ? widget.textLayout.getOffsetForCaret(widget.position!) : null;
+
+  @visibleForTesting
+  double? get caretHeight => isCaretPresent
+      ? widget.textLayout.getHeightForCaret(widget.position!) ??
+      widget.textLayout.getLineHeightAtPosition(widget.position!)
+      : null;
+
+  @visibleForTesting
+  Rect? get localCaretGeometry => isCaretPresent ? caretOffset! & Size(widget.style.width, caretHeight!) : null;
+
+  Rect? get globalCaretGeometry {
+    if (!isCaretPresent) {
+      return null;
+    }
+
+    final topLeftInGlobalSpace = (context.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
+    return localCaretGeometry!.translate(topLeftInGlobalSpace.dx, topLeftInGlobalSpace.dy);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final offset = isCaretPresent ? widget.textLayout.getOffsetForCaret(widget.position!) : null;
-    final height = isCaretPresent
-        ? widget.textLayout.getHeightForCaret(widget.position!) ??
-            widget.textLayout.getLineHeightAtPosition(widget.position!)
-        : null;
+    final offset = caretOffset;
+    final height = caretHeight;
 
     return Stack(
       clipBehavior: Clip.none,
