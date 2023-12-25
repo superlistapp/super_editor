@@ -17,7 +17,7 @@ void main() {
       controller.selection = TextSelection.collapsed(offset: controller.text.length);
 
       // Pump the widget tree with a SuperTextField with a maxWidth smaller
-      // than the text width
+      // than the text width.
       await _pumpTestApp(
         tester,
         textController: controller,
@@ -38,7 +38,7 @@ void main() {
       );
 
       // Pump the widget tree with a SuperTextField with a maxWidth smaller
-      // than the text width
+      // than the text width.
       await _pumpTestApp(
         tester,
         textController: controller,
@@ -53,7 +53,7 @@ void main() {
       expect(controller.selection.extentOffset, 0);
 
       // Drag caret from left side of text field to right side of text field, into the
-      // right auto-scroll regin.
+      // right auto-scroll region.
       final gesture = await tester.dragCaretByDistanceInSuperTextField(const Offset(190, 0));
 
       // Pump a few more frames and ensure that every frame moves the caret further.
@@ -98,7 +98,7 @@ void main() {
       );
 
       // Pump the widget tree with a SuperTextField with a maxWidth smaller
-      // than the text width
+      // than the text width.
       await _pumpTestApp(
         tester,
         textController: controller,
@@ -113,7 +113,7 @@ void main() {
       expect(controller.selection.extentOffset, 0);
 
       // Drag handle from left side of text field to right side of text field, into the
-      // right auto-scroll regin.
+      // right auto-scroll region.
       final gesture = await tester.dragAndroidCollapsedHandleByDistanceInSuperTextField(const Offset(190, 0));
 
       // Pump a few more frames and ensure that every frame moves the caret further.
@@ -165,7 +165,7 @@ void main() {
       controller.selection = TextSelection.collapsed(offset: startCaretPosition);
 
       // Pump the widget tree with a SuperTextField with a maxWidth smaller
-      // than the text width
+      // than the text width.
       await _pumpTestApp(
         tester,
         textController: controller,
@@ -178,13 +178,12 @@ void main() {
 
       // Begin with the caret at the end of the text, scrolled all the way to the right.
       expect(controller.selection.extentOffset, startCaretPosition);
-      // expect(SuperTextFieldInspector.isScrolledToEnd(), isTrue);
 
       // Tap on the text field to give it focus, so that the caret appears.
       await tester.placeCaretInSuperTextField(startCaretPosition);
 
       // Drag caret from right side of text field to left side of text field, into the
-      // left auto-scroll regin.
+      // left auto-scroll region.
       final gesture = await tester.dragCaretByDistanceInSuperTextField(const Offset(-190, 0));
 
       // Pump a few more frames and ensure that every frame moves the caret further.
@@ -252,6 +251,7 @@ void main() {
       expect(SuperTextFieldInspector.findSelection()!.isValid, isFalse);
       expect(SuperTextFieldInspector.hasFocus(), isFalse);
 
+      // Pump with enough time to expire the tap recognizer timer.
       await tester.pump(kTapTimeout);
     });
 
@@ -278,7 +278,7 @@ void main() {
       // Place a caret in the field.
       await tester.placeCaretInSuperTextField(0);
 
-      // Ensure there's a selection with focus
+      // Ensure there's a selection with focus.
       expect(SuperTextFieldInspector.findSelection()!.isValid, isTrue);
       expect(SuperTextFieldInspector.hasFocus(), isTrue);
 
@@ -290,6 +290,7 @@ void main() {
       expect(SuperTextFieldInspector.findScrollOffset()!, 0);
       expect(SuperTextFieldInspector.findSelection(), selectionBeforeDrag);
 
+      // Pump with enough time to expire the tap recognizer timer.
       await tester.pump(kTapTimeout);
     });
   });

@@ -528,7 +528,7 @@ a scrollbar
 
         // Tap in empty space to place the caret at the end of the text.
         await tester.tapAt(tester.getBottomRight(find.byType(SuperTextField)) - const Offset(10, 10));
-        // Without this 'delay' onTapDown is not called the second time
+        // Without this 'delay' onTapDown is not called the second time.
         await tester.pumpAndSettle(const Duration(milliseconds: 200));
         expect(SuperTextFieldInspector.findSelection()!.extent.offset, greaterThan(0));
 

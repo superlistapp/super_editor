@@ -314,7 +314,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
   void _updateSelectionForDragHandleAfterScrollChange() {
     _needToSyncSelectionWithHandleLocation = true;
 
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    onNextFrame((timeStamp) {
       if (!_needToSyncSelectionWithHandleLocation) {
         return;
       }
