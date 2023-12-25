@@ -191,15 +191,20 @@ class _TextScrollViewState extends State<TextScrollView>
 
   @override
   double get endScrollOffset {
+    final viewportWidth = this.viewportWidth;
     final viewportHeight = this.viewportHeight;
-    if (viewportHeight == null) {
+    if (viewportWidth == null || viewportHeight == null) {
       return 0;
     }
 
     final lastCharacterPosition = TextPosition(offset: widget.textEditingController.text.text.length - 1);
-    return (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) -
-        viewportHeight +
-        (widget.padding?.vertical ?? 0.0);
+    return isMultiline
+        ? (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) -
+            viewportHeight +
+            (widget.padding?.vertical ?? 0.0)
+        : _textLayout.getCharacterBox(lastCharacterPosition)!.right -
+            viewportWidth +
+            (widget.padding?.horizontal ?? 0.0);
   }
 
   @override
@@ -485,6 +490,10 @@ class TextScrollController with ChangeNotifier {
 
   Duration _timeOfNextAutoScroll = Duration.zero;
 
+  double get startScrollOffset => _delegate!.startScrollOffset;
+
+  double get endScrollOffset => _delegate!.endScrollOffset;
+
   bool isTextPositionVisible(TextPosition position) => _delegate!.isTextPositionVisible(position);
 
   void jumpToStart() {
@@ -564,7 +573,7 @@ class TextScrollController with ChangeNotifier {
   /// cancelled and replaced by auto-scrolling to the end.
   void startScrollingToEnd() {
     if (_autoScrollDirection == _AutoScrollDirection.end) {
-      // Already scrolling to start. Return.
+      // Already scrolling to end. Return.
       return;
     }
 
@@ -816,7 +825,6 @@ class TextScrollController with ChangeNotifier {
           _delegate!.getCharacterRectAtPosition(TextPosition(offset: _textController.text.text.length - 1));
       final isAtLastLine = rectInContentSpace.top == lastCharRect.top;
       final extraSpacingBelowBottom = (isAtLastLine ? rectInContentSpace.height / 2 : 0);
-
       if (rectInContentSpace.top - extraSpacingAboveTop - _scrollOffset < 0) {
         // The character is entirely or partially above the top of the viewport.
         // Scroll the content down.
@@ -835,7 +843,7 @@ class TextScrollController with ChangeNotifier {
         // Scroll the content right.
         _scrollOffset = rectInContentSpace.left;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rectInContentSpace.right > _delegate!.viewportWidth!) {
+      } else if (rectInContentSpace.right - _scrollOffset > _delegate!.viewportWidth!) {
         // The character is entirely or partially after the end of the viewport.
         // Scroll the content left.
         _scrollOffset = rectInContentSpace.right - _delegate!.viewportWidth!;

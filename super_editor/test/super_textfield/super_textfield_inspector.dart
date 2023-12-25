@@ -75,7 +75,70 @@ class SuperTextFieldInspector {
     return state.controller.selection;
   }
 
-  /// Finds and returns the scroll offset within a [SuperTextField].
+  /// Returns `true` if the [SuperTextField] currently has focus.
+  ///
+  /// {@macro supertextfield_finder}
+  static bool hasFocus([Finder? superTextFieldFinder]) {
+    final finder = superTextFieldFinder ?? find.byType(SuperTextField);
+    final element = finder.evaluate().single as StatefulElement;
+    final state = element.state as SuperTextFieldState;
+    return state.hasFocus;
+  }
+
+  /// Returns `true` if the given [SuperTextField] is a single-line text field.
+  ///
+  /// {@macro supertextfield_finder}
+  static bool isSingleLine([Finder? superTextFieldFinder]) {
+    final finder = superTextFieldFinder ?? find.byType(SuperTextField);
+
+    final fieldFinder = findInnerPlatformTextField(finder);
+    final match = fieldFinder.evaluate().single.widget;
+
+    switch (match.runtimeType) {
+      case SuperDesktopTextField:
+        return (match as SuperDesktopTextField).maxLines == 1;
+      case SuperAndroidTextField:
+        return (match as SuperAndroidTextField).maxLines == 1;
+      case SuperIOSTextField:
+        return (match as SuperIOSTextField).maxLines == 1;
+      default:
+        throw Exception("Found unknown SuperTextField platform widget: $match");
+    }
+  }
+
+  /// Returns `true` if the given [SuperTextField] is a multi-line text field.
+  ///
+  /// {@macro supertextfield_finder}
+  static bool isMultiLine([Finder? superTextFieldFinder]) {
+    return !isSingleLine(superTextFieldFinder);
+  }
+
+  /// Returns `true` if the given [SuperTextField] has a scroll offset of zero, i.e.,
+  /// is scrolled to the beginning of the viewport.
+  ///
+  /// This inspection applies to both horizontal and vertical scrolling text fields.
+  ///
+  /// {@macro supertextfield_finder}
+  static bool isScrolledToBeginning([Finder? superTextFieldFinder]) {
+    return findScrollOffset(superTextFieldFinder) == 0.0;
+  }
+
+  /// Returns `true` if the given [SuperTextField] is scrolled all the away to the
+  /// end of the viewport.
+  ///
+  /// This inspection applies to both horizontal and vertical scrolling text fields.
+  ///
+  /// {@macro supertextfield_finder}
+  static bool isScrolledToEnd([Finder? superTextFieldFinder]) {
+    final maxScrollOffset = findDesktopScrollController(superTextFieldFinder)?.position.maxScrollExtent ??
+        findMobileScrollController(superTextFieldFinder)?.endScrollOffset;
+    assert(maxScrollOffset != null,
+        "Couldn't check if SuperTextField is scrolled to the end because no SuperTextField was found.");
+    return findScrollOffset(superTextFieldFinder) == maxScrollOffset;
+  }
+
+  /// Finds and returns the scroll offset, in the direction of scrolling,
+  /// within a [SuperTextField].
   ///
   /// {@macro supertextfield_finder}
   static double? findScrollOffset([Finder? superTextFieldFinder]) {
@@ -108,6 +171,57 @@ class SuperTextFieldInspector {
     final textScrollView = textScrollViewElement.widget as TextScrollView;
 
     return textScrollView.textScrollController.scrollOffset;
+  }
+
+  static ScrollController? findDesktopScrollController([Finder? superTextFieldFinder]) {
+    final finder = superTextFieldFinder ?? find.byType(SuperTextField);
+
+    final fieldFinder = findInnerPlatformTextField(finder);
+    final match = fieldFinder.evaluate().single.widget;
+    if (match is! SuperDesktopTextField) {
+      return null;
+    }
+
+    final textScrollViewElement = find
+        .descendant(
+          of: finder,
+          matching: find.byType(SuperTextFieldScrollview),
+        )
+        .evaluate()
+        .single as StatefulElement;
+    final textScrollView = textScrollViewElement.widget as SuperTextFieldScrollview;
+
+    return textScrollView.scrollController;
+  }
+
+  static TextScrollController? findMobileScrollController([Finder? superTextFieldFinder]) {
+    final finder = superTextFieldFinder ?? find.byType(SuperTextField);
+
+    final fieldFinder = findInnerPlatformTextField(finder);
+    final match = fieldFinder.evaluate().single.widget;
+    if (match is! SuperAndroidTextField && match is! SuperIOSTextField) {
+      return null;
+    }
+
+    // Both mobile textfields use TextScrollView.
+    final textScrollViewElement = find
+        .descendant(
+          of: finder,
+          matching: find.byType(TextScrollView),
+        )
+        .evaluate()
+        .single as StatefulElement;
+    final textScrollView = textScrollViewElement.widget as TextScrollView;
+
+    return textScrollView.textScrollController;
+  }
+
+  static bool isAndroidCollapsedHandleVisible([Finder? superTextFieldFinder]) {
+    final fieldFinder =
+        SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
+    final match = (fieldFinder.evaluate().single as StatefulElement).state as SuperAndroidTextFieldState;
+
+    return match.isCollapsedHandleVisible;
   }
 
   /// Finds and returns the platform textfield within a [SuperTextField].
