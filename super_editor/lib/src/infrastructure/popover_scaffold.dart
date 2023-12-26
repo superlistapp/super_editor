@@ -164,6 +164,27 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
     widget.onTapOutside(widget.controller);
   }
 
+  BoxConstraints _computePopoverConstraints() {
+    if (widget.popoverGeometry.constraints != null) {
+      return widget.popoverGeometry.constraints!;
+    }
+
+    if (widget.boundaryKey != null) {
+      // Let the popover be at most the size of the boundary widget.
+      final boundaryBox = widget.boundaryKey!.currentContext!.findRenderObject() as RenderBox;
+      return BoxConstraints(
+        maxHeight: boundaryBox.size.height,
+        maxWidth: boundaryBox.size.width,
+      );
+    }
+
+    // Let the popover be at most the size of the screen.
+    return BoxConstraints(
+      maxHeight: _screenSize.height,
+      maxWidth: _screenSize.width,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return OverlayPortal(
@@ -189,7 +210,7 @@ class _PopoverScaffoldState extends State<PopoverScaffold> {
                 widget.popoverGeometry.align(globalLeaderRect, followerSize, _screenSize, widget.boundaryKey),
           ),
           child: ConstrainedBox(
-            constraints: widget.popoverGeometry.constraints ?? const BoxConstraints(),
+            constraints: _computePopoverConstraints(),
             child: Focus(
               parentNode: widget.parentFocusNode,
               child: widget.popoverBuilder(context),
