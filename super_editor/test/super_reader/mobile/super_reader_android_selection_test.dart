@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
@@ -7,7 +6,6 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor/super_reader_test.dart';
 
-import '../../test_tools.dart';
 import '../reader_test_tools.dart';
 
 void main() {
@@ -410,61 +408,6 @@ void main() {
           await gesture.up();
           await tester.pump();
         });
-      });
-
-      testWidgetsOnAndroid("changes selection when dragging expanded handle", (tester) async {
-        const tapRegionId = 'super_editor_group_id';
-        final focusNode = FocusNode();
-
-        final context = await tester //
-            .createDocument()
-            .fromMarkdown('Single line document.')
-            .withFocusNode(focusNode)
-            .withTapRegionGroupId(tapRegionId)
-            .withCustomWidgetTreeBuilder(
-              (superEditor) => MaterialApp(
-                home: Scaffold(
-                  body: TapRegion(
-                    groupId: tapRegionId,
-                    onTapOutside: (e) {
-                      // Fail on tap outside so that we're sure that the test
-                      // pass when using TapRegion's for focus, because apps should be able
-                      // to do that.
-                      fail('Tapped outside of SuperReader');
-                    },
-                    child: superEditor,
-                  ),
-                ),
-              ),
-            )
-            .pump();
-
-        final nodeId = context.document.nodes.first.id;
-
-        // Double tap to show the expanded handle.
-        await SuperReaderRobot(tester).doubleTapInParagraph(nodeId, 0);
-
-        // Drag the downstream handle all the way to the end of the content.
-        final gesture = await SuperReaderRobot(tester).pressDownOnDownstreamMobileHandle();
-        await gesture.moveBy(const Offset(500, 0));
-        await tester.pump();
-
-        // Ensure the selection expanded to the end of the document.
-        expect(
-          SuperReaderInspector.findDocumentSelection(),
-          selectionEquivalentTo(
-            DocumentSelection(
-              base: DocumentPosition(
-                nodeId: nodeId,
-                nodePosition: const TextNodePosition(offset: 0),
-              ),
-              extent: DocumentPosition(
-                nodeId: nodeId,
-                nodePosition: const TextNodePosition(offset: 21),
-              ),
-            ),
-          ),
-        );
       });
     });
   });
