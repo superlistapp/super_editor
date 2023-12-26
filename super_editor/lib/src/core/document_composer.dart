@@ -475,10 +475,6 @@ class ChangeComposingRegionRequest implements EditRequest {
   int get hashCode => composingRegion.hashCode;
 }
 
-class ClearComposingRegionRequest implements EditRequest {
-  const ClearComposingRegionRequest();
-}
-
 class ChangeComposingRegionCommand implements EditCommand {
   ChangeComposingRegionCommand(this.composingRegion);
 
@@ -498,6 +494,10 @@ class ChangeComposingRegionCommand implements EditCommand {
       )
     ]);
   }
+}
+
+class ClearComposingRegionRequest implements EditRequest {
+  const ClearComposingRegionRequest();
 }
 
 class ChangeInteractionModeRequest implements EditRequest {
