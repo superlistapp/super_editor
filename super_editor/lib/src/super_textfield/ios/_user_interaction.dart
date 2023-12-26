@@ -484,9 +484,13 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
     if (widget.textController.selection.isCollapsed) {
       // The selection is collapsed.
-      // Place the selection rect at the top of the caret position.
-      final caretOffset = _textLayout.getOffsetForCaret(widget.textController.selection.extent);
-      _toolbarFocusSelectionRect.value = caretOffset & Size.zero;
+      // Place the selection rect at the caret position.
+      final selectionExtent = widget.textController.selection.extent;
+      final caretOffset = _textLayout.getOffsetForCaret(selectionExtent);
+      final caretHeight =
+          _textLayout.getHeightForCaret(selectionExtent) ?? _textLayout.getLineHeightAtPosition(selectionExtent);
+      _toolbarFocusSelectionRect.value = Rect.fromLTWH(caretOffset.dx, caretOffset.dy, 0, caretHeight);
+
       return;
     }
 
