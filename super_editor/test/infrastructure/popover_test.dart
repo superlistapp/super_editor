@@ -137,13 +137,22 @@ void main() {
           final buttonKey = GlobalKey();
           final popoverController = PopoverController();
 
+          // Use a screen size bigger than the boundary widget
+          // to make sure we use the widget size instead of the screen size
+          // to size and position the popover.
+          tester.view
+            ..devicePixelRatio = 1.0
+            ..platformDispatcher.textScaleFactorTestValue = 1.0
+            ..physicalSize = const Size(1000, 2000);
+          addTearDown(() => tester.platformDispatcher.clearAllTestValues());
+
           // Pump a tree with a popover that fits below the button.
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
                 body: SizedBox(
                   key: boundaryKey,
-                  height: 600,
+                  height: 300,
                   child: Stack(
                     children: [
                       Positioned(
@@ -156,7 +165,7 @@ void main() {
                             height: 50,
                           ),
                           popoverBuilder: (context) => const RoundedRectanglePopoverAppearance(
-                            child: SizedBox(height: 500),
+                            child: SizedBox(height: 200),
                           ),
                         ),
                       ),
@@ -184,10 +193,20 @@ void main() {
           expect(popoverRect.top, greaterThan(buttonRect.bottom));
         });
 
-        testWidgetsOnAllPlatforms('positions the popover above button if there is room', (tester) async {
+        testWidgetsOnAllPlatforms('positions the popover above button if there is room above but not below',
+            (tester) async {
           final boundaryKey = GlobalKey();
           final buttonKey = GlobalKey();
           final popoverController = PopoverController();
+
+          // Use a screen size bigger than the boundary widget
+          // to make sure we use the widget size instead of the screen size
+          // to size and position the popover.
+          tester.view
+            ..devicePixelRatio = 1.0
+            ..platformDispatcher.textScaleFactorTestValue = 1.0
+            ..physicalSize = const Size(1000, 2000);
+          addTearDown(() => tester.platformDispatcher.clearAllTestValues());
 
           // Pump a tree with a popover that fits above the button.
           await tester.pumpWidget(
@@ -195,11 +214,11 @@ void main() {
               home: Scaffold(
                 body: SizedBox(
                   key: boundaryKey,
-                  height: 600,
+                  height: 300,
                   child: Stack(
                     children: [
                       Positioned(
-                        top: 550,
+                        top: 250,
                         child: PopoverScaffold(
                           controller: popoverController,
                           boundaryKey: boundaryKey,
@@ -208,7 +227,7 @@ void main() {
                             height: 50,
                           ),
                           popoverBuilder: (context) => const RoundedRectanglePopoverAppearance(
-                            child: SizedBox(height: 500),
+                            child: SizedBox(height: 200),
                           ),
                         ),
                       ),
@@ -236,19 +255,28 @@ void main() {
           expect(popoverRect.bottom, lessThan(buttonRect.top));
         });
 
-        testWidgetsOnAllPlatforms(
-            'pins the popover to the bottom if there isn\'t room neither below or above the button', (tester) async {
+        testWidgetsOnAllPlatforms('pins the popover to the bottom if there is not room below or above the button',
+            (tester) async {
           final boundaryKey = GlobalKey();
           final buttonKey = GlobalKey();
           final popoverController = PopoverController();
 
-          // Pump a tree with a popover that doesn't fit neither below or above the button.
+          // Use a screen size bigger than the boundary widget
+          // to make sure we use the widget size instead of the screen size
+          // to size and position the popover.
+          tester.view
+            ..devicePixelRatio = 1.0
+            ..platformDispatcher.textScaleFactorTestValue = 1.0
+            ..physicalSize = const Size(1000, 2000);
+          addTearDown(() => tester.platformDispatcher.clearAllTestValues());
+
+          // Pump a tree with a popover that doesn't fit below or above the button.
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
                 body: SizedBox(
                   key: boundaryKey,
-                  height: 600,
+                  height: 500,
                   child: Stack(
                     children: [
                       Positioned(
@@ -261,7 +289,7 @@ void main() {
                             height: 50,
                           ),
                           popoverBuilder: (context) => const RoundedRectanglePopoverAppearance(
-                            child: SizedBox(height: 500),
+                            child: SizedBox(height: 700),
                           ),
                         ),
                       ),
@@ -284,8 +312,10 @@ void main() {
 
           final popoverRect = tester.getRect(find.byType(RoundedRectanglePopoverAppearance));
 
-          // Ensure popover was pinned of the bottom to the boundary widget.
-          expect(popoverRect.bottom, 600);
+          // Ensure popover was pinned of the bottom to the boundary widget
+          // and did not exceeded the boundary size.
+          expect(popoverRect.bottom, 500);
+          expect(popoverRect.height, 500);
         });
       });
 
@@ -336,7 +366,8 @@ void main() {
           expect(popoverRect.top, greaterThan(buttonRect.bottom));
         });
 
-        testWidgetsOnAllPlatforms('positions the popover above button if there is room', (tester) async {
+        testWidgetsOnAllPlatforms('positions the popover above button if there is room above but not below',
+            (tester) async {
           final buttonKey = GlobalKey();
           final popoverController = PopoverController();
 
@@ -385,8 +416,8 @@ void main() {
           expect(popoverRect.bottom, lessThan(buttonRect.top));
         });
 
-        testWidgetsOnAllPlatforms(
-            'pins the popover to the bottom if there isn\'t room neither below or above the button', (tester) async {
+        testWidgetsOnAllPlatforms('pins the popover to the bottom if there is not room below or above the button',
+            (tester) async {
           final buttonKey = GlobalKey();
           final popoverController = PopoverController();
 
@@ -397,7 +428,7 @@ void main() {
 
           addTearDown(() => tester.platformDispatcher.clearAllTestValues());
 
-          // Pump a tree with a popover that doesn't fit neither below or above the button.
+          // Pump a tree with a popover that doesn't fit below or above the button.
           await tester.pumpWidget(
             MaterialApp(
               home: Scaffold(
@@ -435,7 +466,13 @@ void main() {
       });
     });
 
-    testWidgetsOnAllPlatforms('shares focus with other widgets', (tester) async {
+    testWidgetsOnAllPlatforms('shares focus with widgets of a different subtree', (tester) async {
+      // When PopoverScaffold is in a different subtree from the currently focused widget,
+      // for example, an Overlay or OverlayPortal, it doesn't naturally shares focus with it.
+      //
+      // This test makes sure PopoverScaffold has the ability to setup focus sharing
+      // with widgets of a different subtree, so the popover shares focus with a parent FocusNode.
+
       final parentFocusNode = FocusNode();
       final popoverFocusNode = FocusNode();
 
