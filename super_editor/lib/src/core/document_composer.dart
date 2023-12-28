@@ -496,6 +496,10 @@ class ChangeComposingRegionCommand implements EditCommand {
   }
 }
 
+class ClearComposingRegionRequest implements EditRequest {
+  const ClearComposingRegionRequest();
+}
+
 class ChangeInteractionModeRequest implements EditRequest {
   const ChangeInteractionModeRequest({
     required this.isInteractionModeDesired,
