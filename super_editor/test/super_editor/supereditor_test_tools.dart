@@ -798,6 +798,40 @@ class FakeImageComponentBuilder implements ComponentBuilder {
   }
 }
 
+/// Builds [TaskComponentViewModel]s and [ExpandingTaskComponent]s for every
+/// [TaskNode] in a document.
+class ExpandingTaskComponentBuilder extends ComponentBuilder {
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! TaskNode) {
+      return null;
+    }
+
+    return TaskComponentViewModel(
+      nodeId: node.id,
+      padding: EdgeInsets.zero,
+      isComplete: node.isComplete,
+      setComplete: (bool isComplete) {},
+      text: node.text,
+      textStyleBuilder: noStyleBuilder,
+      selectionColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! TaskComponentViewModel) {
+      return null;
+    }
+
+    return ExpandingTaskComponent(
+      key: componentContext.componentKey,
+      viewModel: componentViewModel,
+    );
+  }
+}
+
 /// A task component which expands its height when it's selected.
 class ExpandingTaskComponent extends StatefulWidget {
   const ExpandingTaskComponent({

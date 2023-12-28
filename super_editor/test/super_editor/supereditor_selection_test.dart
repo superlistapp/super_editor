@@ -331,7 +331,7 @@ void main() {
       await tester //
           .createDocument()
           .withCustomContent(document)
-          .withAddedComponents([_ExpandingTaskComponentBuilder()]) //
+          .withAddedComponents([ExpandingTaskComponentBuilder()]) //
           .pump();
 
       // Place the caret at "Tas|k 3" to make it expand.
@@ -1218,40 +1218,6 @@ class _UnselectableHorizontalRuleComponent extends StatelessWidget {
         color: Color(0xFF000000),
         thickness: 1.0,
       ),
-    );
-  }
-}
-
-/// Builds [TaskComponentViewModel]s and [ExpandingTaskComponent]s for every
-/// [TaskNode] in a document.
-class _ExpandingTaskComponentBuilder extends ComponentBuilder {
-  @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
-    if (node is! TaskNode) {
-      return null;
-    }
-
-    return TaskComponentViewModel(
-      nodeId: node.id,
-      padding: EdgeInsets.zero,
-      isComplete: node.isComplete,
-      setComplete: (bool isComplete) {},
-      text: node.text,
-      textStyleBuilder: noStyleBuilder,
-      selectionColor: const Color(0x00000000),
-    );
-  }
-
-  @override
-  Widget? createComponent(
-      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
-    if (componentViewModel is! TaskComponentViewModel) {
-      return null;
-    }
-
-    return ExpandingTaskComponent(
-      key: componentContext.componentKey,
-      viewModel: componentViewModel,
     );
   }
 }
