@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:example/demos/infrastructure/super_editor_item_selector.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -100,6 +101,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     _urlFocusNode.dispose();
     _urlController!.dispose();
     _popoverFocusNode.dispose();
+
     super.dispose();
   }
 
@@ -139,7 +141,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     } else if (selectedNode is ListItemNode) {
       return selectedNode.type == ListItemType.ordered ? _TextType.orderedListItem : _TextType.unorderedListItem;
     } else {
-      throw Exception('Invalid node type: $selectedNode');
+      throw Exception('Alignment does not apply to node of type: $selectedNode');
     }
   }
 
@@ -163,7 +165,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
           return TextAlign.left;
       }
     } else {
-      throw Exception('Alignment does not apply to node of type: $selectedNode');
+      throw Exception('Invalid node type: $selectedNode');
     }
   }
 
@@ -482,6 +484,26 @@ class _EditorToolbarState extends State<EditorToolbar> {
     }
   }
 
+  /// Called when the user selects a block type on the toolbar.
+  void _onBlockTypeSelected(SuperEditorDemoTextItem? selectedItem) {
+    if (selectedItem != null) {
+      setState(() {
+        _convertTextToNewType(_TextType.values //
+            .where((e) => e.name == selectedItem.id)
+            .first);
+      });
+    }
+  }
+
+  /// Called when the user selects an alignment on the toolbar.
+  void _onAlignmentSelected(SuperEditorDemoIconItem? selectedItem) {
+    if (selectedItem != null) {
+      setState(() {
+        _changeAlignment(TextAlign.values.firstWhere((e) => e.name == selectedItem.id));
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BuildInOrder(
@@ -534,27 +556,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
               if (_isConvertibleNode()) ...[
                 Tooltip(
                   message: AppLocalizations.of(context)!.labelTextBlockType,
-                  child: DropdownButton<_TextType>(
-                    value: _getCurrentTextType(),
-                    items: _TextType.values
-                        .map((textType) => DropdownMenuItem<_TextType>(
-                              value: textType,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 16.0),
-                                child: Text(_getTextTypeName(textType)),
-                              ),
-                            ))
-                        .toList(),
-                    icon: const Icon(Icons.arrow_drop_down),
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
-                    ),
-                    underline: const SizedBox(),
-                    elevation: 0,
-                    itemHeight: 48,
-                    onChanged: _convertTextToNewType,
-                  ),
+                  child: _buildBlockTypeSelector(),
                 ),
                 _buildVerticalDivider(),
               ],
@@ -593,33 +595,18 @@ class _EditorToolbarState extends State<EditorToolbar> {
               ),
               // Only display alignment controls if the currently selected text
               // node respects alignment. List items, for example, do not.
-              if (_isTextAlignable()) ...[
-                _buildVerticalDivider(),
-                Tooltip(
-                  message: AppLocalizations.of(context)!.labelTextAlignment,
-                  child: DropdownButton<TextAlign>(
-                    value: _getCurrentTextAlignment(),
-                    items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
-                        .map((textAlign) => DropdownMenuItem<TextAlign>(
-                              value: textAlign,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Icon(_buildTextAlignIcon(textAlign)),
-                              ),
-                            ))
-                        .toList(),
-                    icon: const Icon(Icons.arrow_drop_down),
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
+              if (_isTextAlignable()) //
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildVerticalDivider(),
+                    Tooltip(
+                      message: AppLocalizations.of(context)!.labelTextAlignment,
+                      child: _buildAlignmentSelector(),
                     ),
-                    underline: const SizedBox(),
-                    elevation: 0,
-                    itemHeight: 48,
-                    onChanged: _changeAlignment,
-                  ),
+                  ],
                 ),
-              ],
+
               _buildVerticalDivider(),
               Center(
                 child: IconButton(
@@ -633,6 +620,48 @@ class _EditorToolbarState extends State<EditorToolbar> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildAlignmentSelector() {
+    final alignment = _getCurrentTextAlignment();
+    return SuperEditorDemoIconItemSelector(
+      parentFocusNode: widget.editorFocusNode,
+      boundaryKey: widget.editorViewportKey,
+      value: SuperEditorDemoIconItem(
+        id: alignment.name,
+        icon: _buildTextAlignIcon(alignment),
+      ),
+      items: TextAlign.values
+          .map(
+            (alignment) => SuperEditorDemoIconItem(
+              icon: _buildTextAlignIcon(alignment),
+              id: alignment.name,
+            ),
+          )
+          .toList(),
+      onSelected: _onAlignmentSelected,
+    );
+  }
+
+  Widget _buildBlockTypeSelector() {
+    final currentBlockType = _getCurrentTextType();
+    return SuperEditorDemoTextItemSelector(
+      parentFocusNode: widget.editorFocusNode,
+      boundaryKey: widget.editorViewportKey,
+      id: SuperEditorDemoTextItem(
+        id: currentBlockType.name,
+        label: _getTextTypeName(currentBlockType),
+      ),
+      items: _TextType.values
+          .map(
+            (blockType) => SuperEditorDemoTextItem(
+              id: blockType.name,
+              label: _getTextTypeName(blockType),
+            ),
+          )
+          .toList(),
+      onSelected: _onBlockTypeSelected,
     );
   }
 
