@@ -632,7 +632,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         id: alignment.name,
         icon: _buildTextAlignIcon(alignment),
       ),
-      items: TextAlign.values
+      items: const [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
           .map(
             (alignment) => SuperEditorDemoIconItem(
               icon: _buildTextAlignIcon(alignment),
