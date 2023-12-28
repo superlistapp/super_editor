@@ -255,7 +255,8 @@ void main() {
           expect(popoverRect.bottom, lessThan(buttonRect.top));
         });
 
-        testWidgetsOnAllPlatforms('pins the popover to the bottom if there is not room below or above the button',
+        testWidgetsOnAllPlatforms(
+            'pins the popover to the bottom of boundary if there is not room below or above the button',
             (tester) async {
           final boundaryKey = GlobalKey();
           final buttonKey = GlobalKey();
@@ -416,8 +417,8 @@ void main() {
           expect(popoverRect.bottom, lessThan(buttonRect.top));
         });
 
-        testWidgetsOnAllPlatforms('pins the popover to the bottom if there is not room below or above the button',
-            (tester) async {
+        testWidgetsOnAllPlatforms(
+            'pins the popover to the bottom of screen if there is not room below or above the button', (tester) async {
           final buttonKey = GlobalKey();
           final popoverController = PopoverController();
 

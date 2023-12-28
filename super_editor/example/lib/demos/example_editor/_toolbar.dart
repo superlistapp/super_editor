@@ -633,6 +633,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         icon: _buildTextAlignIcon(alignment),
       ),
       items: TextAlign.values
+          .where((alignment) => !const [TextAlign.start, TextAlign.end].contains(alignment))
           .map(
             (alignment) => SuperEditorDemoIconItem(
               icon: _buildTextAlignIcon(alignment),
