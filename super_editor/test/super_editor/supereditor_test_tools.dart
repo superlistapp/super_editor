@@ -798,6 +798,49 @@ class FakeImageComponentBuilder implements ComponentBuilder {
   }
 }
 
+/// A task component which expands its height when it's selected.
+class ExpandingTaskComponent extends StatefulWidget {
+  const ExpandingTaskComponent({
+    super.key,
+    required this.viewModel,
+  });
+
+  final TaskComponentViewModel viewModel;
+
+  @override
+  State<ExpandingTaskComponent> createState() => _ExpandingTaskComponentState();
+}
+
+class _ExpandingTaskComponentState extends State<ExpandingTaskComponent>
+    with ProxyDocumentComponent<ExpandingTaskComponent>, ProxyTextComposable {
+  final _textKey = GlobalKey();
+
+  @override
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => _textKey;
+
+  @override
+  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextComponent(
+          key: _textKey,
+          text: widget.viewModel.text,
+          textStyleBuilder: widget.viewModel.textStyleBuilder,
+          textSelection: widget.viewModel.selection,
+          selectionColor: widget.viewModel.selectionColor,
+          highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
+        ),
+        if (widget.viewModel.selection != null) //
+          const SizedBox(height: 20)
+      ],
+    );
+  }
+}
+
 class StandardEditorPieces {
   StandardEditorPieces(this.document, this.composer, this.editor);
 

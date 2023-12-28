@@ -88,14 +88,16 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   // Tracks user drag gestures for selection purposes.
   SelectionType _selectionType = SelectionType.position;
   Offset? _dragStartGlobal;
+  // The selection's document position where the user started dragging an expanded selection.
+  // The selection base is cached instead of continuously re-computed because components
+  // can change size and position during selection.
+  DocumentPosition? _dragSelectionBase;
   Offset? _dragEndGlobal;
   bool _expandSelectionDuringDrag = false;
   // When selecting by word, this is the initial word's upstream position.
   DocumentPosition? _wordSelectionUpstream;
   // When selecting by word, this is the initial word's downstream position.
   DocumentPosition? _wordSelectionDownstream;
-  // Holds the first selection base of a drag gesture.
-  DocumentPosition? _startingSelectionBase;
 
   /// Holds which kind of device started a pan gesture, e.g., a mouse or a trackpad.
   PointerDeviceKind? _panGestureDevice;
@@ -551,7 +553,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       _expandSelectionDuringDrag = false;
       _wordSelectionUpstream = null;
       _wordSelectionDownstream = null;
-      _startingSelectionBase = null;
+      _dragSelectionBase = null;
     });
 
     widget.autoScroller.disableAutoScrolling();
@@ -624,15 +626,9 @@ Updating drag selection:
       extentOffsetInDocument,
     );
 
-    // If a component resizes itself depending on whether or not it's selected,
-    // we might end up in a situation where the starting drag offset points
-    // to a different component than the component it was pointing at
-    // the start of the gesture.
-    // Cache and reuse the first selection base of the drag gesture,
-    // so the selection base never changes during a single drag gesture.
-    _startingSelectionBase ??= selection?.base;
+    _dragSelectionBase ??= selection?.base;
 
-    DocumentPosition? basePosition = _startingSelectionBase;
+    DocumentPosition? basePosition = _dragSelectionBase;
     DocumentPosition? extentPosition = selection?.extent;
     editorGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
 

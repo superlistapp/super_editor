@@ -306,7 +306,8 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("keeps selection base while dragging an expandable component", (tester) async {
+    testWidgetsOnArbitraryDesktop("keeps selection base while dragging a selection across components that change size",
+        (tester) async {
       final document = MutableDocument(
         nodes: [
           TaskNode(
@@ -347,7 +348,7 @@ void main() {
         ),
       );
 
-      // Start dragging from "Tas|k 3".
+      // Start dragging from "Tas|k 3" to the beginning of the document.
       final gesture = await tester.startDocumentDragFromPosition(
         from: const DocumentPosition(
           nodeId: '3',
@@ -356,7 +357,7 @@ void main() {
       );
       addTearDown(() => gesture.removePointer());
 
-      // Gradually move up.
+      // Gradually move up until the beginning of the document.
       for (int i = 0; i <= 10; i++) {
         await gesture.moveBy(const Offset(0, -30));
         await tester.pump();
@@ -1221,7 +1222,7 @@ class _UnselectableHorizontalRuleComponent extends StatelessWidget {
   }
 }
 
-/// Builds [TaskComponentViewModel]s and [_ExpandingTaskComponent]s for every
+/// Builds [TaskComponentViewModel]s and [ExpandingTaskComponent]s for every
 /// [TaskNode] in a document.
 class _ExpandingTaskComponentBuilder extends ComponentBuilder {
   @override
@@ -1248,52 +1249,9 @@ class _ExpandingTaskComponentBuilder extends ComponentBuilder {
       return null;
     }
 
-    return _ExpandingTaskComponent(
+    return ExpandingTaskComponent(
       key: componentContext.componentKey,
       viewModel: componentViewModel,
-    );
-  }
-}
-
-/// A task component which expands its height when it's selected.
-class _ExpandingTaskComponent extends StatefulWidget {
-  const _ExpandingTaskComponent({
-    super.key,
-    required this.viewModel,
-  });
-
-  final TaskComponentViewModel viewModel;
-
-  @override
-  State<_ExpandingTaskComponent> createState() => _ExpandingTaskComponentState();
-}
-
-class _ExpandingTaskComponentState extends State<_ExpandingTaskComponent>
-    with ProxyDocumentComponent<_ExpandingTaskComponent>, ProxyTextComposable {
-  final _textKey = GlobalKey();
-
-  @override
-  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => _textKey;
-
-  @override
-  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextComponent(
-          key: _textKey,
-          text: widget.viewModel.text,
-          textStyleBuilder: widget.viewModel.textStyleBuilder,
-          textSelection: widget.viewModel.selection,
-          selectionColor: widget.viewModel.selectionColor,
-          highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
-        ),
-        if (widget.viewModel.selection != null) //
-          const SizedBox(height: 20)
-      ],
     );
   }
 }
