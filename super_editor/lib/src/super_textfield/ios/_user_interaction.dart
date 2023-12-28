@@ -510,11 +510,25 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   void _computeSelectionRect() {
     _previousToolbarFocusSelection = widget.textController.selection;
 
-    if (!widget.textController.selection.isValid || widget.textController.selection.isCollapsed) {
+    if (!widget.textController.selection.isValid) {
       _toolbarFocusSelectionRect.value = null;
       return;
     }
 
+    if (widget.textController.selection.isCollapsed) {
+      // The selection is collapsed.
+      // Place the selection rect at the caret position.
+      final selectionExtent = widget.textController.selection.extent;
+      final caretOffset = _textLayout.getOffsetForCaret(selectionExtent);
+      final caretHeight =
+          _textLayout.getHeightForCaret(selectionExtent) ?? _textLayout.getLineHeightAtPosition(selectionExtent);
+      _toolbarFocusSelectionRect.value = Rect.fromLTWH(caretOffset.dx, caretOffset.dy, 0, caretHeight);
+
+      return;
+    }
+
+    // The selection is expanded.
+    // Make the selection rect include all selected characters.
     final textBoxes = _textLayout.getBoxesForSelection(widget.textController.selection);
 
     Rect boundingBox = textBoxes.first.toRect();
