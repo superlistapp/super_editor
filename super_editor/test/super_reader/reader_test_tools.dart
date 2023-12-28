@@ -86,17 +86,17 @@ class TestDocumentConfigurator {
   SelectionStyles? _selectionStyles;
   Stylesheet? _stylesheet;
   final _addedComponents = <ComponentBuilder>[];
-  bool _autoFocus = false;
   ui.Size? _editorSize;
   List<ComponentBuilder>? _componentBuilders;
   WidgetTreeBuilder? _widgetTreeBuilder;
   ScrollController? _scrollController;
   bool _insideCustomScrollView = false;
   FocusNode? _focusNode;
+  bool _autoFocus = false;
+  String? _tapRegionGroupId;
   DocumentSelection? _selection;
   WidgetBuilder? _androidToolbarBuilder;
   DocumentFloatingToolbarBuilder? _iOSToolbarBuilder;
-  String? _tapRegionGroupId;
 
   /// Configures the [SuperReader] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -270,6 +270,8 @@ class TestDocumentConfigurator {
           ),
           child: SuperReader(
             focusNode: testContext.focusNode,
+            autofocus: _autoFocus,
+            tapRegionGroupId: _tapRegionGroupId,
             document: documentContext.document,
             documentLayoutKey: layoutKey,
             selection: documentContext.selection,
@@ -280,10 +282,8 @@ class TestDocumentConfigurator {
               ..._addedComponents,
               ...(_componentBuilders ?? defaultComponentBuilders),
             ],
-            autofocus: _autoFocus,
             scrollController: _scrollController,
             androidToolbarBuilder: _androidToolbarBuilder,
-            tapRegionGroupId: _tapRegionGroupId,
           ),
         ),
       ),
