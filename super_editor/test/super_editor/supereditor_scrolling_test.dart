@@ -182,17 +182,19 @@ void main() {
       // Ensure that the entire document is selected.
       expect(
         SuperEditorInspector.findDocumentSelection(),
-        DocumentSelection(
-          base: DocumentPosition(
-            nodeId: lastParagraph.id,
-            nodePosition: TextNodePosition(
-              offset: lastParagraph.endPosition.offset,
-              affinity: TextAffinity.upstream,
+        selectionEquivalentTo(
+          DocumentSelection(
+            base: DocumentPosition(
+              nodeId: lastParagraph.id,
+              nodePosition: TextNodePosition(
+                offset: lastParagraph.endPosition.offset,
+                affinity: TextAffinity.upstream,
+              ),
             ),
-          ),
-          extent: DocumentPosition(
-            nodeId: firstParagraph.id,
-            nodePosition: firstParagraph.beginningPosition,
+            extent: DocumentPosition(
+              nodeId: firstParagraph.id,
+              nodePosition: firstParagraph.beginningPosition,
+            ),
           ),
         ),
       );
