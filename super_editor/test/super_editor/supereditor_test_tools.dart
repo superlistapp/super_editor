@@ -505,6 +505,8 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
     return SuperEditor(
       key: widget.testConfiguration.key,
       focusNode: widget.testDocumentContext.focusNode,
+      autofocus: widget.testConfiguration.autoFocus,
+      tapRegionGroupId: widget.testConfiguration.tapRegionGroupId,
       editor: widget.testDocumentContext.editor,
       document: widget.testDocumentContext.document,
       composer: widget.testDocumentContext.composer,
@@ -530,10 +532,8 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
         ...widget.testConfiguration.addedComponents,
         ...(widget.testConfiguration.componentBuilders ?? defaultComponentBuilders),
       ],
-      autofocus: widget.testConfiguration.autoFocus,
       scrollController: widget.testConfiguration.scrollController,
       plugins: widget.testConfiguration.plugins,
-      tapRegionGroupId: widget.testConfiguration.tapRegionGroupId,
     );
   }
 }

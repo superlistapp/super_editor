@@ -43,6 +43,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   const ReadOnlyAndroidDocumentTouchInteractor({
     Key? key,
     required this.focusNode,
+    this.tapRegionGroupId,
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
@@ -56,11 +57,13 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
     this.overlayController,
-    this.tapRegionGroupId,
     this.child,
   }) : super(key: key);
 
   final FocusNode focusNode;
+
+  /// {@macro super_reader_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   final Document document;
   final GlobalKey documentKey;
@@ -98,9 +101,6 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController? overlayController;
-
-  /// {@macro super_reader_tap_region_group_id}
-  final String? tapRegionGroupId;
 
   final bool showDebugPaint;
 

@@ -99,6 +99,8 @@ class SuperEditor extends StatefulWidget {
   SuperEditor({
     Key? key,
     this.focusNode,
+    this.autofocus = false,
+    this.tapRegionGroupId,
     required this.editor,
     required this.document,
     required this.composer,
@@ -118,11 +120,9 @@ class SuperEditor extends StatefulWidget {
     this.selectorHandlers,
     this.gestureMode,
     this.contentTapDelegateFactory = superEditorLaunchLinkTapHandlerFactory,
-    this.tapRegionGroupId,
     this.selectionLayerLinks,
     this.documentUnderlayBuilders = const [],
     this.documentOverlayBuilders = defaultSuperEditorDocumentOverlayBuilders,
-    this.autofocus = false,
     this.overlayController,
     this.androidHandleColor,
     this.androidToolbarBuilder,
@@ -143,6 +143,17 @@ class SuperEditor extends StatefulWidget {
 
   /// Whether or not the [SuperEditor] should autofocus
   final bool autofocus;
+
+  /// {@template super_editor_tap_region_group_id}
+  /// A group ID for a tap region that surrounds the editor
+  /// and also surrounds any related widgets, such as drag handles and a toolbar.
+  ///
+  /// When the editor is inside a [TapRegion], tapping at a drag handle causes
+  /// [TapRegion.onTapOutside] to be called. To prevent that, provide a
+  /// [tapRegionGroupId] with the same value as the ancestor [TapRegion] groupId.
+
+  /// {@endtemplate}
+  final String? tapRegionGroupId;
 
   /// The [ScrollController] that governs this `SuperEditor`'s scroll
   /// offset.
@@ -227,17 +238,6 @@ class SuperEditor extends StatefulWidget {
   /// A [ContentTapDelegate] might be used, for example, to launch a URL
   /// when a user taps on a link.
   final SuperEditorContentTapDelegateFactory? contentTapDelegateFactory;
-
-  /// {@template super_editor_tap_region_group_id}
-  /// A group ID for a tap region that surrounds the editor
-  /// and also surrounds any related widgets, such as drag handles and a toolbar.
-  ///
-  /// When the editor is inside a [TapRegion], tapping at a drag handle causes
-  /// [TapRegion.onTapOutside] to be called. To prevent that, provide a
-  /// [tapRegionGroupId] with the same value as the ancestor [TapRegion] groupId.
-
-  /// {@endtemplate}
-  final String? tapRegionGroupId;
 
   /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.

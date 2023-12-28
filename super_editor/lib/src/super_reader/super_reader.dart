@@ -46,6 +46,8 @@ class SuperReader extends StatefulWidget {
   SuperReader({
     Key? key,
     this.focusNode,
+    this.autofocus = false,
+    this.tapRegionGroupId,
     required this.document,
     this.documentLayoutKey,
     this.selection,
@@ -60,14 +62,12 @@ class SuperReader extends StatefulWidget {
     SelectionStyles? selectionStyle,
     this.gestureMode,
     this.contentTapDelegateFactory = superReaderLaunchLinkTapHandlerFactory,
-    this.autofocus = false,
     this.overlayController,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
-    this.tapRegionGroupId,
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? readOnlyDefaultStylesheet,
         selectionStyles = selectionStyle ?? readOnlyDefaultSelectionStyle,
@@ -78,6 +78,19 @@ class SuperReader extends StatefulWidget {
         super(key: key);
 
   final FocusNode? focusNode;
+
+  /// Whether or not the [SuperReader] should autofocus.
+  final bool autofocus;
+
+  /// {@template super_reader_tap_region_group_id}
+  /// A group ID for a tap region that surrounds the reader
+  /// and also surrounds any related widgets, such as drag handles and a toolbar.
+  ///
+  /// When the reader is inside a [TapRegion], tapping at a drag handle causes
+  /// [TapRegion.onTapOutside] to be called. To prevent that, provide a
+  /// [tapRegionGroupId] with the same value as the ancestor [TapRegion] groupId.
+  /// {@endtemplate}
+  final String? tapRegionGroupId;
 
   /// The [Document] displayed in this [SuperReader], in read-only mode.
   final Document document;
@@ -186,19 +199,6 @@ class SuperReader extends StatefulWidget {
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
-
-  /// Whether or not the [SuperReader] should autofocus.
-  final bool autofocus;
-
-  /// {@template super_reader_tap_region_group_id}
-  /// A group ID for a tap region that surrounds the reader
-  /// and also surrounds any related widgets, such as drag handles and a toolbar.
-  ///
-  /// When the reader is inside a [TapRegion], tapping at a drag handle causes
-  /// [TapRegion.onTapOutside] to be called. To prevent that, provide a
-  /// [tapRegionGroupId] with the same value as the ancestor [TapRegion] groupId.
-  /// {@endtemplate}
-  final String? tapRegionGroupId;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging.
@@ -493,6 +493,7 @@ class SuperReaderState extends State<SuperReader> {
       case DocumentGestureMode.android:
         return ReadOnlyAndroidDocumentTouchInteractor(
           focusNode: _focusNode,
+          tapRegionGroupId: widget.tapRegionGroupId,
           document: _readerContext.document,
           documentKey: _docLayoutKey,
           getDocumentLayout: () => _readerContext.documentLayout,
@@ -505,7 +506,6 @@ class SuperReaderState extends State<SuperReader> {
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
           overlayController: widget.overlayController,
-          tapRegionGroupId: widget.tapRegionGroupId,
         );
       case DocumentGestureMode.iOS:
         return SuperReaderIosDocumentTouchInteractor(
