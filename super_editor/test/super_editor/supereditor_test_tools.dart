@@ -545,6 +545,7 @@ class SuperEditorTestConfiguration {
   Key? key;
   FocusNode? focusNode;
   bool autoFocus = false;
+  String? tapRegionGroupId;
   ui.Size? editorSize;
   final MutableDocument document;
   final addedRequestHandlers = <EditRequestHandler>[];
@@ -568,7 +569,6 @@ class SuperEditorTestConfiguration {
   final addedComponents = <ComponentBuilder>[];
   DocumentFloatingToolbarBuilder? androidToolbarBuilder;
   DocumentFloatingToolbarBuilder? iOSToolbarBuilder;
-  String? tapRegionGroupId;
 
   DocumentSelection? selection;
 

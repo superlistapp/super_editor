@@ -13,7 +13,7 @@ import 'reader_test_tools.dart';
 
 void main() {
   group('SuperReader inside a TapRegion', () {
-    testWidgetsOnMobile("changes selection when dragging expanded handle", (tester) async {
+    testWidgetsOnMobile("does not report a tap outside when the user touches overlay controls", (tester) async {
       const tapRegionId = 'super_editor_group_id';
       final focusNode = FocusNode();
 

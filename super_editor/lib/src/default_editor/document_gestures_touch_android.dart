@@ -1256,16 +1256,19 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
   const SuperEditorAndroidControlsOverlayManager({
     super.key,
+    this.tapRegionGroupId,
     required this.document,
     required this.getDocumentLayout,
     required this.selection,
     required this.setSelection,
     required this.scrollChangeSignal,
     required this.dragHandleAutoScroller,
-    this.tapRegionGroupId,
     this.defaultToolbarBuilder,
     this.child,
   });
+
+  /// {@macro super_editor_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   final Document document;
   final DocumentLayoutResolver getDocumentLayout;
@@ -1277,9 +1280,6 @@ class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
   final ValueListenable<DragHandleAutoScroller?> dragHandleAutoScroller;
 
   final DocumentFloatingToolbarBuilder? defaultToolbarBuilder;
-
-  /// {@macro super_editor_tap_region_group_id}
-  final String? tapRegionGroupId;
 
   final Widget? child;
 

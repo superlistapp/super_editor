@@ -151,7 +151,6 @@ class SuperEditor extends StatefulWidget {
   /// When the editor is inside a [TapRegion], tapping at a drag handle causes
   /// [TapRegion.onTapOutside] to be called. To prevent that, provide a
   /// [tapRegionGroupId] with the same value as the ancestor [TapRegion] groupId.
-
   /// {@endtemplate}
   final String? tapRegionGroupId;
 
@@ -743,6 +742,7 @@ class SuperEditorState extends State<SuperEditor> {
         );
       case DocumentGestureMode.android:
         return SuperEditorAndroidControlsOverlayManager(
+          tapRegionGroupId: widget.tapRegionGroupId,
           document: editContext.document,
           getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
           selection: _composer.selectionNotifier,
@@ -751,7 +751,6 @@ class SuperEditorState extends State<SuperEditor> {
           ]),
           scrollChangeSignal: _scrollChangeSignal,
           dragHandleAutoScroller: _dragHandleAutoScroller,
-          tapRegionGroupId: widget.tapRegionGroupId,
           defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultAndroidEditorToolbarBuilder(
             overlayContext,
             mobileToolbarKey,
