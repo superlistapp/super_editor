@@ -1170,6 +1170,70 @@ Paragraph two
         expect(keyboardAppearance, 'Brightness.dark');
       });
     });
+
+    testWidgetsOnAllPlatforms('clears composing region after selection changes', (tester) async {
+      final testContext = await tester
+          .createDocument() //
+          .withTwoEmptyParagraphs()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Place the caret at the beginning of the document.
+      await tester.placeCaretInParagraph('1', 0);
+
+      // Type something to have some text to tap on.
+      await tester.typeImeText('Composing: ');
+
+      // Ensure we don't have a composing region.
+      expect(testContext.composer.composingRegion.value, isNull);
+
+      // Simulate an insertion containing a composing region.
+      await tester.ime.sendDeltas(
+        [
+          const TextEditingDeltaInsertion(
+            oldText: '. Composing: ',
+            textInserted: "あs",
+            insertionOffset: 13,
+            selection: TextSelection.collapsed(offset: 15),
+            composing: TextRange(start: 13, end: 15),
+          ),
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Ensure the editor applied a composing region.
+      expect(
+        testContext.composer.composingRegion.value,
+        isNotNull,
+      );
+
+      // Intercept the setEditingState message sent to the platform to check if we
+      // cleared the IME composing region when changing the selection.
+      int? composingBase;
+      int? composingExtent;
+      tester
+          .interceptChannel(SystemChannels.textInput.name) //
+          .interceptMethod(
+        'TextInput.setEditingState',
+        (methodCall) {
+          final params = methodCall.arguments as Map;
+          composingBase = params['composingBase'];
+          composingExtent = params['composingExtent'];
+
+          return null;
+        },
+      );
+
+      // Place the caret at the second paragraph.
+      await tester.placeCaretInParagraph('2', 0);
+
+      // Ensure the composing region was cleared in the IME.
+      expect(composingBase, -1);
+      expect(composingExtent, -1);
+
+      // Ensure SuperEditor composing region was cleared.
+      expect(testContext.composer.composingRegion.value, isNull);
+    });
   });
 }
 

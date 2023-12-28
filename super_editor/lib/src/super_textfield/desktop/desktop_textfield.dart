@@ -612,6 +612,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               extentOffset: tapTextPosition.offset,
             )
           : TextSelection.collapsed(offset: tapTextPosition.offset);
+      widget.textController.composingRegion = TextRange.empty;
 
       _log.finer("New text field selection: ${widget.textController.selection}");
     });

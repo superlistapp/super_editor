@@ -1107,10 +1107,23 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     editorStableTagsLog.info("KeepCaretOutOfTagReaction - react()");
-    if (changeList.length > 1 || changeList.first is! SelectionChangeEvent) {
+
+    SelectionChangeEvent? selectionChangeEvent;
+    bool hasNonSelectionOrComposingRegionChange = false;
+
+    if (changeList.length == 2) {
+      // Check if we have any event that isn't a selection or composing region change.
+      hasNonSelectionOrComposingRegionChange =
+          changeList.any((e) => e is! SelectionChangeEvent && e is! ComposingRegionChangeEvent);
+      selectionChangeEvent = changeList.firstWhereOrNull((e) => e is SelectionChangeEvent) as SelectionChangeEvent?;
+    } else if (changeList.length == 1 && changeList.first is SelectionChangeEvent) {
+      selectionChangeEvent = changeList.first as SelectionChangeEvent;
+    }
+
+    if (hasNonSelectionOrComposingRegionChange || selectionChangeEvent == null) {
       // We only want to move the caret when we're confident about what changed. Therefore,
-      // we only react to changes that are solely a selection change, i.e., we ignore
-      // situations like text entry, text deletion, etc.
+      // we only react to changes that are solely a selection or composing region change,
+      // i.e., we ignore situations like text entry, text deletion, etc.
       editorStableTagsLog.info(" - change list isn't just a single SelectionChangeEvent: $changeList");
       return;
     }
@@ -1118,7 +1131,6 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
     editorStableTagsLog.info(" - we received just one selection change event. Checking for user tag.");
 
     final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final selectionChangeEvent = changeList.first as SelectionChangeEvent;
 
     final newCaret = selectionChangeEvent.newSelection?.extent;
     if (newCaret == null) {

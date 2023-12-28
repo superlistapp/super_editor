@@ -178,7 +178,7 @@ Future<void> _clearComposingRegion(WidgetTester tester, Editor editor, Document 
       SelectionChangeType.placeCaret,
       SelectionReason.userInteraction,
     ),
-    ChangeComposingRegionRequest(null),
+    const ClearComposingRegionRequest(),
   ]);
   await tester.pump();
 }

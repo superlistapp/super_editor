@@ -235,6 +235,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
     // Update the text selection to a collapsed selection where the user tapped.
     widget.textController.selection = TextSelection.collapsed(offset: tapTextPosition.offset);
+    widget.textController.composingRegion = TextRange.empty;
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
