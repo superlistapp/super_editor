@@ -549,11 +549,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   void _onDragEnd() {
     setState(() {
       _dragStartGlobal = null;
+      _dragSelectionBase = null;
       _dragEndGlobal = null;
       _expandSelectionDuringDrag = false;
       _wordSelectionUpstream = null;
       _wordSelectionDownstream = null;
-      _dragSelectionBase = null;
     });
 
     widget.autoScroller.disableAutoScrolling();
