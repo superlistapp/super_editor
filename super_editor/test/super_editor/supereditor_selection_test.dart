@@ -7,6 +7,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../super_textfield/super_textfield_robot.dart';
+import '../test_tools.dart';
 import 'supereditor_test_tools.dart';
 
 void main() {
@@ -303,6 +304,85 @@ void main() {
               )),
         ),
       );
+    });
+
+    testWidgetsOnArbitraryDesktop("keeps selection base while dragging a selection across components that change size",
+        (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(
+            id: '1',
+            text: AttributedText('Task 1'),
+            isComplete: false,
+          ),
+          TaskNode(
+            id: '2',
+            text: AttributedText('Task 2'),
+            isComplete: false,
+          ),
+          TaskNode(
+            id: '3',
+            text: AttributedText('Task 3'),
+            isComplete: false,
+          ),
+        ],
+      );
+
+      await tester //
+          .createDocument()
+          .withCustomContent(document)
+          .withAddedComponents([ExpandingTaskComponentBuilder()]) //
+          .pump();
+
+      // Place the caret at "Tas|k 3" to make it expand.
+      await tester.placeCaretInParagraph('3', 3);
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        selectionEquivalentTo(
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: '3',
+              nodePosition: TextNodePosition(offset: 3),
+            ),
+          ),
+        ),
+      );
+
+      // Start dragging from "Tas|k 3" to the beginning of the document.
+      final gesture = await tester.startDocumentDragFromPosition(
+        from: const DocumentPosition(
+          nodeId: '3',
+          nodePosition: TextNodePosition(offset: 3),
+        ),
+      );
+      addTearDown(() => gesture.removePointer());
+
+      // Gradually move up until the beginning of the document.
+      for (int i = 0; i <= 10; i++) {
+        await gesture.moveBy(const Offset(0, -30));
+        await tester.pump();
+      }
+
+      // Ensure the selection expanded to the beginning of the document
+      // and the selection base was retained.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        selectionEquivalentTo(
+          const DocumentSelection(
+            base: DocumentPosition(
+              nodeId: '3',
+              nodePosition: TextNodePosition(offset: 3),
+            ),
+            extent: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        ),
+      );
+
+      // Pump with enough time to expire the tap recognizer timer.
+      await tester.pump(kTapTimeout);
     });
 
     testWidgetsOnAllPlatforms("removes caret when it loses focus", (tester) async {
