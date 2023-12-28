@@ -7,6 +7,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../super_textfield/super_textfield_robot.dart';
+import '../test_tools.dart';
 import 'supereditor_test_tools.dart';
 
 void main() {
@@ -303,6 +304,84 @@ void main() {
               )),
         ),
       );
+    });
+
+    testWidgetsOnArbitraryDesktop("keeps selection base while dragging an expandable component", (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(
+            id: '1',
+            text: AttributedText('Task 1'),
+            isComplete: false,
+          ),
+          TaskNode(
+            id: '2',
+            text: AttributedText('Task 2'),
+            isComplete: false,
+          ),
+          TaskNode(
+            id: '3',
+            text: AttributedText('Task 3'),
+            isComplete: false,
+          ),
+        ],
+      );
+
+      await tester //
+          .createDocument()
+          .withCustomContent(document)
+          .withAddedComponents([_ExpandingTaskComponentBuilder()]) //
+          .pump();
+
+      // Place the caret at "Tas|k 3" to make it expand.
+      await tester.placeCaretInParagraph('3', 3);
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        selectionEquivalentTo(
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: '3',
+              nodePosition: TextNodePosition(offset: 3),
+            ),
+          ),
+        ),
+      );
+
+      // Start dragging from "Tas|k 3".
+      final gesture = await tester.startDocumentDragFromPosition(
+        from: const DocumentPosition(
+          nodeId: '3',
+          nodePosition: TextNodePosition(offset: 3),
+        ),
+      );
+      addTearDown(() => gesture.removePointer());
+
+      // Gradually move up.
+      for (int i = 0; i <= 10; i++) {
+        await gesture.moveBy(const Offset(0, -30));
+        await tester.pump();
+      }
+
+      // Ensure the selection expanded to the beginning of the document
+      // and the selection base was retained.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        selectionEquivalentTo(
+          const DocumentSelection(
+            base: DocumentPosition(
+              nodeId: '3',
+              nodePosition: TextNodePosition(offset: 3),
+            ),
+            extent: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        ),
+      );
+
+      // Pump with enough time to expire the tap recognizer timer.
+      await tester.pump(kTapTimeout);
     });
 
     testWidgetsOnAllPlatforms("removes caret when it loses focus", (tester) async {
@@ -1138,6 +1217,83 @@ class _UnselectableHorizontalRuleComponent extends StatelessWidget {
         color: Color(0xFF000000),
         thickness: 1.0,
       ),
+    );
+  }
+}
+
+/// Builds [TaskComponentViewModel]s and [_ExpandingTaskComponent]s for every
+/// [TaskNode] in a document.
+class _ExpandingTaskComponentBuilder extends ComponentBuilder {
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! TaskNode) {
+      return null;
+    }
+
+    return TaskComponentViewModel(
+      nodeId: node.id,
+      padding: EdgeInsets.zero,
+      isComplete: node.isComplete,
+      setComplete: (bool isComplete) {},
+      text: node.text,
+      textStyleBuilder: noStyleBuilder,
+      selectionColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! TaskComponentViewModel) {
+      return null;
+    }
+
+    return _ExpandingTaskComponent(
+      key: componentContext.componentKey,
+      viewModel: componentViewModel,
+    );
+  }
+}
+
+/// A task component which expands its height when it's selected.
+class _ExpandingTaskComponent extends StatefulWidget {
+  const _ExpandingTaskComponent({
+    super.key,
+    required this.viewModel,
+  });
+
+  final TaskComponentViewModel viewModel;
+
+  @override
+  State<_ExpandingTaskComponent> createState() => _ExpandingTaskComponentState();
+}
+
+class _ExpandingTaskComponentState extends State<_ExpandingTaskComponent>
+    with ProxyDocumentComponent<_ExpandingTaskComponent>, ProxyTextComposable {
+  final _textKey = GlobalKey();
+
+  @override
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => _textKey;
+
+  @override
+  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextComponent(
+          key: _textKey,
+          text: widget.viewModel.text,
+          textStyleBuilder: widget.viewModel.textStyleBuilder,
+          textSelection: widget.viewModel.selection,
+          selectionColor: widget.viewModel.selectionColor,
+          highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
+        ),
+        if (widget.viewModel.selection != null) //
+          const SizedBox(height: 20)
+      ],
     );
   }
 }
