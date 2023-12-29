@@ -1271,6 +1271,7 @@ class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
     required this.scrollChangeSignal,
     required this.dragHandleAutoScroller,
     this.defaultToolbarBuilder,
+    this.showDebugPaint = false,
     this.child,
   });
 
@@ -1287,6 +1288,10 @@ class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
   final ValueListenable<DragHandleAutoScroller?> dragHandleAutoScroller;
 
   final DocumentFloatingToolbarBuilder? defaultToolbarBuilder;
+
+  /// Paints some extra visual ornamentation to help with
+  /// debugging, when `true`.
+  final bool showDebugPaint;
 
   final Widget? child;
 
@@ -1528,7 +1533,8 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       child: Stack(
         children: [
           _buildMagnifierFocalPoint(),
-          _buildDebugSelectionFocalPoint(),
+          if (widget.showDebugPaint) //
+            _buildDebugSelectionFocalPoint(),
           _buildMagnifier(),
           // Handles and toolbar are built after the magnifier so that they don't appear in the magnifier.
           _buildCollapsedHandle(),
