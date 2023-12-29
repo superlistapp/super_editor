@@ -1531,7 +1531,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       valueListenable: _controlsController!.shouldShowCollapsedHandle,
       builder: (context, shouldShow, child) {
         final selection = widget.selection.value;
-        if (selection == null || selection.isCollapsed) {
+        if (selection == null || !selection.isCollapsed) {
           // When the user double taps we first place a collapsed selection
           // and then an expanded selection.
           // Return a SizedBox to avoid flashing the collapsed drag handle.
