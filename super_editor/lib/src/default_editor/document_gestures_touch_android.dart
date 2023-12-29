@@ -1263,6 +1263,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
   const SuperEditorAndroidControlsOverlayManager({
     super.key,
+    this.tapRegionGroupId,
     required this.document,
     required this.getDocumentLayout,
     required this.selection,
@@ -1272,6 +1273,9 @@ class SuperEditorAndroidControlsOverlayManager extends StatefulWidget {
     this.defaultToolbarBuilder,
     this.child,
   });
+
+  /// {@macro super_editor_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   final Document document;
   final DocumentLayoutResolver getDocumentLayout;
@@ -1519,16 +1523,19 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   }
 
   Widget _buildOverlay(BuildContext context) {
-    return Stack(
-      children: [
-        _buildMagnifierFocalPoint(),
-        _buildDebugSelectionFocalPoint(),
-        _buildMagnifier(),
-        // Handles and toolbar are built after the magnifier so that they don't appear in the magnifier.
-        _buildCollapsedHandle(),
-        ..._buildExpandedHandles(),
-        _buildToolbar(),
-      ],
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: Stack(
+        children: [
+          _buildMagnifierFocalPoint(),
+          _buildDebugSelectionFocalPoint(),
+          _buildMagnifier(),
+          // Handles and toolbar are built after the magnifier so that they don't appear in the magnifier.
+          _buildCollapsedHandle(),
+          ..._buildExpandedHandles(),
+          _buildToolbar(),
+        ],
+      ),
     );
   }
 
