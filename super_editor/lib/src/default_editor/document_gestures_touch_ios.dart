@@ -1357,9 +1357,13 @@ enum DragMode {
 class SuperEditorIosToolbarOverlayManager extends StatefulWidget {
   const SuperEditorIosToolbarOverlayManager({
     super.key,
+    this.tapRegionGroupId,
     this.defaultToolbarBuilder,
     this.child,
   });
+
+  /// {@macro super_editor_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   final DocumentFloatingToolbarBuilder? defaultToolbarBuilder;
 
@@ -1395,13 +1399,16 @@ class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolb
   }
 
   Widget _buildToolbar(BuildContext context) {
-    return IosFloatingToolbarOverlay(
-      shouldShowToolbar: _controlsController!.shouldShowToolbar,
-      toolbarFocalPoint: _controlsController!.toolbarFocalPoint,
-      floatingToolbarBuilder:
-          _controlsController!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
-      createOverlayControlsClipper: _controlsController!.createOverlayControlsClipper,
-      showDebugPaint: false,
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: IosFloatingToolbarOverlay(
+        shouldShowToolbar: _controlsController!.shouldShowToolbar,
+        toolbarFocalPoint: _controlsController!.toolbarFocalPoint,
+        floatingToolbarBuilder:
+            _controlsController!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
+        createOverlayControlsClipper: _controlsController!.createOverlayControlsClipper,
+        showDebugPaint: false,
+      ),
     );
   }
 }

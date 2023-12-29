@@ -99,6 +99,8 @@ class SuperEditor extends StatefulWidget {
   SuperEditor({
     Key? key,
     this.focusNode,
+    this.autofocus = false,
+    this.tapRegionGroupId,
     required this.editor,
     required this.document,
     required this.composer,
@@ -121,7 +123,6 @@ class SuperEditor extends StatefulWidget {
     this.selectionLayerLinks,
     this.documentUnderlayBuilders = const [],
     this.documentOverlayBuilders = defaultSuperEditorDocumentOverlayBuilders,
-    this.autofocus = false,
     this.overlayController,
     this.androidHandleColor,
     this.androidToolbarBuilder,
@@ -142,6 +143,16 @@ class SuperEditor extends StatefulWidget {
 
   /// Whether or not the [SuperEditor] should autofocus
   final bool autofocus;
+
+  /// {@template super_editor_tap_region_group_id}
+  /// A group ID for a tap region that surrounds the editor
+  /// and also surrounds any related widgets, such as drag handles and a toolbar.
+  ///
+  /// When the editor is inside a [TapRegion], tapping at a drag handle causes
+  /// [TapRegion.onTapOutside] to be called. To prevent that, provide a
+  /// [tapRegionGroupId] with the same value as the ancestor [TapRegion] groupId.
+  /// {@endtemplate}
+  final String? tapRegionGroupId;
 
   /// The [ScrollController] that governs this `SuperEditor`'s scroll
   /// offset.
@@ -710,6 +721,7 @@ class SuperEditorState extends State<SuperEditor> {
     switch (gestureMode) {
       case DocumentGestureMode.iOS:
         return SuperEditorIosToolbarOverlayManager(
+          tapRegionGroupId: widget.tapRegionGroupId,
           defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultIosEditorToolbarBuilder(
             overlayContext,
             mobileToolbarKey,
@@ -730,6 +742,7 @@ class SuperEditorState extends State<SuperEditor> {
         );
       case DocumentGestureMode.android:
         return SuperEditorAndroidControlsOverlayManager(
+          tapRegionGroupId: widget.tapRegionGroupId,
           document: editContext.document,
           getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
           selection: _composer.selectionNotifier,

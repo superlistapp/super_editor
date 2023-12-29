@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// Extensions on [WidgetTester] for interacting with a [SuperReader] the way
@@ -190,6 +192,36 @@ extension SuperReaderRobot on WidgetTester {
     await gesture.up();
     await gesture.removePointer();
     await pumpAndSettle();
+  }
+
+  Future<TestGesture> pressDownOnDownstreamMobileHandle() async {
+    final handleElement = find
+        .byWidgetPredicate((widget) =>
+            (widget is AndroidSelectionHandle && widget.handleType == HandleType.downstream) ||
+            (widget is IOSSelectionHandle && widget.handleType == HandleType.downstream))
+        .evaluate()
+        .firstOrNull;
+    assert(handleElement != null, "Tried to press down on downstream handle but no handle was found.");
+    final renderHandle = handleElement!.renderObject as RenderBox;
+    final handleCenter = renderHandle.localToGlobal(renderHandle.size.center(Offset.zero));
+
+    final gesture = await startGesture(handleCenter);
+    return gesture;
+  }
+
+  Future<TestGesture> pressDownOnUpstreamMobileHandle() async {
+    final handleElement = find
+        .byWidgetPredicate((widget) =>
+            (widget is AndroidSelectionHandle && widget.handleType == HandleType.upstream) ||
+            (widget is IOSSelectionHandle && widget.handleType == HandleType.upstream))
+        .evaluate()
+        .firstOrNull;
+    assert(handleElement != null, "Tried to press down on upstream handle but no handle was found.");
+    final renderHandle = handleElement!.renderObject as RenderBox;
+    final handleCenter = renderHandle.localToGlobal(renderHandle.size.center(Offset.zero));
+
+    final gesture = await startGesture(handleCenter);
+    return gesture;
   }
 
   DocumentLayout _findDocumentLayout([Finder? superReaderFinder]) {
