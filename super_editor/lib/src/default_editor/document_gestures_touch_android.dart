@@ -1543,6 +1543,14 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     return ValueListenableBuilder(
       valueListenable: _controlsController!.shouldShowCollapsedHandle,
       builder: (context, shouldShow, child) {
+        final selection = widget.selection.value;
+        if (selection == null || !selection.isCollapsed) {
+          // When the user double taps we first place a collapsed selection
+          // and then an expanded selection.
+          // Return a SizedBox to avoid flashing the collapsed drag handle.
+          return const SizedBox();
+        }
+
         // Note: If we pass this widget as the `child` property, it causes repeated starts and stops
         // of the pan gesture. By building it here, pan events work as expected.
         return Follower.withOffset(
