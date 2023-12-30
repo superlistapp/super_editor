@@ -5,6 +5,7 @@ import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../../test_runners.dart';
 import '../supereditor_test_tools.dart';
 
 void main() {
@@ -154,15 +155,18 @@ void main() {
     });
 
     group("paragraph to horizontal rule >", () {
-      testWidgetsOnAllPlatforms("with ---", (tester) async {
+      testAllInputsOnAllPlatforms("with --- in an empty paragraph", (
+        tester, {
+        required TextInputSource inputSource,
+      }) async {
         final context = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
-            .withInputSource(TextInputSource.ime)
+            .withInputSource(inputSource)
             .autoFocus(true)
             .pump();
 
-        await tester.typeImeText("--- ");
+        await tester.typeTextAdaptive("--- ");
 
         // Ensure that we now have two nodes, and the first one is an HR.
         final document = context.findEditContext().document;
@@ -171,6 +175,41 @@ void main() {
         expect(document.nodes.first, isA<HorizontalRuleNode>());
         expect(document.nodes.last, isA<ParagraphNode>());
         expect((document.nodes.last as ParagraphNode).text.text.isEmpty, isTrue);
+      });
+
+      testAllInputsOnAllPlatforms('with --- in an non-empty paragraph', (
+        tester, {
+        required TextInputSource inputSource,
+      }) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('Existing paragraph')
+            .withInputSource(inputSource)
+            .pump();
+
+        // Place the caret at the beginning of the document.
+        await tester.placeCaretInParagraph(context.document.nodes.first.id, 0);
+
+        // Type the first dash.
+        await tester.typeTextAdaptive('-');
+
+        // Ensure no conversion was performed.
+        expect((context.document.nodes.first as ParagraphNode).text.text, '-Existing paragraph');
+
+        // Type the second dash.
+        await tester.typeTextAdaptive('-');
+
+        // Ensure the two dashes were converted to an em-dash.
+        expect((context.document.nodes.first as ParagraphNode).text.text, '—Existing paragraph');
+
+        // Type the third dash.
+        await tester.typeTextAdaptive('- ');
+
+        // Ensure a horizontal rule was inserted before the existing paragraph.
+        expect(context.document.nodes.length, 2);
+        expect(context.document.nodes.first, isA<HorizontalRuleNode>());
+        expect(context.document.nodes.last, isA<ParagraphNode>());
+        expect((context.document.nodes.last as ParagraphNode).text.text, 'Existing paragraph');
       });
 
       testWidgetsOnAllPlatforms('does not convert non-HR dashes', (tester) async {
@@ -349,7 +388,7 @@ final _orderedListVariant = ValueVariant({
 
 final _nonHrVariant = ValueVariant({
   // We ignore " - " because that is a conversion for unordered list items
-  "-- ",
-  "---- ",
-  " --- ",
+  "— ",
+  "—— ",
+  " —- ",
 });

@@ -243,39 +243,50 @@ class BlockquoteConversionReaction extends ParagraphPrefixConversionReaction {
   }
 }
 
-/// Converts full node content that looks like "--- " into a horizontal rule.
-class HorizontalRuleConversionReaction extends ParagraphPrefixConversionReaction {
-  static final _hrPattern = RegExp(r'^---\s$');
+/// Converts node content that looks like "--- " or "—- " into a horizontal rule.
+///
+/// The horizontal rule is inserted before the current node and the remainder of
+/// the node's text is kept.
+///
+/// Applied only to [ParagraphNode]s.
+class HorizontalRuleConversionReaction implements EditReaction {
+  // Matches "---" or "—-" at the beginning of a line, followed by a space.
+  static final _hrPattern = RegExp(r'^(---|—-)\s');
 
   const HorizontalRuleConversionReaction();
 
   @override
-  RegExp get pattern => _hrPattern;
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
 
-  @override
-  void onPrefixMatched(
-    EditContext editContext,
-    RequestDispatcher requestDispatcher,
-    List<EditEvent> changeList,
-    ParagraphNode paragraph,
-    String match,
-  ) {
-    // The user started a paragraph with a horizontal rule pattern.
-    // Convert the paragraph to a horizontal rule.
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final didTypeSpace = EditInspector.editEndsWithSpace(document, changeList);
+    if (!didTypeSpace) {
+      return;
+    }
 
+    final edit = changeList[changeList.length - 2] as DocumentEdit;
+    final textInsertionEvent = edit.change as TextInsertionEvent;
+    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
+    final match = _hrPattern.firstMatch(paragraph.text.text)?.group(0);
+    if (match == null) {
+      return;
+    }
+
+    // The user typed a horizontal rule pattern at the beginning of a paragraph.
+    // - Remove the dashes and the space.
+    // - Insert a horizontal rule before the paragraph.
+    // - Place caret at the start of the paragraph.
     requestDispatcher.execute([
+      DeleteContentRequest(
+        documentRange: DocumentRange(
+          start: DocumentPosition(nodeId: paragraph.id, nodePosition: const TextNodePosition(offset: 0)),
+          end: DocumentPosition(nodeId: paragraph.id, nodePosition: TextNodePosition(offset: match.length)),
+        ),
+      ),
       InsertNodeAtIndexRequest(
         nodeIndex: document.getNodeIndexById(paragraph.id),
         newNode: HorizontalRuleNode(
           id: Editor.createNodeId(),
-        ),
-      ),
-      ReplaceNodeRequest(
-        existingNodeId: paragraph.id,
-        newNode: ParagraphNode(
-          id: paragraph.id,
-          text: AttributedText(),
         ),
       ),
       ChangeSelectionRequest(
@@ -624,17 +635,9 @@ class LinkifyReaction implements EditReaction {
   }
 }
 
-/// An [EditReaction] which converts dashes to em-dashes and horizontal rules.
+/// An [EditReaction] which converts two dashes (--) to an em-dashes (—).
 ///
-/// Performs the following conversions:
-///
-/// - Typing two dashes anywhere in a text node converts them to an em-dash.
-///
-/// - Typing three dashes at the beginning of a paragraph inserts a
-///   horizontal rule before the paragraph, removes the dashes, and places
-///   the caret at the beginning of the paragraph. The first two dashes
-///   are converted to an em-dash and the horizontal rule is inserted
-///   after the user types the third dash.
+/// This reaction applies to all [TextNode]s, anywhere in the text.
 class DashConversionReaction implements EditReaction {
   const DashConversionReaction();
 
@@ -643,17 +646,22 @@ class DashConversionReaction implements EditReaction {
     final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final composer = editorContext.find<MutableDocumentComposer>(Editor.composerKey);
 
-    if (changeList.length != 2) {
-      // When the user types a characters, the changelist contains a text insertion
-      // and a selection change. The current changelist doesn't contain those changes.
-      // Ignore it.
+    if (changeList.length < 2) {
+      // If the user typed a dash, we should have at least an insertion and a
+      // selection change event.
       return;
     }
 
-    final edit =
-        changeList.firstWhereOrNull((e) => e is DocumentEdit && e.change is TextInsertionEvent) as DocumentEdit?;
-    if (edit == null) {
-      // The changelist doesn't contain a text insertion. Ignore it.
+    final selectionEvent = changeList[changeList.length - 1];
+    if (selectionEvent is! SelectionChangeEvent) {
+      // If the user typed a dash, then the last event should be a selection change.
+      return;
+    }
+
+    final edit = changeList[changeList.length - 2];
+    if (edit is! DocumentEdit || edit.change is! TextInsertionEvent) {
+      // If the user typed a dash, then the second to last event should be a text
+      // insertion event with a dash "-".
       return;
     }
 
@@ -666,98 +674,15 @@ class DashConversionReaction implements EditReaction {
     }
 
     if (change.offset < 1) {
-      // The reaction needs at least two character and the inserted character is at
-      // the beginning of the paragraph.
+      // The reaction needs at least two characters before the caret, but there's less than two.
+      // Fizzle.
       return;
     }
 
     final node = document.getNodeById(change.nodeId) as TextNode;
 
     final previousCharacter = node.text.text.substring(change.offset - 1, change.offset);
-    final textAfterInsertedCharacter = node.text.text.substring(change.offset);
-
-    if (!const [_emDash, '-'].contains(previousCharacter)) {
-      // The previous character isn't a dash or an em-dash.
-      // Skip any conversions.
-      return;
-    }
-
-    if (previousCharacter == _emDash) {
-      if (node is! ParagraphNode || change.offset != 1) {
-        // Conversions involving an em-dash followed by a regular dash only happen
-        // at the beginning of a paragraph. Other text nodes, e.g, list items, are ignored.
-        return;
-      }
-
-      // A dash was inserted after an em-dash at the beginning of a paragraph.
-      // The em-dash might be a result of the user typing two dashes.
-      // After typing the third dash we have "—-" (an em-dash followed by a regular dash).
-
-      if (textAfterInsertedCharacter.isNotEmpty) {
-        // A dash was inserted after an em-dash in a non-empty paragraph.
-        // - Remove the dashes.
-        // - Add a horizontal rule before the node.
-        // - Place the caret at the beginning of the paragraph.
-        // - Exit.
-        requestDispatcher.execute([
-          DeleteContentRequest(
-            documentRange: DocumentRange(
-              start: DocumentPosition(nodeId: node.id, nodePosition: const TextNodePosition(offset: 0)),
-              end: DocumentPosition(nodeId: node.id, nodePosition: const TextNodePosition(offset: 2)),
-            ),
-          ),
-          InsertNodeBeforeNodeRequest(
-            existingNodeId: node.id,
-            newNode: HorizontalRuleNode(
-              id: Editor.createNodeId(),
-            ),
-          ),
-          ChangeSelectionRequest(
-            DocumentSelection.collapsed(
-              position: DocumentPosition(
-                nodeId: node.id,
-                nodePosition: const TextNodePosition(offset: 0),
-              ),
-            ),
-            SelectionChangeType.placeCaret,
-            SelectionReason.contentChange,
-          ),
-        ]);
-
-        return;
-      }
-
-      // A dash was inserted after an em-dash in an empty paragraph.
-      // - Insert a horizontal rule before the paragraph.
-      // - Clear the paragraph's text.
-      // - Place the selection at the beginning of the paragraph.
-      // - Exit.
-      requestDispatcher.execute([
-        InsertNodeBeforeNodeRequest(
-          existingNodeId: node.id,
-          newNode: HorizontalRuleNode(
-            id: Editor.createNodeId(),
-          ),
-        ),
-        ReplaceNodeRequest(
-          existingNodeId: node.id,
-          newNode: ParagraphNode(
-            id: node.id,
-            text: AttributedText(),
-          ),
-        ),
-        ChangeSelectionRequest(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
-          SelectionChangeType.placeCaret,
-          SelectionReason.contentChange,
-        ),
-      ]);
-
+    if (previousCharacter != '-') {
       return;
     }
 
@@ -770,16 +695,6 @@ class DashConversionReaction implements EditReaction {
           end: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: change.offset + 1)),
         ),
       ),
-      ChangeSelectionRequest(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: node.id,
-            nodePosition: TextNodePosition(offset: change.offset),
-          ),
-        ),
-        SelectionChangeType.placeCaret,
-        SelectionReason.contentChange,
-      ),
       InsertTextRequest(
         documentPosition: DocumentPosition(
           nodeId: node.id,
@@ -787,7 +702,7 @@ class DashConversionReaction implements EditReaction {
             offset: change.offset - 1,
           ),
         ),
-        textToInsert: _emDash,
+        textToInsert: '—',
         attributions: composer.preferences.currentAttributions,
       ),
       ChangeSelectionRequest(
@@ -805,7 +720,7 @@ class DashConversionReaction implements EditReaction {
 }
 
 class EditInspector {
-  /// Whether [edits] ends with the user typing a space, i.e., typing a " ".
+  /// Whether [edits] ends with the user typing a space, i.e., typing a " " at the end of a node.
   ///
   /// Typing a space means that a space was inserted, and the caret moved from
   /// just before the space, to just after the space.
@@ -858,7 +773,51 @@ class EditInspector {
     return true;
   }
 
+  /// Whether [edits] ends with the user typing a space, i.e., typing a " ".
+  ///
+  /// Typing a space means that a space was inserted, and the caret moved from
+  /// just before the space, to just after the space.
+  static bool editEndsWithSpace(Document document, List<EditEvent> edits) {
+    if (edits.length < 2) {
+      return false;
+    }
+
+    // If the user typed a space, then the last event should be a selection change.
+    final selectionEvent = edits[edits.length - 1];
+    if (selectionEvent is! SelectionChangeEvent) {
+      return false;
+    }
+
+    // If the user typed a space, then the second to last event should be a text
+    // insertion event with a space " ".
+    final edit = edits[edits.length - 2];
+    if (edit is! DocumentEdit) {
+      return false;
+    }
+    final textInsertionEvent = edit.change;
+    if (textInsertionEvent is! TextInsertionEvent) {
+      return false;
+    }
+    if (textInsertionEvent.text.text != " ") {
+      return false;
+    }
+
+    if (selectionEvent.oldSelection == null || selectionEvent.newSelection == null) {
+      return false;
+    }
+    if (selectionEvent.newSelection!.extent.nodeId != textInsertionEvent.nodeId) {
+      return false;
+    }
+
+    final editedNode = document.getNodeById(textInsertionEvent.nodeId)!;
+    // TODO: decide whether this inspection should be just for paragraphs or any text node
+    if (editedNode is! ParagraphNode) {
+      return false;
+    }
+
+    // The inserted text was a space. We assume this means that the user just typed a space.
+    return true;
+  }
+
   EditInspector._();
 }
-
-const _emDash = '—';

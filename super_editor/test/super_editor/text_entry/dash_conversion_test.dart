@@ -5,9 +5,6 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/default_document_editor.dart';
 
-import 'package:super_editor/src/default_editor/default_document_editor_reactions.dart';
-import 'package:super_editor/src/default_editor/horizontal_rule.dart';
-import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
@@ -26,7 +23,6 @@ void main() {
         final context = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
-            .withAddedReactions([const DashConversionReaction()]) //
             .withInputSource(inputSource)
             .pump();
 
@@ -61,7 +57,6 @@ void main() {
             .createDocument()
             .fromMarkdown('was inserted')
             .withInputSource(inputSource)
-            .withAddedReactions([const DashConversionReaction()]) //
             .pump();
 
         final nodeId = context.document.nodes.first.id;
@@ -97,7 +92,6 @@ void main() {
             .createDocument()
             .fromMarkdown('Inserting with a reaction')
             .withInputSource(inputSource)
-            .withAddedReactions([const DashConversionReaction()]) //
             .pump();
 
         final nodeId = context.document.nodes.first.id;
@@ -142,7 +136,6 @@ void main() {
             .createDocument()
             .fromMarkdown('Inserting')
             .withInputSource(inputSource)
-            .withAddedReactions([const DashConversionReaction()]) //
             .pump();
 
         final nodeId = context.document.nodes.first.id;
@@ -181,7 +174,6 @@ void main() {
             .createDocument()
             .fromMarkdown('* ')
             .withInputSource(inputSource)
-            .withAddedReactions([const DashConversionReaction()]) //
             .pump();
 
         final nodeId = context.document.nodes.first.id;
@@ -217,7 +209,6 @@ void main() {
             .createDocument()
             .fromMarkdown('* was inserted')
             .withInputSource(inputSource)
-            .withAddedReactions([const DashConversionReaction()]) //
             .pump();
 
         final nodeId = context.document.nodes.first.id;
@@ -260,7 +251,6 @@ void main() {
             .createDocument()
             .fromMarkdown('* Inserting with a reaction')
             .withInputSource(inputSource)
-            .withAddedReactions([const DashConversionReaction()]) //
             .pump();
 
         final nodeId = context.document.nodes.first.id;
@@ -305,7 +295,6 @@ void main() {
             .createDocument()
             .fromMarkdown('* Inserting')
             .withInputSource(inputSource)
-            .withAddedReactions([const DashConversionReaction()]) //
             .pump();
 
         final nodeId = context.document.nodes.first.id;
@@ -346,7 +335,7 @@ void main() {
           ],
         );
         final composer = MutableDocumentComposer();
-        final editor = _createTestEditor(document: document, composer: composer);
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
         await tester.pumpWidget(
           MaterialApp(
@@ -399,7 +388,7 @@ void main() {
           ],
         );
         final composer = MutableDocumentComposer();
-        final editor = _createTestEditor(document: document, composer: composer);
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
         await tester.pumpWidget(
           MaterialApp(
@@ -457,7 +446,7 @@ void main() {
           ],
         );
         final composer = MutableDocumentComposer();
-        final editor = _createTestEditor(document: document, composer: composer);
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
         await tester.pumpWidget(
           MaterialApp(
@@ -515,7 +504,7 @@ void main() {
           ],
         );
         final composer = MutableDocumentComposer();
-        final editor = _createTestEditor(document: document, composer: composer);
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
         await tester.pumpWidget(
           MaterialApp(
@@ -559,96 +548,5 @@ void main() {
         expect((document.nodes.first as TaskNode).text.text, 'Inserting — by typing two dashes');
       });
     });
-
-    group('converts three dashes to a horizontal rule', () {
-      testAllInputsOnAllPlatforms('at the beginning of an empty paragraph', (
-        tester, {
-        required TextInputSource inputSource,
-      }) async {
-        final context = await tester //
-            .createDocument()
-            .withSingleEmptyParagraph()
-            .withInputSource(inputSource)
-            .withAddedReactions([const DashConversionReaction()]) //
-            .pump();
-
-        // Place the caret at the beginning of the document.
-        await tester.placeCaretInParagraph('1', 0);
-
-        // Type the first dash.
-        await tester.typeTextAdaptive('-');
-
-        // Ensure no conversion was performed.
-        expect((context.document.nodes.first as ParagraphNode).text.text, '-');
-
-        // Type the second dash.
-        await tester.typeTextAdaptive('-');
-
-        // Ensure the two dashes were converted to an em-dash.
-        expect((context.document.nodes.first as ParagraphNode).text.text, '—');
-
-        // Type the third dash.
-        await tester.typeTextAdaptive('-');
-
-        // Ensure the paragraph was converted to a horizontal rule.
-        expect(context.document.nodes.length, 2);
-        expect(context.document.nodes.first, isA<HorizontalRuleNode>());
-        expect(context.document.nodes.last, isA<ParagraphNode>());
-        expect((context.document.nodes.last as ParagraphNode).text.text, '');
-      });
-
-      testAllInputsOnAllPlatforms('at the beginning of a non-empty paragraph', (
-        tester, {
-        required TextInputSource inputSource,
-      }) async {
-        final context = await tester //
-            .createDocument()
-            .fromMarkdown('Existing paragraph')
-            .withInputSource(inputSource)
-            .withAddedReactions([const DashConversionReaction()]) //
-            .pump();
-
-        // Place the caret at the beginning of the document.
-        await tester.placeCaretInParagraph(context.document.nodes.first.id, 0);
-
-        // Type the first dash.
-        await tester.typeTextAdaptive('-');
-
-        // Ensure no conversion was performed.
-        expect((context.document.nodes.first as ParagraphNode).text.text, '-Existing paragraph');
-
-        // Type the second dash.
-        await tester.typeTextAdaptive('-');
-
-        // Ensure the two dashes were converted to an em-dash.
-        expect((context.document.nodes.first as ParagraphNode).text.text, '—Existing paragraph');
-
-        // Type the third dash.
-        await tester.typeTextAdaptive('-');
-
-        // Ensure a horizontal rule was inserted before the existing paragraph.
-        expect(context.document.nodes.length, 2);
-        expect(context.document.nodes.first, isA<HorizontalRuleNode>());
-        expect(context.document.nodes.last, isA<ParagraphNode>());
-        expect((context.document.nodes.last as ParagraphNode).text.text, 'Existing paragraph');
-      });
-    });
   });
-}
-
-/// Creates an [Editor] with the default reaction pipeline plus the [DashConversionReaction].
-Editor _createTestEditor({
-  required MutableDocument document,
-  required MutableDocumentComposer composer,
-}) {
-  final editor = Editor(
-    editables: {
-      Editor.documentKey: document,
-      Editor.composerKey: composer,
-    },
-    requestHandlers: List.from(defaultRequestHandlers),
-    reactionPipeline: [...defaultEditorReactions, const DashConversionReaction()],
-  );
-
-  return editor;
 }
