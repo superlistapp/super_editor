@@ -391,6 +391,8 @@ class RenderLayoutAwareParagraph extends RenderParagraph {
   // We override the default textAlign setter because Flutter's RenderParagraph setter
   // only calls markNeedsPaint, not markNeedsLayout. However, changing alignment does
   // change the layout of the text.
+  //
+  // https://github.com/flutter/flutter/issues/140756
   @override
   set textAlign(TextAlign value) {
     if (value == super.textAlign) {
