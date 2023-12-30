@@ -559,12 +559,13 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   final _upstreamHandleKey = GlobalKey();
   final _downstreamHandleKey = GlobalKey();
 
-  late BlinkController _caretBlinkController;
+  @visibleForTesting
+  late BlinkController caretBlinkController;
 
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = BlinkController(tickerProvider: this);
+    caretBlinkController = BlinkController(tickerProvider: this);
 
     widget.selection.addListener(_onSelectionChange);
     widget.shouldCaretBlink.addListener(_onBlinkModeChange);
@@ -599,7 +600,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     widget.shouldCaretBlink.removeListener(_onBlinkModeChange);
     widget.floatingCursorController?.isActive.removeListener(_onFloatingCursorActivationChange);
 
-    _caretBlinkController.dispose();
+    caretBlinkController.dispose();
     super.dispose();
   }
 
@@ -626,17 +627,17 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 
   void _onBlinkModeChange() {
     if (widget.shouldCaretBlink.value) {
-      _caretBlinkController.startBlinking();
+      caretBlinkController.startBlinking();
     } else {
-      _caretBlinkController.stopBlinking();
+      caretBlinkController.stopBlinking();
     }
   }
 
   void _onFloatingCursorActivationChange() {
     if (widget.floatingCursorController?.isActive.value == true) {
-      _caretBlinkController.stopBlinking();
+      caretBlinkController.stopBlinking();
     } else {
-      _caretBlinkController.startBlinking();
+      caretBlinkController.startBlinking();
     }
   }
 
@@ -728,7 +729,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 
           return IOSCollapsedHandle(
             key: DocumentKeys.caret,
-            controller: _caretBlinkController,
+            controller: caretBlinkController,
             color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
             caretHeight: caret.height,
           );

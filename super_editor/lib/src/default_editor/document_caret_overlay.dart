@@ -46,12 +46,14 @@ class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
   final BlinkTimingMode blinkTimingMode;
 
   @override
-  DocumentLayoutLayerState<CaretDocumentOverlay, Rect?> createState() => _CaretDocumentOverlayState();
+  DocumentLayoutLayerState<CaretDocumentOverlay, Rect?> createState() => CaretDocumentOverlayState();
 }
 
-class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOverlay, Rect?>
+@visibleForTesting
+class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOverlay, Rect?>
     with SingleTickerProviderStateMixin {
-  late final BlinkController _blinkController;
+  @visibleForTesting
+  late final BlinkController blinkController;
 
   @override
   void initState() {
@@ -59,9 +61,9 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
 
     switch (widget.blinkTimingMode) {
       case BlinkTimingMode.ticker:
-        _blinkController = BlinkController(tickerProvider: this);
+        blinkController = BlinkController(tickerProvider: this);
       case BlinkTimingMode.timer:
-        _blinkController = BlinkController.withTimer();
+        blinkController = BlinkController.withTimer();
     }
 
     widget.composer.selectionNotifier.addListener(_onSelectionChange);
@@ -85,7 +87,7 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
   void dispose() {
     widget.composer.selectionNotifier.removeListener(_onSelectionChange);
 
-    _blinkController.dispose();
+    blinkController.dispose();
 
     super.dispose();
   }
@@ -104,27 +106,27 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
   void _startOrStopBlinking() {
     // TODO: allow a configurable policy as to whether to show the caret at all when the selection is expanded: https://github.com/superlistapp/super_editor/issues/234
     final wantsToBlink = widget.composer.selection != null;
-    if (wantsToBlink && _blinkController.isBlinking) {
+    if (wantsToBlink && blinkController.isBlinking) {
       return;
     }
-    if (!wantsToBlink && !_blinkController.isBlinking) {
+    if (!wantsToBlink && !blinkController.isBlinking) {
       return;
     }
 
     wantsToBlink //
-        ? _blinkController.startBlinking()
-        : _blinkController.stopBlinking();
+        ? blinkController.startBlinking()
+        : blinkController.stopBlinking();
   }
 
   void _updateCaretFlash() {
     // TODO: allow a configurable policy as to whether to show the caret at all when the selection is expanded: https://github.com/superlistapp/super_editor/issues/234
     final documentSelection = widget.composer.selection;
     if (documentSelection == null) {
-      _blinkController.stopBlinking();
+      blinkController.stopBlinking();
       return;
     }
 
-    _blinkController.jumpToOpaque();
+    blinkController.jumpToOpaque();
     _startOrStopBlinking();
   }
 
@@ -168,13 +170,13 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
                 left: caret.left,
                 height: caret.height,
                 child: AnimatedBuilder(
-                  animation: _blinkController,
+                  animation: blinkController,
                   builder: (context, child) {
                     return Container(
                       key: DocumentKeys.caret,
                       width: widget.caretStyle.width,
                       decoration: BoxDecoration(
-                        color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
+                        color: widget.caretStyle.color.withOpacity(blinkController.opacity),
                         borderRadius: widget.caretStyle.borderRadius,
                       ),
                     );

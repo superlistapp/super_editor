@@ -178,7 +178,8 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 class AndroidControlsDocumentLayerState
     extends DocumentLayoutLayerState<AndroidHandlesDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
-  late BlinkController _caretBlinkController;
+  @visibleForTesting
+  late BlinkController caretBlinkController;
 
   SuperEditorAndroidControlsController? _controlsController;
 
@@ -187,7 +188,7 @@ class AndroidControlsDocumentLayerState
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = BlinkController(tickerProvider: this);
+    caretBlinkController = BlinkController(tickerProvider: this);
 
     _previousSelection = widget.selection.value;
     widget.selection.addListener(_onSelectionChange);
@@ -223,7 +224,7 @@ class AndroidControlsDocumentLayerState
     widget.selection.removeListener(_onSelectionChange);
     _controlsController?.shouldCaretBlink.removeListener(_onBlinkModeChange);
 
-    _caretBlinkController.dispose();
+    caretBlinkController.dispose();
     super.dispose();
   }
 
@@ -266,14 +267,14 @@ class AndroidControlsDocumentLayerState
 
   void _onBlinkModeChange() {
     if (_controlsController!.shouldCaretBlink.value) {
-      _caretBlinkController.startBlinking();
+      caretBlinkController.startBlinking();
     } else {
-      _caretBlinkController.stopBlinking();
+      caretBlinkController.stopBlinking();
     }
   }
 
   void _caretJumpToOpaque() {
-    _caretBlinkController.jumpToOpaque();
+    caretBlinkController.jumpToOpaque();
   }
 
   @override
@@ -345,11 +346,11 @@ class AndroidControlsDocumentLayerState
       child: Leader(
         link: _controlsController!.collapsedHandleFocalPoint,
         child: ListenableBuilder(
-          listenable: _caretBlinkController,
+          listenable: caretBlinkController,
           builder: (context, child) {
             return ColoredBox(
               key: DocumentKeys.caret,
-              color: caretColor.withOpacity(_caretBlinkController.opacity),
+              color: caretColor.withOpacity(caretBlinkController.opacity),
             );
           },
         ),
