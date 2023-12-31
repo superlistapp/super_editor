@@ -19,7 +19,7 @@ jobs:
       - run: dart pub get
 
       # Build the static site
-      - run: dart run bin/static_shock_docs.dart
+      - run: dart run bin/super_editor_docs.dart
 
       # Zip and upload the static site.
       - name: Upload artifact
