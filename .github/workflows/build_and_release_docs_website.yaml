@@ -1,7 +1,7 @@
 name: Build and Release Docs Website
 on: workflow_dispatch
 jobs:
-  test_linux:
+  build:
     runs-on: ubuntu-latest
 
     defaults:
