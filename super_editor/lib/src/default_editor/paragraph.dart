@@ -200,6 +200,69 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       showComposingUnderline.hashCode;
 }
 
+class ChangeParagraphAlignmentRequest implements EditRequest {
+  ChangeParagraphAlignmentRequest({
+    required this.nodeId,
+    required this.alignment,
+  });
+
+  final String nodeId;
+  final TextAlign alignment;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChangeParagraphAlignmentRequest &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          alignment == other.alignment;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ alignment.hashCode;
+}
+
+class ChangeParagraphAlignmentCommand implements EditCommand {
+  const ChangeParagraphAlignmentCommand({
+    required this.nodeId,
+    required this.alignment,
+  });
+
+  final String nodeId;
+  final TextAlign alignment;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    final existingNode = document.getNodeById(nodeId)! as ParagraphNode;
+
+    String? alignmentName;
+    switch (alignment) {
+      case TextAlign.left:
+      case TextAlign.start:
+        alignmentName = 'left';
+        break;
+      case TextAlign.center:
+        alignmentName = 'center';
+        break;
+      case TextAlign.right:
+      case TextAlign.end:
+        alignmentName = 'right';
+        break;
+      case TextAlign.justify:
+        alignmentName = 'justify';
+        break;
+    }
+    existingNode.putMetadataValue('textAlign', alignmentName);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      ),
+    ]);
+  }
+}
+
 class ChangeParagraphBlockTypeRequest implements EditRequest {
   ChangeParagraphBlockTypeRequest({
     required this.nodeId,
