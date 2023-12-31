@@ -116,6 +116,12 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           ignoreComposerAttributions: request.ignoreComposerAttributions,
         )
       : null,
+  (request) => request is ChangeParagraphAlignmentRequest
+      ? ChangeParagraphAlignmentCommand(
+          nodeId: request.nodeId,
+          alignment: request.alignment,
+        )
+      : null,
   (request) => request is ChangeParagraphBlockTypeRequest
       ? ChangeParagraphBlockTypeCommand(
           nodeId: request.nodeId,

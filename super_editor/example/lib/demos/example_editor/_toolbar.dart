@@ -435,26 +435,13 @@ class _EditorToolbarState extends State<EditorToolbar> {
     if (newAlignment == null) {
       return;
     }
-    String? newAlignmentValue;
-    switch (newAlignment) {
-      case TextAlign.left:
-      case TextAlign.start:
-        newAlignmentValue = 'left';
-        break;
-      case TextAlign.center:
-        newAlignmentValue = 'center';
-        break;
-      case TextAlign.right:
-      case TextAlign.end:
-        newAlignmentValue = 'right';
-        break;
-      case TextAlign.justify:
-        newAlignmentValue = 'justify';
-        break;
-    }
 
-    final selectedNode = widget.document.getNodeById(widget.composer.selection!.extent.nodeId) as ParagraphNode;
-    selectedNode.putMetadataValue('textAlign', newAlignmentValue);
+    widget.editor!.execute([
+      ChangeParagraphAlignmentRequest(
+        nodeId: widget.composer.selection!.extent.nodeId,
+        alignment: newAlignment,
+      ),
+    ]);
   }
 
   /// Returns the localized name for the given [_TextType], e.g.,
