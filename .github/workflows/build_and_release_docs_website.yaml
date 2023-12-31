@@ -16,7 +16,7 @@ jobs:
       - uses: dart-lang/setup-dart@v1
 
       # Download all the packages that the app uses
-      - run: flutter pub get
+      - run: dart pub get
 
       # Build the static site
       - run: dart run bin/static_shock_docs.dart
