@@ -1,0 +1,36 @@
+#funding {
+  margin-top: 96px;
+
+  h2 {
+    color: rgba(255, 255, 255, 0.15);
+    font-size: 32px;
+    font-weight: bold;
+  }
+
+  h3 {
+    margin-top: 48px;
+    margin-bottom: 16px;
+
+    color: rgba(255, 255, 255, 0.08);
+    font-size: 24px;
+    font-weight: bold;
+  }
+
+  h2 + h3 {
+    margin-top: 8px;
+    margin-bottom: 16px;
+  }
+
+  a + a {
+    margin-left: 24px;
+  }
+
+  a > img {
+    opacity: 0.5;
+    transition: opacity 250ms;
+
+    &:hover {
+      opacity: 1.0;
+    }
+  }
+}
