@@ -1,5 +1,5 @@
 name: Build and Release Docs Website
-
+on: workflow_dispatch
 jobs:
   test_linux:
     runs-on: ubuntu-latest
