@@ -1,0 +1,19 @@
+layout: layouts/guides.jinja
+base_path: super-editor-guides/
+docs_menu:
+  - title: Quickstart
+    id: quickstart
+  - title: Document from Markdown
+    id: document-from-markdown
+  - title: Assemble a Document
+    id: assemble-a-document
+  - title: Dark Mode & Light Mode
+    id: dark-mode-and-light-mode
+  - title: Style a Document
+    id: style-a-document
+  - title: Add New Type of Content
+    id: add-new-type-of-content
+  - title: Add a Popover Toolbar
+    id: add-a-popover-toolbar
+  - title: Add a Mobile Keyboard Toolbar
+    id: add-a-mobile-keyboard-toolbar
