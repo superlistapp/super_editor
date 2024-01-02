@@ -259,6 +259,43 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Builder(builder: (context) {
+          return ListView(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                width: double.infinity,
+                child: const Placeholder(
+                  child: Center(
+                    child: Text("Content"),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 350,
+                width: double.infinity,
+                child: ListView(
+                  children: [
+                    _buildEditor(context),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height,
+                width: double.infinity,
+                child: const Placeholder(
+                  child: Center(
+                    child: Text("Content"),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
     return ValueListenableBuilder(
       valueListenable: _brightness,
       builder: (context, brightness, child) {
@@ -374,26 +411,24 @@ class _ExampleEditorState extends State<ExampleEditor> {
           key: _viewportKey,
           child: SuperEditorIosControlsScope(
             controller: _iosControlsController,
-            child: SuperEditor(
-              editor: _docEditor,
+            child: SuperReader(
               document: _doc,
-              composer: _composer,
               focusNode: _editorFocusNode,
               scrollController: _scrollController,
               documentLayoutKey: _docLayoutKey,
-              documentOverlayBuilders: [
-                DefaultCaretOverlayBuilder(
-                  caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
-                ),
-                if (defaultTargetPlatform == TargetPlatform.iOS) ...[
-                  SuperEditorIosHandlesDocumentLayerBuilder(),
-                  SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
-                ],
-                if (defaultTargetPlatform == TargetPlatform.android) ...[
-                  SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
-                  SuperEditorAndroidHandlesDocumentLayerBuilder(),
-                ],
-              ],
+              // documentOverlayBuilders: [
+              //   DefaultCaretOverlayBuilder(
+              //     caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
+              //   ),
+              //   if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+              //     SuperEditorIosHandlesDocumentLayerBuilder(),
+              //     SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
+              //   ],
+              //   if (defaultTargetPlatform == TargetPlatform.android) ...[
+              //     SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
+              //     SuperEditorAndroidHandlesDocumentLayerBuilder(),
+              //   ],
+              // ],
               selectionLayerLinks: _selectionLayerLinks,
               selectionStyle: isLight
                   ? defaultSelectionStyle
@@ -411,8 +446,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
                 ...defaultComponentBuilders,
               ],
               gestureMode: _gestureMode,
-              inputSource: _inputSource,
-              keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
+              // inputSource: _inputSource,
+              // keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
               androidToolbarBuilder: (_) => _buildAndroidFloatingToolbar(),
               overlayController: _overlayController,
             ),
