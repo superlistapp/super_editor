@@ -402,6 +402,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       setState(() {
         _textEditingController.detachFromIme();
         _textEditingController.selection = const TextSelection.collapsed(offset: -1);
+        _textEditingController.composingRegion = TextRange.empty;
         _removeEditingOverlayControls();
       });
     }
