@@ -243,14 +243,16 @@ class BlockquoteConversionReaction extends ParagraphPrefixConversionReaction {
   }
 }
 
-/// Converts node content that looks like "--- " or "—- " into a horizontal rule.
+/// Converts node content that looks like "--- " or "—- " (an em-dash followed by a regular dash)
+/// at the beginning of a paragraph into a horizontal rule.
 ///
 /// The horizontal rule is inserted before the current node and the remainder of
 /// the node's text is kept.
 ///
 /// Applied only to [ParagraphNode]s.
 class HorizontalRuleConversionReaction implements EditReaction {
-  // Matches "---" or "—-" at the beginning of a line, followed by a space.
+  // Matches "---" or "—-" (an em-dash followed by a regular dash) at the beginning of a line,
+  // followed by a space.
   static final _hrPattern = RegExp(r'^(---|—-)\s');
 
   const HorizontalRuleConversionReaction();
@@ -259,7 +261,7 @@ class HorizontalRuleConversionReaction implements EditReaction {
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final document = editorContext.find<MutableDocument>(Editor.documentKey);
 
-    final didTypeSpace = EditInspector.editEndsWithSpace(document, changeList);
+    final didTypeSpace = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpace) {
       return;
     }
@@ -324,7 +326,7 @@ abstract class ParagraphPrefixConversionReaction implements EditReaction {
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
+    final didTypeSpaceAtEnd = EditInspector.didTypeSpaceAtEndOfNode(document, changeList);
     if (_requireSpaceInsertion && !didTypeSpaceAtEnd) {
       return;
     }
@@ -635,7 +637,7 @@ class LinkifyReaction implements EditReaction {
   }
 }
 
-/// An [EditReaction] which converts two dashes (--) to an em-dashes (—).
+/// An [EditReaction] which converts two dashes (--) to an em-dash (—).
 ///
 /// This reaction applies to all [TextNode]s, anywhere in the text.
 class DashConversionReaction implements EditReaction {
@@ -652,37 +654,36 @@ class DashConversionReaction implements EditReaction {
       return;
     }
 
-    final selectionEvent = changeList[changeList.length - 1];
+    final selectionEvent = changeList.last;
     if (selectionEvent is! SelectionChangeEvent) {
       // If the user typed a dash, then the last event should be a selection change.
       return;
     }
 
-    final edit = changeList[changeList.length - 2];
-    if (edit is! DocumentEdit || edit.change is! TextInsertionEvent) {
+    final insertionEvent = changeList[changeList.length - 2];
+    if (insertionEvent is! DocumentEdit || insertionEvent.change is! TextInsertionEvent) {
       // If the user typed a dash, then the second to last event should be a text
       // insertion event with a dash "-".
       return;
     }
 
-    final change = edit.change as TextInsertionEvent;
+    final change = insertionEvent.change as TextInsertionEvent;
 
     if (change.text.text != '-') {
-      // The only character that triggers the conversion is the dash.
-      // Ignore other characters.
+      // The text that was inserted wasn't a dash. The only character that triggers a
+      // conversion is a dash. Fizzle.
       return;
     }
 
     if (change.offset < 1) {
-      // The reaction needs at least two characters before the caret, but there's less than two.
-      // Fizzle.
+      // The reaction needs at least two characters before the caret, but there's less than two. Fizzle.
       return;
     }
 
     final node = document.getNodeById(change.nodeId) as TextNode;
 
-    final previousCharacter = node.text.text.substring(change.offset - 1, change.offset);
-    if (previousCharacter != '-') {
+    final upstreamCharacter = node.text.text.substring(change.offset - 1, change.offset);
+    if (upstreamCharacter != '-') {
       return;
     }
 
@@ -724,7 +725,7 @@ class EditInspector {
   ///
   /// Typing a space means that a space was inserted, and the caret moved from
   /// just before the space, to just after the space.
-  static bool didTypeSpace(Document document, List<EditEvent> edits) {
+  static bool didTypeSpaceAtEndOfNode(Document document, List<EditEvent> edits) {
     if (edits.length < 2) {
       return false;
     }
@@ -777,7 +778,7 @@ class EditInspector {
   ///
   /// Typing a space means that a space was inserted, and the caret moved from
   /// just before the space, to just after the space.
-  static bool editEndsWithSpace(Document document, List<EditEvent> edits) {
+  static bool didTypeSpace(Document document, List<EditEvent> edits) {
     if (edits.length < 2) {
       return false;
     }
