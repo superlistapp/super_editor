@@ -21,7 +21,7 @@ String serializeDocumentToMarkdown(
     // specialized cases of traditional nodes, such as serializing a
     // `ParagraphNode` with a special `"blockType"`.
     ...customNodeSerializers,
-    const ImageNodeSerializer(),
+    ImageNodeSerializer(useSizeNotation: syntax == MarkdownSyntax.superEditor),
     const HorizontalRuleNodeSerializer(),
     const ListItemNodeSerializer(),
     const TaskNodeSerializer(),
@@ -80,11 +80,34 @@ abstract class NodeTypedDocumentNodeMarkdownSerializer<NodeType> implements Docu
 /// [DocumentNodeMarkdownSerializer] for serializing [ImageNode]s as standard Markdown
 /// images.
 class ImageNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<ImageNode> {
-  const ImageNodeSerializer();
+  const ImageNodeSerializer({
+    this.useSizeNotation = false,
+  });
+
+  final bool useSizeNotation;
 
   @override
   String doSerialization(Document document, ImageNode node) {
-    return '![${node.altText}](${node.imageUrl})';
+    if (!useSizeNotation || (node.width == null && node.height == null)) {
+      // We don't want to use size notation or the image doesn't have
+      // size information. Use the regular syntax.
+      return '![${node.altText}](${node.imageUrl})';
+    }
+
+    StringBuffer sizeNotation = StringBuffer();
+    sizeNotation.write(' =');
+
+    if (node.width != null) {
+      sizeNotation.write(node.width!.toInt());
+    }
+
+    sizeNotation.write('x');
+
+    if (node.height != null) {
+      sizeNotation.write(node.height!.toInt());
+    }
+
+    return '![${node.altText}](${node.imageUrl}${sizeNotation.toString()})';
   }
 }
 

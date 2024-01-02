@@ -11,10 +11,14 @@ class ImageNode extends BlockNode with ChangeNotifier {
   ImageNode({
     required this.id,
     required String imageUrl,
+    double? width,
+    double? height,
     String altText = '',
     Map<String, dynamic>? metadata,
   })  : _imageUrl = imageUrl,
-        _altText = altText {
+        _altText = altText,
+        _width = width,
+        _height = height {
     this.metadata = metadata;
 
     putMetadataValue("blockType", const NamedAttribution("image"));
@@ -41,6 +45,28 @@ class ImageNode extends BlockNode with ChangeNotifier {
     }
   }
 
+  double? _width;
+  double? get width => _width;
+  set width(double? newWidth) {
+    if (newWidth == _width) {
+      return;
+    }
+
+    _width = newWidth;
+    notifyListeners();
+  }
+
+  double? _height;
+  double? get height => _height;
+  set height(double? newHeight) {
+    if (newHeight == _height) {
+      return;
+    }
+
+    _height = newHeight;
+    notifyListeners();
+  }
+
   @override
   String? copyContent(dynamic selection) {
     if (selection is! UpstreamDownstreamNodeSelection) {
@@ -52,7 +78,11 @@ class ImageNode extends BlockNode with ChangeNotifier {
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
-    return other is ImageNode && imageUrl == other.imageUrl && altText == other.altText;
+    return other is ImageNode &&
+        imageUrl == other.imageUrl &&
+        width == other.width &&
+        height == other.height &&
+        altText == other.altText;
   }
 
   @override
@@ -62,10 +92,12 @@ class ImageNode extends BlockNode with ChangeNotifier {
           runtimeType == other.runtimeType &&
           id == other.id &&
           _imageUrl == other._imageUrl &&
+          _width == other.width &&
+          _height == other.height &&
           _altText == other._altText;
 
   @override
-  int get hashCode => id.hashCode ^ _imageUrl.hashCode ^ _altText.hashCode;
+  int get hashCode => id.hashCode ^ _imageUrl.hashCode ^ _altText.hashCode ^ _width.hashCode ^ _height.hashCode;
 }
 
 class ImageComponentBuilder implements ComponentBuilder {
@@ -80,6 +112,8 @@ class ImageComponentBuilder implements ComponentBuilder {
     return ImageComponentViewModel(
       nodeId: node.id,
       imageUrl: node.imageUrl,
+      width: node.width,
+      height: node.height,
       selectionColor: const Color(0x00000000),
     );
   }
@@ -94,6 +128,8 @@ class ImageComponentBuilder implements ComponentBuilder {
     return ImageComponent(
       componentKey: componentContext.componentKey,
       imageUrl: componentViewModel.imageUrl,
+      width: componentViewModel.width,
+      height: componentViewModel.height,
       selection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
     );
@@ -106,11 +142,15 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.imageUrl,
+    this.width,
+    this.height,
     this.selection,
     required this.selectionColor,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   String imageUrl;
+  double? width;
+  double? height;
   UpstreamDownstreamNodeSelection? selection;
   Color selectionColor;
 
@@ -121,6 +161,8 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
       maxWidth: maxWidth,
       padding: padding,
       imageUrl: imageUrl,
+      width: width,
+      height: height,
       selection: selection,
       selectionColor: selectionColor,
     );
@@ -134,12 +176,20 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           imageUrl == other.imageUrl &&
+          width == other.width &&
+          height == other.height &&
           selection == other.selection &&
           selectionColor == other.selectionColor;
 
   @override
   int get hashCode =>
-      super.hashCode ^ nodeId.hashCode ^ imageUrl.hashCode ^ selection.hashCode ^ selectionColor.hashCode;
+      super.hashCode ^
+      nodeId.hashCode ^
+      imageUrl.hashCode ^
+      width.hashCode ^
+      height.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode;
 }
 
 /// Displays an image in a document.
@@ -148,6 +198,8 @@ class ImageComponent extends StatelessWidget {
     Key? key,
     required this.componentKey,
     required this.imageUrl,
+    this.width,
+    this.height,
     this.selectionColor = Colors.blue,
     this.selection,
     this.imageBuilder,
@@ -155,6 +207,8 @@ class ImageComponent extends StatelessWidget {
 
   final GlobalKey componentKey;
   final String imageUrl;
+  final double? width;
+  final double? height;
   final Color selectionColor;
   final UpstreamDownstreamNodeSelection? selection;
 
@@ -182,6 +236,8 @@ class ImageComponent extends StatelessWidget {
                   : Image.network(
                       imageUrl,
                       fit: BoxFit.contain,
+                      width: width,
+                      height: height,
                     ),
             ),
           ),
