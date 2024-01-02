@@ -650,8 +650,171 @@ void main() {
         // Ensure the we scrolled back to the end.
         expect(scrollController.offset, scrollController.position.maxScrollExtent);
       });
+
+      group("when hovering over editor", () {
+        testWidgets("scroll down doesn't scroll the page untill editor's scrollable content is consumed",
+            (tester) async {
+          await _pumpSuperEditorWithinScrollable(tester);
+
+          final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
+
+          // Find editor's direct ancestor scrollable
+          final superEditorScrollable = tester.state<ScrollableState>(
+            find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
+          );
+
+          final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
+
+          // Hover to the editor's center.
+          testPointer.hover(tester.getCenter(
+            find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
+          ));
+
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              // TODO: Investigate failure without reduction here.
+              // Without this reduction from max scroll extent, the page's scrolled otherwise
+              // and next test fails.
+              // Probably side effect of the overscroll on reader which could be scrolling the
+              // page at the end. Need to find out.
+              Offset(0, superEditorScrollable.position.maxScrollExtent - 75),
+            ),
+          );
+
+          // Ensure parent scrollable isn't scrolled.
+          expect(pageScrollable.position.pixels, 0);
+
+          // Ensure editor's is scrolled.
+          expect(
+            superEditorScrollable.position.pixels,
+            superEditorScrollable.position.maxScrollExtent,
+          );
+
+          // Scroll down within the page.
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              const Offset(0, 200),
+            ),
+          );
+
+          // Ensure page is scrolled.
+          expect(pageScrollable.position.pixels, greaterThan(0));
+        });
+
+        testWidgets(
+          "scroll up doesn't scroll the page untill editor's scrollable content is consumed",
+          (tester) async {
+            await _pumpSuperEditorWithinScrollable(tester);
+
+            final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
+
+            // Find editor's direct ancestor scrollable.
+            final superEditorScrollable = tester.state<ScrollableState>(
+              find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
+            );
+
+            // Scroll the editor all the way to the bottom.
+            superEditorScrollable.position.jumpTo(superEditorScrollable.position.maxScrollExtent);
+
+            final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
+
+            testPointer.hover(
+              Offset.zero,
+            );
+
+            // Scroll down a little to introduce scrollable content we can scroll back to within
+            // the page.
+            await tester.sendEventToBinding(
+              testPointer.scroll(
+                const Offset(0, 100),
+              ),
+            );
+
+            // TODO: Investigate why the above scroll is causing scroll on page of more
+            // than 100 pixels.
+            // Ensure page isn't scrolled any further than initial page scroll.
+            expect(pageScrollable.position.pixels, 100);
+
+            // Hover to the editor's center.
+            testPointer.hover(
+              tester.getCenter(
+                find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
+              ),
+            );
+
+            // Scroll the editor all the way to the top.
+            await tester.sendEventToBinding(
+              testPointer.scroll(
+                Offset(0, -superEditorScrollable.position.maxScrollExtent),
+              ),
+            );
+
+            // Ensure editor's is scrolled all the way to the top.
+            expect(
+              superEditorScrollable.position.pixels,
+              0,
+            );
+
+            // Ensure page isn't scrolled any further than initial page scroll.
+            expect(pageScrollable.position.pixels, 100);
+
+            // Scroll back to the page top.
+            await tester.sendEventToBinding(
+              testPointer.scroll(
+                const Offset(0, -100),
+              ),
+            );
+
+            // Ensure page is scrolled all the way to the top.
+            expect(pageScrollable.position.pixels, 0);
+          },
+        );
+      });
     });
   });
+}
+
+/// Creates a [SuperEditor] experience within an ancestor scrollable
+/// with scrollable editor content.
+Future<void> _pumpSuperEditorWithinScrollable(WidgetTester tester) async {
+  await tester.createDocument().withLongTextContent().withCustomWidgetTreeBuilder((superReader) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Builder(builder: (context) {
+          return ListView(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                width: double.infinity,
+                child: const Placeholder(
+                  child: Center(
+                    child: Text("Content"),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 350,
+                child: ListView(
+                  children: [
+                    superReader,
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height,
+                width: double.infinity,
+                child: const Placeholder(
+                  child: Center(
+                    child: Text("Content"),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }).pump();
 }
 
 final _scrollDirectionVariant = ValueVariant<_ScrollDirection>({

@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
@@ -1126,6 +1128,113 @@ void main() {
           variant: _scrollDirectionVariant,
         );
       });
+
+      group("when hovering over editor", () {
+        testWidgets("scroll down doesn't scroll the page untill editor's scrollable content is consumed",
+            (tester) async {
+          await _pumpSuperEditorWithinScrollable(tester);
+
+          final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
+
+          // Find editor's direct ancestor scrollable
+          final superEditorScrollable = tester.state<ScrollableState>(
+            find.ancestor(of: find.byType(SuperEditor), matching: find.byType(Scrollable)).first,
+          );
+
+          final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
+
+          // Hover to the editor's center.
+          testPointer.hover(tester.getCenter(
+            find.ancestor(of: find.byType(SuperEditor), matching: find.byType(Scrollable)).first,
+          ));
+
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              Offset(0, superEditorScrollable.position.maxScrollExtent),
+            ),
+          );
+
+          // Ensure parent scrollable isn't scrolled.
+          expect(pageScrollable.position.pixels, 0);
+
+          // Ensure editor's is scrolled.
+          expect(
+            superEditorScrollable.position.pixels,
+            greaterThan(0),
+          );
+
+          // Scroll down within the page.
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              const Offset(0, 200),
+            ),
+          );
+
+          // Ensure page is scrolled.
+          expect(pageScrollable.position.pixels, greaterThan(0));
+        });
+
+        testWidgets("scroll up doesn't scroll the page untill editor's scrollable content is consumed", (tester) async {
+          await _pumpSuperEditorWithinScrollable(tester);
+
+          final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
+
+          // Find editor's direct ancestor scrollable.
+          final superEditorScrollable = tester.state<ScrollableState>(
+            find.ancestor(of: find.byType(SuperEditor), matching: find.byType(Scrollable)).first,
+          );
+
+          // Scroll the editor all the way to the bottom.
+          superEditorScrollable.position.jumpTo(superEditorScrollable.position.maxScrollExtent);
+
+          final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
+
+          testPointer.hover(
+            Offset.zero,
+          );
+
+          // Scroll down a little to introduce scrollable content we can scroll back to within
+          // the page.
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              const Offset(0, 100),
+            ),
+          );
+
+          // Hover to the editor's center.
+          testPointer.hover(
+            tester.getCenter(
+              find.ancestor(of: find.byType(SuperEditor), matching: find.byType(Scrollable)).first,
+            ),
+          );
+
+          // Scroll the editor all the way to the top.
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              Offset(0, -superEditorScrollable.position.maxScrollExtent),
+            ),
+          );
+
+          // Ensure editor's is scrolled all the way to the top.
+          expect(
+            superEditorScrollable.position.pixels,
+            0,
+          );
+
+          // Ensure page isn't scrolled any further than initial page scroll.
+          expect(pageScrollable.position.pixels, 100);
+
+          // Scroll back to the page top.
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              const Offset(0, -100),
+            ),
+          );
+
+          // Ensure page is scrolled all the way to the top.
+          expect(pageScrollable.position.pixels, 0);
+        });
+      });
     });
   });
 }
@@ -1216,6 +1325,50 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
       debugShowCheckedModeBanner: false,
     );
   }
+}
+
+/// Creates a [SuperEditor] experience within an ancestor scrollable
+/// with scrollable editor content.
+Future<void> _pumpSuperEditorWithinScrollable(WidgetTester tester) async {
+  await tester.createDocument().withLongTextContent().withCustomWidgetTreeBuilder((superEditor) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Builder(builder: (context) {
+          return ListView(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                width: double.infinity,
+                child: const Placeholder(
+                  child: Center(
+                    child: Text("Content"),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 350,
+                width: double.infinity,
+                child: ListView(
+                  children: [
+                    superEditor,
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height,
+                width: double.infinity,
+                child: const Placeholder(
+                  child: Center(
+                    child: Text("Content"),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }).pump();
 }
 
 /// Slowly reduces window size to imitate the appearance of a keyboard.
