@@ -477,6 +477,50 @@ void main() {
         // Ensure the textfield composing region was cleared.
         expect(controller.composingRegion, TextRange.empty);
       });
+
+      testWidgetsOnAllPlatforms('clears composing region after losing focus', (tester) async {
+        final controller = ImeAttributedTextEditingController();
+        final focusNode = FocusNode();
+
+        await _pumpSuperTextField(
+          tester,
+          controller,
+          focusNode: focusNode,
+        );
+
+        // Place the caret at the beginning of the textfield.
+        await tester.placeCaretInSuperTextField(0);
+
+        // Type something to have some text to tap on.
+        await tester.typeImeText('Composing: ');
+
+        // Ensure we don't have a composing region.
+        expect(controller.composingRegion, TextRange.empty);
+
+        // Simulate an insertion containing a composing region.
+        await tester.ime.sendDeltas(
+          [
+            const TextEditingDeltaInsertion(
+              oldText: 'Composing: ',
+              textInserted: "あs",
+              insertionOffset: 11,
+              selection: TextSelection.collapsed(offset: 13),
+              composing: TextRange(start: 11, end: 13),
+            ),
+          ],
+          getter: imeClientGetter,
+        );
+
+        // Ensure the textfield applied the composing region.
+        expect(controller.composingRegion, const TextRange(start: 11, end: 13));
+
+        // Remove focus from the textfield.
+        focusNode.unfocus();
+        await tester.pump();
+
+        // Ensure the composing region was cleared.
+        expect(controller.composingRegion, TextRange.empty);
+      });
     });
 
     testWidgetsOnMobile('configures the software keyboard action button', (tester) async {
@@ -805,6 +849,7 @@ Future<void> _pumpEmptySuperTextField(WidgetTester tester) async {
 Future<void> _pumpSuperTextField(
   WidgetTester tester,
   AttributedTextEditingController controller, {
+  FocusNode? focusNode,
   int? minLines,
   int? maxLines,
 }) async {
@@ -818,6 +863,7 @@ Future<void> _pumpSuperTextField(
         child: SizedBox(
           width: 320,
           child: SuperTextField(
+            focusNode: focusNode,
             textController: controller,
             inputSource: TextInputSource.ime,
             minLines: minLines,

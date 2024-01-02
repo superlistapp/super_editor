@@ -385,6 +385,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       setState(() {
         _textEditingController.detachFromIme();
         _textEditingController.selection = const TextSelection.collapsed(offset: -1);
+        _textEditingController.composingRegion = TextRange.empty;
         _removeEditingOverlayControls();
       });
     }
