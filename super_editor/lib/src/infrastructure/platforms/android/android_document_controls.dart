@@ -178,8 +178,7 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 class AndroidControlsDocumentLayerState
     extends DocumentLayoutLayerState<AndroidHandlesDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
-  @visibleForTesting
-  late BlinkController caretBlinkController;
+  late BlinkController _caretBlinkController;
 
   SuperEditorAndroidControlsController? _controlsController;
 
@@ -188,7 +187,7 @@ class AndroidControlsDocumentLayerState
   @override
   void initState() {
     super.initState();
-    caretBlinkController = BlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController(tickerProvider: this);
 
     _previousSelection = widget.selection.value;
     widget.selection.addListener(_onSelectionChange);
@@ -224,7 +223,7 @@ class AndroidControlsDocumentLayerState
     widget.selection.removeListener(_onSelectionChange);
     _controlsController?.shouldCaretBlink.removeListener(_onBlinkModeChange);
 
-    caretBlinkController.dispose();
+    _caretBlinkController.dispose();
     super.dispose();
   }
 
@@ -236,6 +235,9 @@ class AndroidControlsDocumentLayerState
 
   @visibleForTesting
   bool get isCaretDisplayed => layoutData?.caret != null;
+
+  @visibleForTesting
+  bool get isCaretVisible => _caretBlinkController.opacity == 1.0;
 
   @visibleForTesting
   bool get isUpstreamHandleDisplayed => layoutData?.upstream != null;
@@ -267,14 +269,14 @@ class AndroidControlsDocumentLayerState
 
   void _onBlinkModeChange() {
     if (_controlsController!.shouldCaretBlink.value) {
-      caretBlinkController.startBlinking();
+      _caretBlinkController.startBlinking();
     } else {
-      caretBlinkController.stopBlinking();
+      _caretBlinkController.stopBlinking();
     }
   }
 
   void _caretJumpToOpaque() {
-    caretBlinkController.jumpToOpaque();
+    _caretBlinkController.jumpToOpaque();
   }
 
   @override
@@ -346,11 +348,11 @@ class AndroidControlsDocumentLayerState
       child: Leader(
         link: _controlsController!.collapsedHandleFocalPoint,
         child: ListenableBuilder(
-          listenable: caretBlinkController,
+          listenable: _caretBlinkController,
           builder: (context, child) {
             return ColoredBox(
               key: DocumentKeys.caret,
-              color: caretColor.withOpacity(caretBlinkController.opacity),
+              color: caretColor.withOpacity(_caretBlinkController.opacity),
             );
           },
         ),

@@ -397,6 +397,49 @@ class SuperEditorInspector {
     }
   }
 
+  /// Returns `true` if the caret is currently visible and 100% opaque, or `false` if it's
+  /// not.
+  ///
+  /// {@macro supereditor_finder}
+  static bool isCaretVisible([Finder? superEditorFinder]) {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final element = find
+          .descendant(
+            of: (superEditorFinder ?? find.byType(SuperEditor)),
+            matching: find.byType(AndroidHandlesDocumentLayer),
+          )
+          .evaluate()
+          .single as StatefulElement;
+
+      final androidCaretLayerState = element.state as AndroidControlsDocumentLayerState;
+      return androidCaretLayerState.isCaretVisible;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final element = find
+          .descendant(
+            of: (superEditorFinder ?? find.byType(SuperEditor)),
+            matching: find.byType(IosHandlesDocumentLayer),
+          )
+          .evaluate()
+          .single as StatefulElement;
+
+      final iOSCaretLayer = element.state as IosControlsDocumentLayerState;
+      return iOSCaretLayer.isCaretVisible;
+    }
+
+    final element = find
+        .descendant(
+          of: (superEditorFinder ?? find.byType(SuperEditor)),
+          matching: find.byType(CaretDocumentOverlay),
+        )
+        .evaluate()
+        .single as StatefulElement;
+
+    final desktopCaretLayer = element.state as CaretDocumentOverlayState;
+    return desktopCaretLayer.isCaretVisible;
+  }
+
   static Finder findMobileCaretDragHandle([Finder? superEditorFinder]) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:

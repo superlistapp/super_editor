@@ -559,13 +559,12 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   final _upstreamHandleKey = GlobalKey();
   final _downstreamHandleKey = GlobalKey();
 
-  @visibleForTesting
-  late BlinkController caretBlinkController;
+  late BlinkController _caretBlinkController;
 
   @override
   void initState() {
     super.initState();
-    caretBlinkController = BlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController(tickerProvider: this);
 
     widget.selection.addListener(_onSelectionChange);
     widget.shouldCaretBlink.addListener(_onBlinkModeChange);
@@ -600,7 +599,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     widget.shouldCaretBlink.removeListener(_onBlinkModeChange);
     widget.floatingCursorController?.isActive.removeListener(_onFloatingCursorActivationChange);
 
-    caretBlinkController.dispose();
+    _caretBlinkController.dispose();
     super.dispose();
   }
 
@@ -612,6 +611,9 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 
   @visibleForTesting
   bool get isCaretDisplayed => layoutData?.caret != null;
+
+  @visibleForTesting
+  bool get isCaretVisible => _caretBlinkController.opacity == 1.0;
 
   @visibleForTesting
   bool get isUpstreamHandleDisplayed => layoutData?.upstream != null;
@@ -627,17 +629,17 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 
   void _onBlinkModeChange() {
     if (widget.shouldCaretBlink.value) {
-      caretBlinkController.startBlinking();
+      _caretBlinkController.startBlinking();
     } else {
-      caretBlinkController.stopBlinking();
+      _caretBlinkController.stopBlinking();
     }
   }
 
   void _onFloatingCursorActivationChange() {
     if (widget.floatingCursorController?.isActive.value == true) {
-      caretBlinkController.stopBlinking();
+      _caretBlinkController.stopBlinking();
     } else {
-      caretBlinkController.startBlinking();
+      _caretBlinkController.startBlinking();
     }
   }
 
@@ -729,7 +731,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 
           return IOSCollapsedHandle(
             key: DocumentKeys.caret,
-            controller: caretBlinkController,
+            controller: _caretBlinkController,
             color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
             caretHeight: caret.height,
           );

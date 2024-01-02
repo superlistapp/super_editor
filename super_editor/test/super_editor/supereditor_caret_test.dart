@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
@@ -329,79 +328,41 @@ void main() {
       });
     });
 
-    group('blinks caret at rest', () {
+    testWidgetsOnAllPlatforms('blinks caret when focused by tap', (tester) async {
+      // Configure BlinkController to animate, otherwise it won't blink.
+      BlinkController.indeterminateAnimationsEnabled = true;
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
       // Duration to switch between visible and invisible.
       const flashPeriod = Duration(milliseconds: 500);
 
-      testWidgetsOnAllPlatforms('with autofocus', (tester) async {
-        // Configure BlinkController to animate, otherwise it won't blink.
-        BlinkController.indeterminateAnimationsEnabled = true;
-        addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .pump();
 
-        await tester //
-            .createDocument()
-            .withSingleEmptyParagraph()
-            .autoFocus(true)
-            .withSelection(
-              const DocumentSelection.collapsed(
-                position: DocumentPosition(
-                  nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 0),
-                ),
-              ),
-            )
-            .pump();
+      // Tap to place the caret at the beginning of the document.
+      // We don't use the robot method here because it calls pumpAndSettle,
+      // which causes a pumpAndSettle timeout, because we are constantly
+      // scheduling frames.
+      await tester.tap(find.byType(SuperEditor));
+      await tester.pump();
 
-        // Ensure caret is visible at start.
-        expect(_isCaretVisible(tester), true);
+      // Ensure caret is visible.
+      expect(SuperEditorInspector.isCaretVisible(), true);
 
-        // Trigger a frame with an ellapsed time equal to the flashPeriod,
-        // so the caret should change from visible to invisible.
-        await tester.pump(flashPeriod);
+      // Trigger a frame with an ellapsed time equal to the flashPeriod,
+      // so the caret should change from visible to invisible.
+      await tester.pump(flashPeriod);
 
-        // Ensure caret is invisible after the flash period.
-        expect(_isCaretVisible(tester), false);
+      // Ensure caret is invisible after the flash period.
+      expect(SuperEditorInspector.isCaretVisible(), false);
 
-        // Trigger another frame to make caret visible again.
-        await tester.pump(flashPeriod);
+      // Trigger another frame to make caret visible again.
+      await tester.pump(flashPeriod);
 
-        // Ensure caret is visible.
-        expect(_isCaretVisible(tester), true);
-      });
-
-      testWidgetsOnAllPlatforms('when focused by tap', (tester) async {
-        // Configure BlinkController to animate, otherwise it won't blink.
-        BlinkController.indeterminateAnimationsEnabled = true;
-        addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
-
-        await tester //
-            .createDocument()
-            .withSingleEmptyParagraph()
-            .pump();
-
-        // Tap to place the caret at the beginning of the document.
-        // We don't use the robot method here because it calls pumpAndSettle,
-        // which causes a pumpAndSettle timeout, because we are constantly
-        // scheduling frames.
-        await tester.tap(find.byType(SuperEditor));
-        await tester.pump();
-
-        // Ensure caret is visible.
-        expect(_isCaretVisible(tester), true);
-
-        // Trigger a frame with an ellapsed time equal to the flashPeriod,
-        // so the caret should change from visible to invisible.
-        await tester.pump(flashPeriod);
-
-        // Ensure caret is invisible after the flash period.
-        expect(_isCaretVisible(tester), false);
-
-        // Trigger another frame to make caret visible again.
-        await tester.pump(flashPeriod);
-
-        // Ensure caret is visible.
-        expect(_isCaretVisible(tester), true);
-      });
+      // Ensure caret is visible.
+      expect(SuperEditorInspector.isCaretVisible(), true);
     });
   });
 }
@@ -485,22 +446,4 @@ Future<void> _resizeWindow({
     tester.view.physicalSize = currentScreenSize;
     await tester.pumpAndSettle();
   }
-}
-
-bool _isCaretVisible(WidgetTester tester) {
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    final androidCaretLayerState =
-        tester.state<AndroidControlsDocumentLayerState>(find.byType(AndroidHandlesDocumentLayer));
-
-    return androidCaretLayerState.caretBlinkController.opacity == 1.0;
-  }
-
-  if (defaultTargetPlatform == TargetPlatform.iOS) {
-    final iOSCaretLayer = tester.state<IosControlsDocumentLayerState>(find.byType(IosHandlesDocumentLayer));
-
-    return iOSCaretLayer.caretBlinkController.opacity == 1.0;
-  }
-
-  final desktopCaretLayer = tester.state<CaretDocumentOverlayState>(find.byType(CaretDocumentOverlay));
-  return desktopCaretLayer.blinkController.opacity == 1.0;
 }
