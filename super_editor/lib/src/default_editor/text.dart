@@ -1364,6 +1364,40 @@ class ToggleTextAttributionsCommand implements EditCommand {
   }
 }
 
+class ChangeComponentStylesRequest implements EditRequest {
+  const ChangeComponentStylesRequest({
+    required this.nodeId,
+    required this.styles,
+  });
+
+  final String nodeId;
+  final SingleColumnLayoutComponentStyles styles;
+}
+
+class ChangeComponentStylesCommand implements EditCommand {
+  ChangeComponentStylesCommand({
+    required this.nodeId,
+    required this.styles,
+  });
+
+  final String nodeId;
+  final SingleColumnLayoutComponentStyles styles;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final node = document.getNodeById(nodeId)!;
+
+    styles.applyTo(node);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(node.id),
+      ),
+    ]);
+  }
+}
+
 class InsertTextRequest implements EditRequest {
   InsertTextRequest({
     required this.documentPosition,

@@ -482,14 +482,17 @@ class _ExampleEditorState extends State<ExampleEditor> {
         print("Applying width $width to node $nodeId");
         final node = _doc.getNodeById(nodeId)!;
         final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
-        SingleColumnLayoutComponentStyles(
+        final newStyles = SingleColumnLayoutComponentStyles(
           width: width,
           padding: currentStyles.padding,
-        ).applyTo(node);
+        );
 
-        // TODO: schedule a presentation reflow so that the image changes size immediately (https://github.com/superlistapp/super_editor/issues/1529)
-        //       Right now, nothing happens when pressing the button, unless we force a
-        //       rebuild/reflow.
+        _docEditor.execute([
+          ChangeComponentStylesRequest(
+            nodeId: nodeId,
+            styles: newStyles,
+          )
+        ]);
       },
       closeToolbar: _hideImageToolbar,
     );
