@@ -1171,6 +1171,53 @@ Paragraph two
       });
     });
 
+    testWidgetsOnAllPlatforms('clears composing region after losing focus', (tester) async {
+      final focusNode = FocusNode();
+
+      final testContext = await tester
+          .createDocument() //
+          .withTwoEmptyParagraphs()
+          .withInputSource(TextInputSource.ime)
+          .withFocusNode(focusNode)
+          .pump();
+
+      // Place the caret at the beginning of the document.
+      await tester.placeCaretInParagraph('1', 0);
+
+      // Type something to have some text to tap on.
+      await tester.typeImeText('Composing: ');
+
+      // Ensure we don't have a composing region.
+      expect(testContext.composer.composingRegion.value, isNull);
+
+      // Simulate an insertion containing a composing region.
+      await tester.ime.sendDeltas(
+        [
+          const TextEditingDeltaInsertion(
+            oldText: '. Composing: ',
+            textInserted: "あs",
+            insertionOffset: 13,
+            selection: TextSelection.collapsed(offset: 15),
+            composing: TextRange(start: 13, end: 15),
+          ),
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Ensure the editor applied a composing region.
+      expect(
+        testContext.composer.composingRegion.value,
+        isNotNull,
+      );
+
+      // Remove focus from the editor.
+      focusNode.unfocus();
+      await tester.pump();
+
+      // Ensure the composing region was cleared.
+      expect(testContext.composer.composingRegion.value, isNull);
+    });
+
     testWidgetsOnAllPlatforms('clears composing region after selection changes', (tester) async {
       final testContext = await tester
           .createDocument() //

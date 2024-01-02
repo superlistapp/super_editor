@@ -315,6 +315,12 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
         const ClearSelectionRequest(),
       ]);
     }
+
+    if (!widget.focusNode.hasFocus) {
+      widget.editor.execute([
+        const ClearComposingRegionRequest(),
+      ]);
+    }
   }
 
   void _onSelectionChange() {
