@@ -46,12 +46,19 @@ class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
   final BlinkTimingMode blinkTimingMode;
 
   @override
-  DocumentLayoutLayerState<CaretDocumentOverlay, Rect?> createState() => _CaretDocumentOverlayState();
+  DocumentLayoutLayerState<CaretDocumentOverlay, Rect?> createState() => CaretDocumentOverlayState();
 }
 
-class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOverlay, Rect?>
+@visibleForTesting
+class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOverlay, Rect?>
     with SingleTickerProviderStateMixin {
   late final BlinkController _blinkController;
+
+  @visibleForTesting
+  bool get isCaretVisible => _blinkController.opacity == 1.0;
+
+  @visibleForTesting
+  Duration get caretFlashPeriod => _blinkController.flashPeriod;
 
   @override
   void initState() {
