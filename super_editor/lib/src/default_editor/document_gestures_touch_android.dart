@@ -133,7 +133,7 @@ class SuperEditorAndroidControlsController {
 
   /// Whether the caret should blink right now.
   ValueListenable<bool> get shouldCaretBlink => _shouldCaretBlink;
-  final _shouldCaretBlink = ValueNotifier<bool>(false);
+  final _shouldCaretBlink = ValueNotifier<bool>(true);
 
   /// Tells the caret to blink by setting [shouldCaretBlink] to `true`.
   void blinkCaret() {
