@@ -260,6 +260,13 @@ class HorizontalRuleConversionReaction implements EditReaction {
 
   @override
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    if (changeList.length < 2) {
+      // This reaction requires at least an insertion event and a selection change event.
+      // There are less than two events in the the change list, therefore this reaction
+      // shouldn't apply. Fizzle.
+      return;
+    }
+
     final document = editorContext.find<MutableDocument>(Editor.documentKey);
 
     final didTypeSpace = EditInspector.didTypeSpace(document, changeList);
@@ -268,6 +275,13 @@ class HorizontalRuleConversionReaction implements EditReaction {
     }
 
     final edit = changeList[changeList.length - 2] as DocumentEdit;
+    if (edit.change is! TextInsertionEvent) {
+      // This reaction requires that the two last events are an insertion event
+      // followed by a selection change event.
+      // The second to last event isn't a text insertion event, therefore this reaction
+      // shouldn't apply. Fizzle.
+    }
+
     final textInsertionEvent = edit.change as TextInsertionEvent;
     final paragraph = document.getNodeById(textInsertionEvent.nodeId) as TextNode;
     final match = _hrPattern.firstMatch(paragraph.text.text)?.group(0);
@@ -712,7 +726,7 @@ class DashConversionReaction implements EditReaction {
             offset: insertionEvent.offset - 1,
           ),
         ),
-        textToInsert: emDash,
+        textToInsert: SpecialCharacters.emDash,
         attributions: composer.preferences.currentAttributions,
       ),
       ChangeSelectionRequest(
@@ -757,10 +771,6 @@ class EditInspector {
       return false;
     }
     if (textInsertionEvent.text.text != " ") {
-      return false;
-    }
-
-    if (selectionEvent.oldSelection == null || selectionEvent.newSelection == null) {
       return false;
     }
 

@@ -41,7 +41,7 @@ void main() {
 
         // Ensure the two dashes were converted to an em-dash.
         expect(context.document.nodes.length, 1);
-        expect(SuperEditorInspector.findTextInParagraph('1').text, emDash);
+        expect(SuperEditorInspector.findTextInParagraph('1').text, SpecialCharacters.emDash);
 
         // Type some arbitrary text.
         await tester.typeTextAdaptive(' is an em-dash');
