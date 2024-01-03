@@ -41,9 +41,13 @@ class BlinkController with ChangeNotifier {
 
   final Duration _flashPeriod;
 
+  /// Duration to switch between visible and invisible.
+  Duration get flashPeriod => _flashPeriod;
+
   /// Returns `true` if this controller is currently animating a blinking
   /// signal, or `false` if it's not.
-  bool get isBlinking => (_ticker != null || _timer != null) && (_ticker != null ? _ticker!.isTicking : _timer?.isActive ?? false);
+  bool get isBlinking =>
+      (_ticker != null || _timer != null) && (_ticker != null ? _ticker!.isTicking : _timer?.isActive ?? false);
 
   bool _isBlinkingEnabled = true;
   set isBlinkingEnabled(bool newValue) {

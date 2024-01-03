@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'supereditor_test_tools.dart';
 
@@ -325,6 +326,43 @@ void main() {
           expect(finalCaretOffset, expectedFinalCaretOffset);
         });
       });
+    });
+
+    testWidgetsOnAllPlatforms('blinks the caret when the user places the caret with a single tap', (tester) async {
+      // Configure BlinkController to animate, otherwise it won't blink.
+      BlinkController.indeterminateAnimationsEnabled = true;
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .pump();
+
+      // Tap to place the caret at the beginning of the document.
+      // We don't use the robot method here because it calls pumpAndSettle,
+      // which causes a pumpAndSettle timeout, because we are constantly
+      // scheduling frames.
+      await tester.tap(find.byType(SuperEditor));
+      await tester.pump();
+
+      // Ensure caret is visible.
+      expect(SuperEditorInspector.isCaretVisible(), true);
+
+      // Duration to switch between visible and invisible.
+      final flashPeriod = SuperEditorInspector.caretFlashPeriod();
+
+      // Trigger a frame with an ellapsed time equal to the flashPeriod,
+      // so the caret should change from visible to invisible.
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is invisible after the flash period.
+      expect(SuperEditorInspector.isCaretVisible(), false);
+
+      // Trigger another frame to make caret visible again.
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is visible.
+      expect(SuperEditorInspector.isCaretVisible(), true);
     });
   });
 }
