@@ -485,7 +485,7 @@ Paragraph3""");
             id: '1',
             imageUrl: 'https://someimage.com/the/image.png',
             altText: 'some alt text',
-            expectedBitmapSize: ExpectedSize(width: 1000, height: 200),
+            expectedBitmapSize: ExpectedSize(height: 200),
           ),
         ]);
 
