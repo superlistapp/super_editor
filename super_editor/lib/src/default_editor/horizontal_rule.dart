@@ -147,14 +147,16 @@ class HorizontalRuleComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SelectableBox(
-      selection: selection,
-      selectionColor: selectionColor,
-      child: BoxComponent(
-        key: componentKey,
-        child: Divider(
-          color: color,
-          thickness: thickness,
+    return IgnorePointer(
+      child: SelectableBox(
+        selection: selection,
+        selectionColor: selectionColor,
+        child: BoxComponent(
+          key: componentKey,
+          child: Divider(
+            color: color,
+            thickness: thickness,
+          ),
         ),
       ),
     );

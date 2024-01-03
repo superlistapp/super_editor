@@ -186,33 +186,20 @@ void main() {
           await tester.tapAtDocumentPosition(tapPosition);
           await tester.pump();
 
-          await tester.pump();
-          await expectLater(find.byType(MaterialApp), matchesGoldenFile("deleteme-1.png"));
-
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
           final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-          // final expectedInitialCaretOffset =
-          //     _computeExpectedMobileCaretOffsetInDocumentLayout(tester, docKey, tapPosition);
-          // expect(initialCaretOffset, expectedInitialCaretOffset);
 
           // Make the window wider, pushing the caret text position up a line.
           tester.view.physicalSize = screenSizeLandscape;
           await tester.pumpAndSettle();
 
-          // // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
-          // // position that was pushed up to the preceding line.
-          // final finalCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-          // final expectedFinalCaretOffset =
-          //     _computeExpectedMobileCaretOffsetInDocumentLayout(tester, docKey, tapPosition);
-          // expect(finalCaretOffset, expectedFinalCaretOffset);
-
-          await expectLater(find.byType(MaterialApp), matchesGoldenFile("deleteme-2.png"));
-
-          // Ensure that the caret jumped up at least a line height. It probably jumped
-          // down multiple lines.
+          // Ensure that the caret jumped up a line.
+          //
+          // We check for a caret movement that's more-or-less equal to a line height, because
+          // the caret isn't necessarily the same height as the line.
           final finalCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
           final lineHeight = _computeLineHeight(documentPosition);
-          expect(finalCaretOffset.dy - initialCaretOffset.dy, lessThanOrEqualTo(-lineHeight));
+          expect(finalCaretOffset.dy - initialCaretOffset.dy, moreOrLessEquals(-lineHeight, epsilon: 3));
         });
 
         testWidgets('from landscape to portrait updates caret position', (WidgetTester tester) async {
