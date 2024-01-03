@@ -900,8 +900,12 @@ class DefaultAndroidEditorToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     return AndroidTextEditingFloatingToolbar(
       floatingToolbarKey: floatingToolbarKey,
-      onCopyPressed: _copy,
-      onCutPressed: _cut,
+      onCopyPressed: editorOps.composer.selection == null || !editorOps.composer.selection!.isCollapsed //
+          ? _copy
+          : null,
+      onCutPressed: editorOps.composer.selection == null || !editorOps.composer.selection!.isCollapsed //
+          ? _cut
+          : null,
       onPastePressed: _paste,
       onSelectAllPressed: _selectAll,
     );

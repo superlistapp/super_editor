@@ -7,6 +7,7 @@ import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/super_text_field.dart';
 
 import '../super_textfield_inspector.dart';
+import '../super_textfield_robot.dart';
 
 void main() {
   group("SuperTextField Android selection >", () {
@@ -52,6 +53,33 @@ void main() {
       await tester.pumpAndSettle(kDoubleTapTimeout);
 
       // Ensure that no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+    });
+
+    testWidgetsOnAndroid("tapping at collapsed handle shows/hides the toolbar", (tester) async {
+      await _pumpTestApp(tester);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Place caret at the end of the textfield.
+      await tester.placeCaretInSuperTextField(3);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Tap on the drag handle to show the toolbar.
+      await tester.tapOnAndroidCollapsedHandle();
+      await tester.pump();
+
+      // Ensure that the text field toolbar is visible.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsOneWidget);
+
+      // Tap on the drag handle to hide the toolbar.
+      await tester.tapOnAndroidCollapsedHandle();
+      await tester.pump();
+
+      // Ensure no toolbar disappeared.
       expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
     });
   });

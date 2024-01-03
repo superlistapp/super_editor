@@ -658,27 +658,31 @@ Widget _defaultAndroidToolbarBuilder(
   ToolbarConfig config,
 ) {
   return AndroidTextEditingFloatingToolbar(
-    onCutPressed: () {
-      final textController = controller.textController;
+    onCutPressed: config.collapsedSelection
+        ? null
+        : () {
+            final textController = controller.textController;
 
-      final selection = textController.selection;
-      if (selection.isCollapsed) {
-        return;
-      }
+            final selection = textController.selection;
+            if (selection.isCollapsed) {
+              return;
+            }
 
-      final selectedText = selection.textInside(textController.text.text);
+            final selectedText = selection.textInside(textController.text.text);
 
-      textController.deleteSelectedText();
+            textController.deleteSelectedText();
 
-      Clipboard.setData(ClipboardData(text: selectedText));
-    },
-    onCopyPressed: () {
-      final textController = controller.textController;
-      final selection = textController.selection;
-      final selectedText = selection.textInside(textController.text.text);
+            Clipboard.setData(ClipboardData(text: selectedText));
+          },
+    onCopyPressed: config.collapsedSelection
+        ? null
+        : () {
+            final textController = controller.textController;
+            final selection = textController.selection;
+            final selectedText = selection.textInside(textController.text.text);
 
-      Clipboard.setData(ClipboardData(text: selectedText));
-    },
+            Clipboard.setData(ClipboardData(text: selectedText));
+          },
     onPastePressed: () async {
       final clipboardContent = await Clipboard.getData('text/plain');
       if (clipboardContent == null || clipboardContent.text == null) {
