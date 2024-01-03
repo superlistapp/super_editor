@@ -381,13 +381,13 @@ Widget _createTestApp({required DocumentGestureMode gestureMode, required Global
 Offset _computeExpectedMobileCaretOffsetInDocumentLayout(
     WidgetTester tester, GlobalKey docKey, DocumentPosition documentPosition) {
   final docLayout = docKey.currentState as DocumentLayout;
-  final extentRect = docLayout.getRectForSelection(documentPosition, documentPosition)!;
+  final extentRect = docLayout.getRectForPosition(documentPosition)!;
   return Offset(extentRect.left, extentRect.top);
 }
 
 double _computeLineHeight(DocumentPosition documentPosition) {
   final docLayout = SuperEditorInspector.findDocumentLayout();
-  final extentCharacterRect = docLayout.getRectForSelection(documentPosition, documentPosition)!;
+  final extentCharacterRect = docLayout.getRectForPosition(documentPosition)!;
   return extentCharacterRect.height;
 }
 

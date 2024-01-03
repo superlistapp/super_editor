@@ -655,8 +655,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 
     if (selection.isCollapsed) {
       return DocumentSelectionLayout(
-        // TODO: Replace "getRectForSelection()" with "getRectForPosition()" after #1614
-        caret: documentLayout.getRectForSelection(selection.extent, selection.extent)!,
+        caret: documentLayout.getRectForPosition(selection.extent)!,
       );
     } else {
       return DocumentSelectionLayout(
