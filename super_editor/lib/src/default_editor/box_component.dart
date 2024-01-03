@@ -7,6 +7,7 @@ import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/flutter/geometry.dart';
 
 import '../core/document_layout.dart';
 
@@ -184,6 +185,18 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
       // Arbitrary, we'll return the position at the center of the right half of
       // the component.
       return Offset(3 * myBox.size.width / 4, myBox.size.height / 2);
+    }
+  }
+
+  @override
+  Rect getEdgeForPosition(NodePosition nodePosition) {
+    final boundingBox = getRectForPosition(nodePosition);
+
+    final boxPosition = nodePosition as UpstreamDownstreamNodePosition;
+    if (boxPosition.affinity == TextAffinity.upstream) {
+      return boundingBox.leftEdge;
+    } else {
+      return boundingBox.rightEdge;
     }
   }
 

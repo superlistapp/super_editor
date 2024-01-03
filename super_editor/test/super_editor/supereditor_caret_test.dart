@@ -114,7 +114,6 @@ void main() {
         await tester.tapAtDocumentPosition(tapPosition);
         await tester.pump();
 
-        // Ensure that the caret is displayed at the correct (x,y) in the document before resizing the window
         final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
         // Make the window more narrow, pushing the caret text position down a line.
@@ -147,7 +146,6 @@ void main() {
         await tester.tapAtDocumentPosition(tapPosition);
         await tester.pump();
 
-        // Ensure that the caret is displayed at the correct (x,y) in the document before resizing the window
         final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
         // Make the window wider, pushing the caret text position up a line.
@@ -186,7 +184,6 @@ void main() {
           await tester.tapAtDocumentPosition(tapPosition);
           await tester.pump();
 
-          // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
           final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
           // Make the window wider, pushing the caret text position up a line.

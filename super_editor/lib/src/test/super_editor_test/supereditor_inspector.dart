@@ -175,6 +175,22 @@ class SuperEditorInspector {
     return findRichTextInParagraph(nodeId, superEditorFinder).style;
   }
 
+  /// Calculates the delta between the center of the character at [textOffset1] and and the
+  /// center of the character at [textOffset2] within the node with the given [nodeId].
+  ///
+  /// {@macro supereditor_finder}
+  static Offset findDeltaBetweenCharactersInTextNode(String nodeId, int textOffset1, int textOffset2,
+      [Finder? superEditorFinder]) {
+    final docLayout = findDocumentLayout(superEditorFinder);
+    final characterBoxStart = docLayout.getRectForPosition(
+      DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: textOffset1)),
+    );
+    final characterBoxEnd = docLayout.getRectForPosition(
+      DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: textOffset2)),
+    );
+    return characterBoxEnd!.center - characterBoxStart!.center;
+  }
+
   /// Returns the [DocumentNode] at given the [index].
   ///
   /// The given [index] must be a valid node index inside the [Document].The node at [index]

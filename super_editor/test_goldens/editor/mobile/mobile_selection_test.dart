@@ -113,7 +113,7 @@ void main() {
             );
             await tester.pumpAndSettle();
 
-            final dragDelta = _calculateDragDelta(docKey, "1", 34, 28);
+            final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 34, 28);
             final handleRectGlobal = SuperEditorInspector.findMobileCaretDragHandle().globalRect;
             await tester.dragFrom(handleRectGlobal.center, dragDelta);
 
@@ -144,7 +144,7 @@ void main() {
             );
             await tester.pumpAndSettle();
 
-            final dragDelta = _calculateDragDelta(docKey, "1", 34, 39);
+            final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 34, 39);
             final handleRectGlobal = SuperEditorInspector.findMobileCaretDragHandle().globalRect;
             await tester.dragFrom(handleRectGlobal.center, dragDelta);
 
@@ -231,7 +231,7 @@ void main() {
             );
             await tester.pumpAndSettle();
 
-            final dragDelta = _calculateDragDelta(docKey, "1", 28, 22);
+            final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 28, 22);
             final handleRectGlobal = SuperEditorInspector.findMobileBaseDragHandle().globalRect;
             await tester.dragFrom(handleRectGlobal.center, dragDelta);
 
@@ -266,7 +266,7 @@ void main() {
             );
             await tester.pumpAndSettle();
 
-            final dragDelta = _calculateDragDelta(docKey, "1", 38, 30);
+            final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 38, 30);
             final handleRectGlobal = SuperEditorInspector.findMobileExtentDragHandle().globalRect;
             await tester.dragFrom(handleRectGlobal.center, dragDelta);
 
@@ -301,7 +301,7 @@ void main() {
             );
             await tester.pumpAndSettle();
 
-            final dragDelta = _calculateDragDelta(docKey, "1", 38, 44);
+            final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 38, 44);
             final handleRectGlobal = SuperEditorInspector.findMobileExtentDragHandle().globalRect;
             await tester.dragFrom(handleRectGlobal.center, dragDelta);
 
@@ -362,7 +362,7 @@ void main() {
             );
             await tester.pumpAndSettle();
 
-            final dragDelta = _calculateDragDelta(docKey, "1", 34, 28);
+            final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 34, 28);
             final handleRectGlobal = SuperEditorInspector.findMobileCaret().globalRect;
             await tester.dragFrom(handleRectGlobal.center, dragDelta);
 
@@ -393,7 +393,7 @@ void main() {
             );
             await tester.pumpAndSettle();
 
-            final dragDelta = _calculateDragDelta(docKey, "1", 34, 39);
+            final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 34, 39);
             final handleRectGlobal = SuperEditorInspector.findMobileCaret().globalRect;
             await tester.dragFrom(handleRectGlobal.center, dragDelta);
 
@@ -481,7 +481,7 @@ void main() {
             );
             await tester.pumpAndSettle();
 
-            final dragDelta = _calculateDragDelta(docKey, "1", 28, 22);
+            final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 28, 22);
             final handleRectGlobal = SuperEditorInspector.findMobileBaseDragHandle().globalRect;
             await tester.dragFrom(handleRectGlobal.center, dragDelta);
 
@@ -516,7 +516,7 @@ void main() {
             );
             await tester.pumpAndSettle();
 
-            final dragDelta = _calculateDragDelta(docKey, "1", 38, 30);
+            final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 38, 30);
             final handleRectGlobal = SuperEditorInspector.findMobileExtentDragHandle().globalRect;
             await tester.dragFrom(handleRectGlobal.center, dragDelta);
 
@@ -551,7 +551,7 @@ void main() {
             );
             await tester.pumpAndSettle();
 
-            final dragDelta = _calculateDragDelta(docKey, "1", 38, 44);
+            final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 38, 44);
             final handleRectGlobal = SuperEditorInspector.findMobileExtentDragHandle().globalRect;
             await tester.dragFrom(handleRectGlobal.center, dragDelta);
 
@@ -717,19 +717,6 @@ MutableDocument _createSingleParagraphDoc() {
       ),
     ],
   );
-}
-
-/// Calculates the delta between the center of the character at [startOffset] and and the
-/// center of the character at [endOffset] within the node with the given [nodeId].
-Offset _calculateDragDelta(GlobalKey docKey, String nodeId, int startOffset, int endOffset) {
-  final docLayout = docKey.currentState as DocumentLayout;
-  final characterBoxStart = docLayout.getRectForPosition(
-    DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: startOffset)),
-  );
-  final characterBoxEnd = docLayout.getRectForPosition(
-    DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: endOffset)),
-  );
-  return characterBoxEnd!.center - characterBoxStart!.center;
 }
 
 class _DragLinePaint extends StatelessWidget {

@@ -54,6 +54,15 @@ abstract class DocumentLayout {
   /// [DocumentPosition] for the first character within the paragraph.
   DocumentPosition? getDocumentPositionNearestToOffset(Offset layoutOffset);
 
+  /// Returns the upstream edge or downstream edge of the content at the given
+  /// [position].
+  ///
+  /// The edge is defined by a zero-width [Rect] whose offset and height is determined
+  /// by the offset and height of the content at the given [position].
+  ///
+  /// The edge of a piece of content is helpful for sizing and positioning a caret.
+  Rect? getEdgeForPosition(DocumentPosition position);
+
   /// Returns the bounding box around the given [position], within the associated
   /// component, or `null` if no corresponding component can be found, or
   /// the corresponding component has not yet been laid out.
@@ -124,6 +133,15 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// See [Document] for more information about [DocumentNode]s and
   /// node positions.
   Offset getOffsetForPosition(NodePosition nodePosition);
+
+  /// Returns the upstream edge or downstream edge of the content at the given
+  /// [position].
+  ///
+  /// The edge is defined by a zero-width [Rect] whose offset and height is determined
+  /// by the offset and height of the content at the given [position].
+  ///
+  /// The edge of a piece of content is helpful for sizing and positioning a caret.
+  Rect getEdgeForPosition(NodePosition nodePosition);
 
   /// Returns a [Rect] for the given [nodePosition], or throws
   /// an exception if the given [nodePosition] is not compatible
@@ -330,6 +348,12 @@ mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentCompon
   @override
   Offset getOffsetForPosition(NodePosition nodePosition) {
     return _childDocumentComponent.getOffsetForPosition(nodePosition);
+  }
+
+  @override
+  Rect getEdgeForPosition(NodePosition nodePosition) {
+    final childEdge = _childDocumentComponent.getEdgeForPosition(nodePosition);
+    return _getRectFromChild(childEdge);
   }
 
   @override
