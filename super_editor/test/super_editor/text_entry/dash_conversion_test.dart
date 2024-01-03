@@ -7,6 +7,7 @@ import 'package:super_editor/src/default_editor/default_document_editor.dart';
 
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
+import 'package:super_editor/src/infrastructure/strings.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -40,7 +41,7 @@ void main() {
 
         // Ensure the two dashes were converted to an em-dash.
         expect(context.document.nodes.length, 1);
-        expect(SuperEditorInspector.findTextInParagraph('1').text, '—');
+        expect(SuperEditorInspector.findTextInParagraph('1').text, emDash);
 
         // Type some arbitrary text.
         await tester.typeTextAdaptive(' is an em-dash');

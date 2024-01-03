@@ -155,7 +155,7 @@ void main() {
     });
 
     group("paragraph to horizontal rule >", () {
-      testAllInputsOnAllPlatforms("with --- in an empty paragraph", (
+      testAllInputsOnAllPlatforms("with --- at the beginning of an empty paragraph", (
         tester, {
         required TextInputSource inputSource,
       }) async {
@@ -177,7 +177,7 @@ void main() {
         expect((document.nodes.last as ParagraphNode).text.text.isEmpty, isTrue);
       });
 
-      testAllInputsOnAllPlatforms('with --- in an non-empty paragraph', (
+      testAllInputsOnAllPlatforms('with --- at the beginning of an non-empty paragraph', (
         tester, {
         required TextInputSource inputSource,
       }) async {

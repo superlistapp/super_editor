@@ -142,3 +142,5 @@ extension CharacterMovement on String {
     return range.current.length;
   }
 }
+
+const emDash = '—';

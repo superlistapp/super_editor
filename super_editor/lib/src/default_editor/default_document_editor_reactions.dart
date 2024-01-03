@@ -18,6 +18,7 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/strings.dart';
 
 import 'multi_node_editing.dart';
 
@@ -639,7 +640,7 @@ class LinkifyReaction implements EditReaction {
 
 /// An [EditReaction] which converts two dashes (--) to an em-dash (—).
 ///
-/// This reaction applies to all [TextNode]s, anywhere in the text.
+/// This reaction applies to all [TextNode]s in the document.
 class DashConversionReaction implements EditReaction {
   const DashConversionReaction();
 
@@ -649,40 +650,46 @@ class DashConversionReaction implements EditReaction {
     final composer = editorContext.find<MutableDocumentComposer>(Editor.composerKey);
 
     if (changeList.length < 2) {
-      // If the user typed a dash, we should have at least an insertion and a
-      // selection change event.
+      // This reaction requires at least an insertion event and a selection change event.
+      // There are less than two events in the the change list, therefore this reaction
+      // shouldn't apply. Fizzle.
       return;
     }
 
     final selectionEvent = changeList.last;
     if (selectionEvent is! SelectionChangeEvent) {
-      // If the user typed a dash, then the last event should be a selection change.
+      // This reaction requires that the two last events are an insertion event
+      // followed by a selection change event.
+      // The last event isn't a selection event, therefore this reaction
+      // shouldn't apply. Fizzle.
       return;
     }
 
-    final insertionEvent = changeList[changeList.length - 2];
-    if (insertionEvent is! DocumentEdit || insertionEvent.change is! TextInsertionEvent) {
-      // If the user typed a dash, then the second to last event should be a text
-      // insertion event with a dash "-".
+    final documentEdit = changeList[changeList.length - 2];
+    if (documentEdit is! DocumentEdit || documentEdit.change is! TextInsertionEvent) {
+      // This reaction requires that the two last events are an insertion event
+      // followed by a selection change event.
+      // The second to last event isn't a text insertion event, therefore this reaction
+      // shouldn't apply. Fizzle.
       return;
     }
 
-    final change = insertionEvent.change as TextInsertionEvent;
+    final insertionEvent = documentEdit.change as TextInsertionEvent;
 
-    if (change.text.text != '-') {
+    if (insertionEvent.text.text != '-') {
       // The text that was inserted wasn't a dash. The only character that triggers a
       // conversion is a dash. Fizzle.
       return;
     }
 
-    if (change.offset < 1) {
+    if (insertionEvent.offset < 1) {
       // The reaction needs at least two characters before the caret, but there's less than two. Fizzle.
       return;
     }
 
-    final node = document.getNodeById(change.nodeId) as TextNode;
+    final insertionNode = document.getNodeById(insertionEvent.nodeId) as TextNode;
 
-    final upstreamCharacter = node.text.text.substring(change.offset - 1, change.offset);
+    final upstreamCharacter = insertionNode.text.text[insertionEvent.offset - 1];
     if (upstreamCharacter != '-') {
       return;
     }
@@ -692,25 +699,27 @@ class DashConversionReaction implements EditReaction {
     requestDispatcher.execute([
       DeleteContentRequest(
         documentRange: DocumentRange(
-          start: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: change.offset - 1)),
-          end: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: change.offset + 1)),
+          start: DocumentPosition(
+              nodeId: insertionNode.id, nodePosition: TextNodePosition(offset: insertionEvent.offset - 1)),
+          end: DocumentPosition(
+              nodeId: insertionNode.id, nodePosition: TextNodePosition(offset: insertionEvent.offset + 1)),
         ),
       ),
       InsertTextRequest(
         documentPosition: DocumentPosition(
-          nodeId: node.id,
+          nodeId: insertionNode.id,
           nodePosition: TextNodePosition(
-            offset: change.offset - 1,
+            offset: insertionEvent.offset - 1,
           ),
         ),
-        textToInsert: '—',
+        textToInsert: emDash,
         attributions: composer.preferences.currentAttributions,
       ),
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: node.id,
-            nodePosition: TextNodePosition(offset: change.offset),
+            nodeId: insertionNode.id,
+            nodePosition: TextNodePosition(offset: insertionEvent.offset),
           ),
         ),
         SelectionChangeType.placeCaret,
@@ -721,12 +730,60 @@ class DashConversionReaction implements EditReaction {
 }
 
 class EditInspector {
-  /// Whether [edits] ends with the user typing a space, i.e., typing a " " at the end of a node.
-  ///
-  /// Typing a space means that a space was inserted, and the caret moved from
-  /// just before the space, to just after the space.
+  /// Returns `true` if the given [edits] end with the user typing a space anywhere
+  /// within a [TextNode], e.g., typing a " " between two words in a paragraph.
+  static bool didTypeSpace(Document document, List<EditEvent> edits) {
+    if (edits.length < 2) {
+      // This reaction requires at least an insertion event and a selection change event.
+      // There are less than two events in the the change list, therefore this reaction
+      // shouldn't apply. Fizzle.
+      return false;
+    }
+
+    // If the user typed a space, then the last event should be a selection change.
+    final selectionEvent = edits[edits.length - 1];
+    if (selectionEvent is! SelectionChangeEvent) {
+      return false;
+    }
+
+    // If the user typed a space, then the second to last event should be a text
+    // insertion event with a space " ".
+    final edit = edits[edits.length - 2];
+    if (edit is! DocumentEdit) {
+      return false;
+    }
+    final textInsertionEvent = edit.change;
+    if (textInsertionEvent is! TextInsertionEvent) {
+      return false;
+    }
+    if (textInsertionEvent.text.text != " ") {
+      return false;
+    }
+
+    if (selectionEvent.oldSelection == null || selectionEvent.newSelection == null) {
+      return false;
+    }
+
+    if (selectionEvent.newSelection!.extent.nodeId != textInsertionEvent.nodeId) {
+      return false;
+    }
+
+    final editedNode = document.getNodeById(textInsertionEvent.nodeId)!;
+    if (editedNode is! TextNode) {
+      return false;
+    }
+
+    // The inserted text was a space. We assume this means that the user just typed a space.
+    return true;
+  }
+
+  /// Returns `true` if the given [edits] end with the user typing a space at the end of
+  /// a [TextNode], e.g., typing a " " at the end of a paragraph.
   static bool didTypeSpaceAtEndOfNode(Document document, List<EditEvent> edits) {
     if (edits.length < 2) {
+      // This reaction requires at least an insertion event and a selection change event.
+      // There are less than two events in the the change list, therefore this reaction
+      // shouldn't apply. Fizzle.
       return false;
     }
 
@@ -758,8 +815,7 @@ class EditInspector {
     }
 
     final editedNode = document.getNodeById(textInsertionEvent.nodeId)!;
-    // TODO: decide whether this inspection should be just for paragraphs or any text node
-    if (editedNode is! ParagraphNode) {
+    if (editedNode is! TextNode) {
       return false;
     }
 
@@ -771,52 +827,6 @@ class EditInspector {
 
     // The inserted text was a space, and the caret now sits at the end of
     // the edited text. We assume this means that the user just typed a space.
-    return true;
-  }
-
-  /// Whether [edits] ends with the user typing a space, i.e., typing a " ".
-  ///
-  /// Typing a space means that a space was inserted, and the caret moved from
-  /// just before the space, to just after the space.
-  static bool didTypeSpace(Document document, List<EditEvent> edits) {
-    if (edits.length < 2) {
-      return false;
-    }
-
-    // If the user typed a space, then the last event should be a selection change.
-    final selectionEvent = edits[edits.length - 1];
-    if (selectionEvent is! SelectionChangeEvent) {
-      return false;
-    }
-
-    // If the user typed a space, then the second to last event should be a text
-    // insertion event with a space " ".
-    final edit = edits[edits.length - 2];
-    if (edit is! DocumentEdit) {
-      return false;
-    }
-    final textInsertionEvent = edit.change;
-    if (textInsertionEvent is! TextInsertionEvent) {
-      return false;
-    }
-    if (textInsertionEvent.text.text != " ") {
-      return false;
-    }
-
-    if (selectionEvent.oldSelection == null || selectionEvent.newSelection == null) {
-      return false;
-    }
-    if (selectionEvent.newSelection!.extent.nodeId != textInsertionEvent.nodeId) {
-      return false;
-    }
-
-    final editedNode = document.getNodeById(textInsertionEvent.nodeId)!;
-    // TODO: decide whether this inspection should be just for paragraphs or any text node
-    if (editedNode is! ParagraphNode) {
-      return false;
-    }
-
-    // The inserted text was a space. We assume this means that the user just typed a space.
     return true;
   }
 
