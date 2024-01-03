@@ -654,7 +654,7 @@ void main() {
       group("when hovering over editor", () {
         testWidgets("scroll down doesn't scroll the page untill editor's scrollable content is consumed",
             (tester) async {
-          await _pumpSuperEditorWithinScrollable(tester);
+          await tester.pumpWidget(const ScrollingWithinAncestorScrollable());
 
           final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
 
@@ -666,29 +666,26 @@ void main() {
           final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
 
           // Hover to the editor's center.
-          testPointer.hover(tester.getCenter(
-            find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
-          ));
-
-          await tester.sendEventToBinding(
-            testPointer.scroll(
-              // TODO: Investigate failure without reduction here.
-              // Without this reduction from max scroll extent, the page's scrolled otherwise
-              // and next test fails.
-              // Probably side effect of the overscroll on reader which could be scrolling the
-              // page at the end. Need to find out.
-              Offset(0, superEditorScrollable.position.maxScrollExtent - 75),
+          testPointer.hover(
+            tester.getCenter(
+              find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
             ),
           );
 
-          // Ensure parent scrollable isn't scrolled.
-          expect(pageScrollable.position.pixels, 0);
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              Offset(0, superEditorScrollable.position.maxScrollExtent),
+            ),
+          );
 
-          // Ensure editor's is scrolled.
+          // Ensure editor's is scrolled to the bottom.
           expect(
             superEditorScrollable.position.pixels,
             superEditorScrollable.position.maxScrollExtent,
           );
+
+          // Ensure page isn't scrolled.
+          expect(pageScrollable.position.pixels, 0);
 
           // Scroll down within the page.
           await tester.sendEventToBinding(
@@ -704,7 +701,7 @@ void main() {
         testWidgets(
           "scroll up doesn't scroll the page untill editor's scrollable content is consumed",
           (tester) async {
-            await _pumpSuperEditorWithinScrollable(tester);
+            await tester.pumpWidget(const ScrollingWithinAncestorScrollable());
 
             final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
 
@@ -718,22 +715,8 @@ void main() {
 
             final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
 
-            testPointer.hover(
-              Offset.zero,
-            );
-
-            // Scroll down a little to introduce scrollable content we can scroll back to within
-            // the page.
-            await tester.sendEventToBinding(
-              testPointer.scroll(
-                const Offset(0, 100),
-              ),
-            );
-
-            // TODO: Investigate why the above scroll is causing scroll on page of more
-            // than 100 pixels.
-            // Ensure page isn't scrolled any further than initial page scroll.
-            expect(pageScrollable.position.pixels, 100);
+            // Scroll an arbitrary amount in the page before we attempt to scroll the editor.
+            pageScrollable.position.jumpTo(100);
 
             // Hover to the editor's center.
             testPointer.hover(
@@ -772,6 +755,54 @@ void main() {
       });
     });
   });
+}
+
+/// Creates a [SuperReader] experience within an ancestor scrollable
+/// with scrollable editor content.
+class ScrollingWithinAncestorScrollable extends StatelessWidget {
+  const ScrollingWithinAncestorScrollable({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Builder(builder: (context) {
+          return ListView(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                width: double.infinity,
+                child: const Placeholder(
+                  child: Center(
+                    child: Text("Content"),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 350,
+                child: ListView(
+                  children: [
+                    SuperReader(
+                      document: longTextDoc(),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height,
+                width: double.infinity,
+                child: const Placeholder(
+                  child: Center(
+                    child: Text("Content"),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
 }
 
 /// Creates a [SuperEditor] experience within an ancestor scrollable
