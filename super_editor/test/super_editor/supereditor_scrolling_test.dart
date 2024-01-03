@@ -1148,20 +1148,21 @@ void main() {
             find.ancestor(of: find.byType(SuperEditor), matching: find.byType(Scrollable)).first,
           ));
 
+          // Scroll to the editor's bottom.
           await tester.sendEventToBinding(
             testPointer.scroll(
               Offset(0, superEditorScrollable.position.maxScrollExtent),
             ),
           );
 
-          // Ensure parent scrollable isn't scrolled.
-          expect(pageScrollable.position.pixels, 0);
-
           // Ensure editor's is scrolled.
           expect(
             superEditorScrollable.position.pixels,
             greaterThan(0),
           );
+
+          // Ensure parent scrollable isn't scrolled.
+          expect(pageScrollable.position.pixels, 0);
 
           // Scroll down within the page.
           await tester.sendEventToBinding(
@@ -1189,17 +1190,8 @@ void main() {
 
           final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
 
-          testPointer.hover(
-            Offset.zero,
-          );
-
-          // Scroll down a little to introduce scrollable content we can scroll back to within
-          // the page.
-          await tester.sendEventToBinding(
-            testPointer.scroll(
-              const Offset(0, 100),
-            ),
-          );
+          // Scroll an arbitrary amount in the page before we attempt to scroll the editor.
+          pageScrollable.position.jumpTo(100);
 
           // Hover to the editor's center.
           testPointer.hover(
