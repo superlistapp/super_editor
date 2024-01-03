@@ -805,50 +805,6 @@ class _FixedHeightEditorWithinAncestorScrollable extends StatelessWidget {
   }
 }
 
-/// Creates a [SuperEditor] experience within an ancestor scrollable
-/// with scrollable editor content.
-Future<void> _pumpSuperEditorWithinScrollable(WidgetTester tester) async {
-  return;
-  await tester.createDocument().withLongTextContent().withCustomWidgetTreeBuilder((superReader) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Builder(builder: (context) {
-          return ListView(
-            children: [
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.5,
-                width: double.infinity,
-                child: const Placeholder(
-                  child: Center(
-                    child: Text("Content"),
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 350,
-                child: ListView(
-                  children: [
-                    superReader,
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height,
-                width: double.infinity,
-                child: const Placeholder(
-                  child: Center(
-                    child: Text("Content"),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }),
-      ),
-    );
-  }).pump();
-}
-
 final _scrollDirectionVariant = ValueVariant<_ScrollDirection>({
   _ScrollDirection.up,
   _ScrollDirection.down,
