@@ -403,41 +403,35 @@ class SuperEditorInspector {
   /// {@macro supereditor_finder}
   static bool isCaretVisible([Finder? superEditorFinder]) {
     if (defaultTargetPlatform == TargetPlatform.android) {
-      final element = find
-          .descendant(
-            of: (superEditorFinder ?? find.byType(SuperEditor)),
-            matching: find.byType(AndroidHandlesDocumentLayer),
-          )
-          .evaluate()
-          .single as StatefulElement;
-
-      final androidCaretLayerState = element.state as AndroidControlsDocumentLayerState;
+      final androidCaretLayerState = _findAndroidControlsLayer(superEditorFinder);
       return androidCaretLayerState.isCaretVisible;
     }
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      final element = find
-          .descendant(
-            of: (superEditorFinder ?? find.byType(SuperEditor)),
-            matching: find.byType(IosHandlesDocumentLayer),
-          )
-          .evaluate()
-          .single as StatefulElement;
-
-      final iOSCaretLayer = element.state as IosControlsDocumentLayerState;
+      final iOSCaretLayer = _findIosControlsLayer(superEditorFinder);
       return iOSCaretLayer.isCaretVisible;
     }
 
-    final element = find
-        .descendant(
-          of: (superEditorFinder ?? find.byType(SuperEditor)),
-          matching: find.byType(CaretDocumentOverlay),
-        )
-        .evaluate()
-        .single as StatefulElement;
-
-    final desktopCaretLayer = element.state as CaretDocumentOverlayState;
+    final desktopCaretLayer = _findDesktopCaretOverlay(superEditorFinder);
     return desktopCaretLayer.isCaretVisible;
+  }
+
+  /// Returns the [Duration] to switch the caret between visible and invisible.
+  ///
+  /// {@macro supereditor_finder}
+  static Duration caretFlashPeriod([Finder? superEditorFinder]) {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final androidCaretLayerState = _findAndroidControlsLayer(superEditorFinder);
+      return androidCaretLayerState.caretFlashPeriod;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final iOSCaretLayer = _findIosControlsLayer(superEditorFinder);
+      return iOSCaretLayer.caretFlashPeriod;
+    }
+
+    final desktopCaretLayer = _findDesktopCaretOverlay(superEditorFinder);
+    return desktopCaretLayer.caretFlashPeriod;
   }
 
   static Finder findMobileCaretDragHandle([Finder? superEditorFinder]) {
@@ -493,6 +487,42 @@ class SuperEditorInspector {
       case TargetPlatform.fuchsia:
         return FindsNothing();
     }
+  }
+
+  static AndroidControlsDocumentLayerState _findAndroidControlsLayer([Finder? superEditorFinder]) {
+    final element = find
+        .descendant(
+          of: (superEditorFinder ?? find.byType(SuperEditor)),
+          matching: find.byType(AndroidHandlesDocumentLayer),
+        )
+        .evaluate()
+        .single as StatefulElement;
+
+    return element.state as AndroidControlsDocumentLayerState;
+  }
+
+  static IosControlsDocumentLayerState _findIosControlsLayer([Finder? superEditorFinder]) {
+    final element = find
+        .descendant(
+          of: (superEditorFinder ?? find.byType(SuperEditor)),
+          matching: find.byType(IosHandlesDocumentLayer),
+        )
+        .evaluate()
+        .single as StatefulElement;
+
+    return element.state as IosControlsDocumentLayerState;
+  }
+
+  static CaretDocumentOverlayState _findDesktopCaretOverlay([Finder? superEditorFinder]) {
+    final element = find
+        .descendant(
+          of: (superEditorFinder ?? find.byType(SuperEditor)),
+          matching: find.byType(CaretDocumentOverlay),
+        )
+        .evaluate()
+        .single as StatefulElement;
+
+    return element.state as CaretDocumentOverlayState;
   }
 
   SuperEditorInspector._();

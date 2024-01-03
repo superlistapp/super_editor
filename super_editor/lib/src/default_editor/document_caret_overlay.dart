@@ -57,6 +57,9 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
   @visibleForTesting
   bool get isCaretVisible => _blinkController.opacity == 1.0;
 
+  @visibleForTesting
+  Duration get caretFlashPeriod => _blinkController.flashPeriod;
+
   @override
   void initState() {
     super.initState();

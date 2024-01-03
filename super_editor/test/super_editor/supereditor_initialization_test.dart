@@ -10,13 +10,10 @@ import 'supereditor_test_tools.dart';
 
 void main() {
   group('SuperEditor > initialization >', () {
-    testWidgetsOnAllPlatforms('blinks caret when autofocus is true', (tester) async {
+    testWidgetsOnAllPlatforms('immediately shows and blinks the caret when autofocus is true', (tester) async {
       // Configure BlinkController to animate, otherwise it won't blink.
       BlinkController.indeterminateAnimationsEnabled = true;
       addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
-
-      // Duration to switch between visible and invisible.
-      const flashPeriod = Duration(milliseconds: 500);
 
       await tester //
           .createDocument()
@@ -34,6 +31,9 @@ void main() {
 
       // Ensure caret is visible at start.
       expect(SuperEditorInspector.isCaretVisible(), true);
+
+      // Duration to switch between visible and invisible.
+      final flashPeriod = SuperEditorInspector.caretFlashPeriod();
 
       // Trigger a frame with an ellapsed time equal to the flashPeriod,
       // so the caret should change from visible to invisible.

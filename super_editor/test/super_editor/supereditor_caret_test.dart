@@ -328,13 +328,10 @@ void main() {
       });
     });
 
-    testWidgetsOnAllPlatforms('blinks caret when focused by tap', (tester) async {
+    testWidgetsOnAllPlatforms('blinks the caret when the user places the caret with a single tap', (tester) async {
       // Configure BlinkController to animate, otherwise it won't blink.
       BlinkController.indeterminateAnimationsEnabled = true;
       addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
-
-      // Duration to switch between visible and invisible.
-      const flashPeriod = Duration(milliseconds: 500);
 
       await tester //
           .createDocument()
@@ -350,6 +347,9 @@ void main() {
 
       // Ensure caret is visible.
       expect(SuperEditorInspector.isCaretVisible(), true);
+
+      // Duration to switch between visible and invisible.
+      final flashPeriod = SuperEditorInspector.caretFlashPeriod();
 
       // Trigger a frame with an ellapsed time equal to the flashPeriod,
       // so the caret should change from visible to invisible.

@@ -616,6 +616,9 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   bool get isCaretVisible => _caretBlinkController.opacity == 1.0;
 
   @visibleForTesting
+  Duration get caretFlashPeriod => _caretBlinkController.flashPeriod;
+
+  @visibleForTesting
   bool get isUpstreamHandleDisplayed => layoutData?.upstream != null;
 
   @visibleForTesting
