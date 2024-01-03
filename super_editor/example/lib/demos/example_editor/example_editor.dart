@@ -488,7 +488,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         );
 
         _docEditor.execute([
-          ChangeComponentStylesRequest(
+          ChangeSingleColumnLayoutComponentStylesRequest(
             nodeId: nodeId,
             styles: newStyles,
           )

@@ -838,7 +838,7 @@ class _ImageFormatToolbarState extends State<ImageFormatToolbar> {
                   onPressed: _makeImageConfined,
                   icon: const Icon(Icons.photo_size_select_large),
                   splashRadius: 16,
-                  tooltip: 'Limited width',
+                  tooltip: AppLocalizations.of(context)!.labelLimitedWidth,
                 ),
               ),
               Center(
@@ -846,7 +846,7 @@ class _ImageFormatToolbarState extends State<ImageFormatToolbar> {
                   onPressed: _makeImageFullBleed,
                   icon: const Icon(Icons.photo_size_select_actual),
                   splashRadius: 16,
-                  tooltip: 'Full width',
+                  tooltip: AppLocalizations.of(context)!.labelFullWidth,
                 ),
               ),
             ],

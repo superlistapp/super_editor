@@ -194,8 +194,8 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (request) => request is RemoveTextAttributionsRequest
       ? RemoveTextAttributionsCommand(documentRange: request.documentRange, attributions: request.attributions)
       : null,
-  (request) => request is ChangeComponentStylesRequest
-      ? ChangeComponentStylesCommand(nodeId: request.nodeId, styles: request.styles) //
+  (request) => request is ChangeSingleColumnLayoutComponentStylesRequest
+      ? ChangeSingleColumnLayoutComponentStylesCommand(nodeId: request.nodeId, styles: request.styles) //
       : null,
   (request) => request is ConvertTextNodeToParagraphRequest
       ? ConvertTextNodeToParagraphCommand(nodeId: request.nodeId, newMetadata: request.newMetadata)

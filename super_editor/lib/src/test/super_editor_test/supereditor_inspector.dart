@@ -104,6 +104,27 @@ class SuperEditorInspector {
     return alignment.withinRect(rect);
   }
 
+  /// Returns the size of the component which renders the node with the given [nodeId].
+  ///
+  /// {@macro supereditor_finder}
+  static Size findComponentSize(String nodeId, [Finder? finder]) {
+    final documentLayout = _findDocumentLayout(finder);
+    final component = documentLayout.getComponentByNodeId(nodeId);
+    assert(component != null);
+    final componentBox = component!.context.findRenderObject() as RenderBox;
+    return componentBox.size;
+  }
+
+  /// Returns the (x,y) offset for a caret, if that caret appeared at the given [position].
+  ///
+  /// {@macro supereditor_finder}
+  static Offset calculateOffsetForCaret(DocumentPosition position, [Finder? finder]) {
+    final documentLayout = _findDocumentLayout(finder);
+    final positionRect = documentLayout.getRectForPosition(position);
+    assert(positionRect != null);
+    return positionRect!.topLeft;
+  }
+
   /// Returns `true` if the entire content rectangle at [position] is visible on
   /// screen, or `false` otherwise.
   ///
