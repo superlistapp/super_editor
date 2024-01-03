@@ -67,7 +67,7 @@ class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
-    ParagraphNode paragraph,
+    TextNode paragraph,
     String match,
   ) {
     final prefixLength = match.length - 1; // -1 for the space on the end
@@ -130,7 +130,7 @@ class UnorderedListItemConversionReaction extends ParagraphPrefixConversionReact
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
-    ParagraphNode paragraph,
+    TextNode paragraph,
     String match,
   ) {
     // The user started a paragraph with an unordered list item pattern.
@@ -172,7 +172,7 @@ class OrderedListItemConversionReaction extends ParagraphPrefixConversionReactio
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
-    ParagraphNode paragraph,
+    TextNode paragraph,
     String match,
   ) {
     // The user started a paragraph with an ordered list item pattern.
@@ -214,7 +214,7 @@ class BlockquoteConversionReaction extends ParagraphPrefixConversionReaction {
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
-    ParagraphNode paragraph,
+    TextNode paragraph,
     String match,
   ) {
     // The user started a paragraph with blockquote pattern.
@@ -269,7 +269,7 @@ class HorizontalRuleConversionReaction implements EditReaction {
 
     final edit = changeList[changeList.length - 2] as DocumentEdit;
     final textInsertionEvent = edit.change as TextInsertionEvent;
-    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
+    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as TextNode;
     final match = _hrPattern.firstMatch(paragraph.text.text)?.group(0);
     if (match == null) {
       return;
@@ -334,7 +334,7 @@ abstract class ParagraphPrefixConversionReaction implements EditReaction {
 
     final edit = changeList[changeList.length - 2] as DocumentEdit;
     final textInsertionEvent = edit.change as TextInsertionEvent;
-    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
+    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as TextNode;
     final match = pattern.firstMatch(paragraph.text.text)?.group(0);
     if (match == null) {
       return;
@@ -352,7 +352,7 @@ abstract class ParagraphPrefixConversionReaction implements EditReaction {
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
-    ParagraphNode paragraph,
+    TextNode paragraph,
     String match,
   );
 }
