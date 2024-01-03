@@ -1130,7 +1130,7 @@ void main() {
       });
 
       group("when hovering over editor", () {
-        testWidgets("scroll down doesn't scroll the page untill editor's scrollable content is consumed",
+        testWidgets("scroll down scrolls ancestor scrollable after editor's scrollable content is consumed",
             (tester) async {
           await _pumpSuperEditorWithinScrollable(tester);
 
@@ -1172,10 +1172,11 @@ void main() {
           );
 
           // Ensure page is scrolled.
-          expect(pageScrollable.position.pixels, greaterThan(0));
+          expect(pageScrollable.position.pixels, 200);
         });
 
-        testWidgets("scroll up doesn't scroll the page untill editor's scrollable content is consumed", (tester) async {
+        testWidgets("scroll up scrolls ancestor scrollable after editor's scrollable content is consumed",
+            (tester) async {
           await _pumpSuperEditorWithinScrollable(tester);
 
           final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
