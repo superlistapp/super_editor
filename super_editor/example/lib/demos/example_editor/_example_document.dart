@@ -7,7 +7,9 @@ MutableDocument createInitialDocument() {
       ImageNode(
         id: "1",
         imageUrl: 'https://i.ibb.co/5nvRdx1/flutter-horizon.png',
-        height: 422,
+        expectedBitmapSize: ExpectedSize(
+          height: 422,
+        ),
         metadata: const SingleColumnLayoutComponentStyles(
           width: double.infinity,
           padding: EdgeInsets.zero,

@@ -11,14 +11,12 @@ class ImageNode extends BlockNode with ChangeNotifier {
   ImageNode({
     required this.id,
     required String imageUrl,
-    double? width,
-    double? height,
+    ExpectedSize? expectedBitmapSize,
     String altText = '',
     Map<String, dynamic>? metadata,
   })  : _imageUrl = imageUrl,
-        _altText = altText,
-        _width = width,
-        _height = height {
+        _expectedBitmapSize = expectedBitmapSize,
+        _altText = altText {
     this.metadata = metadata;
 
     putMetadataValue("blockType", const NamedAttribution("image"));
@@ -36,6 +34,22 @@ class ImageNode extends BlockNode with ChangeNotifier {
     }
   }
 
+  /// The expected size of the image.
+  ///
+  /// Used to size the component while the image is still being loaded,
+  /// so the content don't shift after the image is loaded.
+  ExpectedSize? get expectedBitmapSize => _expectedBitmapSize;
+  ExpectedSize? _expectedBitmapSize;
+  set expectedBitmapSize(ExpectedSize? expectedSize) {
+    if (expectedSize == _expectedBitmapSize) {
+      return;
+    }
+
+    _expectedBitmapSize = expectedSize;
+
+    notifyListeners();
+  }
+
   String _altText;
   String get altText => _altText;
   set altText(String newAltText) {
@@ -43,28 +57,6 @@ class ImageNode extends BlockNode with ChangeNotifier {
       _altText = newAltText;
       notifyListeners();
     }
-  }
-
-  double? _width;
-  double? get width => _width;
-  set width(double? newWidth) {
-    if (newWidth == _width) {
-      return;
-    }
-
-    _width = newWidth;
-    notifyListeners();
-  }
-
-  double? _height;
-  double? get height => _height;
-  set height(double? newHeight) {
-    if (newHeight == _height) {
-      return;
-    }
-
-    _height = newHeight;
-    notifyListeners();
   }
 
   @override
@@ -80,8 +72,7 @@ class ImageNode extends BlockNode with ChangeNotifier {
   bool hasEquivalentContent(DocumentNode other) {
     return other is ImageNode &&
         imageUrl == other.imageUrl &&
-        width == other.width &&
-        height == other.height &&
+        expectedBitmapSize == other.expectedBitmapSize &&
         altText == other.altText;
   }
 
@@ -92,12 +83,11 @@ class ImageNode extends BlockNode with ChangeNotifier {
           runtimeType == other.runtimeType &&
           id == other.id &&
           _imageUrl == other._imageUrl &&
-          _width == other.width &&
-          _height == other.height &&
+          _expectedBitmapSize == other.expectedBitmapSize &&
           _altText == other._altText;
 
   @override
-  int get hashCode => id.hashCode ^ _imageUrl.hashCode ^ _altText.hashCode ^ _width.hashCode ^ _height.hashCode;
+  int get hashCode => id.hashCode ^ _imageUrl.hashCode ^ _altText.hashCode ^ _expectedBitmapSize.hashCode;
 }
 
 class ImageComponentBuilder implements ComponentBuilder {
@@ -112,8 +102,8 @@ class ImageComponentBuilder implements ComponentBuilder {
     return ImageComponentViewModel(
       nodeId: node.id,
       imageUrl: node.imageUrl,
-      width: node.width,
-      height: node.height,
+      width: node.expectedBitmapSize?.width?.toDouble(),
+      height: node.expectedBitmapSize?.height?.toDouble(),
       selectionColor: const Color(0x00000000),
     );
   }
@@ -245,4 +235,26 @@ class ImageComponent extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A size with optional [width] and [height].
+class ExpectedSize {
+  ExpectedSize({
+    this.height,
+    this.width,
+  });
+
+  final int? width;
+  final int? height;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ExpectedSize && //
+          runtimeType == other.runtimeType &&
+          width == other.width &&
+          height == other.height;
+
+  @override
+  int get hashCode => width.hashCode ^ height.hashCode;
 }

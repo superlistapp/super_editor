@@ -300,8 +300,12 @@ class _MarkdownToDocument implements md.NodeVisitor {
         id: Editor.createNodeId(),
         imageUrl: imageUrl,
         altText: altText,
-        width: width != null ? double.tryParse(width) : null,
-        height: height != null ? double.tryParse(height) : null,
+        expectedBitmapSize: width != null || height != null
+            ? ExpectedSize(
+                width: width != null ? int.tryParse(width) : null,
+                height: height != null ? int.tryParse(height) : null,
+              )
+            : null,
       ),
     );
   }

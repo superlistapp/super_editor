@@ -1,4 +1,5 @@
 import 'package:markdown/markdown.dart' as md;
+import 'package:super_editor/super_editor.dart';
 
 /// Matches images like `![alternate text](url optional_size "optional title")` and
 /// `![alternate text][label]`.
@@ -86,7 +87,7 @@ class SuperEditorImageSyntax extends md.LinkSyntax {
   /// Parses a size using the notation `=widthxheight`.
   ///
   /// Returns `null` if the size notation isn't provided.
-  PreferredSize? _tryParseImageSize(md.InlineParser parser) {
+  ExpectedSize? _tryParseImageSize(md.InlineParser parser) {
     if (parser.charAt(parser.pos) != AsciiTable.equal) {
       // The image size should start with a "=" but the input doesn't. Fizzle.
       return null;
@@ -110,7 +111,7 @@ class SuperEditorImageSyntax extends md.LinkSyntax {
     // Parse an optional height.
     final height = _tryParseNumber(parser);
 
-    return PreferredSize(width: width?.toDouble(), height: height?.toDouble());
+    return ExpectedSize(width: width, height: height);
   }
 
   /// Tries to parse an integer number.
@@ -311,7 +312,7 @@ class SuperEditorImageSyntax extends md.LinkSyntax {
   MarkdownImage? _parseInlineBracketedLink(md.InlineParser parser) {
     parser.advanceBy(1);
 
-    PreferredSize? imageSize;
+    ExpectedSize? imageSize;
 
     var buffer = StringBuffer();
     while (true) {
@@ -398,7 +399,7 @@ class SuperEditorImageSyntax extends md.LinkSyntax {
     var parenCount = 1;
     final buffer = StringBuffer();
 
-    PreferredSize? imageSize;
+    ExpectedSize? imageSize;
 
     while (true) {
       final char = parser.charAt(parser.pos);
@@ -481,7 +482,7 @@ class SuperEditorImageSyntax extends md.LinkSyntax {
   md.Element createNode(
     String destination,
     String? title, {
-    PreferredSize? size,
+    ExpectedSize? size,
     required List<md.Node> Function() getChildren,
   }) {
     final element = md.Element.empty('img');
@@ -721,17 +722,6 @@ class AsciiTable {
   static const int tilde = 0x7E;
 }
 
-/// A size with optional [width] and [height].
-class PreferredSize {
-  PreferredSize({
-    required this.width,
-    required this.height,
-  });
-
-  final double? width;
-  final double? height;
-}
-
 /// A parsed image notation.
 class MarkdownImage extends md.InlineLink {
   MarkdownImage(
@@ -740,5 +730,5 @@ class MarkdownImage extends md.InlineLink {
     this.size,
   }) : super(destination, title: title);
 
-  final PreferredSize? size;
+  final ExpectedSize? size;
 }

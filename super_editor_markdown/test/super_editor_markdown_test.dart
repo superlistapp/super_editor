@@ -459,8 +459,7 @@ Paragraph3""");
             id: '1',
             imageUrl: 'https://someimage.com/the/image.png',
             altText: 'some alt text',
-            width: 500.0,
-            height: 400.0,
+            expectedBitmapSize: ExpectedSize(width: 500, height: 400),
           ),
         ]);
 
@@ -473,7 +472,7 @@ Paragraph3""");
             id: '1',
             imageUrl: 'https://someimage.com/the/image.png',
             altText: 'some alt text',
-            width: 300.0,
+            expectedBitmapSize: ExpectedSize(width: 300),
           ),
         ]);
 
@@ -486,7 +485,7 @@ Paragraph3""");
             id: '1',
             imageUrl: 'https://someimage.com/the/image.png',
             altText: 'some alt text',
-            height: 200.0,
+            expectedBitmapSize: ExpectedSize(width: 1000, height: 200),
           ),
         ]);
 
@@ -849,8 +848,7 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.width, isNull);
-        expect(image.height, isNull);
+        expect(image.expectedBitmapSize, isNull);
       });
 
       test('image with size', () {
@@ -860,8 +858,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.width, 500.0);
-        expect(image.height, 200.0);
+        expect(image.expectedBitmapSize?.width, 500.0);
+        expect(image.expectedBitmapSize?.height, 200.0);
       });
 
       test('image with size and title', () {
@@ -871,8 +869,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.width, 500.0);
-        expect(image.height, 200.0);
+        expect(image.expectedBitmapSize?.width, 500.0);
+        expect(image.expectedBitmapSize?.height, 200.0);
       });
 
       test('image with width', () {
@@ -882,8 +880,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.width, 500.0);
-        expect(image.height, isNull);
+        expect(image.expectedBitmapSize?.width, 500.0);
+        expect(image.expectedBitmapSize?.height, isNull);
       });
 
       test('image with height', () {
@@ -893,8 +891,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.width, isNull);
-        expect(image.height, 200.0);
+        expect(image.expectedBitmapSize?.width, isNull);
+        expect(image.expectedBitmapSize?.height, 200.0);
       });
 
       test('image with size notation without width and height', () {
@@ -903,8 +901,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.width, isNull);
-        expect(image.height, isNull);
+        expect(image.expectedBitmapSize?.width, isNull);
+        expect(image.expectedBitmapSize?.height, isNull);
       });
 
       test('image with incomplete size notation', () {
@@ -913,8 +911,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.width, isNull);
-        expect(image.height, isNull);
+        expect(image.expectedBitmapSize?.width, isNull);
+        expect(image.expectedBitmapSize?.height, isNull);
       });
 
       test('single unstyled paragraph', () {

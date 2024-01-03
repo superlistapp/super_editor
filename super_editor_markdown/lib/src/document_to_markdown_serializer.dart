@@ -88,7 +88,7 @@ class ImageNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<ImageN
 
   @override
   String doSerialization(Document document, ImageNode node) {
-    if (!useSizeNotation || (node.width == null && node.height == null)) {
+    if (!useSizeNotation || (node.expectedBitmapSize?.width == null && node.expectedBitmapSize?.height == null)) {
       // We don't want to use size notation or the image doesn't have
       // size information. Use the regular syntax.
       return '![${node.altText}](${node.imageUrl})';
@@ -97,14 +97,14 @@ class ImageNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<ImageN
     StringBuffer sizeNotation = StringBuffer();
     sizeNotation.write(' =');
 
-    if (node.width != null) {
-      sizeNotation.write(node.width!.toInt());
+    if (node.expectedBitmapSize?.width != null) {
+      sizeNotation.write(node.expectedBitmapSize!.width!.toInt());
     }
 
     sizeNotation.write('x');
 
-    if (node.height != null) {
-      sizeNotation.write(node.height!.toInt());
+    if (node.expectedBitmapSize?.height != null) {
+      sizeNotation.write(node.expectedBitmapSize!.height!.toInt());
     }
 
     return '![${node.altText}](${node.imageUrl}${sizeNotation.toString()})';
