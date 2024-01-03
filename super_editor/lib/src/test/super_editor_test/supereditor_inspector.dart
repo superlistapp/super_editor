@@ -104,16 +104,6 @@ class SuperEditorInspector {
     return alignment.withinRect(rect);
   }
 
-  /// Returns the (x,y) offset for a caret, if that caret appeared at the given [position].
-  ///
-  /// {@macro supereditor_finder}
-  static Offset calculateOffsetForCaret(DocumentPosition position, [Finder? finder]) {
-    final documentLayout = findDocumentLayout(finder);
-    final positionRect = documentLayout.getRectForPosition(position);
-    assert(positionRect != null);
-    return positionRect!.topLeft;
-  }
-
   /// Returns `true` if the entire content rectangle at [position] is visible on
   /// screen, or `false` otherwise.
   ///
