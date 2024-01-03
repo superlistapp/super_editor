@@ -116,7 +116,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
         _addHeader(element, level: 6);
         break;
       case 'p':
-        final inlineVisitor = _parseInline(element);
+        final inlineVisitor = _parseInline(element.textContent);
 
         if (inlineVisitor.isImage) {
           _addImage(
@@ -155,7 +155,19 @@ class _MarkdownToDocument implements md.NodeVisitor {
           listItemType: _listItemTypeStack.last,
           indent: _listItemTypeStack.length - 1,
         );
-        break;
+
+        if (element.children == null) {
+          // There isn't any children to visit.
+          return false;
+        }
+
+        // A list item might contain a "p" tag child if it's separated
+        // by a blank line. Only visit its children if it contains a child list.
+        return element.children!.any(
+          (child) =>
+              child is md.Element && //
+              const ['ol', 'ul'].contains(child.tag),
+        );
       case 'hr':
         _addHorizontalRule();
         break;
@@ -210,7 +222,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
     _content.add(
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: _parseInlineText(element),
+        text: _parseInlineText(element.textContent),
         metadata: {
           'blockType': headerAttribution,
           'textAlign': textAlign,
@@ -237,7 +249,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
     _content.add(
       ParagraphNode(
         id: Editor.createNodeId(),
-        text: _parseInlineText(element),
+        text: _parseInlineText(element.textContent),
         metadata: {
           'blockType': blockquoteAttribution,
         },
@@ -291,12 +303,24 @@ class _MarkdownToDocument implements md.NodeVisitor {
     required ListItemType listItemType,
     required int indent,
   }) {
+    late String content;
+
+    if (element.children != null && element.children!.first is md.UnparsedContent) {
+      // The list item might contain another sub-list. In that case, the textContent
+      // contains the text for the whole list instead of just the current list item.
+      // Use the textContent for the first child, which contains only the text
+      // of the current list item.
+      content = element.children!.first.textContent;
+    } else {
+      content = element.textContent;
+    }
+
     _content.add(
       ListItemNode(
         id: Editor.createNodeId(),
         itemType: listItemType,
         indent: indent,
-        text: _parseInlineText(element),
+        text: _parseInlineText(content),
       ),
     );
   }
@@ -305,20 +329,20 @@ class _MarkdownToDocument implements md.NodeVisitor {
     _content.add(
       TaskNode(
         id: Editor.createNodeId(),
-        text: _parseInlineText(element),
+        text: _parseInlineText(element.textContent),
         isComplete: element.attributes['completed'] == 'true',
       ),
     );
   }
 
-  AttributedText _parseInlineText(md.Element element) {
-    final inlineVisitor = _parseInline(element);
+  AttributedText _parseInlineText(String text) {
+    final inlineVisitor = _parseInline(text);
     return inlineVisitor.attributedText;
   }
 
-  _InlineMarkdownToDocument _parseInline(md.Element element) {
+  _InlineMarkdownToDocument _parseInline(String text) {
     final inlineParser = md.InlineParser(
-      element.textContent,
+      text,
       md.Document(
         inlineSyntaxes: [
           md.StrikethroughSyntax(),
