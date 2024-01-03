@@ -23,6 +23,15 @@ void main() {
         lessThan(1000.0),
       );
 
+      // Ensure the component started with some padding.
+      final paddingBefore = tester.widget<Padding>(find
+          .ancestor(
+            of: find.byWidget(SuperEditorInspector.findWidgetForComponent('1')),
+            matching: find.byType(Padding),
+          )
+          .first);
+      expect(paddingBefore.padding.horizontal, greaterThan(0.0));
+
       // Changes the styles.
       context.editor.execute(
         const [
@@ -39,6 +48,15 @@ void main() {
 
       // Ensure the component took all available width.
       expect(SuperEditorInspector.findComponentSize('1').width, 1000.0);
+
+      // Ensure the padding was removed.
+      final paddingAfter = tester.widget<Padding>(find
+          .ancestor(
+            of: find.byWidget(SuperEditorInspector.findWidgetForComponent('1')),
+            matching: find.byType(Padding),
+          )
+          .first);
+      expect(paddingAfter.padding.horizontal, 0.0);
     });
   });
 }

@@ -1364,7 +1364,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
   }
 }
 
-/// Changes layout styles, like padding and width, of a [DocumentNode].
+/// Changes layout styles, like padding and width, of a component within a [SingleColumnDocumentLayout].
 class ChangeSingleColumnLayoutComponentStylesRequest implements EditRequest {
   const ChangeSingleColumnLayoutComponentStylesRequest({
     required this.nodeId,
