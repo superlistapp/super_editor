@@ -654,7 +654,7 @@ void main() {
       group("when hovering over reader", () {
         testWidgets("scroll down scrolls ancestor scrollable after reader's scrollable content is consumed",
             (tester) async {
-          await tester.pumpWidget(const ScrollingWithinAncestorScrollable());
+          await tester.pumpWidget(const _FixedHeightEditorWithinAncestorScrollable());
 
           final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
 
@@ -701,7 +701,7 @@ void main() {
         testWidgets(
           "scroll up scrolls ancestor scrollable after reader's scrollable content is consumed",
           (tester) async {
-            await tester.pumpWidget(const ScrollingWithinAncestorScrollable());
+            await tester.pumpWidget(const _FixedHeightEditorWithinAncestorScrollable());
 
             final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
 
@@ -757,10 +757,10 @@ void main() {
   });
 }
 
-/// Creates a [SuperReader] experience within an ancestor scrollable
-/// with scrollable editor content.
-class ScrollingWithinAncestorScrollable extends StatelessWidget {
-  const ScrollingWithinAncestorScrollable({super.key});
+/// Creates a [SuperReader] experience with reader having a fixed height with
+/// scrollable content and is present within an ancestor scrollable.
+class _FixedHeightEditorWithinAncestorScrollable extends StatelessWidget {
+  const _FixedHeightEditorWithinAncestorScrollable({super.key});
 
   @override
   Widget build(BuildContext context) {
