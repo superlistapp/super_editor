@@ -1191,7 +1191,8 @@ void main() {
 
           final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
 
-          // Scroll an arbitrary amount in the page before we attempt to scroll the editor.
+          // Scroll an arbitrary amount in the page. This is to test scrolling up
+          // in page at the end.
           pageScrollable.position.jumpTo(100);
 
           // Hover to the editor's center.

@@ -143,7 +143,7 @@ void main() {
       final firstParagraph = document.nodes.first as ParagraphNode;
       final lastParagraph = document.nodes.last as ParagraphNode;
 
-      // Place the caret at the end of the document, which causes the editor to
+      // Place the caret at the end of the document, which causes the reader to
       // scroll to the bottom.
       testDocContext.documentContext.selection.value = DocumentSelection.collapsed(
         position: DocumentPosition(
@@ -198,7 +198,7 @@ void main() {
       final lastParagraph = document.nodes.last as ParagraphNode;
 
       // Place the caret at the end of the document, which should cause the
-      // editor to scroll to the bottom.
+      // reader to scroll to the bottom.
       docContext.documentContext.selection.value = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: lastParagraph.id,
@@ -659,7 +659,7 @@ void main() {
           final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
 
           // Find reader's direct ancestor scrollable
-          final superEditorScrollable = tester.state<ScrollableState>(
+          final superReaderScrollable = tester.state<ScrollableState>(
             find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
           );
 
@@ -674,14 +674,14 @@ void main() {
 
           await tester.sendEventToBinding(
             testPointer.scroll(
-              Offset(0, superEditorScrollable.position.maxScrollExtent),
+              Offset(0, superReaderScrollable.position.maxScrollExtent),
             ),
           );
 
           // Ensure reader's is scrolled to the bottom.
           expect(
-            superEditorScrollable.position.pixels,
-            superEditorScrollable.position.maxScrollExtent,
+            superReaderScrollable.position.pixels,
+            superReaderScrollable.position.maxScrollExtent,
           );
 
           // Ensure page isn't scrolled.
@@ -706,16 +706,17 @@ void main() {
             final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
 
             // Find reader's direct ancestor scrollable.
-            final superEditorScrollable = tester.state<ScrollableState>(
+            final superReaderScrollable = tester.state<ScrollableState>(
               find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
             );
 
-            // Scroll the editor all the way to the bottom.
-            superEditorScrollable.position.jumpTo(superEditorScrollable.position.maxScrollExtent);
+            // Scroll the reader all the way to the bottom.
+            superReaderScrollable.position.jumpTo(superReaderScrollable.position.maxScrollExtent);
 
             final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
 
-            // Scroll an arbitrary amount in the page before we attempt to scroll the editor.
+            // Scroll an arbitrary amount in the page. This is to test scrolling up
+            // in page at the end.
             pageScrollable.position.jumpTo(100);
 
             // Hover to the reader's center.
@@ -725,16 +726,16 @@ void main() {
               ),
             );
 
-            // Scroll the editor all the way to the top.
+            // Scroll the reader all the way to the top.
             await tester.sendEventToBinding(
               testPointer.scroll(
-                Offset(0, -superEditorScrollable.position.maxScrollExtent),
+                Offset(0, -superReaderScrollable.position.maxScrollExtent),
               ),
             );
 
             // Ensure reader's is scrolled all the way to the top.
             expect(
-              superEditorScrollable.position.pixels,
+              superReaderScrollable.position.pixels,
               0,
             );
 
