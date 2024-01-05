@@ -150,7 +150,8 @@ extension TesterWindowSize on WidgetTester {
   }
 }
 
-const goldenSizeLarge = Size(2400, 1600);
+const goldenSizeXLarge = Size(2400, 1600);
+const goldenSizeLarge = Size(1200, 800);
 const goldenSizeLongStrip = Size(1000, 300);
 const goldenSizeMedium = Size(800, 600);
 const goldenSizeSmall = Size(600, 400);

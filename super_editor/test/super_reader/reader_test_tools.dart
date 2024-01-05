@@ -60,6 +60,13 @@ class TestDocumentSelector {
     );
   }
 
+  TestDocumentConfigurator withSingleParagraphShort() {
+    return TestDocumentConfigurator._(
+      _widgetTester,
+      singleParagraphShortDoc(),
+    );
+  }
+
   TestDocumentConfigurator withTwoEmptyParagraphs() {
     return TestDocumentConfigurator._(
       _widgetTester,
@@ -334,6 +341,7 @@ class TestDocumentConfigurator {
       home: Scaffold(
         body: superReader,
       ),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
