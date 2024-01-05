@@ -150,7 +150,7 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
       return null;
     }
 
-    return documentLayout.getRectForPosition(documentSelection.extent)!;
+    return documentLayout.getEdgeForPosition(documentSelection.extent)!;
   }
 
   @override

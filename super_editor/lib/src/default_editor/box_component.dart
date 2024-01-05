@@ -7,6 +7,7 @@ import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/flutter/geometry.dart';
 
 import '../core/document_layout.dart';
 
@@ -59,8 +60,8 @@ abstract class BlockNode extends DocumentNode {
 
   @override
   UpstreamDownstreamNodeSelection computeSelection({
-    @required dynamic base,
-    @required dynamic extent,
+    required NodePosition base,
+    required NodePosition extent,
   }) {
     if (base is! UpstreamDownstreamNodePosition) {
       throw Exception('Expected a UpstreamDownstreamNodePosition for base but received a ${base.runtimeType}');
@@ -106,7 +107,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  UpstreamDownstreamNodePosition? movePositionLeft(dynamic currentPosition, [MovementModifier? movementModifier]) {
+  UpstreamDownstreamNodePosition? movePositionLeft(NodePosition currentPosition, [MovementModifier? movementModifier]) {
     if (currentPosition == const UpstreamDownstreamNodePosition.upstream()) {
       // Can't move any further left.
       return null;
@@ -116,7 +117,8 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  UpstreamDownstreamNodePosition? movePositionRight(dynamic currentPosition, [MovementModifier? movementModifier]) {
+  UpstreamDownstreamNodePosition? movePositionRight(NodePosition currentPosition,
+      [MovementModifier? movementModifier]) {
     if (currentPosition == const UpstreamDownstreamNodePosition.downstream()) {
       // Can't move any further right.
       return null;
@@ -126,13 +128,13 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  UpstreamDownstreamNodePosition? movePositionUp(dynamic currentPosition) {
+  UpstreamDownstreamNodePosition? movePositionUp(NodePosition currentPosition) {
     // BoxComponents don't support vertical movement.
     return null;
   }
 
   @override
-  UpstreamDownstreamNodePosition? movePositionDown(dynamic currentPosition) {
+  UpstreamDownstreamNodePosition? movePositionDown(NodePosition currentPosition) {
     // BoxComponents don't support vertical movement.
     return null;
   }
@@ -166,7 +168,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  Offset getOffsetForPosition(nodePosition) {
+  Offset getOffsetForPosition(NodePosition nodePosition) {
     if (nodePosition is! UpstreamDownstreamNodePosition) {
       throw Exception('Expected nodePosition of type UpstreamDownstreamNodePosition but received: $nodePosition');
     }
@@ -187,24 +189,34 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  Rect getRectForPosition(dynamic nodePosition) {
+  Rect getEdgeForPosition(NodePosition nodePosition) {
+    final boundingBox = getRectForPosition(nodePosition);
+
+    final boxPosition = nodePosition as UpstreamDownstreamNodePosition;
+    if (boxPosition.affinity == TextAffinity.upstream) {
+      return boundingBox.leftEdge;
+    } else {
+      return boundingBox.rightEdge;
+    }
+  }
+
+  /// Returns a [Rect] that bounds this entire box component.
+  ///
+  /// The behavior of this method is the same, regardless of whether the given
+  /// [nodePosition] is `upstream` or `downstream`.
+  @override
+  Rect getRectForPosition(NodePosition nodePosition) {
     if (nodePosition is! UpstreamDownstreamNodePosition) {
       throw Exception('Expected nodePosition of type UpstreamDownstreamNodePosition but received: $nodePosition');
     }
 
     final myBox = context.findRenderObject() as RenderBox;
 
-    if (nodePosition.affinity == TextAffinity.upstream) {
-      // Vertical line to the left of the component.
-      return Rect.fromLTWH(-1, 0, 1, myBox.size.height);
-    } else {
-      // Vertical line to the right of the component.
-      return Rect.fromLTWH(myBox.size.width, 0, 1, myBox.size.height);
-    }
+    return Rect.fromLTWH(0, 0, myBox.size.width, myBox.size.height);
   }
 
   @override
-  Rect getRectForSelection(dynamic basePosition, dynamic extentPosition) {
+  Rect getRectForSelection(NodePosition basePosition, NodePosition extentPosition) {
     if (basePosition is! UpstreamDownstreamNodePosition) {
       throw Exception('Expected nodePosition of type UpstreamDownstreamNodePosition but received: $basePosition');
     }

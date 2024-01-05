@@ -971,18 +971,18 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
-    // Calculate the new (x,y) offsets for the upstream and downstream handles.
-    final baseHandleOffset = _docLayout.getRectForPosition(selection.base)!.bottomLeft;
-    final extentHandleOffset = _docLayout.getRectForPosition(selection.extent)!.bottomRight;
+    // Calculate the new rectangles for the upstream and downstream handles.
+    final baseHandleRect = _docLayout.getRectForPosition(selection.base)!;
+    final extentHandleRect = _docLayout.getRectForPosition(selection.extent)!;
     final affinity = widget.document.getAffinityBetween(base: selection.base, extent: selection.extent);
-    late Offset upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
-    late Offset downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
+    late Rect upstreamHandleRect = affinity == TextAffinity.downstream ? baseHandleRect : extentHandleRect;
+    late Rect downstreamHandleRect = affinity == TextAffinity.downstream ? extentHandleRect : baseHandleRect;
 
     _editingController
       ..removeCaret()
       ..collapsedHandleOffset = null
-      ..upstreamHandleOffset = upstreamHandleOffset
-      ..downstreamHandleOffset = downstreamHandleOffset
+      ..upstreamHandleOffset = upstreamHandleRect.bottomLeft
+      ..downstreamHandleOffset = downstreamHandleRect.bottomRight
       ..cancelCollapsedHandleAutoHideCountdown();
   }
 
@@ -1002,6 +1002,8 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
 
+    // TODO: The following behavior looks like its calculating a bounding box. Should we use
+    //       getRectForSelection instead?
     final baseRectInDoc = _docLayout.getRectForPosition(selection.base)!;
     final extentRectInDoc = _docLayout.getRectForPosition(selection.extent)!;
     final selectionRectInDoc = Rect.fromPoints(
