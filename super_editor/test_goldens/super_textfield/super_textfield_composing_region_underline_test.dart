@@ -8,14 +8,14 @@ import '../test_tools_goldens.dart';
 
 void main() {
   group("SuperTextField > composing region >", () {
-    testGoldensOnAndroid("is underlined", _composingRegionIsUnderlined);
-    testGoldensOniOS("is underlined", _composingRegionIsUnderlined);
-    testGoldensOnMac("is underlined", _composingRegionIsUnderlined);
+    testGoldensOnAndroid("is underlined", _composingRegionIsUnderlined, windowSize: goldenSizeSmall);
+    testGoldensOniOS("is underlined", _composingRegionIsUnderlined, windowSize: goldenSizeSmall);
+    testGoldensOnMac("is underlined", _composingRegionIsUnderlined, windowSize: goldenSizeSmall);
   });
 
   group("SuperTextField > composing region >", () {
-    testGoldensOnWindows("shows nothing", _composingRegionShowsNothing);
-    testGoldensOnLinux("shows nothing", _composingRegionShowsNothing);
+    testGoldensOnWindows("shows nothing", _composingRegionShowsNothing, windowSize: goldenSizeSmall);
+    testGoldensOnLinux("shows nothing", _composingRegionShowsNothing, windowSize: goldenSizeSmall);
   });
 }
 
@@ -71,19 +71,22 @@ Future<void> _pumpScaffold(
     MaterialApp(
       home: Scaffold(
         body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: SuperTextField(
-              textController: textController,
-              textStyleBuilder: (_) => const TextStyle(
-                color: Colors.black,
-                // Use Roboto so that goldens show real text
-                fontFamily: 'Roboto',
+          child: IntrinsicWidth(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: SuperTextField(
+                textController: textController,
+                textStyleBuilder: (_) => const TextStyle(
+                  color: Colors.black,
+                  // Use Roboto so that goldens show real text
+                  fontFamily: 'Roboto',
+                ),
               ),
             ),
           ),
         ),
       ),
+      debugShowCheckedModeBanner: false,
     ),
   );
 }

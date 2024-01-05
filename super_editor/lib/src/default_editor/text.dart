@@ -576,11 +576,10 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       throw Exception('Expected nodePosition of type TextPosition but received: $nodePosition');
     }
 
-    final characterBox = getRectForPosition(nodePosition);
+    final textNodePosition = nodePosition as TextPosition;
+    final characterBox = getRectForPosition(textNodePosition);
 
-    // Always return the upstream edge because `getRectForPosition()` returns the box around
-    // the character immediately after the given position.
-    return characterBox.leftEdge;
+    return textNodePosition.affinity == TextAffinity.upstream ? characterBox.leftEdge : characterBox.rightEdge;
   }
 
   @override
