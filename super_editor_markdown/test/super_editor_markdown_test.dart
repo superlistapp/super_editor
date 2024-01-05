@@ -962,10 +962,40 @@ This is some code
         }
 
         expect((document.nodes[0] as ListItemNode).indent, 0);
+        expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
+
         expect((document.nodes[1] as ListItemNode).indent, 0);
+        expect((document.nodes[1] as ListItemNode).text.text, 'list item 2');
+
         expect((document.nodes[2] as ListItemNode).indent, 1);
+        expect((document.nodes[2] as ListItemNode).text.text, 'list item 2.1');
+
         expect((document.nodes[3] as ListItemNode).indent, 1);
+        expect((document.nodes[3] as ListItemNode).text.text, 'list item 2.2');
+
         expect((document.nodes[4] as ListItemNode).indent, 0);
+        expect((document.nodes[4] as ListItemNode).text.text, 'list item 3');
+      });
+
+      test('unordered list with empty lines between items', () {
+        const markdown = '''
+ * list item 1
+ 
+ * list item 2
+
+ * list item 3''';
+
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 3);
+        for (final node in document.nodes) {
+          expect(node, isA<ListItemNode>());
+          expect((node as ListItemNode).type, ListItemType.unordered);
+        }
+
+        expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
+        expect((document.nodes[1] as ListItemNode).text.text, 'list item 2');
+        expect((document.nodes[2] as ListItemNode).text.text, 'list item 3');
       });
 
       test('ordered list', () {
@@ -985,10 +1015,113 @@ This is some code
         }
 
         expect((document.nodes[0] as ListItemNode).indent, 0);
+        expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
+
         expect((document.nodes[1] as ListItemNode).indent, 0);
+        expect((document.nodes[1] as ListItemNode).text.text, 'list item 2');
+
         expect((document.nodes[2] as ListItemNode).indent, 1);
+        expect((document.nodes[2] as ListItemNode).text.text, 'list item 2.1');
+
         expect((document.nodes[3] as ListItemNode).indent, 1);
+        expect((document.nodes[3] as ListItemNode).text.text, 'list item 2.2');
+
         expect((document.nodes[4] as ListItemNode).indent, 0);
+        expect((document.nodes[4] as ListItemNode).text.text, 'list item 3');
+      });
+
+      test('ordered list with empty lines between items', () {
+        const markdown = '''
+ 1. list item 1
+ 
+ 2. list item 2
+
+ 3. list item 3''';
+
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 3);
+        for (final node in document.nodes) {
+          expect(node, isA<ListItemNode>());
+          expect((node as ListItemNode).type, ListItemType.ordered);
+        }
+
+        expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
+        expect((document.nodes[1] as ListItemNode).text.text, 'list item 2');
+        expect((document.nodes[2] as ListItemNode).text.text, 'list item 3');
+      });
+
+      test('mixing multiple levels of ordered and unordered lists', () {
+        const markdown = '''
+- Level 1
+   1. Level 2
+      1. Level 3
+         - Sublevel 1         
+         - Sublevel 2
+      2. Level 3 again
+   2. Level 2 returning
+2. Level 1 once more
+   - Bullet list
+     - Another bullet
+- Main bullet list
+   - Sub bullet list
+      - Subsub bullet list
+''';
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 13);
+
+        expect((document.nodes[0] as ListItemNode).indent, 0);
+        expect((document.nodes[0] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[0] as ListItemNode).text.text, 'Level 1');
+
+        expect((document.nodes[1] as ListItemNode).indent, 1);
+        expect((document.nodes[1] as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes[1] as ListItemNode).text.text, 'Level 2');
+
+        expect((document.nodes[2] as ListItemNode).indent, 2);
+        expect((document.nodes[2] as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes[2] as ListItemNode).text.text, 'Level 3');
+
+        expect((document.nodes[3] as ListItemNode).indent, 3);
+        expect((document.nodes[3] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[3] as ListItemNode).text.text, 'Sublevel 1');
+
+        expect((document.nodes[4] as ListItemNode).indent, 3);
+        expect((document.nodes[4] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[4] as ListItemNode).text.text, 'Sublevel 2');
+
+        expect((document.nodes[5] as ListItemNode).indent, 2);
+        expect((document.nodes[5] as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes[5] as ListItemNode).text.text, 'Level 3 again');
+
+        expect((document.nodes[6] as ListItemNode).indent, 1);
+        expect((document.nodes[6] as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes[6] as ListItemNode).text.text, 'Level 2 returning');
+
+        expect((document.nodes[7] as ListItemNode).indent, 0);
+        expect((document.nodes[7] as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes[7] as ListItemNode).text.text, 'Level 1 once more');
+
+        expect((document.nodes[8] as ListItemNode).indent, 1);
+        expect((document.nodes[8] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[8] as ListItemNode).text.text, 'Bullet list');
+
+        expect((document.nodes[9] as ListItemNode).indent, 2);
+        expect((document.nodes[9] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[9] as ListItemNode).text.text, 'Another bullet');
+
+        expect((document.nodes[10] as ListItemNode).indent, 0);
+        expect((document.nodes[10] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[10] as ListItemNode).text.text, 'Main bullet list');
+
+        expect((document.nodes[11] as ListItemNode).indent, 1);
+        expect((document.nodes[11] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[11] as ListItemNode).text.text, 'Sub bullet list');
+
+        expect((document.nodes[12] as ListItemNode).indent, 2);
+        expect((document.nodes[12] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[12] as ListItemNode).text.text, 'Subsub bullet list');
       });
 
       test('tasks', () {
