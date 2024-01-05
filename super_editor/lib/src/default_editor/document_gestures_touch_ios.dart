@@ -890,8 +890,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return false;
     }
 
-    // TODO: Replace "getRectForSelection()" with "getRectForPosition()" after #1614
-    final extentRect = _docLayout.getRectForSelection(collapsedPosition, collapsedPosition)!;
+    final extentRect = _docLayout.getRectForPosition(collapsedPosition)!;
     final caretRect = Rect.fromLTWH(extentRect.left - 1, extentRect.center.dy, 1, 1).inflate(24);
 
     final docOffset = _interactorOffsetToDocumentOffset(interactorOffset);

@@ -596,12 +596,14 @@ class _UnselectableHorizontalRuleComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BoxComponent(
-      key: componentKey,
-      isVisuallySelectable: false,
-      child: const Divider(
-        color: Color(0xFF000000),
-        thickness: 1.0,
+    return IgnorePointer(
+      child: BoxComponent(
+        key: componentKey,
+        isVisuallySelectable: false,
+        child: const Divider(
+          color: Color(0xFF000000),
+          thickness: 1.0,
+        ),
       ),
     );
   }

@@ -17,6 +17,7 @@ import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
+import 'package:super_editor/src/infrastructure/flutter/geometry.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/strings.dart';
@@ -567,6 +568,18 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       throw Exception('Expected nodePosition of type TextPosition but received: $nodePosition');
     }
     return textLayout.getOffsetAtPosition(nodePosition);
+  }
+
+  @override
+  Rect getEdgeForPosition(NodePosition nodePosition) {
+    if (nodePosition is! TextPosition) {
+      throw Exception('Expected nodePosition of type TextPosition but received: $nodePosition');
+    }
+
+    final textNodePosition = nodePosition as TextPosition;
+    final characterBox = getRectForPosition(textNodePosition);
+
+    return textNodePosition.affinity == TextAffinity.upstream ? characterBox.leftEdge : characterBox.rightEdge;
   }
 
   @override
