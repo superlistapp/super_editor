@@ -170,6 +170,34 @@ extension SuperEditorRobot on WidgetTester {
     await tapAt(globalTapOffset);
   }
 
+  /// Double-taps at the center of the content at the given [position] within a [SuperEditor].
+  ///
+  /// {@macro supereditor_finder}
+  Future<void> doubleTapAtDocumentPosition(DocumentPosition position, [Finder? superEditorFinder]) async {
+    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final positionRectInDoc = documentLayout.getRectForPosition(position)!;
+    final globalTapOffset = documentLayout.getAncestorOffsetFromDocumentOffset(positionRectInDoc.center);
+
+    await tapAt(globalTapOffset);
+    await pump(kTapMinTime);
+    await tapAt(globalTapOffset);
+  }
+
+  /// Triple-taps at the center of the content at the given [position] within a [SuperEditor].
+  ///
+  /// {@macro supereditor_finder}
+  Future<void> tripleTapAtDocumentPosition(DocumentPosition position, [Finder? superEditorFinder]) async {
+    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final positionRectInDoc = documentLayout.getRectForPosition(position)!;
+    final globalTapOffset = documentLayout.getAncestorOffsetFromDocumentOffset(positionRectInDoc.center);
+
+    await tapAt(globalTapOffset);
+    await pump(kTapMinTime);
+    await tapAt(globalTapOffset);
+    await pump(kTapMinTime);
+    await tapAt(globalTapOffset);
+  }
+
   /// Simulates a user drag that begins at the [from] [DocumentPosition]
   /// and drags a [delta] amount from that point.
   ///

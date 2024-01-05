@@ -47,6 +47,18 @@ MutableDocument singleParagraphDoc() => MutableDocument(
       ],
     );
 
+MutableDocument singleParagraphShortDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            // String length is 445
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+          ),
+        ),
+      ],
+    );
+
 MutableDocument singleBlockDoc() => MutableDocument(
       nodes: [
         HorizontalRuleNode(id: "1"),

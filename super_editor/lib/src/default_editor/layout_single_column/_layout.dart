@@ -225,6 +225,22 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 
   @override
+  Rect? getEdgeForPosition(DocumentPosition position) {
+    final component = getComponentByNodeId(position.nodeId);
+    if (component == null) {
+      editorLayoutLog.info('Could not find any component for node position: $position');
+      return null;
+    }
+
+    final componentEdge = component.getEdgeForPosition(position.nodePosition);
+
+    final componentBox = component.context.findRenderObject() as RenderBox;
+    final docOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
+
+    return componentEdge.translate(docOffset.dx, docOffset.dy);
+  }
+
+  @override
   Rect? getRectForPosition(DocumentPosition position) {
     final component = getComponentByNodeId(position.nodeId);
     if (component == null) {
