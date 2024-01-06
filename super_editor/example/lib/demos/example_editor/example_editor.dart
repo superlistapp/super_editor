@@ -482,15 +482,14 @@ class _ExampleEditorState extends State<ExampleEditor> {
         print("Applying width $width to node $nodeId");
         final node = _doc.getNodeById(nodeId)!;
         final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
-        final newStyles = SingleColumnLayoutComponentStyles(
-          width: width,
-          padding: currentStyles.padding,
-        );
 
         _docEditor.execute([
           ChangeSingleColumnLayoutComponentStylesRequest(
             nodeId: nodeId,
-            styles: newStyles,
+            styles: SingleColumnLayoutComponentStyles(
+              width: width,
+              padding: currentStyles.padding,
+            ),
           )
         ]);
       },
