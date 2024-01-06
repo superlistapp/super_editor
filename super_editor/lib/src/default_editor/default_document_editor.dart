@@ -59,6 +59,12 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           attributions: request.attributions,
         )
       : null,
+  (request) => request is PasteStructuredContentEditorRequest
+      ? PasteStructuredContentEditorCommand(
+          content: request.content,
+          pastePosition: request.pastePosition,
+        )
+      : null,
   (request) => request is InsertNodeAtIndexRequest
       ? InsertNodeAtIndexCommand(nodeIndex: request.nodeIndex, newNode: request.newNode)
       : null,

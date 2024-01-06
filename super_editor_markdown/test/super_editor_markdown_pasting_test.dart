@@ -359,22 +359,7 @@ Aenean mattis ante justo, quis sollicitudin metus interdum id.''',
 Future<(Editor, MutableDocument, MutableDocumentComposer)> _pumpSuperEditor(
     WidgetTester tester, MutableDocument document) async {
   final composer = MutableDocumentComposer();
-  final editor = Editor(
-    editables: {
-      Editor.documentKey: document,
-      Editor.composerKey: composer,
-    },
-    requestHandlers: [
-      (request) => request is PasteStructuredContentEditorRequest
-          ? PasteStructuredContentEditorCommand(
-              content: request.content,
-              pastePosition: request.pastePosition,
-            )
-          : null,
-      ...defaultRequestHandlers,
-    ],
-    reactionPipeline: List.from(defaultEditorReactions),
-  );
+  final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
   await tester.pumpWidget(
     MaterialApp(
