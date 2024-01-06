@@ -15,7 +15,7 @@ This is a normal paragraph.
 @@@ upsell
   
 This is another normal paragraph.''',
-        customBlockSyntax: [UpsellBlockSyntax()],
+        customBlockSyntax: [const UpsellBlockSyntax()],
         customElementToNodeConverters: [UpsellElementToNodeConverter()],
       );
 
@@ -48,7 +48,7 @@ This is a **callout**!
 @@@
   
 This is another normal paragraph.''',
-        customBlockSyntax: [CalloutBlockSyntax()],
+        customBlockSyntax: [const CalloutBlockSyntax()],
         customElementToNodeConverters: [CalloutElementToNodeConverter()],
       );
 
