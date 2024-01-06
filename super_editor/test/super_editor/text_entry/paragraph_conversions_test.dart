@@ -220,12 +220,15 @@ void main() {
             .autoFocus(true)
             .pump();
 
-        final nonHrInput = _nonHrVariant.currentValue!;
-        await tester.typeImeText(nonHrInput);
+        final nonHrInputAndResult = _nonHrVariant.currentValue!;
+        final input = nonHrInputAndResult.input;
+        final expectedResult = nonHrInputAndResult.expectedResult;
+
+        await tester.typeImeText(input);
 
         final paragraphNode = context.findEditContext().document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
-        expect((paragraphNode as ParagraphNode).text.text, nonHrInput);
+        expect((paragraphNode as ParagraphNode).text.text, expectedResult);
       }, variant: _nonHrVariant);
     });
 
@@ -386,9 +389,28 @@ final _orderedListVariant = ValueVariant({
   " 1) ",
 });
 
-final _nonHrVariant = ValueVariant({
+/// Holds sequence of character that shouldn't produce a horizontal rule
+/// and the expected resulting text after running the editor reactions.
+final _nonHrVariant = ValueVariant(const {
   // We ignore " - " because that is a conversion for unordered list items
-  "— ",
-  "—— ",
-  " —- ",
+  _TestInput(input: "-- ", expectedResult: "— "),
+  _TestInput(input: "---- ", expectedResult: "—— "),
+  _TestInput(input: " --- ", expectedResult: " —- "),
 });
+
+/// A test text input and the expected resulting text after running
+/// the editor reactions.
+class _TestInput {
+  const _TestInput({
+    required this.input,
+    required this.expectedResult,
+  });
+
+  final String input;
+  final String expectedResult;
+
+  @override
+  String toString() {
+    return "[input: $input, expectedResult: $expectedResult]";
+  }
+}
