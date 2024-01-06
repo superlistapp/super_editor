@@ -108,7 +108,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static Size findComponentSize(String nodeId, [Finder? finder]) {
-    final documentLayout = _findDocumentLayout(finder);
+    final documentLayout = findDocumentLayout(finder);
     final component = documentLayout.getComponentByNodeId(nodeId);
     assert(component != null);
     final componentBox = component!.context.findRenderObject() as RenderBox;
@@ -119,7 +119,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static Offset calculateOffsetForCaret(DocumentPosition position, [Finder? finder]) {
-    final documentLayout = _findDocumentLayout(finder);
+    final documentLayout = findDocumentLayout(finder);
     final positionRect = documentLayout.getRectForPosition(position);
     assert(positionRect != null);
     return positionRect!.topLeft;
