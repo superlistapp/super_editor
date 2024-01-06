@@ -200,11 +200,14 @@ class AndroidControlsDocumentLayerState
     if (_controlsController != null) {
       _controlsController!.shouldCaretBlink.removeListener(_onBlinkModeChange);
       _controlsController!.caretJumpToOpaqueSignal.removeListener(_caretJumpToOpaque);
+      _controlsController!.shouldShowCollapsedHandle.removeListener(_onShouldShowCollapsedHandleChange);
     }
 
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
     _controlsController!.shouldCaretBlink.addListener(_onBlinkModeChange);
     _controlsController!.caretJumpToOpaqueSignal.addListener(_caretJumpToOpaque);
+
+    _controlsController!.shouldShowCollapsedHandle.addListener(_onShouldShowCollapsedHandleChange);
     _onBlinkModeChange();
   }
 
@@ -222,6 +225,7 @@ class AndroidControlsDocumentLayerState
   void dispose() {
     widget.selection.removeListener(_onSelectionChange);
     _controlsController?.shouldCaretBlink.removeListener(_onBlinkModeChange);
+    _controlsController!.shouldShowCollapsedHandle.removeListener(_onShouldShowCollapsedHandleChange);
 
     _caretBlinkController.dispose();
     super.dispose();
@@ -282,6 +286,16 @@ class AndroidControlsDocumentLayerState
     _caretBlinkController.jumpToOpaque();
   }
 
+  void _onShouldShowCollapsedHandleChange() {
+    // When the user drags an expanded handle it might collapse the selection.
+    // In this case, we have a collapsed selection, but layout data for the
+    // expanded handles. Schedule a new layout to recompute the data for
+    // the collapsed handle.
+    setState(() {
+      //
+    });
+  }
+
   @override
   DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
     final selection = widget.selection.value;
@@ -289,7 +303,7 @@ class AndroidControlsDocumentLayerState
       return null;
     }
 
-    if (selection.isCollapsed) {
+    if (selection.isCollapsed && !_controlsController!.shouldShowExpandedHandles.value) {
       return DocumentSelectionLayout(
         caret: documentLayout.getRectForPosition(selection.extent)!,
       );
