@@ -422,7 +422,6 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                     scrollController: _scrollController,
                     viewportHeight: _viewportHeight,
                     estimatedLineHeight: _getEstimatedLineHeight(),
-                    padding: widget.padding,
                     isMultiline: isMultiline,
                     child: Stack(
                       children: [
