@@ -113,6 +113,22 @@ class SuperTextFieldInspector {
     return !isSingleLine(superTextFieldFinder);
   }
 
+  /// Returns `true` if the given [SuperTextField] is scrollable, i.e., the content
+  /// exceeds the viewport size.
+  static bool hasScrollableExtent([Finder? superTextFieldFinder]) {
+    final desktopScrollController = findDesktopScrollController(superTextFieldFinder);
+    if (desktopScrollController != null) {
+      return desktopScrollController.position.maxScrollExtent > 0;
+    }
+
+    final mobileScrollController = findMobileScrollController(superTextFieldFinder);
+    if (mobileScrollController != null) {
+      return mobileScrollController.endScrollOffset > 0;
+    }
+
+    throw Exception("Couldn't find a SuperTextField to check the scrollable extent. Finder: $superTextFieldFinder");
+  }
+
   /// Returns `true` if the given [SuperTextField] has a scroll offset of zero, i.e.,
   /// is scrolled to the beginning of the viewport.
   ///
