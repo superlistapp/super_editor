@@ -260,6 +260,9 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     );
   }
 
+  @visibleForTesting
+  ScrollController get scrollController => _scrollController;
+
   @override
   ProseTextLayout get textLayout => _textKey.currentState!.textLayout;
 
@@ -419,7 +422,6 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                     scrollController: _scrollController,
                     viewportHeight: _viewportHeight,
                     estimatedLineHeight: _getEstimatedLineHeight(),
-                    padding: widget.padding,
                     isMultiline: isMultiline,
                     child: Stack(
                       children: [
@@ -475,50 +477,57 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   Widget _buildSelectableText() {
     return FillWidthIfConstrained(
-      child: SuperText(
-        key: _textKey,
-        richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
-        textAlign: widget.textAlign,
-        textScaler: _textScaler,
-        layerBeneathBuilder: (context, textLayout) {
-          return Stack(
-            children: [
-              if (widget.textController?.selection.isValid == true)
-                // Selection highlight beneath the text.
-                TextLayoutSelectionHighlight(
-                  textLayout: textLayout,
-                  style: widget.selectionHighlightStyle,
-                  selection: widget.textController?.selection,
-                ),
-              // Underline beneath the composing region.
-              if (widget.textController?.composingRegion.isValid == true && _shouldShowComposingUnderline)
-                TextUnderlineLayer(
-                  textLayout: textLayout,
-                  underlines: [
-                    TextLayoutUnderline(
-                      style: UnderlineStyle(
-                        color: widget.textStyleBuilder({}).color ?? //
-                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+      child: Padding(
+        // WARNING: Padding within the text scroll view must be placed here, under
+        // FillWidthIfConstrained, rather than around it, because FillWidthIfConstrained makes
+        // decisions about sizing that expects its child to fill all available space in the
+        // ancestor Scrollable.
+        padding: widget.padding,
+        child: SuperText(
+          key: _textKey,
+          richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
+          textAlign: widget.textAlign,
+          textScaler: _textScaler,
+          layerBeneathBuilder: (context, textLayout) {
+            return Stack(
+              children: [
+                if (widget.textController?.selection.isValid == true)
+                  // Selection highlight beneath the text.
+                  TextLayoutSelectionHighlight(
+                    textLayout: textLayout,
+                    style: widget.selectionHighlightStyle,
+                    selection: widget.textController?.selection,
+                  ),
+                // Underline beneath the composing region.
+                if (widget.textController?.composingRegion.isValid == true && _shouldShowComposingUnderline)
+                  TextUnderlineLayer(
+                    textLayout: textLayout,
+                    underlines: [
+                      TextLayoutUnderline(
+                        style: UnderlineStyle(
+                          color: widget.textStyleBuilder({}).color ?? //
+                              (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                        ),
+                        range: widget.textController!.composingRegion,
                       ),
-                      range: widget.textController!.composingRegion,
-                    ),
-                  ],
-                ),
-            ],
-          );
-        },
-        layerAboveBuilder: (context, textLayout) {
-          if (!_focusNode.hasFocus) {
-            return const SizedBox();
-          }
+                    ],
+                  ),
+              ],
+            );
+          },
+          layerAboveBuilder: (context, textLayout) {
+            if (!_focusNode.hasFocus) {
+              return const SizedBox();
+            }
 
-          return TextLayoutCaret(
-            textLayout: textLayout,
-            style: widget.caretStyle,
-            position: _controller.selection.extent,
-            blinkTimingMode: widget.blinkTimingMode,
-          );
-        },
+            return TextLayoutCaret(
+              textLayout: textLayout,
+              style: widget.caretStyle,
+              position: _controller.selection.extent,
+              blinkTimingMode: widget.blinkTimingMode,
+            );
+          },
+        ),
       ),
     );
   }
@@ -1463,7 +1472,7 @@ class SuperTextFieldScrollview extends StatefulWidget {
     required this.textKey,
     required this.textController,
     required this.scrollController,
-    required this.padding,
+    this.padding = EdgeInsets.zero,
     required this.viewportHeight,
     required this.estimatedLineHeight,
     required this.isMultiline,
