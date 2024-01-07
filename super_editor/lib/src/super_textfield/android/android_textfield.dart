@@ -330,6 +330,9 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     });
   }
 
+  @visibleForTesting
+  TextScrollController get scrollController => _textScrollController;
+
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
