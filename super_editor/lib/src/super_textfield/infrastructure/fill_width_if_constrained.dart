@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-/// Forces [child] to take up all available width when the
-/// incoming width constraint is bounded, otherwise the [child]
-/// is sized by its intrinsic width.
+/// Widget that constrains its [child]s width in different ways depending on the
+/// incoming width constraint.
 ///
-/// This widget is used to correctly align the text of a multiline
-/// [SuperText] with a constrained width.
+/// Rules:
+///  * If the constraints from the parent has a constrained width, then the [child]
+///    is forced to be EXACTLY as wide the incoming max width.
+///  * If the constraints from the parent has an unbounded width, and if there's an
+///    ancestor `Scrollable`, then the [child] is forced to be AT LEAST as wide as the
+///    Viewport of the `Scrollable`.
+///  * If neither of the above two rules apply, the [child]'s width is set to its
+///    intrinsic width. This implies that any provided [child] must have an intrinsic
+///    width.
+///
+/// This widget is used to correctly align the text of a multiline [SuperText] with
+/// a constrained width. It's also used to constrain and align single-line text within
+/// a horizontal scrollable.
 class FillWidthIfConstrained extends SingleChildRenderObjectWidget {
   const FillWidthIfConstrained({
     required Widget child,
@@ -15,13 +25,13 @@ class FillWidthIfConstrained extends SingleChildRenderObjectWidget {
   @override
   RenderObject createRenderObject(BuildContext context) {
     return RenderFillWidthIfConstrained(
-      minWidth: _getViewportWidth(context),
+      ancestorViewportWidth: _getViewportWidth(context),
     );
   }
 
   @override
   void updateRenderObject(BuildContext context, RenderFillWidthIfConstrained renderObject) {
-    renderObject.minWidth = _getViewportWidth(context);
+    renderObject.ancestorViewportWidth = _getViewportWidth(context);
   }
 
   double? _getViewportWidth(BuildContext context) {
@@ -42,40 +52,36 @@ class FillWidthIfConstrained extends SingleChildRenderObjectWidget {
 
 class RenderFillWidthIfConstrained extends RenderProxyBox {
   RenderFillWidthIfConstrained({
-    double? minWidth,
-  }) : _minWidth = minWidth;
+    double? ancestorViewportWidth,
+  }) : _ancestorViewportWidth = ancestorViewportWidth;
 
-  /// Sets the minimum width the child widget needs to be.
-  ///
-  /// This is needed when this widget is inside a horizontal Scrollable.
-  /// In this case, we might have an infinity maxWidth, so we need
-  /// to specify the Scrollable's width to force the child to
-  /// be at least this width.
-  set minWidth(double? value) {
-    _minWidth = value;
+  /// Informs this [RenderFillWidthIfConstrained] about the width of an ancestor [Scrollable],
+  /// which may be used to set the width of the [child] `RenderObject`.
+  set ancestorViewportWidth(double? value) {
+    _ancestorViewportWidth = value;
     markNeedsLayout();
   }
 
-  double? _minWidth;
+  double? _ancestorViewportWidth;
 
   @override
   void performLayout() {
     BoxConstraints childConstraints = constraints;
 
-    // If the available width is bounded,
-    // force the child to be as wide as the available width.
     if (constraints.hasBoundedWidth) {
+      // The available width is bounded, force the child to be as wide
+      // as the available width.
       childConstraints = BoxConstraints(
         minWidth: constraints.maxWidth,
-        minHeight: constraints.minHeight,
         maxWidth: constraints.maxWidth,
+        minHeight: constraints.minHeight,
         maxHeight: constraints.maxHeight,
       );
-    } else if (_minWidth != null) {
-      // If a minWidth is given, force the child to be at least this width.
-      // This is the case when this widget is placed inside an Scrollable.
+    } else if (_ancestorViewportWidth != null) {
+      // The available width is unbounded and we're inside of a Scrollable.
+      // Make the child at least as wide as the Scrollable viewport.
       childConstraints = BoxConstraints(
-        minWidth: _minWidth!,
+        minWidth: _ancestorViewportWidth!,
         minHeight: constraints.minHeight,
         maxHeight: constraints.maxHeight,
       );
