@@ -90,7 +90,7 @@ This is the document that exists before Markdown is pasted.
       // Ensure that the document has the caret.
       expect(composer.selection, isNotNull);
 
-      // Simulate the user copying a markdown snippet
+      // Simulate the user copying a markdown snippet.
       tester
         ..simulateClipboard()
         ..setSimulatedClipboardContent(_markdownHeaderSnippet);
@@ -134,7 +134,7 @@ This is the document that exists before Markdown is pasted.
       // Ensure that the document has the caret.
       expect(composer.selection, isNotNull);
 
-      // Simulate the user copying a markdown snippet
+      // Simulate the user copying a markdown snippet.
       tester
         ..simulateClipboard()
         ..setSimulatedClipboardContent(_markdownPlainTextSnippet);
@@ -174,7 +174,7 @@ This is the document that exists before Markdown is pasted.''',
       // Ensure that the document has the caret.
       expect(composer.selection, isNotNull);
 
-      // Simulate the user copying a markdown snippet
+      // Simulate the user copying a markdown snippet.
       tester
         ..simulateClipboard()
         ..setSimulatedClipboardContent(_markdownPlainTextSnippet);
@@ -202,14 +202,14 @@ Aenean mattis ante justo, quis sollicitudin metus interdum id.< here and continu
         deserializeMarkdownToDocument('''This is a paragraph that will add text >< here and continue.'''),
       );
 
-      // Place the caret between chevrons ">|<"
+      // Place the caret between chevrons ">|<".
       final lastParagraph = document.nodes.last as TextNode;
       await tester.placeCaretInParagraph(lastParagraph.id, 40);
 
       // Ensure that the document has the caret.
       expect(composer.selection, isNotNull);
 
-      // Simulate the user copying a markdown snippet
+      // Simulate the user copying a markdown snippet.
       tester
         ..simulateClipboard()
         ..setSimulatedClipboardContent("this is a snippet of plain text");
@@ -235,14 +235,14 @@ Aenean mattis ante justo, quis sollicitudin metus interdum id.< here and continu
         ),
       );
 
-      // Place the caret between chevrons ">|<"
+      // Place the caret between chevrons ">|<".
       final lastParagraph = document.nodes.last as TextNode;
       await tester.placeCaretInParagraph(lastParagraph.id, 42);
 
       // Ensure that the document has the caret.
       expect(composer.selection, isNotNull);
 
-      // Simulate the user copying a markdown snippet
+      // Simulate the user copying a markdown snippet.
       tester
         ..simulateClipboard()
         ..setSimulatedClipboardContent("![A Fake Test Image](https://flutter.dev/logo.png)");
@@ -280,7 +280,7 @@ This is the document that exists before Markdown is pasted.
       // Ensure that the document has the caret.
       expect(composer.selection, isNotNull);
 
-      // Simulate the user copying a markdown snippet
+      // Simulate the user copying a markdown snippet.
       tester
         ..simulateClipboard()
         ..setSimulatedClipboardContent(_markdownHeaderSnippet);
@@ -325,7 +325,7 @@ This is the document that exists before Markdown is pasted.
       // Ensure that the document has the caret.
       expect(composer.selection, isNotNull);
 
-      // Simulate the user copying a markdown snippet
+      // Simulate the user copying a markdown snippet.
       tester
         ..simulateClipboard()
         ..setSimulatedClipboardContent(_markdownPlainTextSnippet);

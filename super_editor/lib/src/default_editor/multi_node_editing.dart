@@ -26,7 +26,8 @@ class PasteStructuredContentEditorRequest implements EditRequest {
   final DocumentPosition pastePosition;
 }
 
-/// Inserts the given structured [_content] in the document at the given [_pastePosition].
+/// Inserts given structured content, in the form of a `List` of [DocumentNode]s at a
+/// given paste position within the document.
 class PasteStructuredContentEditorCommand implements EditCommand {
   PasteStructuredContentEditorCommand({
     required List<DocumentNode> content,
@@ -152,27 +153,29 @@ class PasteStructuredContentEditorCommand implements EditCommand {
       deleteInitiallySelectedNode = true;
     }
 
-    // (Possibly) merge or the downstream split node.
-    final lastPastedNode = nodesToInsert.last;
-    if (downstreamSplitNode != null && _canMergeNodes(lastPastedNode, downstreamSplitNode)) {
-      // The text in the last pasted node is stylistically compatible with the
-      // existing text in the node that was split after the caret. Therefore, instead
-      // of inserting the last pasted node, merge its content with the existing split
-      // node.
-      executor.executeCommand(
-        InsertAttributedTextCommand(
-          documentPosition: DocumentPosition(
-            nodeId: downstreamSplitNode.id,
-            nodePosition: const TextNodePosition(offset: 0),
+    // (Possibly) merge or delete the downstream split node.
+    if (nodesToInsert.isNotEmpty) {
+      final lastPastedNode = nodesToInsert.last;
+      if (downstreamSplitNode != null && _canMergeNodes(lastPastedNode, downstreamSplitNode)) {
+        // The text in the last pasted node is stylistically compatible with the
+        // existing text in the node that was split after the caret. Therefore, instead
+        // of inserting the last pasted node, merge its content with the existing split
+        // node.
+        executor.executeCommand(
+          InsertAttributedTextCommand(
+            documentPosition: DocumentPosition(
+              nodeId: downstreamSplitNode.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+            // Only text nodes are merge-able, therefore we know that the last pasted node
+            // is a TextNode.
+            textToInsert: (lastPastedNode as TextNode).text,
           ),
-          // Only text nodes are merge-able, therefore we know that the first pasted node
-          // is a TextNode.
-          textToInsert: (lastPastedNode as TextNode).text,
-        ),
-      );
+        );
 
-      // We've pasted the first new node. Remove it from the nodes to insert.
-      nodesToInsert.removeLast();
+        // We've pasted the last new node. Remove it from the nodes to insert.
+        nodesToInsert.removeLast();
+      }
     }
 
     // Now that the first and last pasted nodes have been merged with existing content
