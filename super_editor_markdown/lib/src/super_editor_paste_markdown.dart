@@ -8,7 +8,7 @@ ExecutionInstruction pasteMarkdownOnCmdAndCtrlV({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+  if (keyEvent is! RawKeyDownEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
