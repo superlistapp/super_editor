@@ -382,7 +382,7 @@ This is some code
 Paragraph3""");
       });
 
-      test('empty paragraphs ignore attributions', () {
+      test('removes all text attributions when serializing an empty paragraph', () {
         final serialized = serializeDocumentToMarkdown(
           MutableDocument(nodes: [
             ParagraphNode(id: '1', text: AttributedText('Paragraph1')),
