@@ -508,8 +508,6 @@ Updating drag selection:
     return Listener(
       onPointerHover: _onMouseMove,
       onPointerSignal: _scrollOnMouseWheel,
-      onPointerDown: (event) => _cancelScrollMomentum(),
-      onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: _buildCursorStyle(
         child: _buildGestureInput(
           child: _buildDocumentContainer(

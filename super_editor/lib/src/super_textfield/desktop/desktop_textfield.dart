@@ -942,8 +942,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     return Listener(
       onPointerSignal: _onPointerSignal,
       onPointerHover: (event) => _cancelScrollMomentum(),
-      onPointerDown: (event) => _cancelScrollMomentum(),
-      onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: GestureDetector(
         onSecondaryTapUp: _onRightClick,
         child: RawGestureDetector(

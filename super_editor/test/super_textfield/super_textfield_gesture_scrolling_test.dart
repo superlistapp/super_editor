@@ -192,6 +192,53 @@ void main() {
       // Ensure the viewport is big enough so the text doesn't scroll vertically
       expect(viewportHeight, greaterThanOrEqualTo(totalHeight));
     });
+
+    testWidgetsOnAllPlatforms("stops momentum on tap down", (tester) async {
+      // Generate a long text to have enough scrollable content.
+      final text = [
+        for (int i = 1; i <= 1000; i++) //
+          'Line $i',
+      ];
+
+      final controller = AttributedTextEditingController(
+        text: AttributedText(text.join('\n')),
+      );
+
+      // Pump the widget tree with a SuperTextField with a maxHeight smaller
+      // than the text height.
+      await _pumpTestApp(
+        tester,
+        textController: controller,
+        minLines: 1,
+        maxLines: 2,
+        maxHeight: 20,
+      );
+
+      // Ensure the textfield initially has no selection.
+      expect(SuperTextFieldInspector.findSelection(), TextRange.empty);
+
+      // Fling scroll the textfield.
+      await tester.fling(find.byType(SuperTextField), const Offset(0.0, -1000), 1000);
+
+      // Pump a few frames of momentum.
+      for (int i = 0; i < 25; i += 1) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      final scrollOffsetInMiddleOfMomentum = SuperTextFieldInspector.findScrollOffset();
+
+      // Tap down to stop the momentum.
+      final gesture = await tester.startGesture(tester.getCenter(find.byType(SuperTextField)));
+
+      // Let any remaining momentum run (there shouldn't be any).
+      await tester.pumpAndSettle();
+
+      // Ensure that the momentum stopped exactly where we tapped.
+      expect(SuperTextFieldInspector.findScrollOffset(), scrollOffsetInMiddleOfMomentum);
+
+      // Release the pointer.
+      await gesture.up();
+      await tester.pump();
+    });
   });
 }
 
