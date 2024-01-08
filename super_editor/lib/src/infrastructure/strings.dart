@@ -143,7 +143,9 @@ extension CharacterMovement on String {
   }
 }
 
-/// Holds constants for special characters using within the package.
+/// Characters that are difficult to represent literally, and therefore are provided as constants.
 class SpecialCharacters {
   static const emDash = '—';
+
+  const SpecialCharacters._();
 }

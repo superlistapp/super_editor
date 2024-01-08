@@ -654,6 +654,10 @@ class LinkifyReaction implements EditReaction {
 
 /// An [EditReaction] which converts two dashes (--) to an em-dash (—).
 ///
+/// This reaction only applies when the user enters a dash (-) after
+/// another dash in the same node. The upstream dash and the newly inserted
+/// dash are removed and an em-dash (—) is inserted.
+///
 /// This reaction applies to all [TextNode]s in the document.
 class DashConversionReaction implements EditReaction {
   const DashConversionReaction();
