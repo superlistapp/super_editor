@@ -347,7 +347,7 @@ mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentCompon
 
   @override
   Offset getOffsetForPosition(NodePosition nodePosition) {
-    return _childDocumentComponent.getOffsetForPosition(nodePosition);
+    return _getOffsetFromChild(_childDocumentComponent.getOffsetForPosition(nodePosition));
   }
 
   @override
