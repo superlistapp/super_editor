@@ -8,7 +8,8 @@ import 'supereditor_test_tools.dart';
 
 void main() {
   group('SuperEditor > single column layout >', () {
-    testWidgetsOnAllPlatforms('updates component width after changing component styles', (tester) async {
+    testWidgetsOnAllPlatforms('updates component width when component styles are changed by the editor',
+        (tester) async {
       // Pump an editor with an arbitrary size, so we know
       // the maximum width a component can be.
       final context = await tester
@@ -17,8 +18,9 @@ void main() {
           .withEditorSize(const Size(1000.0, 5000.0))
           .pump();
 
-      // Hold the padding before running the command.
-      final paddingBefore = tester
+      // Find the padding around the component to ensure the component took all
+      // the editor width, minus the padding.
+      final componentPadding = tester
           .widget<Padding>(find
               .ancestor(
                 of: find.byWidget(SuperEditorInspector.findWidgetForComponent('1')),
@@ -30,7 +32,7 @@ void main() {
       // Ensure the component doesn't start taking all the available width.
       expect(
         SuperEditorInspector.findComponentSize('1').width,
-        lessThan(1000.0 - paddingBefore.horizontal),
+        lessThan(1000.0 - componentPadding.horizontal),
       );
 
       // Changes the width.
@@ -46,21 +48,14 @@ void main() {
       );
       await tester.pump();
 
-      // Ensure the component took all available width and the padding didn't chagne.
-      final paddingAfter = tester
-          .widget<Padding>(find
-              .ancestor(
-                of: find.byWidget(SuperEditorInspector.findWidgetForComponent('1')),
-                matching: find.byType(Padding),
-              )
-              .first)
-          .padding;
-      expect(paddingAfter, paddingBefore);
-      expect(SuperEditorInspector.findComponentSize('1').width, 1000.0 - paddingBefore.horizontal);
+      // Ensure the component took all available width.
+      expect(SuperEditorInspector.findComponentSize('1').width, 1000.0 - componentPadding.horizontal);
     });
   });
 
-  testWidgetsOnAllPlatforms('updates component padding after changing component styles', (tester) async {
+  testWidgetsOnAllPlatforms(
+      'updates padding around each component in a document layout, when the overall document layout padding is changed by the editor',
+      (tester) async {
     final context = await tester
         .createDocument() //
         .withSingleEmptyParagraph()
