@@ -250,8 +250,8 @@ Aenean mattis ante justo, quis sollicitudin metus interdum id.< here and continu
       // Paste the markdown content into the empty document.
       await tester.pressCmdV();
 
-      // Ensure that the pasted text split the existing paragraph and then merged
-      // the starting and ending text of the pasted Markdown.
+      // Ensure that the pasted text split the existing paragraph and then inserted
+      // an image in between.
       final documentMarkdown = serializeDocumentToMarkdown(document);
 
       expect(
