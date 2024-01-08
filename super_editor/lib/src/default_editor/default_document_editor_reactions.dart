@@ -496,7 +496,7 @@ class LinkifyReaction implements EditReaction {
     this.updatePolicy = LinkUpdatePolicy.preserve,
   });
 
-  /// Configures how a
+  /// Configures how a change in a URL should be handled.
   final LinkUpdatePolicy updatePolicy;
 
   @override
@@ -574,6 +574,7 @@ class LinkifyReaction implements EditReaction {
     }
 
     if (!didInsertSpace) {
+      // We didn't linkify any text. Check if we need to update an URL.
       _tryUpdateLinkAttribution(document, composer, edits);
     }
   }
