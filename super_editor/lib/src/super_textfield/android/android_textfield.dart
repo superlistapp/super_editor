@@ -657,48 +657,58 @@ Widget _defaultAndroidToolbarBuilder(
   AndroidEditingOverlayController controller,
   ToolbarConfig config,
 ) {
+  final hasCollapsedSelection = controller.textController.selection != TextRange.empty;
+
   return AndroidTextEditingFloatingToolbar(
-    onCutPressed: config.collapsedSelection
+    onCutPressed: hasCollapsedSelection //
         ? null
-        : () {
-            final textController = controller.textController;
-
-            final selection = textController.selection;
-            if (selection.isCollapsed) {
-              return;
-            }
-
-            final selectedText = selection.textInside(textController.text.text);
-
-            textController.deleteSelectedText();
-
-            Clipboard.setData(ClipboardData(text: selectedText));
-          },
-    onCopyPressed: config.collapsedSelection
+        : () => _onToolbarCutPressed(controller),
+    onCopyPressed: hasCollapsedSelection //
         ? null
-        : () {
-            final textController = controller.textController;
-            final selection = textController.selection;
-            final selectedText = selection.textInside(textController.text.text);
-
-            Clipboard.setData(ClipboardData(text: selectedText));
-          },
-    onPastePressed: () async {
-      final clipboardContent = await Clipboard.getData('text/plain');
-      if (clipboardContent == null || clipboardContent.text == null) {
-        return;
-      }
-
-      final textController = controller.textController;
-      final selection = textController.selection;
-      if (selection.isCollapsed) {
-        textController.insertAtCaret(text: clipboardContent.text!);
-      } else {
-        textController.replaceSelectionWithUnstyledText(replacementText: clipboardContent.text!);
-      }
-    },
-    onSelectAllPressed: () {
-      controller.textController.selectAll();
-    },
+        : () => _onToolbarCopyPressed(controller),
+    onPastePressed: () => _onToolbarPastePressed(controller),
+    onSelectAllPressed: () => _onToolbarSelectAllPressed(controller),
   );
+}
+
+void _onToolbarCutPressed(AndroidEditingOverlayController controller) {
+  final textController = controller.textController;
+
+  final selection = textController.selection;
+  if (selection.isCollapsed) {
+    return;
+  }
+
+  final selectedText = selection.textInside(textController.text.text);
+
+  textController.deleteSelectedText();
+
+  Clipboard.setData(ClipboardData(text: selectedText));
+}
+
+void _onToolbarCopyPressed(AndroidEditingOverlayController controller) {
+  final textController = controller.textController;
+  final selection = textController.selection;
+  final selectedText = selection.textInside(textController.text.text);
+
+  Clipboard.setData(ClipboardData(text: selectedText));
+}
+
+Future<void> _onToolbarPastePressed(AndroidEditingOverlayController controller) async {
+  final clipboardContent = await Clipboard.getData('text/plain');
+  if (clipboardContent == null || clipboardContent.text == null) {
+    return;
+  }
+
+  final textController = controller.textController;
+  final selection = textController.selection;
+  if (selection.isCollapsed) {
+    textController.insertAtCaret(text: clipboardContent.text!);
+  } else {
+    textController.replaceSelectionWithUnstyledText(replacementText: clipboardContent.text!);
+  }
+}
+
+void _onToolbarSelectAllPressed(AndroidEditingOverlayController controller) {
+  controller.textController.selectAll();
 }

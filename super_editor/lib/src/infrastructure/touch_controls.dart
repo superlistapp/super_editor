@@ -16,14 +16,10 @@ enum HandleType {
 class ToolbarConfig {
   ToolbarConfig({
     required this.focalPoint,
-    this.collapsedSelection = false,
   });
 
   /// The desired point where a toolbar arrow should point to.
   ///
   /// Represented as global coordinates.
   final Offset focalPoint;
-
-  // TODO: change this.
-  final bool collapsedSelection;
 }

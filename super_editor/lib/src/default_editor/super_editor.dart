@@ -904,16 +904,21 @@ class DefaultAndroidEditorToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AndroidTextEditingFloatingToolbar(
-      floatingToolbarKey: floatingToolbarKey,
-      onCopyPressed: selectionNotifier.value == null || !selectionNotifier.value!.isCollapsed //
-          ? _copy
-          : null,
-      onCutPressed: selectionNotifier.value == null || !selectionNotifier.value!.isCollapsed //
-          ? _cut
-          : null,
-      onPastePressed: _paste,
-      onSelectAllPressed: _selectAll,
+    return ValueListenableBuilder(
+      valueListenable: selectionNotifier,
+      builder: (context, selection, child) {
+        return AndroidTextEditingFloatingToolbar(
+          floatingToolbarKey: floatingToolbarKey,
+          onCopyPressed: selection == null || !selection.isCollapsed //
+              ? _copy
+              : null,
+          onCutPressed: selection == null || !selection.isCollapsed //
+              ? _cut
+              : null,
+          onPastePressed: _paste,
+          onSelectAllPressed: _selectAll,
+        );
+      },
     );
   }
 

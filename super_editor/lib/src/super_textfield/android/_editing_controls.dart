@@ -588,10 +588,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
               child: widget.popoverToolbarBuilder(
                 context,
                 widget.editingController,
-                ToolbarConfig(
-                  focalPoint: textFieldGlobalOffset + toolbarTopAnchor,
-                  collapsedSelection: widget.editingController.textController.selection.isCollapsed,
-                ),
+                ToolbarConfig(focalPoint: textFieldGlobalOffset + toolbarTopAnchor),
               ),
             );
           }),
