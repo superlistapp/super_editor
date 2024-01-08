@@ -58,10 +58,10 @@ void main() {
           "This is overlapping styles.",
           AttributedSpans(
             attributions: [
-              SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: boldAttribution, offset: 13, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: italicsAttribution, offset: 11, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: italicsAttribution, offset: 18, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: boldAttribution, offset: 13, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: italicsAttribution, offset: 11, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: italicsAttribution, offset: 18, markerType: SpanMarkerType.end),
             ],
           ),
         ).toMarkdown(),

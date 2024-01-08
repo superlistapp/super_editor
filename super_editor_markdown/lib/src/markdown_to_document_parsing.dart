@@ -28,10 +28,10 @@ MutableDocument deserializeMarkdownToDocument(
       ...customBlockSyntax,
       if (syntax == MarkdownSyntax.superEditor) ...[
         _HeaderWithAlignmentSyntax(),
-        _ParagraphWithAlignmentSyntax(),
+        const _ParagraphWithAlignmentSyntax(),
       ],
-      _EmptyLinePreservingParagraphSyntax(),
-      _TaskSyntax(),
+      const _EmptyLinePreservingParagraphSyntax(),
+      const _TaskSyntax(),
     ],
   );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
@@ -239,7 +239,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
         id: Editor.createNodeId(),
         text: attributedText,
         metadata: {
-          'textAlign': textAlign != null ? textAlign : null,
+          'textAlign': textAlign,
         },
       ),
     );
