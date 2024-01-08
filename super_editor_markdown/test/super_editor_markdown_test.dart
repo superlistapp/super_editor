@@ -1293,7 +1293,7 @@ with multiple lines
       });
 
       test('multiple paragraphs', () {
-        final input = """Paragraph1
+        const input = """Paragraph1
 
 Paragraph2""";
         final doc = deserializeMarkdownToDocument(input);
@@ -1304,7 +1304,7 @@ Paragraph2""";
       });
 
       test('empty paragraph between paragraphs', () {
-        final input = """Paragraph1
+        const input = """Paragraph1
 
 
 
@@ -1318,7 +1318,7 @@ Paragraph3""";
       });
 
       test('multiple empty paragraph between paragraphs', () {
-        final input = """Paragraph1
+        const input = """Paragraph1
 
 
 
