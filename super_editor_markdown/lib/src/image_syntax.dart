@@ -1,8 +1,9 @@
 import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/super_editor.dart';
 
-/// Matches images like `![alternate text](url optional_size "optional title")` and
-/// `![alternate text][label]`.
+/// Matches all images.
+///
+/// For example: `![My Image](https://my-image.com)` and `![My Image](https://my-image.com =500x200)`
 ///
 /// To define a size, use the notation `=widthxheight`. The size notation is optional and
 /// it can be providade partially. For example:
@@ -11,7 +12,7 @@ import 'package:super_editor/super_editor.dart';
 /// - ![alternate text](url =500x)
 /// - ![alternate text](url =x200)
 ///
-/// Extracted and adapted from the markdown package.
+/// This class was modified from a copy of [md.LinkSyntax].
 class SuperEditorImageSyntax extends md.LinkSyntax {
   static final _entirelyWhitespacePattern = RegExp(r'^\s*$.');
 

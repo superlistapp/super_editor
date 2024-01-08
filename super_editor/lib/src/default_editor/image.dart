@@ -38,6 +38,11 @@ class ImageNode extends BlockNode with ChangeNotifier {
   ///
   /// Used to size the component while the image is still being loaded,
   /// so the content don't shift after the image is loaded.
+  ///
+  /// Although is allowed to specify only one dimension, it's preferable
+  /// to specify both width and heigh, so the/ image aspect ratio
+  /// is preserved while the image is loading. Providing only one dimension
+  /// might still cause the content to be shifted after the image is loaded.
   ExpectedSize? get expectedBitmapSize => _expectedBitmapSize;
   ExpectedSize? _expectedBitmapSize;
   set expectedBitmapSize(ExpectedSize? expectedSize) {
@@ -166,20 +171,12 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           imageUrl == other.imageUrl &&
-          width == other.width &&
-          height == other.height &&
           selection == other.selection &&
           selectionColor == other.selectionColor;
 
   @override
   int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      imageUrl.hashCode ^
-      width.hashCode ^
-      height.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode;
+      super.hashCode ^ nodeId.hashCode ^ imageUrl.hashCode ^ selection.hashCode ^ selectionColor.hashCode;
 }
 
 /// Displays an image in a document.
@@ -226,8 +223,28 @@ class ImageComponent extends StatelessWidget {
                   : Image.network(
                       imageUrl,
                       fit: BoxFit.contain,
-                      width: width,
-                      height: height,
+                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                        if (frame != null) {
+                          // The image is already loaded. Use the image as is.
+                          return child;
+                        }
+
+                        if (width != null && height != null) {
+                          // Both width and height were provide.
+                          // Preserve the aspect ratio of the original image.
+                          return AspectRatio(
+                            aspectRatio: width! / height!,
+                            child: SizedBox(width: width, height: height),
+                          );
+                        }
+
+                        // The image is still loading and only one dimension was provided.
+                        // Use the given dimension.
+                        return SizedBox(
+                          width: width,
+                          height: height,
+                        );
+                      },
                     ),
             ),
           ),

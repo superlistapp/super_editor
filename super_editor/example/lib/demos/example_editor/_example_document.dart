@@ -8,7 +8,8 @@ MutableDocument createInitialDocument() {
         id: "1",
         imageUrl: 'https://i.ibb.co/5nvRdx1/flutter-horizon.png',
         expectedBitmapSize: ExpectedSize(
-          height: 422,
+          width: 1911,
+          height: 630,
         ),
         metadata: const SingleColumnLayoutComponentStyles(
           width: double.infinity,
