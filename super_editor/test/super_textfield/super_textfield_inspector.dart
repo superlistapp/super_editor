@@ -232,6 +232,41 @@ class SuperTextFieldInspector {
     return textScrollView.textScrollController;
   }
 
+  /// Finds and returns the bounding rectangle for the caret in the given [SuperTextField],
+  /// represented as coordinates that are local to the viewport.
+  ///
+  /// The viewport is the rectangle within which (possibly) scrollable text is displayed.
+  ///
+  /// {@macro supertextfield_finder}
+  static Rect? findCaretRectInViewport([Finder? superTextFieldFinder]) {
+    // TODO: Add support for Android and iOS SuperTextFields to this method (#1771).
+
+    final rootFieldFinder = superTextFieldFinder ?? find.byType(SuperTextField);
+    final desktopFieldCandidates =
+        find.descendant(of: rootFieldFinder, matching: find.byType(SuperDesktopTextField)).evaluate();
+    if (desktopFieldCandidates.isEmpty) {
+      throw Exception(
+          "Couldn't find a desktop text field. Currently only desktop is supported by findCaretRectInViewport.");
+    }
+    final desktopTextField = find.descendant(of: rootFieldFinder, matching: find.byType(SuperDesktopTextField));
+
+    final viewport = find
+        .descendant(of: desktopTextField, matching: find.byType(SuperTextFieldScrollview))
+        .evaluate()
+        .single
+        .renderObject as RenderBox;
+
+    final caretDisplayElement = find
+        .descendant(of: desktopTextField, matching: find.byType(TextLayoutCaret))
+        .evaluate()
+        .single as StatefulElement;
+    final caretDisplay = caretDisplayElement.state as TextLayoutCaretState;
+    final caretGlobalRect = caretDisplay.globalCaretGeometry!;
+
+    final viewportOffset = viewport.localToGlobal(Offset.zero);
+    return caretGlobalRect.translate(-viewportOffset.dx, -viewportOffset.dy);
+  }
+
   static bool isAndroidCollapsedHandleVisible([Finder? superTextFieldFinder]) {
     final fieldFinder =
         SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));

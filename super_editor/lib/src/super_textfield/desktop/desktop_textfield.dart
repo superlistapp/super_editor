@@ -425,8 +425,27 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                     isMultiline: isMultiline,
                     child: Stack(
                       children: [
-                        if (showHint) widget.hintBuilder!(context),
-                        _buildSelectableText(),
+                        if (showHint) //
+                          FillWidthIfConstrained(
+                            child: Padding(
+                              // WARNING: Padding within the text scroll view must be placed here, under
+                              // FillWidthIfConstrained, rather than around it, because FillWidthIfConstrained makes
+                              // decisions about sizing that expects its child to fill all available space in the
+                              // ancestor Scrollable.
+                              padding: widget.padding,
+                              child: widget.hintBuilder!(context),
+                            ),
+                          ),
+                        FillWidthIfConstrained(
+                          child: Padding(
+                            // WARNING: Padding within the text scroll view must be placed here, under
+                            // FillWidthIfConstrained, rather than around it, because FillWidthIfConstrained makes
+                            // decisions about sizing that expects its child to fill all available space in the
+                            // ancestor Scrollable.
+                            padding: widget.padding,
+                            child: _buildSelectableText(),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -476,59 +495,50 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   Widget _buildSelectableText() {
-    return FillWidthIfConstrained(
-      child: Padding(
-        // WARNING: Padding within the text scroll view must be placed here, under
-        // FillWidthIfConstrained, rather than around it, because FillWidthIfConstrained makes
-        // decisions about sizing that expects its child to fill all available space in the
-        // ancestor Scrollable.
-        padding: widget.padding,
-        child: SuperText(
-          key: _textKey,
-          richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
-          textAlign: widget.textAlign,
-          textScaler: _textScaler,
-          layerBeneathBuilder: (context, textLayout) {
-            return Stack(
-              children: [
-                if (widget.textController?.selection.isValid == true)
-                  // Selection highlight beneath the text.
-                  TextLayoutSelectionHighlight(
-                    textLayout: textLayout,
-                    style: widget.selectionHighlightStyle,
-                    selection: widget.textController?.selection,
+    return SuperText(
+      key: _textKey,
+      richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
+      textAlign: widget.textAlign,
+      textScaler: _textScaler,
+      layerBeneathBuilder: (context, textLayout) {
+        return Stack(
+          children: [
+            if (widget.textController?.selection.isValid == true)
+              // Selection highlight beneath the text.
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: widget.selectionHighlightStyle,
+                selection: widget.textController?.selection,
+              ),
+            // Underline beneath the composing region.
+            if (widget.textController?.composingRegion.isValid == true && _shouldShowComposingUnderline)
+              TextUnderlineLayer(
+                textLayout: textLayout,
+                underlines: [
+                  TextLayoutUnderline(
+                    style: UnderlineStyle(
+                      color: widget.textStyleBuilder({}).color ?? //
+                          (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                    ),
+                    range: widget.textController!.composingRegion,
                   ),
-                // Underline beneath the composing region.
-                if (widget.textController?.composingRegion.isValid == true && _shouldShowComposingUnderline)
-                  TextUnderlineLayer(
-                    textLayout: textLayout,
-                    underlines: [
-                      TextLayoutUnderline(
-                        style: UnderlineStyle(
-                          color: widget.textStyleBuilder({}).color ?? //
-                              (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
-                        ),
-                        range: widget.textController!.composingRegion,
-                      ),
-                    ],
-                  ),
-              ],
-            );
-          },
-          layerAboveBuilder: (context, textLayout) {
-            if (!_focusNode.hasFocus) {
-              return const SizedBox();
-            }
+                ],
+              ),
+          ],
+        );
+      },
+      layerAboveBuilder: (context, textLayout) {
+        if (!_focusNode.hasFocus) {
+          return const SizedBox();
+        }
 
-            return TextLayoutCaret(
-              textLayout: textLayout,
-              style: widget.caretStyle,
-              position: _controller.selection.extent,
-              blinkTimingMode: widget.blinkTimingMode,
-            );
-          },
-        ),
-      ),
+        return TextLayoutCaret(
+          textLayout: textLayout,
+          style: widget.caretStyle,
+          position: _controller.selection.extent,
+          blinkTimingMode: widget.blinkTimingMode,
+        );
+      },
     );
   }
 }
@@ -1472,7 +1482,6 @@ class SuperTextFieldScrollview extends StatefulWidget {
     required this.textKey,
     required this.textController,
     required this.scrollController,
-    this.padding = EdgeInsets.zero,
     required this.viewportHeight,
     required this.estimatedLineHeight,
     required this.isMultiline,
@@ -1489,10 +1498,6 @@ class SuperTextFieldScrollview extends StatefulWidget {
 
   /// [ScrollController] that controls the scroll offset of this [SuperTextFieldScrollview].
   final ScrollController scrollController;
-
-  /// Padding placed around the text content of this text field, but within the
-  /// scrollable viewport.
-  final EdgeInsetsGeometry padding;
 
   /// The height of the viewport for this text field.
   ///
@@ -1575,18 +1580,21 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
       return;
     }
 
-    final extentOffset = _textLayout.getOffsetAtPosition(selection.extent);
+    final viewportBox = context.findRenderObject() as RenderBox;
+    final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
+    // Note: the textBoxOffset will be negative.
+    final textBoxOffset = textBox.globalToLocal(Offset.zero, ancestor: viewportBox);
+
+    final selectionExtentOffsetInText = _textLayout.getOffsetAtPosition(selection.extent);
 
     const gutterExtent = 0; // _dragGutterExtent
 
-    final myBox = context.findRenderObject() as RenderBox;
-    final beyondLeftExtent = min(extentOffset.dx - widget.scrollController.offset - gutterExtent, 0).abs();
-    final beyondRightExtent = max(
-        extentOffset.dx - myBox.size.width - widget.scrollController.offset + gutterExtent + widget.padding.horizontal,
-        0);
+    final beyondLeftViewportEdge = min(-textBoxOffset.dx + selectionExtentOffsetInText.dx - gutterExtent, 0).abs();
+    final beyondRightViewportEdge =
+        max((-textBoxOffset.dx + selectionExtentOffsetInText.dx + gutterExtent) - viewportBox.size.width, 0);
 
-    if (beyondLeftExtent > 0) {
-      final newScrollPosition = (widget.scrollController.offset - beyondLeftExtent)
+    if (beyondLeftViewportEdge > 0) {
+      final newScrollPosition = (widget.scrollController.offset - beyondLeftViewportEdge)
           .clamp(0.0, widget.scrollController.position.maxScrollExtent);
 
       widget.scrollController.animateTo(
@@ -1594,8 +1602,8 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOut,
       );
-    } else if (beyondRightExtent > 0) {
-      final newScrollPosition = (beyondRightExtent + widget.scrollController.offset)
+    } else if (beyondRightViewportEdge > 0) {
+      final newScrollPosition = (beyondRightViewportEdge + widget.scrollController.offset)
           .clamp(0.0, widget.scrollController.position.maxScrollExtent);
 
       widget.scrollController.animateTo(
@@ -1639,8 +1647,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
             widget.scrollController.offset +
             gutterExtent +
             (isAtLastLine ? _textLayout.getLineHeightAtPosition(selection.extent) / 2 : 0) +
-            (widget.estimatedLineHeight / 2) + // manual adjustment to avoid line getting half cut off
-            (widget.padding.vertical / 2),
+            (widget.estimatedLineHeight / 2), // manual adjustment to avoid line getting half cut off
         0);
 
     _log.finer('_ensureSelectionExtentIsVisible - Ensuring extent is visible.');
@@ -1786,10 +1793,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
           controller: widget.scrollController,
           physics: const NeverScrollableScrollPhysics(),
           scrollDirection: widget.isMultiline ? Axis.vertical : Axis.horizontal,
-          child: Padding(
-            padding: widget.padding,
-            child: widget.child,
-          ),
+          child: widget.child,
         ),
       ),
     );
