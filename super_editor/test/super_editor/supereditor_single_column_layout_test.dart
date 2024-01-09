@@ -16,26 +16,22 @@ void main() {
           .createDocument() //
           .withSingleEmptyParagraph()
           .withEditorSize(const Size(1000.0, 5000.0))
+          .useStylesheet(
+            defaultStylesheet.copyWith(addRulesAfter: [
+              StyleRule(
+                BlockSelector.all,
+                (doc, docNode) => {
+                  Styles.padding: const CascadingPadding.all(0.0),
+                },
+              )
+            ]),
+          )
           .pump();
 
-      // Find the padding around the component to ensure the component took all
-      // the editor width, minus the padding.
-      final componentPadding = tester
-          .widget<Padding>(find
-              .ancestor(
-                of: find.byWidget(SuperEditorInspector.findWidgetForComponent('1')),
-                matching: find.byType(Padding),
-              )
-              .first)
-          .padding;
+      // Ensure the component doesn't take all the available width.
+      expect(SuperEditorInspector.findComponentSize('1').width, lessThan(1000.0));
 
-      // Ensure the component doesn't start taking all the available width.
-      expect(
-        SuperEditorInspector.findComponentSize('1').width,
-        lessThan(1000.0 - componentPadding.horizontal),
-      );
-
-      // Changes the width.
+      // Change the width the of the first component in the document layout.
       context.editor.execute(
         const [
           ChangeSingleColumnLayoutComponentStylesRequest(
@@ -49,7 +45,7 @@ void main() {
       await tester.pump();
 
       // Ensure the component took all available width.
-      expect(SuperEditorInspector.findComponentSize('1').width, 1000.0 - componentPadding.horizontal);
+      expect(SuperEditorInspector.findComponentSize('1').width, 1000.0);
     });
   });
 
