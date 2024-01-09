@@ -160,18 +160,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     }
   }
 
-  void _onTapDown(TapDownDetails details) {
-    _log.fine("User tapped down");
-    if (!widget.focusNode.hasFocus) {
-      _log.finer("Field isn't focused. Ignoring press.");
-      return;
-    }
-
-    // When the user drags, the toolbar should not be visible.
-    // A drag can begin with a tap down, so we hide the toolbar
-    // preemptively.
-    widget.editingOverlayController.hideToolbar();
-  }
+  void _onTapDown(TapDownDetails details) {}
 
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');

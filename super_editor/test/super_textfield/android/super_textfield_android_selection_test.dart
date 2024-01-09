@@ -83,6 +83,39 @@ void main() {
       expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
     });
 
+    testWidgetsOnAndroid("tapping at existing selection shows/hides the toolbar", (tester) async {
+      await _pumpTestApp(tester);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Place caret at "ab|c".
+      await tester.placeCaretInSuperTextField(2);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Tap again on the same position to show the toolbar.
+      await tester.placeCaretInSuperTextField(2);
+
+      // Ensure that the toolbar is visible and the selection didn't change.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsOneWidget);
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: 2),
+      );
+
+      // Tap again on the same position to hide the toolbar.
+      await tester.placeCaretInSuperTextField(2);
+
+      // Ensure the toolbar disappeared and the selection didn't change.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: 2),
+      );
+    });
+
     testWidgetsOnAndroid("hides toolbar when the user taps to move the caret", (tester) async {
       await _pumpTestApp(tester);
 
