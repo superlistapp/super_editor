@@ -232,7 +232,9 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
     _fullText = attributedText.text;
     _buffer = StringBuffer();
     _bufferCursor = 0;
-    attributedText.visitAttributions(this);
+    if (attributedText.text.isNotEmpty) {
+      attributedText.visitAttributions(this);
+    }
     return _buffer.toString();
   }
 
