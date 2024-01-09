@@ -1,11 +1,13 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import '../core/document.dart';
@@ -144,7 +146,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
 
     if (componentViewModel.type == ListItemType.unordered) {
       return UnorderedListItemComponent(
-        textKey: componentContext.componentKey,
+        key: componentContext.componentKey,
         text: componentViewModel.text,
         styleBuilder: componentViewModel.textStyleBuilder,
         indent: componentViewModel.indent,
@@ -156,7 +158,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
       );
     } else if (componentViewModel.type == ListItemType.ordered) {
       return OrderedListItemComponent(
-        textKey: componentContext.componentKey,
+        key: componentContext.componentKey,
         indent: componentViewModel.indent,
         listIndex: componentViewModel.ordinalValue!,
         text: componentViewModel.text,
@@ -271,10 +273,9 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
 /// Displays a un-ordered list item in a document.
 ///
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
-class UnorderedListItemComponent extends StatelessWidget {
+class UnorderedListItemComponent extends StatefulWidget {
   const UnorderedListItemComponent({
     Key? key,
-    required this.textKey,
     required this.text,
     required this.styleBuilder,
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
@@ -290,7 +291,6 @@ class UnorderedListItemComponent extends StatelessWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  final GlobalKey textKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final UnorderedListItemDotBuilder dotBuilder;
@@ -306,9 +306,23 @@ class UnorderedListItemComponent extends StatelessWidget {
   final bool showDebugPaint;
 
   @override
+  State<UnorderedListItemComponent> createState() => _UnorderedListItemComponentState();
+}
+
+class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
+    with ProxyDocumentComponent<UnorderedListItemComponent>, ProxyTextComposable {
+  final _textKey = GlobalKey();
+
+  @override
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => _textKey;
+
+  @override
+  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+
+  @override
   Widget build(BuildContext context) {
-    final textStyle = styleBuilder({});
-    final indentSpace = indentCalculator(textStyle, indent);
+    final textStyle = widget.styleBuilder({});
+    final indentSpace = widget.indentCalculator(textStyle, widget.indent);
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.25));
     const manualVerticalAdjustment = 3.0;
@@ -320,25 +334,25 @@ class UnorderedListItemComponent extends StatelessWidget {
           width: indentSpace,
           margin: const EdgeInsets.only(top: manualVerticalAdjustment),
           decoration: BoxDecoration(
-            border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+            border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
           ),
           child: SizedBox(
             height: lineHeight,
-            child: dotBuilder(context, this),
+            child: widget.dotBuilder(context, widget),
           ),
         ),
         Expanded(
           child: TextComponent(
-            key: textKey,
-            text: text,
-            textStyleBuilder: styleBuilder,
-            textSelection: textSelection,
+            key: _textKey,
+            text: widget.text,
+            textStyleBuilder: widget.styleBuilder,
+            textSelection: widget.textSelection,
             textScaler: textScaler,
-            selectionColor: selectionColor,
-            highlightWhenEmpty: highlightWhenEmpty,
-            composingRegion: composingRegion,
-            showComposingUnderline: showComposingUnderline,
-            showDebugPaint: showDebugPaint,
+            selectionColor: widget.selectionColor,
+            highlightWhenEmpty: widget.highlightWhenEmpty,
+            composingRegion: widget.composingRegion,
+            showComposingUnderline: widget.showComposingUnderline,
+            showDebugPaint: widget.showDebugPaint,
           ),
         ),
       ],
@@ -366,10 +380,9 @@ Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListIt
 /// Displays an ordered list item in a document.
 ///
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
-class OrderedListItemComponent extends StatelessWidget {
+class OrderedListItemComponent extends StatefulWidget {
   const OrderedListItemComponent({
     Key? key,
-    required this.textKey,
     required this.listIndex,
     required this.text,
     required this.styleBuilder,
@@ -386,7 +399,6 @@ class OrderedListItemComponent extends StatelessWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  final GlobalKey textKey;
   final int listIndex;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
@@ -403,9 +415,23 @@ class OrderedListItemComponent extends StatelessWidget {
   final bool showDebugPaint;
 
   @override
+  State<OrderedListItemComponent> createState() => _OrderedListItemComponentState();
+}
+
+class _OrderedListItemComponentState extends State<OrderedListItemComponent>
+    with ProxyDocumentComponent<OrderedListItemComponent>, ProxyTextComposable {
+  final _textKey = GlobalKey();
+
+  @override
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => _textKey;
+
+  @override
+  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+
+  @override
   Widget build(BuildContext context) {
-    final textStyle = styleBuilder({});
-    final indentSpace = indentCalculator(textStyle, indent);
+    final textStyle = widget.styleBuilder({});
+    final indentSpace = widget.indentCalculator(textStyle, widget.indent);
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.0));
 
@@ -416,25 +442,25 @@ class OrderedListItemComponent extends StatelessWidget {
           width: indentSpace,
           height: lineHeight,
           decoration: BoxDecoration(
-            border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+            border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
           ),
           child: SizedBox(
             height: lineHeight,
-            child: numeralBuilder(context, this),
+            child: widget.numeralBuilder(context, widget),
           ),
         ),
         Expanded(
           child: TextComponent(
-            key: textKey,
-            text: text,
-            textStyleBuilder: styleBuilder,
-            textSelection: textSelection,
+            key: _textKey,
+            text: widget.text,
+            textStyleBuilder: widget.styleBuilder,
+            textSelection: widget.textSelection,
             textScaler: textScaler,
-            selectionColor: selectionColor,
-            highlightWhenEmpty: highlightWhenEmpty,
-            composingRegion: composingRegion,
-            showComposingUnderline: showComposingUnderline,
-            showDebugPaint: showDebugPaint,
+            selectionColor: widget.selectionColor,
+            highlightWhenEmpty: widget.highlightWhenEmpty,
+            composingRegion: widget.composingRegion,
+            showComposingUnderline: widget.showComposingUnderline,
+            showDebugPaint: widget.showDebugPaint,
           ),
         ),
       ],

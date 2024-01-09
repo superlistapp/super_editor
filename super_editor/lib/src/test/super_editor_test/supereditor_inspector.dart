@@ -167,7 +167,17 @@ class SuperEditorInspector {
   /// {@macro supereditor_finder}
   static AttributedText findTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
     final documentLayout = findDocumentLayout(superEditorFinder);
-    return (documentLayout.getComponentByNodeId(nodeId) as TextComponentState).widget.text;
+    final component = documentLayout.getComponentByNodeId(nodeId);
+
+    if (component is TextComponentState) {
+      return component.widget.text;
+    }
+
+    if (component is ProxyDocumentComponent) {
+      return (component.childDocumentComponentKey.currentState as TextComponentState).widget.text;
+    }
+
+    throw Exception('The component for node id $nodeId is not a TextComponent.');
   }
 
   /// Finds the paragraph with the given [nodeId] and returns the paragraph's content as a [TextSpan].
@@ -179,7 +189,7 @@ class SuperEditorInspector {
   static TextSpan findRichTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
     final documentLayout = findDocumentLayout(superEditorFinder);
 
-    final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
+    final textComponentState = documentLayout.getComponentByNodeId(nodeId) as DocumentComponent;
     final superText = find
         .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
         .evaluate()
