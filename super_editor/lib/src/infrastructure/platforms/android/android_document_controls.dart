@@ -237,7 +237,7 @@ class AndroidControlsDocumentLayerState
   bool get isCaretDisplayed => layoutData?.caret != null;
 
   @visibleForTesting
-  bool get isCaretVisible => _caretBlinkController.opacity == 1.0;
+  bool get isCaretVisible => _caretBlinkController.opacity == 1.0 && isCaretDisplayed;
 
   @visibleForTesting
   Duration get caretFlashPeriod => _caretBlinkController.flashPeriod;
