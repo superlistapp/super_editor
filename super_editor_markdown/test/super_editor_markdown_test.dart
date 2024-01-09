@@ -848,7 +848,7 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.expectedSize, isNull);
+        expect(image.expectedBitmapSize, isNull);
       });
 
       test('image with size', () {
@@ -858,8 +858,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.expectedSize?.width, 500.0);
-        expect(image.expectedSize?.height, 200.0);
+        expect(image.expectedBitmapSize?.width, 500.0);
+        expect(image.expectedBitmapSize?.height, 200.0);
       });
 
       test('image with size and title', () {
@@ -869,8 +869,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.expectedSize?.width, 500.0);
-        expect(image.expectedSize?.height, 200.0);
+        expect(image.expectedBitmapSize?.width, 500.0);
+        expect(image.expectedBitmapSize?.height, 200.0);
       });
 
       test('image with width', () {
@@ -880,8 +880,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.expectedSize?.width, 500.0);
-        expect(image.expectedSize?.height, isNull);
+        expect(image.expectedBitmapSize?.width, 500.0);
+        expect(image.expectedBitmapSize?.height, isNull);
       });
 
       test('image with height', () {
@@ -891,8 +891,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.expectedSize?.width, isNull);
-        expect(image.expectedSize?.height, 200.0);
+        expect(image.expectedBitmapSize?.width, isNull);
+        expect(image.expectedBitmapSize?.height, 200.0);
       });
 
       test('image with size notation without width and height', () {
@@ -901,8 +901,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.expectedSize?.width, isNull);
-        expect(image.expectedSize?.height, isNull);
+        expect(image.expectedBitmapSize?.width, isNull);
+        expect(image.expectedBitmapSize?.height, isNull);
       });
 
       test('image with incomplete size notation', () {
@@ -911,8 +911,8 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
-        expect(image.expectedSize?.width, isNull);
-        expect(image.expectedSize?.height, isNull);
+        expect(image.expectedBitmapSize?.width, isNull);
+        expect(image.expectedBitmapSize?.height, isNull);
       });
 
       test('single unstyled paragraph', () {

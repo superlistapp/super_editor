@@ -724,12 +724,14 @@ class AsciiTable {
 }
 
 /// A parsed image notation.
-class MarkdownImage extends md.InlineLink {
-  MarkdownImage(
-    String destination, {
-    String? title,
+class MarkdownImage {
+  const MarkdownImage(
+    this.destination, {
+    this.title,
     this.size,
-  }) : super(destination, title: title);
+  });
 
+  final String destination;
+  final String? title;
   final ExpectedSize? size;
 }

@@ -131,8 +131,12 @@ class _MarkdownToDocument implements md.NodeVisitor {
             // TODO: handle null image URL
             imageUrl: inlineVisitor.imageUrl!,
             altText: inlineVisitor.imageAltText!,
-            width: inlineVisitor.width,
-            height: inlineVisitor.height,
+            expectedBitmapSize: inlineVisitor.width != null || inlineVisitor.height != null
+                ? ExpectedSize(
+                    inlineVisitor.width != null ? int.tryParse(inlineVisitor.width!) : null,
+                    inlineVisitor.height != null ? int.tryParse(inlineVisitor.height!) : null,
+                  )
+                : null,
           );
         } else {
           _addParagraph(inlineVisitor.attributedText, element.attributes);
@@ -292,20 +296,14 @@ class _MarkdownToDocument implements md.NodeVisitor {
   void _addImage({
     required String imageUrl,
     required String altText,
-    String? width,
-    String? height,
+    ExpectedSize? expectedBitmapSize,
   }) {
     _content.add(
       ImageNode(
         id: Editor.createNodeId(),
         imageUrl: imageUrl,
         altText: altText,
-        expectedBitmapSize: width != null || height != null
-            ? ExpectedSize(
-                width != null ? int.tryParse(width) : null,
-                height != null ? int.tryParse(height) : null,
-              )
-            : null,
+        expectedBitmapSize: expectedBitmapSize,
       ),
     );
   }

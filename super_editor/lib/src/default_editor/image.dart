@@ -15,7 +15,7 @@ class ImageNode extends BlockNode with ChangeNotifier {
     String altText = '',
     Map<String, dynamic>? metadata,
   })  : _imageUrl = imageUrl,
-        _expectedSize = expectedBitmapSize,
+        _expectedBitmapSize = expectedBitmapSize,
         _altText = altText {
     this.metadata = metadata;
 
@@ -46,14 +46,14 @@ class ImageNode extends BlockNode with ChangeNotifier {
   /// in a vertical layout will likely take up more space or less space than the final
   /// image because the final image will probably be scaled. Therefore, to take
   /// advantage of [ExpectedSize], you should try to provide both dimensions.
-  ExpectedSize? get expectedSize => _expectedSize;
-  ExpectedSize? _expectedSize;
-  set expectedSize(ExpectedSize? newValue) {
-    if (newValue == _expectedSize) {
+  ExpectedSize? get expectedBitmapSize => _expectedBitmapSize;
+  ExpectedSize? _expectedBitmapSize;
+  set expectedBitmapSize(ExpectedSize? newValue) {
+    if (newValue == _expectedBitmapSize) {
       return;
     }
 
-    _expectedSize = newValue;
+    _expectedBitmapSize = newValue;
 
     notifyListeners();
   }
@@ -106,7 +106,7 @@ class ImageComponentBuilder implements ComponentBuilder {
     return ImageComponentViewModel(
       nodeId: node.id,
       imageUrl: node.imageUrl,
-      expectedSize: node.expectedSize,
+      expectedSize: node.expectedBitmapSize,
       selectionColor: const Color(0x00000000),
     );
   }
@@ -225,7 +225,7 @@ class ImageComponent extends StatelessWidget {
                           // Both width and height were provide.
                           // Preserve the aspect ratio of the original image.
                           return AspectRatio(
-                            aspectRatio: expectedSize!.width! / expectedSize!.height!,
+                            aspectRatio: expectedSize!.aspectRatio,
                             child: SizedBox(
                               width: expectedSize!.width!.toDouble(),
                               height: expectedSize!.height!.toDouble(),
@@ -250,11 +250,18 @@ class ImageComponent extends StatelessWidget {
 }
 
 /// A size with optional [width] and [height].
+///
+/// Used to size an image component based on the expected bitmap size of the image,
+/// so the content doesn't shift after the image is loaded.
 class ExpectedSize {
   const ExpectedSize(this.width, this.height);
 
   final int? width;
   final int? height;
+
+  double get aspectRatio => height != null //
+      ? (width ?? 0) / height!
+      : throw UnsupportedError("Can't compute the aspect ratio with a null height");
 
   @override
   bool operator ==(Object other) =>
