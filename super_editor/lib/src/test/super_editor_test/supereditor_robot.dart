@@ -344,6 +344,22 @@ extension SuperEditorRobot on WidgetTester {
     return gesture;
   }
 
+  /// Simulates typing [text], either as keyboard keys, or as insertion deltas of
+  /// a software keyboard.
+  ///
+  /// Provide an [imeOwnerFinder] if there are multiple [ImeOwner]s in the current
+  /// widget tree.
+  Future<void> typeTextAdaptive(String text, [Finder? imeOwnerFinder]) async {
+    if (!testTextInput.hasAnyClients) {
+      // There isn't any IME connections.
+      // Type using the hardware keyboard.
+      await typeKeyboardText(text);
+      return;
+    }
+
+    await ime.typeText(text, getter: () => imeClientGetter(imeOwnerFinder));
+  }
+
   /// Types the given [text] into a [SuperEditor] by simulating IME text deltas from
   /// the platform.
   ///
