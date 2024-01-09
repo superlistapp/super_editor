@@ -1081,6 +1081,7 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
     ),
     this.platformOverride,
     this.displayOnAllPlatforms = false,
+    this.displayCaretWithExpandedSelection = true,
     this.blinkTimingMode = BlinkTimingMode.ticker,
   });
 
@@ -1095,6 +1096,11 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
   /// By default, the caret is only displayed on desktop.
   final bool displayOnAllPlatforms;
 
+  /// Whether to display the caret when the selection is expanded.
+  ///
+  /// Defaults to `true`.
+  final bool displayCaretWithExpandedSelection;
+
   /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
   ///
   /// `Timer`s are not expected to work in tests.
@@ -1108,6 +1114,7 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
       caretStyle: caretStyle,
       platformOverride: platformOverride,
       displayOnAllPlatforms: displayOnAllPlatforms,
+      displayCaretWithExpandedSelection: displayCaretWithExpandedSelection,
       blinkTimingMode: blinkTimingMode,
     );
   }
