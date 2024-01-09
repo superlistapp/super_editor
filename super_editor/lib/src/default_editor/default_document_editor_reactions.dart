@@ -67,7 +67,7 @@ class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
-    ParagraphNode paragraph,
+    TextNode paragraph,
     String match,
   ) {
     final prefixLength = match.length - 1; // -1 for the space on the end
@@ -130,7 +130,7 @@ class UnorderedListItemConversionReaction extends ParagraphPrefixConversionReact
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
-    ParagraphNode paragraph,
+    TextNode paragraph,
     String match,
   ) {
     // The user started a paragraph with an unordered list item pattern.
@@ -172,7 +172,7 @@ class OrderedListItemConversionReaction extends ParagraphPrefixConversionReactio
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
-    ParagraphNode paragraph,
+    TextNode paragraph,
     String match,
   ) {
     // The user started a paragraph with an ordered list item pattern.
@@ -214,7 +214,7 @@ class BlockquoteConversionReaction extends ParagraphPrefixConversionReaction {
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
-    ParagraphNode paragraph,
+    TextNode paragraph,
     String match,
   ) {
     // The user started a paragraph with blockquote pattern.
@@ -321,9 +321,9 @@ class HorizontalRuleConversionReaction implements EditReaction {
 }
 
 /// Base class for [EditReaction]s that want to take action when the user types text at
-/// the beginning of a [TextNode], which matches a given [RegExp].
-abstract class TextNodePrefixConversionReaction implements EditReaction {
-  const TextNodePrefixConversionReaction({
+/// the beginning of a paragraph, which matches a given [RegExp].
+abstract class ParagraphPrefixConversionReaction implements EditReaction {
+  const ParagraphPrefixConversionReaction({
     bool requireSpaceInsertion = true,
   }) : _requireSpaceInsertion = requireSpaceInsertion;
 
@@ -334,7 +334,7 @@ abstract class TextNodePrefixConversionReaction implements EditReaction {
   /// user didn't insert a space into the paragraph.
   final bool _requireSpaceInsertion;
 
-  /// Pattern that is matched at the beginning of a node and then passed to
+  /// Pattern that is matched at the beginning of a paragraph and then passed to
   /// sub-classes for processing.
   RegExp get pattern;
 
@@ -348,61 +348,25 @@ abstract class TextNodePrefixConversionReaction implements EditReaction {
 
     final edit = changeList[changeList.length - 2] as DocumentEdit;
     final textInsertionEvent = edit.change as TextInsertionEvent;
-
-    final textNode = document.getNodeById(textInsertionEvent.nodeId) as TextNode;
-    if (!acceptsNode(textNode)) {
-      // The subclass doesn't accept this type of node. Fizzle.
-      return;
-    }
-
-    final match = pattern.firstMatch(textNode.text.text)?.group(0);
+    final paragraph = document.getNodeById(textInsertionEvent.nodeId) as TextNode;
+    final match = pattern.firstMatch(paragraph.text.text)?.group(0);
     if (match == null) {
       return;
     }
 
-    // The user started a node with the desired pattern. Delegate to the subclass
+    // The user started a paragraph with the desired pattern. Delegate to the subclass
     // to do whatever it wants.
-    onPrefixMatched(editContext, requestDispatcher, changeList, textNode, match);
+    onPrefixMatched(editContext, requestDispatcher, changeList, paragraph, match);
   }
-
-  /// Hook called by the superclass, before evaluating the [pattern], to check if a
-  /// given [node] is acceptable for this reaction.
-  ///
-  /// For example, a reaction that only runs for [ParagraphNode]s should return `true`
-  /// only if [node] is a [ParagraphNode].
-  @protected
-  bool acceptsNode(TextNode node);
-
-  /// Hook, called by the superclass, when the user starts the given [node] with
-  /// the given [match], which fits the desired [pattern].
-  @protected
-  void onPrefixMatched(
-    EditContext editContext,
-    RequestDispatcher requestDispatcher,
-    List<EditEvent> changeList,
-    TextNode node,
-    String match,
-  );
-}
-
-/// A [TextNodePrefixConversionReaction] that only runs for [ParagraphNode]s.
-///
-/// This reaction runs when the user types text at the beginning of a [ParagraphNode],
-/// which matches a given [RegExp].
-abstract class ParagraphPrefixConversionReaction extends TextNodePrefixConversionReaction {
-  const ParagraphPrefixConversionReaction();
-
-  @override
-  bool acceptsNode(TextNode node) => node is ParagraphNode;
 
   /// Hook, called by the superclass, when the user starts the given [paragraph] with
   /// the given [match], which fits the desired [pattern].
-  @override
+  @protected
   void onPrefixMatched(
     EditContext editContext,
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
-    covariant ParagraphNode paragraph,
+    TextNode paragraph,
     String match,
   );
 }
