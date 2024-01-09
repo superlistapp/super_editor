@@ -382,6 +382,45 @@ This is some code
 Paragraph3""");
       });
 
+      test('removes all text attributions when serializing an empty paragraph', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText('Paragraph1')),
+            ParagraphNode(
+              id: '2',
+              text: AttributedText(
+                '',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+                    SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.end),
+                  ],
+                ),
+              ),
+            ),
+            ParagraphNode(
+              id: '3',
+              text: AttributedText(
+                '',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+                    SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.end),
+                  ],
+                ),
+              ),
+            ),
+          ]),
+        );
+
+        // Ensure the attributions were ignored for the empty paragraphs.
+        expect(serialized, """Paragraph1
+
+
+
+""");
+      });
+
       test('separates multiple paragraphs with blank lines', () {
         final serialized = serializeDocumentToMarkdown(
           MutableDocument(nodes: [
