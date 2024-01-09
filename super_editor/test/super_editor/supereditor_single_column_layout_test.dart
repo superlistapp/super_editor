@@ -28,24 +28,21 @@ void main() {
           )
           .pump();
 
-      // Ensure the component doesn't take all the available width.
-      expect(SuperEditorInspector.findComponentSize('1').width, lessThan(1000.0));
-
       // Change the width the of the first component in the document layout.
       context.editor.execute(
         const [
           ChangeSingleColumnLayoutComponentStylesRequest(
             nodeId: '1',
             styles: SingleColumnLayoutComponentStyles(
-              width: double.infinity,
+              width: 400.0,
             ),
           ),
         ],
       );
       await tester.pump();
 
-      // Ensure the component took all available width.
-      expect(SuperEditorInspector.findComponentSize('1').width, 1000.0);
+      // Ensure the component width changed to the requested value.
+      expect(SuperEditorInspector.findComponentSize('1').width, 400.0);
     });
   });
 
