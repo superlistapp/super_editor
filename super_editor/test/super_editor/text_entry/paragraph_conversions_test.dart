@@ -5,6 +5,7 @@ import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../../test_runners.dart';
 import '../supereditor_test_tools.dart';
 
 void main() {
@@ -154,15 +155,18 @@ void main() {
     });
 
     group("paragraph to horizontal rule >", () {
-      testWidgetsOnAllPlatforms("with ---", (tester) async {
+      testAllInputsOnAllPlatforms("with --- at the beginning of an empty paragraph", (
+        tester, {
+        required TextInputSource inputSource,
+      }) async {
         final context = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
-            .withInputSource(TextInputSource.ime)
+            .withInputSource(inputSource)
             .autoFocus(true)
             .pump();
 
-        await tester.typeImeText("--- ");
+        await tester.typeTextAdaptive("--- ");
 
         // Ensure that we now have two nodes, and the first one is an HR.
         final document = context.findEditContext().document;
@@ -173,6 +177,41 @@ void main() {
         expect((document.nodes.last as ParagraphNode).text.text.isEmpty, isTrue);
       });
 
+      testAllInputsOnAllPlatforms('with --- at the beginning of an non-empty paragraph', (
+        tester, {
+        required TextInputSource inputSource,
+      }) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('Existing paragraph')
+            .withInputSource(inputSource)
+            .pump();
+
+        // Place the caret at the beginning of the document.
+        await tester.placeCaretInParagraph(context.document.nodes.first.id, 0);
+
+        // Type the first dash.
+        await tester.typeTextAdaptive('-');
+
+        // Ensure no conversion was performed.
+        expect((context.document.nodes.first as ParagraphNode).text.text, '-Existing paragraph');
+
+        // Type the second dash.
+        await tester.typeTextAdaptive('-');
+
+        // Ensure the two dashes were converted to an em-dash.
+        expect((context.document.nodes.first as ParagraphNode).text.text, '—Existing paragraph');
+
+        // Type the third dash.
+        await tester.typeTextAdaptive('- ');
+
+        // Ensure a horizontal rule was inserted before the existing paragraph.
+        expect(context.document.nodes.length, 2);
+        expect(context.document.nodes.first, isA<HorizontalRuleNode>());
+        expect(context.document.nodes.last, isA<ParagraphNode>());
+        expect((context.document.nodes.last as ParagraphNode).text.text, 'Existing paragraph');
+      });
+
       testWidgetsOnAllPlatforms('does not convert non-HR dashes', (tester) async {
         final context = await tester //
             .createDocument()
@@ -181,12 +220,15 @@ void main() {
             .autoFocus(true)
             .pump();
 
-        final nonHrInput = _nonHrVariant.currentValue!;
-        await tester.typeImeText(nonHrInput);
+        final nonHrInputAndResult = _nonHrVariant.currentValue!;
+        final input = nonHrInputAndResult.input;
+        final expectedResult = nonHrInputAndResult.expectedResult;
+
+        await tester.typeImeText(input);
 
         final paragraphNode = context.findEditContext().document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
-        expect((paragraphNode as ParagraphNode).text.text, nonHrInput);
+        expect((paragraphNode as ParagraphNode).text.text, expectedResult);
       }, variant: _nonHrVariant);
     });
 
@@ -347,9 +389,28 @@ final _orderedListVariant = ValueVariant({
   " 1) ",
 });
 
-final _nonHrVariant = ValueVariant({
+/// Holds sequence of character that shouldn't produce a horizontal rule
+/// and the expected resulting text after running the editor reactions.
+final _nonHrVariant = ValueVariant(const {
   // We ignore " - " because that is a conversion for unordered list items
-  "-- ",
-  "---- ",
-  " --- ",
+  _TestInput(input: "-- ", expectedResult: "— "),
+  _TestInput(input: "---- ", expectedResult: "—— "),
+  _TestInput(input: " --- ", expectedResult: " —- "),
 });
+
+/// A test text input and the expected resulting text after running
+/// the editor reactions.
+class _TestInput {
+  const _TestInput({
+    required this.input,
+    required this.expectedResult,
+  });
+
+  final String input;
+  final String expectedResult;
+
+  @override
+  String toString() {
+    return "[input: $input, expectedResult: $expectedResult]";
+  }
+}

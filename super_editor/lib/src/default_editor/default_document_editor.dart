@@ -223,5 +223,6 @@ final defaultEditorReactions = List.unmodifiable([
   const BlockquoteConversionReaction(),
   const HorizontalRuleConversionReaction(),
   const ImageUrlConversionReaction(),
+  const DashConversionReaction(),
   //---- End Content Conversions ---
 ]);
