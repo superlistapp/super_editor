@@ -249,10 +249,7 @@ class ImageComponent extends StatelessWidget {
   }
 }
 
-/// A size with optional [width] and [height].
-///
-/// Used to size an image component based on the expected bitmap size of the image,
-/// so the content doesn't shift after the image is loaded.
+/// The expected size of a piece of content, such as an image that's loading.
 class ExpectedSize {
   const ExpectedSize(this.width, this.height);
 
