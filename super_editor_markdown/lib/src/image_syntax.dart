@@ -112,7 +112,7 @@ class SuperEditorImageSyntax extends md.LinkSyntax {
     // Parse an optional height.
     final height = _tryParseNumber(parser);
 
-    return ExpectedSize(width: width, height: height);
+    return ExpectedSize(width, height);
   }
 
   /// Tries to parse an integer number.

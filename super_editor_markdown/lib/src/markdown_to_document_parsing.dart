@@ -302,8 +302,8 @@ class _MarkdownToDocument implements md.NodeVisitor {
         altText: altText,
         expectedBitmapSize: width != null || height != null
             ? ExpectedSize(
-                width: width != null ? int.tryParse(width) : null,
-                height: height != null ? int.tryParse(height) : null,
+                width != null ? int.tryParse(width) : null,
+                height != null ? int.tryParse(height) : null,
               )
             : null,
       ),
