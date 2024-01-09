@@ -347,10 +347,11 @@ mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentCompon
 
   @override
   Offset getOffsetForPosition(NodePosition nodePosition) {
-    // Get the offset from the child to return the offset in
-    // component space instead of text space. Without this,
-    // the offset for components that shift the text, like a task,
-    // won't be aligned with a text component.
+    // In addition to the standard `getOffsetForPosition` of the child component, the proxy
+    // also calls `_getOffsetFromChild`, which returns the offset from the top-left of this
+    // proxy box, to the top-left of the child. Some proxy components, such as a task,
+    // add content that shifts the child component, like adding a checkbox. Any such
+    // shift of the child component must be accounted for when reporting a content offset.
     return _getOffsetFromChild(
       _childDocumentComponent.getOffsetForPosition(nodePosition),
     );

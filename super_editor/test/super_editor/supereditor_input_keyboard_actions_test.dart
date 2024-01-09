@@ -825,7 +825,7 @@ void main() {
         variant: inputSourceVariant,
       );
 
-      group("jumps to downstream node preserving approximate x position with DOWN ARROW", () {
+      group("jumps to downstream node preserving approximate x-position with DOWN ARROW", () {
         testWidgetsOnDesktop('from paragraph to paragraph', (tester) async {
           final context = await tester //
               .createDocument()
@@ -1162,7 +1162,7 @@ This is a paragraph''') //
         });
       });
 
-      group("jumps to upstream node preserving approximate x position with UP ARROW", () {
+      group("jumps to upstream node preserving approximate x-position with UP ARROW", () {
         testWidgetsOnDesktop('from paragraph to paragraph', (tester) async {
           final context = await tester //
               .createDocument()
