@@ -483,14 +483,11 @@ class ImageUrlConversionReaction implements EditReaction {
 ///
 /// - [LinkUpdatePolicy.preserve] : the attribution remains unchanged.
 /// - [LinkUpdatePolicy.update] : the attribution is updated to reflect the new URL.
-///   The attribution is updated only if characters are inserted/removed at the middle of a link.
-/// - [LinkUpdatePolicy.remove] : the attribution is removed for the exinting link.
-///   The attribution is removed if characters are inserted at the middle of a link,
-///   or if characters are removed anywhere in a link.
+/// - [LinkUpdatePolicy.remove] : the attribution is removed.
 ///
-/// The linkification only applies when the user enters a space " " after a token that
-/// looks like a URL. If the user doesn't enter a trailing space, or the preceding
-/// token doesn't look like a URL, then the linkification doesn't happen.
+/// A plain text URL only has a link applied to it when the user enters a space " "
+/// after a token that looks like a URL. If the user doesn't enter a trailing space,
+/// or the preceding token doesn't look like a URL, then the link attribution isn't aplied.
 class LinkifyReaction implements EditReaction {
   const LinkifyReaction({
     this.updatePolicy = LinkUpdatePolicy.preserve,
@@ -653,9 +650,8 @@ class LinkifyReaction implements EditReaction {
     }
 
     if (changeList.isEmpty) {
-      // This reaction requires a single deletion event OR at least an insertion/deletion event
-      // followed a selection change event. There aren't any events in the the change list,
-      // therefore this reaction shouldn't apply. Fizzle.
+      // There aren't any changes, therefore no URL was changed, therefore we don't
+      // need to update a URL. Fizzle.
       return;
     }
 
@@ -663,9 +659,10 @@ class LinkifyReaction implements EditReaction {
     if (changeList.length == 1) {
       final editEvent = changeList.last;
       if (editEvent is! DocumentEdit || editEvent.change is! TextDeletedEvent) {
-        // This reaction can run with a single deletion event because
-        // deleting the downstream character generates a single change.
-        // We have a single event, but it isn't a deletion. Fizzle.
+        // There's only a single event in the change list, and it's not a deletion
+        // event. The only situation where a URL would change with a single
+        // event is a deletion event. Therefore, we don't need to change a URL.
+        // Fizzle.
         return;
       }
 
@@ -673,25 +670,28 @@ class LinkifyReaction implements EditReaction {
     } else {
       final selectionEvent = changeList.last;
       if (selectionEvent is! SelectionChangeEvent) {
-        // The change list contains more than one event.
-        // In this case, it's required that the last two events are an insertion/deletion event
-        // followed by a selection change event. The last event isn't a selection event,
-        // therefore this reaction shouldn't apply. Fizzle.
+        // The last event isn't a selection event. We expect a URL change
+        // to consist of an insertion or a deletion followed by a selection
+        // change. This event list doesn't fit the pattern. Fizzle.
         return;
       }
 
       final edit = changeList[changeList.length - 2];
       if (edit is! DocumentEdit || //
           (edit.change is! TextInsertionEvent && edit.change is! TextDeletedEvent)) {
-        // The change list contains more than one event.
-        // In this case, this reaction requires that the two last events are an insertion/deletion event
-        // followed by a selection change event.  The second to last event isn't a text insertion/deletion event,
-        // therefore this reaction shouldn't apply. Fizzle.
+        // The second to last event isn't an insertion or deletion. We
+        // expect a URL change to consist of an insertion or a deletion
+        // followed by a selection change. This event list doesn't fit
+        // the pattern. Fizzle.
         return;
       }
 
       insertionOrDeletionEvent = edit.change as NodeChangeEvent;
     }
+
+    // The change list includes an insertion or deletion followed by a selection
+    // change, therefore a URL may have changed. Look for a URL around the
+    // altered text.
 
     final changedNodeId = insertionOrDeletionEvent.nodeId;
     final changedNodeText = (document.getNodeById(changedNodeId) as TextNode).text;
@@ -712,12 +712,15 @@ class LinkifyReaction implements EditReaction {
           .firstOrNull;
     }
 
-    if (insertionOrDeletionOffset < changedNodeText.length) {
+    if (insertionOrDeletionOffset < changedNodeText.length - 1) {
       // Check if the downstream character has a link attribution.
+      final downstreamOffset = insertionOrDeletionEvent is TextInsertionEvent //
+          ? insertionOrDeletionOffset + 1
+          : insertionOrDeletionOffset;
       downstreamLinkAttribution = changedNodeText
           .getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution is LinkAttribution,
-            range: SpanRange(insertionOrDeletionOffset + 1, insertionOrDeletionOffset + 1),
+            range: SpanRange(downstreamOffset, downstreamOffset),
           )
           .firstOrNull;
     }
@@ -727,8 +730,10 @@ class LinkifyReaction implements EditReaction {
       return;
     }
 
-    // Whether or not the change happened at the middle of a link, i.e.,
-    // both upstream and downstream characters have a link attribution with the same URL.
+    // We only want to update a URL if a change happened within an existing URL,
+    // not at the edges. Determine whether this change reflects an insertion or
+    // deletion within an existing URL by looking for identical link attributions
+    // both upstream and downstream from the edited text offset.
     final isAtMiddleOfLink = upstreamLinkAttribution != null &&
         downstreamLinkAttribution != null &&
         upstreamLinkAttribution.attribution == downstreamLinkAttribution.attribution;
@@ -753,8 +758,13 @@ class LinkifyReaction implements EditReaction {
       composer.preferences.removeStyle(attributionSpan.attribution);
     }
 
+    // A URL was changed and we have now removed the original link. Removing
+    // the original link was a necessary step for both `LinkUpdatePolicy.remove`
+    // and for `LinkUpdatePolicy.update`.
+    //
+    // If the policy is `LinkUpdatePolicy.update` then we need to add a new
+    // link attribution that reflects the edited URL text. We do that below.
     if (updatePolicy == LinkUpdatePolicy.update) {
-      // We are configure to update the link. Add the new attribution.
       changedNodeText.addAttribution(
         LinkAttribution(
           url: _parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
@@ -764,6 +774,8 @@ class LinkifyReaction implements EditReaction {
     }
   }
 
+  /// Parses the [text] as [Uri], prepending "https://" if it doesn't start
+  /// with "http://" or "https://".
   Uri _parseLink(String text) {
     final uri = text.startsWith("http://") || text.startsWith("https://") //
         ? Uri.parse(text)
@@ -773,15 +785,15 @@ class LinkifyReaction implements EditReaction {
 }
 
 /// Configuration for the action that should happen when a text containing
-/// a link attribution is modified.
+/// a link attribution is modified, e.g., "google.com" becomes "gogle.com".
 enum LinkUpdatePolicy {
-  /// The attribution must remain unchanged.
+  /// When a linkified URL has characters added or deleted, the link remains the same.
   preserve,
 
-  /// The attribution must be updated to reflect the new URL.
+  /// When a linkified URL has characters added or removed, the link is updated to reflect the new URL value.
   update,
 
-  /// The attributions must be removed.
+  /// When a linkified URL has characters added or removed, the link is completely removed.
   remove,
 }
 
