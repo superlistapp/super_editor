@@ -8,7 +8,7 @@ import 'theme.dart';
 ///
 /// A menu button is displayed with the given [label].
 ///
-/// When the user clicks the menu button, a popover appears, which displays a the given [items] as
+/// When the user clicks the menu button, a popover appears, which displays the given [items] as
 /// a vertical list. The popover is left-aligned with the menu button, and appears immediately below
 /// the menu button.
 ///
@@ -167,14 +167,12 @@ class DocsAppMenuPopoverGeometry extends PopoverGeometry {
           alignment = const FollowerAlignment(
             leaderAnchor: Alignment.bottomLeft,
             followerAnchor: Alignment.topLeft,
-            // followerOffset: Offset(0, 20),
           );
         } else if (globalLeaderRect.top - followerSize.height > bounds.top) {
           // The follower fits above the leader.
           alignment = const FollowerAlignment(
             leaderAnchor: Alignment.bottomLeft,
             followerAnchor: Alignment.topLeft,
-            // followerOffset: Offset(0, -20),
           );
         } else {
           // There isn't enough room to fully display the follower below or above the leader.
@@ -182,7 +180,6 @@ class DocsAppMenuPopoverGeometry extends PopoverGeometry {
           alignment = const FollowerAlignment(
             leaderAnchor: Alignment.bottomLeft,
             followerAnchor: Alignment.topLeft,
-            // followerOffset: Offset(0, 20),
           );
         }
 
