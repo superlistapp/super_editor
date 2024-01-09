@@ -305,7 +305,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
   }) {
     late String content;
 
-    if (element.children != null && element.children!.first is md.UnparsedContent) {
+    if (element.children != null && element.children!.isNotEmpty && element.children!.first is md.UnparsedContent) {
       // The list item might contain another sub-list. In that case, the textContent
       // contains the text for the whole list instead of just the current list item.
       // Use the textContent for the first child, which contains only the text

@@ -1016,6 +1016,16 @@ This is some code
         expect((document.nodes[4] as ListItemNode).text.text, 'list item 3');
       });
 
+      test('empty unordered list item', () {
+        const markdown = '* ';
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes.first as ListItemNode).text.text, isEmpty);
+      });
+
       test('unordered list with empty lines between items', () {
         const markdown = '''
  * list item 1
@@ -1067,6 +1077,16 @@ This is some code
 
         expect((document.nodes[4] as ListItemNode).indent, 0);
         expect((document.nodes[4] as ListItemNode).text.text, 'list item 3');
+      });
+
+      test('empty ordered list item', () {
+        const markdown = '1. ';
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first, isA<ListItemNode>());
+        expect((document.nodes.first as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes.first as ListItemNode).text.text, isEmpty);
       });
 
       test('ordered list with empty lines between items', () {
