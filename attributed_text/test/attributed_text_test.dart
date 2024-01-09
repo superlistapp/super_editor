@@ -781,15 +781,15 @@ void main() {
 
         final spans = text.spans.collapseSpans(contentLength: text.text.length);
 
-        // Ensure two spans were returned.
-        // The first containing no attributions and the second containing the attribution.
+        // Ensure two spans were returned. The first containing no attributions and
+        // the second containing the attribution.
         expect(spans.length, 2);
         expect(spans[0].attributions, isEmpty);
         expect(spans[0].start, 0);
         expect(spans[0].end, 5);
         expect(spans[1].attributions, isNotEmpty);
         expect(spans[1].start, 6);
-        expect(spans[1].end, text.text.length - 1);
+        expect(spans[1].end, 10);
       });
     });
   });
