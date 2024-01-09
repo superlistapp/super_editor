@@ -19,6 +19,7 @@ class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
     ),
     this.platformOverride,
     this.displayOnAllPlatforms = false,
+    this.displayCaretWithExpandedSelection = true,
     this.blinkTimingMode = BlinkTimingMode.ticker,
   }) : super(key: key);
 
@@ -40,6 +41,11 @@ class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
   /// By default, the caret is only displayed on desktop.
   final bool displayOnAllPlatforms;
 
+  /// Whether to display the caret when the selection is expanded.
+  ///
+  /// Defaults to `true`.
+  final bool displayCaretWithExpandedSelection;
+
   /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
   ///
   /// `Timer`s are not expected to work in tests.
@@ -53,12 +59,6 @@ class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
 class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOverlay, Rect?>
     with SingleTickerProviderStateMixin {
   late final BlinkController _blinkController;
-
-  @visibleForTesting
-  bool get isCaretVisible => _blinkController.opacity == 1.0;
-
-  @visibleForTesting
-  Duration get caretFlashPeriod => _blinkController.flashPeriod;
 
   @override
   void initState() {
@@ -96,6 +96,20 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
 
     super.dispose();
   }
+
+  @visibleForTesting
+  bool get isCaretVisible => _blinkController.opacity == 1.0 && !_shouldHideCaretForExpandedSelection;
+
+  /// Returns `true` if the selection is currently expanded, and we want to hide the caret when
+  /// the selection is expanded.
+  ///
+  /// Returns `false` if the selection is collapsed or `null`, or if we want to show the caret
+  /// when the selection is expanded.
+  bool get _shouldHideCaretForExpandedSelection =>
+      !widget.displayCaretWithExpandedSelection && widget.composer.selection?.isCollapsed == false;
+
+  @visibleForTesting
+  Duration get caretFlashPeriod => _blinkController.flashPeriod;
 
   void _onSelectionChange() {
     _updateCaretFlash();
@@ -160,6 +174,10 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
     // `displayOnAllPlatforms` to true.
     final platform = widget.platformOverride ?? defaultTargetPlatform;
     if (!widget.displayOnAllPlatforms && (platform == TargetPlatform.android || platform == TargetPlatform.iOS)) {
+      return const SizedBox();
+    }
+
+    if (_shouldHideCaretForExpandedSelection) {
       return const SizedBox();
     }
 

@@ -350,6 +350,31 @@ void main() {
       // Ensure caret is visible.
       expect(SuperEditorInspector.isCaretVisible(), true);
     });
+
+    testWidgetsOnAllPlatforms('hides caret during expanded selection when configured that way', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withCaretPolicies(
+            displayCaretWithExpandedSelection: false,
+          )
+          .pump();
+
+      // Place the caret in the paragraph.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Ensure caret is visible.
+      expect(SuperEditorInspector.isCaretVisible(), true);
+
+      // Go from a collapsed selection to an expanded selection.
+      await tester.doubleTapInParagraph("1", 2);
+
+      // Ensure the selection is expanded.
+      expect(SuperEditorInspector.findDocumentSelection()!.isCollapsed, isFalse);
+
+      // Ensure that the caret is no longer visible.
+      expect(SuperEditorInspector.isCaretVisible(), false);
+    });
   });
 }
 

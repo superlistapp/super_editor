@@ -162,6 +162,15 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  TestSuperEditorConfigurator withCaretPolicies({
+    bool? displayCaretWithExpandedSelection,
+  }) {
+    if (displayCaretWithExpandedSelection != null) {
+      _config.displayCaretWithExpandedSelection = displayCaretWithExpandedSelection;
+    }
+    return this;
+  }
+
   /// Configures the [SuperEditor]'s [SoftwareKeyboardController].
   TestSuperEditorConfigurator withSoftwareKeyboardController(SoftwareKeyboardController controller) {
     _config.softwareKeyboardController = controller;
@@ -533,8 +542,43 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
         ...(widget.testConfiguration.componentBuilders ?? defaultComponentBuilders),
       ],
       scrollController: widget.testConfiguration.scrollController,
+      documentOverlayBuilders: _createOverlayBuilders(),
       plugins: widget.testConfiguration.plugins,
     );
+  }
+
+  List<SuperEditorLayerBuilder> _createOverlayBuilders() {
+    // At the moment, the only configuration for overlays that we support is whether or not
+    // to display the caret for expanded selections. Therefore, we show the default overlays
+    // except in the specific case where we want to hide the caret. In that case, we don't
+    // include the defaults - we provide a configured caret overlay builder, instead.
+    //
+    // If you introduce further configuration to overlay builders, make sure that in the default
+    // situation, we're using `defaultSuperEditorDocumentOverlayBuilders`, so that most tests
+    // verify the defaults that most apps will use.
+    if (widget.testConfiguration.displayCaretWithExpandedSelection) {
+      return defaultSuperEditorDocumentOverlayBuilders;
+    }
+
+    // Copy and modify the default overlay builders
+    return [
+      // Adds a Leader around the document selection at a focal point for the
+      // iOS floating toolbar.
+      const SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
+      // Displays caret and drag handles, specifically for iOS.
+      const SuperEditorIosHandlesDocumentLayerBuilder(),
+
+      // Adds a Leader around the document selection at a focal point for the
+      // Android floating toolbar.
+      const SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
+      // Displays caret and drag handles, specifically for Android.
+      const SuperEditorAndroidHandlesDocumentLayerBuilder(),
+
+      // Displays caret for typical desktop use-cases.
+      DefaultCaretOverlayBuilder(
+        displayCaretWithExpandedSelection: widget.testConfiguration.displayCaretWithExpandedSelection,
+      ),
+    ];
   }
 }
 
@@ -559,6 +603,7 @@ class SuperEditorTestConfiguration {
   TextInputSource? inputSource;
   SuperEditorSelectionPolicies? selectionPolicies;
   SelectionStyles? selectionStyles;
+  bool displayCaretWithExpandedSelection = true;
   SoftwareKeyboardController? softwareKeyboardController;
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;
