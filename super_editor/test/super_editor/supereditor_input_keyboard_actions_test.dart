@@ -2544,6 +2544,7 @@ Future<TestDocumentContext> _pumpPageScrollSliverTestSetup(
   }).pump();
 }
 
+/// Pumps a [SuperEditor] configured with the [TaskComponentBuilder].
 Future<void> _pumpEditorWithTaskComponent(
   WidgetTester tester, {
   required MutableDocument document,
