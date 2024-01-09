@@ -79,7 +79,33 @@ void main() {
       await tester.tapOnAndroidCollapsedHandle();
       await tester.pump();
 
-      // Ensure no toolbar disappeared.
+      // Ensure the toolbar disappeared.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+    });
+
+    testWidgetsOnAndroid("hides toolbar when the user taps to move the caret", (tester) async {
+      await _pumpTestApp(tester);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Place caret at the beginning of the textfield.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Tap on the drag handle to show the toolbar.
+      await tester.tapOnAndroidCollapsedHandle();
+      await tester.pump();
+
+      // Ensure that the text field toolbar is visible.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsOneWidget);
+
+      // Place caret at the end of the textfield.
+      await tester.placeCaretInSuperTextField(3);
+
+      // Ensure the toolbar disappeared.
       expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
     });
   });

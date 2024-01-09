@@ -176,6 +176,8 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
 
+    final previousSelection = widget.textController.selection;
+
     _selectAtOffset(details.localPosition);
 
     if (widget.focusNode.hasFocus && widget.textController.isAttachedToIme) {
@@ -194,7 +196,6 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
       return;
     }
 
-    final previousSelection = widget.textController.selection;
     final didTapOnExistingSelection = previousSelection.isCollapsed
         ? tapTextPosition == previousSelection.extent
         : tapTextPosition.offset >= previousSelection.start && tapTextPosition.offset <= previousSelection.end;

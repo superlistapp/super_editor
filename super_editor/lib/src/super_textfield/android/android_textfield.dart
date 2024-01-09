@@ -657,15 +657,15 @@ Widget _defaultAndroidToolbarBuilder(
   AndroidEditingOverlayController controller,
   ToolbarConfig config,
 ) {
-  final hasCollapsedSelection = controller.textController.selection != TextRange.empty;
+  final isSelectionExpanded = !controller.textController.selection.isCollapsed;
 
   return AndroidTextEditingFloatingToolbar(
-    onCutPressed: hasCollapsedSelection //
-        ? null
-        : () => _onToolbarCutPressed(controller),
-    onCopyPressed: hasCollapsedSelection //
-        ? null
-        : () => _onToolbarCopyPressed(controller),
+    onCutPressed: isSelectionExpanded //
+        ? () => _onToolbarCutPressed(controller)
+        : null,
+    onCopyPressed: isSelectionExpanded //
+        ? () => _onToolbarCopyPressed(controller)
+        : null,
     onPastePressed: () => _onToolbarPastePressed(controller),
     onSelectAllPressed: () => _onToolbarSelectAllPressed(controller),
   );

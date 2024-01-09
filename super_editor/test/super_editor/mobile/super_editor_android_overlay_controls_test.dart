@@ -87,7 +87,7 @@ void main() {
       expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
     });
 
-    testWidgetsOnAndroid("hides toolbar when placing the caret", (tester) async {
+    testWidgetsOnAndroid("hides toolbar when the user taps to move the caret", (tester) async {
       await _pumpSingleParagraphApp(tester);
 
       // Place the caret at the beginning of the document.
