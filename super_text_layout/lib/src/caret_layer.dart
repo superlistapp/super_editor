@@ -77,7 +77,7 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
 
   BlinkController _createBlinkController() {
     if (widget.blinkController != null) {
-      return _blinkController;
+      return widget.blinkController!;
     }
 
     switch (widget.blinkTimingMode) {
@@ -97,7 +97,7 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
   @visibleForTesting
   double? get caretHeight => isCaretPresent
       ? widget.textLayout.getHeightForCaret(widget.position!) ??
-      widget.textLayout.getLineHeightAtPosition(widget.position!)
+          widget.textLayout.getLineHeightAtPosition(widget.position!)
       : null;
 
   @visibleForTesting
