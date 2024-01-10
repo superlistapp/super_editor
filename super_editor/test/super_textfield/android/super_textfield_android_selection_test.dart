@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/super_text_field.dart';
 
@@ -83,7 +84,7 @@ void main() {
       expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
     });
 
-    testWidgetsOnAndroid("tapping at existing selection shows/hides the toolbar", (tester) async {
+    testWidgetsOnAndroid("tapping at existing collapsed selection shows/hides the toolbar", (tester) async {
       await _pumpTestApp(tester);
 
       // Ensure no toolbar is displayed.
@@ -109,6 +110,30 @@ void main() {
       await tester.placeCaretInSuperTextField(2);
 
       // Ensure the toolbar disappeared and the selection didn't change.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: 2),
+      );
+    });
+
+    testWidgetsOnAndroid("tapping at existing expanded selection places the caret", (tester) async {
+      await _pumpTestApp(tester);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Double tap to select "abc".
+      await tester.doubleTapAtSuperTextField(2);
+
+      // Ensure the toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsOneWidget);
+
+      // Tap at "ab|c" to place the caret. Pump to avoid a pan gesture.
+      await tester.pump(kTapTimeout);
+      await tester.placeCaretInSuperTextField(2);
+
+      // Ensure that the toolbar disappeared and the selection changed.
       expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
       expect(
         SuperTextFieldInspector.findSelection(),

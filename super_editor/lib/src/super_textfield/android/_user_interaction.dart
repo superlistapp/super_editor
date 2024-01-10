@@ -186,9 +186,8 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
         ? tapTextPosition == previousSelection.extent
         : tapTextPosition.offset >= previousSelection.start && tapTextPosition.offset <= previousSelection.end;
 
-    if (didTapOnExistingSelection) {
-      // Toggle the toolbar display when the user taps on the collapsed caret,
-      // or on top of an existing selection.
+    if (didTapOnExistingSelection && previousSelection.isCollapsed) {
+      // Toggle the toolbar display when the user taps on the collapsed caret.
       widget.editingOverlayController.toggleToolbar();
     } else {
       // The user tapped somewhere in the text outside any existing selection.
