@@ -4,14 +4,14 @@ import 'package:super_editor/super_editor.dart';
 MutableDocument createInitialDocument() {
   return MutableDocument(
     nodes: [
-      ImageNode(
-        id: "1",
-        imageUrl: 'https://i.ibb.co/5nvRdx1/flutter-horizon.png',
-        metadata: const SingleColumnLayoutComponentStyles(
-          width: double.infinity,
-          padding: EdgeInsets.zero,
-        ).toMetadata(),
-      ),
+      // ImageNode(
+      //   id: "1",
+      //   imageUrl: 'https://i.ibb.co/5nvRdx1/flutter-horizon.png',
+      //   metadata: const SingleColumnLayoutComponentStyles(
+      //     width: double.infinity,
+      //     padding: EdgeInsets.zero,
+      //   ).toMetadata(),
+      // ),
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText('Welcome to Super Editor 💙 🚀'),

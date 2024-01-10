@@ -143,7 +143,7 @@ void main() {
       final firstParagraph = document.nodes.first as ParagraphNode;
       final lastParagraph = document.nodes.last as ParagraphNode;
 
-      // Place the caret at the end of the document, which causes the editor to
+      // Place the caret at the end of the document, which causes the reader to
       // scroll to the bottom.
       testDocContext.documentContext.selection.value = DocumentSelection.collapsed(
         position: DocumentPosition(
@@ -198,7 +198,7 @@ void main() {
       final lastParagraph = document.nodes.last as ParagraphNode;
 
       // Place the caret at the end of the document, which should cause the
-      // editor to scroll to the bottom.
+      // reader to scroll to the bottom.
       docContext.documentContext.selection.value = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: lastParagraph.id,
@@ -650,8 +650,160 @@ void main() {
         // Ensure the we scrolled back to the end.
         expect(scrollController.offset, scrollController.position.maxScrollExtent);
       });
+
+      group("when hovering over reader", () {
+        testWidgets("scroll down scrolls ancestor scrollable after reader's scrollable content is consumed",
+            (tester) async {
+          await tester.pumpWidget(const _FixedHeightEditorWithinAncestorScrollable());
+
+          final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
+
+          // Find reader's direct ancestor scrollable
+          final superReaderScrollable = tester.state<ScrollableState>(
+            find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
+          );
+
+          final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
+
+          // Hover to the reader's center.
+          testPointer.hover(
+            tester.getCenter(
+              find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
+            ),
+          );
+
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              Offset(0, superReaderScrollable.position.maxScrollExtent),
+            ),
+          );
+
+          // Ensure reader's is scrolled to the bottom.
+          expect(
+            superReaderScrollable.position.pixels,
+            superReaderScrollable.position.maxScrollExtent,
+          );
+
+          // Ensure page isn't scrolled.
+          expect(pageScrollable.position.pixels, 0);
+
+          // Scroll down within the page.
+          await tester.sendEventToBinding(
+            testPointer.scroll(
+              const Offset(0, 200),
+            ),
+          );
+
+          // Ensure page is scrolled.
+          expect(pageScrollable.position.pixels, 200);
+        });
+
+        testWidgets(
+          "scroll up scrolls ancestor scrollable after reader's scrollable content is consumed",
+          (tester) async {
+            await tester.pumpWidget(const _FixedHeightEditorWithinAncestorScrollable());
+
+            final pageScrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
+
+            // Find reader's direct ancestor scrollable.
+            final superReaderScrollable = tester.state<ScrollableState>(
+              find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
+            );
+
+            // Scroll the reader all the way to the bottom.
+            superReaderScrollable.position.jumpTo(superReaderScrollable.position.maxScrollExtent);
+
+            final TestPointer testPointer = TestPointer(1, PointerDeviceKind.mouse);
+
+            // Scroll an arbitrary amount in the page. This is to test scrolling up
+            // in page at the end.
+            pageScrollable.position.jumpTo(100);
+
+            // Hover to the reader's center.
+            testPointer.hover(
+              tester.getCenter(
+                find.ancestor(of: find.byType(SuperReader), matching: find.byType(Scrollable)).first,
+              ),
+            );
+
+            // Scroll the reader all the way to the top.
+            await tester.sendEventToBinding(
+              testPointer.scroll(
+                Offset(0, -superReaderScrollable.position.maxScrollExtent),
+              ),
+            );
+
+            // Ensure reader's is scrolled all the way to the top.
+            expect(
+              superReaderScrollable.position.pixels,
+              0,
+            );
+
+            // Ensure page isn't scrolled any further than initial page scroll.
+            expect(pageScrollable.position.pixels, 100);
+
+            // Scroll back to the page top.
+            await tester.sendEventToBinding(
+              testPointer.scroll(
+                const Offset(0, -100),
+              ),
+            );
+
+            // Ensure page is scrolled all the way to the top.
+            expect(pageScrollable.position.pixels, 0);
+          },
+        );
+      });
     });
   });
+}
+
+/// Creates a [SuperReader] experience with reader having a fixed height with
+/// scrollable content and is present within an ancestor scrollable.
+class _FixedHeightEditorWithinAncestorScrollable extends StatelessWidget {
+  const _FixedHeightEditorWithinAncestorScrollable({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Builder(builder: (context) {
+          return ListView(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                width: double.infinity,
+                child: const Placeholder(
+                  child: Center(
+                    child: Text("Content"),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 350,
+                child: ListView(
+                  children: [
+                    SuperReader(
+                      document: longTextDoc(),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height,
+                width: double.infinity,
+                child: const Placeholder(
+                  child: Center(
+                    child: Text("Content"),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
 }
 
 final _scrollDirectionVariant = ValueVariant<_ScrollDirection>({
