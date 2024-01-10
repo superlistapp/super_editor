@@ -179,12 +179,23 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   // positions the invisible touch targets for base/extent dragging.
   final _popoverController = OverlayPortalController();
 
+  /// Text field caret blink controller.
+  late final BlinkController _blinkController;
+
   /// Notifies the popover toolbar to rebuild itself.
   final _popoverRebuildSignal = SignalNotifier();
 
   @override
   void initState() {
     super.initState();
+
+    switch (widget.blinkTimingMode) {
+      case BlinkTimingMode.ticker:
+        _blinkController = BlinkController(tickerProvider: this);
+      case BlinkTimingMode.timer:
+        _blinkController = BlinkController.withTimer();
+    }
+
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
@@ -282,6 +293,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   @override
   void dispose() {
+    _blinkController.dispose();
+
     _removeEditingOverlayControls();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -544,6 +557,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             isMultiline: _isMultiline,
             handleColor: widget.handlesColor,
             showDebugPaint: widget.showDebugPaint,
+            blinkController: _blinkController,
             child: TextScrollView(
               key: _scrollKey,
               textScrollController: _textScrollController,
@@ -636,6 +650,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
                 ? _textEditingController.selection.extent
                 : null,
             blinkTimingMode: widget.blinkTimingMode,
+            blinkController: _blinkController,
           );
         },
       ),
@@ -657,6 +672,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           handleColor: widget.handlesColor,
           popoverToolbarBuilder: widget.popoverToolbarBuilder,
           showDebugPaint: widget.showDebugPaint,
+          blinkController: _blinkController,
         );
       },
     );

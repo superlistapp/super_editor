@@ -46,6 +46,7 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
     required this.textController,
     required this.editingOverlayController,
     required this.textScrollController,
+    required this.blinkController,
     required this.textKey,
     required this.getGlobalCaretRect,
     required this.isMultiline,
@@ -76,6 +77,9 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
   final AndroidEditingOverlayController editingOverlayController;
 
   final TextScrollController textScrollController;
+
+  /// Text field caret blink controller.
+  final BlinkController blinkController;
 
   /// [GlobalKey] that references the widget that contains the text within
   /// this [AndroidTextFieldTouchInteractor].
@@ -324,6 +328,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
       );
 
       widget.editingOverlayController.showMagnifier(_globalDragOffset!);
+      widget.blinkController.stopBlinking();
     });
   }
 
@@ -348,6 +353,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     setState(() {
       _isDraggingCaret = false;
       widget.editingOverlayController.hideMagnifier();
+      widget.blinkController.startBlinking();
 
       if (!widget.textController.selection.isCollapsed) {
         widget.editingOverlayController.showToolbar();

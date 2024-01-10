@@ -188,12 +188,23 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   // positions the invisible touch targets for base/extent dragging.
   final _popoverController = OverlayPortalController();
 
+  /// Text field caret blink controller.
+  late final BlinkController _blinkController;
+
   /// Notifies the popover toolbar to rebuild itself.
   final _overlayControlsRebuildSignal = SignalNotifier();
 
   @override
   void initState() {
     super.initState();
+
+    switch (widget.blinkTimingMode) {
+      case BlinkTimingMode.ticker:
+        _blinkController = BlinkController(tickerProvider: this);
+      case BlinkTimingMode.timer:
+        _blinkController = BlinkController.withTimer();
+    }
+
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
@@ -301,6 +312,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   @override
   void dispose() {
+    _blinkController.dispose();
+
     _removeEditingOverlayControls();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -538,6 +551,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             textController: _textEditingController,
             editingOverlayController: _editingOverlayController,
             textScrollController: _textScrollController,
+            blinkController: _blinkController,
             isMultiline: _isMultiline,
             handleColor: widget.handlesColor,
             showDebugPaint: widget.showDebugPaint,
@@ -642,7 +656,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
               position: _textEditingController.selection.isCollapsed //
                   ? _textEditingController.selection.extent
                   : null,
-              blinkTimingMode: widget.blinkTimingMode,
+              blinkController: _blinkController,
             ),
             IOSFloatingCursor(
               controller: _floatingCursorController,
@@ -660,6 +674,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         return IOSEditingControls(
           editingController: _editingOverlayController,
           textScrollController: _textScrollController,
+          blinkController: _blinkController,
           textFieldLayerLink: _textFieldLayerLink,
           textFieldKey: _textFieldKey,
           textContentLayerLink: _textContentLayerLink,
