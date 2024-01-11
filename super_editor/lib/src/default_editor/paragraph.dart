@@ -482,7 +482,7 @@ class SplitParagraphCommand implements EditCommand {
         // This attribution shouldn't extend from one paragraph to another. Remove it.
         endText.removeAttribution(
           attributionRange.attribution,
-          SpanRange(attributionRange.start, attributionRange.end),
+          attributionRange.range,
         );
       }
     }

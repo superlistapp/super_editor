@@ -440,7 +440,7 @@ class PatternTagReaction implements EditReaction {
       editorPatternTagsLog.finer("There are multiple triggers in this tag. Splitting.");
 
       // Remove the existing attribution, which covers multiple pattern tags.
-      spanRemovals.add(SpanRange(patternTag.start, patternTag.end));
+      spanRemovals.add(patternTag.range);
       editorPatternTagsLog.finer(
           "Removing multi-tag span: ${patternTag.start} -> ${patternTag.end}, '${node.text.text.substring(patternTag.start, patternTag.end + 1)}'");
 
