@@ -498,7 +498,7 @@ class MutableDocument implements Document, Editable {
     _refreshNodeIdCaches();
   }
 
-  /// Creates an empty [MutableDocument].
+  /// Creates an empty [Document].
   factory MutableDocument.empty() {
     return MutableDocument(
       nodes: [
