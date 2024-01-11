@@ -49,7 +49,7 @@ class AttributedTextEditingController with ChangeNotifier {
       _composingAttributions
         ..clear()
         ..addAll(text.getAllAttributionsThroughout(
-          SpanRange(selection.start, selection.end),
+          selection.toSpanRange(),
         ));
     }
   }
