@@ -1474,7 +1474,7 @@ void main() {
         await tester.pressDelete();
         await tester.pressDelete();
 
-        // Ensure the characters were delete and link attribution was updated..
+        // Ensure the characters were delete and link attribution was updated.
         final text = SuperEditorInspector.findTextInParagraph(doc.nodes.first.id);
         expect(text.text, "google.com");
         expect(
@@ -1486,6 +1486,31 @@ void main() {
           ),
           isTrue,
         );
+
+        // Delete more 9 characters, leaving only the last "m".
+        await tester.pressDelete();
+        await tester.pressDelete();
+        await tester.pressDelete();
+        await tester.pressDelete();
+        await tester.pressDelete();
+        await tester.pressDelete();
+        await tester.pressDelete();
+        await tester.pressDelete();
+        await tester.pressDelete();
+
+        // Ensure the attribution was updated.
+        final textAfter = SuperEditorInspector.findTextInParagraph(doc.nodes.first.id);
+        expect(textAfter.text, "m");
+        expect(
+          (textAfter.getAllAttributionsAt(0).first as LinkAttribution).url.toString(),
+          "https://m",
+        );
+
+        // Press delete to remove the last character.
+        await tester.pressDelete();
+
+        // Ensure the text was deleted.
+        expect(SuperEditorInspector.findTextInParagraph(doc.nodes.first.id).text, isEmpty);
       });
 
       testWidgetsOnAllPlatforms('removing the attribution', (tester) async {
