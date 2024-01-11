@@ -1,6 +1,8 @@
 import 'dart:math';
 
+import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
+import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
 
@@ -494,6 +496,18 @@ class MutableDocument implements Document, Editable {
     List<DocumentNode>? nodes,
   }) : _nodes = nodes ?? [] {
     _refreshNodeIdCaches();
+  }
+
+  /// Creates an empty [MutableDocument].
+  factory MutableDocument.empty() {
+    return MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(),
+        ),
+      ],
+    );
   }
 
   void dispose() {
