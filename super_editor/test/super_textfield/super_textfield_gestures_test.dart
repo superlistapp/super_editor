@@ -181,6 +181,288 @@ void main() {
         await gesture.up();
         await gesture.removePointer();
       });
+
+      testWidgetsOnDesktop("scrolls the content when dragging with trackpad down", (tester) async {
+        final controller = AttributedTextEditingController(
+          text: AttributedText('''
+SuperTextField with a
+content that spans
+multiple lines
+of text to test
+scrolling with 
+a trackpad
+'''),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 300),
+                child: SuperTextField(
+                  textController: controller,
+                  maxLines: 2,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Double tap to select "SuperTextField".
+        await tester.doubleTapAtSuperTextField(0);
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(baseOffset: 0, extentOffset: 14),
+        );
+
+        // Find text field scrollable.
+        final scrollState = tester.state<ScrollableState>(find.descendant(
+          of: find.byType(SuperTextField),
+          matching: find.byType(Scrollable),
+        ));
+
+        // Ensure the textfield didn't start scrolled.
+        expect(scrollState.position.pixels, 0.0);
+
+        // Simulate the user starting a gesture with two fingers
+        // somewhere close to the beginning of the text.
+        final gesture = await tester.startGesture(
+          tester.getTopLeft(find.byType(SuperTextField)) + const Offset(10, 10),
+          kind: PointerDeviceKind.trackpad,
+        );
+        await tester.pump();
+
+        // Move a distance big enough to ensure a pan gesture.
+        await gesture.moveBy(const Offset(0, kPanSlop));
+        await tester.pump();
+
+        // Drag up.
+        await gesture.moveBy(const Offset(0, -300));
+        await tester.pump();
+
+        // Ensure the content scrolled to the end of the content.
+        expect(scrollState.position.pixels, moreOrLessEquals(80.0));
+
+        // Ensure that the selection didn't change.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(baseOffset: 0, extentOffset: 14),
+        );
+      });
+
+      testWidgetsOnDesktop("scrolls the content when dragging with trackpad up", (tester) async {
+        final controller = AttributedTextEditingController(
+          text: AttributedText('''
+SuperTextField with a
+content that spans
+multiple lines
+of text to test
+scrolling with
+a trackpad
+'''),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 300),
+                child: SuperTextField(
+                  textController: controller,
+                  maxLines: 2,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Double tap to select "SuperTextField".
+        await tester.doubleTapAtSuperTextField(0);
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(baseOffset: 0, extentOffset: 14),
+        );
+
+        // Find text field scrollable.
+        final scrollState = tester.state<ScrollableState>(find.descendant(
+          of: find.byType(SuperTextField),
+          matching: find.byType(Scrollable),
+        ));
+
+        // Jump to the end of the textfield.
+        scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
+        await tester.pump();
+
+        // Simulate the user starting a gesture with two fingers
+        // somewhere close to the end of the text.
+        final gesture = await tester.startGesture(
+          tester.getBottomLeft(find.byType(SuperTextField)) + const Offset(10, -1),
+          kind: PointerDeviceKind.trackpad,
+        );
+        await tester.pump();
+
+        // Move a distance big enough to ensure a pan gesture.
+        await gesture.moveBy(const Offset(0, kPanSlop));
+        await tester.pump();
+
+        // Drag down.
+        await gesture.moveBy(const Offset(0, 300));
+        await tester.pump();
+
+        // Ensure the content scrolled to the beginning of the content.
+        expect(scrollState.position.pixels, 0.0);
+
+        // Ensure that the selection didn't change.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(baseOffset: 0, extentOffset: 14),
+        );
+      });
+
+      testWidgetsOnDesktop("scrolls the content when dragging the scrollbar down", (tester) async {
+        final controller = AttributedTextEditingController(
+          text: AttributedText('''
+SuperTextField with a
+content that spans
+multiple lines
+of text to test
+scrolling with 
+a scrollbar
+'''),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 300),
+                child: SuperTextField(
+                  textController: controller,
+                  maxLines: 4,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Double tap to select "SuperTextField".
+        await tester.doubleTapAtSuperTextField(0);
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(baseOffset: 0, extentOffset: 14),
+        );
+
+        // Find text field scrollable.
+        final scrollState = tester.state<ScrollableState>(find.descendant(
+          of: find.byType(SuperTextField),
+          matching: find.byType(Scrollable),
+        ));
+
+        // Ensure the textfield didn't start scrolled.
+        expect(scrollState.position.pixels, 0.0);
+
+        // Find the approximate position of the scrollbar thumb.
+        final thumbLocation = tester.getTopRight(find.byType(SuperTextField)) + const Offset(-10, 10);
+
+        // Hover to make the thumb visible with a duration long enough to run the fade in animation.
+        final testPointer = TestPointer(1, PointerDeviceKind.mouse);
+        await tester.sendEventToBinding(testPointer.hover(thumbLocation, timeStamp: const Duration(seconds: 1)));
+        await tester.pumpAndSettle();
+
+        // Press the thumb.
+        await tester.sendEventToBinding(testPointer.down(thumbLocation));
+        await tester.pump(kTapMinTime);
+
+        // Move the thumb down a distance equals to the max scroll extent.
+        await tester.sendEventToBinding(testPointer.move(thumbLocation + const Offset(0, 48)));
+        await tester.pump();
+
+        // Release the pointer.
+        await tester.sendEventToBinding(testPointer.up());
+        await tester.pump();
+
+        // Ensure the content scrolled to the end of the content.
+        expect(scrollState.position.pixels, moreOrLessEquals(scrollState.position.maxScrollExtent));
+
+        // Ensure that the selection didn't change.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(baseOffset: 0, extentOffset: 14),
+        );
+      });
+
+      testWidgetsOnDesktop("scrolls the content when dragging the scrollbar up", (tester) async {
+        final controller = AttributedTextEditingController(
+          text: AttributedText('''
+SuperTextField with a
+content that spans
+multiple lines
+of text to test
+scrolling with 
+a scrollbar
+'''),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 300),
+                child: SuperTextField(
+                  textController: controller,
+                  maxLines: 4,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Double tap to select "SuperTextField".
+        await tester.doubleTapAtSuperTextField(0);
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(baseOffset: 0, extentOffset: 14),
+        );
+
+        // Find text field scrollable.
+        final scrollState = tester.state<ScrollableState>(find.descendant(
+          of: find.byType(SuperTextField),
+          matching: find.byType(Scrollable),
+        ));
+
+        // Jump to the end of the textfield.
+        scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
+        await tester.pump();
+
+        // Find the approximate position of the scrollbar thumb.
+        final thumbLocation = tester.getBottomRight(find.byType(SuperTextField)) - const Offset(10, 10);
+
+        // Hover to make the thumb visible with a duration long enough to run the fade in animation.
+        final testPointer = TestPointer(1, PointerDeviceKind.mouse);
+        await tester.sendEventToBinding(testPointer.hover(thumbLocation, timeStamp: const Duration(seconds: 1)));
+        await tester.pumpAndSettle();
+
+        // Press the thumb.
+        await tester.sendEventToBinding(testPointer.down(thumbLocation));
+        await tester.pump(kTapMinTime);
+
+        // Move the thumb up a distance equals to the max scroll extent.
+        await tester.sendEventToBinding(testPointer.move(thumbLocation - const Offset(0, 48)));
+        await tester.pump();
+
+        // Release the pointer.
+        await tester.sendEventToBinding(testPointer.up());
+        await tester.pump();
+
+        // Ensure the content scrolled to the beginning of the content.
+        expect(scrollState.position.pixels, 0.0);
+
+        // Ensure that the selection didn't change.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(baseOffset: 0, extentOffset: 14),
+        );
+      });
     });
 
     group("on mobile", () {
@@ -223,7 +505,7 @@ void main() {
         expect(SuperTextFieldInspector.findSelection()!.isValid, true);
       });
 
-      testWidgetsOnMobile("tap down in focused field moves the caret", (tester) async {
+      testWidgetsOnMobile("tap down in focused field does nothing", (tester) async {
         await _pumpTestApp(tester);
 
         // Tap in empty space to place the caret at the end of the text.
@@ -237,6 +519,25 @@ void main() {
         addTearDown(() => gesture.removePointer());
         await tester.pumpAndSettle();
 
+        // Ensure the caret didn't move.
+        expect(SuperTextFieldInspector.findSelection()!.extent.offset, 3);
+      });
+
+      testWidgetsOnMobile("tap up in focused field moves the caret", (tester) async {
+        await _pumpTestApp(tester);
+
+        // Tap in empty space to place the caret at the end of the text.
+        await tester.tapAt(tester.getBottomRight(find.byType(SuperTextField)) - const Offset(10, 10));
+        // Without this 'delay' onTapDown is not called the second time.
+        await tester.pumpAndSettle(const Duration(milliseconds: 200));
+        expect(SuperTextFieldInspector.findSelection()!.extent.offset, greaterThan(0));
+
+        // Tap DOWN at beginning of text to move the caret.
+        final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pump();
+        await gesture.up();
+        await tester.pump(kTapTimeout);
+
         // Ensure the caret moved to the beginning of the text.
         expect(SuperTextFieldInspector.findSelection()!.extent.offset, 0);
       });
@@ -244,6 +545,10 @@ void main() {
       // mobile only because precise input (mouse) doesn't use touch slop
       testWidgetsOnMobile("MediaQuery gesture settings are respected", (tester) async {
         bool horizontalDragStartCalled = false;
+        final controller = AttributedTextEditingController(
+          text: AttributedText('a b c'),
+        );
+
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -263,9 +568,7 @@ void main() {
                   return MediaQuery(
                     data: data,
                     child: SuperTextField(
-                      textController: AttributedTextEditingController(
-                        text: AttributedText('a b c'),
-                      ),
+                      textController: controller,
                     ),
                   );
                 }),
@@ -282,9 +585,8 @@ void main() {
           const TextSelection.collapsed(offset: 0),
         );
 
-        // The gesture should trigger the selection PanGestureRecognizer instead
-        // the HorizontalDragGestureRecognizer below.
-
+        // The following gesture should trigger the selection PanGestureRecognizer instead
+        // of the HorizontalDragGestureRecognizer, thereby moving the caret.
         final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
         addTearDown(() => gesture.removePointer());
         await gesture.moveBy(const Offset(19, 0));
@@ -297,6 +599,7 @@ void main() {
           const TextSelection.collapsed(offset: 1),
         );
 
+        // Pump an update with a larger pan slop.
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -316,9 +619,7 @@ void main() {
                   return MediaQuery(
                     data: data,
                     child: SuperTextField(
-                      textController: AttributedTextEditingController(
-                        text: AttributedText('a b c'),
-                      ),
+                      textController: controller,
                     ),
                   );
                 }),
@@ -327,18 +628,22 @@ void main() {
           ),
         );
 
+        // The following gesture, which moves as much as the previous gesture, should
+        // have no effect on the selection because the pan slop was increased.
         final gesture2 = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
         addTearDown(() => gesture2.removePointer());
         await gesture2.moveBy(const Offset(19, 0));
         await gesture2.up();
         await tester.pumpAndSettle();
 
-        // With default gesture settings the horizontal drag recognizer will
-        // win instead of the selection PanGestureRecognizer.
+        // Ensure that the selection didn't change because the larger pan slop prevented
+        // the selection pan from winning in the gesture arena. Also, ensure that because
+        // the selection pan didn't take the gesture, the horizontal drag detector won
+        // out, instead.
         expect(horizontalDragStartCalled, isTrue);
         expect(
           SuperTextFieldInspector.findSelection(),
-          const TextSelection.collapsed(offset: 0),
+          const TextSelection.collapsed(offset: 1),
         );
       });
 
@@ -492,4 +797,11 @@ class _GestureSettings extends DeviceGestureSettings {
 
   @override
   final double panSlop;
+}
+
+TextStyle _textStyleBuilder(Set<Attribution> attributions) {
+  return defaultTextFieldStyleBuilder(attributions).copyWith(
+    color: Colors.black,
+    fontFamily: 'Roboto',
+  );
 }

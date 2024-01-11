@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 /// Document overlay that paints a caret with the given [caretStyle].
@@ -18,6 +19,7 @@ class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
     ),
     this.platformOverride,
     this.displayOnAllPlatforms = false,
+    this.displayCaretWithExpandedSelection = true,
     this.blinkTimingMode = BlinkTimingMode.ticker,
   }) : super(key: key);
 
@@ -39,16 +41,22 @@ class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
   /// By default, the caret is only displayed on desktop.
   final bool displayOnAllPlatforms;
 
+  /// Whether to display the caret when the selection is expanded.
+  ///
+  /// Defaults to `true`.
+  final bool displayCaretWithExpandedSelection;
+
   /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
   ///
   /// `Timer`s are not expected to work in tests.
   final BlinkTimingMode blinkTimingMode;
 
   @override
-  DocumentLayoutLayerState<CaretDocumentOverlay, Rect?> createState() => _CaretDocumentOverlayState();
+  DocumentLayoutLayerState<CaretDocumentOverlay, Rect?> createState() => CaretDocumentOverlayState();
 }
 
-class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOverlay, Rect?>
+@visibleForTesting
+class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOverlay, Rect?>
     with SingleTickerProviderStateMixin {
   late final BlinkController _blinkController;
 
@@ -88,6 +96,20 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
 
     super.dispose();
   }
+
+  @visibleForTesting
+  bool get isCaretVisible => _blinkController.opacity == 1.0 && !_shouldHideCaretForExpandedSelection;
+
+  /// Returns `true` if the selection is currently expanded, and we want to hide the caret when
+  /// the selection is expanded.
+  ///
+  /// Returns `false` if the selection is collapsed or `null`, or if we want to show the caret
+  /// when the selection is expanded.
+  bool get _shouldHideCaretForExpandedSelection =>
+      !widget.displayCaretWithExpandedSelection && widget.composer.selection?.isCollapsed == false;
+
+  @visibleForTesting
+  Duration get caretFlashPeriod => _blinkController.flashPeriod;
 
   void _onSelectionChange() {
     _updateCaretFlash();
@@ -142,7 +164,7 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
       return null;
     }
 
-    return documentLayout.getRectForPosition(documentSelection.extent)!;
+    return documentLayout.getEdgeForPosition(documentSelection.extent)!;
   }
 
   @override
@@ -152,6 +174,10 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
     // `displayOnAllPlatforms` to true.
     final platform = widget.platformOverride ?? defaultTargetPlatform;
     if (!widget.displayOnAllPlatforms && (platform == TargetPlatform.android || platform == TargetPlatform.iOS)) {
+      return const SizedBox();
+    }
+
+    if (_shouldHideCaretForExpandedSelection) {
       return const SizedBox();
     }
 
@@ -170,7 +196,7 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
                   animation: _blinkController,
                   builder: (context, child) {
                     return Container(
-                      key: primaryCaretKey,
+                      key: DocumentKeys.caret,
                       width: widget.caretStyle.width,
                       decoration: BoxDecoration(
                         color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
@@ -186,5 +212,3 @@ class _CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentO
     );
   }
 }
-
-const primaryCaretKey = ValueKey("caret_primary");

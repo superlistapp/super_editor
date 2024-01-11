@@ -16,6 +16,7 @@ import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/floating_cursor.dart';
@@ -23,12 +24,12 @@ import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_contr
 import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import '../infrastructure/document_gestures.dart';
 import '../infrastructure/document_gestures_interaction_overrides.dart';
-import '../infrastructure/text_input.dart';
 import 'selection_upstream_downstream.dart';
 
 /// An [InheritedWidget] that provides shared access to a [SuperEditorIosControlsController],
@@ -52,7 +53,7 @@ class SuperEditorIosControlsScope extends InheritedWidget {
     final data = maybeRootOf(context);
 
     if (data == null) {
-      throw Exception("Tried to depend upon the root IOSEditorControlsContext but no such ancestor widget exists.");
+      throw Exception("Tried to depend upon the root SuperEditorIosControlsScope but no such ancestor widget exists.");
     }
 
     return data;
@@ -227,6 +228,7 @@ class IosDocumentTouchInteractor extends StatefulWidget {
     required this.getDocumentLayout,
     required this.selection,
     required this.scrollController,
+    required this.dragHandleAutoScroller,
     this.contentTapHandler,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     this.showDebugPaint = false,
@@ -245,6 +247,8 @@ class IosDocumentTouchInteractor extends StatefulWidget {
   final ContentTapDelegate? contentTapHandler;
 
   final ScrollController scrollController;
+
+  final ValueNotifier<DragHandleAutoScroller?> dragHandleAutoScroller;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -274,7 +278,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   SuperEditorIosControlsController? _controlsController;
   late FloatingCursorListener _floatingCursorListener;
 
-  late DragHandleAutoScroller _handleAutoScrolling;
   Offset? _globalStartDragOffset;
   Offset? _dragStartInDoc;
   Offset? _startDragPositionOffset;
@@ -299,7 +302,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   void initState() {
     super.initState();
 
-    _handleAutoScrolling = DragHandleAutoScroller(
+    widget.dragHandleAutoScroller.value = DragHandleAutoScroller(
       vsync: this,
       dragAutoScrollBoundary: widget.dragAutoScrollBoundary,
       getScrollPosition: () => scrollPosition,
@@ -331,7 +334,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     _controlsController!.floatingCursorController.addListener(_floatingCursorListener);
     _controlsController!.floatingCursorController.cursorGeometryInViewport.addListener(_onFloatingCursorGeometryChange);
 
-    _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
+    _ancestorScrollPosition = context.findAncestorScrollableWithVerticalScroll?.position;
 
     // On the next frame, check if our active scroll position changed to a
     // different instance. If it did, move our listener to the new one.
@@ -378,7 +381,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
     _teardownScrollController();
 
-    _handleAutoScrolling.dispose();
+    widget.dragHandleAutoScroller.value?.dispose();
 
     super.dispose();
   }
@@ -436,7 +439,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         ? _documentOffsetToViewportOffset(selectionRectInDocumentLayout.bottomCenter)
         : _documentOffsetToViewportOffset(selectionRectInDocumentLayout.topCenter);
 
-    _handleAutoScrolling.ensureOffsetIsVisible(extentOffsetInViewport);
+    widget.dragHandleAutoScroller.value?.ensureOffsetIsVisible(extentOffsetInViewport);
   }
 
   void _onDocumentChange(_) {
@@ -475,7 +478,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
   RenderBox get viewportBox =>
-      (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+      (context.findAncestorScrollableWithVerticalScroll?.context.findRenderObject() ?? context.findRenderObject())
+          as RenderBox;
 
   Offset _documentOffsetToViewportOffset(Offset documentOffset) {
     final globalOffset = _docLayout.getGlobalOffsetFromDocumentOffset(documentOffset);
@@ -749,6 +753,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
+      const ClearComposingRegionRequest(),
     ]);
 
     return true;
@@ -874,7 +879,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     // finger/mouse position hasn't changed.
     _dragStartScrollOffset = scrollPosition.pixels;
 
-    _handleAutoScrolling.startAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.startAutoScrollHandleMonitoring();
 
     scrollPosition.addListener(_onAutoScrollChange);
   }
@@ -948,7 +953,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     // Auto-scroll, if needed, for either handle dragging or long press dragging.
-    _handleAutoScrolling.updateAutoScrollHandleMonitoring(
+    widget.dragHandleAutoScroller.value?.updateAutoScrollHandleMonitoring(
       dragEndInViewport: dragEndInViewport,
     );
 
@@ -973,6 +978,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionChangeType.placeCaret,
           SelectionReason.userInteraction,
         ),
+        const ClearComposingRegionRequest(),
       ]);
     } else if (_dragHandleType == HandleType.upstream) {
       widget.editor.execute([
@@ -983,6 +989,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
+        const ClearComposingRegionRequest(),
       ]);
     } else if (_dragHandleType == HandleType.downstream) {
       widget.editor.execute([
@@ -993,6 +1000,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
+        const ClearComposingRegionRequest(),
       ]);
     }
   }
@@ -1048,7 +1056,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _onHandleDragEnd();
     }
 
-    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
     scrollPosition.removeListener(_onAutoScrollChange);
   }
 
@@ -1133,7 +1141,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         changeType,
         SelectionReason.userInteraction,
       ),
+      const ClearComposingRegionRequest(),
     ]);
+
     editorGesturesLog.fine("Selected region: ${widget.selection.value}");
   }
 
@@ -1157,6 +1167,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         SelectionChangeType.expandSelection,
         SelectionReason.userInteraction,
       ),
+      const ClearComposingRegionRequest(),
     ]);
   }
 
@@ -1172,6 +1183,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           SelectionChangeType.expandSelection,
           SelectionReason.userInteraction,
         ),
+        const ClearComposingRegionRequest(),
       ]);
       return true;
     } else {
@@ -1185,7 +1197,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _handleAutoScrolling.startAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.startAutoScrollHandleMonitoring();
   }
 
   void _onFloatingCursorGeometryChange() {
@@ -1194,13 +1206,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _handleAutoScrolling.updateAutoScrollHandleMonitoring(
+    widget.dragHandleAutoScroller.value?.updateAutoScrollHandleMonitoring(
       dragEndInViewport: cursorGeometry.center,
     );
   }
 
   void _onFloatingCursorStop() {
-    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
   }
 
   void _selectPosition(DocumentPosition position) {
@@ -1213,23 +1225,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
+      const ClearComposingRegionRequest(),
     ]);
-  }
-
-  ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.maybeOf(context);
-    if (ancestorScrollable == null) {
-      return null;
-    }
-
-    final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar
-    // or a horizontal ListView, so we can't use the ancestor scrollable
-    if (direction == AxisDirection.left || direction == AxisDirection.right) {
-      return null;
-    }
-
-    return ancestorScrollable;
   }
 
   /// Starts a drag activity to scroll the document.
@@ -1359,9 +1356,13 @@ enum DragMode {
 class SuperEditorIosToolbarOverlayManager extends StatefulWidget {
   const SuperEditorIosToolbarOverlayManager({
     super.key,
+    this.tapRegionGroupId,
     this.defaultToolbarBuilder,
     this.child,
   });
+
+  /// {@macro super_editor_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   final DocumentFloatingToolbarBuilder? defaultToolbarBuilder;
 
@@ -1373,63 +1374,41 @@ class SuperEditorIosToolbarOverlayManager extends StatefulWidget {
 
 @visibleForTesting
 class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolbarOverlayManager> {
-  SuperEditorIosControlsController? _controlsContext;
-  OverlayEntry? _toolbarOverlayEntry;
-
-  @visibleForTesting
-  bool get wantsToDisplayToolbar => _controlsContext!.shouldShowToolbar.value;
+  final OverlayPortalController _overlayPortalController = OverlayPortalController();
+  SuperEditorIosControlsController? _controlsController;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = SuperEditorIosControlsScope.rootOf(context);
-
-    // Add our overlay on the next frame. If we did it immediately, it would
-    // cause a setState() to be called during didChangeDependencies, which is
-    // a framework violation.
-    onNextFrame((timeStamp) {
-      _addToolbarOverlay();
-    });
+    _controlsController = SuperEditorIosControlsScope.rootOf(context);
+    _overlayPortalController.show();
   }
 
-  @override
-  void dispose() {
-    _removeToolbarOverlay();
-    super.dispose();
-  }
-
-  void _addToolbarOverlay() {
-    if (_toolbarOverlayEntry != null) {
-      return;
-    }
-
-    _toolbarOverlayEntry = OverlayEntry(builder: (overlayContext) {
-      return IosFloatingToolbarOverlay(
-        shouldShowToolbar: _controlsContext!.shouldShowToolbar,
-        toolbarFocalPoint: _controlsContext!.toolbarFocalPoint,
-        floatingToolbarBuilder:
-            _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
-        createOverlayControlsClipper: _controlsContext!.createOverlayControlsClipper,
-        showDebugPaint: false,
-      );
-    });
-
-    Overlay.of(context).insert(_toolbarOverlayEntry!);
-  }
-
-  void _removeToolbarOverlay() {
-    if (_toolbarOverlayEntry == null) {
-      return;
-    }
-
-    _toolbarOverlayEntry!.remove();
-    _toolbarOverlayEntry = null;
-  }
+  @visibleForTesting
+  bool get wantsToDisplayToolbar => _controlsController!.shouldShowToolbar.value;
 
   @override
   Widget build(BuildContext context) {
-    return widget.child ?? const SizedBox();
+    return OverlayPortal(
+      controller: _overlayPortalController,
+      overlayChildBuilder: _buildToolbar,
+      child: widget.child ?? const SizedBox(),
+    );
+  }
+
+  Widget _buildToolbar(BuildContext context) {
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: IosFloatingToolbarOverlay(
+        shouldShowToolbar: _controlsController!.shouldShowToolbar,
+        toolbarFocalPoint: _controlsController!.toolbarFocalPoint,
+        floatingToolbarBuilder:
+            _controlsController!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
+        createOverlayControlsClipper: _controlsController!.createOverlayControlsClipper,
+        showDebugPaint: false,
+      ),
+    );
   }
 }
 
@@ -1449,68 +1428,37 @@ class SuperEditorIosMagnifierOverlayManager extends StatefulWidget {
 
 @visibleForTesting
 class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMagnifierOverlayManager> {
-  SuperEditorIosControlsController? _controlsContext;
-  OverlayEntry? _magnifierOverlayEntry;
-
-  @visibleForTesting
-  bool get wantsToDisplayMagnifier => _controlsContext!.shouldShowMagnifier.value;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Add our overlay on the next frame. If we did it immediately, it would
-    // cause a setState() to be called during didChangeDependencies, which is
-    // a framework violation.
-    onNextFrame((timeStamp) {
-      _addMagnifierOverlay();
-    });
-  }
+  final OverlayPortalController _overlayPortalController = OverlayPortalController();
+  SuperEditorIosControlsController? _controlsController;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _controlsContext = SuperEditorIosControlsScope.rootOf(context);
+    _controlsController = SuperEditorIosControlsScope.rootOf(context);
+    _overlayPortalController.show();
   }
 
-  @override
-  void dispose() {
-    _removeMagnifierOverlay();
-    super.dispose();
-  }
-
-  void _addMagnifierOverlay() {
-    if (_magnifierOverlayEntry != null) {
-      return;
-    }
-
-    _magnifierOverlayEntry = OverlayEntry(builder: (_) => _buildMagnifier());
-    Overlay.of(context).insert(_magnifierOverlayEntry!);
-  }
-
-  void _removeMagnifierOverlay() {
-    if (_magnifierOverlayEntry == null) {
-      return;
-    }
-
-    _magnifierOverlayEntry!.remove();
-    _magnifierOverlayEntry = null;
-  }
+  @visibleForTesting
+  bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
   @override
   Widget build(BuildContext context) {
-    return widget.child ?? const SizedBox();
+    return OverlayPortal(
+      controller: _overlayPortalController,
+      overlayChildBuilder: _buildMagnifier,
+      child: widget.child ?? const SizedBox(),
+    );
   }
 
-  Widget _buildMagnifier() {
+  Widget _buildMagnifier(BuildContext context) {
     // Display a magnifier that tracks a focal point.
     //
     // When the user is dragging an overlay handle, SuperEditor
     // position a Leader with a LeaderLink. This magnifier follows that Leader
     // via the LeaderLink.
     return ValueListenableBuilder(
-      valueListenable: _controlsContext!.shouldShowMagnifier,
+      valueListenable: _controlsController!.shouldShowMagnifier,
       builder: (context, shouldShowMagnifier, child) {
         if (!shouldShowMagnifier) {
           return const SizedBox();
@@ -1518,14 +1466,15 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
 
         return child!;
       },
-      child: _controlsContext!.magnifierBuilder != null //
-          ? _controlsContext!.magnifierBuilder!(context, DocumentKeys.magnifier, _controlsContext!.magnifierFocalPoint)
-          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, _controlsContext!.magnifierFocalPoint),
+      child: _controlsController!.magnifierBuilder != null //
+          ? _controlsController!.magnifierBuilder!(
+              context, DocumentKeys.magnifier, _controlsController!.magnifierFocalPoint)
+          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, _controlsController!.magnifierFocalPoint),
     );
   }
 
   Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint) {
-    if (isWeb) {
+    if (CurrentPlatform.isWeb) {
       // Defer to the browser to display overlay controls on mobile.
       return const SizedBox();
     }
@@ -1766,6 +1715,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
+      const ClearComposingRegionRequest(),
     ]);
   }
 
@@ -1824,6 +1774,12 @@ class SuperEditorIosToolbarFocalPointDocumentLayerBuilder implements SuperEditor
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editorContext) {
+    if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
+      // There's no controls scope. This probably means SuperEditor is configured with
+      // a non-iOS gesture mode. Build nothing.
+      return const ContentLayerProxyWidget(child: SizedBox());
+    }
+
     return IosToolbarFocalPointDocumentLayer(
       document: editorContext.document,
       selection: editorContext.composer.selectionNotifier,
@@ -1844,7 +1800,9 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
-    if (defaultTargetPlatform != TargetPlatform.iOS) {
+    if (defaultTargetPlatform != TargetPlatform.iOS || SuperEditorIosControlsScope.maybeNearestOf(context) == null) {
+      // There's no controls scope. This probably means SuperEditor is configured with
+      // a non-iOS gesture mode. Build nothing.
       return const ContentLayerProxyWidget(child: SizedBox());
     }
 
@@ -1855,6 +1813,7 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
       changeSelection: (newSelection, changeType, reason) {
         editContext.editor.execute([
           ChangeSelectionRequest(newSelection, changeType, reason),
+          const ClearComposingRegionRequest(),
         ]);
       },
       handleColor: handleColor ??

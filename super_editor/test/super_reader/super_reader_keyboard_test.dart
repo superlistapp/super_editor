@@ -34,7 +34,7 @@ void main() {
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 13));
       });
 
-      testAllInputsOnMac("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
+      testAllInputsOnApple("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
         tester, {
         required TextInputSource inputSource,
       }) async {
@@ -58,7 +58,7 @@ void main() {
         );
       });
 
-      testAllInputsOnMac("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
+      testAllInputsOnApple("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
         tester, {
         required TextInputSource inputSource,
       }) async {
@@ -70,7 +70,7 @@ void main() {
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 20));
       });
 
-      testAllInputsOnMac("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
+      testAllInputsOnApple("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
         tester, {
         required TextInputSource inputSource,
       }) async {
@@ -82,7 +82,7 @@ void main() {
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 0));
       });
 
-      testAllInputsOnMac("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
+      testAllInputsOnApple("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
         tester, {
         required TextInputSource inputSource,
       }) async {
@@ -182,7 +182,7 @@ void main() {
       });
     });
 
-    testAllInputsOnMac("and removes selection when it collapses without holding the SHIFT key", (
+    testAllInputsOnApple("and removes selection when it collapses without holding the SHIFT key", (
       tester, {
       required TextInputSource inputSource,
     }) async {
@@ -224,7 +224,7 @@ void main() {
       );
     });
 
-    testAllInputsOnMac("and retains the selection when collapsed and the SHIFT key is pressed", (
+    testAllInputsOnApple("and retains the selection when collapsed and the SHIFT key is pressed", (
       tester, {
       required TextInputSource inputSource,
     }) async {

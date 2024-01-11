@@ -60,6 +60,13 @@ class TestDocumentSelector {
     );
   }
 
+  TestDocumentConfigurator withSingleParagraphShort() {
+    return TestDocumentConfigurator._(
+      _widgetTester,
+      singleParagraphShortDoc(),
+    );
+  }
+
   TestDocumentConfigurator withTwoEmptyParagraphs() {
     return TestDocumentConfigurator._(
       _widgetTester,
@@ -86,13 +93,14 @@ class TestDocumentConfigurator {
   SelectionStyles? _selectionStyles;
   Stylesheet? _stylesheet;
   final _addedComponents = <ComponentBuilder>[];
-  bool _autoFocus = false;
   ui.Size? _editorSize;
   List<ComponentBuilder>? _componentBuilders;
   WidgetTreeBuilder? _widgetTreeBuilder;
   ScrollController? _scrollController;
   bool _insideCustomScrollView = false;
   FocusNode? _focusNode;
+  bool _autoFocus = false;
+  String? _tapRegionGroupId;
   DocumentSelection? _selection;
   WidgetBuilder? _androidToolbarBuilder;
   DocumentFloatingToolbarBuilder? _iOSToolbarBuilder;
@@ -233,6 +241,14 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Configures the [SuperReader] to use the given [tapRegionGroupId].
+  ///
+  /// This DOESN'T wrap the reader with a [TapRegion].
+  TestDocumentConfigurator withTapRegionGroupId(String? tapRegionGroupId) {
+    _tapRegionGroupId = tapRegionGroupId;
+    return this;
+  }
+
   /// Pumps a [SuperReader] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
   /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
@@ -261,6 +277,8 @@ class TestDocumentConfigurator {
           ),
           child: SuperReader(
             focusNode: testContext.focusNode,
+            autofocus: _autoFocus,
+            tapRegionGroupId: _tapRegionGroupId,
             document: documentContext.document,
             documentLayoutKey: layoutKey,
             selection: documentContext.selection,
@@ -271,7 +289,6 @@ class TestDocumentConfigurator {
               ..._addedComponents,
               ...(_componentBuilders ?? defaultComponentBuilders),
             ],
-            autofocus: _autoFocus,
             scrollController: _scrollController,
             androidToolbarBuilder: _androidToolbarBuilder,
           ),
@@ -324,6 +341,7 @@ class TestDocumentConfigurator {
       home: Scaffold(
         body: superReader,
       ),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

@@ -94,7 +94,7 @@ A paragraph
                 const BlockSelector("listItem"),
                 (doc, docNode) {
                   return {
-                    "textStyle": const TextStyle(
+                    Styles.textStyle: const TextStyle(
                       color: Colors.blue,
                       fontSize: 16,
                     ),
@@ -105,7 +105,7 @@ A paragraph
                 const BlockSelector("paragraph"),
                 (doc, docNode) {
                   return {
-                    "textStyle": const TextStyle(
+                    Styles.textStyle: const TextStyle(
                       color: Colors.red,
                       fontSize: 16,
                     ),
@@ -249,8 +249,8 @@ InlineSpan _findSpanAtOffset(
   WidgetTester tester, {
   required int offset,
 }) {
-  final superTextWithSelection = tester.widget<SuperTextWithSelection>(find.byType(SuperTextWithSelection));
-  return superTextWithSelection.richText.getSpanForPosition(TextPosition(offset: offset))!;
+  final superText = tester.widget<SuperText>(find.byType(SuperText));
+  return superText.richText.getSpanForPosition(TextPosition(offset: offset))!;
 }
 
 final _stylesheetWithNodePositionRule = Stylesheet(
@@ -260,7 +260,7 @@ final _stylesheetWithNodePositionRule = Stylesheet(
       const BlockSelector("paragraph"),
       (doc, docNode) {
         return {
-          "textStyle": const TextStyle(
+          Styles.textStyle: const TextStyle(
             color: Colors.red,
           ),
         };
@@ -270,7 +270,7 @@ final _stylesheetWithNodePositionRule = Stylesheet(
       const BlockSelector("paragraph").last(),
       (doc, docNode) {
         return {
-          "textStyle": const TextStyle(
+          Styles.textStyle: const TextStyle(
             color: Colors.blue,
           )
         };
@@ -284,7 +284,7 @@ final _stylesheetWithBlackText = Stylesheet(
   rules: [
     StyleRule(BlockSelector.all, (document, node) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Colors.black,
         ),
       };
@@ -297,7 +297,7 @@ final _stylesheetWithWhiteText = Stylesheet(
   rules: [
     StyleRule(BlockSelector.all, (document, node) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Colors.white,
         ),
       };

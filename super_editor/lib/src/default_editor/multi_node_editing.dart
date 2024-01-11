@@ -14,6 +14,244 @@ import 'paragraph.dart';
 
 final _log = Logger(scope: 'multi_node_editing.dart');
 
+/// Request to paste the given structured [content] in the document at the
+/// given [pastePosition].
+class PasteStructuredContentEditorRequest implements EditRequest {
+  PasteStructuredContentEditorRequest({
+    required this.content,
+    required this.pastePosition,
+  });
+
+  final List<DocumentNode> content;
+  final DocumentPosition pastePosition;
+}
+
+/// Inserts given structured content, in the form of a `List` of [DocumentNode]s at a
+/// given paste position within the document.
+class PasteStructuredContentEditorCommand implements EditCommand {
+  PasteStructuredContentEditorCommand({
+    required List<DocumentNode> content,
+    required DocumentPosition pastePosition,
+  })  : _content = content,
+        _pastePosition = pastePosition;
+
+  final List<DocumentNode> _content;
+  final DocumentPosition _pastePosition;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    if (_content.isEmpty) {
+      // Nothing to paste. Return.
+      return;
+    }
+
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+    final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
+    if (currentNodeWithSelection is! TextNode) {
+      throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
+    }
+
+    editorOpsLog.info("Pasting clipboard content as Markdown in document.");
+
+    if (_content.length == 1) {
+      _pasteSingleNode(executor, document, _content.first, _pastePosition, currentNodeWithSelection);
+    } else {
+      _pasteMultipleNodes(executor, document, _content, currentNodeWithSelection);
+    }
+
+    editorOpsLog.fine('New selection after paste operation: ${composer.selection}');
+    editorOpsLog.fine('Done with paste command.');
+  }
+
+  void _pasteSingleNode(CommandExecutor executor, MutableDocument document, DocumentNode pastedNode,
+      DocumentPosition pastePosition, TextNode currentNodeWithSelection) {
+    if (_canMergeNodes(currentNodeWithSelection, pastedNode)) {
+      executor.executeCommand(
+        InsertAttributedTextCommand(
+          documentPosition: pastePosition,
+          // Only text nodes are merge-able, therefore we know that the first pasted node
+          // is a TextNode.
+          textToInsert: (pastedNode as TextNode).text,
+        ),
+      );
+
+      return;
+    }
+
+    final (upstreamNodeId, _) = _splitPasteParagraph(
+        executor, currentNodeWithSelection.id, (pastePosition.nodePosition as TextNodePosition).offset);
+
+    // Insert the pasted node after the split upstream node.
+    document.insertNodeAfter(
+      existingNode: document.getNodeById(upstreamNodeId)!,
+      newNode: pastedNode,
+    );
+    executor.logChanges([
+      DocumentEdit(
+        NodeInsertedEvent(pastedNode.id, document.getNodeIndexById(pastedNode.id)),
+      )
+    ]);
+
+    // Place the caret at the end of the pasted content.
+    executor.executeCommand(
+      ChangeSelectionCommand(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: pastedNode.id,
+            nodePosition: pastedNode.endPosition,
+          ),
+        ),
+        SelectionChangeType.insertContent,
+        SelectionReason.userInteraction,
+      ),
+    );
+  }
+
+  void _pasteMultipleNodes(
+    CommandExecutor executor,
+    MutableDocument document,
+    List<DocumentNode> pastedNodes,
+    TextNode currentNodeWithSelection,
+  ) {
+    final textNode = document.getNode(_pastePosition) as TextNode;
+    final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
+    final nodesToInsert = List.from(_content);
+
+    // Split the original node in two, around the caret.
+    TextNode? downstreamSplitNode;
+    if (pasteTextOffset < textNode.endPosition.offset) {
+      // The caret sits somewhere in the middle of an existing text node. Split the
+      // node at the caret so we can paste structured content in between.
+      final (_, downstreamSplitNodeId) = _splitPasteParagraph(executor, currentNodeWithSelection.id, pasteTextOffset);
+      downstreamSplitNode = document.getNodeById(downstreamSplitNodeId) as TextNode;
+    }
+
+    // (Possibly) merge or delete the upstream split node.
+    bool deleteInitiallySelectedNode = false;
+    final firstPastedNode = nodesToInsert.first;
+    if (_canMergeNodes(currentNodeWithSelection, firstPastedNode)) {
+      // The text in the first pasted node is stylistically compatible with the
+      // existing text in the node where the paste was triggered. Therefore, instead
+      // inserting the first pasted node, merge its content with the existing node.
+      executor.executeCommand(
+        InsertAttributedTextCommand(
+          documentPosition: _pastePosition,
+          // Only text nodes are merge-able, therefore we know that the first pasted node
+          // is a TextNode.
+          textToInsert: (firstPastedNode as TextNode).text,
+        ),
+      );
+
+      // We've pasted the first new node. Remove it from the nodes to insert.
+      nodesToInsert.removeAt(0);
+    }
+    if (currentNodeWithSelection.text.length == 0) {
+      // The node with the selection is an empty text node. After we use that node's
+      // position to insert other nodes, we want to delete that first node, as if the
+      // pasted content replaced it.
+      deleteInitiallySelectedNode = true;
+    }
+
+    // (Possibly) merge or delete the downstream split node.
+    if (nodesToInsert.isNotEmpty) {
+      final lastPastedNode = nodesToInsert.last;
+      if (downstreamSplitNode != null && _canMergeNodes(lastPastedNode, downstreamSplitNode)) {
+        // The text in the last pasted node is stylistically compatible with the
+        // existing text in the node that was split after the caret. Therefore, instead
+        // of inserting the last pasted node, merge its content with the existing split
+        // node.
+        executor.executeCommand(
+          InsertAttributedTextCommand(
+            documentPosition: DocumentPosition(
+              nodeId: downstreamSplitNode.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+            // Only text nodes are merge-able, therefore we know that the last pasted node
+            // is a TextNode.
+            textToInsert: (lastPastedNode as TextNode).text,
+          ),
+        );
+
+        // We've pasted the last new node. Remove it from the nodes to insert.
+        nodesToInsert.removeLast();
+      }
+    }
+
+    // Now that the first and last pasted nodes have been merged with existing content
+    // (or not), insert all remaining pasted nodes into the document.
+    DocumentNode previousNode = currentNodeWithSelection;
+    for (final pastedNode in nodesToInsert) {
+      document.insertNodeAfter(
+        existingNode: previousNode,
+        newNode: pastedNode,
+      );
+      previousNode = pastedNode;
+
+      executor.logChanges([
+        DocumentEdit(
+          NodeInsertedEvent(pastedNode.id, document.getNodeIndexById(pastedNode.id)),
+        )
+      ]);
+    }
+
+    if (deleteInitiallySelectedNode) {
+      document.deleteNode(currentNodeWithSelection);
+      executor.logChanges([
+        DocumentEdit(
+          NodeRemovedEvent(currentNodeWithSelection.id, currentNodeWithSelection),
+        )
+      ]);
+    }
+
+    // Place the caret at the end of the pasted content.
+    executor.executeCommand(
+      ChangeSelectionCommand(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: previousNode.id,
+            nodePosition: previousNode.endPosition,
+          ),
+        ),
+        SelectionChangeType.insertContent,
+        SelectionReason.userInteraction,
+      ),
+    );
+  }
+
+  (String upstreamNode, String downstreamNode) _splitPasteParagraph(
+    CommandExecutor executor,
+    String currentNodeWithSelectionId,
+    int pasteTextOffset,
+  ) {
+    final newNodeId = Editor.createNodeId();
+    executor.executeCommand(
+      SplitParagraphCommand(
+        nodeId: currentNodeWithSelectionId,
+        splitPosition: TextPosition(offset: pasteTextOffset),
+        newNodeId: newNodeId,
+        replicateExistingMetadata: true,
+      ),
+    );
+
+    return (currentNodeWithSelectionId, newNodeId);
+  }
+
+  bool _canMergeNodes(DocumentNode existingNode, DocumentNode newNode) {
+    if (existingNode is! TextNode || newNode is! TextNode) {
+      // We can only merge text nodes.
+      return false;
+    }
+
+    if (existingNode.metadata['blockType'] != newNode.metadata['blockType']) {
+      // Text nodes with different block types cannot be merged, e.g., "Header 1" with a "Blockquote".
+      return false;
+    }
+
+    return true;
+  }
+}
+
 class InsertNodeAtIndexRequest implements EditRequest {
   InsertNodeAtIndexRequest({
     required this.nodeIndex,

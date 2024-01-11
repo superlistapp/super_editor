@@ -12,10 +12,10 @@ final _log = scrollingTextFieldLog;
 
 /// A scrollable that positions its [child] based on text metrics.
 ///
-/// The [child] must contain a [SuperTextWithSelection] in its tree,
-/// [textKey] must refer to that [SuperTextWithSelection], and the
+/// The [child] must contain a [SuperText] in its tree,
+/// [textKey] must refer to that [SuperText], and the
 /// dimensions of the [child] subtree should match the dimensions
-/// of the [SuperTextWithSelection] so that there are no surprises
+/// of the [SuperText] so that there are no surprises
 /// when the scroll offset is configured based on where a given
 /// character appears in the [child] layout.
 ///
@@ -191,15 +191,20 @@ class _TextScrollViewState extends State<TextScrollView>
 
   @override
   double get endScrollOffset {
+    final viewportWidth = this.viewportWidth;
     final viewportHeight = this.viewportHeight;
-    if (viewportHeight == null) {
+    if (viewportWidth == null || viewportHeight == null) {
       return 0;
     }
 
     final lastCharacterPosition = TextPosition(offset: widget.textEditingController.text.text.length - 1);
-    return (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) -
-        viewportHeight +
-        (widget.padding?.vertical ?? 0.0);
+    return isMultiline
+        ? (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) -
+            viewportHeight +
+            (widget.padding?.vertical ?? 0.0)
+        : _textLayout.getCharacterBox(lastCharacterPosition)!.right -
+            viewportWidth +
+            (widget.padding?.horizontal ?? 0.0);
   }
 
   @override
@@ -485,6 +490,10 @@ class TextScrollController with ChangeNotifier {
 
   Duration _timeOfNextAutoScroll = Duration.zero;
 
+  double get startScrollOffset => _delegate!.startScrollOffset;
+
+  double get endScrollOffset => _delegate!.endScrollOffset;
+
   bool isTextPositionVisible(TextPosition position) => _delegate!.isTextPositionVisible(position);
 
   void jumpToStart() {
@@ -564,7 +573,7 @@ class TextScrollController with ChangeNotifier {
   /// cancelled and replaced by auto-scrolling to the end.
   void startScrollingToEnd() {
     if (_autoScrollDirection == _AutoScrollDirection.end) {
-      // Already scrolling to start. Return.
+      // Already scrolling to end. Return.
       return;
     }
 
@@ -816,7 +825,6 @@ class TextScrollController with ChangeNotifier {
           _delegate!.getCharacterRectAtPosition(TextPosition(offset: _textController.text.text.length - 1));
       final isAtLastLine = rectInContentSpace.top == lastCharRect.top;
       final extraSpacingBelowBottom = (isAtLastLine ? rectInContentSpace.height / 2 : 0);
-
       if (rectInContentSpace.top - extraSpacingAboveTop - _scrollOffset < 0) {
         // The character is entirely or partially above the top of the viewport.
         // Scroll the content down.
@@ -835,7 +843,7 @@ class TextScrollController with ChangeNotifier {
         // Scroll the content right.
         _scrollOffset = rectInContentSpace.left;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rectInContentSpace.right > _delegate!.viewportWidth!) {
+      } else if (rectInContentSpace.right - _scrollOffset > _delegate!.viewportWidth!) {
         // The character is entirely or partially after the end of the viewport.
         // Scroll the content left.
         _scrollOffset = rectInContentSpace.right - _delegate!.viewportWidth!;
@@ -897,9 +905,9 @@ enum _AutoScrollDirection {
 /// Sizes the [child] so its height falls within [minLines] and [maxLines], multiplied by the
 /// given [lineHeight].
 ///
-/// The [child] must contain a [SuperTextWithSelection] in its tree,
+/// The [child] must contain a [SuperText] in its tree,
 /// and the dimensions of the [child] subtree should match the dimensions
-/// of the [SuperTextWithSelection]. The given [textKey] must be bound to the [SuperTextWithSelection]
+/// of the [SuperText]. The given [textKey] must be bound to the [SuperText]
 /// within the [child]'s subtree.
 class _TextLinesLimiter extends SingleChildRenderObjectWidget {
   const _TextLinesLimiter({
@@ -911,7 +919,7 @@ class _TextLinesLimiter extends SingleChildRenderObjectWidget {
     required super.child,
   });
 
-  /// [GlobalKey] that references the [SuperTextWithSelection] within the [child]'s subtree.
+  /// [GlobalKey] that references the [SuperText] within the [child]'s subtree.
   final GlobalKey<ProseTextState> textKey;
 
   /// The minimum height of this text scroll view, represented as a

@@ -33,6 +33,8 @@ export 'super_textfield_context.dart';
 /// instead of regular `String`s or `InlineSpan`s, which makes it easier to style
 /// text and edit other text metadata.
 
+export "super_text_field_keys.dart";
+
 /// Text field that supports styled text.
 ///
 /// [SuperTextField] adapts to the expectations of the current platform, or
@@ -72,6 +74,7 @@ class SuperTextField extends StatefulWidget {
     this.padding,
     this.textInputAction,
     this.imeConfiguration,
+    this.showComposingUnderline,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -197,17 +200,24 @@ class SuperTextField extends StatefulWidget {
   /// Preferences for how the platform IME should look and behave during editing.
   final TextInputConfiguration? imeConfiguration;
 
+  /// Whether to show an underline beneath the text in the composing region, or `null`
+  /// to let [SuperTextField] decide when to show the underline.
+  final bool? showComposingUnderline;
+
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
 }
 
 class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner {
   final _platformFieldKey = GlobalKey();
+  late FocusNode _focusNode;
   late ImeAttributedTextEditingController _controller;
 
   @override
   void initState() {
     super.initState();
+
+    _focusNode = widget.focusNode ?? FocusNode();
 
     _controller = widget.textController != null
         ? widget.textController is ImeAttributedTextEditingController
@@ -220,6 +230,13 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
   void didUpdateWidget(SuperTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (widget.focusNode != oldWidget.focusNode) {
+      if (oldWidget.focusNode == null) {
+        _focusNode.dispose();
+      }
+      _focusNode = widget.focusNode ?? FocusNode();
+    }
+
     if (widget.textController != oldWidget.textController) {
       _controller = widget.textController != null
           ? widget.textController is ImeAttributedTextEditingController
@@ -228,6 +245,18 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           : ImeAttributedTextEditingController();
     }
   }
+
+  @override
+  void dispose() {
+    if (widget.focusNode == null) {
+      _focusNode.dispose();
+    }
+
+    super.dispose();
+  }
+
+  @visibleForTesting
+  bool get hasFocus => _focusNode.hasFocus;
 
   @visibleForTesting
   AttributedTextEditingController get controller => _controller;
@@ -314,7 +343,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
       case SuperTextFieldPlatformConfiguration.desktop:
         return SuperDesktopTextField(
           key: _platformFieldKey,
-          focusNode: widget.focusNode,
+          focusNode: _focusNode,
           tapRegionGroupId: widget.tapRegionGroupId,
           textController: _controller,
           textAlign: widget.textAlign,
@@ -338,6 +367,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           inputSource: _inputSource,
           textInputAction: _textInputAction,
           imeConfiguration: widget.imeConfiguration,
+          showComposingUnderline: widget.showComposingUnderline ?? defaultTargetPlatform == TargetPlatform.macOS,
           blinkTimingMode: widget.blinkTimingMode,
         );
       case SuperTextFieldPlatformConfiguration.android:
@@ -345,7 +375,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           shortcuts: _scrollShortcutOverrides,
           child: SuperAndroidTextField(
             key: _platformFieldKey,
-            focusNode: widget.focusNode,
+            focusNode: _focusNode,
             tapRegionGroupId: widget.tapRegionGroupId,
             textController: _controller,
             textAlign: widget.textAlign,
@@ -363,6 +393,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             lineHeight: widget.lineHeight,
             textInputAction: _textInputAction,
             imeConfiguration: widget.imeConfiguration,
+            showComposingUnderline: widget.showComposingUnderline ?? true,
             padding: widget.padding,
             blinkTimingMode: widget.blinkTimingMode,
           ),
@@ -372,7 +403,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
           shortcuts: _scrollShortcutOverrides,
           child: SuperIOSTextField(
             key: _platformFieldKey,
-            focusNode: widget.focusNode,
+            focusNode: _focusNode,
             tapRegionGroupId: widget.tapRegionGroupId,
             textController: _controller,
             textAlign: widget.textAlign,
@@ -390,6 +421,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             lineHeight: widget.lineHeight,
             textInputAction: _textInputAction,
             imeConfiguration: widget.imeConfiguration,
+            showComposingUnderline: widget.showComposingUnderline ?? true,
             padding: widget.padding,
             blinkTimingMode: widget.blinkTimingMode,
           ),

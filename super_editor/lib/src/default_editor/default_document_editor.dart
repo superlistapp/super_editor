@@ -46,6 +46,9 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (request) => request is ChangeComposingRegionRequest //
       ? ChangeComposingRegionCommand(request.composingRegion)
       : null,
+  (request) => request is ClearComposingRegionRequest //
+      ? ChangeComposingRegionCommand(null)
+      : null,
   (request) => request is ChangeInteractionModeRequest //
       ? ChangeInteractionModeCommand(isInteractionModeDesired: request.isInteractionModeDesired)
       : null,
@@ -54,6 +57,12 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           documentPosition: request.documentPosition,
           textToInsert: request.textToInsert,
           attributions: request.attributions,
+        )
+      : null,
+  (request) => request is PasteStructuredContentEditorRequest
+      ? PasteStructuredContentEditorCommand(
+          content: request.content,
+          pastePosition: request.pastePosition,
         )
       : null,
   (request) => request is InsertNodeAtIndexRequest
@@ -111,6 +120,12 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       ? InsertCharacterAtCaretCommand(
           character: request.character,
           ignoreComposerAttributions: request.ignoreComposerAttributions,
+        )
+      : null,
+  (request) => request is ChangeParagraphAlignmentRequest
+      ? ChangeParagraphAlignmentCommand(
+          nodeId: request.nodeId,
+          alignment: request.alignment,
         )
       : null,
   (request) => request is ChangeParagraphBlockTypeRequest
@@ -208,5 +223,6 @@ final defaultEditorReactions = List.unmodifiable([
   const BlockquoteConversionReaction(),
   const HorizontalRuleConversionReaction(),
   const ImageUrlConversionReaction(),
+  const DashConversionReaction(),
   //---- End Content Conversions ---
 ]);

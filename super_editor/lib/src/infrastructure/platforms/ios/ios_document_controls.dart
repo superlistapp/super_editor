@@ -18,18 +18,6 @@ import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart'
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-class DocumentKeys {
-  static const mobileToolbar = ValueKey("document_mobile_toolbar");
-  static const magnifier = ValueKey("document_magnifier");
-  static const iOsCaret = ValueKey("document_ios_caret");
-  static const androidCaret = ValueKey("document_android_caret");
-  static const androidCaretHandle = ValueKey("document_android_caret_handle");
-  static const upstreamHandle = ValueKey("document_upstream_handle");
-  static const downstreamHandle = ValueKey("document_downstream_handle");
-
-  DocumentKeys._();
-}
-
 /// An application overlay that displays an iOS-style toolbar.
 class IosFloatingToolbarOverlay extends StatefulWidget {
   const IosFloatingToolbarOverlay({
@@ -625,6 +613,12 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   bool get isCaretDisplayed => layoutData?.caret != null;
 
   @visibleForTesting
+  bool get isCaretVisible => _caretBlinkController.opacity == 1.0 && isCaretDisplayed;
+
+  @visibleForTesting
+  Duration get caretFlashPeriod => _caretBlinkController.flashPeriod;
+
+  @visibleForTesting
   bool get isUpstreamHandleDisplayed => layoutData?.upstream != null;
 
   @visibleForTesting
@@ -738,7 +732,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
           }
 
           return IOSCollapsedHandle(
-            key: DocumentKeys.iOsCaret,
+            key: DocumentKeys.caret,
             controller: _caretBlinkController,
             color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
             caretHeight: caret.height,
@@ -790,61 +784,3 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     );
   }
 }
-
-/// Builds a full-screen floating toolbar display, with the toolbar positioned near the
-/// [focalPoint], and with the toolbar attached to the given [mobileToolbarKey].
-///
-/// The [mobileToolbarKey] is used to find the toolbar in the widget tree for various purposes,
-/// e.g., within tests to verify the presence or absence of a toolbar. If your builder chooses
-/// not to build a toolbar, e.g., returns a `SizedBox()` instead of a toolbar, then the
-/// you shouldn't use the [mobileToolbarKey].
-///
-/// The [mobileToolbarKey] must be attached to the toolbar, not the top-level widget returned
-/// from this builder, because the [mobileToolbarKey] might be used to verify the size and location
-/// of the toolbar. For example:
-///
-/// ```dart
-/// Widget buildMagnifier(context, mobileToolbarKey, focalPoint) {
-///   return Follower(
-///     link: focalPoint,
-///     child: Toolbar(
-///       key: mobileToolbarKey,
-///       width: 100,
-///       height: 42,
-///       magnification: 1.5,
-///     ),
-///   );
-/// }
-/// ```
-typedef DocumentFloatingToolbarBuilder = Widget Function(
-  BuildContext context,
-  Key mobileToolbarKey,
-  LeaderLink focalPoint,
-);
-
-/// Builds a full-screen magnifier display, with the magnifier following the given [focalPoint],
-/// and with the magnifier attached to the given [magnifierKey].
-///
-/// The [magnifierKey] is used to find the magnifier in the widget tree for various purposes,
-/// e.g., within tests to verify the presence or absence of a magnifier. If your builder chooses
-/// not to build a magnifier, e.g., returns a `SizedBox()` instead of a magnifier, then the
-/// you shouldn't use the [magnifierKey].
-///
-/// The [magnifierKey] must be attached to the magnifier, not the top-level widget returned
-/// from this builder, because the [magnifierKey] might be used to verify the size and location
-/// of the magnifier. For example:
-///
-/// ```dart
-/// Widget buildMagnifier(context, magnifierKey, focalPoint) {
-///   return Follower(
-///     link: focalPoint,
-///     child: Magnifier(
-///       key: magnifierKey,
-///       width: 100,
-///       height: 42,
-///       magnification: 1.5,
-///     ),
-///   );
-/// }
-/// ```
-typedef DocumentMagnifierBuilder = Widget Function(BuildContext, Key magnifierKey, LeaderLink focalPoint);

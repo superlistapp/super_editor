@@ -17,6 +17,7 @@ import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
+import 'package:super_editor/src/infrastructure/flutter/geometry.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/strings.dart';
@@ -373,15 +374,21 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   bool get highlightWhenEmpty;
   set highlightWhenEmpty(bool highlight);
 
+  TextRange? get composingRegion;
+  set composingRegion(TextRange? composingRegion);
+
+  bool get showComposingUnderline;
+  set showComposingUnderline(bool showComposingUnderline);
+
   @override
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
 
-    textAlignment = styles["textAlign"] ?? textAlignment;
+    textAlignment = styles[Styles.textAlign] ?? textAlignment;
 
     textStyleBuilder = (attributions) {
-      final baseStyle = styles["textStyle"] ?? noStyleBuilder({});
-      final inlineTextStyler = styles["inlineTextStyler"] as AttributionStyleAdjuster;
+      final baseStyle = styles[Styles.textStyle] ?? noStyleBuilder({});
+      final inlineTextStyler = styles[Styles.inlineTextStyler] as AttributionStyleAdjuster;
 
       return inlineTextStyler(attributions, baseStyle);
     };
@@ -405,6 +412,8 @@ class TextWithHintComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
+    this.showComposingUnderline = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -418,6 +427,8 @@ class TextWithHintComponent extends StatefulWidget {
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool highlightWhenEmpty;
+  final TextRange? composingRegion;
+  final bool showComposingUnderline;
   final bool showDebugPaint;
 
   @override
@@ -466,6 +477,8 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
           textSelection: widget.textSelection,
           selectionColor: widget.selectionColor,
           highlightWhenEmpty: widget.highlightWhenEmpty,
+          composingRegion: widget.composingRegion,
+          showComposingUnderline: widget.showComposingUnderline,
           showDebugPaint: widget.showDebugPaint,
         ),
       ],
@@ -488,23 +501,43 @@ class TextComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
+    this.showComposingUnderline = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
   final AttributedText text;
+
   final TextAlign? textAlign;
+
   final TextDirection? textDirection;
-  final AttributionStyleBuilder textStyleBuilder;
-  final Map<String, dynamic> metadata;
-  final TextSelection? textSelection;
-  final Color selectionColor;
-  final bool highlightWhenEmpty;
-  final bool showDebugPaint;
 
   /// The text scaling policy.
   ///
   /// Defaults to `MediaQuery.textScalerOf()`.
   final TextScaler? textScaler;
+
+  final AttributionStyleBuilder textStyleBuilder;
+
+  final Map<String, dynamic> metadata;
+
+  final TextSelection? textSelection;
+
+  final Color selectionColor;
+
+  final bool highlightWhenEmpty;
+
+  /// The span of text that's currently sitting in the IME's composing region,
+  /// which is underlined by this component.
+  final TextRange? composingRegion;
+
+  /// Whether to underline the [composingRegion].
+  ///
+  /// Showing the underline is optional because the behavior differs between
+  /// platforms, e.g., Mac shows an underline but Windows and Linux don't.
+  final bool showComposingUnderline;
+
+  final bool showDebugPaint;
 
   @override
   TextComponentState createState() => TextComponentState();
@@ -525,9 +558,6 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
     //       API for nearest position and then let clients pick the one that's
     //       right for them.
     final textPosition = textLayout.getPositionNearestToOffset(localOffset);
-    // if (textPosition == null) {
-    //   return null;
-    // }
 
     return TextNodePosition.fromTextPosition(textPosition);
   }
@@ -538,6 +568,18 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       throw Exception('Expected nodePosition of type TextPosition but received: $nodePosition');
     }
     return textLayout.getOffsetAtPosition(nodePosition);
+  }
+
+  @override
+  Rect getEdgeForPosition(NodePosition nodePosition) {
+    if (nodePosition is! TextPosition) {
+      throw Exception('Expected nodePosition of type TextPosition but received: $nodePosition');
+    }
+
+    final textNodePosition = nodePosition as TextPosition;
+    final characterBox = getRectForPosition(textNodePosition);
+
+    return textNodePosition.affinity == TextAffinity.upstream ? characterBox.leftEdge : characterBox.rightEdge;
   }
 
   @override
@@ -567,10 +609,15 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
 
     if (selection.isCollapsed) {
       // A collapsed selection reports no boxes, but we want to return a rect at the
-      // selection's x-offset, and with a height that matches the text. Try to calculate
+      // selection's x-offset with a height that matches the text. Try to calculate
       // a selection rectangle based on the character that's either after, or before, the
       // collapsed selection position.
-      TextBox? characterBox = textLayout.getCharacterBox(selection.extent);
+      final rectForPosition = getRectForPosition(extentNodePosition);
+      if (rectForPosition.height > 0) {
+        return rectForPosition;
+      }
+
+      TextBox? characterBox = textLayout.getCharacterBox(extentNodePosition);
       if (characterBox != null) {
         final rect = characterBox.toRect();
         return Rect.fromLTWH(rect.left, rect.top, 0, rect.height);
@@ -578,8 +625,8 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
 
       // We didn't find a character at the given offset. That offset might be at the end
       // of the text. Try looking one character upstream.
-      characterBox = selection.extent.offset > 0
-          ? textLayout.getCharacterBox(TextPosition(offset: selection.extent.offset - 1))
+      characterBox = extentNodePosition.offset > 0
+          ? textLayout.getCharacterBox(TextPosition(offset: extentNodePosition.offset - 1))
           : null;
       if (characterBox != null) {
         final rect = characterBox.toRect();
@@ -905,20 +952,48 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
 
     return IgnorePointer(
-      child: SuperTextWithSelection.single(
+      child: SuperText(
         key: _textKey,
         richText: widget.text.computeTextSpan(_textStyleWithBlockType),
         textAlign: widget.textAlign ?? TextAlign.left,
         textDirection: widget.textDirection ?? TextDirection.ltr,
         textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
-        userSelection: UserSelection(
-          highlightStyle: SelectionHighlightStyle(
-            color: widget.selectionColor,
-          ),
-          selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
-          highlightWhenEmpty: widget.highlightWhenEmpty,
-          hasCaret: false,
-        ),
+        layerBeneathBuilder: (context, textLayout) {
+          return Stack(
+            children: [
+              // Selection highlight beneath the text.
+              if (widget.text.length > 0)
+                TextLayoutSelectionHighlight(
+                  textLayout: textLayout,
+                  style: SelectionHighlightStyle(
+                    color: widget.selectionColor,
+                  ),
+                  selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
+                )
+              else if (widget.highlightWhenEmpty)
+                TextLayoutEmptyHighlight(
+                  textLayout: textLayout,
+                  style: SelectionHighlightStyle(
+                    color: widget.selectionColor,
+                  ),
+                ),
+              // Underline beneath the composing region.
+              if (widget.composingRegion != null)
+                TextUnderlineLayer(
+                  textLayout: textLayout,
+                  underlines: [
+                    TextLayoutUnderline(
+                      style: UnderlineStyle(
+                        color: widget.textStyleBuilder({}).color ?? //
+                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                      ),
+                      range: widget.composingRegion!,
+                    ),
+                  ],
+                ),
+            ],
+          );
+        },
       ),
     );
   }

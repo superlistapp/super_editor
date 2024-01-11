@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/magnifier.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/outer_box_shadow.dart';
@@ -34,9 +35,12 @@ class AndroidMagnifyingGlass extends StatelessWidget {
   static const _cornerRadius = 8.0;
 
   const AndroidMagnifyingGlass({
+    super.key,
+    this.magnificationScale = 1.5,
     this.offsetFromFocalPoint = Offset.zero,
   });
 
+  final double magnificationScale;
   final Offset offsetFromFocalPoint;
 
   @override
@@ -49,7 +53,7 @@ class AndroidMagnifyingGlass extends StatelessWidget {
           ),
           offsetFromFocalPoint: offsetFromFocalPoint,
           size: const Size(_width, _height),
-          magnificationScale: 1.5,
+          magnificationScale: magnificationScale,
         ),
         Container(
           width: _width,

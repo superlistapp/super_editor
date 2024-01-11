@@ -142,3 +142,10 @@ extension CharacterMovement on String {
     return range.current.length;
   }
 }
+
+/// Characters that are difficult to represent literally, and therefore are provided as constants.
+class SpecialCharacters {
+  static const emDash = '—';
+
+  const SpecialCharacters._();
+}

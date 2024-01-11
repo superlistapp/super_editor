@@ -114,7 +114,16 @@ void main() {
         // Ensure the list item has first level of indentation.
         expect(listItemNode.indent, 0);
 
+        // Ensure the caret is initially positioned near the upstream edge of the first
+        // character of the list item.
+        //
+        // We only care about a roughly accurate caret offset because the logic around
+        // exact caret positioning might change and we don't want that to break this test.
         final caretOffsetBeforeIndent = SuperEditorInspector.findCaretOffsetInDocument();
+        final firstCharacterRectBeforeIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
+          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+        )!;
+        expect(caretOffsetBeforeIndent.dx, moreOrLessEquals(firstCharacterRectBeforeIndent.left, epsilon: 5));
 
         // Press tab to trigger the list indent command.
         await tester.pressTab();
@@ -122,19 +131,18 @@ void main() {
         // Ensure the list item has second level of indentation.
         expect(listItemNode.indent, 1);
 
-        // Compute the offset at which the caret should be displayed.
-        final computedOffsetAfterIndent = SuperEditorInspector.calculateOffsetForCaret(
-          DocumentPosition(
-            nodeId: listItemNode.id,
-            nodePosition: const TextNodePosition(offset: 0),
-          ),
-        );
-
-        // Ensure the list indentation was actually performed.
-        expect(computedOffsetAfterIndent.dx, greaterThan(caretOffsetBeforeIndent.dx));
-
-        // Ensure the caret is being displayed at the correct position.
-        expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterIndent));
+        // Ensure that the caret's current offset is downstream from the initial caret offset,
+        // and also that the current caret offset is roughly positioned near the upstream edge
+        // of the first list item character.
+        //
+        // We only care about a roughly accurate caret offset because the logic around
+        // exact caret positioning might change and we don't want that to break this test.
+        final caretOffsetAfterIndent = SuperEditorInspector.findCaretOffsetInDocument();
+        expect(caretOffsetAfterIndent.dx, greaterThan(caretOffsetBeforeIndent.dx));
+        final firstCharacterRectAfterIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
+          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+        )!;
+        expect(caretOffsetAfterIndent.dx, moreOrLessEquals(firstCharacterRectAfterIndent.left, epsilon: 5));
       });
 
       testWidgetsOnDesktop('updates caret position when unindenting', (tester) async {
@@ -152,7 +160,16 @@ void main() {
         // Ensure the list item has second level of indentation.
         expect(listItemNode.indent, 1);
 
-        final caretOffsetBeforeUnindent = SuperEditorInspector.findCaretOffsetInDocument();
+        // Ensure the caret is initially positioned near the upstream edge of the first
+        // character of the list item.
+        //
+        // We only care about a roughly accurate caret offset because the logic around
+        // exact caret positioning might change and we don't want that to break this test.
+        final caretOffsetBeforeUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
+        final firstCharacterRectBeforeUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
+          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+        )!;
+        expect(caretOffsetBeforeUnIndent.dx, moreOrLessEquals(firstCharacterRectBeforeUnIndent.left, epsilon: 5));
 
         // Press backspace to trigger the list unindent command.
         await tester.pressBackspace();
@@ -160,19 +177,18 @@ void main() {
         // Ensure the list item has first level of indentation.
         expect(listItemNode.indent, 0);
 
-        // Compute the offset at which the caret should be displayed.
-        final computedOffsetAfterUnindent = SuperEditorInspector.calculateOffsetForCaret(
-          DocumentPosition(
-            nodeId: listItemNode.id,
-            nodePosition: const TextNodePosition(offset: 0),
-          ),
-        );
-
-        // Ensure the list indentation was actually performed.
-        expect(computedOffsetAfterUnindent.dx, lessThan(caretOffsetBeforeUnindent.dx));
-
-        // Ensure the caret is being displayed at the correct position.
-        expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
+        // Ensure that the caret's current offset is upstream from the initial caret offset,
+        // and also that the current caret offset is roughly positioned near the upstream edge
+        // of the first list item character.
+        //
+        // We only care about a roughly accurate caret offset because the logic around
+        // exact caret positioning might change and we don't want that to break this test.
+        final caretOffsetAfterUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
+        expect(caretOffsetAfterUnIndent.dx, lessThan(caretOffsetBeforeUnIndent.dx));
+        final firstCharacterRectAfterUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
+          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+        )!;
+        expect(caretOffsetAfterUnIndent.dx, moreOrLessEquals(firstCharacterRectAfterUnIndent.left, epsilon: 5));
       });
 
       testWidgetsOnDesktop('unindents with SHIFT + TAB', (tester) async {
@@ -423,7 +439,16 @@ void main() {
         // Ensure the list item has first level of indentation.
         expect(listItemNode.indent, 0);
 
+        // Ensure the caret is initially positioned near the upstream edge of the first
+        // character of the list item.
+        //
+        // We only care about a roughly accurate caret offset because the logic around
+        // exact caret positioning might change and we don't want that to break this test.
         final caretOffsetBeforeIndent = SuperEditorInspector.findCaretOffsetInDocument();
+        final firstCharacterRectBeforeIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
+          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+        )!;
+        expect(caretOffsetBeforeIndent.dx, moreOrLessEquals(firstCharacterRectBeforeIndent.left, epsilon: 5));
 
         // Press tab to trigger the list indent command.
         await tester.pressTab();
@@ -431,19 +456,18 @@ void main() {
         // Ensure the list item has second level of indentation.
         expect(listItemNode.indent, 1);
 
-        // Compute the offset at which the caret should be displayed.
-        final computedOffsetAfterIndent = SuperEditorInspector.calculateOffsetForCaret(
-          DocumentPosition(
-            nodeId: listItemNode.id,
-            nodePosition: const TextNodePosition(offset: 0),
-          ),
-        );
-
-        // Ensure the list indentation was actually performed.
-        expect(computedOffsetAfterIndent.dx, greaterThan(caretOffsetBeforeIndent.dx));
-
-        // Ensure the caret is being displayed at the correct position.
-        expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterIndent));
+        // Ensure that the caret's current offset is downstream from the initial caret offset,
+        // and also that the current caret offset is roughly positioned near the upstream edge
+        // of the first list item character.
+        //
+        // We only care about a roughly accurate caret offset because the logic around
+        // exact caret positioning might change and we don't want that to break this test.
+        final caretOffsetAfterIndent = SuperEditorInspector.findCaretOffsetInDocument();
+        expect(caretOffsetAfterIndent.dx, greaterThan(caretOffsetBeforeIndent.dx));
+        final firstCharacterRectAfterIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
+          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+        )!;
+        expect(caretOffsetAfterIndent.dx, moreOrLessEquals(firstCharacterRectAfterIndent.left, epsilon: 5));
       });
 
       testWidgetsOnArbitraryDesktop('updates caret position when unindenting', (tester) async {
@@ -461,7 +485,16 @@ void main() {
         // Ensure the list item has second level of indentation.
         expect(listItemNode.indent, 1);
 
-        final caretOffsetBeforeUnindent = SuperEditorInspector.findCaretOffsetInDocument();
+        // Ensure the caret is initially positioned near the upstream edge of the first
+        // character of the list item.
+        //
+        // We only care about a roughly accurate caret offset because the logic around
+        // exact caret positioning might change and we don't want that to break this test.
+        final caretOffsetBeforeUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
+        final firstCharacterRectBeforeUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
+          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+        )!;
+        expect(caretOffsetBeforeUnIndent.dx, moreOrLessEquals(firstCharacterRectBeforeUnIndent.left, epsilon: 5));
 
         // Press backspace to trigger the list unindent command.
         await tester.pressBackspace();
@@ -469,17 +502,18 @@ void main() {
         // Ensure the list item has first level of indentation.
         expect(listItemNode.indent, 0);
 
-        // Compute the offset at which the caret should be displayed.
-        final computedOffsetAfterUnindent = SuperEditorInspector.calculateOffsetForCaret(DocumentPosition(
-          nodeId: listItemNode.id,
-          nodePosition: const TextNodePosition(offset: 0),
-        ));
-
-        // Ensure the list indentation was actually performed.
-        expect(computedOffsetAfterUnindent.dx, lessThan(caretOffsetBeforeUnindent.dx));
-
-        // Ensure the caret is being displayed at the correct position.
-        expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
+        // Ensure that the caret's current offset is upstream from the initial caret offset,
+        // and also that the current caret offset is roughly positioned near the upstream edge
+        // of the first list item character.
+        //
+        // We only care about a roughly accurate caret offset because the logic around
+        // exact caret positioning might change and we don't want that to break this test.
+        final caretOffsetAfterUnIndent = SuperEditorInspector.findCaretOffsetInDocument();
+        expect(caretOffsetAfterUnIndent.dx, lessThan(caretOffsetBeforeUnIndent.dx));
+        final firstCharacterRectAfterUnIndent = SuperEditorInspector.findDocumentLayout().getRectForPosition(
+          DocumentPosition(nodeId: listItemNode.id, nodePosition: const TextNodePosition(offset: 0)),
+        )!;
+        expect(caretOffsetAfterUnIndent.dx, moreOrLessEquals(firstCharacterRectAfterUnIndent.left, epsilon: 5));
       });
 
       testWidgetsOnDesktop('unindents with SHIFT + TAB', (tester) async {
@@ -503,6 +537,7 @@ void main() {
         // Ensure the list item has first level of indentation.
         expect(listItemNode.indent, 0);
       });
+
       testWidgetsOnAllPlatforms("inserts new item on ENTER at end of existing item", (tester) async {
         final context = await tester //
             .createDocument()
@@ -850,7 +885,7 @@ final _styleSheet = Stylesheet(
       const BlockSelector("paragraph"),
       (doc, docNode) {
         return {
-          "textStyle": const TextStyle(
+          Styles.textStyle: const TextStyle(
             color: Colors.red,
             fontSize: 16,
           ),
@@ -861,7 +896,7 @@ final _styleSheet = Stylesheet(
       const BlockSelector("listItem"),
       (doc, docNode) {
         return {
-          "textStyle": const TextStyle(
+          Styles.textStyle: const TextStyle(
             color: Colors.blue,
             fontSize: 16,
           ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -58,6 +59,26 @@ extension SuperEditorRobot on WidgetTester {
     // auto-scroll, or throw exception when it's not tappable.
 
     return await startGesture(globalTapOffset);
+  }
+
+  Future<TestGesture> doubleTapDownInParagraph(
+    String nodeId,
+    int offset, {
+    TextAffinity affinity = TextAffinity.downstream,
+    Finder? superEditorFinder,
+  }) async {
+    // Calculate the global tap position based on the TextLayout and desired TextPosition.
+    final globalTapOffset = _findGlobalOffsetForTextPosition(nodeId, offset, affinity, superEditorFinder);
+
+    final gesture = await startGesture(globalTapOffset);
+    await gesture.up();
+    await pump(kTapMinTime + const Duration(milliseconds: 1));
+
+    await gesture.down(globalTapOffset);
+    await pump(kTapMinTime + const Duration(milliseconds: 1));
+    await pump();
+
+    return gesture;
   }
 
   /// Simulates a long-press at the given text [offset] within the paragraph
@@ -149,6 +170,34 @@ extension SuperEditorRobot on WidgetTester {
     await tapAt(globalTapOffset);
   }
 
+  /// Double-taps at the center of the content at the given [position] within a [SuperEditor].
+  ///
+  /// {@macro supereditor_finder}
+  Future<void> doubleTapAtDocumentPosition(DocumentPosition position, [Finder? superEditorFinder]) async {
+    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final positionRectInDoc = documentLayout.getRectForPosition(position)!;
+    final globalTapOffset = documentLayout.getAncestorOffsetFromDocumentOffset(positionRectInDoc.center);
+
+    await tapAt(globalTapOffset);
+    await pump(kTapMinTime);
+    await tapAt(globalTapOffset);
+  }
+
+  /// Triple-taps at the center of the content at the given [position] within a [SuperEditor].
+  ///
+  /// {@macro supereditor_finder}
+  Future<void> tripleTapAtDocumentPosition(DocumentPosition position, [Finder? superEditorFinder]) async {
+    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final positionRectInDoc = documentLayout.getRectForPosition(position)!;
+    final globalTapOffset = documentLayout.getAncestorOffsetFromDocumentOffset(positionRectInDoc.center);
+
+    await tapAt(globalTapOffset);
+    await pump(kTapMinTime);
+    await tapAt(globalTapOffset);
+    await pump(kTapMinTime);
+    await tapAt(globalTapOffset);
+  }
+
   /// Simulates a user drag that begins at the [from] [DocumentPosition]
   /// and drags a [delta] amount from that point.
   ///
@@ -156,9 +205,14 @@ extension SuperEditorRobot on WidgetTester {
   /// to ensure that the drag rectangle never has a zero-width or a
   /// zero-height, because such a drag rectangle wouldn't be seen as
   /// intersecting any content.
+  ///
+  /// Provide a [pointerDeviceKind] to override the device kind used in the gesture.
+  /// If [pointerDeviceKind] is `null`, it defaults to [PointerDeviceKind.touch]
+  /// on mobile, and [PointerDeviceKind.mouse] on other platforms.
   Future<void> dragSelectDocumentFromPositionByOffset({
     required DocumentPosition from,
     required Offset delta,
+    PointerDeviceKind? pointerDeviceKind,
     Finder? superEditorFinder,
   }) async {
     final documentLayout = _findDocumentLayout(superEditorFinder);
@@ -196,8 +250,13 @@ extension SuperEditorRobot on WidgetTester {
       }
     }
 
+    final deviceKind = pointerDeviceKind ??
+        (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.android
+            ? PointerDeviceKind.touch
+            : PointerDeviceKind.mouse);
+
     // Simulate the drag.
-    final gesture = await startGesture(dragStartOffset, kind: PointerDeviceKind.mouse);
+    final gesture = await startGesture(dragStartOffset, kind: deviceKind);
 
     // Move slightly so that a "pan start" is reported.
     //
@@ -255,6 +314,16 @@ extension SuperEditorRobot on WidgetTester {
     await pumpAndSettle();
   }
 
+  Future<TestGesture> pressDownOnCollapsedMobileHandle() async {
+    final handleElement = find.byKey(DocumentKeys.androidCaretHandle).evaluate().firstOrNull;
+    assert(handleElement != null, "Tried to press down on Android collapsed handle but no handle was found.");
+    final renderHandle = handleElement!.renderObject as RenderBox;
+    final handleCenter = renderHandle.localToGlobal(renderHandle.size.center(Offset.zero));
+
+    final gesture = await startGesture(handleCenter);
+    return gesture;
+  }
+
   Future<TestGesture> pressDownOnUpstreamMobileHandle() async {
     final handleElement = find.byKey(DocumentKeys.upstreamHandle).evaluate().firstOrNull;
     assert(handleElement != null, "Tried to press down on upstream handle but no handle was found.");
@@ -273,6 +342,22 @@ extension SuperEditorRobot on WidgetTester {
 
     final gesture = await startGesture(handleCenter);
     return gesture;
+  }
+
+  /// Simulates typing [text], either as keyboard keys, or as insertion deltas of
+  /// a software keyboard.
+  ///
+  /// Provide an [imeOwnerFinder] if there are multiple [ImeOwner]s in the current
+  /// widget tree.
+  Future<void> typeTextAdaptive(String text, [Finder? imeOwnerFinder]) async {
+    if (!testTextInput.hasAnyClients) {
+      // There isn't any IME connections.
+      // Type using the hardware keyboard.
+      await typeKeyboardText(text);
+      return;
+    }
+
+    await ime.typeText(text, getter: () => imeClientGetter(imeOwnerFinder));
   }
 
   /// Types the given [text] into a [SuperEditor] by simulating IME text deltas from

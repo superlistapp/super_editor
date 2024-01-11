@@ -232,7 +232,9 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
     _fullText = attributedText.text;
     _buffer = StringBuffer();
     _bufferCursor = 0;
-    attributedText.visitAttributions(this);
+    if (attributedText.text.isNotEmpty) {
+      attributedText.visitAttributions(this);
+    }
     return _buffer.toString();
   }
 
@@ -350,7 +352,7 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   /// Checks for the presence of a link in the attributions and returns the characters necessary to represent it
   /// at the open or closing boundary of the attribution, depending on the event.
   static String _encodeLinkMarker(Set<Attribution> attributions, AttributionVisitEvent event) {
-    final linkAttributions = attributions.where((element) => element is LinkAttribution?);
+    final linkAttributions = attributions.whereType<LinkAttribution?>();
     if (linkAttributions.isNotEmpty) {
       final linkAttribution = linkAttributions.first as LinkAttribution;
 

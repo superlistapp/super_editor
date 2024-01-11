@@ -13,17 +13,17 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_editor/src/super_reader/reader_context.dart';
 import 'package:super_editor/src/super_reader/super_reader.dart';
-
-import '../infrastructure/text_input.dart';
 
 /// An [InheritedWidget] that provides shared access to a [SuperReaderIosControlsController],
 /// which coordinates the state of iOS controls like drag handles, magnifier, and toolbar.
@@ -285,7 +285,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
     _controlsController = SuperReaderIosControlsScope.rootOf(context);
 
-    _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
+    _ancestorScrollPosition = context.findAncestorScrollableWithVerticalScroll?.position;
 
     // On the next frame, check if our active scroll position changed to a
     // different instance. If it did, move our listener to the new one.
@@ -414,7 +414,8 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
   RenderBox get viewportBox =>
-      (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+      (context.findAncestorScrollableWithVerticalScroll?.context.findRenderObject() ?? context.findRenderObject())
+          as RenderBox;
 
   RenderBox get interactorBox => context.findRenderObject() as RenderBox;
 
@@ -865,22 +866,6 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     widget.selection.value = newSelection;
   }
 
-  ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.maybeOf(context);
-    if (ancestorScrollable == null) {
-      return null;
-    }
-
-    final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar
-    // or a horizontal ListView, so we can't use the ancestor scrollable
-    if (direction == AxisDirection.left || direction == AxisDirection.right) {
-      return null;
-    }
-
-    return ancestorScrollable;
-  }
-
   void _onAutoScrollChange() {
     _updateDragSelection();
     _updateMagnifierFocalPointOnAutoScrollFrame();
@@ -1042,9 +1027,13 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 class SuperReaderIosToolbarOverlayManager extends StatefulWidget {
   const SuperReaderIosToolbarOverlayManager({
     super.key,
+    this.tapRegionGroupId,
     this.defaultToolbarBuilder,
     this.child,
   });
+
+  /// {@macro super_reader_tap_region_group_id}
+  final String? tapRegionGroupId;
 
   final DocumentFloatingToolbarBuilder? defaultToolbarBuilder;
 
@@ -1056,8 +1045,8 @@ class SuperReaderIosToolbarOverlayManager extends StatefulWidget {
 
 @visibleForTesting
 class SuperReaderIosToolbarOverlayManagerState extends State<SuperReaderIosToolbarOverlayManager> {
+  final OverlayPortalController _overlayPortalController = OverlayPortalController();
   SuperReaderIosControlsController? _controlsContext;
-  OverlayEntry? _toolbarOverlayEntry;
 
   @visibleForTesting
   bool get wantsToDisplayToolbar => _controlsContext!.shouldShowToolbar.value;
@@ -1067,52 +1056,30 @@ class SuperReaderIosToolbarOverlayManagerState extends State<SuperReaderIosToolb
     super.didChangeDependencies();
 
     _controlsContext = SuperReaderIosControlsScope.rootOf(context);
-
-    // Add our overlay on the next frame. If we did it immediately, it would
-    // cause a setState() to be called during didChangeDependencies, which is
-    // a framework violation.
-    onNextFrame((timeStamp) {
-      _addToolbarOverlay();
-    });
+    _overlayPortalController.show();
   }
 
   @override
-  void dispose() {
-    _removeToolbarOverlay();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return OverlayPortal(
+      controller: _overlayPortalController,
+      overlayChildBuilder: _buildToolbar,
+      child: widget.child ?? const SizedBox(),
+    );
   }
 
-  void _addToolbarOverlay() {
-    if (_toolbarOverlayEntry != null) {
-      return;
-    }
-
-    _toolbarOverlayEntry = OverlayEntry(builder: (overlayContext) {
-      return IosFloatingToolbarOverlay(
+  Widget _buildToolbar(BuildContext context) {
+    return TapRegion(
+      groupId: widget.tapRegionGroupId,
+      child: IosFloatingToolbarOverlay(
         shouldShowToolbar: _controlsContext!.shouldShowToolbar,
         toolbarFocalPoint: _controlsContext!.toolbarFocalPoint,
         floatingToolbarBuilder:
             _controlsContext!.toolbarBuilder ?? widget.defaultToolbarBuilder ?? (_, __, ___) => const SizedBox(),
         createOverlayControlsClipper: _controlsContext!.createOverlayControlsClipper,
         showDebugPaint: false,
-      );
-    });
-
-    Overlay.of(context).insert(_toolbarOverlayEntry!);
-  }
-
-  void _removeToolbarOverlay() {
-    if (_toolbarOverlayEntry == null) {
-      return;
-    }
-
-    _toolbarOverlayEntry!.remove();
-    _toolbarOverlayEntry = null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return widget.child ?? const SizedBox();
+      ),
+    );
   }
 }
 
@@ -1132,61 +1099,30 @@ class SuperReaderIosMagnifierOverlayManager extends StatefulWidget {
 
 @visibleForTesting
 class SuperReaderIosMagnifierOverlayManagerState extends State<SuperReaderIosMagnifierOverlayManager> {
+  final OverlayPortalController _overlayPortalController = OverlayPortalController();
   SuperReaderIosControlsController? _controlsContext;
-  OverlayEntry? _magnifierOverlayEntry;
 
   @visibleForTesting
   bool get wantsToDisplayMagnifier => _controlsContext!.shouldShowMagnifier.value;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Add our overlay on the next frame. If we did it immediately, it would
-    // cause a setState() to be called during initState(), which is
-    // a framework violation.
-    onNextFrame((timeStamp) {
-      _addMagnifierOverlay();
-    });
-  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     _controlsContext = SuperReaderIosControlsScope.rootOf(context);
-  }
-
-  @override
-  void dispose() {
-    _removeMagnifierOverlay();
-    super.dispose();
-  }
-
-  void _addMagnifierOverlay() {
-    if (_magnifierOverlayEntry != null) {
-      return;
-    }
-
-    _magnifierOverlayEntry = OverlayEntry(builder: (_) => _buildMagnifier());
-    Overlay.of(context).insert(_magnifierOverlayEntry!);
-  }
-
-  void _removeMagnifierOverlay() {
-    if (_magnifierOverlayEntry == null) {
-      return;
-    }
-
-    _magnifierOverlayEntry!.remove();
-    _magnifierOverlayEntry = null;
+    _overlayPortalController.show();
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.child ?? const SizedBox();
+    return OverlayPortal(
+      controller: _overlayPortalController,
+      overlayChildBuilder: _buildMagnifier,
+      child: widget.child ?? const SizedBox(),
+    );
   }
 
-  Widget _buildMagnifier() {
+  Widget _buildMagnifier(BuildContext context) {
     // Display a magnifier that tracks a focal point.
     //
     // When the user is dragging an overlay handle, SuperEditor
@@ -1208,7 +1144,7 @@ class SuperReaderIosMagnifierOverlayManagerState extends State<SuperReaderIosMag
   }
 
   Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint) {
-    if (isWeb) {
+    if (CurrentPlatform.isWeb) {
       // Defer to the browser to display overlay controls on mobile.
       return const SizedBox();
     }

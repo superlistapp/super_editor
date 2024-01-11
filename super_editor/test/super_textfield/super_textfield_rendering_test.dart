@@ -54,7 +54,7 @@ void main() {
       expect(find.text('1', findRichText: true), findsOneWidget);
 
       // Ensure the text field expanded to the height of minLines.
-      final textHeight = tester.getSize(find.byType(SuperTextWithSelection)).height;
+      final textHeight = tester.getSize(find.byType(SuperText)).height;
       final textFieldHeight = tester.getSize(find.byType(SuperTextField)).height;
       final minLinesHeight = textHeight * 5;
       expect(textFieldHeight, moreOrLessEquals(minLinesHeight));
@@ -82,7 +82,7 @@ void main() {
       expect(find.text('1\n2\n3\n4\n5\n6', findRichText: true), findsOneWidget);
 
       // Ensure the text field shrank to half of the text size.
-      final textHeight = tester.getSize(find.byType(SuperTextWithSelection)).height;
+      final textHeight = tester.getSize(find.byType(SuperText)).height;
       final textFieldHeight = tester.getSize(find.byType(SuperTextField)).height;
       final maxLinesHeight = textHeight / 2;
       expect(textFieldHeight, moreOrLessEquals(maxLinesHeight));

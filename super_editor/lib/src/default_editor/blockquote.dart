@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -76,6 +77,8 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       textSelection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
+      composingRegion: componentViewModel.composingRegion,
+      showComposingUnderline: componentViewModel.showComposingUnderline,
     );
   }
 }
@@ -94,6 +97,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
+    this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   @override
@@ -110,6 +115,10 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
+  @override
+  TextRange? composingRegion;
+  @override
+  bool showComposingUnderline;
 
   Color backgroundColor;
   BorderRadius borderRadius;
@@ -117,8 +126,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   @override
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
-    backgroundColor = styles["backgroundColor"] ?? Colors.transparent;
-    borderRadius = styles["borderRadius"] ?? BorderRadius.zero;
+    backgroundColor = styles[Styles.backgroundColor] ?? Colors.transparent;
+    borderRadius = styles[Styles.borderRadius] ?? BorderRadius.zero;
   }
 
   @override
@@ -136,6 +145,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
+      composingRegion: composingRegion,
+      showComposingUnderline: showComposingUnderline,
     );
   }
 
@@ -153,7 +164,9 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
           borderRadius == other.borderRadius &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+          highlightWhenEmpty == other.highlightWhenEmpty &&
+          composingRegion == other.composingRegion &&
+          showComposingUnderline == other.showComposingUnderline;
 
   @override
   int get hashCode =>
@@ -166,7 +179,9 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       borderRadius.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+      highlightWhenEmpty.hashCode ^
+      composingRegion.hashCode ^
+      showComposingUnderline.hashCode;
 }
 
 /// Displays a blockquote in a document.
@@ -180,8 +195,10 @@ class BlockquoteComponent extends StatelessWidget {
     this.selectionColor = Colors.lightBlueAccent,
     required this.backgroundColor,
     required this.borderRadius,
-    this.showDebugPaint = false,
     this.highlightWhenEmpty = false,
+    this.composingRegion,
+    this.showComposingUnderline = false,
+    this.showDebugPaint = false,
   }) : super(key: key);
 
   final GlobalKey textKey;
@@ -192,6 +209,8 @@ class BlockquoteComponent extends StatelessWidget {
   final Color backgroundColor;
   final BorderRadius borderRadius;
   final bool highlightWhenEmpty;
+  final TextRange? composingRegion;
+  final bool showComposingUnderline;
   final bool showDebugPaint;
 
   @override
@@ -210,6 +229,8 @@ class BlockquoteComponent extends StatelessWidget {
           textSelection: textSelection,
           selectionColor: selectionColor,
           highlightWhenEmpty: highlightWhenEmpty,
+          composingRegion: composingRegion,
+          showComposingUnderline: showComposingUnderline,
           showDebugPaint: showDebugPaint,
         ),
       ),

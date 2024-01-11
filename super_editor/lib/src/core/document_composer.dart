@@ -295,12 +295,10 @@ class ChangeSelectionRequest implements EditRequest {
     this.newSelection,
     this.changeType,
     this.reason, {
-    this.newComposingRegion,
     this.notifyListeners = true,
   });
 
   final DocumentSelection? newSelection;
-  final DocumentRange? newComposingRegion;
 
   /// Whether to notify [DocumentComposer] listeners when the selection is changed.
   // TODO: configure the composer so it plugs into the editor in way that this is unnecessary.
@@ -317,18 +315,12 @@ class ChangeSelectionRequest implements EditRequest {
       other is ChangeSelectionRequest &&
           runtimeType == other.runtimeType &&
           newSelection == other.newSelection &&
-          newComposingRegion == other.newComposingRegion &&
           notifyListeners == other.notifyListeners &&
           changeType == other.changeType &&
           reason == other.reason;
 
   @override
-  int get hashCode =>
-      newSelection.hashCode ^
-      newComposingRegion.hashCode ^
-      notifyListeners.hashCode ^
-      changeType.hashCode ^
-      reason.hashCode;
+  int get hashCode => newSelection.hashCode ^ notifyListeners.hashCode ^ changeType.hashCode ^ reason.hashCode;
 }
 
 /// An [EditCommand] that changes the [DocumentSelection] in the [DocumentComposer]
@@ -338,12 +330,10 @@ class ChangeSelectionCommand implements EditCommand {
     this.newSelection,
     this.changeType,
     this.reason, {
-    this.newComposingRegion,
     this.notifyListeners = true,
   });
 
   final DocumentSelection? newSelection;
-  final DocumentRange? newComposingRegion;
 
   /// Whether to notify [DocumentComposer] listeners when the selection is changed.
   // TODO: configure the composer so it plugs into the editor in way that this is unnecessary.
@@ -357,17 +347,13 @@ class ChangeSelectionCommand implements EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final initialSelection = composer.selection;
-    final initialComposingRegion = composer.composingRegion.value;
 
     composer.setSelectionWithReason(newSelection, reason);
-    composer.setComposingRegion(newComposingRegion);
 
     executor.logChanges([
       SelectionChangeEvent(
         oldSelection: initialSelection,
         newSelection: newSelection,
-        oldComposingRegion: initialComposingRegion,
-        newComposingRegion: newComposingRegion,
         changeType: changeType,
         reason: reason,
       )
@@ -380,22 +366,32 @@ class SelectionChangeEvent implements EditEvent {
   const SelectionChangeEvent({
     required this.oldSelection,
     required this.newSelection,
-    required this.oldComposingRegion,
-    required this.newComposingRegion,
     required this.changeType,
     required this.reason,
   });
 
   final DocumentSelection? oldSelection;
   final DocumentSelection? newSelection;
-  final DocumentRange? oldComposingRegion;
-  final DocumentRange? newComposingRegion;
   final SelectionChangeType changeType;
   // TODO: can we replace the concept of a `reason` with `changeType`
   final String reason;
 
   @override
   String toString() => "[SelectionChangeEvent] - New selection: $newSelection, change type: $changeType";
+}
+
+/// A [EditEvent] that represents a change to the user's composing region within a document.
+class ComposingRegionChangeEvent implements EditEvent {
+  const ComposingRegionChangeEvent({
+    required this.oldComposingRegion,
+    required this.newComposingRegion,
+  });
+
+  final DocumentRange? oldComposingRegion;
+  final DocumentRange? newComposingRegion;
+
+  @override
+  String toString() => "[ComposingRegionChangeEvent] - New composing region: $newComposingRegion";
 }
 
 /// Represents a change of a [DocumentSelection].
@@ -486,8 +482,22 @@ class ChangeComposingRegionCommand implements EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    context.find<MutableDocumentComposer>(Editor.composerKey)._composingRegion.value = composingRegion;
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+    final initialComposingRegion = composer.composingRegion.value;
+
+    composer._composingRegion.value = composingRegion;
+
+    executor.logChanges([
+      ComposingRegionChangeEvent(
+        oldComposingRegion: initialComposingRegion,
+        newComposingRegion: composingRegion,
+      )
+    ]);
   }
+}
+
+class ClearComposingRegionRequest implements EditRequest {
+  const ClearComposingRegionRequest();
 }
 
 class ChangeInteractionModeRequest implements EditRequest {

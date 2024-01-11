@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_input_configuration.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
@@ -48,6 +49,7 @@ class SuperIOSTextField extends StatefulWidget {
     required this.handlesColor,
     this.textInputAction,
     this.imeConfiguration,
+    this.showComposingUnderline = true,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
@@ -140,6 +142,9 @@ class SuperIOSTextField extends StatefulWidget {
   /// Preferences for how the platform IME should look and behave during editing.
   final TextInputConfiguration? imeConfiguration;
 
+  /// Whether to show an underline beneath the text in the composing region.
+  final bool showComposingUnderline;
+
   /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
 
@@ -219,6 +224,12 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     if (_focusNode.hasFocus) {
       // The given FocusNode already has focus, we need to update selection and attach to IME.
       onNextFrame((_) => _updateSelectionAndImeConnectionOnFocusChange());
+    }
+
+    if (_textEditingController.selection.isValid) {
+      // The text field was initialized with a selection - immediately ensure that the
+      // extent is visible.
+      onNextFrame((_) => _textScrollController.ensureExtentIsVisible());
     }
   }
 
@@ -340,8 +351,27 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     });
   }
 
+  @visibleForTesting
+  TextScrollController get scrollController => _textScrollController;
+
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
+
+  Rect? _getGlobalCaretRect() {
+    if (!_textEditingController.selection.isValid || !_textEditingController.selection.isCollapsed) {
+      // Either there's no selection, or the selection is expanded. In either case, there's no caret.
+      return null;
+    }
+
+    final globalTextOffset =
+        (_textContentKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
+
+    final caretPosition = _textEditingController.selection.extent;
+    final caretOffset = textLayout.getOffsetForCaret(caretPosition) + globalTextOffset;
+    final caretHeight = textLayout.getHeightForCaret(caretPosition)!;
+
+    return Rect.fromLTWH(caretOffset.dx, caretOffset.dy, 1, caretHeight);
+  }
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
@@ -375,6 +405,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       setState(() {
         _textEditingController.detachFromIme();
         _textEditingController.selection = const TextSelection.collapsed(offset: -1);
+        _textEditingController.composingRegion = TextRange.empty;
         _removeEditingOverlayControls();
       });
     }
@@ -384,7 +415,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     if (_textEditingController.selection.isCollapsed) {
       _editingOverlayController.hideToolbar();
     }
-    _textScrollController.ensureExtentIsVisible();
   }
 
   void _onTextScrollChange() {
@@ -442,7 +472,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   /// is visible on the viewport when it's focused
   void _autoScrollToKeepTextFieldVisible() {
     // If we are not inside a [Scrollable] we don't autoscroll
-    final ancestorScrollable = _findAncestorScrollable(context);
+    final ancestorScrollable = context.findAncestorScrollableWithVerticalScroll;
     if (ancestorScrollable == null) {
       return;
     }
@@ -475,22 +505,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     );
   }
 
-  ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.maybeOf(context);
-    if (ancestorScrollable == null) {
-      return null;
-    }
-
-    final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar
-    // or a horizontal ListView, so we can't use the ancestor scrollable
-    if (direction == AxisDirection.left || direction == AxisDirection.right) {
-      return null;
-    }
-
-    return ancestorScrollable;
-  }
-
   @override
   Widget build(BuildContext context) {
     return OverlayPortal(
@@ -511,6 +525,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           child: IOSTextFieldTouchInteractor(
             focusNode: _focusNode,
             selectableTextKey: _textContentKey,
+            getGlobalCaretRect: _getGlobalCaretRect,
             textFieldLayerLink: _textFieldLayerLink,
             textController: _textEditingController,
             editingOverlayController: _editingOverlayController,
@@ -580,20 +595,54 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     }
 
     return FillWidthIfConstrained(
-      child: SuperTextWithSelection.single(
+      child: SuperText(
         key: _textContentKey,
         richText: textSpan,
         textAlign: widget.textAlign,
         textScaler: MediaQuery.textScalerOf(context),
-        userSelection: UserSelection(
-          highlightStyle: SelectionHighlightStyle(
-            color: widget.selectionColor,
-          ),
-          caretStyle: caretStyle,
-          selection: _textEditingController.selection,
-          hasCaret: _focusNode.hasFocus,
-          blinkTimingMode: widget.blinkTimingMode,
-        ),
+        layerBeneathBuilder: (context, textLayout) {
+          return Stack(
+            children: [
+              if (widget.textController?.selection.isValid == true)
+                // Selection highlight beneath the text.
+                TextLayoutSelectionHighlight(
+                  textLayout: textLayout,
+                  style: SelectionHighlightStyle(
+                    color: widget.selectionColor,
+                  ),
+                  selection: widget.textController?.selection,
+                ),
+              // Underline beneath the composing region.
+              if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
+                TextUnderlineLayer(
+                  textLayout: textLayout,
+                  underlines: [
+                    TextLayoutUnderline(
+                      style: UnderlineStyle(
+                        color: widget.textStyleBuilder({}).color ?? //
+                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                      ),
+                      range: widget.textController!.composingRegion,
+                    ),
+                  ],
+                ),
+            ],
+          );
+        },
+        layerAboveBuilder: (context, textLayout) {
+          if (!_focusNode.hasFocus) {
+            return const SizedBox();
+          }
+
+          return TextLayoutCaret(
+            textLayout: textLayout,
+            style: widget.caretStyle,
+            position: _textEditingController.selection.isCollapsed //
+                ? _textEditingController.selection.extent
+                : null,
+            blinkTimingMode: widget.blinkTimingMode,
+          );
+        },
       ),
     );
   }

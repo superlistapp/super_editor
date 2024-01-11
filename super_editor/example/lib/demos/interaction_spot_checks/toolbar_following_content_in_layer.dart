@@ -23,92 +23,65 @@ class _ToolbarFollowingContentInLayerState extends State<ToolbarFollowingContent
   final _baseContentWidth = 10.0;
   final _expansionExtent = ValueNotifier<double>(0);
 
-  OverlayState? _ancestorOverlay;
-  late final OverlayEntry _toolbarEntry;
+  final OverlayPortalController _overlayPortalController = OverlayPortalController();
 
   @override
   void initState() {
     super.initState();
 
-    _toolbarEntry = OverlayEntry(builder: (_) {
-      return _buildToolbarOverlay();
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    // Any time our dependencies change, our ancestor Overlay may have changed.
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      final newOverlay = Overlay.of(context);
-      if (newOverlay == _ancestorOverlay) {
-        // Overlay didn't change. Nothing to do.
-        return;
-      }
-
-      if (_ancestorOverlay != null) {
-        _toolbarEntry.remove();
-      }
-
-      _ancestorOverlay = newOverlay;
-      newOverlay.insert(_toolbarEntry);
-    });
-  }
-
-  @override
-  void dispose() {
-    _toolbarEntry.remove();
-
-    super.dispose();
+    _overlayPortalController.show();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SpotCheckScaffold(
-      content: KeyedSubtree(
-        key: _viewportKey,
-        child: ContentLayers(
-          overlays: [
-            (_) => LeaderLayoutLayer(
-                  leaderLink: _leaderLink,
-                  leaderBoundsKey: _leaderBoundsKey,
-                ),
-          ],
-          content: (_) => Center(
-            child: Column(
-              children: [
-                const Spacer(),
-                ValueListenableBuilder(
-                  valueListenable: _expansionExtent,
-                  builder: (context, expansionExtent, _) {
-                    return Container(
-                      height: 12,
-                      width: _baseContentWidth + (2 * expansionExtent) + 2, // +2 for border
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          key: _leaderBoundsKey,
-                          width: _baseContentWidth + expansionExtent,
-                          height: 10,
-                          color: Colors.white.withOpacity(0.2),
+    return OverlayPortal(
+      controller: _overlayPortalController,
+      overlayChildBuilder: _buildToolbarOverlay,
+      child: SpotCheckScaffold(
+        content: KeyedSubtree(
+          key: _viewportKey,
+          child: ContentLayers(
+            overlays: [
+              (_) => LeaderLayoutLayer(
+                    leaderLink: _leaderLink,
+                    leaderBoundsKey: _leaderBoundsKey,
+                  ),
+            ],
+            content: (_) => Center(
+              child: Column(
+                children: [
+                  const Spacer(),
+                  ValueListenableBuilder(
+                    valueListenable: _expansionExtent,
+                    builder: (context, expansionExtent, _) {
+                      return Container(
+                        height: 12,
+                        width: _baseContentWidth + (2 * expansionExtent) + 2, // +2 for border
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
                         ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 96),
-                TextButton(
-                  onPressed: () {
-                    _expansionExtent.value = Random().nextDouble() * 200;
-                  },
-                  child: Text("Change Size"),
-                ),
-                const Spacer(),
-              ],
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            key: _leaderBoundsKey,
+                            width: _baseContentWidth + expansionExtent,
+                            height: 10,
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 96),
+                  TextButton(
+                    onPressed: () {
+                      _expansionExtent.value = Random().nextDouble() * 200;
+                    },
+                    child: Text("Change Size"),
+                  ),
+                  const Spacer(),
+                ],
+              ),
             ),
           ),
         ),
@@ -116,7 +89,7 @@ class _ToolbarFollowingContentInLayerState extends State<ToolbarFollowingContent
     );
   }
 
-  Widget _buildToolbarOverlay() {
+  Widget _buildToolbarOverlay(BuildContext context) {
     return FollowerFadeOutBeyondBoundary(
       link: _leaderLink,
       boundary: WidgetFollowerBoundary(

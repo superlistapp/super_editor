@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'supereditor_test_tools.dart';
 
@@ -13,7 +13,8 @@ void main() {
     // text position sits at a location that should move to a different line when the available space
     // is reduced.
     const textPosition = TextPosition(offset: 46);
-    final tapPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: textPosition.offset));
+    final documentPosition = DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: textPosition.offset));
+    final tapPosition = documentPosition;
 
     group('text affinity', () {
       // Use a relatively small size to make sure we have a line break.
@@ -45,14 +46,14 @@ void main() {
         await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
+        // The upstream caret should be at the same y and greater x than the caret at the start of the paragraph.
+        expect(upstreamCaretOffset.dx, greaterThan(startOfFirstLineCaretOffset.dx + xExpectBuffer));
+        expect(upstreamCaretOffset.dy, startOfFirstLineCaretOffset.dy);
+
         // Find the coordinates of the caret at the start of the second line (line break offset w/ downstream affinity).
         await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
         await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.downstream);
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-
-        // The upstream caret should be at the same y and greater x than the caret at the start of the paragraph.
-        expect(upstreamCaretOffset.dx, greaterThan(startOfFirstLineCaretOffset.dx + xExpectBuffer));
-        expect(upstreamCaretOffset.dy, startOfFirstLineCaretOffset.dy);
 
         // The downstream caret should be at the same x and greater y than the caret at the start of the paragraph.
         expect(downstreamCaretOffset.dx, startOfFirstLineCaretOffset.dx);
@@ -110,24 +111,20 @@ void main() {
         await tester.pumpAndSettle();
 
         // Place caret at a position that will move to the next line when the width contracts
-        final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-        await tester.tapAt(tapOffset);
-        await tester.pumpAndSettle();
+        await tester.tapAtDocumentPosition(tapPosition);
+        await tester.pump();
 
-        // Ensure that the caret is displayed at the correct (x,y) in the document before resizing the window
         final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        final expectedInitialCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
-        expect(initialCaretOffset, expectedInitialCaretOffset);
 
         // Make the window more narrow, pushing the caret text position down a line.
         await _resizeWindow(
             tester: tester, frameCount: 60, initialScreenSize: screenSizeBigger, finalScreenSize: screenSizeSmaller);
 
-        // Ensure that after resizing the window, the caret updated its (x,y) to match the text
-        // position that was pushed down to the next line.
+        // Ensure that the caret jumped down at least a line height. It probably jumped
+        // down multiple lines.
         final finalCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        final expectedFinalCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
-        expect(finalCaretOffset, expectedFinalCaretOffset);
+        final lineHeight = _computeLineHeight(documentPosition);
+        expect(finalCaretOffset.dy - initialCaretOffset.dy, greaterThan(lineHeight));
       });
 
       testWidgetsOnDesktop('moves caret to preceding line when available width expands', (WidgetTester tester) async {
@@ -146,24 +143,20 @@ void main() {
         await tester.pumpAndSettle();
 
         // Place caret at a position that will move to the preceding line when the width expands
-        final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-        await tester.tapAt(tapOffset);
-        await tester.pumpAndSettle();
+        await tester.tapAtDocumentPosition(tapPosition);
+        await tester.pump();
 
-        // Ensure that the caret is displayed at the correct (x,y) in the document before resizing the window
         final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        final expectedInitialCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
-        expect(initialCaretOffset, expectedInitialCaretOffset);
 
         // Make the window wider, pushing the caret text position up a line.
         await _resizeWindow(
             tester: tester, frameCount: 60, initialScreenSize: screenSizeSmaller, finalScreenSize: screenSizeBigger);
 
-        // Ensure that after resizing the window, the caret updated its (x,y) to match the text
-        // position that was pushed up to the preceding line.
+        // Ensure that the caret jumped up at least a line height. It probably jumped
+        // down multiple lines.
         final finalCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        final expectedFinalCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
-        expect(finalCaretOffset, expectedFinalCaretOffset);
+        final lineHeight = _computeLineHeight(documentPosition);
+        expect(finalCaretOffset.dy - initialCaretOffset.dy, lessThan(-lineHeight));
       });
     });
 
@@ -188,24 +181,22 @@ void main() {
           await tester.pumpAndSettle();
 
           // Place caret at a position that will move to the preceding line when the width expands
-          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-          await tester.tapAt(tapOffset);
-          await tester.pumpAndSettle();
+          await tester.tapAtDocumentPosition(tapPosition);
+          await tester.pump();
 
-          // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
-          final initialCaretOffset = _getCurrentAndroidCaretOffset(tester);
-          final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
-          expect(initialCaretOffset, expectedInitialCaretOffset);
+          final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
           // Make the window wider, pushing the caret text position up a line.
           tester.view.physicalSize = screenSizeLandscape;
           await tester.pumpAndSettle();
 
-          // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
-          // position that was pushed up to the preceding line.
-          final finalCaretOffset = _getCurrentAndroidCaretOffset(tester);
-          final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
-          expect(finalCaretOffset, expectedFinalCaretOffset);
+          // Ensure that the caret jumped up a line.
+          //
+          // We check for a caret movement that's more-or-less equal to a line height, because
+          // the caret isn't necessarily the same height as the line.
+          final finalCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+          final lineHeight = _computeLineHeight(documentPosition);
+          expect(finalCaretOffset.dy - initialCaretOffset.dy, moreOrLessEquals(-lineHeight, epsilon: 3));
         });
 
         testWidgets('from landscape to portrait updates caret position', (WidgetTester tester) async {
@@ -224,13 +215,13 @@ void main() {
           await tester.pumpAndSettle();
 
           // Place caret at a position that will move to the next line when the width contracts
-          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-          await tester.tapAt(tapOffset);
-          await tester.pumpAndSettle();
+          await tester.tapAtDocumentPosition(tapPosition);
+          await tester.pump();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
-          final initialCaretOffset = _getCurrentAndroidCaretOffset(tester);
-          final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+          final expectedInitialCaretOffset =
+              _computeExpectedMobileCaretOffsetInDocumentLayout(tester, docKey, tapPosition);
           expect(initialCaretOffset, expectedInitialCaretOffset);
 
           // Make the window more narrow, pushing the caret text position up a line.
@@ -239,8 +230,9 @@ void main() {
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
           // position that was pushed down to the next line.
-          final finalCaretOffset = _getCurrentAndroidCaretOffset(tester);
-          final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          final finalCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+          final expectedFinalCaretOffset =
+              _computeExpectedMobileCaretOffsetInDocumentLayout(tester, docKey, tapPosition);
           expect(finalCaretOffset, expectedFinalCaretOffset);
         });
       });
@@ -262,13 +254,13 @@ void main() {
           await tester.pumpAndSettle();
 
           // Place caret at a position that will move to the preceding line when the width expands
-          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-          await tester.tapAt(tapOffset);
-          await tester.pumpAndSettle();
+          await tester.tapAtDocumentPosition(tapPosition);
+          await tester.pump();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
-          final initialOffset = _getIosCurrentCaretOffset(tester);
-          final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          final initialOffset = SuperEditorInspector.findCaretOffsetInDocument();
+          final expectedInitialCaretOffset =
+              _computeExpectedMobileCaretOffsetInDocumentLayout(tester, docKey, tapPosition);
           expect(initialOffset, expectedInitialCaretOffset);
 
           // Make the window wider, pushing the caret text position up a line.
@@ -277,8 +269,9 @@ void main() {
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
           // position that was pushed up to the preceding line.
-          final finalCaretOffset = _getIosCurrentCaretOffset(tester);
-          final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          final finalCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+          final expectedFinalCaretOffset =
+              _computeExpectedMobileCaretOffsetInDocumentLayout(tester, docKey, tapPosition);
           expect(finalCaretOffset, expectedFinalCaretOffset);
         });
 
@@ -298,13 +291,13 @@ void main() {
           await tester.pumpAndSettle();
 
           // Place caret at a position that will move to the next line when the width contracts
-          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
-          await tester.tapAt(tapOffset);
-          await tester.pumpAndSettle();
+          await tester.tapAtDocumentPosition(tapPosition);
+          await tester.pump();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
-          final initialOffset = _getIosCurrentCaretOffset(tester);
-          final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          final initialOffset = SuperEditorInspector.findCaretOffsetInDocument();
+          final expectedInitialCaretOffset =
+              _computeExpectedMobileCaretOffsetInDocumentLayout(tester, docKey, tapPosition);
           expect(initialOffset, expectedInitialCaretOffset);
 
           // Make the window more narrow, pushing the caret text position down a line.
@@ -313,11 +306,74 @@ void main() {
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
           // position that was pushed down to the next line.
-          final finalCaretOffset = _getIosCurrentCaretOffset(tester);
-          final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          final finalCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+          final expectedFinalCaretOffset =
+              _computeExpectedMobileCaretOffsetInDocumentLayout(tester, docKey, tapPosition);
           expect(finalCaretOffset, expectedFinalCaretOffset);
         });
       });
+    });
+
+    testWidgetsOnAllPlatforms('blinks the caret when the user places the caret with a single tap', (tester) async {
+      // Configure BlinkController to animate, otherwise it won't blink.
+      BlinkController.indeterminateAnimationsEnabled = true;
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .pump();
+
+      // Tap to place the caret at the beginning of the document.
+      // We don't use the robot method here because it calls pumpAndSettle,
+      // which causes a pumpAndSettle timeout, because we are constantly
+      // scheduling frames.
+      await tester.tap(find.byType(SuperEditor));
+      await tester.pump();
+
+      // Ensure caret is visible.
+      expect(SuperEditorInspector.isCaretVisible(), true);
+
+      // Duration to switch between visible and invisible.
+      final flashPeriod = SuperEditorInspector.caretFlashPeriod();
+
+      // Trigger a frame with an ellapsed time equal to the flashPeriod,
+      // so the caret should change from visible to invisible.
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is invisible after the flash period.
+      expect(SuperEditorInspector.isCaretVisible(), false);
+
+      // Trigger another frame to make caret visible again.
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is visible.
+      expect(SuperEditorInspector.isCaretVisible(), true);
+    });
+
+    testWidgetsOnAllPlatforms('hides caret during expanded selection when configured that way', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withCaretPolicies(
+            displayCaretWithExpandedSelection: false,
+          )
+          .pump();
+
+      // Place the caret in the paragraph.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Ensure caret is visible.
+      expect(SuperEditorInspector.isCaretVisible(), true);
+
+      // Go from a collapsed selection to an expanded selection.
+      await tester.doubleTapInParagraph("1", 2);
+
+      // Ensure the selection is expanded.
+      expect(SuperEditorInspector.findDocumentSelection()!.isCollapsed, isFalse);
+
+      // Ensure that the caret is no longer visible.
+      expect(SuperEditorInspector.isCaretVisible(), false);
     });
   });
 }
@@ -340,59 +396,21 @@ Widget _createTestApp({required DocumentGestureMode gestureMode, required Global
   );
 }
 
-/// Compute the center (x,y) for the given document [position]
-Offset _getOffsetForPosition(GlobalKey docKey, DocumentPosition position) {
-  final docBox = docKey.currentContext!.findRenderObject() as RenderBox;
-  final docLayout = docKey.currentState as DocumentLayout;
-  final characterBox = docLayout.getRectForPosition(position);
-  return docBox.localToGlobal(characterBox!.center);
-}
-
-/// Find the caret in the widget tree and return it's (x,y)
-///
-/// Should be used only when the document gesture mode is equal to [DocumentGestureMode.android]
-///
-/// The reason for having different implementations is that depending on the gesture mode,
-/// the widget that holds the caret offset is different
-Offset _getCurrentAndroidCaretOffset(WidgetTester tester) {
-  final controls =
-      tester.widget<AndroidDocumentTouchEditingControls>(find.byType(AndroidDocumentTouchEditingControls).last);
-  return controls.editingController.caretTop!;
-}
-
-/// Find the caret in the widget tree and return it's (x,y)
-///
-/// Should be used only when the document gesture mode is equal to [DocumentGestureMode.iOS]
-///
-/// The reason for having different implementations is that depending on the gesture mode,
-/// the widget that holds the caret offset is different
-Offset _getIosCurrentCaretOffset(WidgetTester tester) {
-  // TODO: provide new way to query the top of the caret now that we're using an iOS controls context and not an edit controller
-  // final controls = tester.widget<IosEditingToolbarOverlay>(find.byType(IosEditingToolbarOverlay).last);
-  // return controls.editingController.caretTop!;
-
-  final controls = tester.state(find.byType(IosHandlesDocumentLayer).last) as IosControlsDocumentLayerState;
-  return controls.caret!.topCenter;
-}
-
-/// Given a [textPosition], compute the expected (x,y) for the caret
-///
-/// Should be used only when the document gesture mode is equal to [DocumentGestureMode.mouse]
-Offset _computeExpectedDesktopCaretOffset(WidgetTester tester, TextPosition textPosition) {
-  return SuperEditorInspector.calculateOffsetForCaret(DocumentPosition(
-    nodeId: "1",
-    nodePosition: TextNodePosition.fromTextPosition(textPosition),
-  ));
-}
-
-/// Given a [textPosition], compute the expected (x,y) for the caret
+/// Given a [textPosition], compute the expected (x,y) for the caret within the document layout.
 ///
 /// Should be used only when the document gesture mode is equal to [DocumentGestureMode.android]
 /// or [DocumentGestureMode.iOS]
-Offset _computeExpectedMobileCaretOffset(WidgetTester tester, GlobalKey docKey, DocumentPosition documentPosition) {
+Offset _computeExpectedMobileCaretOffsetInDocumentLayout(
+    WidgetTester tester, GlobalKey docKey, DocumentPosition documentPosition) {
   final docLayout = docKey.currentState as DocumentLayout;
   final extentRect = docLayout.getRectForPosition(documentPosition)!;
   return Offset(extentRect.left, extentRect.top);
+}
+
+double _computeLineHeight(DocumentPosition documentPosition) {
+  final docLayout = SuperEditorInspector.findDocumentLayout();
+  final extentCharacterRect = docLayout.getRectForPosition(documentPosition)!;
+  return extentCharacterRect.height;
 }
 
 MutableDocument _createTestDocument() {

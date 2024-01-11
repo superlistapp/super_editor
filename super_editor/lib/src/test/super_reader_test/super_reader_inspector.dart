@@ -53,16 +53,6 @@ class SuperReaderInspector {
     return alignment.withinRect(rect);
   }
 
-  /// Returns the (x,y) offset for a caret, if that caret appeared at the given [position].
-  ///
-  /// {@macro super_document_finder}
-  static Offset calculateOffsetForCaret(DocumentPosition position, [Finder? finder]) {
-    final documentLayout = _findDocumentLayout(finder);
-    final positionRect = documentLayout.getRectForPosition(position);
-    assert(positionRect != null);
-    return positionRect!.topLeft;
-  }
-
   /// Returns `true` if the entire content rectangle at [position] is visible on
   /// screen, or `false` otherwise.
   ///
@@ -108,6 +98,24 @@ class SuperReaderInspector {
     return (documentLayout.getComponentByNodeId(nodeId) as TextComponentState).widget.text;
   }
 
+  /// Finds the paragraph with the given [nodeId] and returns the paragraph's content as a [TextSpan].
+  ///
+  /// A [TextSpan] is the fundamental way that Flutter styles text. It's the lowest level reflection
+  /// of what the user will see, short of rendering the actual UI.
+  ///
+  /// {@macro super_reader_finder}
+  static TextSpan findRichTextInParagraph(String nodeId, [Finder? superReaderFinder]) {
+    final documentLayout = _findDocumentLayout(superReaderFinder);
+
+    final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
+    final superText = find
+        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
+        .evaluate()
+        .single
+        .widget as SuperText;
+    return superText.richText as TextSpan;
+  }
+
   /// Finds and returns the [TextStyle] that's applied to the top-level of the [TextSpan]
   /// in the paragraph with the given [nodeId].
   ///
@@ -116,12 +124,12 @@ class SuperReaderInspector {
     final documentLayout = _findDocumentLayout(superDocumentFinder);
 
     final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
-    final superTextWithSelection = find
-        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperTextWithSelection))
+    final superText = find
+        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
         .evaluate()
         .single
-        .widget as SuperTextWithSelection;
-    return superTextWithSelection.richText.style;
+        .widget as SuperText;
+    return superText.richText.style;
   }
 
   /// Returns the [DocumentNode] at given the [index].
@@ -264,7 +272,7 @@ class SuperReaderInspector {
       case TargetPlatform.iOS:
         return find.byWidgetPredicate(
           (widget) =>
-              widget.key == DocumentKeys.iOsCaret ||
+              widget.key == DocumentKeys.caret ||
               widget.key == DocumentKeys.upstreamHandle ||
               widget.key == DocumentKeys.downstreamHandle,
         );
@@ -279,9 +287,8 @@ class SuperReaderInspector {
   static Finder findMobileCaret([Finder? superReaderFinder]) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return find.byKey(DocumentKeys.androidCaret);
       case TargetPlatform.iOS:
-        return find.byKey(DocumentKeys.iOsCaret);
+        return find.byKey(DocumentKeys.caret);
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:
@@ -295,7 +302,7 @@ class SuperReaderInspector {
       case TargetPlatform.android:
         return find.byKey(DocumentKeys.androidCaretHandle);
       case TargetPlatform.iOS:
-        return find.byKey(DocumentKeys.iOsCaret);
+        return find.byKey(DocumentKeys.caret);
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:

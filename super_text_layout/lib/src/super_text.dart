@@ -64,7 +64,7 @@ class SuperText extends StatefulWidget {
 }
 
 @visibleForTesting
-class SuperTextState extends State<SuperText> with ProseTextBlock {
+class SuperTextState extends ProseTextState<SuperText> with ProseTextBlock {
   final _textLayoutKey = GlobalKey();
   @override
   ProseTextLayout get textLayout => RenderSuperTextLayout.textLayoutFrom(_textLayoutKey)!;
@@ -386,6 +386,21 @@ class RenderLayoutAwareParagraph extends RenderParagraph {
     if (_onMarkNeedsLayout != value) {
       _onMarkNeedsLayout = value;
     }
+  }
+
+  // We override the default textAlign setter because Flutter's RenderParagraph setter
+  // only calls markNeedsPaint, not markNeedsLayout. However, changing alignment does
+  // change the layout of the text.
+  //
+  // https://github.com/flutter/flutter/issues/140756
+  @override
+  set textAlign(TextAlign value) {
+    if (value == super.textAlign) {
+      return;
+    }
+
+    super.textAlign = value;
+    markNeedsLayout();
   }
 
   bool get needsLayout => _needsLayout;

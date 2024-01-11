@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
@@ -6,7 +7,9 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../test_runners.dart';
+import '../test_tools.dart';
 import 'supereditor_test_tools.dart';
+import 'test_documents.dart';
 
 void main() {
   group('SuperEditor keyboard', () {
@@ -56,7 +59,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 3));
         });
 
-        testAllInputsOnMac("to beginning of word when ALT + LEFT_ARROW is pressed", (
+        testAllInputsOnApple("to beginning of word when ALT + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -67,7 +70,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 8));
         });
 
-        testAllInputsOnMac("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
+        testAllInputsOnApple("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -78,7 +81,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
         });
 
-        testAllInputsOnMac("to end of word when ALT + RIGHT_ARROW is pressed", (
+        testAllInputsOnApple("to end of word when ALT + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -89,7 +92,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
         });
 
-        testAllInputsOnMac("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
+        testAllInputsOnApple("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -100,7 +103,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
         });
 
-        testAllInputsOnMac("to beginning of line when CMD + LEFT_ARROW is pressed", (
+        testAllInputsOnApple("to beginning of line when CMD + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -111,7 +114,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 0));
         });
 
-        testAllInputsOnMac("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
+        testAllInputsOnApple("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -122,7 +125,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 0));
         });
 
-        testAllInputsOnMac("to end of line when CMD + RIGHT_ARROW is pressed", (
+        testAllInputsOnApple("to end of line when CMD + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -133,7 +136,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 26, TextAffinity.upstream));
         });
 
-        testAllInputsOnMac("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
+        testAllInputsOnApple("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
           tester, {
           required TextInputSource inputSource,
         }) async {
@@ -279,6 +282,103 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 58));
         });
       });
+    });
+
+    testAllInputsOnAllPlatforms('does nothing without primary focus', (
+      tester, {
+      required TextInputSource inputSource,
+    }) async {
+      final editorFocusNode = FocusNode();
+      final popoverFocusNode = FocusNode();
+      final textFieldFocusNode = FocusNode();
+      final overlayController = OverlayPortalController();
+
+      bool keyHandlerCalled = false;
+
+      // Pump a tree with an OverlayPortal that displays a SuperTextField.
+      // The textfield shares focus with SuperEditor, simulating a popover toolbar.
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withFocusNode(editorFocusNode)
+          .withInputSource(inputSource)
+          .withAddedKeyboardActions(append: [
+            ({required editContext, required keyEvent}) {
+              keyHandlerCalled = true;
+              return ExecutionInstruction.continueExecution;
+            }
+          ])
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: OverlayPortal(
+                  controller: overlayController,
+                  overlayChildBuilder: (context) => Focus(
+                    focusNode: popoverFocusNode,
+                    parentNode: editorFocusNode,
+                    child: SuperTextField(
+                      focusNode: textFieldFocusNode,
+                      inputSource: inputSource,
+                    ),
+                  ),
+                  child: superEditor,
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Double tap to select the word "Lorem".
+      await tester.doubleTapInParagraph('1', 0);
+
+      // Show the popover and request focus to the textfield.
+      overlayController.show();
+      textFieldFocusNode.requestFocus();
+      await tester.pump();
+
+      // Press cmd + shift + alt + ctrl + space.
+      // This isn't a default shortcut in any platform.
+      // Therefore, if the editor is handling key events, our custom handler
+      // will be called.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.meta);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.alt);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.space);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.space);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.alt);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.meta);
+      await tester.pumpAndSettle();
+
+      // Ensure the custom handler wasn't called.
+      expect(keyHandlerCalled, false);
+
+      // Press enter, which by default inserts a new line,
+      // to check if the document will change.
+      await tester.pressEnter();
+
+      // Ensure the document doesn't change.
+      expect(
+        SuperEditorInspector.findTextInParagraph('1').text,
+        (singleParagraphDoc().nodes.first as TextNode).text.text,
+      );
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        selectionEquivalentTo(
+          const DocumentSelection(
+            base: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+            extent: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 5),
+            ),
+          ),
+        ),
+      );
     });
   });
 

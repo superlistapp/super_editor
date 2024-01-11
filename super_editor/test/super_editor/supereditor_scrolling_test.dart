@@ -182,17 +182,19 @@ void main() {
       // Ensure that the entire document is selected.
       expect(
         SuperEditorInspector.findDocumentSelection(),
-        DocumentSelection(
-          base: DocumentPosition(
-            nodeId: lastParagraph.id,
-            nodePosition: TextNodePosition(
-              offset: lastParagraph.endPosition.offset,
-              affinity: TextAffinity.upstream,
+        selectionEquivalentTo(
+          DocumentSelection(
+            base: DocumentPosition(
+              nodeId: lastParagraph.id,
+              nodePosition: TextNodePosition(
+                offset: lastParagraph.endPosition.offset,
+                affinity: TextAffinity.upstream,
+              ),
             ),
-          ),
-          extent: DocumentPosition(
-            nodeId: firstParagraph.id,
-            nodePosition: firstParagraph.beginningPosition,
+            extent: DocumentPosition(
+              nodeId: firstParagraph.id,
+              nodePosition: firstParagraph.beginningPosition,
+            ),
           ),
         ),
       );
@@ -258,7 +260,7 @@ void main() {
               rules: [
                 StyleRule(BlockSelector.all, (document, node) {
                   return {
-                    "textStyle": const TextStyle(
+                    Styles.textStyle: const TextStyle(
                       color: Colors.black,
                     ),
                   };
@@ -301,7 +303,7 @@ void main() {
               rules: [
                 StyleRule(BlockSelector.all, (document, node) {
                   return {
-                    "textStyle": const TextStyle(
+                    Styles.textStyle: const TextStyle(
                       color: Colors.black,
                     ),
                   };
@@ -631,7 +633,7 @@ void main() {
       final shrinkPerFrame =
           (screenSizeWithoutKeyboard.height - screenSizeWithKeyboard.height) / keyboardExpansionFrameCount;
 
-      testWidgets('on Android, keeps caret visible when keyboard appears', (WidgetTester tester) async {
+      testWidgetsOnAndroid('on Android, keeps caret visible when keyboard appears', (WidgetTester tester) async {
         tester.view
           ..physicalSize = screenSizeWithoutKeyboard
           ..platformDispatcher.textScaleFactorTestValue = 1.0
@@ -646,6 +648,11 @@ void main() {
         // Select text near the bottom of the screen, where the keyboard will appear
         final tapPosition = Offset(screenSizeWithoutKeyboard.width / 2, screenSizeWithoutKeyboard.height - 1);
         await tester.tapAt(tapPosition);
+        await tester.pump();
+
+        // TODO: add caret finder to inspector
+        final caretFinder = find.byKey(DocumentKeys.caret);
+        expect(caretFinder, findsOneWidget);
 
         // Shrink the screen height, as if the keyboard appeared.
         await _simulateKeyboardAppearance(
@@ -656,9 +663,8 @@ void main() {
         );
 
         // Ensure that the editor auto-scrolled to keep the caret visible.
-        // TODO: there are 2 `BlinkingCaret` at the same time. There should be only 1 caret
-        final caretFinder = find.byType(BlinkingCaret);
-        final caretOffset = tester.getBottomLeft(caretFinder.last);
+        expect(caretFinder, findsOneWidget);
+        final caretOffset = tester.getBottomLeft(caretFinder);
 
         // The default trailing boundary of the default `SuperEditor`
         const trailingBoundary = 54.0;

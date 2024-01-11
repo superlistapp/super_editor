@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// Extensions on [WidgetTester] for interacting with a [SuperReader] the way
@@ -82,9 +85,14 @@ extension SuperReaderRobot on WidgetTester {
   /// to ensure that the drag rectangle never has a zero-width or a
   /// zero-height, because such a drag rectangle wouldn't be seen as
   /// intersecting any content.
+  ///
+  /// Provide a [pointerDeviceKind] to override the device kind used in the gesture.
+  /// If [pointerDeviceKind] is `null`, it defaults to [PointerDeviceKind.touch]
+  /// on mobile, and [PointerDeviceKind.mouse] on other platforms.
   Future<void> dragSelectDocumentFromPositionByOffset({
     required DocumentPosition from,
     required Offset delta,
+    PointerDeviceKind? pointerDeviceKind,
     Finder? superReaderFinder,
   }) async {
     final documentLayout = _findDocumentLayout(superReaderFinder);
@@ -122,8 +130,13 @@ extension SuperReaderRobot on WidgetTester {
       }
     }
 
+    final deviceKind = pointerDeviceKind ??
+        (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.android
+            ? PointerDeviceKind.touch
+            : PointerDeviceKind.mouse);
+
     // Simulate the drag.
-    final gesture = await startGesture(dragStartOffset, kind: PointerDeviceKind.mouse);
+    final gesture = await startGesture(dragStartOffset, kind: deviceKind);
 
     // Move slightly so that a "pan start" is reported.
     //
@@ -179,6 +192,36 @@ extension SuperReaderRobot on WidgetTester {
     await gesture.up();
     await gesture.removePointer();
     await pumpAndSettle();
+  }
+
+  Future<TestGesture> pressDownOnDownstreamMobileHandle() async {
+    final handleElement = find
+        .byWidgetPredicate((widget) =>
+            (widget is AndroidSelectionHandle && widget.handleType == HandleType.downstream) ||
+            (widget is IOSSelectionHandle && widget.handleType == HandleType.downstream))
+        .evaluate()
+        .firstOrNull;
+    assert(handleElement != null, "Tried to press down on downstream handle but no handle was found.");
+    final renderHandle = handleElement!.renderObject as RenderBox;
+    final handleCenter = renderHandle.localToGlobal(renderHandle.size.center(Offset.zero));
+
+    final gesture = await startGesture(handleCenter);
+    return gesture;
+  }
+
+  Future<TestGesture> pressDownOnUpstreamMobileHandle() async {
+    final handleElement = find
+        .byWidgetPredicate((widget) =>
+            (widget is AndroidSelectionHandle && widget.handleType == HandleType.upstream) ||
+            (widget is IOSSelectionHandle && widget.handleType == HandleType.upstream))
+        .evaluate()
+        .firstOrNull;
+    assert(handleElement != null, "Tried to press down on upstream handle but no handle was found.");
+    final renderHandle = handleElement!.renderObject as RenderBox;
+    final handleCenter = renderHandle.localToGlobal(renderHandle.size.center(Offset.zero));
+
+    final gesture = await startGesture(handleCenter);
+    return gesture;
   }
 
   DocumentLayout _findDocumentLayout([Finder? superReaderFinder]) {

@@ -82,24 +82,11 @@ class SuperEditorInspector {
 
   /// Returns the (x,y) offset for the caret that's currently visible in the document.
   static Offset findCaretOffsetInDocument([Finder? finder]) {
-    final desktopCaretBox = find.byKey(primaryCaretKey).evaluate().singleOrNull?.renderObject as RenderBox?;
-    if (desktopCaretBox != null) {
-      final globalCaretOffset = desktopCaretBox.localToGlobal(Offset.zero);
-      final documentLayout = _findDocumentLayout(finder);
-      final globalToDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
-      return globalCaretOffset - globalToDocumentOffset;
-    }
-
-    final androidControls = find.byType(AndroidDocumentTouchEditingControls).evaluate().lastOrNull?.widget
-        as AndroidDocumentTouchEditingControls?;
-    if (androidControls != null) {
-      return androidControls.editingController.caretTop!;
-    }
-
-    final iOSControls = (find.byType(IosHandlesDocumentLayer).evaluate().lastOrNull as StatefulElement?)?.state
-        as IosControlsDocumentLayerState?;
-    if (iOSControls != null && iOSControls.caret != null) {
-      return iOSControls.caret!.topCenter;
+    final caret = find.byKey(DocumentKeys.caret).evaluate().singleOrNull?.renderObject as RenderBox?;
+    if (caret != null) {
+      final globalCaretOffset = caret.localToGlobal(Offset.zero);
+      final documentLayout = findDocumentLayout(finder);
+      return documentLayout.getDocumentOffsetFromAncestorOffset(globalCaretOffset);
     }
 
     throw Exception('Could not locate caret in document');
@@ -109,7 +96,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static Offset findComponentOffset(String nodeId, Alignment alignment, [Finder? finder]) {
-    final documentLayout = _findDocumentLayout(finder);
+    final documentLayout = findDocumentLayout(finder);
     final component = documentLayout.getComponentByNodeId(nodeId);
     assert(component != null);
     final componentBox = component!.context.findRenderObject() as RenderBox;
@@ -117,22 +104,12 @@ class SuperEditorInspector {
     return alignment.withinRect(rect);
   }
 
-  /// Returns the (x,y) offset for a caret, if that caret appeared at the given [position].
-  ///
-  /// {@macro supereditor_finder}
-  static Offset calculateOffsetForCaret(DocumentPosition position, [Finder? finder]) {
-    final documentLayout = _findDocumentLayout(finder);
-    final positionRect = documentLayout.getRectForPosition(position);
-    assert(positionRect != null);
-    return positionRect!.topLeft;
-  }
-
   /// Returns `true` if the entire content rectangle at [position] is visible on
   /// screen, or `false` otherwise.
   ///
   /// {@macro supereditor_finder}
   static bool isPositionVisibleGlobally(DocumentPosition position, Size globalSize, [Finder? finder]) {
-    final documentLayout = _findDocumentLayout(finder);
+    final documentLayout = findDocumentLayout(finder);
     final positionRect = documentLayout.getRectForPosition(position)!;
     final globalDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
     final globalPositionRect = positionRect.translate(globalDocumentOffset.dx, globalDocumentOffset.dy);
@@ -151,7 +128,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static WidgetType findWidgetForComponent<WidgetType>(String nodeId, [Finder? superEditorFinder]) {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final documentLayout = findDocumentLayout(superEditorFinder);
     final widget = (documentLayout.getComponentByNodeId(nodeId) as State).widget;
     if (widget is! WidgetType) {
       throw Exception("Looking for a component's widget. Expected type $WidgetType, but found ${widget.runtimeType}");
@@ -168,7 +145,7 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static AttributedText findTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final documentLayout = findDocumentLayout(superEditorFinder);
     return (documentLayout.getComponentByNodeId(nodeId) as TextComponentState).widget.text;
   }
 
@@ -179,15 +156,15 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static TextSpan findRichTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final documentLayout = findDocumentLayout(superEditorFinder);
 
     final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
-    final superTextWithSelection = find
-        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperTextWithSelection))
+    final superText = find
+        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
         .evaluate()
         .single
-        .widget as SuperTextWithSelection;
-    return superTextWithSelection.richText as TextSpan;
+        .widget as SuperText;
+    return superText.richText as TextSpan;
   }
 
   /// Finds and returns the [TextStyle] that's applied to the top-level of the [TextSpan]
@@ -196,6 +173,22 @@ class SuperEditorInspector {
   /// {@macro supereditor_finder}
   static TextStyle? findParagraphStyle(String nodeId, [Finder? superEditorFinder]) {
     return findRichTextInParagraph(nodeId, superEditorFinder).style;
+  }
+
+  /// Calculates the delta between the center of the character at [textOffset1] and and the
+  /// center of the character at [textOffset2] within the node with the given [nodeId].
+  ///
+  /// {@macro supereditor_finder}
+  static Offset findDeltaBetweenCharactersInTextNode(String nodeId, int textOffset1, int textOffset2,
+      [Finder? superEditorFinder]) {
+    final docLayout = findDocumentLayout(superEditorFinder);
+    final characterBoxStart = docLayout.getRectForPosition(
+      DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: textOffset1)),
+    );
+    final characterBoxEnd = docLayout.getRectForPosition(
+      DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: textOffset2)),
+    );
+    return characterBoxEnd!.center - characterBoxStart!.center;
   }
 
   /// Returns the [DocumentNode] at given the [index].
@@ -225,7 +218,7 @@ class SuperEditorInspector {
 
   /// Locates the first line break in a text node, or throws an exception if it cannot find one.
   static int findOffsetOfLineBreak(String nodeId, [Finder? superEditorFinder]) {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final documentLayout = findDocumentLayout(superEditorFinder);
 
     final componentState = documentLayout.getComponentByNodeId(nodeId) as State;
     late final GlobalKey textComponentKey;
@@ -245,7 +238,7 @@ class SuperEditorInspector {
   /// Finds the [DocumentLayout] that backs a [SuperEditor] in the widget tree.
   ///
   /// {@macro supereditor_finder}
-  static DocumentLayout _findDocumentLayout([Finder? superEditorFinder]) {
+  static DocumentLayout findDocumentLayout([Finder? superEditorFinder]) {
     late final Finder layoutFinder;
     if (superEditorFinder != null) {
       layoutFinder = find.descendant(of: superEditorFinder, matching: find.byType(SingleColumnDocumentLayout));
@@ -269,14 +262,27 @@ class SuperEditorInspector {
   ///    [wantsMobileToolbarToBeVisible] is `true`, but [isMobileToolbarVisible]
   ///    is `false`.
   static bool wantsMobileToolbarToBeVisible([Finder? superEditorFinder]) {
-    // TODO: add Android support
-    final toolbarManager = find.state<SuperEditorIosToolbarOverlayManagerState>(superEditorFinder);
-    if (toolbarManager == null) {
-      throw Exception(
-          "Tried to verify that SuperEditor wants mobile toolbar to be visible, but couldn't find the toolbar manager widget.");
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        final toolbarManager = find.state<SuperEditorAndroidControlsOverlayManagerState>(superEditorFinder);
+        if (toolbarManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile toolbar to be visible on Android, but couldn't find the toolbar manager widget.");
+        }
+        return toolbarManager.wantsToDisplayToolbar;
+      case TargetPlatform.iOS:
+        final toolbarManager = find.state<SuperEditorIosToolbarOverlayManagerState>(superEditorFinder);
+        if (toolbarManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile toolbar to be visible on iOS, but couldn't find the toolbar manager widget.");
+        }
+        return toolbarManager.wantsToDisplayToolbar;
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.fuchsia:
+        return false;
     }
-
-    return toolbarManager.wantsToDisplayToolbar;
   }
 
   /// Returns `true` if the mobile floating toolbar is currently visible, or `false`
@@ -308,14 +314,29 @@ class SuperEditorInspector {
   ///    [wantsMobileMagnifierToBeVisible] is `true`, but [isMobileMagnifierVisible]
   ///    is `false`.
   static bool wantsMobileMagnifierToBeVisible([Finder? superEditorFinder]) {
-    // TODO: add Android support
-    final magnifierManager = find.state<SuperEditorIosMagnifierOverlayManagerState>(superEditorFinder);
-    if (magnifierManager == null) {
-      throw Exception(
-          "Tried to verify that SuperEditor wants mobile magnifier to be visible, but couldn't find the magnifier manager widget.");
-    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        final magnifierManager = find.state<SuperEditorAndroidControlsOverlayManagerState>(superEditorFinder);
+        if (magnifierManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile magnifier to be visible on Android, but couldn't find the magnifier manager widget.");
+        }
 
-    return magnifierManager.wantsToDisplayMagnifier;
+        return magnifierManager.wantsToDisplayMagnifier;
+      case TargetPlatform.iOS:
+        final magnifierManager = find.state<SuperEditorIosMagnifierOverlayManagerState>(superEditorFinder);
+        if (magnifierManager == null) {
+          throw Exception(
+              "Tried to verify that SuperEditor wants mobile magnifier to be visible on iOS, but couldn't find the magnifier manager widget.");
+        }
+
+        return magnifierManager.wantsToDisplayMagnifier;
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.fuchsia:
+        return false;
+    }
   }
 
   /// Returns `true` if a mobile magnifier is currently visible, or `false` if it's
@@ -357,7 +378,7 @@ class SuperEditorInspector {
       case TargetPlatform.iOS:
         return find.byWidgetPredicate(
           (widget) =>
-              widget.key == DocumentKeys.iOsCaret ||
+              widget.key == DocumentKeys.caret ||
               widget.key == DocumentKeys.upstreamHandle ||
               widget.key == DocumentKeys.downstreamHandle,
         );
@@ -372,9 +393,8 @@ class SuperEditorInspector {
   static Finder findMobileCaret([Finder? superEditorFinder]) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return find.byKey(DocumentKeys.androidCaret);
       case TargetPlatform.iOS:
-        return find.byKey(DocumentKeys.iOsCaret);
+        return find.byKey(DocumentKeys.caret);
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:
@@ -383,12 +403,49 @@ class SuperEditorInspector {
     }
   }
 
+  /// Returns `true` if the caret is currently visible and 100% opaque, or `false` if it's
+  /// not.
+  ///
+  /// {@macro supereditor_finder}
+  static bool isCaretVisible([Finder? superEditorFinder]) {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final androidCaretLayerState = _findAndroidControlsLayer(superEditorFinder);
+      return androidCaretLayerState.isCaretVisible;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final iOSCaretLayer = _findIosControlsLayer(superEditorFinder);
+      return iOSCaretLayer.isCaretVisible;
+    }
+
+    final desktopCaretLayer = _findDesktopCaretOverlay(superEditorFinder);
+    return desktopCaretLayer.isCaretVisible;
+  }
+
+  /// Returns the [Duration] to switch the caret between visible and invisible.
+  ///
+  /// {@macro supereditor_finder}
+  static Duration caretFlashPeriod([Finder? superEditorFinder]) {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final androidCaretLayerState = _findAndroidControlsLayer(superEditorFinder);
+      return androidCaretLayerState.caretFlashPeriod;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final iOSCaretLayer = _findIosControlsLayer(superEditorFinder);
+      return iOSCaretLayer.caretFlashPeriod;
+    }
+
+    final desktopCaretLayer = _findDesktopCaretOverlay(superEditorFinder);
+    return desktopCaretLayer.caretFlashPeriod;
+  }
+
   static Finder findMobileCaretDragHandle([Finder? superEditorFinder]) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return find.byKey(DocumentKeys.androidCaretHandle);
       case TargetPlatform.iOS:
-        return find.byKey(DocumentKeys.iOsCaret);
+        return find.byKey(DocumentKeys.caret);
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:
@@ -412,6 +469,9 @@ class SuperEditorInspector {
     }
   }
 
+  /// Finds the upstream drag handle for a mobile `SuperEditor`.
+  ///
+  /// This handle might be the base handle or the extent handle, depending on selection direction.
   static Finder findMobileUpstreamDragHandle([Finder? superEditorFinder]) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -425,6 +485,9 @@ class SuperEditorInspector {
     }
   }
 
+  /// Finds the downstream drag handle for a mobile `SuperEditor`.
+  ///
+  /// This handle might be the base handle or the extent handle, depending on selection direction.
   static Finder findMobileDownstreamDragHandle([Finder? superEditorFinder]) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -436,6 +499,86 @@ class SuperEditorInspector {
       case TargetPlatform.fuchsia:
         return FindsNothing();
     }
+  }
+
+  /// Finds the base drag handle for a mobile `SuperEditor`.
+  ///
+  /// Keep in mind that the base handle is the handle at the beginning of a selection.
+  /// The beginning of a selection might appear on the left side or right side of a
+  /// selection, depending on the direction that the user dragged to select content.
+  static Finder findMobileBaseDragHandle([Finder? superEditorFinder]) {
+    final selection = findDocumentSelection(superEditorFinder);
+    expect(selection, isNotNull,
+        reason: "Tried to find the mobile handle for the selection base, but the selection is null.");
+
+    if (selection!.isCollapsed) {
+      // When the selection is collapsed, the base and extent are the same. The choice is irrelevant.
+      return findMobileDownstreamDragHandle(superEditorFinder);
+    }
+
+    if (selection.hasDownstreamAffinity(findDocument(superEditorFinder)!)) {
+      return findMobileUpstreamDragHandle(superEditorFinder);
+    } else {
+      return findMobileDownstreamDragHandle(superEditorFinder);
+    }
+  }
+
+  /// Finds the extent drag handle for a mobile `SuperEditor`.
+  ///
+  /// Keep in mind that the extent handle is the handle at the end of a selection.
+  /// The end of a selection might appear on the left side or right side of a
+  /// selection, depending on the direction that the user dragged to select content.
+  static Finder findMobileExtentDragHandle([Finder? superEditorFinder]) {
+    final selection = findDocumentSelection(superEditorFinder);
+    expect(selection, isNotNull,
+        reason: "Tried to find the mobile handle for the selection extent, but the selection is null.");
+
+    if (selection!.isCollapsed) {
+      // When the selection is collapsed, the base and extent are the same. The choice is irrelevant.
+      return findMobileDownstreamDragHandle(superEditorFinder);
+    }
+
+    if (selection.hasDownstreamAffinity(findDocument(superEditorFinder)!)) {
+      return findMobileDownstreamDragHandle(superEditorFinder);
+    } else {
+      return findMobileUpstreamDragHandle(superEditorFinder);
+    }
+  }
+
+  static AndroidControlsDocumentLayerState _findAndroidControlsLayer([Finder? superEditorFinder]) {
+    final element = find
+        .descendant(
+          of: (superEditorFinder ?? find.byType(SuperEditor)),
+          matching: find.byType(AndroidHandlesDocumentLayer),
+        )
+        .evaluate()
+        .single as StatefulElement;
+
+    return element.state as AndroidControlsDocumentLayerState;
+  }
+
+  static IosControlsDocumentLayerState _findIosControlsLayer([Finder? superEditorFinder]) {
+    final element = find
+        .descendant(
+          of: (superEditorFinder ?? find.byType(SuperEditor)),
+          matching: find.byType(IosHandlesDocumentLayer),
+        )
+        .evaluate()
+        .single as StatefulElement;
+
+    return element.state as IosControlsDocumentLayerState;
+  }
+
+  static CaretDocumentOverlayState _findDesktopCaretOverlay([Finder? superEditorFinder]) {
+    final element = find
+        .descendant(
+          of: (superEditorFinder ?? find.byType(SuperEditor)),
+          matching: find.byType(CaretDocumentOverlay),
+        )
+        .evaluate()
+        .single as StatefulElement;
+
+    return element.state as CaretDocumentOverlayState;
   }
 
   SuperEditorInspector._();

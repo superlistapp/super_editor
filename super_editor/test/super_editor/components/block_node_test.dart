@@ -287,14 +287,7 @@ void main() {
             .withEditorSize(const Size(300, 300))
             .pump();
 
-        // TODO: Move this to Super Editor tooling.
-        await tester.tapAtDocumentPosition(const DocumentPosition(
-          nodeId: "2",
-          nodePosition: UpstreamDownstreamNodePosition.upstream(),
-        ));
-        await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
-
-        await tester.tapAtDocumentPosition(const DocumentPosition(
+        await tester.doubleTapAtDocumentPosition(const DocumentPosition(
           nodeId: "2",
           nodePosition: UpstreamDownstreamNodePosition.upstream(),
         ));
@@ -643,7 +636,7 @@ Widget _buildHardwareKeyboardEditor(MutableDocument document, MutableDocumentCom
           addRulesAfter: [
             StyleRule(BlockSelector.all, (doc, node) {
               return {
-                "textStyle": const TextStyle(
+                Styles.textStyle: const TextStyle(
                   fontSize: 12,
                 ),
               };

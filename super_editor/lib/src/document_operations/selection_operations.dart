@@ -69,6 +69,7 @@ bool moveSelectionToNearestSelectableNode({
         SelectionChangeType.expandSelection,
         SelectionReason.userInteraction,
       ),
+      const ClearComposingRegionRequest(),
     ]);
   } else {
     // Selection should be replaced by new collapsed position.
@@ -78,6 +79,7 @@ bool moveSelectionToNearestSelectableNode({
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),
+      const ClearComposingRegionRequest(),
     ]);
   }
 

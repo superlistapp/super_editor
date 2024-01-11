@@ -4,7 +4,7 @@ version: 0.1.5
 homepage: https://github.com/superlistapp/super_editor
 
 environment:
-  sdk: ">=2.12.0 <4.0.0"
+  sdk: ">=3.0.0 <4.0.0"
   flutter: ">=1.17.0"
 
 dependencies:
@@ -29,6 +29,8 @@ dev_dependencies:
   flutter_lints: ^2.0.1
   flutter_test:
     sdk: flutter
+  flutter_test_robots: ^0.0.22
+  flutter_test_runners: ^0.0.4
   golden_toolkit: ^0.15.0
 
 flutter:

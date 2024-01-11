@@ -772,6 +772,19 @@ abstract class ContentLayerWidget implements Widget {
   // Marker interface.
 }
 
+/// A [ContentLayerWidget] that displays nothing.
+///
+/// Useful when a layer should conditionally display content. An [EmptyContentLayer] can
+/// be returned in cases where no visuals are desired.
+class EmptyContentLayer extends ContentLayerStatelessWidget {
+  const EmptyContentLayer({super.key});
+
+  @override
+  Widget doBuild(BuildContext context, Element? contentElement, RenderObject? contentLayout) {
+    return const SizedBox();
+  }
+}
+
 /// Widget that builds a [ContentLayers] layer based on a traditional widget
 /// subtree, as represented by the given [child].
 ///

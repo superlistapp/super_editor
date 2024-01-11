@@ -32,6 +32,7 @@ import 'package:super_editor/src/infrastructure/documents/selection_leader_docum
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
 import '../infrastructure/text_input.dart';
@@ -45,6 +46,8 @@ class SuperReader extends StatefulWidget {
   SuperReader({
     Key? key,
     this.focusNode,
+    this.autofocus = false,
+    this.tapRegionGroupId,
     required this.document,
     this.documentLayoutKey,
     this.selection,
@@ -59,7 +62,6 @@ class SuperReader extends StatefulWidget {
     SelectionStyles? selectionStyle,
     this.gestureMode,
     this.contentTapDelegateFactory = superReaderLaunchLinkTapHandlerFactory,
-    this.autofocus = false,
     this.overlayController,
     this.androidHandleColor,
     this.androidToolbarBuilder,
@@ -76,6 +78,19 @@ class SuperReader extends StatefulWidget {
         super(key: key);
 
   final FocusNode? focusNode;
+
+  /// Whether or not the [SuperReader] should autofocus.
+  final bool autofocus;
+
+  /// {@template super_reader_tap_region_group_id}
+  /// A group ID for a tap region that surrounds the reader
+  /// and also surrounds any related widgets, such as drag handles and a toolbar.
+  ///
+  /// When the reader is inside a [TapRegion], tapping at a drag handle causes
+  /// [TapRegion.onTapOutside] to be called. To prevent that, provide a
+  /// [tapRegionGroupId] with the same value as the ancestor [TapRegion] groupId.
+  /// {@endtemplate}
+  final String? tapRegionGroupId;
 
   /// The [Document] displayed in this [SuperReader], in read-only mode.
   final Document document;
@@ -184,9 +199,6 @@ class SuperReader extends StatefulWidget {
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
-
-  /// Whether or not the [SuperReader] should autofocus.
-  final bool autofocus;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging.
@@ -447,6 +459,7 @@ class SuperReaderState extends State<SuperReader> {
     switch (_gestureMode) {
       case DocumentGestureMode.iOS:
         return SuperReaderIosToolbarOverlayManager(
+          tapRegionGroupId: widget.tapRegionGroupId,
           defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultIosReaderToolbarBuilder(
             overlayContext,
             mobileToolbarKey,
@@ -480,6 +493,7 @@ class SuperReaderState extends State<SuperReader> {
       case DocumentGestureMode.android:
         return ReadOnlyAndroidDocumentTouchInteractor(
           focusNode: _focusNode,
+          tapRegionGroupId: widget.tapRegionGroupId,
           document: _readerContext.document,
           documentKey: _docLayoutKey,
           getDocumentLayout: () => _readerContext.documentLayout,
@@ -517,7 +531,7 @@ Widget defaultIosReaderToolbarBuilder(
   ValueListenable<DocumentSelection?> selection,
   SuperReaderIosControlsController editorControlsController,
 ) {
-  if (isWeb) {
+  if (CurrentPlatform.isWeb) {
     // On web, we defer to the browser's internal overlay controls for mobile.
     return const SizedBox();
   }
@@ -716,9 +730,9 @@ final readOnlyDefaultStylesheet = Stylesheet(
       BlockSelector.all,
       (doc, docNode) {
         return {
-          "maxWidth": 640.0,
-          "padding": const CascadingPadding.symmetric(horizontal: 24),
-          "textStyle": const TextStyle(
+          Styles.maxWidth: 640.0,
+          Styles.padding: const CascadingPadding.symmetric(horizontal: 24),
+          Styles.textStyle: const TextStyle(
             color: Colors.black,
             fontSize: 18,
             height: 1.4,
@@ -730,8 +744,8 @@ final readOnlyDefaultStylesheet = Stylesheet(
       const BlockSelector("header1"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 40),
-          "textStyle": const TextStyle(
+          Styles.padding: const CascadingPadding.only(top: 40),
+          Styles.textStyle: const TextStyle(
             color: Color(0xFF333333),
             fontSize: 38,
             fontWeight: FontWeight.bold,
@@ -743,8 +757,8 @@ final readOnlyDefaultStylesheet = Stylesheet(
       const BlockSelector("header2"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 32),
-          "textStyle": const TextStyle(
+          Styles.padding: const CascadingPadding.only(top: 32),
+          Styles.textStyle: const TextStyle(
             color: Color(0xFF333333),
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -756,8 +770,8 @@ final readOnlyDefaultStylesheet = Stylesheet(
       const BlockSelector("header3"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 28),
-          "textStyle": const TextStyle(
+          Styles.padding: const CascadingPadding.only(top: 28),
+          Styles.textStyle: const TextStyle(
             color: Color(0xFF333333),
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -769,7 +783,7 @@ final readOnlyDefaultStylesheet = Stylesheet(
       const BlockSelector("paragraph"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 24),
+          Styles.padding: const CascadingPadding.only(top: 24),
         };
       },
     ),
@@ -777,7 +791,7 @@ final readOnlyDefaultStylesheet = Stylesheet(
       const BlockSelector("paragraph").after("header1"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 0),
+          Styles.padding: const CascadingPadding.only(top: 0),
         };
       },
     ),
@@ -785,7 +799,7 @@ final readOnlyDefaultStylesheet = Stylesheet(
       const BlockSelector("paragraph").after("header2"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 0),
+          Styles.padding: const CascadingPadding.only(top: 0),
         };
       },
     ),
@@ -793,7 +807,7 @@ final readOnlyDefaultStylesheet = Stylesheet(
       const BlockSelector("paragraph").after("header3"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 0),
+          Styles.padding: const CascadingPadding.only(top: 0),
         };
       },
     ),
@@ -801,7 +815,7 @@ final readOnlyDefaultStylesheet = Stylesheet(
       const BlockSelector("listItem"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 24),
+          Styles.padding: const CascadingPadding.only(top: 24),
         };
       },
     ),
@@ -809,7 +823,7 @@ final readOnlyDefaultStylesheet = Stylesheet(
       const BlockSelector("blockquote"),
       (doc, docNode) {
         return {
-          "textStyle": const TextStyle(
+          Styles.textStyle: const TextStyle(
             color: Colors.grey,
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -822,7 +836,7 @@ final readOnlyDefaultStylesheet = Stylesheet(
       BlockSelector.all.last(),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(bottom: 96),
+          Styles.padding: const CascadingPadding.only(bottom: 96),
         };
       },
     ),
@@ -858,6 +872,10 @@ TextStyle readOnlyDefaultStyleBuilder(Set<Attribution> attributions) {
         decoration: newStyle.decoration == null
             ? TextDecoration.lineThrough
             : TextDecoration.combine([TextDecoration.lineThrough, newStyle.decoration!]),
+      );
+    } else if (attribution is ColorAttribution) {
+      newStyle = newStyle.copyWith(
+        color: attribution.color,
       );
     } else if (attribution is LinkAttribution) {
       newStyle = newStyle.copyWith(

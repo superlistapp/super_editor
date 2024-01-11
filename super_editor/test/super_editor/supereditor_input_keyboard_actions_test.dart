@@ -7,15 +7,16 @@ import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../test_runners.dart';
 import '../test_tools_user_input.dart';
 import 'supereditor_test_tools.dart';
 
 void main() {
   group('Super Editor keyboard actions', () {
     group("movement >", () {
-      group("Mac >", () {
+      group("Mac and iOS >", () {
         group("jumps to", () {
-          testWidgetsOnMac('beginning of line with CMD + LEFT ARROW', (tester) async {
+          testWidgetsOnApple('beginning of line with CMD + LEFT ARROW', (tester) async {
             // Start the user's selection somewhere after the beginning of the first
             // line in the first node.
             await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -34,7 +35,7 @@ void main() {
             );
           });
 
-          testWidgetsOnMac('end of line with CMD + RIGHT ARROW', (tester) async {
+          testWidgetsOnApple('end of line with CMD + RIGHT ARROW', (tester) async {
             // Start the user's selection somewhere before the end of the first line
             // in the first node.
             await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -55,7 +56,7 @@ void main() {
             );
           });
 
-          testWidgetsOnMac('beginning of word with ALT + LEFT ARROW', (tester) async {
+          testWidgetsOnApple('beginning of word with ALT + LEFT ARROW', (tester) async {
             // Start the user's selection somewhere in the middle of a word.
             await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -73,7 +74,7 @@ void main() {
             );
           });
 
-          testWidgetsOnMac('end of word with ALT + RIGHT ARROW', (tester) async {
+          testWidgetsOnApple('end of word with ALT + RIGHT ARROW', (tester) async {
             // Start the user's selection somewhere in the middle of a word.
             await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -91,7 +92,7 @@ void main() {
             );
           });
 
-          testWidgetsOnMac('beginning of paragraph with OPTION + UP ARROW', (tester) async {
+          testWidgetsOnApple('beginning of paragraph with OPTION + UP ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -115,7 +116,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMac('end of paragraph with OPTION + DOWN ARROW', (tester) async {
+          testWidgetsOnApple('end of paragraph with OPTION + DOWN ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -139,7 +140,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMac('beginning of document with CMD + UP ARROW', (tester) async {
+          testWidgetsOnApple('beginning of document with CMD + UP ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -162,7 +163,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMac('end of document with CMD + DOWN ARROW', (tester) async {
+          testWidgetsOnApple('end of document with CMD + DOWN ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -187,7 +188,7 @@ void main() {
         });
 
         group("expands to", () {
-          testWidgetsOnMac('beginning of paragraph with SHIFT + OPTION + UP ARROW', (tester) async {
+          testWidgetsOnApple('beginning of paragraph with SHIFT + OPTION + UP ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -215,7 +216,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMac('end of paragraph with SHIFT + OPTION + DOWN ARROW', (tester) async {
+          testWidgetsOnApple('end of paragraph with SHIFT + OPTION + DOWN ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -243,7 +244,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMac('beginning of document with SHIFT + CMD + UP ARROW', (tester) async {
+          testWidgetsOnApple('beginning of document with SHIFT + CMD + UP ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -270,7 +271,7 @@ void main() {
             );
           }, variant: inputSourceVariant);
 
-          testWidgetsOnMac('end of document with SHIFT + CMD + DOWN ARROW', (tester) async {
+          testWidgetsOnApple('end of document with SHIFT + CMD + DOWN ARROW', (tester) async {
             await _pumpTwoParagraphsTestApp(
               tester,
               inputSource: inputSourceVariant.currentValue!,
@@ -298,7 +299,7 @@ void main() {
           }, variant: inputSourceVariant);
         });
 
-        testWidgetsOnMac("option + backspace: deletes a word upstream", (tester) async {
+        testWidgetsOnApple("option + backspace: deletes a word upstream", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -327,7 +328,7 @@ void main() {
           );
         }, variant: inputSourceVariant);
 
-        testWidgetsOnMac("option + backspace: deletes a word upstream (after a space)", (tester) async {
+        testWidgetsOnApple("option + backspace: deletes a word upstream (after a space)", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -356,7 +357,7 @@ void main() {
           );
         }, variant: inputSourceVariant);
 
-        testWidgetsOnMac("option + delete: deletes a word downstream", (tester) async {
+        testWidgetsOnApple("option + delete: deletes a word downstream", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -385,7 +386,7 @@ void main() {
           );
         }, variant: inputSourceVariant);
 
-        testWidgetsOnMac("option + delete: deletes a word downstream (before a space)", (tester) async {
+        testWidgetsOnApple("option + delete: deletes a word downstream (before a space)", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -414,7 +415,7 @@ void main() {
           );
         }, variant: inputSourceVariant);
 
-        testWidgetsOnMac("control + backspace: deletes a single upstream character", (tester) async {
+        testWidgetsOnApple("control + backspace: deletes a single upstream character", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -441,7 +442,7 @@ void main() {
           );
         }, variant: inputSourceVariant);
 
-        testWidgetsOnMac("control + delete: deletes a single downstream character", (tester) async {
+        testWidgetsOnApple("control + delete: deletes a single downstream character", (tester) async {
           final testContext = await tester
               .createDocument() //
               .withSingleParagraph()
@@ -1059,7 +1060,7 @@ void main() {
     });
 
     group('CMD + A to select all', () {
-      testWidgetsOnMac('does nothing when CMD key is pressed but A-key is not pressed', (tester) async {
+      testWidgetsOnApple('does nothing when CMD key is pressed but A-key is not pressed', (tester) async {
         await tester //
             .createDocument()
             .withSingleParagraph()
@@ -1082,7 +1083,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('does nothing when A-key is pressed but meta key is not pressed', (tester) async {
+      testWidgetsOnApple('does nothing when A-key is pressed but meta key is not pressed', (tester) async {
         await tester //
             .createDocument()
             .withSingleParagraph()
@@ -1105,7 +1106,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('does nothing when CMD+A is pressed but the document is empty', (tester) async {
+      testWidgetsOnApple('does nothing when CMD+A is pressed but the document is empty', (tester) async {
         await tester //
             .createDocument()
             .withSingleEmptyParagraph()
@@ -1127,7 +1128,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('selects all when CMD+A is pressed with a single-node document', (tester) async {
+      testWidgetsOnApple('selects all when CMD+A is pressed with a single-node document', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(MutableDocument(
@@ -1160,7 +1161,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('selects all when CMD+A is pressed with a two-node document', (tester) async {
+      testWidgetsOnApple('selects all when CMD+A is pressed with a two-node document', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1199,7 +1200,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('selects all when CMD+A is pressed with a three-node document', (tester) async {
+      testWidgetsOnApple('selects all when CMD+A is pressed with a three-node document', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1245,7 +1246,7 @@ void main() {
     });
 
     group('key pressed with selection', () {
-      testWidgetsOnMac('deletes selection if backspace is pressed', (tester) async {
+      testWidgetsOnApple('deletes selection if backspace is pressed', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1293,7 +1294,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('deletes selection if delete is pressed', (tester) async {
+      testWidgetsOnApple('deletes selection if delete is pressed', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1341,7 +1342,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('replaces selected content with character when character key is pressed', (tester) async {
+      testWidgetsOnApple('replaces selected content with character when character key is pressed', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1390,7 +1391,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('collapses selection if escape is pressed', (tester) async {
+      testWidgetsOnApple('collapses selection if escape is pressed', (tester) async {
         await tester //
             .createDocument()
             .withCustomContent(
@@ -1439,7 +1440,7 @@ void main() {
       });
     });
 
-    testWidgetsOnMac('does nothing when escape is pressed if the selection is collapsed', (tester) async {
+    testWidgetsOnApple('does nothing when escape is pressed if the selection is collapsed', (tester) async {
       await tester //
           .createDocument()
           .withCustomContent(
@@ -1600,9 +1601,9 @@ void main() {
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent);
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdHome(tester);
+            await tester.pressCmdHome(tester);
           } else {
-            await _pressCtrlHome(tester);
+            await tester.pressCtrlHome(tester);
           }
 
           // Ensure we scrolled to the top of the viewport.
@@ -1632,9 +1633,9 @@ void main() {
           scrollState.position.jumpTo(scrollState.position.minScrollExtent + 10);
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdHome(tester);
+            await tester.pressCmdHome(tester);
           } else {
-            await _pressCtrlHome(tester);
+            await tester.pressCtrlHome(tester);
           }
 
           // Ensure we didn't scroll past the top of the viewport.
@@ -1656,9 +1657,9 @@ void main() {
           final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdEnd(tester);
+            await tester.pressCmdEnd(tester);
           } else {
-            await _pressCtrlEnd(tester);
+            await tester.pressCtrlEnd(tester);
           }
 
           // Ensure we scrolled to the bottom of the viewport.
@@ -1685,9 +1686,9 @@ void main() {
           scrollState.position.jumpTo(scrollState.position.maxScrollExtent - 10);
 
           if (defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS) {
-            await _pressCmdEnd(tester);
+            await tester.pressCmdEnd(tester);
           } else {
-            await _pressCtrlEnd(tester);
+            await tester.pressCtrlEnd(tester);
           }
 
           // Ensure we didn't scroll past the bottom of the viewport.
@@ -1866,38 +1867,6 @@ Future<TestDocumentContext> _pumpPageScrollSliverTestSetup(
       debugShowCheckedModeBanner: false,
     );
   }).pump();
-}
-
-Future<void> _pressCmdHome(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressCmdEnd(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.meta, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressCtrlHome(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.home, platform: 'macos');
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressCtrlEnd(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.control, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.end, platform: 'macos');
-  await tester.pumpAndSettle();
 }
 
 Future<void> _pressShiftAltUpArrow(WidgetTester tester) async {

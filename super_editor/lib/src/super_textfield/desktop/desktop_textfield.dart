@@ -9,7 +9,9 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
+import 'package:super_editor/src/infrastructure/flutter/material_scrollbar.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_input_configuration.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
@@ -17,6 +19,7 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_field_scroller.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
@@ -66,6 +69,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.inputSource = TextInputSource.keyboard,
     this.textInputAction,
     this.imeConfiguration,
+    this.showComposingUnderline,
     this.selectorHandlers,
     List<TextFieldKeyboardHandler>? keyboardHandlers,
   })  : keyboardHandlers = keyboardHandlers ??
@@ -142,6 +146,10 @@ class SuperDesktopTextField extends StatefulWidget {
   /// Preferences for how the platform IME should look and behave during editing.
   final TextInputConfiguration? imeConfiguration;
 
+  /// Whether to show an underline beneath the text in the composing region, or `null`
+  /// to let [SuperDesktopTextField] decide when to show the underline.
+  final bool? showComposingUnderline;
+
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
 }
@@ -165,7 +173,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   void initState() {
     super.initState();
 
-    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionOnFocusChange);
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndComposingRegionOnFocusChange);
 
     _controller = widget.textController != null
         ? widget.textController is ImeAttributedTextEditingController
@@ -181,7 +189,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     _createTextFieldContext();
 
     // Check if we need to update the selection.
-    _updateSelectionOnFocusChange();
+    _updateSelectionAndComposingRegionOnFocusChange();
   }
 
   @override
@@ -189,14 +197,14 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {
-      _focusNode.removeListener(_updateSelectionOnFocusChange);
+      _focusNode.removeListener(_updateSelectionAndComposingRegionOnFocusChange);
       if (oldWidget.focusNode == null) {
         _focusNode.dispose();
       }
-      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionOnFocusChange);
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndComposingRegionOnFocusChange);
 
       // Check if we need to update the selection.
-      _updateSelectionOnFocusChange();
+      _updateSelectionAndComposingRegionOnFocusChange();
     }
 
     if (widget.textController != oldWidget.textController) {
@@ -228,7 +236,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   void dispose() {
     _textFieldScroller.detach();
     _scrollController.dispose();
-    _focusNode.removeListener(_updateSelectionOnFocusChange);
+    _focusNode.removeListener(_updateSelectionAndComposingRegionOnFocusChange);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -252,6 +260,9 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     );
   }
 
+  @visibleForTesting
+  ScrollController get scrollController => _scrollController;
+
   @override
   ProseTextLayout get textLayout => _textKey.currentState!.textLayout;
 
@@ -267,13 +278,17 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     _focusNode.requestFocus();
   }
 
-  void _updateSelectionOnFocusChange() {
+  void _updateSelectionAndComposingRegionOnFocusChange() {
     // If our FocusNode just received focus, automatically set our
     // controller's text position to the end of the available content.
     //
     // This behavior matches Flutter's standard behavior.
     if (_focusNode.hasFocus && !_hasFocus && _controller.selection.extentOffset == -1) {
       _controller.selection = TextSelection.collapsed(offset: _controller.text.text.length);
+    }
+    if (!_focusNode.hasFocus) {
+      // We lost focus. Clear the composing region.
+      _controller.composingRegion = TextRange.empty;
     }
     _hasFocus = _focusNode.hasFocus;
   }
@@ -347,6 +362,9 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     return _estimatedLineHeight.calculate(defaultStyle, _textScaler);
   }
 
+  bool get _shouldShowComposingUnderline =>
+      widget.showComposingUnderline ?? defaultTargetPlatform == TargetPlatform.macOS;
+
   @override
   Widget build(BuildContext context) {
     if (_textKey.currentContext == null) {
@@ -364,46 +382,76 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       groupId: widget.tapRegionGroupId,
       child: _buildTextInputSystem(
         isMultiline: isMultiline,
-        child: SuperTextFieldGestureInteractor(
-          focusNode: _focusNode,
-          textController: _controller,
-          textKey: _textKey,
-          textScrollKey: _textScrollKey,
-          isMultiline: isMultiline,
-          onRightClick: widget.onRightClick,
-          child: MultiListenableBuilder(
-            listenables: {
-              _focusNode,
-              _controller,
-            },
-            builder: (context) {
-              final isTextEmpty = _controller.text.text.isEmpty;
-              final showHint = widget.hintBuilder != null &&
-                  ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                      (isTextEmpty &&
-                          !_focusNode.hasFocus &&
-                          widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+        // As we handle the scrolling gestures ourselves,
+        // we use NeverScrollableScrollPhysics to prevent SingleChildScrollView
+        // from scrolling. This also prevents the user from interacting
+        // with the scrollbar.
+        // We use a modified version of Flutter's Scrollbar that allows
+        // configuring it with a different scroll physics.
+        //
+        // See https://github.com/superlistapp/super_editor/issues/1628 for more details.
+        child: ScrollbarWithCustomPhysics(
+          controller: _scrollController,
+          physics: ScrollConfiguration.of(context).getScrollPhysics(context),
+          child: SuperTextFieldGestureInteractor(
+            focusNode: _focusNode,
+            textController: _controller,
+            textKey: _textKey,
+            textScrollKey: _textScrollKey,
+            isMultiline: isMultiline,
+            onRightClick: widget.onRightClick,
+            child: MultiListenableBuilder(
+              listenables: {
+                _focusNode,
+                _controller,
+              },
+              builder: (context) {
+                final isTextEmpty = _controller.text.text.isEmpty;
+                final showHint = widget.hintBuilder != null &&
+                    ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                        (isTextEmpty &&
+                            !_focusNode.hasFocus &&
+                            widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-              return _buildDecoration(
-                child: SuperTextFieldScrollview(
-                  key: _textScrollKey,
-                  textKey: _textKey,
-                  textController: _controller,
-                  textAlign: widget.textAlign,
-                  scrollController: _scrollController,
-                  viewportHeight: _viewportHeight,
-                  estimatedLineHeight: _getEstimatedLineHeight(),
-                  padding: widget.padding,
-                  isMultiline: isMultiline,
-                  child: Stack(
-                    children: [
-                      if (showHint) widget.hintBuilder!(context),
-                      _buildSelectableText(),
-                    ],
+                return _buildDecoration(
+                  child: SuperTextFieldScrollview(
+                    key: _textScrollKey,
+                    textKey: _textKey,
+                    textController: _controller,
+                    textAlign: widget.textAlign,
+                    scrollController: _scrollController,
+                    viewportHeight: _viewportHeight,
+                    estimatedLineHeight: _getEstimatedLineHeight(),
+                    isMultiline: isMultiline,
+                    child: Stack(
+                      children: [
+                        if (showHint) //
+                          FillWidthIfConstrained(
+                            child: Padding(
+                              // WARNING: Padding within the text scroll view must be placed here, under
+                              // FillWidthIfConstrained, rather than around it, because FillWidthIfConstrained makes
+                              // decisions about sizing that expects its child to fill all available space in the
+                              // ancestor Scrollable.
+                              padding: widget.padding,
+                              child: widget.hintBuilder!(context),
+                            ),
+                          ),
+                        FillWidthIfConstrained(
+                          child: Padding(
+                            // WARNING: Padding within the text scroll view must be placed here, under
+                            // FillWidthIfConstrained, rather than around it, because FillWidthIfConstrained makes
+                            // decisions about sizing that expects its child to fill all available space in the
+                            // ancestor Scrollable.
+                            padding: widget.padding,
+                            child: _buildSelectableText(),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -447,20 +495,50 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   Widget _buildSelectableText() {
-    return FillWidthIfConstrained(
-      child: SuperTextWithSelection.single(
-        key: _textKey,
-        richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
-        textAlign: widget.textAlign,
-        textScaler: _textScaler,
-        userSelection: UserSelection(
-          highlightStyle: widget.selectionHighlightStyle,
-          caretStyle: widget.caretStyle,
-          selection: _controller.selection,
-          hasCaret: _focusNode.hasFocus,
+    return SuperText(
+      key: _textKey,
+      richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
+      textAlign: widget.textAlign,
+      textScaler: _textScaler,
+      layerBeneathBuilder: (context, textLayout) {
+        return Stack(
+          children: [
+            if (widget.textController?.selection.isValid == true)
+              // Selection highlight beneath the text.
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: widget.selectionHighlightStyle,
+                selection: widget.textController?.selection,
+              ),
+            // Underline beneath the composing region.
+            if (widget.textController?.composingRegion.isValid == true && _shouldShowComposingUnderline)
+              TextUnderlineLayer(
+                textLayout: textLayout,
+                underlines: [
+                  TextLayoutUnderline(
+                    style: UnderlineStyle(
+                      color: widget.textStyleBuilder({}).color ?? //
+                          (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                    ),
+                    range: widget.textController!.composingRegion,
+                  ),
+                ],
+              ),
+          ],
+        );
+      },
+      layerAboveBuilder: (context, textLayout) {
+        if (!_focusNode.hasFocus) {
+          return const SizedBox();
+        }
+
+        return TextLayoutCaret(
+          textLayout: textLayout,
+          style: widget.caretStyle,
+          position: _controller.selection.extent,
           blinkTimingMode: widget.blinkTimingMode,
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -531,6 +609,9 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   final _dragGutterExtent = 24;
   final _maxDragSpeed = 20;
 
+  /// Holds which kind of device started a pan gesture, e.g., a mouse or a trackpad.
+  PointerDeviceKind? _panGestureDevice;
+
   ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
 
   SuperTextFieldScrollviewState get _textScroll => widget.textScrollKey.currentState!;
@@ -554,6 +635,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               extentOffset: tapTextPosition.offset,
             )
           : TextSelection.collapsed(offset: tapTextPosition.offset);
+      widget.textController.composingRegion = TextRange.empty;
 
       _log.finer("New text field selection: ${widget.textController.selection}");
     });
@@ -610,6 +692,14 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onPanStart(DragStartDetails details) {
+    _panGestureDevice = details.kind;
+
+    if (_panGestureDevice == PointerDeviceKind.trackpad) {
+      // After flutter 3.3, dragging with two fingers on a trackpad triggers a pan gesture.
+      // This gesture should scroll the content and keep the selection unchanged.
+      return;
+    }
+
     _log.fine("User started pan");
     _dragStartInViewport = details.localPosition;
     _dragStartInText = _getTextOffset(_dragStartInViewport!);
@@ -621,6 +711,17 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
   void _onPanUpdate(DragUpdateDetails details) {
     _log.finer("User moved during pan");
+
+    if (_panGestureDevice == PointerDeviceKind.trackpad) {
+      // The user dragged using two fingers on a trackpad.
+      // Scroll the content and keep the selection unchanged.
+      // We multiply by -1 because the scroll should be in the opposite
+      // direction of the drag, e.g., dragging up on a trackpad scrolls
+      // the content to downstream direction.
+      _scrollVertically(details.delta.dy * -1);
+      return;
+    }
+
     setState(() {
       _dragEndInViewport = details.localPosition;
       _dragEndInText = _getTextOffset(_dragEndInViewport!);
@@ -634,6 +735,14 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
   void _onPanEnd(DragEndDetails details) {
     _log.finer("User ended a pan");
+
+    if (_panGestureDevice == PointerDeviceKind.trackpad) {
+      // The user ended a pan gesture with two fingers on a trackpad.
+      // We already scrolled the document.
+      _textScroll.goBallistic(-details.velocity.pixelsPerSecond.dy);
+      return;
+    }
+
     setState(() {
       _dragStartInText = null;
       _dragEndInText = null;
@@ -721,12 +830,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   /// form of mouse scrolling.
   void _onPointerSignal(PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
-      // TODO: remove access to _textScroll.widget
-      final newScrollOffset = (_textScroll.widget.scrollController.offset + event.scrollDelta.dy)
-          .clamp(0.0, _textScroll.widget.scrollController.position.maxScrollExtent);
-      _textScroll.widget.scrollController.jumpTo(newScrollOffset);
-
-      _updateDragSelection();
+      _scrollVertically(event.scrollDelta.dy);
     }
   }
 
@@ -814,6 +918,22 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     _textScroll.stopScrollingToEnd();
   }
 
+  /// Scrolls the document vertically by [delta] pixels.
+  void _scrollVertically(double delta) {
+    // TODO: remove access to _textScroll.widget
+    final newScrollOffset = (_textScroll.widget.scrollController.offset + delta)
+        .clamp(0.0, _textScroll.widget.scrollController.position.maxScrollExtent);
+    _textScroll.widget.scrollController.jumpTo(newScrollOffset);
+    _updateDragSelection();
+  }
+
+  /// Beginning with Flutter 3.3.3, we are responsible for starting and
+  /// stopping scroll momentum. This method cancels any scroll momentum
+  /// in our scroll controller.
+  void _cancelScrollMomentum() {
+    _textScroll.goIdle();
+  }
+
   TextPosition? _getPositionAtOffset(Offset textFieldOffset) {
     final textOffset = _getTextOffset(textFieldOffset);
     final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
@@ -840,6 +960,9 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return Listener(
       onPointerSignal: _onPointerSignal,
+      onPointerHover: (event) => _cancelScrollMomentum(),
+      onPointerDown: (event) => _cancelScrollMomentum(),
+      onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: GestureDetector(
         onSecondaryTapUp: _onRightClick,
         child: RawGestureDetector(
@@ -858,9 +981,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               },
             ),
             PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-              () => PanGestureRecognizer(
-                supportedDevices: {PointerDeviceKind.mouse},
-              ),
+              () => PanGestureRecognizer(),
               (PanGestureRecognizer recognizer) {
                 recognizer
                   ..onStart = _onPanStart
@@ -1236,7 +1357,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
   }
 
   void _reportCaretRectToIme() {
-    if (isWeb) {
+    if (CurrentPlatform.isWeb) {
       // On web, setting the caret rect isn't supported.
       // To position the IME popovers, we report our size, transform and text style
       // and let the browser position the popovers.
@@ -1361,7 +1482,6 @@ class SuperTextFieldScrollview extends StatefulWidget {
     required this.textKey,
     required this.textController,
     required this.scrollController,
-    required this.padding,
     required this.viewportHeight,
     required this.estimatedLineHeight,
     required this.isMultiline,
@@ -1378,10 +1498,6 @@ class SuperTextFieldScrollview extends StatefulWidget {
 
   /// [ScrollController] that controls the scroll offset of this [SuperTextFieldScrollview].
   final ScrollController scrollController;
-
-  /// Padding placed around the text content of this text field, but within the
-  /// scrollable viewport.
-  final EdgeInsetsGeometry padding;
 
   /// The height of the viewport for this text field.
   ///
@@ -1464,18 +1580,21 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
       return;
     }
 
-    final extentOffset = _textLayout.getOffsetAtPosition(selection.extent);
+    final viewportBox = context.findRenderObject() as RenderBox;
+    final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
+    // Note: the textBoxOffset will be negative.
+    final textBoxOffset = textBox.globalToLocal(Offset.zero, ancestor: viewportBox);
+
+    final selectionExtentOffsetInText = _textLayout.getOffsetAtPosition(selection.extent);
 
     const gutterExtent = 0; // _dragGutterExtent
 
-    final myBox = context.findRenderObject() as RenderBox;
-    final beyondLeftExtent = min(extentOffset.dx - widget.scrollController.offset - gutterExtent, 0).abs();
-    final beyondRightExtent = max(
-        extentOffset.dx - myBox.size.width - widget.scrollController.offset + gutterExtent + widget.padding.horizontal,
-        0);
+    final beyondLeftViewportEdge = min(-textBoxOffset.dx + selectionExtentOffsetInText.dx - gutterExtent, 0).abs();
+    final beyondRightViewportEdge =
+        max((-textBoxOffset.dx + selectionExtentOffsetInText.dx + gutterExtent) - viewportBox.size.width, 0);
 
-    if (beyondLeftExtent > 0) {
-      final newScrollPosition = (widget.scrollController.offset - beyondLeftExtent)
+    if (beyondLeftViewportEdge > 0) {
+      final newScrollPosition = (widget.scrollController.offset - beyondLeftViewportEdge)
           .clamp(0.0, widget.scrollController.position.maxScrollExtent);
 
       widget.scrollController.animateTo(
@@ -1483,8 +1602,8 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOut,
       );
-    } else if (beyondRightExtent > 0) {
-      final newScrollPosition = (beyondRightExtent + widget.scrollController.offset)
+    } else if (beyondRightViewportEdge > 0) {
+      final newScrollPosition = (beyondRightViewportEdge + widget.scrollController.offset)
           .clamp(0.0, widget.scrollController.position.maxScrollExtent);
 
       widget.scrollController.animateTo(
@@ -1528,8 +1647,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
             widget.scrollController.offset +
             gutterExtent +
             (isAtLastLine ? _textLayout.getLineHeightAtPosition(selection.extent) / 2 : 0) +
-            (widget.estimatedLineHeight / 2) + // manual adjustment to avoid line getting half cut off
-            (widget.padding.vertical / 2),
+            (widget.estimatedLineHeight / 2), // manual adjustment to avoid line getting half cut off
         0);
 
     _log.finer('_ensureSelectionExtentIsVisible - Ensuring extent is visible.');
@@ -1624,6 +1742,30 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     widget.scrollController.position.jumpTo(widget.scrollController.offset + _scrollAmountPerFrame);
   }
 
+  /// Animates the scroll position like a ballistic particle with friction, beginning
+  /// with the given [pixelsPerSecond] velocity.
+  void goBallistic(double pixelsPerSecond) {
+    final pos = widget.scrollController.position;
+
+    if (pos is ScrollPositionWithSingleContext) {
+      if (pos.maxScrollExtent > 0) {
+        pos.goBallistic(pixelsPerSecond);
+      }
+      pos.context.setIgnorePointer(false);
+    }
+  }
+
+  /// Immediately stops scrolling animation/momentum.
+  void goIdle() {
+    final pos = widget.scrollController.position;
+
+    if (pos is ScrollPositionWithSingleContext) {
+      if (pos.pixels > pos.minScrollExtent && pos.pixels < pos.maxScrollExtent) {
+        pos.goIdle();
+      }
+    }
+  }
+
   void _onTick(elapsedTime) {
     if (_scrollToStartOnTick) {
       scrollToStart();
@@ -1637,12 +1779,20 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
   Widget build(BuildContext context) {
     return SizedBox(
       height: widget.viewportHeight,
-      child: SingleChildScrollView(
-        controller: widget.scrollController,
-        physics: const NeverScrollableScrollPhysics(),
-        scrollDirection: widget.isMultiline ? Axis.vertical : Axis.horizontal,
-        child: Padding(
-          padding: widget.padding,
+      // As we handle the scrolling gestures ourselves,
+      // we use NeverScrollableScrollPhysics to prevent SingleChildScrollView
+      // from scrolling. This also prevents the user from interacting
+      // with the scrollbar.
+      // We use a modified version of Flutter's Scrollbar that allows
+      // configuring it with a different scroll physics.
+      //
+      // See https://github.com/superlistapp/super_editor/issues/1628 for more details.
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+        child: SingleChildScrollView(
+          controller: widget.scrollController,
+          physics: const NeverScrollableScrollPhysics(),
+          scrollDirection: widget.isMultiline ? Axis.vertical : Axis.horizontal,
           child: widget.child,
         ),
       ),
@@ -1746,6 +1896,12 @@ TextFieldKeyboardHandler ignoreTextFieldKeyCombos(List<ShortcutActivator> keys) 
 /// );
 /// ```
 const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageUp,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageDown,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToBeginningOfDocumentOnCtrlOrCmdAndHome,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToEndOfDocumentOnCtrlOrCmdAndEnd,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToBeginningOfDocumentOnHomeOnMacOrWeb,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToEndOfDocumentOnEndOnMacOrWeb,
   DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
@@ -1758,6 +1914,7 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.blockControlKeys,
   DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed,
 ];
 
@@ -1786,11 +1943,17 @@ const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToBeginningOfDocumentOnCtrlOrCmdAndHome,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToEndOfDocumentOnCtrlOrCmdAndEnd,
   // WARNING: No keyboard handlers below this point will run on Mac. On Mac, most
   // common shortcuts are recognized by the OS. This line short circuits SuperTextField
   // handlers, passing the key combo to the OS on Mac. Place all custom Mac key
   // combos above this handler.
   DefaultSuperTextFieldKeyboardHandlers.sendKeyEventToMacOs,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageUp,
+  DefaultSuperTextFieldKeyboardHandlers.scrollOnPageDown,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToBeginningOfDocumentOnHomeOnMacOrWeb,
+  DefaultSuperTextFieldKeyboardHandlers.scrollToEndOfDocumentOnEndOnMacOrWeb,
   DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
   DefaultSuperTextFieldKeyboardHandlers.moveToLineStartWithHome,
@@ -1918,7 +2081,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (isWeb && (textFieldContext.controller.composingRegion.isValid)) {
+    if (CurrentPlatform.isWeb && (textFieldContext.controller.composingRegion.isValid)) {
       // We are composing a character on web. It's possible that a native element is being displayed,
       // like an emoji picker or a character selection panel.
       // We need to let the OS handle the key so the user can navigate
@@ -2215,7 +2378,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required SuperTextFieldContext textFieldContext,
     required RawKeyEvent keyEvent,
   }) {
-    if (defaultTargetPlatform == TargetPlatform.macOS && !isWeb) {
+    if (defaultTargetPlatform == TargetPlatform.macOS && !CurrentPlatform.isWeb) {
       // On macOS, we let the IME handle all key events. Then, the IME might generate
       // selectors which express the user intent, e.g, moveLeftAndModifySelection:.
       //
@@ -2223,6 +2386,200 @@ class DefaultSuperTextFieldKeyboardHandlers {
       //
       // This is needed for the interaction with the accent panel to work.
       return TextFieldKeyboardHandlerResult.sendToOperatingSystem;
+    }
+
+    return TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls up by the viewport height, or as high as possible,
+  /// when the user presses the Page Up key.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls the
+  /// ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollOnPageUp({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.pageUp) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollPageUp(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls down by the viewport height, or as far as possible,
+  /// when the user presses the Page Down key.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls the
+  /// ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollOnPageDown({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.pageDown) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollPageDown(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls the viewport to the top of the content, when the user presses
+  /// CMD + HOME on Mac, or CTRL + HOME on all other platforms.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls to the
+  /// top of the ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollToBeginningOfDocumentOnCtrlOrCmdAndHome({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.home) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (CurrentPlatform.isApple && !keyEvent.isMetaPressed) {
+      // !HardwareKeyboard.instance.isMetaPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (!CurrentPlatform.isApple && !keyEvent.isControlPressed) {
+      // !HardwareKeyboard.instance.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollToBeginningOfDocument(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls the viewport to the bottom of the content, when the user presses
+  /// CMD + END on Mac, or CTRL + END on all other platforms.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls to the
+  /// bottom of the ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollToEndOfDocumentOnCtrlOrCmdAndEnd({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.end) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (CurrentPlatform.isApple && !keyEvent.isMetaPressed) {
+      // !HardwareKeyboard.instance.isMetaPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (!CurrentPlatform.isApple && !keyEvent.isControlPressed) {
+      // !HardwareKeyboard.instance.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollToEndOfDocument(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls the viewport to the top of the content, when the user presses
+  /// HOME on Mac or web.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls to the
+  /// top of the ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollToBeginningOfDocumentOnHomeOnMacOrWeb({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.home) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (defaultTargetPlatform != TargetPlatform.macOS && !CurrentPlatform.isWeb) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollToBeginningOfDocument(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Scrolls the viewport to the bottom of the content, when the user presses
+  /// END on Mac or web.
+  ///
+  /// Scrolls the text field if it has scrollable content, if not then scrolls to the
+  /// bottom of the ancestor scrollable content if one's present.
+  static TextFieldKeyboardHandlerResult scrollToEndOfDocumentOnEndOnMacOrWeb({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent is! RawKeyDownEvent) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.end) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (defaultTargetPlatform != TargetPlatform.macOS && !CurrentPlatform.isWeb) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final bool scrolled = _scrollToEndOfDocument(textFieldContext: textFieldContext);
+
+    /// If scrolled, mark the key event as 'handled', otherwise 'notHandled' to give other
+    /// key handlers opportunity to handle the key event.
+    return scrolled ? TextFieldKeyboardHandlerResult.handled : TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// Halt execution of the current key event if the key pressed is one of
+  /// the functions keys (F1, F2, F3, etc.), or the Page Up/Down, Home/End key.
+  ///
+  /// Without this action in place pressing one of the above mentioned keys
+  /// would display an unknown '?' character in the textfield.
+  static TextFieldKeyboardHandlerResult blockControlKeys({
+    required SuperTextFieldContext textFieldContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent.logicalKey == LogicalKeyboardKey.escape ||
+        keyEvent.logicalKey == LogicalKeyboardKey.pageUp ||
+        keyEvent.logicalKey == LogicalKeyboardKey.pageDown ||
+        keyEvent.logicalKey == LogicalKeyboardKey.home ||
+        keyEvent.logicalKey == LogicalKeyboardKey.end ||
+        (keyEvent.logicalKey.keyId >= LogicalKeyboardKey.f1.keyId &&
+            keyEvent.logicalKey.keyId <= LogicalKeyboardKey.f23.keyId)) {
+      return TextFieldKeyboardHandlerResult.blocked;
     }
 
     return TextFieldKeyboardHandlerResult.notHandled;
@@ -2311,6 +2668,12 @@ const defaultTextFieldSelectorHandlers = <String, SuperTextFieldSelectorHandler>
   MacOsSelectors.deleteToBeginningOfLine: _deleteToBeginningOfLine,
   MacOsSelectors.deleteToEndOfLine: _deleteToEndOfLine,
   MacOsSelectors.deleteBackwardByDecomposingPreviousCharacter: _deleteUpstream,
+
+  // Scrolling.
+  MacOsSelectors.scrollToBeginningOfDocument: _scrollToBeginningOfDocument,
+  MacOsSelectors.scrollToEndOfDocument: _scrollToEndOfDocument,
+  MacOsSelectors.scrollPageUp: _scrollPageUp,
+  MacOsSelectors.scrollPageDown: _scrollPageDown,
 };
 
 void _giveUpFocus({
@@ -2587,4 +2950,196 @@ void _deleteToEndOfLine({
   }
 
   textFieldContext.controller.deleteTextOnLineAfterCaret(textLayout: textFieldContext.getTextLayout());
+}
+
+/// Scrolls to the top of the textfield.
+///
+/// In absence of scrollable content within textfield, tries to scroll the ancestor
+/// scrollable to its top.
+///
+/// Returns `true` if the scroll is performed, otherwise 'false'.
+bool _scrollToBeginningOfDocument({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final TextFieldScroller textFieldScroller = textFieldContext.scroller;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
+
+  if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
+    // The text field doesn't have any scrollable content. There is no ancestor
+    // scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  if (textFieldScroller.scrollOffset > 0) {
+    // The text field has more content than can fit, and the text field is partially
+    // scrolled downward. Scroll back to the top of the text field.
+    textFieldScroller.animateTo(
+      textFieldScroller.minScrollExtent,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+
+    return true;
+  }
+
+  if (ancestorScrollable == null) {
+    // There is no ancestor scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  // Scroll to the top of the ancestor scrollable.
+  ancestorScrollable.animateTo(
+    ancestorScrollable.minScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return true;
+}
+
+/// Scrolls to the end of the textfield.
+///
+/// In absence of scrollable content within textfield, tries to scroll the ancestor
+/// scrollable to its end.
+///
+/// Returns `true` if the scroll is performed, otherwise false.
+bool _scrollToEndOfDocument({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final TextFieldScroller textFieldScroller = textFieldContext.scroller;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
+
+  if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
+    // The text field doesn't have any scrollable content. There is no ancestor
+    // scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  if (textFieldScroller.scrollOffset < textFieldScroller.maxScrollExtent) {
+    // The text field has more content than can fit, and the text field is partially
+    // scrolled upward. Scroll back to the bottom of the text field.
+    textFieldScroller.animateTo(
+      textFieldScroller.maxScrollExtent,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+
+    return true;
+  }
+
+  if (ancestorScrollable == null) {
+    // There is no ancestor scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  if (!ancestorScrollable.maxScrollExtent.isFinite) {
+    // We want to scroll to the end of the ancestor scrollable, but it's infinitely long,
+    // so we can't. Fizzle.
+    return false;
+  }
+
+  // Scroll to the end of the ancestor scrollable.
+  ancestorScrollable.animateTo(
+    ancestorScrollable.maxScrollExtent,
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return true;
+}
+
+/// Scrolls up textfield by viewport height.
+///
+/// In absence of scrollable content within textfield, tries to scroll the ancestor
+/// scrollable up by its viewport height.
+///
+/// Returns `true` if the scroll is performed, otherwise false.
+bool _scrollPageUp({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final TextFieldScroller textFieldScroller = textFieldContext.scroller;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
+
+  if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
+    // No scrollable content within `SuperDesktopField` and ancestor scrollable
+    // is absent, give other handlers opportunity to handle the key event.
+    return false;
+  }
+
+  if (textFieldScroller.scrollOffset > 0) {
+    // The text field has more content than can fit. Scroll up text field by viewport height.
+    textFieldScroller.animateTo(
+      max(
+        textFieldScroller.scrollOffset - textFieldScroller.viewportDimension,
+        textFieldScroller.minScrollExtent,
+      ),
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+    return true;
+  }
+
+  if (ancestorScrollable == null) {
+    // There is no ancestor scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  // Scroll up ancestor scrollable by viewport height.
+  ancestorScrollable.animateTo(
+    max(ancestorScrollable.pixels - ancestorScrollable.viewportDimension, ancestorScrollable.minScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return true;
+}
+
+/// Scrolls down textfield by viewport height.
+///
+/// In absence of scrollable content within textfield, tries to scroll the ancestor
+/// scrollable down by its viewport height.
+///
+/// Returns `true` if the scroll is performed, otherwise false.
+bool _scrollPageDown({
+  required SuperTextFieldContext textFieldContext,
+}) {
+  final TextFieldScroller textFieldScroller = textFieldContext.scroller;
+  final ScrollPosition? ancestorScrollable =
+      textFieldContext.textFieldBuildContext.findAncestorScrollableWithVerticalScroll?.position;
+
+  if (textFieldScroller.maxScrollExtent == 0 && ancestorScrollable == null) {
+    // No scrollable content within `SuperDesktopField` and ancestor scrollable
+    // is absent, give other handlers opportunity to handle the key event.
+    return false;
+  }
+
+  if (textFieldScroller.scrollOffset < textFieldScroller.maxScrollExtent) {
+    // The text field has more content than can fit. Scroll down text field by viewport height.
+    textFieldScroller.animateTo(
+      min(
+        textFieldScroller.scrollOffset + textFieldScroller.viewportDimension,
+        textFieldScroller.maxScrollExtent,
+      ),
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+    return true;
+  }
+
+  if (ancestorScrollable == null) {
+    // There is no ancestor scrollable to scroll. Fizzle.
+    return false;
+  }
+
+  // Scroll down ancestor scrollable by viewport height.
+  ancestorScrollable.animateTo(
+    min(ancestorScrollable.pixels + ancestorScrollable.viewportDimension, ancestorScrollable.maxScrollExtent),
+    duration: const Duration(milliseconds: 150),
+    curve: Curves.decelerate,
+  );
+
+  return true;
 }

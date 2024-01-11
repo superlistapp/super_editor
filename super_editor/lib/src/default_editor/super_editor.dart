@@ -16,6 +16,7 @@ import 'package:super_editor/src/default_editor/debug_visualization.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
+import 'package:super_editor/src/default_editor/layout_single_column/_styler_composing_region.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -24,8 +25,10 @@ import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -96,6 +99,8 @@ class SuperEditor extends StatefulWidget {
   SuperEditor({
     Key? key,
     this.focusNode,
+    this.autofocus = false,
+    this.tapRegionGroupId,
     required this.editor,
     required this.document,
     required this.composer,
@@ -118,7 +123,6 @@ class SuperEditor extends StatefulWidget {
     this.selectionLayerLinks,
     this.documentUnderlayBuilders = const [],
     this.documentOverlayBuilders = defaultSuperEditorDocumentOverlayBuilders,
-    this.autofocus = false,
     this.overlayController,
     this.androidHandleColor,
     this.androidToolbarBuilder,
@@ -140,6 +144,16 @@ class SuperEditor extends StatefulWidget {
 
   /// Whether or not the [SuperEditor] should autofocus
   final bool autofocus;
+
+  /// {@template super_editor_tap_region_group_id}
+  /// A group ID for a tap region that surrounds the editor
+  /// and also surrounds any related widgets, such as drag handles and a toolbar.
+  ///
+  /// When the editor is inside a [TapRegion], tapping at a drag handle causes
+  /// [TapRegion.onTapOutside] to be called. To prevent that, provide a
+  /// [tapRegionGroupId] with the same value as the ancestor [TapRegion] groupId.
+  /// {@endtemplate}
+  final String? tapRegionGroupId;
 
   /// The [ScrollController] that governs this `SuperEditor`'s scroll
   /// offset.
@@ -272,20 +286,24 @@ class SuperEditor extends StatefulWidget {
   final Map<String, SuperEditorSelectorHandler>? selectorHandlers;
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
+  @Deprecated(
+      "To configure overlay controls, surround SuperEditor with a SuperEditorIosControlsScope and/or SuperEditorAndroidControlsScope")
   final MagnifierAndToolbarController? overlayController;
 
   /// Color of the text selection drag handles on Android.
+  @Deprecated("To configure handle color, surround SuperEditor with a SuperEditorAndroidControlsScope, instead")
   final Color? androidHandleColor;
 
   /// Builder that creates a floating toolbar when running on Android.
+  @Deprecated("To configure a toolbar builder, surround SuperEditor with a SuperEditorAndroidControlsScope, instead")
   final WidgetBuilder? androidToolbarBuilder;
 
   /// Color of the text selection drag handles on iOS.
-  @Deprecated("To configure handle color, surround SuperEditor with an IosEditorControlsScope, instead")
+  @Deprecated("To configure handle color, surround SuperEditor with a SuperEditorIosControlsScope, instead")
   final Color? iOSHandleColor;
 
   /// Builder that creates a floating toolbar when running on iOS.
-  @Deprecated("To configure a toolbar builder, surround SuperEditor with an IosEditorControlsScope, instead")
+  @Deprecated("To configure a toolbar builder, surround SuperEditor with a SuperEditorIosControlsScope, instead")
   final WidgetBuilder? iOSToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, like drag
@@ -295,7 +313,8 @@ class SuperEditor extends StatefulWidget {
   /// If no clipper factory method is provided, then the overlay controls
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
-  // TODO: remove this once both iOS and Android overlay controls are moved to ancestor scopes.
+  @Deprecated(
+      "To configure an overlay clipper, surround SuperEditor with a SuperEditorIosControlsScope and/or a SuperEditorAndroidControlsScope")
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
   /// Plugins that add sets of behaviors to the editing experience.
@@ -344,11 +363,19 @@ class SuperEditorState extends State<SuperEditor> {
 
   ContentTapDelegate? _contentTapDelegate;
 
-  // GlobalKey for the iOS editor controls context so that the context data doesn't
+  final _dragHandleAutoScroller = ValueNotifier<DragHandleAutoScroller?>(null);
+
+  // GlobalKey for the iOS editor controls scope so that the scope's controller doesn't
   // continuously replace itself every time we rebuild. We want to retain the same
   // controls because they're shared throughout a number of disconnected widgets.
   final _iosControlsContextKey = GlobalKey();
   final _iosControlsController = SuperEditorIosControlsController();
+
+  // GlobalKey for the Android editor controls scope so that the scope's controller doesn't
+  // continuously replace itself every time we rebuild. We want to retain the same
+  // controls because they're shared throughout a number of disconnected widgets.
+  final _androidControlsContextKey = GlobalKey();
+  final _androidControlsController = SuperEditorAndroidControlsController();
 
   // Leader links that connect leader widgets near the user's selection
   // to carets, handles, and other things that want to follow the selection.
@@ -435,6 +462,7 @@ class SuperEditorState extends State<SuperEditor> {
     _contentTapDelegate?.dispose();
 
     _iosControlsController.dispose();
+    _androidControlsController.dispose();
 
     widget.editor.context.remove(Editor.layoutKey);
 
@@ -495,6 +523,10 @@ class SuperEditorState extends State<SuperEditor> {
       selectedTextColorStrategy: widget.stylesheet.selectedTextColorStrategy,
     );
 
+    final showComposingUnderline = defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.android;
+
     _docLayoutPresenter = SingleColumnLayoutPresenter(
       document: document,
       componentBuilders: widget.componentBuilders,
@@ -502,6 +534,12 @@ class SuperEditorState extends State<SuperEditor> {
         _docStylesheetStyler,
         _docLayoutPerComponentBlockStyler,
         ...widget.customStylePhases,
+        if (showComposingUnderline)
+          SingleColumnLayoutComposingRegionStyler(
+            document: document,
+            composingRegion: editContext.composer.composingRegion,
+            showComposingUnderline: true,
+          ),
         // Selection changes are very volatile. Put that phase last
         // to minimize view model recalculations.
         _docLayoutSelectionStyler,
@@ -608,23 +646,28 @@ class SuperEditorState extends State<SuperEditor> {
     );
   }
 
-  /// Builds an [InheritedWidget] that holds a shared context for editor controls,
+  /// Build an [InheritedWidget] that holds a shared controller scope for editor controls,
   /// e.g., caret, handles, magnifier, toolbar.
   ///
-  /// This context may be shared by multiple widgets within [SuperEditor]. It's also
-  /// possible that a client app has wrapped [SuperEditor] with its own context
-  /// [InheritedWidget], in which case the context is shared with widgets inside
+  /// This controller may be shared by multiple widgets within [SuperEditor]. It's also
+  /// possible that a client app has wrapped [SuperEditor] with its own controller scope
+  /// [InheritedWidget], in which case the controller is shared with widgets inside
   /// of [SuperEditor], and widgets outside of [SuperEditor].
+  ///
+  /// The specific scope that's added to the widget tree is selected by the given [gestureMode].
   Widget _buildGestureControlsScope({
     required Widget child,
   }) {
     switch (gestureMode) {
-      // case DocumentGestureMode.mouse:
-      //   // TODO: create context for mouse mode (#1533)
-      // case DocumentGestureMode.android:
-      //   // TODO: create context for Android (#1509)
+      case DocumentGestureMode.mouse:
+        return child;
+      case DocumentGestureMode.android:
+        return SuperEditorAndroidControlsScope(
+          key: _androidControlsContextKey,
+          controller: _androidControlsController,
+          child: child,
+        );
       case DocumentGestureMode.iOS:
-      default:
         return SuperEditorIosControlsScope(
           key: _iosControlsContextKey,
           controller: _iosControlsController,
@@ -685,6 +728,7 @@ class SuperEditorState extends State<SuperEditor> {
     switch (gestureMode) {
       case DocumentGestureMode.iOS:
         return SuperEditorIosToolbarOverlayManager(
+          tapRegionGroupId: widget.tapRegionGroupId,
           defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultIosEditorToolbarBuilder(
             overlayContext,
             mobileToolbarKey,
@@ -703,9 +747,26 @@ class SuperEditorState extends State<SuperEditor> {
             ),
           ),
         );
-      case DocumentGestureMode.mouse:
       case DocumentGestureMode.android:
-      default:
+        return SuperEditorAndroidControlsOverlayManager(
+          tapRegionGroupId: widget.tapRegionGroupId,
+          document: editContext.document,
+          getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+          selection: _composer.selectionNotifier,
+          setSelection: (newSelection) => editContext.editor.execute([
+            ChangeSelectionRequest(newSelection, SelectionChangeType.pushCaret, SelectionReason.userInteraction),
+          ]),
+          scrollChangeSignal: _scrollChangeSignal,
+          dragHandleAutoScroller: _dragHandleAutoScroller,
+          defaultToolbarBuilder: (overlayContext, mobileToolbarKey, focalPoint) => defaultAndroidEditorToolbarBuilder(
+            overlayContext,
+            mobileToolbarKey,
+            editContext.commonOps,
+            SuperEditorAndroidControlsScope.rootOf(context),
+          ),
+          child: child,
+        );
+      case DocumentGestureMode.mouse:
         return child;
     }
   }
@@ -733,13 +794,7 @@ class SuperEditorState extends State<SuperEditor> {
           selection: editContext.composer.selectionNotifier,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
-          documentKey: _docLayoutKey,
-          documentLayoutLink: _documentLayoutLink,
-          selectionLinks: _selectionLinks,
-          handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
-          createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          overlayController: widget.overlayController,
+          dragHandleAutoScroller: _dragHandleAutoScroller,
           showDebugPaint: widget.debugPaint.gestures,
         );
       case DocumentGestureMode.iOS:
@@ -751,6 +806,7 @@ class SuperEditorState extends State<SuperEditor> {
           selection: editContext.composer.selectionNotifier,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
+          dragHandleAutoScroller: _dragHandleAutoScroller,
           showDebugPaint: widget.debugPaint.gestures,
         );
     }
@@ -765,7 +821,7 @@ Widget defaultIosEditorToolbarBuilder(
   CommonEditorOperations editorOps,
   SuperEditorIosControlsController editorControlsController,
 ) {
-  if (isWeb) {
+  if (CurrentPlatform.isWeb) {
     // On web, we defer to the browser's internal overlay controls for mobile.
     return const SizedBox();
   }
@@ -816,6 +872,65 @@ class DefaultIosEditorToolbar extends StatelessWidget {
 
   void _paste() {
     editorOps.paste();
+    editorControlsController.hideToolbar();
+  }
+}
+
+/// Builds a standard editor-style Android floating toolbar.
+Widget defaultAndroidEditorToolbarBuilder(
+  BuildContext context,
+  Key floatingToolbarKey,
+  CommonEditorOperations editorOps,
+  SuperEditorAndroidControlsController editorControlsController,
+) {
+  return DefaultAndroidEditorToolbar(
+    floatingToolbarKey: floatingToolbarKey,
+    editorOps: editorOps,
+    editorControlsController: editorControlsController,
+  );
+}
+
+/// An Android floating toolbar, which includes standard buttons for an editor use-case.
+class DefaultAndroidEditorToolbar extends StatelessWidget {
+  const DefaultAndroidEditorToolbar({
+    super.key,
+    this.floatingToolbarKey,
+    required this.editorOps,
+    required this.editorControlsController,
+  });
+
+  final Key? floatingToolbarKey;
+  final CommonEditorOperations editorOps;
+  final SuperEditorAndroidControlsController editorControlsController;
+
+  @override
+  Widget build(BuildContext context) {
+    return AndroidTextEditingFloatingToolbar(
+      floatingToolbarKey: floatingToolbarKey,
+      onCopyPressed: _copy,
+      onCutPressed: _cut,
+      onPastePressed: _paste,
+      onSelectAllPressed: _selectAll,
+    );
+  }
+
+  void _cut() {
+    editorOps.cut();
+    editorControlsController.hideToolbar();
+  }
+
+  void _copy() {
+    editorOps.copy();
+    editorControlsController.hideToolbar();
+  }
+
+  void _paste() {
+    editorOps.paste();
+    editorControlsController.hideToolbar();
+  }
+
+  void _selectAll() {
+    editorOps.selectAll();
     editorControlsController.hideToolbar();
   }
 }
@@ -973,6 +1088,7 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
     ),
     this.platformOverride,
     this.displayOnAllPlatforms = false,
+    this.displayCaretWithExpandedSelection = true,
     this.blinkTimingMode = BlinkTimingMode.ticker,
   });
 
@@ -987,6 +1103,11 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
   /// By default, the caret is only displayed on desktop.
   final bool displayOnAllPlatforms;
 
+  /// Whether to display the caret when the selection is expanded.
+  ///
+  /// Defaults to `true`.
+  final bool displayCaretWithExpandedSelection;
+
   /// The timing mechanism used to blink, e.g., `Ticker` or `Timer`.
   ///
   /// `Timer`s are not expected to work in tests.
@@ -1000,6 +1121,7 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
       caretStyle: caretStyle,
       platformOverride: platformOverride,
       displayOnAllPlatforms: displayOnAllPlatforms,
+      displayCaretWithExpandedSelection: displayCaretWithExpandedSelection,
       blinkTimingMode: blinkTimingMode,
     );
   }
@@ -1025,6 +1147,13 @@ const defaultSuperEditorDocumentOverlayBuilders = [
   SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
   // Displays caret and drag handles, specifically for iOS.
   SuperEditorIosHandlesDocumentLayerBuilder(),
+
+  // Adds a Leader around the document selection at a focal point for the
+  // Android floating toolbar.
+  SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
+  // Displays caret and drag handles, specifically for Android.
+  SuperEditorAndroidHandlesDocumentLayerBuilder(),
+
   // Displays caret for typical desktop use-cases.
   DefaultCaretOverlayBuilder(),
 ];
@@ -1185,9 +1314,9 @@ final defaultStylesheet = Stylesheet(
       BlockSelector.all,
       (doc, docNode) {
         return {
-          "maxWidth": 640.0,
-          "padding": const CascadingPadding.symmetric(horizontal: 24),
-          "textStyle": const TextStyle(
+          Styles.maxWidth: 640.0,
+          Styles.padding: const CascadingPadding.symmetric(horizontal: 24),
+          Styles.textStyle: const TextStyle(
             color: Colors.black,
             fontSize: 18,
             height: 1.4,
@@ -1199,8 +1328,8 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("header1"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 40),
-          "textStyle": const TextStyle(
+          Styles.padding: const CascadingPadding.only(top: 40),
+          Styles.textStyle: const TextStyle(
             color: Color(0xFF333333),
             fontSize: 38,
             fontWeight: FontWeight.bold,
@@ -1212,8 +1341,8 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("header2"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 32),
-          "textStyle": const TextStyle(
+          Styles.padding: const CascadingPadding.only(top: 32),
+          Styles.textStyle: const TextStyle(
             color: Color(0xFF333333),
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -1225,8 +1354,8 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("header3"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 28),
-          "textStyle": const TextStyle(
+          Styles.padding: const CascadingPadding.only(top: 28),
+          Styles.textStyle: const TextStyle(
             color: Color(0xFF333333),
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -1238,7 +1367,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("paragraph"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 24),
+          Styles.padding: const CascadingPadding.only(top: 24),
         };
       },
     ),
@@ -1246,7 +1375,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("paragraph").after("header1"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 0),
+          Styles.padding: const CascadingPadding.only(top: 0),
         };
       },
     ),
@@ -1254,7 +1383,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("paragraph").after("header2"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 0),
+          Styles.padding: const CascadingPadding.only(top: 0),
         };
       },
     ),
@@ -1262,7 +1391,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("paragraph").after("header3"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 0),
+          Styles.padding: const CascadingPadding.only(top: 0),
         };
       },
     ),
@@ -1270,7 +1399,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("listItem"),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(top: 24),
+          Styles.padding: const CascadingPadding.only(top: 24),
         };
       },
     ),
@@ -1278,7 +1407,7 @@ final defaultStylesheet = Stylesheet(
       const BlockSelector("blockquote"),
       (doc, docNode) {
         return {
-          "textStyle": const TextStyle(
+          Styles.textStyle: const TextStyle(
             color: Colors.grey,
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -1291,7 +1420,7 @@ final defaultStylesheet = Stylesheet(
       BlockSelector.all.last(),
       (doc, docNode) {
         return {
-          "padding": const CascadingPadding.only(bottom: 96),
+          Styles.padding: const CascadingPadding.only(bottom: 96),
         };
       },
     ),

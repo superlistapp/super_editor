@@ -362,7 +362,7 @@ void main() {
         await tester.pumpAndSettle();
 
         final textFieldRect = tester.getRect(find.byType(SuperTextField));
-        final contentRect = tester.getRect(find.byType(SuperTextWithSelection));
+        final contentRect = tester.getRect(find.byType(SuperText));
 
         // Ensure padding was applied.
         expect(contentRect.left - textFieldRect.left, 5);
@@ -398,7 +398,7 @@ SuperTextField
       );
       await tester.pumpAndSettle();
 
-      final textSize = tester.getSize(find.byType(SuperTextWithSelection));
+      final textSize = tester.getSize(find.byType(SuperText));
       final textFieldSize = tester.getSize(find.byType(SuperTextField));
 
       // Ensure the text field height is big enough to display the whole content.

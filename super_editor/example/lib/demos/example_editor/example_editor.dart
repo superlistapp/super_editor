@@ -385,8 +385,14 @@ class _ExampleEditorState extends State<ExampleEditor> {
                 DefaultCaretOverlayBuilder(
                   caretStyle: const CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
                 ),
-                SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
-                SuperEditorIosHandlesDocumentLayerBuilder(),
+                if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                  SuperEditorIosHandlesDocumentLayerBuilder(),
+                  SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
+                ],
+                if (defaultTargetPlatform == TargetPlatform.android) ...[
+                  SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
+                  SuperEditorAndroidHandlesDocumentLayerBuilder(),
+                ],
               ],
               selectionLayerLinks: _selectionLayerLinks,
               selectionStyle: isLight
@@ -496,7 +502,7 @@ final _darkModeStyles = [
     BlockSelector.all,
     (doc, docNode) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Color(0xFFCCCCCC),
         ),
       };
@@ -506,7 +512,7 @@ final _darkModeStyles = [
     const BlockSelector("header1"),
     (doc, docNode) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Color(0xFF888888),
         ),
       };
@@ -516,7 +522,7 @@ final _darkModeStyles = [
     const BlockSelector("header2"),
     (doc, docNode) {
       return {
-        "textStyle": const TextStyle(
+        Styles.textStyle: const TextStyle(
           color: Color(0xFF888888),
         ),
       };
