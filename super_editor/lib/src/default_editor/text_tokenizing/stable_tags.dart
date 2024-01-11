@@ -537,10 +537,8 @@ class TagUserReaction implements EditReaction {
       }
 
       // We only care about deleted text when the deleted text contains at least one tag.
-      final tagsInDeletedText = change.deletedText.getAttributionSpansInRange(
-        attributionFilter: (attribution) =>
-            attribution == stableTagComposingAttribution || attribution is CommittedStableTagAttribution,
-        range: SpanRange(0, change.deletedText.text.length),
+      final tagsInDeletedText = change.deletedText.getAttributionSpansByFilter(
+        (attribution) => attribution == stableTagComposingAttribution || attribution is CommittedStableTagAttribution,
       );
       if (tagsInDeletedText.isEmpty) {
         continue;

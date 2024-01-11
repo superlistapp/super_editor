@@ -413,9 +413,8 @@ class PatternTagReaction implements EditReaction {
   }
 
   void _splitBackToBackTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
-    final patternTags = node.text.getAttributionSpansInRange(
-      attributionFilter: (attribution) => attribution is PatternTagAttribution,
-      range: SpanRange(0, node.text.text.length),
+    final patternTags = node.text.getAttributionSpansByFilter(
+      (attribution) => attribution is PatternTagAttribution,
     );
     if (patternTags.isEmpty) {
       return;
@@ -511,9 +510,8 @@ class PatternTagReaction implements EditReaction {
       }
 
       // We only care about deleted text when the deleted text contains at least one tag.
-      final tagsInDeletedText = change.deletedText.getAttributionSpansInRange(
-        attributionFilter: (attribution) => attribution is PatternTagAttribution,
-        range: SpanRange(0, change.deletedText.text.length),
+      final tagsInDeletedText = change.deletedText.getAttributionSpansByFilter(
+        (attribution) => attribution is PatternTagAttribution,
       );
       if (tagsInDeletedText.isEmpty) {
         continue;
