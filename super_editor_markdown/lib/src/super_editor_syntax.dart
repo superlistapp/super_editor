@@ -2,7 +2,7 @@ enum MarkdownSyntax {
   /// Standard markdown syntax.
   normal,
 
-  /// Extended syntax which supports serialization of text alignment, strikethrough and underline.
+  /// Extended syntax which supports serialization of text alignment, strikethrough, underline and image size.
   ///
   /// Underline text is serialized between a pair of `¬`.
   ///
@@ -16,5 +16,8 @@ enum MarkdownSyntax {
   /// `---:` represents right alignment.
   ///
   /// `-::-` represents justify alignment.
+  ///
+  /// Image size is serialized using the notation `=widthxheight` after the url,
+  /// separated by a space.
   superEditor,
 }

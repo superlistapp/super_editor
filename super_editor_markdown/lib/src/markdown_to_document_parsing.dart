@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_markdown/src/image_syntax.dart';
+import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 import 'super_editor_syntax.dart';
 
@@ -40,7 +42,7 @@ MutableDocument deserializeMarkdownToDocument(
   final markdownNodes = blockParser.parseLines();
 
   // Convert structured markdown to a Document.
-  final nodeVisitor = _MarkdownToDocument(customElementToNodeConverters, encodeHtml);
+  final nodeVisitor = _MarkdownToDocument(customElementToNodeConverters, encodeHtml, syntax);
   for (final node in markdownNodes) {
     node.accept(nodeVisitor);
   }
@@ -68,7 +70,13 @@ MutableDocument deserializeMarkdownToDocument(
 /// contains [DocumentNode]s that correspond to the visited
 /// markdown content.
 class _MarkdownToDocument implements md.NodeVisitor {
-  _MarkdownToDocument([this._elementToNodeConverters = const [], this._encodeHtml = false]);
+  _MarkdownToDocument([
+    this._elementToNodeConverters = const [],
+    this._encodeHtml = false,
+    this.syntax = MarkdownSyntax.normal,
+  ]);
+
+  final MarkdownSyntax syntax;
 
   final List<ElementToNodeConverter> _elementToNodeConverters;
 
@@ -123,6 +131,12 @@ class _MarkdownToDocument implements md.NodeVisitor {
             // TODO: handle null image URL
             imageUrl: inlineVisitor.imageUrl!,
             altText: inlineVisitor.imageAltText!,
+            expectedBitmapSize: inlineVisitor.width != null || inlineVisitor.height != null
+                ? ExpectedSize(
+                    inlineVisitor.width != null ? int.tryParse(inlineVisitor.width!) : null,
+                    inlineVisitor.height != null ? int.tryParse(inlineVisitor.height!) : null,
+                  )
+                : null,
           );
         } else {
           _addParagraph(inlineVisitor.attributedText, element.attributes);
@@ -282,12 +296,14 @@ class _MarkdownToDocument implements md.NodeVisitor {
   void _addImage({
     required String imageUrl,
     required String altText,
+    ExpectedSize? expectedBitmapSize,
   }) {
     _content.add(
       ImageNode(
         id: Editor.createNodeId(),
         imageUrl: imageUrl,
         altText: altText,
+        expectedBitmapSize: expectedBitmapSize,
       ),
     );
   }
@@ -347,6 +363,8 @@ class _MarkdownToDocument implements md.NodeVisitor {
         inlineSyntaxes: [
           md.StrikethroughSyntax(),
           UnderlineSyntax(),
+          if (syntax == MarkdownSyntax.superEditor) //
+            SuperEditorImageSyntax(),
         ],
         encodeHtml: _encodeHtml,
       ),
@@ -387,6 +405,12 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
   String? _imageAltText;
   String? get imageAltText => _imageAltText;
 
+  String? get width => _width;
+  String? _width;
+
+  String? get height => _height;
+  String? _height;
+
   AttributedText get attributedText => _textStack.first;
 
   final List<AttributedText> _textStack = [AttributedText()];
@@ -397,6 +421,8 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
       // TODO: handle missing "src" attribute
       _imageUrl = element.attributes['src']!;
       _imageAltText = element.attributes['alt'] ?? '';
+      _width = element.attributes['width'];
+      _height = element.attributes['height'];
       return true;
     }
 
