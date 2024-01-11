@@ -61,14 +61,7 @@ class _MyApp extends State&lt;MyApp&gt; {
   void initState() {
     super.initState();
 
-    _document = MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: Editor.createNodeId(),
-          text: AttributedText(text: ''),
-        ),
-      ],
-    );
+    _document = MutableDocument.empty();
 
     _composer = MutableDocumentComposer();
 
