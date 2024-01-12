@@ -12,5 +12,7 @@
   "labelParagraph": "Párrafo",
   "labelBlockquote": "Cita de bloque",
   "labelOrderedListItem": "Elemento de lista cerrada",
-  "labelUnorderedListItem": "Elemento de lista no ordenada"
+  "labelUnorderedListItem": "Elemento de lista no ordenada",
+  "labelLimitedWidth": "Ancho limitado",
+  "labelFullWidth": "Ancho completo"
 }
