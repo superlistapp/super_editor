@@ -490,8 +490,8 @@ void main() {
       }
       final scrollOffsetInMiddleOfMomentum = scrollController.offset;
 
-      // Tap to stop the momentum.
-      await tester.tap(find.byType(SuperEditor));
+      // Tap down to stop the momentum.
+      final gesture = await tester.startGesture(tester.getCenter(find.byType(SuperEditor)));
 
       // Let any remaining momentum run (there shouldn't be any).
       await tester.pumpAndSettle();
@@ -499,7 +499,60 @@ void main() {
       // Ensure that the momentum stopped exactly where we tapped.
       expect(scrollOffsetInMiddleOfMomentum, scrollController.offset);
 
+      // Release the pointer.
+      await gesture.up();
+      await tester.pump();
+
       // Ensure that tapping on the editor didn't place the caret.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+    });
+
+    testWidgetsOnDesktop("stops momentum on tap down with trackpad and doesn't place the caret", (tester) async {
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument() //
+          .withLongDoc() //
+          .withScrollController(scrollController) //
+          .pump();
+
+      // Ensure the editor initially has no selection.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+      // Fling scroll the editor with the trackpad.
+      final scrollGesture = await tester.startGesture(
+        tester.getCenter(find.byType(SuperEditor)),
+        kind: PointerDeviceKind.trackpad,
+      );
+      await scrollGesture.moveBy(const Offset(0, -1000));
+      await scrollGesture.up();
+
+      // Pump a few frames of momentum.
+      for (int i = 0; i < 25; i += 1) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      final scrollOffsetInMiddleOfMomentum = scrollController.offset;
+
+      // Ensure the editor scrolled.
+      expect(scrollOffsetInMiddleOfMomentum, greaterThan(0.0));
+
+      // Tap down to stop the momentum.
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(SuperEditor)),
+        kind: PointerDeviceKind.trackpad,
+      );
+
+      // Let any remaining momentum run (there shouldn't be any).
+      await tester.pumpAndSettle();
+
+      // Ensure that the momentum stopped exactly where we tapped.
+      expect(scrollController.offset, scrollOffsetInMiddleOfMomentum);
+
+      // Release the pointer.
+      await gesture.up();
+      await tester.pump();
+
+      // Ensure that tapping on the editor didn't change the selection.
       expect(SuperEditorInspector.findDocumentSelection(), isNull);
     });
 
