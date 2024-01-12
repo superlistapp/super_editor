@@ -1363,6 +1363,10 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   @visibleForTesting
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
+  void _toggleToolbarOnCollapsedHandleTap() {
+    _controlsController!.toggleToolbar();
+  }
+
   void _onHandlePanStart(DragStartDetails details, HandleType handleType) {
     final selection = widget.selection.value;
     if (selection == null) {
@@ -1578,6 +1582,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
                 onTapDown: (_) {
                   // Register tap down to win gesture arena ASAP.
                 },
+                onTap: _toggleToolbarOnCollapsedHandleTap,
                 onPanStart: (details) => _onHandlePanStart(details, HandleType.collapsed),
                 onPanUpdate: _onHandlePanUpdate,
                 onPanEnd: _onHandlePanEnd,
