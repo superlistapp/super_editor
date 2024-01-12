@@ -758,8 +758,6 @@ Updating drag selection:
     return Listener(
       onPointerSignal: _scrollOnMouseWheel,
       onPointerHover: _onMouseMove,
-      onPointerDown: (event) => _cancelScrollMomentum(),
-      onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: _buildCursorStyle(
         child: _buildGestureInput(
           child: widget.child ?? const SizedBox(),
