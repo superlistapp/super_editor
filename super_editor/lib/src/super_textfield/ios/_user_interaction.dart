@@ -316,7 +316,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       );
 
       widget.editingOverlayController.showMagnifier(_globalDragOffset!);
-      widget.editingOverlayController.blinkController.stopBlinking();
+      widget.editingOverlayController.stopCaretBlinking();
     });
   }
 
@@ -341,7 +341,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     setState(() {
       _isDraggingCaret = false;
       widget.editingOverlayController.hideMagnifier();
-      widget.editingOverlayController.blinkController.startBlinking();
+      widget.editingOverlayController.startCaretBlinking();
 
       if (!widget.textController.selection.isCollapsed) {
         widget.editingOverlayController.showToolbar();

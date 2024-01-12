@@ -204,7 +204,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     setState(() {
       _localDragOffset = _localDragOffset! + details.delta;
       widget.editingController.showMagnifier(_localDragOffset!);
-      widget.editingController.blinkController.stopBlinking();
+      widget.editingController.stopCaretBlinking();
     });
   }
 
@@ -244,7 +244,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
       _isDraggingBase = false;
       _isDraggingExtent = false;
       widget.editingController.hideMagnifier();
-      widget.editingController.blinkController.startBlinking();
+      widget.editingController.startCaretBlinking();
 
       if (!widget.editingController.textController.selection.isCollapsed) {
         widget.editingController.showToolbar();
@@ -583,9 +583,6 @@ class IOSEditingOverlayController with ChangeNotifier {
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController overlayController;
 
-  /// Text field caret blink controller.
-  final BlinkController blinkController;
-
   LeaderLink get toolbarFocalPoint => _toolbarFocalPoint;
   final LeaderLink _toolbarFocalPoint;
 
@@ -629,5 +626,26 @@ class IOSEditingOverlayController with ChangeNotifier {
 
   void _overlayControllerChanged() {
     notifyListeners();
+  }
+
+  /// Text field caret blink controller.
+  final BlinkController blinkController;
+
+  /// Starts the text field caret blinking.
+  ///
+  /// If it's already blinking, does nothing.
+  void startCaretBlinking() {
+    if (!blinkController.isBlinking) {
+      blinkController.startBlinking();
+    }
+  }
+
+  /// Stops the text field caret blinking.
+  ///
+  /// If it's already stopped, does nothing.
+  void stopCaretBlinking() {
+    if (blinkController.isBlinking) {
+      blinkController.stopBlinking();
+    }
   }
 }

@@ -305,7 +305,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     setState(() {
       _localDragOffset = _localDragOffset! + details.delta;
       widget.editingController.showMagnifier(_localDragOffset!);
-      widget.editingController.blinkController.stopBlinking();
+      widget.editingController.stopCaretBlinking();
       _log.fine(' - done updating all local state for drag update');
     });
   }
@@ -374,7 +374,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       _isDraggingBase = false;
       _isDraggingExtent = false;
       widget.editingController.hideMagnifier();
-      widget.editingController.blinkController.startBlinking();
+      widget.editingController.startCaretBlinking();
 
       if (!widget.editingController.textController.selection.isCollapsed) {
         // We hid the toolbar while dragging a handle. If the selection is
@@ -831,9 +831,6 @@ class AndroidEditingOverlayController with ChangeNotifier {
   /// this [textController].
   final AttributedTextEditingController textController;
 
-  /// Text field caret blink controller.
-  final BlinkController blinkController;
-
   void toggleToolbar() {
     if (isToolbarVisible) {
       hideToolbar();
@@ -923,6 +920,27 @@ class AndroidEditingOverlayController with ChangeNotifier {
     if (!_isCollapsedHandleAutoHidden) {
       _isCollapsedHandleAutoHidden = true;
       notifyListeners();
+    }
+  }
+
+  /// Text field caret blink controller.
+  final BlinkController blinkController;
+
+  /// Starts the text field caret blinking.
+  ///
+  /// If it's already blinking, does nothing.
+  void startCaretBlinking() {
+    if (!blinkController.isBlinking) {
+      blinkController.startBlinking();
+    }
+  }
+
+  /// Stops the text field caret blinking.
+  ///
+  /// If it's already stopped, does nothing.
+  void stopCaretBlinking() {
+    if (blinkController.isBlinking) {
+      blinkController.stopBlinking();
     }
   }
 }
