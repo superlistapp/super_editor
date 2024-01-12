@@ -12,5 +12,7 @@
   "labelParagraph": "Paragraph",
   "labelBlockquote": "Blockquote",
   "labelOrderedListItem": "Ordered List Item",
-  "labelUnorderedListItem": "Unordered List Item"
+  "labelUnorderedListItem": "Unordered List Item",
+  "labelLimitedWidth": "Limited width",
+  "labelFullWidth": "Full width"
 }
