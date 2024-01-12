@@ -14,13 +14,25 @@ void main() {
       // the maximum width a component can be.
       final context = await tester
           .createDocument() //
-          .withSingleEmptyParagraph()
+          .withCustomContent(
+            MutableDocument(nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(),
+                metadata: const SingleColumnLayoutComponentStyles(
+                  width: 600.0,
+                ).toMetadata(),
+              ),
+            ]),
+          )
           .withEditorSize(const Size(1000.0, 5000.0))
           .useStylesheet(
             defaultStylesheet.copyWith(addRulesAfter: [
               StyleRule(
                 BlockSelector.all,
                 (doc, docNode) => {
+                  // Zeroes the padding so the component is exactly
+                  // the requested size.
                   Styles.padding: const CascadingPadding.all(0.0),
                 },
               )
