@@ -712,7 +712,8 @@ class LinkifyReaction implements EditReaction {
           .firstOrNull;
     }
 
-    if (insertionOrDeletionOffset < changedNodeText.length) {
+    if ((insertionOrDeletionEvent is TextInsertionEvent && insertionOrDeletionOffset < changedNodeText.length - 1) ||
+        (insertionOrDeletionEvent is TextDeletedEvent && insertionOrDeletionOffset < changedNodeText.length)) {
       // Check if the downstream character has a link attribution.
       final downstreamOffset = insertionOrDeletionEvent is TextInsertionEvent //
           ? insertionOrDeletionOffset + 1
