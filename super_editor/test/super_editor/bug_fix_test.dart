@@ -8,11 +8,7 @@ void main() {
   group("Bug fix", () {
     group("429 - delete multiple new nodes", () {
       testWidgets("bug repro", (tester) async {
-        final document = MutableDocument(
-          nodes: [
-            ParagraphNode(id: "1", text: AttributedText()),
-          ],
-        );
+        final document = MutableDocument.empty("1");
         final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -84,11 +80,7 @@ void main() {
       });
 
       testWidgets("related to bug", (tester) async {
-        final document = MutableDocument(
-          nodes: [
-            ParagraphNode(id: "1", text: AttributedText()),
-          ],
-        );
+        final document = MutableDocument.empty("1");
         final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(

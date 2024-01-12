@@ -909,14 +909,7 @@ void main() {
       testWidgetsOnAllPlatforms("deletes second tag and leaves first tag alone", (tester) async {
         await _pumpTestEditor(
           tester,
-          MutableDocument(
-            nodes: [
-              ParagraphNode(
-                id: "1",
-                text: AttributedText(),
-              ),
-            ],
-          ),
+          MutableDocument.empty("1"),
         );
 
         await tester.placeCaretInParagraph("1", 0);

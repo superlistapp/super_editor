@@ -23,11 +23,7 @@ MutableDocument hrThenParagraphDoc() => MutableDocument(
       ],
     );
 
-MutableDocument singleParagraphEmptyDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(id: "1", text: AttributedText()),
-      ],
-    );
+MutableDocument singleParagraphEmptyDoc() => MutableDocument.empty("1");
 
 MutableDocument twoParagraphEmptyDoc() => MutableDocument(
       nodes: [

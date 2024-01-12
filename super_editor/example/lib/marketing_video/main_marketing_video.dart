@@ -27,14 +27,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
   void initState() {
     super.initState();
 
-    _document = MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: Editor.createNodeId(),
-          text: AttributedText(),
-        ),
-      ],
-    );
+    _document = MutableDocument.empty();
     _composer = MutableDocumentComposer(
       initialSelection: DocumentSelection.collapsed(
         position: DocumentPosition(
