@@ -294,14 +294,13 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   @override
   void dispose() {
-    _blinkController.dispose();
-
     _removeEditingOverlayControls();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // Dispose after the current frame so that other widgets have
       // time to remove their listeners.
       _editingOverlayController.dispose();
+      _blinkController.dispose();
     });
 
     _textEditingController

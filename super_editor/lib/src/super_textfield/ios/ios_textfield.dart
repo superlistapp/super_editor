@@ -313,8 +313,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   @override
   void dispose() {
-    _blinkController.dispose();
-
     _removeEditingOverlayControls();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -322,6 +320,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       // time to remove their listeners.
       _editingOverlayController.dispose();
       _overlayController.dispose();
+      _blinkController.dispose();
     });
 
     _textEditingController
