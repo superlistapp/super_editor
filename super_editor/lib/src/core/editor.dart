@@ -498,12 +498,14 @@ class MutableDocument implements Document, Editable {
     _refreshNodeIdCaches();
   }
 
-  /// Creates an empty [Document].
-  factory MutableDocument.empty() {
+  /// Creates an [Document] with a single [ParagraphNode].
+  ///
+  /// Optionally, takes in a [nodeId] for the [ParagraphNode].
+  factory MutableDocument.empty([String? nodeId]) {
     return MutableDocument(
       nodes: [
         ParagraphNode(
-          id: Editor.createNodeId(),
+          id: nodeId ?? Editor.createNodeId(),
           text: AttributedText(),
         ),
       ],
