@@ -3,10 +3,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/super_text_field.dart';
 
 import '../super_textfield_inspector.dart';
+import '../super_textfield_robot.dart';
 
 void main() {
   group("SuperTextField Android selection >", () {
@@ -52,6 +54,116 @@ void main() {
       await tester.pumpAndSettle(kDoubleTapTimeout);
 
       // Ensure that no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+    });
+
+    testWidgetsOnAndroid("tapping at collapsed handle shows/hides the toolbar", (tester) async {
+      await _pumpTestApp(tester);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Place caret at the end of the textfield.
+      await tester.placeCaretInSuperTextField(3);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Tap on the drag handle to show the toolbar.
+      await tester.tapOnAndroidCollapsedHandle();
+      await tester.pump();
+
+      // Ensure that the text field toolbar is visible.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsOneWidget);
+
+      // Tap on the drag handle to hide the toolbar.
+      await tester.tapOnAndroidCollapsedHandle();
+      await tester.pump();
+
+      // Ensure the toolbar disappeared.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+    });
+
+    testWidgetsOnAndroid("tapping at existing collapsed selection shows/hides the toolbar", (tester) async {
+      await _pumpTestApp(tester);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Place caret at "ab|c".
+      await tester.placeCaretInSuperTextField(2);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Tap again on the same position to show the toolbar.
+      await tester.placeCaretInSuperTextField(2);
+
+      // Ensure that the toolbar is visible and the selection didn't change.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsOneWidget);
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: 2),
+      );
+
+      // Tap again on the same position to hide the toolbar.
+      await tester.placeCaretInSuperTextField(2);
+
+      // Ensure the toolbar disappeared and the selection didn't change.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: 2),
+      );
+    });
+
+    testWidgetsOnAndroid("tapping at existing expanded selection places the caret", (tester) async {
+      await _pumpTestApp(tester);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Double tap to select "abc".
+      await tester.doubleTapAtSuperTextField(2);
+
+      // Ensure the toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsOneWidget);
+
+      // Tap at "ab|c" to place the caret. Pump to avoid a pan gesture.
+      await tester.pump(kTapTimeout);
+      await tester.placeCaretInSuperTextField(2);
+
+      // Ensure that the toolbar disappeared and the selection changed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+      expect(
+        SuperTextFieldInspector.findSelection(),
+        const TextSelection.collapsed(offset: 2),
+      );
+    });
+
+    testWidgetsOnAndroid("hides toolbar when the user taps to move the caret", (tester) async {
+      await _pumpTestApp(tester);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Place caret at the beginning of the textfield.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Ensure no toolbar is displayed.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
+
+      // Tap on the drag handle to show the toolbar.
+      await tester.tapOnAndroidCollapsedHandle();
+      await tester.pump();
+
+      // Ensure that the text field toolbar is visible.
+      expect(find.byType(AndroidTextEditingFloatingToolbar), findsOneWidget);
+
+      // Place caret at the end of the textfield.
+      await tester.placeCaretInSuperTextField(3);
+
+      // Ensure the toolbar disappeared.
       expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
     });
   });
