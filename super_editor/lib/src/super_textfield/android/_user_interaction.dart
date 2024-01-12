@@ -324,7 +324,10 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
       );
 
       widget.editingOverlayController.showMagnifier(_globalDragOffset!);
-      widget.editingOverlayController.stopCaretBlinking();
+
+      if (widget.textController.selection.isCollapsed) {
+        widget.editingOverlayController.stopCaretBlinking();
+      }
     });
   }
 
@@ -349,7 +352,10 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     setState(() {
       _isDraggingCaret = false;
       widget.editingOverlayController.hideMagnifier();
-      widget.editingOverlayController.startCaretBlinking();
+
+      if (widget.textController.selection.isCollapsed) {
+        widget.editingOverlayController.startCaretBlinking();
+      }
 
       if (!widget.textController.selection.isCollapsed) {
         widget.editingOverlayController.showToolbar();

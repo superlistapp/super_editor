@@ -305,7 +305,11 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     setState(() {
       _localDragOffset = _localDragOffset! + details.delta;
       widget.editingController.showMagnifier(_localDragOffset!);
-      widget.editingController.stopCaretBlinking();
+
+      if (widget.editingController.textController.selection.isCollapsed) {
+        widget.editingController.stopCaretBlinking();
+      }
+
       _log.fine(' - done updating all local state for drag update');
     });
   }
@@ -374,7 +378,10 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       _isDraggingBase = false;
       _isDraggingExtent = false;
       widget.editingController.hideMagnifier();
-      widget.editingController.startCaretBlinking();
+
+      if (widget.editingController.textController.selection.isCollapsed) {
+        widget.editingController.startCaretBlinking();
+      }
 
       if (!widget.editingController.textController.selection.isCollapsed) {
         // We hid the toolbar while dragging a handle. If the selection is

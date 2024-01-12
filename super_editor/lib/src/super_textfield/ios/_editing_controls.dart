@@ -204,7 +204,10 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     setState(() {
       _localDragOffset = _localDragOffset! + details.delta;
       widget.editingController.showMagnifier(_localDragOffset!);
-      widget.editingController.stopCaretBlinking();
+
+      if (widget.editingController.textController.selection.isCollapsed) {
+        widget.editingController.stopCaretBlinking();
+      }
     });
   }
 
@@ -244,7 +247,10 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
       _isDraggingBase = false;
       _isDraggingExtent = false;
       widget.editingController.hideMagnifier();
-      widget.editingController.startCaretBlinking();
+
+      if (widget.editingController.textController.selection.isCollapsed) {
+        widget.editingController.startCaretBlinking();
+      }
 
       if (!widget.editingController.textController.selection.isCollapsed) {
         widget.editingController.showToolbar();
