@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/infrastructure/composable_text.dart';
 
 import 'document_selection.dart';
 import 'document.dart';
@@ -447,6 +448,35 @@ mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentCompon
   @override
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset) {
     return _childDocumentComponent.getDesiredCursorAtOffset(_getChildOffset(localOffset));
+  }
+}
+
+class ProxyTextComponent extends StatefulWidget {
+  const ProxyTextComponent({
+    super.key,
+    required this.childDocumentComponentKey,
+    required this.child,
+  });
+
+  final GlobalKey<State<StatefulWidget>> childDocumentComponentKey;
+
+  final Widget child;
+
+  @override
+  State<ProxyTextComponent> createState() => _ProxyTextComponentState();
+}
+
+class _ProxyTextComponentState extends State<ProxyTextComponent>
+    with ProxyDocumentComponent<ProxyTextComponent>, ProxyTextComposable {
+  @override
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => widget.childDocumentComponentKey;
+
+  @override
+  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }
 

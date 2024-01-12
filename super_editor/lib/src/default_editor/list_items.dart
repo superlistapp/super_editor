@@ -7,7 +7,6 @@ import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
-import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import '../core/document.dart';
@@ -146,7 +145,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
 
     if (componentViewModel.type == ListItemType.unordered) {
       return UnorderedListItemComponent(
-        key: componentContext.componentKey,
+        componentKey: componentContext.componentKey,
         text: componentViewModel.text,
         styleBuilder: componentViewModel.textStyleBuilder,
         indent: componentViewModel.indent,
@@ -158,7 +157,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
       );
     } else if (componentViewModel.type == ListItemType.ordered) {
       return OrderedListItemComponent(
-        key: componentContext.componentKey,
+        componentKey: componentContext.componentKey,
         indent: componentViewModel.indent,
         listIndex: componentViewModel.ordinalValue!,
         text: componentViewModel.text,
@@ -273,9 +272,10 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
 /// Displays a un-ordered list item in a document.
 ///
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
-class UnorderedListItemComponent extends StatefulWidget {
-  const UnorderedListItemComponent({
+class UnorderedListItemComponent extends StatelessWidget {
+  UnorderedListItemComponent({
     Key? key,
+    required this.componentKey,
     required this.text,
     required this.styleBuilder,
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
@@ -291,6 +291,7 @@ class UnorderedListItemComponent extends StatefulWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
+  final GlobalKey componentKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final UnorderedListItemDotBuilder dotBuilder;
@@ -305,57 +306,49 @@ class UnorderedListItemComponent extends StatefulWidget {
   final bool showComposingUnderline;
   final bool showDebugPaint;
 
-  @override
-  State<UnorderedListItemComponent> createState() => _UnorderedListItemComponentState();
-}
-
-class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
-    with ProxyDocumentComponent<UnorderedListItemComponent>, ProxyTextComposable {
-  final _textKey = GlobalKey();
-
-  @override
-  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => _textKey;
-
-  @override
-  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+  final GlobalKey _textKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = widget.styleBuilder({});
-    final indentSpace = widget.indentCalculator(textStyle, widget.indent);
+    final textStyle = styleBuilder({});
+    final indentSpace = indentCalculator(textStyle, indent);
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.25));
     const manualVerticalAdjustment = 3.0;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: indentSpace,
-          margin: const EdgeInsets.only(top: manualVerticalAdjustment),
-          decoration: BoxDecoration(
-            border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+    return ProxyTextComponent(
+      key: componentKey,
+      childDocumentComponentKey: _textKey,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: indentSpace,
+            margin: const EdgeInsets.only(top: manualVerticalAdjustment),
+            decoration: BoxDecoration(
+              border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+            ),
+            child: SizedBox(
+              height: lineHeight,
+              child: dotBuilder(context, this),
+            ),
           ),
-          child: SizedBox(
-            height: lineHeight,
-            child: widget.dotBuilder(context, widget),
+          Expanded(
+            child: TextComponent(
+              key: _textKey,
+              text: text,
+              textStyleBuilder: styleBuilder,
+              textSelection: textSelection,
+              textScaler: textScaler,
+              selectionColor: selectionColor,
+              highlightWhenEmpty: highlightWhenEmpty,
+              composingRegion: composingRegion,
+              showComposingUnderline: showComposingUnderline,
+              showDebugPaint: showDebugPaint,
+            ),
           ),
-        ),
-        Expanded(
-          child: TextComponent(
-            key: _textKey,
-            text: widget.text,
-            textStyleBuilder: widget.styleBuilder,
-            textSelection: widget.textSelection,
-            textScaler: textScaler,
-            selectionColor: widget.selectionColor,
-            highlightWhenEmpty: widget.highlightWhenEmpty,
-            composingRegion: widget.composingRegion,
-            showComposingUnderline: widget.showComposingUnderline,
-            showDebugPaint: widget.showDebugPaint,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -380,9 +373,10 @@ Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListIt
 /// Displays an ordered list item in a document.
 ///
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
-class OrderedListItemComponent extends StatefulWidget {
-  const OrderedListItemComponent({
+class OrderedListItemComponent extends StatelessWidget {
+  OrderedListItemComponent({
     Key? key,
+    required this.componentKey,
     required this.listIndex,
     required this.text,
     required this.styleBuilder,
@@ -399,6 +393,7 @@ class OrderedListItemComponent extends StatefulWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
+  final GlobalKey componentKey;
   final int listIndex;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
@@ -414,56 +409,48 @@ class OrderedListItemComponent extends StatefulWidget {
   final bool showComposingUnderline;
   final bool showDebugPaint;
 
-  @override
-  State<OrderedListItemComponent> createState() => _OrderedListItemComponentState();
-}
-
-class _OrderedListItemComponentState extends State<OrderedListItemComponent>
-    with ProxyDocumentComponent<OrderedListItemComponent>, ProxyTextComposable {
-  final _textKey = GlobalKey();
-
-  @override
-  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => _textKey;
-
-  @override
-  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+  final GlobalKey _textKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = widget.styleBuilder({});
-    final indentSpace = widget.indentCalculator(textStyle, widget.indent);
+    final textStyle = styleBuilder({});
+    final indentSpace = indentCalculator(textStyle, indent);
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.0));
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: indentSpace,
-          height: lineHeight,
-          decoration: BoxDecoration(
-            border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
-          ),
-          child: SizedBox(
+    return ProxyTextComponent(
+      key: componentKey,
+      childDocumentComponentKey: _textKey,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: indentSpace,
             height: lineHeight,
-            child: widget.numeralBuilder(context, widget),
+            decoration: BoxDecoration(
+              border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+            ),
+            child: SizedBox(
+              height: lineHeight,
+              child: numeralBuilder(context, this),
+            ),
           ),
-        ),
-        Expanded(
-          child: TextComponent(
-            key: _textKey,
-            text: widget.text,
-            textStyleBuilder: widget.styleBuilder,
-            textSelection: widget.textSelection,
-            textScaler: textScaler,
-            selectionColor: widget.selectionColor,
-            highlightWhenEmpty: widget.highlightWhenEmpty,
-            composingRegion: widget.composingRegion,
-            showComposingUnderline: widget.showComposingUnderline,
-            showDebugPaint: widget.showDebugPaint,
+          Expanded(
+            child: TextComponent(
+              key: _textKey,
+              text: text,
+              textStyleBuilder: styleBuilder,
+              textSelection: textSelection,
+              textScaler: textScaler,
+              selectionColor: selectionColor,
+              highlightWhenEmpty: highlightWhenEmpty,
+              composingRegion: composingRegion,
+              showComposingUnderline: showComposingUnderline,
+              showDebugPaint: showDebugPaint,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

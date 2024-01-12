@@ -189,9 +189,9 @@ class SuperEditorInspector {
   static TextSpan findRichTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
     final documentLayout = findDocumentLayout(superEditorFinder);
 
-    final textComponentState = documentLayout.getComponentByNodeId(nodeId) as DocumentComponent;
+    final component = documentLayout.getComponentByNodeId(nodeId) as DocumentComponent;
     final superText = find
-        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
+        .descendant(of: find.byWidget(component.widget), matching: find.byType(SuperText))
         .evaluate()
         .single
         .widget as SuperText;
