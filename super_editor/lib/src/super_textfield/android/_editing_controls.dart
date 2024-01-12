@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
@@ -216,6 +217,12 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       // this drag event started in a handle, not within this overall widget.
       _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
     });
+  }
+
+  void _onHandleTap(HandleType handleType) {
+    if (handleType == HandleType.collapsed) {
+      widget.editingController.toggleToolbar();
+    }
   }
 
   void _onBasePanStart(DragStartDetails details) {
@@ -716,7 +723,9 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       child: FractionalTranslation(
         translation: fractionalTranslation,
         child: GestureDetector(
+          dragStartBehavior: DragStartBehavior.down,
           behavior: HitTestBehavior.translucent,
+          onTap: () => _onHandleTap(handleType),
           onPanStart: onPanStart,
           onPanUpdate: _onPanUpdate,
           onPanEnd: _onPanEnd,

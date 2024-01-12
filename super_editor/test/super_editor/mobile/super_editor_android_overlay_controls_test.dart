@@ -63,6 +63,53 @@ void main() {
       await tester.pump(kTapMinTime);
     });
 
+    testWidgetsOnAndroid("shows and hides toolbar upon tap on collapsed handle", (tester) async {
+      await _pumpSingleParagraphApp(tester);
+
+      // Place the caret at the beginning of the document.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Ensure the toolbar isn't visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
+
+      // Tap the drag handle to show the toolbar.
+      await tester.tap(SuperEditorInspector.findMobileCaretDragHandle());
+      await tester.pump();
+
+      // Ensure the toolbar is visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isTrue);
+
+      // Tap the drag handle to hide the toolbar.
+      await tester.tap(SuperEditorInspector.findMobileCaretDragHandle());
+      await tester.pump();
+
+      // Ensure the toolbar isn't visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
+    });
+
+    testWidgetsOnAndroid("hides toolbar when the user taps to move the caret", (tester) async {
+      await _pumpSingleParagraphApp(tester);
+
+      // Place the caret at the beginning of the document.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Ensure the toolbar isn't visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
+
+      // Tap the drag handle to show the toolbar.
+      await tester.tap(SuperEditorInspector.findMobileCaretDragHandle());
+      await tester.pump();
+
+      // Ensure the toolbar is visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isTrue);
+
+      // Place the caret at "Lorem |ipsum".
+      await tester.placeCaretInParagraph("1", 6);
+
+      // Ensure the toolbar isn't visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
+    });
+
     testWidgetsOnAndroid("shows toolbar when selection is expanded", (tester) async {
       await _pumpSingleParagraphApp(tester);
 
