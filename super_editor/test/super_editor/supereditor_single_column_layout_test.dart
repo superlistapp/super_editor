@@ -40,6 +40,9 @@ void main() {
           )
           .pump();
 
+      // Ensure the component initially has the requested size.
+      expect(SuperEditorInspector.findComponentSize('1').width, 600.0);
+
       // Change the width the of the first component in the document layout.
       context.editor.execute(
         const [
