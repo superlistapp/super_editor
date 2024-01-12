@@ -13,7 +13,7 @@ import 'test_tools.dart';
 void main() {
   group("SuperEditor > pasting markdown >", () {
     testWidgetsOnArbitraryDesktop("can paste into an empty document", (tester) async {
-      final document = MutableDocument(nodes: [ParagraphNode(id: "1", text: AttributedText())]);
+      final document = MutableDocument.empty("1");
       final composer = MutableDocumentComposer();
       final editor = Editor(
         editables: {
