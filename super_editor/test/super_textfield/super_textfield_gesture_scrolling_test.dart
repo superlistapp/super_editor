@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
@@ -193,7 +194,7 @@ void main() {
       expect(viewportHeight, greaterThanOrEqualTo(totalHeight));
     });
 
-    testWidgetsOnAllPlatforms("stops momentum on tap down", (tester) async {
+    testWidgetsOnDesktop("stops momentum on tap down with trackpad and doesn't place the caret", (tester) async {
       // Generate a long text to have enough scrollable content.
       final text = [
         for (int i = 1; i <= 1000; i++) //
@@ -217,8 +218,13 @@ void main() {
       // Ensure the textfield initially has no selection.
       expect(SuperTextFieldInspector.findSelection(), TextRange.empty);
 
-      // Fling scroll the textfield.
-      await tester.fling(find.byType(SuperTextField), const Offset(0.0, -1000), 1000);
+      // Fling scroll the textfield with the trackpad.
+      final scrollGesture = await tester.startGesture(
+        tester.getCenter(find.byType(SuperTextField)),
+        kind: PointerDeviceKind.trackpad,
+      );
+      await scrollGesture.moveBy(const Offset(0, -1000));
+      await scrollGesture.up();
 
       // Pump a few frames of momentum.
       for (int i = 0; i < 25; i += 1) {
@@ -226,18 +232,27 @@ void main() {
       }
       final scrollOffsetInMiddleOfMomentum = SuperTextFieldInspector.findScrollOffset();
 
+      // Ensure the textfield scrolled.
+      expect(scrollOffsetInMiddleOfMomentum, greaterThan(0.0));
+
       // Tap down to stop the momentum.
-      final gesture = await tester.startGesture(tester.getCenter(find.byType(SuperTextField)));
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(SuperTextField)),
+        kind: PointerDeviceKind.trackpad,
+      );
 
       // Let any remaining momentum run (there shouldn't be any).
       await tester.pumpAndSettle();
 
       // Ensure that the momentum stopped exactly where we tapped.
-      expect(SuperTextFieldInspector.findScrollOffset(), scrollOffsetInMiddleOfMomentum);
+      expect(scrollOffsetInMiddleOfMomentum, SuperTextFieldInspector.findScrollOffset());
 
       // Release the pointer.
       await gesture.up();
       await tester.pump();
+
+      // Ensure the selection didn't change.
+      expect(SuperTextFieldInspector.findSelection(), TextRange.empty);
     });
   });
 }
