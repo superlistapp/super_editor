@@ -42,7 +42,6 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
     required this.textController,
     required this.editingOverlayController,
     required this.textScrollController,
-    required this.blinkController,
     required this.selectableTextKey,
     required this.getGlobalCaretRect,
     required this.isMultiline,
@@ -73,9 +72,6 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
   final IOSEditingOverlayController editingOverlayController;
 
   final TextScrollController textScrollController;
-
-  /// Text field caret blink controller.
-  final BlinkController blinkController;
 
   /// [GlobalKey] that references the widget that contains the field's
   /// text.
@@ -320,7 +316,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       );
 
       widget.editingOverlayController.showMagnifier(_globalDragOffset!);
-      widget.blinkController.stopBlinking();
+      widget.editingOverlayController.blinkController.stopBlinking();
     });
   }
 
@@ -345,7 +341,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     setState(() {
       _isDraggingCaret = false;
       widget.editingOverlayController.hideMagnifier();
-      widget.blinkController.startBlinking();
+      widget.editingOverlayController.blinkController.startBlinking();
 
       if (!widget.textController.selection.isCollapsed) {
         widget.editingOverlayController.showToolbar();

@@ -30,7 +30,6 @@ class IOSEditingControls extends StatefulWidget {
     Key? key,
     required this.editingController,
     required this.textScrollController,
-    required this.blinkController,
     required this.textFieldKey,
     required this.textContentKey,
     required this.textFieldLayerLink,
@@ -49,9 +48,6 @@ class IOSEditingControls extends StatefulWidget {
   /// Controller that auto-scrolls text based on handle
   /// location.
   final TextScrollController textScrollController;
-
-  /// Text field caret blink controller.
-  final BlinkController blinkController;
 
   /// [LayerLink] that is anchored to the text field's boundary.
   final LayerLink textFieldLayerLink;
@@ -208,7 +204,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     setState(() {
       _localDragOffset = _localDragOffset! + details.delta;
       widget.editingController.showMagnifier(_localDragOffset!);
-      widget.blinkController.stopBlinking();
+      widget.editingController.blinkController.stopBlinking();
     });
   }
 
@@ -248,7 +244,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
       _isDraggingBase = false;
       _isDraggingExtent = false;
       widget.editingController.hideMagnifier();
-      widget.blinkController.startBlinking();
+      widget.editingController.blinkController.startBlinking();
 
       if (!widget.editingController.textController.selection.isCollapsed) {
         widget.editingController.showToolbar();
@@ -559,6 +555,7 @@ class IOSEditingOverlayController with ChangeNotifier {
     required LeaderLink toolbarFocalPoint,
     required LeaderLink magnifierFocalPoint,
     required this.overlayController,
+    required this.blinkController,
   })  : _toolbarFocalPoint = toolbarFocalPoint,
         _magnifierFocalPoint = magnifierFocalPoint {
     overlayController.addListener(_overlayControllerChanged);
@@ -585,6 +582,9 @@ class IOSEditingOverlayController with ChangeNotifier {
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController overlayController;
+
+  /// Text field caret blink controller.
+  final BlinkController blinkController;
 
   LeaderLink get toolbarFocalPoint => _toolbarFocalPoint;
   final LeaderLink _toolbarFocalPoint;

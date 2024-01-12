@@ -32,7 +32,6 @@ class AndroidEditingOverlayControls extends StatefulWidget {
     Key? key,
     required this.editingController,
     required this.textScrollController,
-    required this.blinkController,
     required this.textFieldKey,
     required this.textContentKey,
     required this.textFieldLayerLink,
@@ -51,9 +50,6 @@ class AndroidEditingOverlayControls extends StatefulWidget {
   /// Controller that auto-scrolls text based on handle
   /// location.
   final TextScrollController textScrollController;
-
-  /// Text field caret blink controller.
-  final BlinkController blinkController;
 
   /// [LayerLink] that is anchored to the text field's boundary.
   final LayerLink textFieldLayerLink;
@@ -309,7 +305,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     setState(() {
       _localDragOffset = _localDragOffset! + details.delta;
       widget.editingController.showMagnifier(_localDragOffset!);
-      widget.blinkController.stopBlinking();
+      widget.editingController.blinkController.stopBlinking();
       _log.fine(' - done updating all local state for drag update');
     });
   }
@@ -378,7 +374,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       _isDraggingBase = false;
       _isDraggingExtent = false;
       widget.editingController.hideMagnifier();
-      widget.blinkController.startBlinking();
+      widget.editingController.blinkController.startBlinking();
 
       if (!widget.editingController.textController.selection.isCollapsed) {
         // We hid the toolbar while dragging a handle. If the selection is
@@ -811,6 +807,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
 class AndroidEditingOverlayController with ChangeNotifier {
   AndroidEditingOverlayController({
     required this.textController,
+    required this.blinkController,
     required LayerLink magnifierFocalPoint,
   }) : _magnifierFocalPoint = magnifierFocalPoint;
 
@@ -833,6 +830,9 @@ class AndroidEditingOverlayController with ChangeNotifier {
   /// selection. Those properties and behaviors are represented by
   /// this [textController].
   final AttributedTextEditingController textController;
+
+  /// Text field caret blink controller.
+  final BlinkController blinkController;
 
   void toggleToolbar() {
     if (isToolbarVisible) {

@@ -228,6 +228,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       toolbarFocalPoint: _toolbarLeaderLink,
       magnifierFocalPoint: _magnifierLeaderLink,
       overlayController: _overlayController,
+      blinkController: _blinkController,
     );
 
     WidgetsBinding.instance.addObserver(this);
@@ -551,7 +552,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             textController: _textEditingController,
             editingOverlayController: _editingOverlayController,
             textScrollController: _textScrollController,
-            blinkController: _blinkController,
             isMultiline: _isMultiline,
             handleColor: widget.handlesColor,
             showDebugPaint: widget.showDebugPaint,
@@ -674,7 +674,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         return IOSEditingControls(
           editingController: _editingOverlayController,
           textScrollController: _textScrollController,
-          blinkController: _blinkController,
           textFieldLayerLink: _textFieldLayerLink,
           textFieldKey: _textFieldKey,
           textContentLayerLink: _textContentLayerLink,

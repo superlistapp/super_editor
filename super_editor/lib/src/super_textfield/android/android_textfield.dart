@@ -210,6 +210,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     _editingOverlayController = AndroidEditingOverlayController(
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
+      blinkController: _blinkController,
     );
 
     WidgetsBinding.instance.addObserver(this);
@@ -557,7 +558,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             isMultiline: _isMultiline,
             handleColor: widget.handlesColor,
             showDebugPaint: widget.showDebugPaint,
-            blinkController: _blinkController,
             child: TextScrollView(
               key: _scrollKey,
               textScrollController: _textScrollController,
@@ -672,7 +672,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           handleColor: widget.handlesColor,
           popoverToolbarBuilder: widget.popoverToolbarBuilder,
           showDebugPaint: widget.showDebugPaint,
-          blinkController: _blinkController,
         );
       },
     );
