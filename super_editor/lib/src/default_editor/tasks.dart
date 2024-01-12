@@ -186,7 +186,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           other is TaskComponentViewModel &&
           runtimeType == other.runtimeType &&
           isComplete == other.isComplete &&
-          setComplete == other.setComplete &&
           text == other.text &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
@@ -200,7 +199,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   int get hashCode =>
       super.hashCode ^
       isComplete.hashCode ^
-      setComplete.hashCode ^
       text.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
