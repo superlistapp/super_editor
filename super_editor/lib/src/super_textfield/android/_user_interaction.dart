@@ -160,8 +160,6 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     }
   }
 
-  void _onTapDown(TapDownDetails details) {}
-
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
 
@@ -461,7 +459,6 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
             () => TapSequenceGestureRecognizer(),
             (TapSequenceGestureRecognizer recognizer) {
               recognizer
-                ..onTapDown = _onTapDown
                 ..onTapUp = _onTapUp
                 ..onDoubleTapDown = _onDoubleTapDown
                 ..onTripleTapDown = _onTripleTapDown
