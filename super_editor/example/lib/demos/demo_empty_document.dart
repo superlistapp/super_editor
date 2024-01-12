@@ -22,7 +22,7 @@ class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
   @override
   void initState() {
     super.initState();
-    _doc = _createDocument1();
+    _doc = MutableDocument.empty("1");
     _composer = MutableDocumentComposer();
     _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
   }
@@ -43,12 +43,4 @@ class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
       ),
     );
   }
-}
-
-MutableDocument _createDocument1() {
-  return MutableDocument(
-    nodes: [
-      ParagraphNode(id: "1", text: AttributedText()),
-    ],
-  );
 }

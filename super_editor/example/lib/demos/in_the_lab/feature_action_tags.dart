@@ -26,12 +26,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
   void initState() {
     super.initState();
 
-    _document = MutableDocument(nodes: [
-      ParagraphNode(
-        id: Editor.createNodeId(),
-        text: AttributedText(""),
-      ),
-    ]);
+    _document = MutableDocument.empty();
     _composer = MutableDocumentComposer();
     _editor = Editor(
       editables: {

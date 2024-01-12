@@ -13,9 +13,7 @@ void main() {
       test('throws exception when there is no command for a given request', () {
         final editor = Editor(
           editables: {
-            Editor.documentKey: MutableDocument(
-              nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText())],
-            ),
+            Editor.documentKey: MutableDocument.empty(),
           },
           requestHandlers: [],
         );
@@ -81,9 +79,7 @@ void main() {
         // and those commands expand to additional commands, the overall command
         // order is what we expect.
         List<EditEvent>? changeList;
-        final document = MutableDocument(
-          nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText())],
-        );
+        final document = MutableDocument.empty();
 
         final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
@@ -148,14 +144,7 @@ void main() {
       test('runs reactions after a command', () {
         int reactionCount = 0;
 
-        final document = MutableDocument(
-          nodes: [
-            ParagraphNode(
-              id: "1",
-              text: AttributedText(),
-            )
-          ],
-        );
+        final document = MutableDocument.empty("1");
 
         final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
@@ -194,9 +183,7 @@ void main() {
       });
 
       test('interrupts back-to-back commands to run a reaction', () {
-        final document = MutableDocument(
-          nodes: [ParagraphNode(id: "1", text: AttributedText())],
-        );
+        final document = MutableDocument.empty("1");
 
         final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
@@ -284,9 +271,7 @@ void main() {
       });
 
       test('reactions receive a change list with events from earlier reactions', () {
-        final document = MutableDocument(
-          nodes: [ParagraphNode(id: "1", text: AttributedText())],
-        );
+        final document = MutableDocument.empty("1");
 
         final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
@@ -370,9 +355,7 @@ void main() {
       });
 
       test('reactions do not run in response to reactions', () {
-        final document = MutableDocument(
-          nodes: [ParagraphNode(id: "1", text: AttributedText())],
-        );
+        final document = MutableDocument.empty("1");
 
         final composer = MutableDocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
