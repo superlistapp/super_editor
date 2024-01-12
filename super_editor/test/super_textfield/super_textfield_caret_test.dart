@@ -5,6 +5,7 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
+import 'super_textfield_robot.dart';
 
 void main() {
   group("SuperTextField caret", () {
@@ -166,6 +167,60 @@ void main() {
       expect(caret.style.width, caretStyle.width);
       expect(caret.style.borderRadius, caretStyle.borderRadius);
     });
+
+    testWidgetsOnMobile("does not blink while dragging", (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText(
+            '''SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.'''),
+      );
+
+      await _pumpTestApp(tester, controller: controller);
+
+      await tester.placeCaretInSuperTextField(0);
+
+      // Drag caret by an arbitrary distance.
+      await tester.dragCaretByDistanceInSuperTextField(const Offset(100, 100));
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+    });
+
+    testWidgetsOnAndroid("does not blink while dragging collapsed handle", (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText(
+            '''SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.'''),
+      );
+
+      await _pumpTestApp(tester, controller: controller);
+
+      await tester.placeCaretInSuperTextField(0);
+
+      // Drag handle by an arbitrary distance.
+      await tester.dragAndroidCollapsedHandleByDistanceInSuperTextField(const Offset(100, 100));
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+    });
   });
 }
 
@@ -195,4 +250,30 @@ bool _isCaretVisible(WidgetTester tester) {
   final customPaint = find.byWidgetPredicate((widget) => widget is CustomPaint && widget.painter is CaretPainter);
   final caretPainter = tester.widget<CustomPaint>(customPaint.last).painter as CaretPainter;
   return caretPainter.blinkController!.opacity == 1.0;
+}
+
+/// Pumps a [SuperTextField] experience.
+Future<void> _pumpTestApp(
+  WidgetTester tester, {
+  AttributedTextEditingController? controller,
+  EdgeInsets? padding,
+  TextAlign? textAlign,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          width: 300,
+          child: SuperTextField(
+            padding: padding,
+            textAlign: textAlign ?? TextAlign.left,
+            textController: controller ??
+                AttributedTextEditingController(
+                  text: AttributedText('abc'),
+                ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
