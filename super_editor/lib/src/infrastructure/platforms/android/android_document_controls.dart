@@ -207,6 +207,10 @@ class AndroidControlsDocumentLayerState
     _controlsController!.shouldCaretBlink.addListener(_onBlinkModeChange);
     _controlsController!.caretJumpToOpaqueSignal.addListener(_caretJumpToOpaque);
 
+    // The appearance of the collapsed handle is used to compute the selection layout data.
+    // We conditionally compute either the caret data or the expanded selection data. This
+    // information is then used to decide whether or not we should show the caret or the
+    // expanded handles. Therefore, we need to listen to this signal to rebuild this layer.
     _controlsController!.shouldShowCollapsedHandle.addListener(_onShouldShowCollapsedHandleChange);
     _onBlinkModeChange();
   }
