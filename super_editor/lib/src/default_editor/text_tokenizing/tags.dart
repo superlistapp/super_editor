@@ -73,7 +73,7 @@ class TagFinder {
       return null;
     }
 
-    final tagText = text.text.substring(tokenStartOffset, tokenEndOffset);
+    final tagText = text.substring(tokenStartOffset, tokenEndOffset);
     if (!tagText.startsWith(tagRule.trigger)) {
       return null;
     }

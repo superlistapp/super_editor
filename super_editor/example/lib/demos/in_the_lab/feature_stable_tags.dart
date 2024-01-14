@@ -75,7 +75,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
         );
 
         for (final userSpan in userSpans) {
-          _users.add(node.text.text.substring(userSpan.start, userSpan.end + 1));
+          _users.add(node.text.substring(userSpan.start, userSpan.end + 1));
         }
       }
     });

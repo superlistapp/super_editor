@@ -74,7 +74,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
         );
 
         for (final actionSpan in actionSpans) {
-          _actions.add(node.text.text.substring(actionSpan.start, actionSpan.end + 1));
+          _actions.add(node.text.substring(actionSpan.start, actionSpan.end + 1));
         }
       }
     });

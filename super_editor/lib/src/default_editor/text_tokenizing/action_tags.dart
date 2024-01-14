@@ -367,7 +367,7 @@ class ActionTagComposingReaction implements EditReaction {
     final changeRequests = <EditRequest>[];
 
     for (final range in cancelledTagRanges) {
-      final cancelledText = node.text.text.substring(range.start, range.end + 1); // +1 because substring is exclusive
+      final cancelledText = node.text.substring(range.start, range.end + 1); // +1 because substring is exclusive
       if (cancelledText == _tagRule.trigger) {
         // This is a legitimate cancellation attribution.
         continue;

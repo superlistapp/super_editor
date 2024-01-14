@@ -84,7 +84,7 @@ class PatternTagPlugin extends SuperEditorPlugin {
       final tags = <IndexedTag>{};
       for (final tagSpan in tagSpans) {
         IndexedTag(
-          Tag.fromRaw(node.text.text.substring(tagSpan.start, tagSpan.end + 1)),
+          Tag.fromRaw(node.text.substring(tagSpan.start, tagSpan.end + 1)),
           node.id,
           tagSpan.start,
         );
@@ -425,7 +425,7 @@ class PatternTagReaction implements EditReaction {
 
     editorPatternTagsLog.finer("Found ${patternTags.length} pattern tag attributions in text node '${node.id}'");
     for (final patternTag in patternTags) {
-      final tagContent = node.text.text.substring(patternTag.start, patternTag.end + 1);
+      final tagContent = node.text.substring(patternTag.start, patternTag.end + 1);
       editorPatternTagsLog.finer("Inspecting $tagContent at ${patternTag.start} -> ${patternTag.end}");
 
       if (tagContent.lastIndexOf(_tagRule.trigger) == 0) {
@@ -442,7 +442,7 @@ class PatternTagReaction implements EditReaction {
       // Remove the existing attribution, which covers multiple pattern tags.
       spanRemovals.add(patternTag.range);
       editorPatternTagsLog.finer(
-          "Removing multi-tag span: ${patternTag.start} -> ${patternTag.end}, '${node.text.text.substring(patternTag.start, patternTag.end + 1)}'");
+          "Removing multi-tag span: ${patternTag.start} -> ${patternTag.end}, '${node.text.substring(patternTag.start, patternTag.end + 1)}'");
 
       // Add a new attribution for each individual pattern tag.
       int triggerSymbolIndex = tagContent.indexOf(_tagRule.trigger);
@@ -454,7 +454,7 @@ class PatternTagReaction implements EditReaction {
           // There's a trigger, followed by at least one non-trigger character. Therefore, this
           // is a legitimate pattern tag. Give it an attribution.
           editorPatternTagsLog.finer(
-              "Adding a split tag span: ${patternTag.start + triggerSymbolIndex} -> ${patternTag.start + tagEnd}, '${node.text.text.substring(patternTag.start + triggerSymbolIndex, patternTag.start + tagEnd + 1)}'");
+              "Adding a split tag span: ${patternTag.start + triggerSymbolIndex} -> ${patternTag.start + tagEnd}, '${node.text.substring(patternTag.start + triggerSymbolIndex, patternTag.start + tagEnd + 1)}'");
           spanCreations.add(SpanRange(
             patternTag.start + triggerSymbolIndex,
             patternTag.start + tagEnd,
@@ -533,7 +533,7 @@ class PatternTagReaction implements EditReaction {
       );
 
       for (final tag in allTags) {
-        final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
+        final tagText = textNode.text.substring(tag.start, tag.end + 1);
         if (!tagText.startsWith(_tagRule.trigger) || tagText == _tagRule.trigger) {
           editorPatternTagsLog.info("Removing tag with value: '$tagText'");
           removeTagRequests.add(
@@ -597,7 +597,7 @@ class PatternTagReaction implements EditReaction {
         )
         .map(
           (span) => IndexedTag(
-            Tag.fromRaw(textNode.text.text.substring(span.start, span.end + 1)),
+            Tag.fromRaw(textNode.text.substring(span.start, span.end + 1)),
             textNode.id,
             span.start,
           ),

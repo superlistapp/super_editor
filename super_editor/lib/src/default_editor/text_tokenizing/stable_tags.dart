@@ -437,7 +437,7 @@ class TagUserReaction implements EditReaction {
     final changeRequests = <EditRequest>[];
 
     for (final range in cancelledTagRanges) {
-      final cancelledText = node.text.text.substring(range.start, range.end + 1); // +1 because substring is exclusive
+      final cancelledText = node.text.substring(range.start, range.end + 1); // +1 because substring is exclusive
       if (cancelledText == _tagRule.trigger) {
         // This is a legitimate cancellation attribution.
         continue;
@@ -561,7 +561,7 @@ class TagUserReaction implements EditReaction {
       );
 
       for (final tag in allComposingTags) {
-        final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
+        final tagText = textNode.text.substring(tag.start, tag.end + 1);
 
         if (!tagText.startsWith(_tagRule.trigger)) {
           editorStableTagsLog.info("Removing tag with value: '$tagText'");
@@ -607,7 +607,7 @@ class TagUserReaction implements EditReaction {
           : -1;
 
       for (final tag in allStableTags) {
-        final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
+        final tagText = textNode.text.substring(tag.start, tag.end + 1);
         final attribution = tag.attribution as CommittedStableTagAttribution;
         final containsTrigger = textNode.text.text[tag.start] == _tagRule.trigger;
 
@@ -862,7 +862,7 @@ class TagUserReaction implements EditReaction {
         AddTextAttributionsRequest(
           documentRange: tagSelection,
           attributions: {
-            CommittedStableTagAttribution(textNode.text.text.substring(
+            CommittedStableTagAttribution(textNode.text.substring(
               tag.startOffset + 1, // +1 to remove the trigger ("@") from the value
               tag.endOffset,
             ))
@@ -959,7 +959,7 @@ class TagUserReaction implements EditReaction {
         )
         .map(
           (span) => IndexedTag(
-            Tag.fromRaw(textNode.text.text.substring(span.start, span.end + 1)),
+            Tag.fromRaw(textNode.text.substring(span.start, span.end + 1)),
             textNode.id,
             span.start,
           ),
