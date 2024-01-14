@@ -694,7 +694,7 @@ void main() {
         expect(spans.length, 1);
         expect(spans[0].attributions, isEmpty);
         expect(spans[0].start, 0);
-        expect(spans[0].end, text.text.length - 1);
+        expect(spans[0].end, text.length - 1);
       });
 
       test('returns a single span for text with an attribution containing the whole text', () {
@@ -722,7 +722,7 @@ void main() {
         expect(spans.length, 1);
         expect(spans[0].attributions, isNotEmpty);
         expect(spans[0].start, 0);
-        expect(spans[0].end, text.text.length - 1);
+        expect(spans[0].end, text.length - 1);
       });
 
       test('returns two spans for text with an attribution from the beginning until half of the text', () {
@@ -755,7 +755,7 @@ void main() {
         expect(spans[0].end, 5);
         expect(spans[1].attributions, isEmpty);
         expect(spans[1].start, 6);
-        expect(spans[1].end, text.text.length - 1);
+        expect(spans[1].end, text.length - 1);
       });
 
       test('handles markers which end after the end of the text', () {

@@ -78,7 +78,7 @@ class PatternTagPlugin extends SuperEditorPlugin {
 
       final tagSpans = node.text.getAttributionSpansInRange(
         attributionFilter: (a) => a is PatternTagAttribution,
-        range: SpanRange(0, node.text.text.length - 1),
+        range: SpanRange(0, node.text.length - 1),
       );
 
       final tags = <IndexedTag>{};
@@ -529,7 +529,7 @@ class PatternTagReaction implements EditReaction {
       final textNode = document.getNodeById(nodeId) as TextNode;
       final allTags = textNode.text.getAttributionSpansInRange(
         attributionFilter: (attribution) => attribution is PatternTagAttribution,
-        range: SpanRange(0, textNode.text.text.length - 1),
+        range: SpanRange(0, textNode.text.length - 1),
       );
 
       for (final tag in allTags) {
@@ -593,7 +593,7 @@ class PatternTagReaction implements EditReaction {
     final allTags = textNode.text
         .getAttributionSpansInRange(
           attributionFilter: (attribution) => attribution is PatternTagAttribution,
-          range: SpanRange(0, textNode.text.text.length - 1),
+          range: SpanRange(0, textNode.text.length - 1),
         )
         .map(
           (span) => IndexedTag(

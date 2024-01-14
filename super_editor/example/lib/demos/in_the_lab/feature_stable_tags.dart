@@ -71,7 +71,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
 
         final userSpans = node.text.getAttributionSpansInRange(
           attributionFilter: (a) => a is CommittedStableTagAttribution,
-          range: SpanRange(0, node.text.text.length - 1),
+          range: SpanRange(0, node.text.length - 1),
         );
 
         for (final userSpan in userSpans) {

@@ -384,7 +384,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         _log.info('Attaching TextInputClient to TextInput');
         setState(() {
           if (!_textEditingController.selection.isValid) {
-            _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.text.length);
+            _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.length);
           }
 
           if (widget.imeConfiguration != null) {

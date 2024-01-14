@@ -65,7 +65,7 @@ class _AttributionBoundsState extends ContentLayerState<AttributionBounds, List<
 
       final spans = node.text.getAttributionSpansInRange(
         attributionFilter: widget.selector,
-        range: SpanRange(0, node.text.text.length - 1),
+        range: SpanRange(0, node.text.length - 1),
       );
 
       for (final span in spans) {

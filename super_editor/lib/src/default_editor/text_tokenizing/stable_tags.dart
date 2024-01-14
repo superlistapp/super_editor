@@ -431,7 +431,7 @@ class TagUserReaction implements EditReaction {
   List<EditRequest> _healCancelledTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
     final cancelledTagRanges = node.text.getAttributionSpansInRange(
       attributionFilter: (a) => a == stableTagCancelledAttribution,
-      range: SpanRange(0, node.text.text.length - 1),
+      range: SpanRange(0, node.text.length - 1),
     );
 
     final changeRequests = <EditRequest>[];
@@ -557,7 +557,7 @@ class TagUserReaction implements EditReaction {
       // If a composing tag no longer contains a trigger ("@"), remove the attribution.
       final allComposingTags = textNode.text.getAttributionSpansInRange(
         attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
-        range: SpanRange(0, textNode.text.text.length - 1),
+        range: SpanRange(0, textNode.text.length - 1),
       );
 
       for (final tag in allComposingTags) {
@@ -588,7 +588,7 @@ class TagUserReaction implements EditReaction {
       final allStableTags = textNode.text
           .getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution is CommittedStableTagAttribution,
-            range: SpanRange(0, textNode.text.text.length - 1),
+            range: SpanRange(0, textNode.text.length - 1),
           )
           .sorted((tag1, tag2) => tag2.start - tag1.start);
 
@@ -955,7 +955,7 @@ class TagUserReaction implements EditReaction {
     final allTags = textNode.text
         .getAttributionSpansInRange(
           attributionFilter: attributionFilter,
-          range: SpanRange(0, textNode.text.text.length - 1),
+          range: SpanRange(0, textNode.text.length - 1),
         )
         .map(
           (span) => IndexedTag(
