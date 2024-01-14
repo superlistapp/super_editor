@@ -688,7 +688,7 @@ void main() {
       test('returns a single span for text without attributions', () {
         final text = AttributedText('Hello World');
 
-        final spans = text.spans.collapseSpans(contentLength: text.text.length);
+        final spans = text.computeAttributionSpans().toList();
 
         // Ensure a single span containing the whole text was returned.
         expect(spans.length, 1);
@@ -716,7 +716,7 @@ void main() {
           ),
         );
 
-        final spans = text.spans.collapseSpans(contentLength: text.text.length);
+        final spans = text.computeAttributionSpans().toList();
 
         // Ensure a single span containing the whole text was returned.
         expect(spans.length, 1);
@@ -745,7 +745,7 @@ void main() {
           ),
         );
 
-        final spans = text.spans.collapseSpans(contentLength: text.text.length);
+        final spans = text.computeAttributionSpans().toList();
 
         // Ensure two spans were returned.
         // The first containing the attribution and the second without any attributions.
@@ -779,7 +779,7 @@ void main() {
           ),
         );
 
-        final spans = text.spans.collapseSpans(contentLength: text.text.length);
+        final spans = text.computeAttributionSpans().toList();
 
         // Ensure two spans were returned. The first containing no attributions and
         // the second containing the attribution.
