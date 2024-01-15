@@ -595,7 +595,7 @@ class LinkifyReaction implements EditReaction {
         if (nextEdit is DocumentEdit && nextEdit.change is NodeChangeEvent) {
           final editedNode = document.getNodeById((nextEdit.change as NodeChangeEvent).nodeId);
           if (editedNode is TextNode) {
-            _extractUpstreamWordAndLinkify(editedNode.text, editedNode.text.text.length);
+            _extractUpstreamWordAndLinkify(editedNode.text, editedNode.text.length);
           }
         }
       }

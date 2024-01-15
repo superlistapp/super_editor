@@ -704,7 +704,7 @@ class _ExpandingCommand implements EditCommand {
       InsertTextCommand(
         documentPosition: DocumentPosition(
           nodeId: paragraph.id,
-          nodePosition: TextNodePosition(offset: paragraph.text.text.length),
+          nodePosition: TextNodePosition(offset: paragraph.text.length),
         ),
         textToInsert:
             "${request.generationId > 0 ? "\n" : ""}${List.filled(request.generationId, "  ").join()}(${request.generationId}.${request.batchId})",

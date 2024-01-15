@@ -222,8 +222,8 @@ class DeleteCharactersCommand implements RobotCommand {
     focusNode!.requestFocus();
 
     int currentOffset = textController.selection.extentOffset;
-    final finalLength = textController.text.text.length - characterCount;
-    while (textController.text.text.length > finalLength) {
+    final finalLength = textController.text.length - characterCount;
+    while (textController.text.length > finalLength) {
       final codePointsDeleted = _deleteCharacter(textController, currentOffset, direction);
       if (direction == TextAffinity.upstream) {
         currentOffset -= codePointsDeleted;

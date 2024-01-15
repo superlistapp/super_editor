@@ -197,7 +197,7 @@ class _TextScrollViewState extends State<TextScrollView>
       return 0;
     }
 
-    final lastCharacterPosition = TextPosition(offset: widget.textEditingController.text.text.length - 1);
+    final lastCharacterPosition = TextPosition(offset: widget.textEditingController.text.length - 1);
     return isMultiline
         ? (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) -
             viewportHeight +
@@ -290,7 +290,7 @@ class _TextScrollViewState extends State<TextScrollView>
     // to avoid any issues with the layout system differentiating between lines.
     final textPositionAtRightEnd =
         _textLayout.getPositionNearestToOffset(Offset(viewportWidth + _scrollController.offset, 5));
-    final nextPosition = textPositionAtRightEnd.offset >= widget.textEditingController.text.text.length - 1
+    final nextPosition = textPositionAtRightEnd.offset >= widget.textEditingController.text.length - 1
         ? textPositionAtRightEnd
         : TextPosition(offset: textPositionAtRightEnd.offset + 1);
     return _textLayout.getOffsetAtPosition(nextPosition).dx;
@@ -802,8 +802,8 @@ class TextScrollController with ChangeNotifier {
       return;
     }
 
-    final characterIndex = _textController.selection.extentOffset >= _textController.text.text.length
-        ? _textController.text.text.length - 1
+    final characterIndex = _textController.selection.extentOffset >= _textController.text.length
+        ? _textController.text.length - 1
         : _textController.selection.extentOffset;
 
     final extentCharacterRectInContentSpace =
@@ -821,8 +821,7 @@ class TextScrollController with ChangeNotifier {
       final isAtFirstLine = rectInContentSpace.top == firstCharRect.top;
       final extraSpacingAboveTop = (isAtFirstLine ? rectInContentSpace.height / 2 : 0);
 
-      final lastCharRect =
-          _delegate!.getCharacterRectAtPosition(TextPosition(offset: _textController.text.text.length - 1));
+      final lastCharRect = _delegate!.getCharacterRectAtPosition(TextPosition(offset: _textController.text.length - 1));
       final isAtLastLine = rectInContentSpace.top == lastCharRect.top;
       final extraSpacingBelowBottom = (isAtLastLine ? rectInContentSpace.height / 2 : 0);
       if (rectInContentSpace.top - extraSpacingAboveTop - _scrollOffset < 0) {

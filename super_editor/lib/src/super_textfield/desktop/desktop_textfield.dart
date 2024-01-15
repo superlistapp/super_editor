@@ -284,7 +284,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     //
     // This behavior matches Flutter's standard behavior.
     if (_focusNode.hasFocus && !_hasFocus && _controller.selection.extentOffset == -1) {
-      _controller.selection = TextSelection.collapsed(offset: _controller.text.text.length);
+      _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
     }
     if (!_focusNode.hasFocus) {
       // We lost focus. Clear the composing region.
@@ -337,7 +337,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       return 0;
     }
 
-    final offsetAtEndOfText = textLayout.getOffsetAtPosition(TextPosition(offset: _controller.text.text.length));
+    final offsetAtEndOfText = textLayout.getOffsetAtPosition(TextPosition(offset: _controller.text.length));
     int lineCount = (offsetAtEndOfText.dy / _getEstimatedLineHeight()).ceil();
 
     if (_controller.text.text.endsWith('\n')) {
@@ -1286,7 +1286,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
         _log.info('Attaching TextInputClient to TextInput');
         setState(() {
           if (!_textController.selection.isValid) {
-            _textController.selection = TextSelection.collapsed(offset: _textController.text.text.length);
+            _textController.selection = TextSelection.collapsed(offset: _textController.text.length);
           }
 
           if (widget.imeConfiguration != null) {
@@ -1636,7 +1636,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
         .abs();
 
     final lastCharY =
-        _textLayout.getCharacterBox(TextPosition(offset: widget.textController.text.text.length - 1))?.top ?? 0.0;
+        _textLayout.getCharacterBox(TextPosition(offset: widget.textController.text.length - 1))?.top ?? 0.0;
     final isAtLastLine = extentOffset.dy == lastCharY;
 
     final beyondBottomExtent = max<double>(
