@@ -1957,7 +1957,7 @@ This is a paragraph
         await tester.pressBackspace();
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInParagraph("1").text, "Text with [] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -2005,7 +2005,7 @@ This is a paragraph
         await tester.pressDelete();
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInParagraph("1").text, "Text with [] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -2054,7 +2054,7 @@ This is a paragraph
         await tester.typeKeyboardText("a");
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInParagraph("1").text, "Text with [a] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [a] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -2102,7 +2102,7 @@ This is a paragraph
         await tester.pressEscape();
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInParagraph("1").text, "Text with [SELECTME] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [SELECTME] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -2136,7 +2136,7 @@ This is a paragraph
       await tester.pressEscape();
 
       // Ensure that nothing changed.
-      expect(SuperEditorInspector.findTextInParagraph("1").text, "This is some text");
+      expect(SuperEditorInspector.findTextInComponent("1").text, "This is some text");
       expect(
         SuperEditorInspector.findDocumentSelection(),
         const DocumentSelection.collapsed(

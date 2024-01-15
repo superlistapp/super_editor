@@ -165,7 +165,7 @@ class SuperEditorInspector {
   /// [SuperEditor].
   ///
   /// {@macro supereditor_finder}
-  static AttributedText findTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
+  static AttributedText findTextInComponent(String nodeId, [Finder? superEditorFinder]) {
     final documentLayout = findDocumentLayout(superEditorFinder);
     final component = documentLayout.getComponentByNodeId(nodeId);
 

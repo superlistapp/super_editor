@@ -361,7 +361,7 @@ void main() {
 
       // Ensure the document doesn't change.
       expect(
-        SuperEditorInspector.findTextInParagraph('1').text,
+        SuperEditorInspector.findTextInComponent('1').text,
         (singleParagraphDoc().nodes.first as TextNode).text.text,
       );
       expect(

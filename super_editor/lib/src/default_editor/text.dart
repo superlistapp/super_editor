@@ -1011,15 +1011,27 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   }
 }
 
+/// A [ProxyDocumentComponent] that adds [TextComposable] capabilities so
+/// that simple text-based proxy components can meet their expected contract
+/// without going through the work of defining a stateful widget that mixes in
+/// the [ProxyDocumentComponent] methods.
+///
+/// Using a [ProxyTextDocumentComponent] is never technically necessary.
+/// Custom [DocumentComponent]s can achieve a similar result by mixing in
+/// [ProxyDocumentComponent] within a `State` object. This widget is provided
+/// as a convenience so that some components can be defined as stateless
+/// widgets while still providing access to component behaviors and text layout queries.
 class ProxyTextDocumentComponent extends StatefulWidget {
   const ProxyTextDocumentComponent({
     super.key,
-    required this.childDocumentComponentKey,
+    required this.textComponentKey,
     required this.child,
   });
 
-  final GlobalKey<State<StatefulWidget>> childDocumentComponentKey;
+  final GlobalKey textComponentKey;
 
+  /// The widget subtree, which must include a widget that implements `TextComposable`,
+  /// and that `TextComposable` must be bound to the given [textComponentKey].
   final Widget child;
 
   @override
@@ -1029,7 +1041,7 @@ class ProxyTextDocumentComponent extends StatefulWidget {
 class _ProxyTextDocumentComponentState extends State<ProxyTextDocumentComponent>
     with ProxyDocumentComponent<ProxyTextDocumentComponent>, ProxyTextComposable {
   @override
-  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => widget.childDocumentComponentKey;
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => widget.textComponentKey;
 
   @override
   TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;

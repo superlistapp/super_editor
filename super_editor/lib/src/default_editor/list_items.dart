@@ -1,7 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
@@ -306,7 +305,17 @@ class UnorderedListItemComponent extends StatelessWidget {
   final bool showComposingUnderline;
   final bool showDebugPaint;
 
-  final GlobalKey _textKey = GlobalKey();
+  /// A [GlobalKey] that connects a [ProxyTextDocumentComponent] to its
+  /// descendant [TextComponent].
+  ///
+  /// The [ProxyTextDocumentComponent] doesn't know where the [TextComponent] sits
+  /// in its subtree, but the proxy needs access to the [TextComponent] to provide
+  /// access to text layout details.
+  ///
+  /// This key doesn't need to be public because the given [componentKey]
+  /// provides clients with direct access to text layout queries, as well as
+  /// standard [DocumentComponent] queries.
+  final GlobalKey _innerTextComponentKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -318,7 +327,7 @@ class UnorderedListItemComponent extends StatelessWidget {
 
     return ProxyTextDocumentComponent(
       key: componentKey,
-      childDocumentComponentKey: _textKey,
+      textComponentKey: _innerTextComponentKey,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -335,7 +344,7 @@ class UnorderedListItemComponent extends StatelessWidget {
           ),
           Expanded(
             child: TextComponent(
-              key: _textKey,
+              key: _innerTextComponentKey,
               text: text,
               textStyleBuilder: styleBuilder,
               textSelection: textSelection,
@@ -409,7 +418,17 @@ class OrderedListItemComponent extends StatelessWidget {
   final bool showComposingUnderline;
   final bool showDebugPaint;
 
-  final GlobalKey _textKey = GlobalKey();
+  /// A [GlobalKey] that connects a [ProxyTextDocumentComponent] to its
+  /// descendant [TextComponent].
+  ///
+  /// The [ProxyTextDocumentComponent] doesn't know where the [TextComponent] sits
+  /// in its subtree, but the proxy needs access to the [TextComponent] to provide
+  /// access to text layout details.
+  ///
+  /// This key doesn't need to be public because the given [componentKey]
+  /// provides clients with direct access to text layout queries, as well as
+  /// standard [DocumentComponent] queries.
+  final GlobalKey _innerTextComponentKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -420,7 +439,7 @@ class OrderedListItemComponent extends StatelessWidget {
 
     return ProxyTextDocumentComponent(
       key: componentKey,
-      childDocumentComponentKey: _textKey,
+      textComponentKey: _innerTextComponentKey,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -437,7 +456,7 @@ class OrderedListItemComponent extends StatelessWidget {
           ),
           Expanded(
             child: TextComponent(
-              key: _textKey,
+              key: _innerTextComponentKey,
               text: text,
               textStyleBuilder: styleBuilder,
               textSelection: textSelection,

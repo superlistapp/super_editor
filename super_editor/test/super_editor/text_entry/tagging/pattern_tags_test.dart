@@ -21,7 +21,7 @@ void main() {
         await tester.typeImeText("#");
 
         // Ensure that no hash tag was created.
-        final text = SuperEditorInspector.findTextInParagraph("1");
+        final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "#");
         expect(
           text.hasAttributionAt(0, attribution: const PatternTagAttribution()),
@@ -40,7 +40,7 @@ void main() {
         await tester.typeImeText("#flutter");
 
         // Ensure that the tag has a composing attribution.
-        final text = SuperEditorInspector.findTextInParagraph("1");
+        final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "#flutter");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 0),
@@ -68,7 +68,7 @@ void main() {
         await tester.typeImeText("#flutter");
 
         // Ensure that the tag has a composing attribution.
-        final text = SuperEditorInspector.findTextInParagraph("1");
+        final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "before #flutter after");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 7),
@@ -96,7 +96,7 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure that the tag doesn't have a composing attribution.
-        final text = SuperEditorInspector.findTextInParagraph("1");
+        final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "#");
         expect(
           text.hasAttributionAt(0, attribution: const PatternTagAttribution()),
@@ -125,7 +125,7 @@ void main() {
 
         // Ensure that there's no more composing attribution because the tag
         // should have been committed.
-        final text = SuperEditorInspector.findTextInParagraph("1");
+        final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "before #flutter after");
         expect(
           text.getAttributionSpansInRange(
@@ -162,7 +162,7 @@ void main() {
         await tester.typeImeText("#flutter. after");
 
         // Ensure that the hash tag doesn't include the period.
-        final text = SuperEditorInspector.findTextInParagraph("1");
+        final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "before #flutter. after");
         expect(
           text.getAttributionSpansInRange(
@@ -203,7 +203,7 @@ void main() {
         await tester.typeImeText(".");
 
         // Ensure that the hash tag shrunk to where the period was inserted.
-        final text = SuperEditorInspector.findTextInParagraph("1");
+        final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "before #flutter.dart");
         expect(
           text.getAttributionSpansInRange(
@@ -230,7 +230,7 @@ void main() {
         // Compose a hash tag.
         await tester.typeImeText("hello #flutter#d");
 
-        var text = SuperEditorInspector.findTextInParagraph("1");
+        var text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "hello #flutter#d");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 6),
@@ -245,7 +245,7 @@ void main() {
         await tester.typeImeText("art");
 
         // Ensure that the tag has a composing attribution.
-        text = SuperEditorInspector.findTextInParagraph("1");
+        text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "hello #flutter#dart");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 6),
@@ -268,7 +268,7 @@ void main() {
         await tester.typeImeText("hello #flutter #dart");
 
         // Ensure that the tag has a composing attribution.
-        final text = SuperEditorInspector.findTextInParagraph("1");
+        final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "hello #flutter #dart");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 6),
@@ -475,7 +475,7 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure that the tag is still marked as a hash tag.
-        final text = SuperEditorInspector.findTextInParagraph("1");
+        final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "#bcdfghi ");
         expect(
           text.getAttributedRange({const PatternTagAttribution()}, 0),

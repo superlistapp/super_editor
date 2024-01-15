@@ -23,8 +23,8 @@ void main() {
         // Type a URL. It shouldn't linkify until we add a space.
         await tester.typeImeText("https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph("1");
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.text, "https://www.google.com");
         expect(
@@ -38,8 +38,8 @@ void main() {
         // Type a space, to cause a linkify reaction.
         await tester.typeImeText(" ");
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph("1");
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.text, "https://www.google.com ");
         expect(
@@ -66,8 +66,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText("https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph("1");
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.text, "https://www.google.com");
         expect(
@@ -81,8 +81,8 @@ void main() {
         // Press enter to linkify the URL and insert a new paragraph.
         await tester.pressEnter();
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph("1");
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.text, "https://www.google.com");
         expect(
@@ -116,8 +116,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText("https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.comafter link");
         expect(
@@ -131,8 +131,8 @@ void main() {
         // Press enter to linkify the URL and split the paragraph.
         await tester.pressEnter();
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.com");
         expect(
@@ -166,8 +166,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText("https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph("1");
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.text, "https://www.google.com");
         expect(
@@ -182,8 +182,8 @@ void main() {
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText('\n');
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph("1");
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.text, "https://www.google.com");
         expect(
@@ -219,8 +219,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText("https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.comafter link");
         expect(
@@ -235,8 +235,8 @@ void main() {
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText('\n');
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.com");
         expect(
@@ -269,8 +269,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText("https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph("1");
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.text, "https://www.google.com");
         expect(
@@ -286,8 +286,8 @@ void main() {
         await tester.testTextInput.receiveAction(TextInputAction.newline);
         await tester.pump();
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph("1");
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent("1");
 
         expect(text.text, "https://www.google.com");
         expect(
@@ -323,8 +323,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText("https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.comafter link");
         expect(
@@ -340,8 +340,8 @@ void main() {
         await tester.testTextInput.receiveAction(TextInputAction.newline);
         await tester.pump();
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.com");
         expect(
@@ -375,8 +375,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText(" https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Item https://www.google.com");
         expect(
@@ -390,8 +390,8 @@ void main() {
         // Press enter to linkify the URL and insert a new list item.
         await tester.pressEnter();
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Item https://www.google.com");
         expect(
@@ -425,8 +425,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText("https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.comafter link");
         expect(
@@ -440,8 +440,8 @@ void main() {
         // Press enter to linkify the URL and insert a new list item.
         await tester.pressEnter();
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.com");
         expect(
@@ -477,8 +477,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText(" https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Item https://www.google.com");
         expect(
@@ -493,8 +493,8 @@ void main() {
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText('\n');
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Item https://www.google.com");
         expect(
@@ -530,8 +530,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText("https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.comafter link");
         expect(
@@ -546,8 +546,8 @@ void main() {
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText('\n');
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.com");
         expect(
@@ -582,8 +582,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText(" https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Item https://www.google.com");
         expect(
@@ -599,8 +599,8 @@ void main() {
         await tester.testTextInput.receiveAction(TextInputAction.newline);
         await tester.pump();
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Item https://www.google.com");
         expect(
@@ -636,8 +636,8 @@ void main() {
         // Type a URL. It shouldn't linkify until the user presses ENTER.
         await tester.typeImeText("https://www.google.com");
 
-        // Ensure it's not linkified yet.
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's not linkified yet.
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.comafter link");
         expect(
@@ -653,8 +653,8 @@ void main() {
         await tester.testTextInput.receiveAction(TextInputAction.newline);
         await tester.pump();
 
-        // Ensure it's linkified.
-        text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure it's linkified.
+      text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "Before link https://www.google.com");
         expect(
@@ -1096,7 +1096,7 @@ void main() {
       await tester.typeImeText("https://www.google.com and https://flutter.dev ");
 
       // Ensure both URLs are linkified with the correct URLs.
-      final text = SuperEditorInspector.findTextInParagraph("1");
+      final text = SuperEditorInspector.findTextInComponent("1");
 
       expect(text.text, "https://www.google.com and https://flutter.dev ");
       expect(
@@ -1134,7 +1134,7 @@ void main() {
       await tester.typeImeText("google.com");
 
       // Ensure it's not linkified yet.
-      var text = SuperEditorInspector.findTextInParagraph("1");
+      var text = SuperEditorInspector.findTextInComponent("1");
 
       expect(text.text, "google.com");
       expect(
@@ -1149,7 +1149,7 @@ void main() {
       await tester.typeImeText(" ");
 
       // Ensure it's linkified.
-      text = SuperEditorInspector.findTextInParagraph("1");
+      text = SuperEditorInspector.findTextInComponent("1");
 
       expect(text.text, "google.com ");
       expect(
@@ -1180,8 +1180,8 @@ void main() {
       await tester.typeImeText(" ");
 
       // Ensure it's linkified with a URL schema.
-      var text = SuperEditorInspector.findTextInParagraph("1");
-      text = SuperEditorInspector.findTextInParagraph("1");
+      var text = SuperEditorInspector.findTextInComponent("1");
+      text = SuperEditorInspector.findTextInComponent("1");
 
       expect(text.text, "www.google.com ");
       expect(
@@ -1351,9 +1351,9 @@ void main() {
         // Add characters.
         await tester.typeImeText("oooo");
 
-        // Ensure the characters were inserted, the whole link is still attributed.
-        final nodeId = doc.nodes.first.id;
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure the characters were inserted, the whole link is still attributed.
+      final nodeId = doc.nodes.first.id;
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "www.googoooole.com");
         expect(
@@ -1439,9 +1439,9 @@ void main() {
         await tester.pressDelete();
         await tester.pressDelete();
 
-        // Ensure the characters were inserted, the whole link is still attributed.
-        final nodeId = doc.nodes.first.id;
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure the characters were inserted, the whole link is still attributed.
+      final nodeId = doc.nodes.first.id;
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "google.com");
         expect(
@@ -1559,19 +1559,9 @@ void main() {
         await tester.pressBackspace();
         await tester.pressBackspace();
 
-        // Ensure the characters were deleted and the whole link is still attributed.
-        final text = SuperEditorInspector.findTextInParagraph(doc.nodes.first.id);
-        expect(text.text, "www.g.com");
-        expect(
-          text.hasAttributionsThroughout(
-            attributions: {
-              LinkAttribution(url: Uri.parse("www.google.com")),
-            },
-            range: SpanRange(0, text.length - 1),
-          ),
-          isTrue,
-        );
-      });
+      // Ensure the characters were inserted, the whole link is still attributed.
+      final nodeId = doc.nodes.first.id;
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
       testWidgetsOnAllPlatforms('updating the attribution', (tester) async {
         await tester //
@@ -1653,9 +1643,9 @@ void main() {
         await tester.pressBackspace();
         await tester.pressBackspace();
 
-        // Ensure the characters were inserted, the whole link is still attributed.
-        final nodeId = doc.nodes.first.id;
-        var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      // Ensure the characters were inserted, the whole link is still attributed.
+      final nodeId = doc.nodes.first.id;
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
         expect(text.text, "www.google");
         expect(
@@ -1826,7 +1816,7 @@ void main() {
 
       // Ensure the text were inserted, and only the URL is linkified.
       final nodeId = doc.nodes.first.id;
-      var text = SuperEditorInspector.findTextInParagraph(nodeId);
+      var text = SuperEditorInspector.findTextInComponent(nodeId);
 
       expect(text.text, "www.google.co hello");
       expect(
@@ -1869,14 +1859,14 @@ void main() {
       // ensure that no link markers were added to the empty paragraph.
       expect(doc.nodes.length, 2);
       final newParagraphId = doc.nodes[1].id;
-      AttributedText newParagraphText = SuperEditorInspector.findTextInParagraph(newParagraphId);
+      AttributedText newParagraphText = SuperEditorInspector.findTextInComponent(newParagraphId);
       expect(newParagraphText.spans.markers, isEmpty);
 
       // Type some text.
       await tester.typeImeText("New paragraph");
 
       // Ensure the text we typed didn't re-introduce a link attribution.
-      newParagraphText = SuperEditorInspector.findTextInParagraph(newParagraphId);
+      newParagraphText = SuperEditorInspector.findTextInComponent(newParagraphId);
       expect(newParagraphText.text, "New paragraph");
       expect(
         newParagraphText.getAttributionSpansInRange(
@@ -1911,14 +1901,14 @@ void main() {
       expect(doc.nodes.length, 2);
       expect(doc.nodes[1], isA<ListItemNode>());
       final newListItemId = doc.nodes[1].id;
-      AttributedText newListItemText = SuperEditorInspector.findTextInParagraph(newListItemId);
+      AttributedText newListItemText = SuperEditorInspector.findTextInComponent(newListItemId);
       expect(newListItemText.spans.markers, isEmpty);
 
       // Type some text.
       await tester.typeImeText("New list item");
 
       // Ensure the text we typed didn't re-introduce a link attribution.
-      newListItemText = SuperEditorInspector.findTextInParagraph(newListItemId);
+      newListItemText = SuperEditorInspector.findTextInComponent(newListItemId);
       expect(newListItemText.text, "New list item");
       expect(
         newListItemText.getAttributionSpansInRange(

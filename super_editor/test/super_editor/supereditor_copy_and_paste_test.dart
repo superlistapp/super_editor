@@ -31,7 +31,7 @@ void main() {
 
       // Ensure that the text was pasted into the paragraph.
       final nodeId = doc.nodes.first.id;
-      expect(SuperEditorInspector.findTextInParagraph(nodeId).text, "Pasted text: This was pasted here");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Pasted text: This was pasted here");
     });
 
     testWidgetsOnApple('pastes within a list item', (tester) async {
@@ -55,7 +55,7 @@ void main() {
 
       // Ensure that the text was pasted into the paragraph.
       final nodeId = doc.nodes.first.id;
-      expect(SuperEditorInspector.findTextInParagraph(nodeId).text, "Pasted text: This was pasted here");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Pasted text: This was pasted here");
     });
 
     testAllInputsOnDesktop('pastes multiple paragraphs', (
