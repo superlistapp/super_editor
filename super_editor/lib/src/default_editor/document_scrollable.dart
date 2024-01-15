@@ -228,7 +228,7 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
       child,
       ScrollableDetails.vertical(controller: _scrollController),
     );
-    if (maybeScrollBar is! Scrollbar) {
+    if (maybeScrollBar == child) {
       // The scroll behavior is configured to NOT show scrollbars.
       return child;
     }
