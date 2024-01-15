@@ -1429,15 +1429,15 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     _moveSelectionAndMagnifierToDragHandleOffset(dragDx: details.delta.dx);
   }
 
-  void _onHandlePanEnd(DragEndDetails details) {
-    _onHandleDragEnd();
+  void _onHandlePanEnd(DragEndDetails details, HandleType handleType) {
+    _onHandleDragEnd(handleType);
   }
 
-  void _onHandlePanCancel() {
-    _onHandleDragEnd();
+  void _onHandlePanCancel(HandleType handleType) {
+    _onHandleDragEnd(handleType);
   }
 
-  void _onHandleDragEnd() {
+  void _onHandleDragEnd(HandleType handleType) {
     _dragHandleSelectionBound = null;
     _dragHandleType = null;
     _dragHandleSelectionGlobalFocalPoint.value = null;
@@ -1447,6 +1447,16 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     _controlsController!
       ..blinkCaret()
       ..hideMagnifier();
+
+    if (widget.selection.value?.isCollapsed == true &&
+        const [HandleType.upstream, HandleType.downstream].contains(handleType)) {
+      // The user dragged an expanded handle until the selection collapsed and then released the handle.
+      // While the user was dragging, the expanded handles were displayed.
+      // Show the collapsed.
+      _controlsController!
+        ..hideExpandedHandles()
+        ..showCollapsedHandle();
+    }
 
     // Stop auto-scrolling based on the drag-handle offset.
     widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
@@ -1585,8 +1595,8 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
                 onTap: _toggleToolbarOnCollapsedHandleTap,
                 onPanStart: (details) => _onHandlePanStart(details, HandleType.collapsed),
                 onPanUpdate: _onHandlePanUpdate,
-                onPanEnd: _onHandlePanEnd,
-                onPanCancel: _onHandlePanCancel,
+                onPanEnd: (details) => _onHandlePanEnd(details, HandleType.collapsed),
+                onPanCancel: () => _onHandlePanCancel(HandleType.collapsed),
                 dragStartBehavior: DragStartBehavior.down,
                 child: AndroidSelectionHandle(
                   key: DocumentKeys.androidCaretHandle,
@@ -1620,8 +1630,8 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
               },
               onPanStart: (details) => _onHandlePanStart(details, HandleType.upstream),
               onPanUpdate: _onHandlePanUpdate,
-              onPanEnd: _onHandlePanEnd,
-              onPanCancel: _onHandlePanCancel,
+              onPanEnd: (details) => _onHandlePanEnd(details, HandleType.upstream),
+              onPanCancel: () => _onHandlePanCancel(HandleType.upstream),
               dragStartBehavior: DragStartBehavior.down,
               child: AndroidSelectionHandle(
                 key: DocumentKeys.upstreamHandle,
@@ -1649,8 +1659,8 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
               },
               onPanStart: (details) => _onHandlePanStart(details, HandleType.downstream),
               onPanUpdate: _onHandlePanUpdate,
-              onPanEnd: _onHandlePanEnd,
-              onPanCancel: _onHandlePanCancel,
+              onPanEnd: (details) => _onHandlePanEnd(details, HandleType.downstream),
+              onPanCancel: () => _onHandlePanCancel(HandleType.downstream),
               dragStartBehavior: DragStartBehavior.down,
               child: AndroidSelectionHandle(
                 key: DocumentKeys.downstreamHandle,
