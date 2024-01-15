@@ -755,7 +755,7 @@ class DeleteContentCommand implements EditCommand {
       DocumentEdit(
         TextInsertionEvent(
           nodeId: startNodeAfterDeletion.id,
-          offset: startNodeAfterDeletion.text.text.length,
+          offset: startNodeAfterDeletion.text.length,
           text: endNodeAfterDeletion.text,
         ),
       ),
@@ -890,7 +890,7 @@ class DeleteContentCommand implements EditCommand {
 
         node.text = node.text.removeRegion(
           startOffset: textNodePosition.offset,
-          endOffset: node.text.text.length,
+          endOffset: node.text.length,
         );
 
         return [

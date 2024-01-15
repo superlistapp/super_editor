@@ -431,13 +431,13 @@ class TagUserReaction implements EditReaction {
   List<EditRequest> _healCancelledTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
     final cancelledTagRanges = node.text.getAttributionSpansInRange(
       attributionFilter: (a) => a == stableTagCancelledAttribution,
-      range: SpanRange(0, node.text.text.length - 1),
+      range: SpanRange(0, node.text.length - 1),
     );
 
     final changeRequests = <EditRequest>[];
 
     for (final range in cancelledTagRanges) {
-      final cancelledText = node.text.text.substring(range.start, range.end + 1); // +1 because substring is exclusive
+      final cancelledText = node.text.substring(range.start, range.end + 1); // +1 because substring is exclusive
       if (cancelledText == _tagRule.trigger) {
         // This is a legitimate cancellation attribution.
         continue;
@@ -537,10 +537,8 @@ class TagUserReaction implements EditReaction {
       }
 
       // We only care about deleted text when the deleted text contains at least one tag.
-      final tagsInDeletedText = change.deletedText.getAttributionSpansInRange(
-        attributionFilter: (attribution) =>
-            attribution == stableTagComposingAttribution || attribution is CommittedStableTagAttribution,
-        range: SpanRange(0, change.deletedText.text.length),
+      final tagsInDeletedText = change.deletedText.getAttributionSpansByFilter(
+        (attribution) => attribution == stableTagComposingAttribution || attribution is CommittedStableTagAttribution,
       );
       if (tagsInDeletedText.isEmpty) {
         continue;
@@ -559,11 +557,11 @@ class TagUserReaction implements EditReaction {
       // If a composing tag no longer contains a trigger ("@"), remove the attribution.
       final allComposingTags = textNode.text.getAttributionSpansInRange(
         attributionFilter: (attribution) => attribution == stableTagComposingAttribution,
-        range: SpanRange(0, textNode.text.text.length - 1),
+        range: SpanRange(0, textNode.text.length - 1),
       );
 
       for (final tag in allComposingTags) {
-        final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
+        final tagText = textNode.text.substring(tag.start, tag.end + 1);
 
         if (!tagText.startsWith(_tagRule.trigger)) {
           editorStableTagsLog.info("Removing tag with value: '$tagText'");
@@ -590,7 +588,7 @@ class TagUserReaction implements EditReaction {
       final allStableTags = textNode.text
           .getAttributionSpansInRange(
             attributionFilter: (attribution) => attribution is CommittedStableTagAttribution,
-            range: SpanRange(0, textNode.text.text.length - 1),
+            range: SpanRange(0, textNode.text.length - 1),
           )
           .sorted((tag1, tag2) => tag2.start - tag1.start);
 
@@ -609,7 +607,7 @@ class TagUserReaction implements EditReaction {
           : -1;
 
       for (final tag in allStableTags) {
-        final tagText = textNode.text.text.substring(tag.start, tag.end + 1);
+        final tagText = textNode.text.substring(tag.start, tag.end + 1);
         final attribution = tag.attribution as CommittedStableTagAttribution;
         final containsTrigger = textNode.text.text[tag.start] == _tagRule.trigger;
 
@@ -864,7 +862,7 @@ class TagUserReaction implements EditReaction {
         AddTextAttributionsRequest(
           documentRange: tagSelection,
           attributions: {
-            CommittedStableTagAttribution(textNode.text.text.substring(
+            CommittedStableTagAttribution(textNode.text.substring(
               tag.startOffset + 1, // +1 to remove the trigger ("@") from the value
               tag.endOffset,
             ))
@@ -957,11 +955,11 @@ class TagUserReaction implements EditReaction {
     final allTags = textNode.text
         .getAttributionSpansInRange(
           attributionFilter: attributionFilter,
-          range: SpanRange(0, textNode.text.text.length - 1),
+          range: SpanRange(0, textNode.text.length - 1),
         )
         .map(
           (span) => IndexedTag(
-            Tag.fromRaw(textNode.text.text.substring(span.start, span.end + 1)),
+            Tag.fromRaw(textNode.text.substring(span.start, span.end + 1)),
             textNode.id,
             span.start,
           ),

@@ -342,7 +342,7 @@ class SplitBlockquoteCommand implements EditCommand {
     final blockquote = node as ParagraphNode;
     final text = blockquote.text;
     final startText = text.copyText(0, splitPosition.offset);
-    final endText = splitPosition.offset < text.text.length ? text.copyText(splitPosition.offset) : AttributedText();
+    final endText = splitPosition.offset < text.length ? text.copyText(splitPosition.offset) : AttributedText();
 
     // Change the current node's content to just the text before the caret.
     // TODO: figure out how node changes should work in terms of

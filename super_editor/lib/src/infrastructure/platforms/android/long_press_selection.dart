@@ -6,6 +6,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
+import 'package:super_editor/super_editor.dart';
 
 /// A strategy for selecting text during a long-press drag gesture, similar to
 /// how the Android OS selects text during a long-press drag.
@@ -445,7 +446,7 @@ class AndroidDocumentLongPressSelectionStrategy {
       );
       longPressSelectionLog.finest(" - word selection: $wordSelection");
       final textNode = _document.getNodeById(wordUnderFinger.base.nodeId) as TextNode;
-      final wordText = textNode.text.substring(wordSelection.start, wordSelection.end);
+      final wordText = textNode.text.substringInRange(wordSelection.toSpanRange());
       longPressSelectionLog.finest("Selected word text: '$wordText'");
 
       newSelection = DocumentSelection(base: _longPressInitialSelection!.end, extent: wordUnderFinger.start);
@@ -628,7 +629,7 @@ class AndroidDocumentLongPressSelectionStrategy {
         extentOffset: (wordUnderFinger.extent.nodePosition as TextNodePosition).offset,
       );
       final textNode = _document.getNodeById(wordUnderFinger.base.nodeId) as TextNode;
-      final wordText = textNode.text.substring(wordSelection.start, wordSelection.end);
+      final wordText = textNode.text.substringInRange(wordSelection.toSpanRange());
       longPressSelectionLog.finest("Selected word text: '$wordText'");
 
       newSelection = DocumentSelection(base: _longPressInitialSelection!.start, extent: wordUnderFinger.end);

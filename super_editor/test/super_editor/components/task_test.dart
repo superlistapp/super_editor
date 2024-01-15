@@ -117,7 +117,7 @@ void main() {
       );
 
       // Place the caret at the end of the task.
-      await tester.placeCaretInParagraph("1", task.text.text.length);
+      await tester.placeCaretInParagraph("1", task.text.length);
 
       // Press enter to create a new, empty task, below the original task.
       await tester.pressEnter();
@@ -166,7 +166,7 @@ void main() {
       );
 
       // Place the caret at the end of the task.
-      await tester.placeCaretInParagraph("1", task.text.text.length);
+      await tester.placeCaretInParagraph("1", task.text.length);
 
       // Press enter to create a new, empty task, below the original task.
       // On Web, this generates both a newline input action and a key event.
@@ -217,7 +217,7 @@ void main() {
       );
 
       // Place the caret at the end of the task.
-      await tester.placeCaretInParagraph("1", task.text.text.length);
+      await tester.placeCaretInParagraph("1", task.text.length);
 
       // On Android, pressing ENTER generates a "\n" insertion.
       await tester.typeImeText("\n");
@@ -265,7 +265,7 @@ void main() {
       );
 
       // Place the caret at the end of the task.
-      await tester.placeCaretInParagraph("1", task.text.text.length);
+      await tester.placeCaretInParagraph("1", task.text.length);
 
       // On iOS, pressing ENTER generates a newline action.
       await tester.testTextInput.receiveAction(TextInputAction.newline);

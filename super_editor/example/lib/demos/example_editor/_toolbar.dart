@@ -355,7 +355,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         // the entire link attribution.
         text.removeAttribution(
           overlappingLinkSpan.attribution,
-          SpanRange(overlappingLinkSpan.start, overlappingLinkSpan.end),
+          overlappingLinkSpan.range,
         );
       }
     } else {

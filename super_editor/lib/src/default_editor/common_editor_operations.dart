@@ -966,7 +966,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    final firstNodeTextLength = node.text.text.length;
+    final firstNodeTextLength = node.text.length;
 
     // Send edit command.
     editor.execute([
@@ -1003,7 +1003,7 @@ class CommonEditorOperations {
     final textNode = document.getNode(composer.selection!.extent) as TextNode;
     final text = textNode.text;
     final currentTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
-    if (currentTextOffset >= text.text.length) {
+    if (currentTextOffset >= text.length) {
       return false;
     }
 
@@ -1181,7 +1181,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    final aboveParagraphLength = nodeAbove.text.text.length;
+    final aboveParagraphLength = nodeAbove.text.length;
 
     // Send edit command.
     editor.execute([
@@ -2487,7 +2487,7 @@ class DeleteDownstreamCharacterCommand implements EditCommand {
     final textNode = document.getNode(selection.extent) as TextNode;
     final text = textNode.text;
     final currentTextPositionOffset = (selection.extent.nodePosition as TextNodePosition).offset;
-    if (currentTextPositionOffset >= text.text.length) {
+    if (currentTextPositionOffset >= text.length) {
       throw Exception("Tried to delete downstream character but the caret is sitting at the end of the text.");
     }
 
