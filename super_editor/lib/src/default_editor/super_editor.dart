@@ -21,6 +21,7 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
+import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
@@ -795,6 +796,9 @@ class SuperEditorState extends State<SuperEditor> {
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
+
+          /// todo: expose this as a parameter. Fill an issue
+          dragAutoScrollBoundary: const AxisOffset.symmetric(1),
           showDebugPaint: widget.debugPaint.gestures,
         );
       case DocumentGestureMode.iOS:
@@ -807,6 +811,9 @@ class SuperEditorState extends State<SuperEditor> {
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
+
+          /// todo: expose this as a parameter. Fill an issue
+          dragAutoScrollBoundary: const AxisOffset.symmetric(1),
           showDebugPaint: widget.debugPaint.gestures,
         );
     }
