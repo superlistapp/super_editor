@@ -451,35 +451,6 @@ mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentCompon
   }
 }
 
-class ProxyTextComponent extends StatefulWidget {
-  const ProxyTextComponent({
-    super.key,
-    required this.childDocumentComponentKey,
-    required this.child,
-  });
-
-  final GlobalKey<State<StatefulWidget>> childDocumentComponentKey;
-
-  final Widget child;
-
-  @override
-  State<ProxyTextComponent> createState() => _ProxyTextComponentState();
-}
-
-class _ProxyTextComponentState extends State<ProxyTextComponent>
-    with ProxyDocumentComponent<ProxyTextComponent>, ProxyTextComposable {
-  @override
-  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => widget.childDocumentComponentKey;
-
-  @override
-  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
-
-  @override
-  Widget build(BuildContext context) {
-    return widget.child;
-  }
-}
-
 /// Preferences for how the document selection should change, e.g.,
 /// move word-by-word instead of character-by-character.
 ///

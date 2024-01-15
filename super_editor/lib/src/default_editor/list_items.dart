@@ -316,7 +316,7 @@ class UnorderedListItemComponent extends StatelessWidget {
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.25));
     const manualVerticalAdjustment = 3.0;
 
-    return ProxyTextComponent(
+    return ProxyTextDocumentComponent(
       key: componentKey,
       childDocumentComponentKey: _textKey,
       child: Row(
@@ -418,7 +418,7 @@ class OrderedListItemComponent extends StatelessWidget {
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.0));
 
-    return ProxyTextComponent(
+    return ProxyTextDocumentComponent(
       key: componentKey,
       childDocumentComponentKey: _textKey,
       child: Row(

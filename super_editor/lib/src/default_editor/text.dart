@@ -1011,6 +1011,35 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   }
 }
 
+class ProxyTextDocumentComponent extends StatefulWidget {
+  const ProxyTextDocumentComponent({
+    super.key,
+    required this.childDocumentComponentKey,
+    required this.child,
+  });
+
+  final GlobalKey<State<StatefulWidget>> childDocumentComponentKey;
+
+  final Widget child;
+
+  @override
+  State<ProxyTextDocumentComponent> createState() => _ProxyTextDocumentComponentState();
+}
+
+class _ProxyTextDocumentComponentState extends State<ProxyTextDocumentComponent>
+    with ProxyDocumentComponent<ProxyTextDocumentComponent>, ProxyTextComposable {
+  @override
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => widget.childDocumentComponentKey;
+
+  @override
+  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}
+
 class AddTextAttributionsRequest implements EditRequest {
   AddTextAttributionsRequest({
     required this.documentRange,
