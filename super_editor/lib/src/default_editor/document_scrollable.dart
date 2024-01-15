@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
@@ -198,6 +198,41 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     required Widget child,
   }) {
     final scrollBehavior = ScrollConfiguration.of(context);
+    return _maybeBuildScrollbar(
+      behavior: scrollBehavior,
+      child: ScrollConfiguration(
+        behavior: scrollBehavior.copyWith(scrollbars: false),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          physics: const NeverScrollableScrollPhysics(),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _maybeBuildScrollbar({
+    required ScrollBehavior behavior,
+    required Widget child,
+  }) {
+    // We allow apps to prevent the custom scrollbar from being added by
+    // wrapping the editor with a `ScrollConfiguration` configured to not
+    // display scrollbars. However, at this moment we can't query this
+    // information from the BuildContext. As a workaround, we check whether
+    // or not the buildScrollbar method returns a ScrollBar. If it doesn't,
+    // this means the app doesn't want us to add our own ScrollBar.
+    //
+    // Change this after https://github.com/flutter/flutter/issues/141508 is solved.
+    final maybeScrollBar = behavior.buildScrollbar(
+      context,
+      child,
+      ScrollableDetails.vertical(controller: _scrollController),
+    );
+    if (maybeScrollBar == child) {
+      // The scroll behavior is configured to NOT show scrollbars.
+      return child;
+    }
+
     // As we handle the scrolling gestures ourselves,
     // we use NeverScrollableScrollPhysics to prevent SingleChildScrollView
     // from scrolling. This also prevents the user from interacting
@@ -208,15 +243,8 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     // See https://github.com/superlistapp/super_editor/issues/1628 for more details.
     return ScrollbarWithCustomPhysics(
       controller: _scrollController,
-      physics: scrollBehavior.getScrollPhysics(context),
-      child: ScrollConfiguration(
-        behavior: scrollBehavior.copyWith(scrollbars: false),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          physics: const NeverScrollableScrollPhysics(),
-          child: child,
-        ),
-      ),
+      physics: behavior.getScrollPhysics(context),
+      child: child,
     );
   }
 
