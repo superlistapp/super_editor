@@ -200,11 +200,20 @@ class AndroidControlsDocumentLayerState
     if (_controlsController != null) {
       _controlsController!.shouldCaretBlink.removeListener(_onBlinkModeChange);
       _controlsController!.caretJumpToOpaqueSignal.removeListener(_caretJumpToOpaque);
+      _controlsController!.shouldShowCollapsedHandle.removeListener(_onShouldShowCollapsedHandleChange);
     }
 
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
     _controlsController!.shouldCaretBlink.addListener(_onBlinkModeChange);
     _controlsController!.caretJumpToOpaqueSignal.addListener(_caretJumpToOpaque);
+
+    /// Listen for changes about whether we want to show the collapsed handle
+    /// or whether we want to show expanded handles for a selection. We listen to
+    /// this because there are some situations where the desired handle type is
+    /// ambiguous, such as when when the user drags an expanded handle such that
+    /// the selection collapses. In that case, the selection is collapsed but we want
+    /// to show the expanded handle. This signal clarifies which one we want.
+    _controlsController!.shouldShowCollapsedHandle.addListener(_onShouldShowCollapsedHandleChange);
     _onBlinkModeChange();
   }
 
@@ -222,6 +231,7 @@ class AndroidControlsDocumentLayerState
   void dispose() {
     widget.selection.removeListener(_onSelectionChange);
     _controlsController?.shouldCaretBlink.removeListener(_onBlinkModeChange);
+    _controlsController!.shouldShowCollapsedHandle.removeListener(_onShouldShowCollapsedHandleChange);
 
     _caretBlinkController.dispose();
     super.dispose();
@@ -282,6 +292,19 @@ class AndroidControlsDocumentLayerState
     _caretBlinkController.jumpToOpaque();
   }
 
+  void _onShouldShowCollapsedHandleChange() {
+    // The controller went from wanting a collapsed handle to wanting expanded handles,
+    // or vis-a-versa. This signal is relevant to us because of an ambiguous handle situation.
+    // The user might drag an expanded handle such  that the selection is collapsed, in which
+    // case we still want to show an expanded handle. Similarly, if the user then releases that
+    // expanded handle, we should switch to a collapsed handle for the same selection. This
+    // method tells us that the desired handle type has changed. Re-run layout and build to
+    // ensure that we're showing the correct handle.
+    setState(() {
+      //
+    });
+  }
+
   @override
   DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
     final selection = widget.selection.value;
@@ -289,7 +312,7 @@ class AndroidControlsDocumentLayerState
       return null;
     }
 
-    if (selection.isCollapsed) {
+    if (selection.isCollapsed && !_controlsController!.shouldShowExpandedHandles.value) {
       return DocumentSelectionLayout(
         caret: documentLayout.getRectForPosition(selection.extent)!,
       );

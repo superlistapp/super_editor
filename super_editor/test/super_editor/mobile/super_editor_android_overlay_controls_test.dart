@@ -4,6 +4,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../../test_runners.dart';
+import '../../test_tools.dart';
 import '../supereditor_test_tools.dart';
 
 void main() {
@@ -159,6 +160,55 @@ void main() {
       // Resolve the gesture so that we don't have pending gesture timers.
       await gesture.up();
       await tester.pump(kTapMinTime);
+    });
+
+    testWidgetsOnAndroid("shows expanded handles when dragging to a collapsed selection", (tester) async {
+      await _pumpSingleParagraphApp(tester);
+
+      // Select the word "Lorem".
+      await tester.doubleTapInParagraph('1', 1);
+
+      // Press the upstream drag handle and drag it downstream until "Lorem|" to collapse the selection.
+      final gesture = await tester.pressDownOnUpstreamMobileHandle();
+      await gesture.moveBy(SuperEditorInspector.findDeltaBetweenCharactersInTextNode('1', 0, 5));
+      await tester.pump();
+
+      // Ensure that the selection collapsed.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        selectionEquivalentTo(
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 5)),
+          ),
+        ),
+      );
+
+      // Find the rectangle for the selected character.
+      final documentLayout = SuperEditorInspector.findDocumentLayout();
+      final selectedPositionRect = documentLayout.getRectForPosition(
+        const DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 5)),
+      )!;
+
+      // Ensure that the drag handles are visible and in the correct location.
+      expect(SuperEditorInspector.findAllMobileDragHandles(), findsExactly(2));
+      expect(
+        tester.getTopLeft(SuperEditorInspector.findMobileDownstreamDragHandle()),
+        offsetMoreOrLessEquals(documentLayout.getGlobalOffsetFromDocumentOffset(selectedPositionRect.bottomRight)),
+      );
+      expect(
+        tester.getTopRight(SuperEditorInspector.findMobileUpstreamDragHandle()),
+        offsetMoreOrLessEquals(documentLayout.getGlobalOffsetFromDocumentOffset(selectedPositionRect.bottomRight)),
+      );
+
+      // Release the drag handle.
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      // Ensure the expanded handles were hidden and the collapsed handle
+      // and the caret were displayed.
+      expect(SuperEditorInspector.findAllMobileDragHandles(), findsOneWidget);
+      expect(SuperEditorInspector.findMobileCaretDragHandle(), findsOneWidget);
+      expect(SuperEditorInspector.isCaretVisible(), isTrue);
     });
 
     group("on device and web > shows", () {
