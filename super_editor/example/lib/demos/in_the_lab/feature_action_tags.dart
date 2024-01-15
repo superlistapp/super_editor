@@ -70,11 +70,11 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
 
         final actionSpans = node.text.getAttributionSpansInRange(
           attributionFilter: (a) => a == actionTagComposingAttribution,
-          range: SpanRange(0, node.text.text.length - 1),
+          range: SpanRange(0, node.text.length - 1),
         );
 
         for (final actionSpan in actionSpans) {
-          _actions.add(node.text.text.substring(actionSpan.start, actionSpan.end + 1));
+          _actions.add(node.text.substring(actionSpan.start, actionSpan.end + 1));
         }
       }
     });

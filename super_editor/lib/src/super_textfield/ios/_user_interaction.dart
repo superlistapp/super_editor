@@ -229,7 +229,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     final tapTextPosition = _getTextPositionNearestToOffset(localOffset);
     if (tapTextPosition == null || tapTextPosition.offset < 0) {
       // This situation indicates the user tapped in empty space
-      widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.text.length);
+      widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.length);
       return;
     }
 
