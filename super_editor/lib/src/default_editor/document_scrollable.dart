@@ -198,7 +198,7 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     required Widget child,
   }) {
     final scrollBehavior = ScrollConfiguration.of(context);
-    return _buildScrollbar(
+    return _maybeBuildScrollbar(
       behavior: scrollBehavior,
       child: ScrollConfiguration(
         behavior: scrollBehavior.copyWith(scrollbars: false),
@@ -211,7 +211,7 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     );
   }
 
-  Widget _buildScrollbar({
+  Widget _maybeBuildScrollbar({
     required ScrollBehavior behavior,
     required Widget child,
   }) {

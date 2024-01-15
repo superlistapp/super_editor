@@ -1204,7 +1204,7 @@ void main() {
       );
     });
 
-    testWidgetsOnDesktop('does not show scrollbar when configured to', (tester) async {
+    testWidgetsOnDesktop('does not show scrollbar when ancestor ScrollConfiguration does not want one', (tester) async {
       final scrollController = ScrollController();
       await tester //
           .createDocument()
