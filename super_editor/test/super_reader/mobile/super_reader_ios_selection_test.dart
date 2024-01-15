@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';

@@ -37,7 +37,7 @@ class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {
 
     initLoggers(Level.FINEST, {
       // textFieldLog,
-      scrollingTextFieldLog,
+      // scrollingTextFieldLog,
       // imeTextFieldLog,
       // androidTextFieldLog,
     });

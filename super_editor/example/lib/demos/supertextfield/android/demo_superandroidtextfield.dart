@@ -18,7 +18,10 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
   @override
   void initState() {
     super.initState();
-    initLoggers(Level.FINER, {androidTextFieldLog, imeTextFieldLog});
+    initLoggers(Level.FINER, {
+      // androidTextFieldLog,
+      // imeTextFieldLog,
+    });
 
     _focusNode = FocusNode();
   }
@@ -52,6 +55,7 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
       tapRegionGroupId: _tapRegionGroupId,
       textController: config.controller,
       textStyleBuilder: config.styleBuilder,
+      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
       hintBehavior: HintBehavior.displayHintUntilTextEntered,
       hintBuilder: StyledHintBuilder(
           hintText: AttributedText("Enter text"),

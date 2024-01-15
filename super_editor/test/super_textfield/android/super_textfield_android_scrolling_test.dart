@@ -54,7 +54,7 @@ void main() {
 
       // Drag caret from left side of text field to right side of text field, into the
       // right auto-scroll region.
-      final gesture = await tester.dragCaretByDistanceInSuperTextField(const Offset(190, 0));
+      final gesture = await tester.dragCaretByDistanceInSuperTextField(const Offset(220, 0));
 
       // Pump a few more frames and ensure that every frame moves the caret further.
       int previousCaretPosition = controller.selection.extentOffset;
@@ -161,8 +161,7 @@ void main() {
       final controller = AttributedTextEditingController(
         text: AttributedText("This is long text that extends beyond the right side of the text field."),
       );
-      final startCaretPosition = controller.text.length - 3;
-      controller.selection = TextSelection.collapsed(offset: startCaretPosition);
+      controller.selection = TextSelection.collapsed(offset: controller.text.length);
 
       // Pump the widget tree with a SuperTextField with a maxWidth smaller
       // than the text width.
@@ -174,17 +173,18 @@ void main() {
         // This width is important because it determines how far we need to drag the caret
         // to the right to enter the auto-scroll region.
         maxWidth: 200,
+        // Add padding to leave room to see the caret at the very end of the
+        // text.
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        autofocus: true,
       );
 
-      // Begin with the caret at the end of the text, scrolled all the way to the right.
-      expect(controller.selection.extentOffset, startCaretPosition);
-
-      // Tap on the text field to give it focus, so that the caret appears.
-      await tester.placeCaretInSuperTextField(startCaretPosition);
+      // Ensure we're starting scrolled to the end.
+      expect(SuperTextFieldInspector.isScrolledToEnd(), isTrue);
 
       // Drag caret from right side of text field to left side of text field, into the
       // left auto-scroll region.
-      final gesture = await tester.dragCaretByDistanceInSuperTextField(const Offset(-190, 0));
+      final gesture = await tester.dragCaretByDistanceInSuperTextField(const Offset(-220, 0));
 
       // Pump a few more frames and ensure that every frame moves the caret further.
       int previousCaretPosition = controller.selection.extentOffset;
@@ -304,7 +304,13 @@ Future<void> _pumpTestApp(
   double? maxWidth,
   double? maxHeight,
   EdgeInsets? padding,
+  bool autofocus = false,
 }) async {
+  final focusNode = FocusNode();
+  if (autofocus) {
+    focusNode.requestFocus();
+  }
+
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -315,6 +321,7 @@ Future<void> _pumpTestApp(
               maxHeight: maxHeight ?? double.infinity,
             ),
             child: SuperTextField(
+              focusNode: focusNode,
               textController: textController,
               lineHeight: 20,
               textStyleBuilder: (_) => const TextStyle(fontSize: 20),
