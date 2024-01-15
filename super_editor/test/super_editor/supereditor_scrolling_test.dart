@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
+import 'package:super_editor/src/infrastructure/flutter/material_scrollbar.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -1179,6 +1180,60 @@ void main() {
           variant: _scrollDirectionVariant,
         );
       });
+    });
+
+    testWidgetsOnDesktop('shows scrollbar by default', (tester) async {
+      final scrollController = ScrollController();
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withEditorSize(const Size(300, 300))
+          .withScrollController(scrollController)
+          .pump();
+
+      // Ensure the editor is scrollable.
+      expect(scrollController.position.maxScrollExtent, greaterThan(0.0));
+
+      // Ensure the scrollbar is displayed.
+      expect(
+        find.descendant(
+          of: find.byType(SuperEditor),
+          matching: find.byType(ScrollbarWithCustomPhysics),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgetsOnDesktop('does not show scrollbar when ancestor ScrollConfiguration does not want one', (tester) async {
+      final scrollController = ScrollController();
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withEditorSize(const Size(300, 300))
+          .withScrollController(scrollController)
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: ScrollConfiguration(
+                  behavior: const ScrollBehavior().copyWith(scrollbars: false),
+                  child: superEditor,
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Ensure the editor is scrollable.
+      expect(scrollController.position.maxScrollExtent, greaterThan(0.0));
+
+      // Ensure no scrollbar is displayed.
+      expect(
+        find.descendant(
+          of: find.byType(SuperEditor),
+          matching: find.byType(ScrollbarWithCustomPhysics),
+        ),
+        findsNothing,
+      );
     });
   });
 }
