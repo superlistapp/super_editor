@@ -293,10 +293,13 @@ class AndroidControlsDocumentLayerState
   }
 
   void _onShouldShowCollapsedHandleChange() {
-    // When the user drags an expanded handle it might collapse the selection.
-    // In this case, we have a collapsed selection, but layout data for the
-    // expanded handles. Schedule a rebuild to recompute the layout data for
-    // the selection, to determine which handle we want.
+    // The controller went from wanting a collapsed handle to wanting expanded handles,
+    // or vis-a-versa. This signal is relevant to us because of an ambiguous handle situation.
+    // The user might drag an expanded handle such  that the selection is collapsed, in which
+    // case we still want to show an expanded handle. Similarly, if the user then releases that
+    // expanded handle, we should switch to a collapsed handle for the same selection. This
+    // method tells us that the desired handle type has changed. Re-run layout and build to
+    // ensure that we're showing the correct handle.
     setState(() {
       //
     });
