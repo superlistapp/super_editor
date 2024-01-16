@@ -13,7 +13,7 @@ void main() {
     testWidgetsOnDesktop("control keys don't impact content", (tester) async {
       await _pumpApp(tester, _desktopInputSourceAndControlKeyVariant.currentValue!.inputSource);
 
-      final initialParagraphText = SuperEditorInspector.findTextInParagraph("1");
+      final initialParagraphText = SuperEditorInspector.findTextInComponent("1");
 
       // Select some content -> "Lorem |ipsum| dolor sit..."
       await tester.doubleTapInParagraph("1", 8);
@@ -30,14 +30,14 @@ void main() {
       );
 
       // Make sure the content and selection remains the same.
-      expect(SuperEditorInspector.findTextInParagraph("1"), initialParagraphText);
+      expect(SuperEditorInspector.findTextInComponent("1"), initialParagraphText);
       expect(SuperEditorInspector.findDocumentSelection(), expectedSelection);
     }, variant: _desktopInputSourceAndControlKeyVariant);
 
     testWidgetsOnMobile("control keys don't impact content", (tester) async {
       await _pumpApp(tester, _mobileInputSourceAndControlKeyVariant.currentValue!.inputSource);
 
-      final initialParagraphText = SuperEditorInspector.findTextInParagraph("1");
+      final initialParagraphText = SuperEditorInspector.findTextInComponent("1");
 
       // Select some content -> "Lorem |ipsum| dolor sit..."
       await tester.doubleTapInParagraph("1", 8);
@@ -54,7 +54,7 @@ void main() {
       );
 
       // Make sure the content and selection remains the same.
-      expect(SuperEditorInspector.findTextInParagraph("1"), initialParagraphText);
+      expect(SuperEditorInspector.findTextInComponent("1"), initialParagraphText);
       expect(SuperEditorInspector.findDocumentSelection(), expectedSelection);
     }, variant: _mobileInputSourceAndControlKeyVariant);
   });
