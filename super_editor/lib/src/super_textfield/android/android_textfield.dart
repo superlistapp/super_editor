@@ -180,7 +180,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   final _popoverController = OverlayPortalController();
 
   /// Text field caret blink controller.
-  late final BlinkController _blinkController;
+  late final BlinkController _caretBlinkController;
 
   /// Notifies the popover toolbar to rebuild itself.
   final _popoverRebuildSignal = SignalNotifier();
@@ -191,9 +191,9 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
     switch (widget.blinkTimingMode) {
       case BlinkTimingMode.ticker:
-        _blinkController = BlinkController(tickerProvider: this);
+        _caretBlinkController = BlinkController(tickerProvider: this);
       case BlinkTimingMode.timer:
-        _blinkController = BlinkController.withTimer();
+        _caretBlinkController = BlinkController.withTimer();
     }
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
@@ -210,7 +210,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     _editingOverlayController = AndroidEditingOverlayController(
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
-      blinkController: _blinkController,
+      caretBlinkController: _caretBlinkController,
     );
 
     WidgetsBinding.instance.addObserver(this);
@@ -300,7 +300,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       // Dispose after the current frame so that other widgets have
       // time to remove their listeners.
       _editingOverlayController.dispose();
-      _blinkController.dispose();
+      _caretBlinkController.dispose();
     });
 
     _textEditingController
@@ -648,7 +648,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             position: _textEditingController.selection.isCollapsed //
                 ? _textEditingController.selection.extent
                 : null,
-            blinkController: _blinkController,
+            blinkController: _caretBlinkController,
           );
         },
       ),

@@ -814,7 +814,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
 class AndroidEditingOverlayController with ChangeNotifier {
   AndroidEditingOverlayController({
     required this.textController,
-    required this.blinkController,
+    required this.caretBlinkController,
     required LayerLink magnifierFocalPoint,
   }) : _magnifierFocalPoint = magnifierFocalPoint;
 
@@ -823,6 +823,9 @@ class AndroidEditingOverlayController with ChangeNotifier {
     _handleAutoHideTimer?.cancel();
     super.dispose();
   }
+
+  /// Text field caret blink controller.
+  final BlinkController caretBlinkController;
 
   bool _isToolbarVisible = false;
   bool get isToolbarVisible => _isToolbarVisible;
@@ -930,15 +933,12 @@ class AndroidEditingOverlayController with ChangeNotifier {
     }
   }
 
-  /// Text field caret blink controller.
-  final BlinkController blinkController;
-
   /// Starts the text field caret blinking.
   ///
   /// If it's already blinking, does nothing.
   void startCaretBlinking() {
-    if (!blinkController.isBlinking) {
-      blinkController.startBlinking();
+    if (!caretBlinkController.isBlinking) {
+      caretBlinkController.startBlinking();
     }
   }
 
@@ -946,8 +946,8 @@ class AndroidEditingOverlayController with ChangeNotifier {
   ///
   /// If it's already stopped, does nothing.
   void stopCaretBlinking() {
-    if (blinkController.isBlinking) {
-      blinkController.stopBlinking();
+    if (caretBlinkController.isBlinking) {
+      caretBlinkController.stopBlinking();
     }
   }
 }

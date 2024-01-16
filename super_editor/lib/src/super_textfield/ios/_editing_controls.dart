@@ -558,10 +558,10 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
 class IOSEditingOverlayController with ChangeNotifier {
   IOSEditingOverlayController({
     required this.textController,
+    required this.caretBlinkController,
     required LeaderLink toolbarFocalPoint,
     required LeaderLink magnifierFocalPoint,
     required this.overlayController,
-    required this.blinkController,
   })  : _toolbarFocalPoint = toolbarFocalPoint,
         _magnifierFocalPoint = magnifierFocalPoint {
     overlayController.addListener(_overlayControllerChanged);
@@ -572,6 +572,9 @@ class IOSEditingOverlayController with ChangeNotifier {
     overlayController.removeListener(_overlayControllerChanged);
     super.dispose();
   }
+
+  /// Text field caret blink controller.
+  final BlinkController caretBlinkController;
 
   bool get isToolbarVisible => overlayController.shouldDisplayToolbar;
 
@@ -634,15 +637,12 @@ class IOSEditingOverlayController with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Text field caret blink controller.
-  final BlinkController blinkController;
-
   /// Starts the text field caret blinking.
   ///
   /// If it's already blinking, does nothing.
   void startCaretBlinking() {
-    if (!blinkController.isBlinking) {
-      blinkController.startBlinking();
+    if (!caretBlinkController.isBlinking) {
+      caretBlinkController.startBlinking();
     }
   }
 
@@ -650,8 +650,8 @@ class IOSEditingOverlayController with ChangeNotifier {
   ///
   /// If it's already stopped, does nothing.
   void stopCaretBlinking() {
-    if (blinkController.isBlinking) {
-      blinkController.stopBlinking();
+    if (caretBlinkController.isBlinking) {
+      caretBlinkController.stopBlinking();
     }
   }
 }
