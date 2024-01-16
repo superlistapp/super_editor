@@ -8,6 +8,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../test_runners.dart';
+import '../test_tools.dart';
 import '../test_tools_user_input.dart';
 import 'supereditor_test_tools.dart';
 
@@ -823,6 +824,680 @@ void main() {
         },
         variant: inputSourceVariant,
       );
+
+      group("jumps to downstream node preserving approximate x-position with DOWN ARROW", () {
+        testWidgetsOnDesktop('from paragraph to paragraph', (tester) async {
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown('''
+First paragraph
+
+Second paragraph''') //
+              .pump();
+
+          // Place caret at "First para|graph".
+          await tester.placeCaretInParagraph(context.document.nodes.first.id, 10);
+
+          // Press DOWN arrow to move the caret to the downstream paragraph.
+          await tester.pressDownArrow();
+
+          // Ensure the selection moved to "Second par|agraph".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: context.document.nodes.last.id,
+                  nodePosition: const TextNodePosition(offset: 10),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from paragraph to task', (tester) async {
+          await _pumpEditorWithTaskComponent(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(id: '1', text: AttributedText('This is a paragraph')),
+                TaskNode(id: '2', text: AttributedText('This is a task'), isComplete: false),
+              ],
+            ),
+          );
+
+          // Place the caret at "This is a |paragraph".
+          await tester.placeCaretInParagraph('1', 10);
+
+          // Press down arrow to move the caret to the downstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          // This is a paragraph
+          // [ ]This is a task
+          //
+          // So, pressing DOWN should move the caret from "This is a |paragraph"
+          // to "This is| a task".
+          await tester.pressDownArrow();
+
+          // Ensure the caret moved to "This is| a task".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '2',
+                  nodePosition: TextNodePosition(offset: 7),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from paragraph to list item', (tester) async {
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown('''
+This is a paragraph
+
+* This is a list item''') //
+              .pump();
+
+          // Place the caret at "This is a |paragraph".
+          await tester.placeCaretInParagraph(context.document.nodes.first.id, 10);
+
+          // Press DOWN arrow to move the caret to the downstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          // This is a paragraph
+          // * This is a list item
+          //
+          // So, pressing DOWN should move the caret from "This is a |paragraph"
+          // to "This is |a list item".
+          await tester.pressDownArrow();
+
+          // Ensure the selection moved to "This is |a list item".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: context.document.nodes.last.id,
+                  nodePosition: const TextNodePosition(offset: 8),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from task to paragraph', (tester) async {
+          await _pumpEditorWithTaskComponent(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                TaskNode(id: '1', text: AttributedText('This is a task'), isComplete: false),
+                ParagraphNode(id: '2', text: AttributedText('This is a paragraph')),
+              ],
+            ),
+          );
+
+          // Place the caret at "This| is a task".
+          await tester.placeCaretInParagraph('1', 4);
+
+          // Press down arrow to move the caret to the downstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          // [ ]This is a task
+          // This is a paragraph
+          //
+          // So, pressing DOWN should move the caret from "This| is a task"
+          // to "This is| a paragraph".
+          await tester.pressDownArrow();
+
+          // Ensure the caret moved to "This is| a paragraph."
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '2',
+                  nodePosition: TextNodePosition(offset: 7),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from task to task', (tester) async {
+          await _pumpEditorWithTaskComponent(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                TaskNode(id: '1', text: AttributedText('This is another task'), isComplete: false),
+                TaskNode(id: '2', text: AttributedText('This is a task'), isComplete: false),
+              ],
+            ),
+          );
+
+          // Place the caret at "This is a|nother task".
+          await tester.placeCaretInParagraph('1', 9);
+
+          // Press down arrow to move the caret to the downstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          //   [ ]  This is another task
+          //   [ ]  This is a task
+          //
+          // So, pressing DOWN should move the caret from "This is a|nother task"
+          // to "This is a| task".
+          await tester.pressDownArrow();
+
+          // Ensure the caret moved to "This is a| task".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '2',
+                  nodePosition: TextNodePosition(offset: 9),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from task to list item', (tester) async {
+          await _pumpEditorWithTaskComponent(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                TaskNode(id: '1', text: AttributedText('This is a task'), isComplete: false),
+                ListItemNode.unordered(id: '2', text: AttributedText('This is a list item')),
+              ],
+            ),
+          );
+
+          // Place the caret at "This| is a task".
+          await tester.placeCaretInParagraph('1', 4);
+
+          // Press down arrow to move the caret to the downstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          // [ ]This is a task
+          //  * This is a list item
+          //
+          // So, pressing DOWN should move the caret from "This| is a task"
+          // to "This| is a list item".
+          await tester.pressDownArrow();
+
+          // Ensure the caret moved to "This| is a list item".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '2',
+                  nodePosition: TextNodePosition(offset: 4),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from list item to paragraph', (tester) async {
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown('''
+* This is a list item
+
+This is a paragraph''') //
+              .pump();
+
+          // Place caret at "This is |a list item".
+          await tester.placeCaretInParagraph(context.document.nodes.first.id, 8);
+
+          // Press DOWN arrow to move the caret to the downstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          // * This is a list item
+          // This is a paragraph
+          //
+          // So, pressing DOWN should move the caret from "This is |a list item"
+          // to "This is a |paragraph".
+          await tester.pressDownArrow();
+
+          // Ensure the selection moved to "This is a |paragraph".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: context.document.nodes.last.id,
+                  nodePosition: const TextNodePosition(offset: 10),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from list item to task', (tester) async {
+          await _pumpEditorWithTaskComponent(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                ListItemNode.unordered(id: '1', text: AttributedText('This is a list item')),
+                TaskNode(id: '2', text: AttributedText('This is a task'), isComplete: false),
+              ],
+            ),
+          );
+
+          // Place the caret at "This| is a list item".
+          await tester.placeCaretInParagraph('1', 4);
+
+          // Press down arrow to move the caret to the downstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          //  * This is a list item
+          // [ ]This is a task
+          //
+          // So, pressing DOWN should move the caret from "This| is a list item"
+          // to "This| is a task".
+          await tester.pressDownArrow();
+
+          // Ensure the caret moved to "This| is a task".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '2',
+                  nodePosition: TextNodePosition(offset: 4),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from list item to list item', (tester) async {
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown('''
+* This is another list item
+
+* This is a list item''') //
+              .pump();
+
+          // Place the caret at "This is a|nother list item".
+          await tester.placeCaretInParagraph(context.document.nodes.first.id, 9);
+
+          // Press down arrow to move the caret to the downstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          //  *  This is another list item
+          //  *  This is a list item
+          //
+          // So, pressing DOWN should move the caret from "This is a|nother list item"
+          // to "This is a| list item".
+          await tester.pressDownArrow();
+
+          // Ensure the caret moved to "This is a| task".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: context.document.nodes.last.id,
+                  nodePosition: const TextNodePosition(offset: 9),
+                ),
+              ),
+            ),
+          );
+        });
+      });
+
+      group("jumps to upstream node preserving approximate x-position with UP ARROW", () {
+        testWidgetsOnDesktop('from paragraph to paragraph', (tester) async {
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown(''''
+First paragraph
+
+Second paragraph''') //
+              .pump();
+
+          // Place caret at "Second p|aragraph".
+          await tester.placeCaretInParagraph(context.document.nodes.last.id, 8);
+
+          // Press UP arrow to move the caret to the upstream paragraph.
+          await tester.pressUpArrow();
+
+          // Ensure the selection moved to "First para|graph".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: context.document.nodes.first.id,
+                  nodePosition: const TextNodePosition(offset: 10),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from paragraph to task', (tester) async {
+          await _pumpEditorWithTaskComponent(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                TaskNode(id: '1', text: AttributedText('This is a task'), isComplete: false),
+                ParagraphNode(id: '2', text: AttributedText('This is a paragraph')),
+              ],
+            ),
+          );
+
+          // Place the caret at "This is a |paragraph".
+          await tester.placeCaretInParagraph('2', 10);
+
+          // Press up arrow to move the caret to the upstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          // [ ]This is a task
+          // This is a paragraph
+          //
+          // So, pressing UP should move the caret from "This is a |paragraph"
+          // to "Th|is is a task".
+          await tester.pressUpArrow();
+
+          // Ensure the caret moved to "This is| a task".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 7),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from paragraph to list item', (tester) async {
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown('''
+* This is a list item
+
+This is a paragraph''') //
+              .pump();
+
+          // Place the caret at "This is a |paragraph".
+          await tester.placeCaretInParagraph(context.document.nodes.last.id, 10);
+
+          // Press UP arrow to move the caret to the upstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          // * This is a list item
+          // This is a paragraph
+          //
+          // So, pressing UP should move the caret from "This is a |paragraph"
+          // to "This is |a list item".
+          await tester.pressUpArrow();
+
+          // Ensure the selection moved to "This is |a list item".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: context.document.nodes.first.id,
+                  nodePosition: const TextNodePosition(offset: 8),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from task to paragraph', (tester) async {
+          await _pumpEditorWithTaskComponent(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(id: '1', text: AttributedText('This is a paragraph')),
+                TaskNode(id: '2', text: AttributedText('This is a task'), isComplete: false),
+              ],
+            ),
+          );
+
+          // Place the caret at "This| is a task".
+          await tester.placeCaretInParagraph('2', 4);
+
+          // Press up arrow to move the caret to the upstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          // This is a paragraph
+          // [ ]This is a task
+          //
+          // So, pressing UP should move the caret from "This| is a task"
+          // to "This is| a paragraph".
+          await tester.pressUpArrow();
+
+          // Ensure the caret moved to "This is| a paragraph."
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 7),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from task to task', (tester) async {
+          await _pumpEditorWithTaskComponent(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                TaskNode(id: '1', text: AttributedText('This is a task'), isComplete: false),
+                TaskNode(id: '2', text: AttributedText('This is another task'), isComplete: false),
+              ],
+            ),
+          );
+
+          // Place the caret at "This is a|nother task".
+          await tester.placeCaretInParagraph('2', 9);
+
+          // Press up arrow to move the caret to the upstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          //   [ ]  This is a task
+          //   [ ]  This is another task
+          //
+          // So, pressing UP should move the caret from "This is a|nother task"
+          // to "This is a| task".
+          await tester.pressUpArrow();
+
+          // Ensure the caret moved to "This is a| task".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 9),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from task to list item', (tester) async {
+          await _pumpEditorWithTaskComponent(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                ListItemNode.unordered(id: '1', text: AttributedText('This is a list item')),
+                TaskNode(id: '2', text: AttributedText('This is a task'), isComplete: false),
+              ],
+            ),
+          );
+
+          // Place the caret at "This| is a task".
+          await tester.placeCaretInParagraph('2', 4);
+
+          // Press UP arrow to move the caret to the upstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          //  * This is a list item
+          // [ ]This is a task
+          //
+          // So, pressing UP should move the caret from "This| is a task"
+          // to "This| is a list item".
+          await tester.pressUpArrow();
+
+          // Ensure the caret moved to "This| is a list item".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 4),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from list item to paragraph', (tester) async {
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown('''
+This is a paragraph
+
+* This is a list item''') //
+              .pump();
+
+          // Place caret at "This is |a list item".
+          await tester.placeCaretInParagraph(context.document.nodes.last.id, 8);
+
+          // Press UP arrow to move the caret to the upstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          // This is a paragraph
+          // * This is a list item
+          //
+          // So, pressing UP should move the caret from "This is |a list item"
+          // to "This is a |paragraph".
+          await tester.pressUpArrow();
+
+          // Ensure the selection moved to "This is a |paragraph".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: context.document.nodes.first.id,
+                  nodePosition: const TextNodePosition(offset: 10),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from list item to task', (tester) async {
+          await _pumpEditorWithTaskComponent(
+            tester,
+            document: MutableDocument(
+              nodes: [
+                TaskNode(id: '1', text: AttributedText('This is a task'), isComplete: false),
+                ListItemNode.unordered(id: '2', text: AttributedText('This is a list item')),
+              ],
+            ),
+          );
+
+          // Place the caret at "This| is a list item".
+          await tester.placeCaretInParagraph('2', 4);
+
+          // Press UP arrow to move the caret to the upstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          // [ ]This is a task
+          //  * This is a list item
+          //
+          // So, pressing UP should move the caret from "This| is a list item"
+          // to "This| is a task".
+          await tester.pressUpArrow();
+
+          // Ensure the caret moved to "This| is a task".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 4),
+                ),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnDesktop('from list item to list item', (tester) async {
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown('''
+* This is a list item
+
+* This is another list item''') //
+              .pump();
+
+          // Place the caret at "This is a|nother list item".
+          await tester.placeCaretInParagraph(context.document.nodes.last.id, 9);
+
+          // Press UP arrow to move the caret to the upstream node.
+          //
+          // The text layout of this document is approximately:
+          //
+          //  *  This is a list item
+          //  *  This is another list item
+          //
+          // So, pressing UP should move the caret from "This is a|nother list item"
+          // to "This is a| list item".
+          await tester.pressUpArrow();
+
+          // Ensure the caret moved to "This is a| task".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: context.document.nodes.first.id,
+                  nodePosition: const TextNodePosition(offset: 9),
+                ),
+              ),
+            ),
+          );
+        });
+      });
     });
 
     group("Linux >", () {
@@ -1282,7 +1957,7 @@ void main() {
         await tester.pressBackspace();
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInParagraph("1").text, "Text with [] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -1330,7 +2005,7 @@ void main() {
         await tester.pressDelete();
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInParagraph("1").text, "Text with [] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -1379,7 +2054,7 @@ void main() {
         await tester.typeKeyboardText("a");
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInParagraph("1").text, "Text with [a] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [a] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -1427,7 +2102,7 @@ void main() {
         await tester.pressEscape();
 
         // Ensure the selected content was deleted.
-        expect(SuperEditorInspector.findTextInParagraph("1").text, "Text with [SELECTME] selection");
+        expect(SuperEditorInspector.findTextInComponent("1").text, "Text with [SELECTME] selection");
         expect(
           SuperEditorInspector.findDocumentSelection(),
           const DocumentSelection.collapsed(
@@ -1461,7 +2136,7 @@ void main() {
       await tester.pressEscape();
 
       // Ensure that nothing changed.
-      expect(SuperEditorInspector.findTextInParagraph("1").text, "This is some text");
+      expect(SuperEditorInspector.findTextInComponent("1").text, "This is some text");
       expect(
         SuperEditorInspector.findDocumentSelection(),
         const DocumentSelection.collapsed(
@@ -1867,6 +2542,31 @@ Future<TestDocumentContext> _pumpPageScrollSliverTestSetup(
       debugShowCheckedModeBanner: false,
     );
   }).pump();
+}
+
+/// Pumps a [SuperEditor] configured with the [TaskComponentBuilder].
+Future<void> _pumpEditorWithTaskComponent(
+  WidgetTester tester, {
+  required MutableDocument document,
+}) async {
+  final composer = MutableDocumentComposer();
+  final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: SuperEditor(
+          editor: editor,
+          document: document,
+          composer: composer,
+          componentBuilders: [
+            TaskComponentBuilder(editor),
+            ...defaultComponentBuilders,
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 Future<void> _pressShiftAltUpArrow(WidgetTester tester) async {

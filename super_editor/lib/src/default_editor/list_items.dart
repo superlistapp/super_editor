@@ -144,7 +144,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
 
     if (componentViewModel.type == ListItemType.unordered) {
       return UnorderedListItemComponent(
-        textKey: componentContext.componentKey,
+        componentKey: componentContext.componentKey,
         text: componentViewModel.text,
         styleBuilder: componentViewModel.textStyleBuilder,
         indent: componentViewModel.indent,
@@ -156,7 +156,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
       );
     } else if (componentViewModel.type == ListItemType.ordered) {
       return OrderedListItemComponent(
-        textKey: componentContext.componentKey,
+        componentKey: componentContext.componentKey,
         indent: componentViewModel.indent,
         listIndex: componentViewModel.ordinalValue!,
         text: componentViewModel.text,
@@ -272,9 +272,9 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
 ///
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
 class UnorderedListItemComponent extends StatelessWidget {
-  const UnorderedListItemComponent({
+  UnorderedListItemComponent({
     Key? key,
-    required this.textKey,
+    required this.componentKey,
     required this.text,
     required this.styleBuilder,
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
@@ -290,7 +290,7 @@ class UnorderedListItemComponent extends StatelessWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  final GlobalKey textKey;
+  final GlobalKey componentKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final UnorderedListItemDotBuilder dotBuilder;
@@ -305,6 +305,18 @@ class UnorderedListItemComponent extends StatelessWidget {
   final bool showComposingUnderline;
   final bool showDebugPaint;
 
+  /// A [GlobalKey] that connects a [ProxyTextDocumentComponent] to its
+  /// descendant [TextComponent].
+  ///
+  /// The [ProxyTextDocumentComponent] doesn't know where the [TextComponent] sits
+  /// in its subtree, but the proxy needs access to the [TextComponent] to provide
+  /// access to text layout details.
+  ///
+  /// This key doesn't need to be public because the given [componentKey]
+  /// provides clients with direct access to text layout queries, as well as
+  /// standard [DocumentComponent] queries.
+  final GlobalKey _innerTextComponentKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
@@ -313,35 +325,39 @@ class UnorderedListItemComponent extends StatelessWidget {
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.25));
     const manualVerticalAdjustment = 3.0;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: indentSpace,
-          margin: const EdgeInsets.only(top: manualVerticalAdjustment),
-          decoration: BoxDecoration(
-            border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+    return ProxyTextDocumentComponent(
+      key: componentKey,
+      textComponentKey: _innerTextComponentKey,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: indentSpace,
+            margin: const EdgeInsets.only(top: manualVerticalAdjustment),
+            decoration: BoxDecoration(
+              border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+            ),
+            child: SizedBox(
+              height: lineHeight,
+              child: dotBuilder(context, this),
+            ),
           ),
-          child: SizedBox(
-            height: lineHeight,
-            child: dotBuilder(context, this),
+          Expanded(
+            child: TextComponent(
+              key: _innerTextComponentKey,
+              text: text,
+              textStyleBuilder: styleBuilder,
+              textSelection: textSelection,
+              textScaler: textScaler,
+              selectionColor: selectionColor,
+              highlightWhenEmpty: highlightWhenEmpty,
+              composingRegion: composingRegion,
+              showComposingUnderline: showComposingUnderline,
+              showDebugPaint: showDebugPaint,
+            ),
           ),
-        ),
-        Expanded(
-          child: TextComponent(
-            key: textKey,
-            text: text,
-            textStyleBuilder: styleBuilder,
-            textSelection: textSelection,
-            textScaler: textScaler,
-            selectionColor: selectionColor,
-            highlightWhenEmpty: highlightWhenEmpty,
-            composingRegion: composingRegion,
-            showComposingUnderline: showComposingUnderline,
-            showDebugPaint: showDebugPaint,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -367,9 +383,9 @@ Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListIt
 ///
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
 class OrderedListItemComponent extends StatelessWidget {
-  const OrderedListItemComponent({
+  OrderedListItemComponent({
     Key? key,
-    required this.textKey,
+    required this.componentKey,
     required this.listIndex,
     required this.text,
     required this.styleBuilder,
@@ -386,7 +402,7 @@ class OrderedListItemComponent extends StatelessWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  final GlobalKey textKey;
+  final GlobalKey componentKey;
   final int listIndex;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
@@ -402,6 +418,18 @@ class OrderedListItemComponent extends StatelessWidget {
   final bool showComposingUnderline;
   final bool showDebugPaint;
 
+  /// A [GlobalKey] that connects a [ProxyTextDocumentComponent] to its
+  /// descendant [TextComponent].
+  ///
+  /// The [ProxyTextDocumentComponent] doesn't know where the [TextComponent] sits
+  /// in its subtree, but the proxy needs access to the [TextComponent] to provide
+  /// access to text layout details.
+  ///
+  /// This key doesn't need to be public because the given [componentKey]
+  /// provides clients with direct access to text layout queries, as well as
+  /// standard [DocumentComponent] queries.
+  final GlobalKey _innerTextComponentKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
@@ -409,35 +437,39 @@ class OrderedListItemComponent extends StatelessWidget {
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.0));
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: indentSpace,
-          height: lineHeight,
-          decoration: BoxDecoration(
-            border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
-          ),
-          child: SizedBox(
+    return ProxyTextDocumentComponent(
+      key: componentKey,
+      textComponentKey: _innerTextComponentKey,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: indentSpace,
             height: lineHeight,
-            child: numeralBuilder(context, this),
+            decoration: BoxDecoration(
+              border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+            ),
+            child: SizedBox(
+              height: lineHeight,
+              child: numeralBuilder(context, this),
+            ),
           ),
-        ),
-        Expanded(
-          child: TextComponent(
-            key: textKey,
-            text: text,
-            textStyleBuilder: styleBuilder,
-            textSelection: textSelection,
-            textScaler: textScaler,
-            selectionColor: selectionColor,
-            highlightWhenEmpty: highlightWhenEmpty,
-            composingRegion: composingRegion,
-            showComposingUnderline: showComposingUnderline,
-            showDebugPaint: showDebugPaint,
+          Expanded(
+            child: TextComponent(
+              key: _innerTextComponentKey,
+              text: text,
+              textStyleBuilder: styleBuilder,
+              textSelection: textSelection,
+              textScaler: textScaler,
+              selectionColor: selectionColor,
+              highlightWhenEmpty: highlightWhenEmpty,
+              composingRegion: composingRegion,
+              showComposingUnderline: showComposingUnderline,
+              showDebugPaint: showDebugPaint,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

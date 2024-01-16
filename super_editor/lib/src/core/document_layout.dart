@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/infrastructure/composable_text.dart';
 
 import 'document_selection.dart';
 import 'document.dart';
@@ -347,7 +348,14 @@ mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentCompon
 
   @override
   Offset getOffsetForPosition(NodePosition nodePosition) {
-    return _childDocumentComponent.getOffsetForPosition(nodePosition);
+    // In addition to the standard `getOffsetForPosition` of the child component, the proxy
+    // also calls `_getOffsetFromChild`, which returns the offset from the top-left of this
+    // proxy box, to the top-left of the child. Some proxy components, such as a task,
+    // add content that shifts the child component, like adding a checkbox. Any such
+    // shift of the child component must be accounted for when reporting a content offset.
+    return _getOffsetFromChild(
+      _childDocumentComponent.getOffsetForPosition(nodePosition),
+    );
   }
 
   @override
