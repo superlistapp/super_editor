@@ -573,7 +573,6 @@ class IOSEditingOverlayController with ChangeNotifier {
     super.dispose();
   }
 
-  /// Text field caret blink controller.
   final BlinkController caretBlinkController;
 
   bool get isToolbarVisible => overlayController.shouldDisplayToolbar;

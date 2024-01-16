@@ -179,7 +179,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   // positions the invisible touch targets for base/extent dragging.
   final _popoverController = OverlayPortalController();
 
-  /// Text field caret blink controller.
   late final BlinkController _caretBlinkController;
 
   /// Notifies the popover toolbar to rebuild itself.

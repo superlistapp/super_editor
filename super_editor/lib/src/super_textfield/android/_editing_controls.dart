@@ -824,7 +824,6 @@ class AndroidEditingOverlayController with ChangeNotifier {
     super.dispose();
   }
 
-  /// Text field caret blink controller.
   final BlinkController caretBlinkController;
 
   bool _isToolbarVisible = false;
