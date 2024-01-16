@@ -648,7 +648,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             position: _textEditingController.selection.isCollapsed //
                 ? _textEditingController.selection.extent
                 : null,
-            blinkTimingMode: widget.blinkTimingMode,
             blinkController: _blinkController,
           );
         },
