@@ -34,20 +34,20 @@ void main() {
         await tester.typeTextAdaptive('-');
 
         // Ensure no conversion happened.
-        expect(SuperEditorInspector.findTextInParagraph('1').text, '-');
+        expect(SuperEditorInspector.findTextInComponent('1').text, '-');
 
         // Type the second dash.
         await tester.typeTextAdaptive('-');
 
         // Ensure the two dashes were converted to an em-dash.
         expect(context.document.nodes.length, 1);
-        expect(SuperEditorInspector.findTextInParagraph('1').text, SpecialCharacters.emDash);
+        expect(SuperEditorInspector.findTextInComponent('1').text, SpecialCharacters.emDash);
 
         // Type some arbitrary text.
         await tester.typeTextAdaptive(' is an em-dash');
 
         // Ensure the text was inserted.
-        expect(SuperEditorInspector.findTextInParagraph('1').text, '— is an em-dash');
+        expect(SuperEditorInspector.findTextInComponent('1').text, '— is an em-dash');
       });
 
       testAllInputsOnAllPlatforms('at the beginning of a non-empty paragraph', (
@@ -69,20 +69,20 @@ void main() {
         await tester.typeTextAdaptive('-');
 
         // Ensure no conversion happened.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, '-was inserted');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, '-was inserted');
 
         // Type the second dash.
         await tester.typeTextAdaptive('-');
 
         // Ensure the two dashes were converted to an em-dash.
         expect(context.document.nodes.length, 1);
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, '—was inserted');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, '—was inserted');
 
         // Type some arbitrary text.
         await tester.typeTextAdaptive('(em-dash) ');
 
         // Ensure the text was inserted.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, '—(em-dash) was inserted');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, '—(em-dash) was inserted');
       });
 
       testAllInputsOnAllPlatforms('at the middle of a paragraph', (
@@ -104,14 +104,14 @@ void main() {
         await tester.typeTextAdaptive('-');
 
         // Ensure no conversion happened.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting -with a reaction');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting -with a reaction');
 
         // Type the second dash.
         await tester.typeTextAdaptive('-');
 
         // Ensure the two dashes were converted to an em-dash.
         expect(context.document.nodes.length, 1);
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting —with a reaction');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting —with a reaction');
 
         // Type some arbitrary text.
         await tester.typeTextAdaptive(' typing two dashes ');
@@ -120,13 +120,13 @@ void main() {
         // and the second should be inserted as is.
         await tester.typeTextAdaptive('---');
         expect(
-            SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting — typing two dashes —-with a reaction');
+            SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting — typing two dashes —-with a reaction');
 
         // Type another dash. The previously inserted dash and the current one
         // should be converted to an em-dash.
         await tester.typeTextAdaptive('-');
         expect(
-            SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting — typing two dashes ——with a reaction');
+            SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting — typing two dashes ——with a reaction');
       });
 
       testAllInputsOnAllPlatforms('at the end of a paragraph', (
@@ -151,20 +151,20 @@ void main() {
         await tester.typeTextAdaptive('-');
 
         // Ensure no conversion happened.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting -');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting -');
 
         // Type the second dash.
         await tester.typeTextAdaptive('-');
 
         // Ensure the two dashes were converted to an em-dash.
         expect(context.document.nodes.length, 1);
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting —');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting —');
 
         // Type some arbitrary text.
         await tester.typeTextAdaptive(' by typing two dashes');
 
         // Ensure the text was inserted.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting — by typing two dashes');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting — by typing two dashes');
       });
 
       testAllInputsOnAllPlatforms('at the beginning of an empty list item', (
@@ -186,20 +186,20 @@ void main() {
         await tester.typeTextAdaptive('-');
 
         // Ensure no conversion happened.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, '-');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, '-');
 
         // Type the second dash.
         await tester.typeTextAdaptive('-');
 
         // Ensure the two dashes were converted to an em-dash.
         expect(context.document.nodes.length, 1);
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, '—');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, '—');
 
         // Type some arbitrary text.
         await tester.typeTextAdaptive(' is an em-dash');
 
         // Ensure the text was inserted.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, '— is an em-dash');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, '— is an em-dash');
       });
 
       testAllInputsOnAllPlatforms('at the beginning of a non-empty list item', (
@@ -221,27 +221,27 @@ void main() {
         await tester.typeTextAdaptive('-');
 
         // Ensure no conversion happened.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, '-was inserted');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, '-was inserted');
 
         // Type the second dash.
         await tester.typeTextAdaptive('-');
 
         // Ensure the two dashes were converted to an em-dash.
         expect(context.document.nodes.length, 1);
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, '—was inserted');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, '—was inserted');
 
         // Type a third dash.
         await tester.typeTextAdaptive('-');
 
         // Ensure a dash was inserted and no other nodes were added.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, '—-was inserted');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, '—-was inserted');
         expect(context.document.nodes.length, 1);
 
         // Type some arbitrary text.
         await tester.typeTextAdaptive('(em-dash) ');
 
         // Ensure the text was inserted.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, '—-(em-dash) was inserted');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, '—-(em-dash) was inserted');
       });
 
       testAllInputsOnAllPlatforms('at the middle of a list item', (
@@ -263,14 +263,14 @@ void main() {
         await tester.typeTextAdaptive('-');
 
         // Ensure no conversion happened.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting -with a reaction');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting -with a reaction');
 
         // Type the second dash.
         await tester.typeTextAdaptive('-');
 
         // Ensure the two dashes were converted to an em-dash.
         expect(context.document.nodes.length, 1);
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting —with a reaction');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting —with a reaction');
 
         // Type some arbitrary text.
         await tester.typeTextAdaptive(' typing two dashes ');
@@ -279,13 +279,13 @@ void main() {
         // and the second should be inserted as is.
         await tester.typeTextAdaptive('---');
         expect(
-            SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting — typing two dashes —-with a reaction');
+            SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting — typing two dashes —-with a reaction');
 
         // Type another dash. The previously inserted dash and the current one
         // should be converted to an em-dash.
         await tester.typeTextAdaptive('-');
         expect(
-            SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting — typing two dashes ——with a reaction');
+            SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting — typing two dashes ——with a reaction');
       });
 
       testAllInputsOnAllPlatforms('at the end of a list item', (
@@ -310,20 +310,20 @@ void main() {
         await tester.typeTextAdaptive('-');
 
         // Ensure no conversion happened.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting -');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting -');
 
         // Type the second dash.
         await tester.typeTextAdaptive('-');
 
         // Ensure the two dashes were converted to an em-dash.
         expect(context.document.nodes.length, 1);
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting —');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting —');
 
         // Type some arbitrary text.
         await tester.typeTextAdaptive(' by typing two dashes');
 
         // Ensure the text was inserted.
-        expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'Inserting — by typing two dashes');
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'Inserting — by typing two dashes');
       });
 
       testAllInputsOnAllPlatforms('at the beginning of an empty task', (

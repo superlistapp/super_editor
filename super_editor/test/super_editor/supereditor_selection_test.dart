@@ -1077,7 +1077,7 @@ Second Paragraph
       // Place the caret at the middle of the first word.
       await tester.placeCaretInParagraph('1', 2);
 
-      final text = SuperEditorInspector.findTextInParagraph('1').text;
+      final text = SuperEditorInspector.findTextInComponent('1').text;
 
       await tester.ime.sendDeltas(
         [
