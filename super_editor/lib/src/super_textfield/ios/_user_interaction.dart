@@ -345,12 +345,12 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       _isDraggingCaret = false;
       widget.editingOverlayController.hideMagnifier();
 
-      if (widget.textController.selection.isCollapsed) {
-        widget.editingOverlayController.startCaretBlinking();
-      }
-
       if (!widget.textController.selection.isCollapsed) {
         widget.editingOverlayController.showToolbar();
+      } else {
+        // We stop the caret blink while dragging the collapsed caret. If the selection is
+        // collapsed, start the caret blink.
+        widget.editingOverlayController.startCaretBlinking();
       }
     });
   }

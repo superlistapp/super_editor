@@ -248,12 +248,12 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
       _isDraggingExtent = false;
       widget.editingController.hideMagnifier();
 
-      if (widget.editingController.textController.selection.isCollapsed) {
-        widget.editingController.startCaretBlinking();
-      }
-
       if (!widget.editingController.textController.selection.isCollapsed) {
         widget.editingController.showToolbar();
+      } else {
+        // We stop the caret blink while dragging the collapsed handle. If the selection is
+        // collapsed, start the caret blink.
+        widget.editingController.startCaretBlinking();
       }
     });
   }

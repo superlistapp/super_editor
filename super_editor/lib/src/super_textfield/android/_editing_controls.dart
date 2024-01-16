@@ -379,15 +379,15 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       _isDraggingExtent = false;
       widget.editingController.hideMagnifier();
 
-      if (widget.editingController.textController.selection.isCollapsed) {
-        widget.editingController.startCaretBlinking();
-      }
-
       if (!widget.editingController.textController.selection.isCollapsed) {
         // We hid the toolbar while dragging a handle. If the selection is
         // expanded, show it again.
         widget.editingController.showToolbar();
       } else {
+        // We stop the caret blink while dragging the collapsed handle. If the selection is
+        // collapsed, start the caret blink.
+        widget.editingController.startCaretBlinking();
+
         // The collapsed handle should disappear after some inactivity.
         widget.editingController
           ..unHideCollapsedHandle()
