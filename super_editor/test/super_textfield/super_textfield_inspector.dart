@@ -281,12 +281,12 @@ class SuperTextFieldInspector {
 
     final iOSTextField = find.descendant(of: rootFieldFinder, matching: find.byType(SuperIOSTextField));
     if (iOSTextField.evaluate().isNotEmpty) {
-      return _findCaretRectInViewportOnIos(iOSTextField);
+      return _findCaretRectInViewportOnMobile(iOSTextField);
     }
 
     final androidTextField = find.descendant(of: rootFieldFinder, matching: find.byType(SuperAndroidTextField));
     if (androidTextField.evaluate().isNotEmpty) {
-      return _findCaretRectInViewportOnAndroid(androidTextField);
+      return _findCaretRectInViewportOnMobile(androidTextField);
     }
 
     throw Exception(
@@ -311,31 +311,15 @@ class SuperTextFieldInspector {
     return caretGlobalRect.translate(-viewportOffset.dx, -viewportOffset.dy);
   }
 
-  static Rect? _findCaretRectInViewportOnIos(Finder iOSTextField) {
+  static Rect? _findCaretRectInViewportOnMobile(Finder mobileFieldFinder) {
     final viewport = find
-        .descendant(of: iOSTextField, matching: find.byType(TextScrollView))
-        .evaluate()
-        .single
-        .renderObject as RenderBox;
-
-    final caretDisplayElement =
-        find.descendant(of: iOSTextField, matching: find.byType(TextLayoutCaret)).evaluate().single as StatefulElement;
-    final caretDisplay = caretDisplayElement.state as TextLayoutCaretState;
-    final caretGlobalRect = caretDisplay.globalCaretGeometry!;
-
-    final viewportOffset = viewport.localToGlobal(Offset.zero);
-    return caretGlobalRect.translate(-viewportOffset.dx, -viewportOffset.dy);
-  }
-
-  static Rect? _findCaretRectInViewportOnAndroid(Finder androidTextField) {
-    final viewport = find
-        .descendant(of: androidTextField, matching: find.byType(TextScrollView))
+        .descendant(of: mobileFieldFinder, matching: find.byType(TextScrollView))
         .evaluate()
         .single
         .renderObject as RenderBox;
 
     final caretDisplayElement = find
-        .descendant(of: androidTextField, matching: find.byType(TextLayoutCaret))
+        .descendant(of: mobileFieldFinder, matching: find.byType(TextLayoutCaret))
         .evaluate()
         .single as StatefulElement;
     final caretDisplay = caretDisplayElement.state as TextLayoutCaretState;
