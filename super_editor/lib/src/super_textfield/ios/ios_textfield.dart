@@ -654,7 +654,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
               position: _textEditingController.selection.isCollapsed //
                   ? _textEditingController.selection.extent
                   : null,
-              blinkController: _blinkController,
+              blinkController: _caretBlinkController,
             ),
             IOSFloatingCursor(
               controller: _floatingCursorController,
