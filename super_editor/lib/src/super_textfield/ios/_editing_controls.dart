@@ -573,8 +573,6 @@ class IOSEditingOverlayController with ChangeNotifier {
     super.dispose();
   }
 
-  final BlinkController caretBlinkController;
-
   bool get isToolbarVisible => overlayController.shouldDisplayToolbar;
 
   /// The [AttributedTextEditingController] controlling the text
@@ -587,6 +585,8 @@ class IOSEditingOverlayController with ChangeNotifier {
   /// selection. Those properties and behaviors are represented by
   /// this [textController].
   final AttributedTextEditingController textController;
+
+  final BlinkController caretBlinkController;
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController overlayController;

@@ -824,8 +824,6 @@ class AndroidEditingOverlayController with ChangeNotifier {
     super.dispose();
   }
 
-  final BlinkController caretBlinkController;
-
   bool _isToolbarVisible = false;
   bool get isToolbarVisible => _isToolbarVisible;
 
@@ -839,6 +837,8 @@ class AndroidEditingOverlayController with ChangeNotifier {
   /// selection. Those properties and behaviors are represented by
   /// this [textController].
   final AttributedTextEditingController textController;
+
+  final BlinkController caretBlinkController;
 
   void toggleToolbar() {
     if (isToolbarVisible) {
