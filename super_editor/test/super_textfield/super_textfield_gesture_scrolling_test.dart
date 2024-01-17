@@ -2,7 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -136,7 +135,7 @@ void main() {
       controller.selection = const TextSelection.collapsed(offset: 28);
       await tester.pumpAndSettle();
 
-      // Ensure the content didn't scrolled.
+      // Ensure the content didn't scroll.
       expect(
         SuperTextFieldInspector.findScrollOffset(),
         scrollOffsetBefore,
@@ -144,10 +143,6 @@ void main() {
     });
 
     testWidgetsOnDesktop("doesn't scroll vertically when maxLines is null", (tester) async {
-      // With the Ahem font the estimated line height is equal to the true line height
-      // so we need to use a custom font.
-      await loadAppFonts();
-
       // We use some padding because it affects the viewport height calculation.
       const verticalPadding = 6.0;
 
@@ -277,7 +272,7 @@ Future<void> _pumpTestApp(
           child: SuperTextField(
             textController: textController,
             lineHeight: 20,
-            textStyleBuilder: (_) => const TextStyle(fontSize: 20),
+            textStyleBuilder: (_) => const TextStyle(fontSize: 20, color: Colors.black),
             minLines: minLines,
             maxLines: maxLines,
             padding: padding,

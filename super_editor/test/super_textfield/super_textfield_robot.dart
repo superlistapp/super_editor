@@ -215,7 +215,14 @@ extension SuperTextFieldRobot on WidgetTester {
     Offset scrollOffset = Offset.zero,
   ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
-    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity, scrollOffset);
+    return await _tapAtTextPositionInTextLayout(
+      textField.textLayout,
+      textField.textLayoutOffsetInField,
+      textFieldBox,
+      offset,
+      textAffinity,
+      scrollOffset,
+    );
   }
 
   Future<bool> _tapAtTextPositionOnAndroid(
@@ -225,7 +232,14 @@ extension SuperTextFieldRobot on WidgetTester {
     Offset scrollOffset = Offset.zero,
   ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
-    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity, scrollOffset);
+    return await _tapAtTextPositionInTextLayout(
+      textField.textLayout,
+      textField.textLayoutOffsetInField,
+      textFieldBox,
+      offset,
+      textAffinity,
+      scrollOffset,
+    );
   }
 
   Future<bool> _tapAtTextPositionOnIOS(
@@ -235,11 +249,19 @@ extension SuperTextFieldRobot on WidgetTester {
     Offset scrollOffset = Offset.zero,
   ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
-    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity, scrollOffset);
+    return await _tapAtTextPositionInTextLayout(
+      textField.textLayout,
+      textField.textLayoutOffsetInField,
+      textFieldBox,
+      offset,
+      textAffinity,
+      scrollOffset,
+    );
   }
 
   Future<bool> _tapAtTextPositionInTextLayout(
     TextLayout textLayout,
+    Offset textOffsetInField, // i.e., the padding around the text
     RenderBox textFieldBox,
     int offset, [
     TextAffinity textAffinity = TextAffinity.downstream,
@@ -280,7 +302,7 @@ extension SuperTextFieldRobot on WidgetTester {
       );
     }
 
-    final globalTapOffset = adjustedOffset + textFieldBox.localToGlobal(Offset.zero);
+    final globalTapOffset = textOffsetInField + adjustedOffset + textFieldBox.localToGlobal(Offset.zero);
     await tapAt(globalTapOffset);
     return true;
   }
