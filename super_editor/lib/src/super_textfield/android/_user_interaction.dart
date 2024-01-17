@@ -301,6 +301,10 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
 
       // Cancel any ongoing handle auto-disappear timer.
       widget.editingOverlayController.cancelCollapsedHandleAutoHideCountdown();
+
+      if (widget.textController.selection.isCollapsed) {
+        widget.editingOverlayController.stopCaretBlinking();
+      }
     });
   }
 
@@ -324,10 +328,6 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
       );
 
       widget.editingOverlayController.showMagnifier(_globalDragOffset!);
-
-      if (widget.textController.selection.isCollapsed) {
-        widget.editingOverlayController.stopCaretBlinking();
-      }
     });
   }
 
