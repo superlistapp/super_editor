@@ -197,12 +197,17 @@ void main() {
       // Ensure caret is visible.
       expect(_isCaretVisible(tester), true);
 
-      await tester.pump(flashPeriod);
+      await tester.pump(flashPeriod ~/ 2);
 
       // Ensure caret is visible.
       expect(_isCaretVisible(tester), true);
 
-      await tester.pump(flashPeriod);
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
 
       // Ensure caret is visible.
       expect(_isCaretVisible(tester), true);
@@ -237,12 +242,17 @@ void main() {
       // Ensure caret is visible.
       expect(_isCaretVisible(tester), true);
 
-      await tester.pump(flashPeriod);
+      await tester.pump(flashPeriod ~/ 2);
 
       // Ensure caret is visible.
       expect(_isCaretVisible(tester), true);
 
-      await tester.pump(flashPeriod);
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
 
       // Ensure caret is visible.
       expect(_isCaretVisible(tester), true);
