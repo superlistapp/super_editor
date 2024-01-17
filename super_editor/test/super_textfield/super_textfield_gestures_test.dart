@@ -158,6 +158,38 @@ void main() {
           const TextSelection.collapsed(offset: 0),
         );
       });
+
+      testWidgetsOnAllPlatforms("when a single-line text field contains scrollable text", (tester) async {
+        // The purpose of this test is to ensure that when placing the caret in a scrollable
+        // single-line text field (a text field with more text than can fit), the text field
+        // doesn't erratically move the caret somewhere else due to buggy scroll calculations.
+        await _pumpSingleLineTextField(
+          tester,
+          controller: AttributedTextEditingController(
+            // Display enough text to ensure the text field is scrollable.
+            text: AttributedText(
+              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna.",
+            ),
+          ),
+        );
+
+        // Ensure we begin with no scroll offset.
+        expect(SuperTextFieldInspector.isScrolledToBeginning(), isTrue);
+
+        // Place the caret at an arbitrary offset other than zero (so that we can
+        // catch any bug where the caret ends up being placed too far upstream after
+        // the tap).
+        await tester.placeCaretInSuperTextField(10);
+
+        // Ensure the caret was placed at the desired text position.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 10),
+        );
+
+        // Ensure that placing the caret didn't cause the scroll view to jump anywhere.
+        expect(SuperTextFieldInspector.isScrolledToBeginning(), isTrue);
+      });
     });
 
     group("on desktop", () {
@@ -589,7 +621,11 @@ a scrollbar
         // of the HorizontalDragGestureRecognizer, thereby moving the caret.
         final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
         addTearDown(() => gesture.removePointer());
+        // This first move is just enough to surpass the touch slop, which then
+        // triggers _onPanStart, but doesn't impact the text selection.
         await gesture.moveBy(const Offset(19, 0));
+        // This second move runs _onPanUpdate, which does change the text selection.
+        await gesture.moveBy(const Offset(1, 0));
         await gesture.up();
         await tester.pumpAndSettle();
 
@@ -788,6 +824,36 @@ Future<void> _pumpTestApp(
   );
 }
 
+Future<void> _pumpSingleLineTextField(
+  WidgetTester tester, {
+  AttributedTextEditingController? controller,
+  double? width,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: width ?? 400,
+            child: DecoratedBox(
+              decoration: BoxDecoration(border: Border.all(color: Colors.red)),
+              child: SuperTextField(
+                textController: controller,
+                // We use significant padding to catch bugs related to projecting offsets
+                // between the text layout and the scrolling viewport.
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 48),
+                minLines: 1,
+                maxLines: 1,
+                inputSource: TextInputSource.ime,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 // Custom gesture settings that ensure panSlop equal to touchSlop
 class _GestureSettings extends DeviceGestureSettings {
   const _GestureSettings({
@@ -797,11 +863,4 @@ class _GestureSettings extends DeviceGestureSettings {
 
   @override
   final double panSlop;
-}
-
-TextStyle _textStyleBuilder(Set<Attribution> attributions) {
-  return defaultTextFieldStyleBuilder(attributions).copyWith(
-    color: Colors.black,
-    fontFamily: 'Roboto',
-  );
 }
