@@ -169,14 +169,27 @@ void main() {
     });
 
     testWidgetsOnMobile("does not blink while dragging the caret", (tester) async {
+      // Disable indeterminate animations.
+      BlinkController.indeterminateAnimationsEnabled = false;
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
       final controller = AttributedTextEditingController(
         text: AttributedText(
             '''SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.'''),
       );
 
-      await _pumpTestApp(tester, controller: controller);
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            textController: controller,
+          ),
+        ),
+      );
 
       await tester.placeCaretInSuperTextField(0);
+
+      // Configure BlinkController to animate, otherwise it won't blink.
+      BlinkController.indeterminateAnimationsEnabled = true;
 
       // Drag caret by an arbitrary distance.
       await tester.dragCaretByDistanceInSuperTextField(const Offset(100, 100));
@@ -196,14 +209,27 @@ void main() {
     });
 
     testWidgetsOnAndroid("does not blink while dragging collapsed handle", (tester) async {
+      // Disable indeterminate animations.
+      BlinkController.indeterminateAnimationsEnabled = false;
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
       final controller = AttributedTextEditingController(
         text: AttributedText(
             '''SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.'''),
       );
 
-      await _pumpTestApp(tester, controller: controller);
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            textController: controller,
+          ),
+        ),
+      );
 
       await tester.placeCaretInSuperTextField(0);
+
+      // Configure BlinkController to animate, otherwise it won't blink.
+      BlinkController.indeterminateAnimationsEnabled = true;
 
       // Drag handle by an arbitrary distance.
       await tester.dragAndroidCollapsedHandleByDistanceInSuperTextField(const Offset(100, 100));
