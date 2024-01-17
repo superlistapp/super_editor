@@ -277,29 +277,3 @@ bool _isCaretVisible(WidgetTester tester) {
   final caretPainter = tester.widget<CustomPaint>(customPaint.last).painter as CaretPainter;
   return caretPainter.blinkController!.opacity == 1.0;
 }
-
-/// Pumps a [SuperTextField] experience.
-Future<void> _pumpTestApp(
-  WidgetTester tester, {
-  AttributedTextEditingController? controller,
-  EdgeInsets? padding,
-  TextAlign? textAlign,
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: 300,
-          child: SuperTextField(
-            padding: padding,
-            textAlign: textAlign ?? TextAlign.left,
-            textController: controller ??
-                AttributedTextEditingController(
-                  text: AttributedText('abc'),
-                ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
