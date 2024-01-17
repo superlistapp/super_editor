@@ -168,7 +168,7 @@ void main() {
       expect(caret.style.borderRadius, caretStyle.borderRadius);
     });
 
-    testWidgetsOnMobile("does not blink while dragging", (tester) async {
+    testWidgetsOnMobile("does not blink while dragging the caret", (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText(
             '''SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.'''),
