@@ -155,13 +155,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   void _onBasePanStart(DragStartDetails details) {
     _log.fine('_onBasePanStart');
 
-    widget.editingController.hideToolbar();
-
-    widget.textScrollController.updateAutoScrollingForTouchOffset(
-      userInteractionOffsetInViewport:
-          (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(details.globalPosition),
-    );
-    widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
+    _onHandleDragStart(details);
 
     setState(() {
       _isDraggingBase = true;
@@ -176,6 +170,18 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   void _onExtentPanStart(DragStartDetails details) {
     _log.fine('_onExtentPanStart');
 
+    _onHandleDragStart(details);
+
+    setState(() {
+      _isDraggingBase = false;
+      _isDraggingExtent = true;
+      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
+    });
+  }
+
+  void _onHandleDragStart(DragStartDetails details) {
+    _log.fine('_onHandleDragStart()');
+
     widget.editingController.hideToolbar();
 
     widget.textScrollController.updateAutoScrollingForTouchOffset(
@@ -184,11 +190,9 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     );
     widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
 
-    setState(() {
-      _isDraggingBase = false;
-      _isDraggingExtent = true;
-      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
-    });
+    if (widget.editingController.textController.selection.isCollapsed) {
+      widget.editingController.stopCaretBlinking();
+    }
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -204,12 +208,6 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     setState(() {
       _localDragOffset = _localDragOffset! + details.delta;
       widget.editingController.showMagnifier(_localDragOffset!);
-
-      if (widget.editingController.textController.selection.isCollapsed) {
-        if (widget.editingController.caretBlinkController.isBlinking) {
-          widget.editingController.stopCaretBlinking();
-        }
-      }
     });
   }
 
