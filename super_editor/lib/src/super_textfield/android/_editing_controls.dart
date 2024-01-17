@@ -307,7 +307,9 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       widget.editingController.showMagnifier(_localDragOffset!);
 
       if (widget.editingController.textController.selection.isCollapsed) {
-        widget.editingController.stopCaretBlinking();
+        if (widget.editingController.caretBlinkController.isBlinking) {
+          widget.editingController.stopCaretBlinking();
+        }
       }
 
       _log.fine(' - done updating all local state for drag update');
@@ -936,17 +938,13 @@ class AndroidEditingOverlayController with ChangeNotifier {
   ///
   /// If it's already blinking, does nothing.
   void startCaretBlinking() {
-    if (!caretBlinkController.isBlinking) {
-      caretBlinkController.startBlinking();
-    }
+    caretBlinkController.startBlinking();
   }
 
   /// Stops the text field caret blinking.
   ///
   /// If it's already stopped, does nothing.
   void stopCaretBlinking() {
-    if (caretBlinkController.isBlinking) {
-      caretBlinkController.stopBlinking();
-    }
+    caretBlinkController.stopBlinking();
   }
 }
