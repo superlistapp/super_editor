@@ -19,7 +19,10 @@ class _SuperIOSTextFieldDemoState extends State<SuperIOSTextFieldDemo> {
   @override
   void initState() {
     super.initState();
-    initLoggers(Level.FINE, {iosTextFieldLog, imeTextFieldLog});
+    initLoggers(Level.FINE, {
+      // iosTextFieldLog,
+      // imeTextFieldLog,
+    });
 
     _focusNode = FocusNode();
   }
@@ -48,26 +51,33 @@ class _SuperIOSTextFieldDemoState extends State<SuperIOSTextFieldDemo> {
     final genericTextStyle = config.styleBuilder({});
     final lineHeight = genericTextStyle.fontSize! * (genericTextStyle.height ?? 1.0);
 
-    return SuperIOSTextField(
-      focusNode: _focusNode,
-      tapRegionGroupId: _tapRegionGroupId,
-      textController: config.controller,
-      textStyleBuilder: config.styleBuilder,
-      hintBehavior: HintBehavior.displayHintUntilTextEntered,
-      hintBuilder: StyledHintBuilder(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.black),
+      ),
+      child: SuperIOSTextField(
+        focusNode: _focusNode,
+        tapRegionGroupId: _tapRegionGroupId,
+        textController: config.controller,
+        textStyleBuilder: config.styleBuilder,
+        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
+        hintBehavior: HintBehavior.displayHintUntilTextEntered,
+        hintBuilder: StyledHintBuilder(
           hintText: AttributedText("Enter text"),
           hintTextStyleBuilder: (attributions) {
             return config.styleBuilder(attributions).copyWith(color: Colors.grey);
-          }).build,
-      selectionColor: Colors.blue.withOpacity(0.4),
-      caretStyle: const CaretStyle(color: Colors.blue),
-      blinkTimingMode: BlinkTimingMode.timer,
-      handlesColor: Colors.blue,
-      minLines: config.minLines,
-      maxLines: config.maxLines,
-      lineHeight: lineHeight,
-      textInputAction: TextInputAction.done,
-      showDebugPaint: config.showDebugPaint,
+          },
+        ).build,
+        selectionColor: Colors.blue.withOpacity(0.4),
+        caretStyle: const CaretStyle(color: Colors.blue),
+        blinkTimingMode: BlinkTimingMode.timer,
+        handlesColor: Colors.blue,
+        minLines: config.minLines,
+        maxLines: config.maxLines,
+        lineHeight: lineHeight,
+        textInputAction: TextInputAction.done,
+        showDebugPaint: config.showDebugPaint,
+      ),
     );
   }
 }

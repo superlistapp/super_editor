@@ -36,15 +36,27 @@ extension DragExtensions on WidgetTester {
     required Offset totalDragOffset,
     int frameCount = 10,
   }) async {
-    final dragPerFrame = Offset(totalDragOffset.dx / frameCount, totalDragOffset.dy / frameCount);
-
     final dragGesture = await startGesture(startLocation);
+    await dragContinuation(dragGesture, totalDragOffset, frameCount: frameCount);
+
+    return dragGesture;
+  }
+
+  /// Simulates a user drag with an existing [gesture].
+  ///
+  /// This is useful, for example, when simulating multiple drags without the user
+  /// lifting his finger.
+  Future<void> dragContinuation(
+    TestGesture dragGesture,
+    Offset delta, {
+    int frameCount = 10,
+  }) async {
+    final dragPerFrame = Offset(delta.dx / frameCount, delta.dy / frameCount);
+
     for (int i = 0; i < frameCount; i += 1) {
       await dragGesture.moveBy(dragPerFrame);
       await pump();
     }
-
-    return dragGesture;
   }
 }
 

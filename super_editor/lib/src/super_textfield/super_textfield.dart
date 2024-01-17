@@ -408,6 +408,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             textController: _controller,
             textAlign: widget.textAlign,
             textStyleBuilder: widget.textStyleBuilder,
+            padding: widget.padding,
             hintBehavior: widget.hintBehavior,
             hintBuilder: widget.hintBuilder,
             caretStyle: widget.caretStyle ??
@@ -422,7 +423,6 @@ class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner
             textInputAction: _textInputAction,
             imeConfiguration: widget.imeConfiguration,
             showComposingUnderline: widget.showComposingUnderline ?? true,
-            padding: widget.padding,
             blinkTimingMode: widget.blinkTimingMode,
           ),
         );
