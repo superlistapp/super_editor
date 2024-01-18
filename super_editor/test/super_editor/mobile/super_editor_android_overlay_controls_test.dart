@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
@@ -209,6 +210,168 @@ void main() {
       expect(SuperEditorInspector.findAllMobileDragHandles(), findsOneWidget);
       expect(SuperEditorInspector.findMobileCaretDragHandle(), findsOneWidget);
       expect(SuperEditorInspector.isCaretVisible(), isTrue);
+    });
+
+    group('shows magnifier above the caret when dragging the collapsed handle', () {
+      testWidgetsOnAndroid('with an ancestor scrollable', (tester) async {
+        final scrollController = ScrollController();
+
+        // Pump the editor inside a CustomScrollView with a number of widgets
+        // above the editor, so we can check if the magnifier is positioned at the correct
+        // position, even if the editor isn't aligned with the top-left of the screen.
+        await tester
+            .createDocument()
+            .withSingleParagraph()
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => MaterialApp(
+                home: Scaffold(
+                  body: SizedBox(
+                    width: 300,
+                    height: 300,
+                    child: CustomScrollView(
+                      controller: scrollController,
+                      slivers: [
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (BuildContext context, int index) => Text('$index'),
+                            childCount: 50,
+                          ),
+                        ),
+                        SliverToBoxAdapter(child: superEditor),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            )
+            .pump();
+
+        // Ensure the scrollview is scrollable.
+        expect(scrollController.position.maxScrollExtent, greaterThan(0.0));
+
+        // Jump to the end of the content.
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        await tester.pump();
+
+        // Place the caret near the end of the document.
+        await tester.tapInParagraph("1", 440);
+
+        // Press and drag the caret somewhere else in the paragraph.
+        final gesture = await tester.pressDownOnCollapsedMobileHandle();
+        for (int i = 0; i < 5; i += 1) {
+          await gesture.moveBy(const Offset(24, 0));
+          await tester.pump();
+        }
+
+        // Ensure magnifier is visible and it's placed above the caret.
+        expect(SuperEditorInspector.isMobileMagnifierVisible(), isTrue);
+        expect(
+          tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
+          lessThan(tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy),
+        );
+
+        // Resolve the gesture so that we don't have pending gesture timers.
+        await gesture.up();
+        await tester.pump(kTapMinTime);
+      });
+
+      testWidgetsOnAndroid('without an ancestor scrollable', (tester) async {
+        final scrollController = ScrollController();
+
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withScrollController(scrollController)
+            .withEditorSize(const Size(300, 300))
+            .pump();
+
+        // Ensure the editor is scrollable.
+        expect(scrollController.position.maxScrollExtent, greaterThan(0.0));
+
+        // Jump to the end of the content.
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        await tester.pump();
+
+        // Place the caret near the end of the document.
+        await tester.tapInParagraph("1", 440);
+        await tester.pumpAndSettle();
+
+        // Press and drag the caret somewhere else in the paragraph.
+        final gesture = await tester.pressDownOnCollapsedMobileHandle();
+        for (int i = 0; i < 5; i += 1) {
+          await gesture.moveBy(const Offset(24, 0));
+          await tester.pump();
+        }
+
+        // Ensure magnifier is visible and it's placed above the caret.
+        expect(SuperEditorInspector.isMobileMagnifierVisible(), isTrue);
+        expect(
+          tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
+          lessThan(tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy),
+        );
+
+        // Resolve the gesture so that we don't have pending gesture timers.
+        await gesture.up();
+        await tester.pump(kTapMinTime);
+      });
+
+      testWidgetsOnAndroid('without an ancestor scrollable having widgets above the editor', (tester) async {
+        final scrollController = ScrollController();
+
+        // Pump a tree with another widget above the editor,
+        // so we can check if the magnifier is positioned at the correct
+        // position, even if the editor isn't aligned with the top-left of the screen.
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withScrollController(scrollController)
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => MaterialApp(
+                home: Scaffold(
+                  body: SizedBox(
+                    width: 300,
+                    height: 300,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 100),
+                        Expanded(child: superEditor),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            )
+            .pump();
+
+        // Ensure the editor is scrollable.
+        expect(scrollController.position.maxScrollExtent, greaterThan(0.0));
+
+        // Jump to the end of the content.
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        await tester.pump();
+
+        // Place the caret near the end of the document.
+        await tester.tapInParagraph("1", 440);
+        await tester.pumpAndSettle();
+
+        // Press and drag the caret somewhere else in the paragraph.
+        final gesture = await tester.pressDownOnCollapsedMobileHandle();
+        for (int i = 0; i < 5; i += 1) {
+          await gesture.moveBy(const Offset(24, 0));
+          await tester.pump();
+        }
+
+        // Ensure magnifier is visible and it's placed above the caret.
+        expect(SuperEditorInspector.isMobileMagnifierVisible(), isTrue);
+        expect(
+          tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
+          lessThan(tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy),
+        );
+
+        // Resolve the gesture so that we don't have pending gesture timers.
+        await gesture.up();
+        await tester.pump(kTapMinTime);
+      });
     });
 
     group("on device and web > shows", () {
