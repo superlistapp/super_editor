@@ -74,14 +74,14 @@ void main() {
       expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
 
       // Tap the drag handle to show the toolbar.
-      await tester.tap(SuperEditorInspector.findMobileCaretDragHandle());
+      await tester.tapOnCollapsedMobileHandle();
       await tester.pump();
 
       // Ensure the toolbar is visible.
       expect(SuperEditorInspector.isMobileToolbarVisible(), isTrue);
 
       // Tap the drag handle to hide the toolbar.
-      await tester.tap(SuperEditorInspector.findMobileCaretDragHandle());
+      await tester.tapOnCollapsedMobileHandle();
       await tester.pump();
 
       // Ensure the toolbar isn't visible.
@@ -98,7 +98,7 @@ void main() {
       expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
 
       // Tap the drag handle to show the toolbar.
-      await tester.tap(SuperEditorInspector.findMobileCaretDragHandle());
+      await tester.tapOnCollapsedMobileHandle();
       await tester.pump();
 
       // Ensure the toolbar is visible.

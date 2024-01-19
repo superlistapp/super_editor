@@ -126,13 +126,19 @@ extension SuperTextFieldRobot on WidgetTester {
   ///
   /// {@macro supertextfield_finder}
   Future<void> tapOnAndroidCollapsedHandle([Finder? superTextFieldFinder]) async {
-    await tap(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is AndroidSelectionHandle && //
-            widget.handleType == HandleType.collapsed,
-      ),
-    );
+    final handleElement = find
+        .byWidgetPredicate(
+          (widget) =>
+              widget is AndroidSelectionHandle && //
+              widget.handleType == HandleType.collapsed,
+        )
+        .evaluate()
+        .firstOrNull;
+    assert(handleElement != null, "Tried to press down on Android collapsed handle but no handle was found.");
+    final renderHandle = handleElement!.renderObject as RenderBox;
+    final handleCenter = renderHandle.localToGlobal(renderHandle.size.center(Offset.zero));
+
+    await tapAt(handleCenter);
   }
 
   /// Double taps in a [SuperTextField] at the given [offset]
