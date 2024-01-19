@@ -1,15 +1,7 @@
-import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/editor.dart';
-import 'package:super_editor/src/default_editor/default_document_editor.dart';
-import 'package:super_editor/src/default_editor/list_items.dart';
-import 'package:super_editor/src/default_editor/paragraph.dart';
-import 'package:super_editor/src/default_editor/super_editor.dart';
-import 'package:super_editor/src/default_editor/tasks.dart';
+import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 import 'package:super_text_layout/super_text_layout_inspector.dart';
