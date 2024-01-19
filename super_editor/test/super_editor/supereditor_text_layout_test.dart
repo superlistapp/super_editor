@@ -109,7 +109,7 @@ void main() {
       _ensureOnlyExpectedNodesRebuilt(
         previousBuildCount: buildCountPerNode,
         currentBuildCount: newBuildCountPerNode,
-        expectedRebuiltNodes: {'paragraph-1'},
+        expectedRebuiltNodes: {'paragraph-1', 'unordered-1'},
       );
 
       // Update the current build count to perform the subsequent expectations.
@@ -124,7 +124,7 @@ void main() {
       _ensureOnlyExpectedNodesRebuilt(
         previousBuildCount: buildCountPerNode,
         currentBuildCount: newBuildCountPerNode,
-        expectedRebuiltNodes: {},
+        expectedRebuiltNodes: {'unordered-1', 'ordered-1'},
       );
 
       // Update the current build count to perform the subsequent expectations.
@@ -139,7 +139,7 @@ void main() {
       _ensureOnlyExpectedNodesRebuilt(
         previousBuildCount: buildCountPerNode,
         currentBuildCount: newBuildCountPerNode,
-        expectedRebuiltNodes: {'task-1'},
+        expectedRebuiltNodes: {'ordered-1', 'task-1'},
       );
     });
   });
