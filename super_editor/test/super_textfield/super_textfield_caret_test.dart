@@ -170,7 +170,6 @@ void main() {
 
     testWidgetsOnMobile("does not blink while dragging the caret", (tester) async {
       // Disable indeterminate animations.
-      BlinkController.indeterminateAnimationsEnabled = false;
       addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
 
       final controller = AttributedTextEditingController(
@@ -215,7 +214,6 @@ void main() {
 
     testWidgetsOnAndroid("does not blink while dragging collapsed handle", (tester) async {
       // Disable indeterminate animations.
-      BlinkController.indeterminateAnimationsEnabled = false;
       addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
 
       final controller = AttributedTextEditingController(
