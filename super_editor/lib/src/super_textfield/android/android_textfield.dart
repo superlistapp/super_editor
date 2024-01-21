@@ -208,8 +208,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
     _editingOverlayController = AndroidEditingOverlayController(
       textController: _textEditingController,
-      magnifierFocalPoint: _magnifierLayerLink,
       caretBlinkController: _caretBlinkController,
+      magnifierFocalPoint: _magnifierLayerLink,
     );
 
     WidgetsBinding.instance.addObserver(this);
@@ -299,7 +299,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       // Dispose after the current frame so that other widgets have
       // time to remove their listeners.
       _editingOverlayController.dispose();
-      _caretBlinkController.dispose();
     });
 
     _textEditingController
@@ -321,6 +320,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     _textScrollController
       ..removeListener(_onTextScrollChange)
       ..dispose();
+
+    _caretBlinkController.dispose();
 
     _popoverRebuildSignal.dispose();
 

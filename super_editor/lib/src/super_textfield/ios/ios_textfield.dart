@@ -224,10 +224,10 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
     _editingOverlayController = IOSEditingOverlayController(
       textController: _textEditingController,
+      caretBlinkController: _caretBlinkController,
       toolbarFocalPoint: _toolbarLeaderLink,
       magnifierFocalPoint: _magnifierLeaderLink,
       overlayController: _overlayController,
-      caretBlinkController: _caretBlinkController,
     );
 
     WidgetsBinding.instance.addObserver(this);
@@ -319,7 +319,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       // time to remove their listeners.
       _editingOverlayController.dispose();
       _overlayController.dispose();
-      _caretBlinkController.dispose();
     });
 
     _textEditingController
@@ -342,6 +341,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     _textScrollController
       ..removeListener(_onTextScrollChange)
       ..dispose();
+
+    _caretBlinkController.dispose();
 
     WidgetsBinding.instance.removeObserver(this);
 
