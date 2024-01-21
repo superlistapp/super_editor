@@ -218,6 +218,82 @@ void main() {
       expect(_isCaretVisible(tester), true);
     });
 
+    testWidgetsOnMobile("does not blink while dragging expanded handles", (tester) async {
+      // Disable indeterminate animations so that pumpAndSettle() doesn't time out.
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
+      final controller = AttributedTextEditingController(
+        text: AttributedText(
+          '''SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.''',
+        ),
+      );
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            textController: controller,
+          ),
+        ),
+      );
+
+      await tester.doubleTapAtSuperTextField(0);
+
+      // Configure BlinkController to animate, otherwise it won't blink.
+      BlinkController.indeterminateAnimationsEnabled = true;
+
+      // Drag the upstream handle by an arbitrary distance.
+      await tester.dragHandleByDistanceInSuperTextFieldOnMobile(HandleType.upstream, const Offset(100, 100));
+
+      // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
+      // Test in half-flash period intervals as we don't know how much time has passed and
+      // we might get unlucky and check the visibility when the caret is momentarily
+      // invisible.
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      // Drag the downstream handle by an arbitrary distance.
+      await tester.dragHandleByDistanceInSuperTextFieldOnMobile(HandleType.downstream, const Offset(100, 100));
+
+      // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
+      // Test in half-flash period intervals as we don't know how much time has passed and
+      // we might get unlucky and check the visibility when the caret is momentarily
+      // invisible.
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+    });
+
     testWidgetsOnAndroid("does not blink while dragging collapsed handle", (tester) async {
       // Disable indeterminate animations so that pumpAndSettle() doesn't time out.
       addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
