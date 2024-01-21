@@ -174,7 +174,8 @@ void main() {
 
       final controller = AttributedTextEditingController(
         text: AttributedText(
-            '''SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.'''),
+          '''SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.''',
+        ),
       );
 
       await tester.pumpWidget(
@@ -218,7 +219,8 @@ void main() {
 
       final controller = AttributedTextEditingController(
         text: AttributedText(
-            '''SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.'''),
+          '''SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.''',
+        ),
       );
 
       await tester.pumpWidget(
