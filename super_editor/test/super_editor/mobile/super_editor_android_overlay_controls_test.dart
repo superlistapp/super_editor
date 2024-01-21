@@ -263,13 +263,18 @@ void main() {
           await tester.pump();
         }
 
-        // Ensure magnifier is visible and it's placed above the caret.
-        // If the wrong coordinate space is used, the content above the editor
-        // will push the magnifier down.
+        // Ensure magnifier is visible, it's placed above the caret and not
+        // too far to the top.If the wrong coordinate space is used, the content
+        // above the editor will push the magnifier down.
         expect(SuperEditorInspector.isMobileMagnifierVisible(), isTrue);
         expect(
           tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
           lessThan(tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy),
+        );
+        expect(
+          tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy -
+              tester.getTopLeft(SuperEditorInspector.findMobileMagnifier()).dy,
+          lessThan(70.0),
         );
 
         // Resolve the gesture so that we don't have pending gesture timers.
@@ -305,11 +310,17 @@ void main() {
           await tester.pump();
         }
 
-        // Ensure magnifier is visible and it's placed above the caret.
+        // Ensure magnifier is visible, it's placed above the caret and not
+        // too far to the top.
         expect(SuperEditorInspector.isMobileMagnifierVisible(), isTrue);
         expect(
           tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
           lessThan(tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy),
+        );
+        expect(
+          tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy -
+              tester.getTopLeft(SuperEditorInspector.findMobileMagnifier()).dy,
+          lessThan(70.0),
         );
 
         // Resolve the gesture so that we don't have pending gesture timers.
@@ -363,13 +374,18 @@ void main() {
           await tester.pump();
         }
 
-        // Ensure magnifier is visible and it's placed above the caret.
-        // If the wrong coordinate space is used, the content above the editor
-        // will push the magnifier down.
+        // Ensure magnifier is visible, it's placed above the caret and not
+        // too far to the top.If the wrong coordinate space is used, the content
+        // above the editor will push the magnifier down.
         expect(SuperEditorInspector.isMobileMagnifierVisible(), isTrue);
         expect(
           tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
           lessThan(tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy),
+        );
+        expect(
+          tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy -
+              tester.getTopLeft(SuperEditorInspector.findMobileMagnifier()).dy,
+          lessThan(70.0),
         );
 
         // Resolve the gesture so that we don't have pending gesture timers.
