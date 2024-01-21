@@ -191,6 +191,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
 
     if (widget.editingController.textController.selection.isCollapsed) {
+      // The user is dragging the handle. Stop the caret from blinking while dragging.
       widget.editingController.stopCaretBlinking();
     }
   }
@@ -251,8 +252,8 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
       if (!widget.editingController.textController.selection.isCollapsed) {
         widget.editingController.showToolbar();
       } else {
-        // We stop the caret blink while dragging the collapsed handle. If the selection is
-        // collapsed, start the caret blink.
+        // The user stopped dragging a handle and the selection is collapsed.
+        // Start the caret blinking again.
         widget.editingController.startCaretBlinking();
       }
     });
@@ -588,6 +589,16 @@ class IOSEditingOverlayController with ChangeNotifier {
 
   final BlinkController caretBlinkController;
 
+  /// Starts the text field caret blinking.
+  void startCaretBlinking() {
+    caretBlinkController.startBlinking();
+  }
+
+  /// Stops the text field caret blinking.
+  void stopCaretBlinking() {
+    caretBlinkController.stopBlinking();
+  }
+
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController overlayController;
 
@@ -634,19 +645,5 @@ class IOSEditingOverlayController with ChangeNotifier {
 
   void _overlayControllerChanged() {
     notifyListeners();
-  }
-
-  /// Starts the text field caret blinking.
-  ///
-  /// If it's already blinking, does nothing.
-  void startCaretBlinking() {
-    caretBlinkController.startBlinking();
-  }
-
-  /// Stops the text field caret blinking.
-  ///
-  /// If it's already stopped, does nothing.
-  void stopCaretBlinking() {
-    caretBlinkController.stopBlinking();
   }
 }

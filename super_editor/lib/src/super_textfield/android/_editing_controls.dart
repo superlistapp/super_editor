@@ -288,6 +288,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     _log.fine(' - hid the toolbar, cancelled countdown timer');
 
     if (widget.editingController.textController.selection.isCollapsed) {
+      // The user is dragging the handle. Stop the caret from blinking while dragging.
       widget.editingController.stopCaretBlinking();
     }
   }
@@ -386,8 +387,8 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
         // expanded, show it again.
         widget.editingController.showToolbar();
       } else {
-        // We stop the caret blink while dragging the collapsed handle. If the selection is
-        // collapsed, start the caret blink.
+        // The user stopped dragging a handle and the selection is collapsed.
+        // Start the caret blinking again.
         widget.editingController.startCaretBlinking();
 
         // The collapsed handle should disappear after some inactivity.
@@ -842,6 +843,16 @@ class AndroidEditingOverlayController with ChangeNotifier {
 
   final BlinkController caretBlinkController;
 
+  /// Starts the text field caret blinking.
+  void startCaretBlinking() {
+    caretBlinkController.startBlinking();
+  }
+
+  /// Stops the text field caret blinking.
+  void stopCaretBlinking() {
+    caretBlinkController.stopBlinking();
+  }
+
   void toggleToolbar() {
     if (isToolbarVisible) {
       hideToolbar();
@@ -932,19 +943,5 @@ class AndroidEditingOverlayController with ChangeNotifier {
       _isCollapsedHandleAutoHidden = true;
       notifyListeners();
     }
-  }
-
-  /// Starts the text field caret blinking.
-  ///
-  /// If it's already blinking, does nothing.
-  void startCaretBlinking() {
-    caretBlinkController.startBlinking();
-  }
-
-  /// Stops the text field caret blinking.
-  ///
-  /// If it's already stopped, does nothing.
-  void stopCaretBlinking() {
-    caretBlinkController.stopBlinking();
   }
 }

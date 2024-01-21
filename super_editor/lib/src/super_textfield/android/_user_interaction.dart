@@ -303,6 +303,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
       widget.editingOverlayController.cancelCollapsedHandleAutoHideCountdown();
 
       if (widget.textController.selection.isCollapsed) {
+        // The user is dragging the caret. Stop the caret from blinking while dragging.
         widget.editingOverlayController.stopCaretBlinking();
       }
     });
@@ -356,8 +357,8 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
       if (!widget.textController.selection.isCollapsed) {
         widget.editingOverlayController.showToolbar();
       } else {
-        // We stop the caret blink while dragging the caret. If the selection is
-        // collapsed, start the caret blink.
+        // The user stopped dragging the caret and the selection is collapsed.
+        // Start the caret blinking again.
         widget.editingOverlayController.startCaretBlinking();
 
         // The selection is collapsed. The collapsed handle should disappear
