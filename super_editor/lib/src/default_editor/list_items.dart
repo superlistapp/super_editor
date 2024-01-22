@@ -271,8 +271,8 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
 /// Displays a un-ordered list item in a document.
 ///
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
-class UnorderedListItemComponent extends StatelessWidget {
-  UnorderedListItemComponent({
+class UnorderedListItemComponent extends StatefulWidget {
+  const UnorderedListItemComponent({
     Key? key,
     required this.componentKey,
     required this.text,
@@ -305,6 +305,11 @@ class UnorderedListItemComponent extends StatelessWidget {
   final bool showComposingUnderline;
   final bool showDebugPaint;
 
+  @override
+  State<UnorderedListItemComponent> createState() => _UnorderedListItemComponentState();
+}
+
+class _UnorderedListItemComponentState extends State<UnorderedListItemComponent> {
   /// A [GlobalKey] that connects a [ProxyTextDocumentComponent] to its
   /// descendant [TextComponent].
   ///
@@ -312,21 +317,21 @@ class UnorderedListItemComponent extends StatelessWidget {
   /// in its subtree, but the proxy needs access to the [TextComponent] to provide
   /// access to text layout details.
   ///
-  /// This key doesn't need to be public because the given [componentKey]
+  /// This key doesn't need to be public because the given [widget.componentKey]
   /// provides clients with direct access to text layout queries, as well as
   /// standard [DocumentComponent] queries.
   final GlobalKey _innerTextComponentKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = styleBuilder({});
-    final indentSpace = indentCalculator(textStyle, indent);
+    final textStyle = widget.styleBuilder({});
+    final indentSpace = widget.indentCalculator(textStyle, widget.indent);
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.25));
     const manualVerticalAdjustment = 3.0;
 
     return ProxyTextDocumentComponent(
-      key: componentKey,
+      key: widget.componentKey,
       textComponentKey: _innerTextComponentKey,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,25 +340,25 @@ class UnorderedListItemComponent extends StatelessWidget {
             width: indentSpace,
             margin: const EdgeInsets.only(top: manualVerticalAdjustment),
             decoration: BoxDecoration(
-              border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+              border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
             ),
             child: SizedBox(
               height: lineHeight,
-              child: dotBuilder(context, this),
+              child: widget.dotBuilder(context, widget),
             ),
           ),
           Expanded(
             child: TextComponent(
               key: _innerTextComponentKey,
-              text: text,
-              textStyleBuilder: styleBuilder,
-              textSelection: textSelection,
+              text: widget.text,
+              textStyleBuilder: widget.styleBuilder,
+              textSelection: widget.textSelection,
               textScaler: textScaler,
-              selectionColor: selectionColor,
-              highlightWhenEmpty: highlightWhenEmpty,
-              composingRegion: composingRegion,
-              showComposingUnderline: showComposingUnderline,
-              showDebugPaint: showDebugPaint,
+              selectionColor: widget.selectionColor,
+              highlightWhenEmpty: widget.highlightWhenEmpty,
+              composingRegion: widget.composingRegion,
+              showComposingUnderline: widget.showComposingUnderline,
+              showDebugPaint: widget.showDebugPaint,
             ),
           ),
         ],
@@ -382,8 +387,8 @@ Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListIt
 /// Displays an ordered list item in a document.
 ///
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
-class OrderedListItemComponent extends StatelessWidget {
-  OrderedListItemComponent({
+class OrderedListItemComponent extends StatefulWidget {
+  const OrderedListItemComponent({
     Key? key,
     required this.componentKey,
     required this.listIndex,
@@ -418,6 +423,11 @@ class OrderedListItemComponent extends StatelessWidget {
   final bool showComposingUnderline;
   final bool showDebugPaint;
 
+  @override
+  State<OrderedListItemComponent> createState() => _OrderedListItemComponentState();
+}
+
+class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
   /// A [GlobalKey] that connects a [ProxyTextDocumentComponent] to its
   /// descendant [TextComponent].
   ///
@@ -425,20 +435,20 @@ class OrderedListItemComponent extends StatelessWidget {
   /// in its subtree, but the proxy needs access to the [TextComponent] to provide
   /// access to text layout details.
   ///
-  /// This key doesn't need to be public because the given [componentKey]
+  /// This key doesn't need to be public because the given [widget.componentKey]
   /// provides clients with direct access to text layout queries, as well as
   /// standard [DocumentComponent] queries.
   final GlobalKey _innerTextComponentKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = styleBuilder({});
-    final indentSpace = indentCalculator(textStyle, indent);
+    final textStyle = widget.styleBuilder({});
+    final indentSpace = widget.indentCalculator(textStyle, widget.indent);
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.0));
 
     return ProxyTextDocumentComponent(
-      key: componentKey,
+      key: widget.componentKey,
       textComponentKey: _innerTextComponentKey,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,25 +457,25 @@ class OrderedListItemComponent extends StatelessWidget {
             width: indentSpace,
             height: lineHeight,
             decoration: BoxDecoration(
-              border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
+              border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
             ),
             child: SizedBox(
               height: lineHeight,
-              child: numeralBuilder(context, this),
+              child: widget.numeralBuilder(context, widget),
             ),
           ),
           Expanded(
             child: TextComponent(
               key: _innerTextComponentKey,
-              text: text,
-              textStyleBuilder: styleBuilder,
-              textSelection: textSelection,
+              text: widget.text,
+              textStyleBuilder: widget.styleBuilder,
+              textSelection: widget.textSelection,
               textScaler: textScaler,
-              selectionColor: selectionColor,
-              highlightWhenEmpty: highlightWhenEmpty,
-              composingRegion: composingRegion,
-              showComposingUnderline: showComposingUnderline,
-              showDebugPaint: showDebugPaint,
+              selectionColor: widget.selectionColor,
+              highlightWhenEmpty: widget.highlightWhenEmpty,
+              composingRegion: widget.composingRegion,
+              showComposingUnderline: widget.showComposingUnderline,
+              showDebugPaint: widget.showDebugPaint,
             ),
           ),
         ],
