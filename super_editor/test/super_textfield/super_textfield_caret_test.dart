@@ -190,7 +190,9 @@ void main() {
       // Configure BlinkController to animate, otherwise it won't blink.
       BlinkController.indeterminateAnimationsEnabled = true;
 
-      // Drag caret by an arbitrary distance.
+      // Drag caret by a small distance so that we trigger a user drag event.
+      // This drag event is continued down below so that we can check for caret blinking
+      // during a user drag.
       await tester.dragCaretByDistanceInSuperTextField(const Offset(100, 100));
 
       // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
@@ -239,7 +241,10 @@ void main() {
       // Configure BlinkController to animate, otherwise it won't blink.
       BlinkController.indeterminateAnimationsEnabled = true;
 
-      // Drag the upstream handle by an arbitrary distance.
+      // Drag the upstream selection handle by a small distance so that we trigger a
+      // user drag event.
+      // This drag event is continued down below so that we can check for caret blinking
+      // during a user drag.
       await tester.dragHandleByDistanceInSuperTextFieldOnMobile(HandleType.upstream, const Offset(100, 100));
 
       // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
@@ -265,7 +270,10 @@ void main() {
       // Ensure caret is visible.
       expect(_isCaretVisible(tester), true);
 
-      // Drag the downstream handle by an arbitrary distance.
+      // Drag the downstream selection handle by a small distance so that we trigger a
+      // user drag event.
+      // This drag event is continued down below so that we can check for caret blinking
+      // during a user drag.
       await tester.dragHandleByDistanceInSuperTextFieldOnMobile(HandleType.downstream, const Offset(100, 100));
 
       // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
@@ -314,7 +322,10 @@ void main() {
       // Configure BlinkController to animate, otherwise it won't blink.
       BlinkController.indeterminateAnimationsEnabled = true;
 
-      // Drag handle by an arbitrary distance.
+      // Drag the collapsed handle by a small distance so that we trigger a
+      // user drag event.
+      // This drag event is continued down below so that we can check for caret blinking
+      // during a user drag.
       await tester.dragAndroidCollapsedHandleByDistanceInSuperTextField(const Offset(100, 100));
 
       // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
