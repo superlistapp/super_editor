@@ -263,9 +263,9 @@ void main() {
           await tester.pump();
         }
 
-        // Ensure magnifier is visible, it's placed above the caret and not
-        // too far to the top.If the wrong coordinate space is used, the content
-        // above the editor will push the magnifier down.
+        // Ensure that the magnifier appears above the caret. To check this, we make
+        // sure the bottom of the magnifier is above the top of the caret, and we make
+        // sure that the bottom of the magnifier is not unreasonable far above the caret.
         expect(SuperEditorInspector.isMobileMagnifierVisible(), isTrue);
         expect(
           tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
@@ -273,7 +273,7 @@ void main() {
         );
         expect(
           tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy -
-              tester.getTopLeft(SuperEditorInspector.findMobileMagnifier()).dy,
+              tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
           lessThan(70.0),
         );
 
@@ -310,8 +310,9 @@ void main() {
           await tester.pump();
         }
 
-        // Ensure magnifier is visible, it's placed above the caret and not
-        // too far to the top.
+        // Ensure that the magnifier appears above the caret. To check this, we make
+        // sure the bottom of the magnifier is above the top of the caret, and we make
+        // sure that the bottom of the magnifier is not unreasonable far above the caret.
         expect(SuperEditorInspector.isMobileMagnifierVisible(), isTrue);
         expect(
           tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
@@ -319,7 +320,7 @@ void main() {
         );
         expect(
           tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy -
-              tester.getTopLeft(SuperEditorInspector.findMobileMagnifier()).dy,
+              tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
           lessThan(70.0),
         );
 
@@ -374,9 +375,9 @@ void main() {
           await tester.pump();
         }
 
-        // Ensure magnifier is visible, it's placed above the caret and not
-        // too far to the top.If the wrong coordinate space is used, the content
-        // above the editor will push the magnifier down.
+        // Ensure that the magnifier appears above the caret. To check this, we make
+        // sure the bottom of the magnifier is above the top of the caret, and we make
+        // sure that the bottom of the magnifier is not unreasonable far above the caret.
         expect(SuperEditorInspector.isMobileMagnifierVisible(), isTrue);
         expect(
           tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
@@ -384,7 +385,7 @@ void main() {
         );
         expect(
           tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy -
-              tester.getTopLeft(SuperEditorInspector.findMobileMagnifier()).dy,
+              tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
           lessThan(70.0),
         );
 
