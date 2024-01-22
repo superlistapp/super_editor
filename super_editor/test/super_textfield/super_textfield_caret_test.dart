@@ -169,7 +169,6 @@ void main() {
     });
 
     testWidgetsOnMobile("does not blink while dragging the caret", (tester) async {
-      // Disable indeterminate animations so that pumpAndSettle() doesn't time out.
       addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
 
       final controller = AttributedTextEditingController(
@@ -219,7 +218,6 @@ void main() {
     });
 
     testWidgetsOnMobile("does not blink while dragging expanded handles", (tester) async {
-      // Disable indeterminate animations so that pumpAndSettle() doesn't time out.
       addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
 
       final controller = AttributedTextEditingController(
@@ -295,7 +293,6 @@ void main() {
     });
 
     testWidgetsOnAndroid("does not blink while dragging collapsed handle", (tester) async {
-      // Disable indeterminate animations so that pumpAndSettle() doesn't time out.
       addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
 
       final controller = AttributedTextEditingController(
