@@ -243,9 +243,8 @@ void main() {
       BlinkController.indeterminateAnimationsEnabled = true;
 
       // Drag the upstream selection handle by a small distance so that we trigger a
-      // user drag event.
-      // This drag event is continued down below so that we can check for caret blinking
-      // during a user drag.
+      // user drag event. This drag event is continued down below so that we can check
+      // for caret blinking during a user drag.
       final TestGesture gesture =
           await tester.dragHandleByDistanceInSuperTextFieldOnMobile(HandleType.upstream, const Offset(100, 100));
       addTearDown(() => gesture.removePointer());
@@ -279,9 +278,8 @@ void main() {
       await tester.pump();
 
       // Drag the downstream selection handle by a small distance so that we trigger a
-      // user drag event.
-      // This drag event is continued down below so that we can check for caret blinking
-      // during a user drag.
+      // user drag event. This drag event is continued down below so that we can check
+      // for caret blinking during a user drag.
       final TestGesture gesture2 =
           await tester.dragHandleByDistanceInSuperTextFieldOnMobile(HandleType.downstream, const Offset(100, 100));
       addTearDown(() => gesture2.removePointer());
@@ -333,9 +331,8 @@ void main() {
       BlinkController.indeterminateAnimationsEnabled = true;
 
       // Drag the collapsed handle by a small distance so that we trigger a
-      // user drag event.
-      // This drag event is continued down below so that we can check for caret blinking
-      // during a user drag.
+      // user drag event. This drag event is continued down below so that we
+      // can check for caret blinking during a user drag.
       final TestGesture gesture =
           await tester.dragAndroidCollapsedHandleByDistanceInSuperTextField(const Offset(100, 100));
       addTearDown(() => gesture.removePointer());
