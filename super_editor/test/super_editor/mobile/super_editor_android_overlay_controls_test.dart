@@ -274,7 +274,7 @@ void main() {
         expect(
           tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy -
               tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
-          lessThan(70.0),
+          lessThan(20.0),
         );
 
         // Resolve the gesture so that we don't have pending gesture timers.
@@ -321,7 +321,7 @@ void main() {
         expect(
           tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy -
               tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
-          lessThan(70.0),
+          lessThan(20.0),
         );
 
         // Resolve the gesture so that we don't have pending gesture timers.
@@ -386,7 +386,7 @@ void main() {
         expect(
           tester.getTopLeft(SuperEditorInspector.findMobileCaret()).dy -
               tester.getBottomLeft(SuperEditorInspector.findMobileMagnifier()).dy,
-          lessThan(70.0),
+          lessThan(20.0),
         );
 
         // Resolve the gesture so that we don't have pending gesture timers.
