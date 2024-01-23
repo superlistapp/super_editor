@@ -245,9 +245,9 @@ void main() {
       // Drag the upstream selection handle by a small distance so that we trigger a
       // user drag event. This drag event is continued down below so that we can check
       // for caret blinking during a user drag.
-      final TestGesture gesture =
+      final TestGesture upstreamHandleGesture =
           await tester.dragHandleByDistanceInSuperTextFieldOnMobile(HandleType.upstream, const Offset(100, 100));
-      addTearDown(() => gesture.removePointer());
+      addTearDown(() => upstreamHandleGesture.removePointer());
 
       // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
       // Test in half-flash period intervals as we don't know how much time has passed and
@@ -274,15 +274,15 @@ void main() {
 
       // End the current drag gesture before we start the downstream handle drag.
       // We don't want multiple gesture pointers active at the same time.
-      await gesture.up();
+      await upstreamHandleGesture.up();
       await tester.pump();
 
       // Drag the downstream selection handle by a small distance so that we trigger a
       // user drag event. This drag event is continued down below so that we can check
       // for caret blinking during a user drag.
-      final TestGesture gesture2 =
+      final TestGesture downstreamHandleGesture =
           await tester.dragHandleByDistanceInSuperTextFieldOnMobile(HandleType.downstream, const Offset(100, 100));
-      addTearDown(() => gesture2.removePointer());
+      addTearDown(() => downstreamHandleGesture.removePointer());
 
       // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
       // Test in half-flash period intervals as we don't know how much time has passed and
