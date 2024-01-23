@@ -1397,9 +1397,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       documentLayout.getRectForPosition(selectionBoundPosition)!.center,
     );
     _dragHandleSelectionGlobalFocalPoint.value = centerOfContentAtOffset;
-
-    final myBox = context.findRenderObject() as RenderBox;
-    _magnifierFocalPoint.value = myBox.globalToLocal(centerOfContentAtOffset);
+    _magnifierFocalPoint.value = centerOfContentAtOffset;
 
     // Update the controls for handle dragging.
     _controlsController!
@@ -1493,15 +1491,12 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
 
     // Move the magnifier focal point to match the drag x-offset, but always remain focused on the vertical
     // center of the line.
-    final myBox = context.findRenderObject() as RenderBox;
     final centerOfContentAtNearestPosition = documentLayout.getAncestorOffsetFromDocumentOffset(
       documentLayout.getRectForPosition(nearestPosition)!.center,
     );
-    _magnifierFocalPoint.value = myBox.globalToLocal(
-      Offset(
-        _magnifierFocalPoint.value!.dx + dragDx,
-        centerOfContentAtNearestPosition.dy,
-      ),
+    _magnifierFocalPoint.value = Offset(
+      _magnifierFocalPoint.value!.dx + dragDx,
+      centerOfContentAtNearestPosition.dy,
     );
 
     switch (_dragHandleType!) {
