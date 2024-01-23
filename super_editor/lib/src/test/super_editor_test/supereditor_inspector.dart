@@ -576,6 +576,21 @@ class SuperEditorInspector {
     }
   }
 
+  /// Finds the magnifier for a mobile `SuperEditor`.
+  static Finder findMobileMagnifier([Finder? superEditorFinder]) {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return find.byKey(DocumentKeys.magnifier);
+
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.fuchsia:
+        return FindsNothing();
+    }
+  }
+
   static AndroidControlsDocumentLayerState _findAndroidControlsLayer([Finder? superEditorFinder]) {
     final element = find
         .descendant(
