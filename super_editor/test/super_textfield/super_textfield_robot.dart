@@ -123,11 +123,10 @@ extension SuperTextFieldRobot on WidgetTester {
     return gesture;
   }
 
-  /// Drags the [SuperTextField] handle by the given delta.
+  /// Drags the [SuperTextField] upstream handle by the given delta.
   ///
   /// {@macro supertextfield_finder}
-  Future<TestGesture> dragHandleByDistanceInSuperTextFieldOnMobile(
-    HandleType handleType,
+  Future<TestGesture> dragUpstreamMobileHandleByDistanceInSuperTextField(
     Offset delta, [
     Finder? superTextFieldFinder,
   ]) async {
@@ -136,21 +135,42 @@ extension SuperTextFieldRobot on WidgetTester {
     final match = fieldFinder.evaluate().single.widget;
 
     if (match is SuperAndroidTextField) {
-      return _dragAndroidHandleByDistanceInSuperTextField(handleType, delta, fieldFinder);
+      return _dragAndroidUpstreamHandleByDistanceInSuperTextField(delta, fieldFinder);
     }
 
     if (match is SuperIOSTextField) {
-      return _dragIOSHandleByDistanceInSuperTextField(handleType, delta, fieldFinder);
+      return _dragIOSUpstreamHandleByDistanceInSuperTextField(delta, fieldFinder);
     }
 
     throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
   }
 
-  /// Drags the [SuperAndroidTextField] handle by the given delta.
+  /// Drags the [SuperTextField] downstream handle by the given delta.
   ///
   /// {@macro supertextfield_finder}
-  Future<TestGesture> _dragAndroidHandleByDistanceInSuperTextField(
-    HandleType handleType,
+  Future<TestGesture> dragDownstreamMobileHandleByDistanceInSuperTextField(
+    Offset delta, [
+    Finder? superTextFieldFinder,
+  ]) async {
+    final fieldFinder =
+        SuperTextFieldInspector.findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
+    final match = fieldFinder.evaluate().single.widget;
+
+    if (match is SuperAndroidTextField) {
+      return _dragAndroidDownstreamHandleByDistanceInSuperTextField(delta, fieldFinder);
+    }
+
+    if (match is SuperIOSTextField) {
+      return _dragIOSDownstreamHandleByDistanceInSuperTextField(delta, fieldFinder);
+    }
+
+    throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
+  }
+
+  /// Drags the [SuperAndroidTextField] upstream handle by the given delta.
+  ///
+  /// {@macro supertextfield_finder}
+  Future<TestGesture> _dragAndroidUpstreamHandleByDistanceInSuperTextField(
     Offset delta, [
     Finder? superTextFieldFinder,
   ]) async {
@@ -161,30 +181,46 @@ extension SuperTextFieldRobot on WidgetTester {
       matching: find.byWidgetPredicate(
         (widget) =>
             widget is AndroidSelectionHandle && //
-            widget.handleType == handleType,
+            widget.handleType == HandleType.upstream,
       ),
     );
 
     expect(handleFinder, findsOne);
 
-    final handleCenter = getCenter(handleFinder);
-
-    final gesture = await startGesture(handleCenter);
-    await pump(kTapMinTime);
-
-    for (int i = 0; i < 50; i += 1) {
-      await gesture.moveBy(delta / 50);
-      await pump(const Duration(milliseconds: 50));
-    }
+    final gesture = await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
 
     return gesture;
   }
 
-  /// Drags the [SuperIOSTextField] handle by the given delta.
+  /// Drags the [SuperAndroidTextField] downstream handle by the given delta.
   ///
   /// {@macro supertextfield_finder}
-  Future<TestGesture> _dragIOSHandleByDistanceInSuperTextField(
-    HandleType handleType,
+  Future<TestGesture> _dragAndroidDownstreamHandleByDistanceInSuperTextField(
+    Offset delta, [
+    Finder? superTextFieldFinder,
+  ]) async {
+    // TODO: lookup the actual handle size and offset when follow_the_leader correctly reports global bounds for followers
+    // Use our knowledge that the handle sits directly beneath the caret to drag it.
+    final handleFinder = find.descendant(
+      of: superTextFieldFinder ?? find.byType(SuperAndroidTextField),
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is AndroidSelectionHandle && //
+            widget.handleType == HandleType.downstream,
+      ),
+    );
+
+    expect(handleFinder, findsOne);
+
+    final gesture = await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
+
+    return gesture;
+  }
+
+  /// Drags the [SuperIOSTextField] upstream handle by the given delta.
+  ///
+  /// {@macro supertextfield_finder}
+  Future<TestGesture> _dragIOSUpstreamHandleByDistanceInSuperTextField(
     Offset delta, [
     Finder? superTextFieldFinder,
   ]) async {
@@ -195,13 +231,48 @@ extension SuperTextFieldRobot on WidgetTester {
       matching: find.byWidgetPredicate(
         (widget) =>
             widget is IOSSelectionHandle && //
-            widget.handleType == handleType,
+            widget.handleType == HandleType.upstream,
       ),
     );
 
     expect(handleFinder, findsOne);
 
-    final handleCenter = getCenter(handleFinder);
+    final gesture = await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
+
+    return gesture;
+  }
+
+  /// Drags the [SuperIOSTextField] downstream handle by the given delta.
+  ///
+  /// {@macro supertextfield_finder}
+  Future<TestGesture> _dragIOSDownstreamHandleByDistanceInSuperTextField(
+    Offset delta, [
+    Finder? superTextFieldFinder,
+  ]) async {
+    // TODO: lookup the actual handle size and offset when follow_the_leader correctly reports global bounds for followers
+    // Use our knowledge that the handle sits directly beneath the caret to drag it.
+    final handleFinder = find.descendant(
+      of: superTextFieldFinder ?? find.byType(SuperIOSTextField),
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is IOSSelectionHandle && //
+            widget.handleType == HandleType.downstream,
+      ),
+    );
+
+    expect(handleFinder, findsOne);
+
+    final gesture = await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
+
+    return gesture;
+  }
+
+  /// Drags the [SuperTextField] handle by the given delta.
+  Future<TestGesture> _dragHandleByDistanceInSuperTextField(
+    Finder superTextFieldHandleFinder,
+    Offset delta,
+  ) async {
+    final handleCenter = getCenter(superTextFieldHandleFinder);
 
     final gesture = await startGesture(handleCenter);
     await pump(kTapMinTime);

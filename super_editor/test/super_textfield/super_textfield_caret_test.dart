@@ -246,7 +246,7 @@ void main() {
       // user drag event. This drag event is continued down below so that we can check
       // for caret blinking during a user drag.
       final TestGesture upstreamHandleGesture =
-          await tester.dragHandleByDistanceInSuperTextFieldOnMobile(HandleType.upstream, const Offset(100, 100));
+          await tester.dragUpstreamMobileHandleByDistanceInSuperTextField(const Offset(100, 100));
       addTearDown(() => upstreamHandleGesture.removePointer());
 
       // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
@@ -281,7 +281,7 @@ void main() {
       // user drag event. This drag event is continued down below so that we can check
       // for caret blinking during a user drag.
       final TestGesture downstreamHandleGesture =
-          await tester.dragHandleByDistanceInSuperTextFieldOnMobile(HandleType.downstream, const Offset(100, 100));
+          await tester.dragDownstreamMobileHandleByDistanceInSuperTextField(const Offset(100, 100));
       addTearDown(() => downstreamHandleGesture.removePointer());
 
       // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
