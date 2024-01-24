@@ -171,6 +171,11 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  TestSuperEditorConfigurator withCaretStyle({CaretStyle? caretStyle}) {
+    _config.caretStyle = caretStyle;
+    return this;
+  }
+
   /// Configures the [SuperEditor]'s [SoftwareKeyboardController].
   TestSuperEditorConfigurator withSoftwareKeyboardController(SoftwareKeyboardController controller) {
     _config.softwareKeyboardController = controller;
@@ -557,7 +562,12 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
     // situation, we're using `defaultSuperEditorDocumentOverlayBuilders`, so that most tests
     // verify the defaults that most apps will use.
     if (widget.testConfiguration.displayCaretWithExpandedSelection) {
-      return defaultSuperEditorDocumentOverlayBuilders;
+      return [
+        ...defaultSuperEditorDocumentOverlayBuilders.where((overlay) => overlay is! DefaultCaretOverlayBuilder),
+        DefaultCaretOverlayBuilder(
+          caretStyle: widget.testConfiguration.caretStyle ?? const CaretStyle(),
+        )
+      ];
     }
 
     // Copy and modify the default overlay builders
@@ -577,6 +587,7 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       // Displays caret for typical desktop use-cases.
       DefaultCaretOverlayBuilder(
         displayCaretWithExpandedSelection: widget.testConfiguration.displayCaretWithExpandedSelection,
+        caretStyle: widget.testConfiguration.caretStyle ?? const CaretStyle(),
       ),
     ];
   }
@@ -604,6 +615,7 @@ class SuperEditorTestConfiguration {
   SuperEditorSelectionPolicies? selectionPolicies;
   SelectionStyles? selectionStyles;
   bool displayCaretWithExpandedSelection = true;
+  CaretStyle? caretStyle;
   SoftwareKeyboardController? softwareKeyboardController;
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;
@@ -824,9 +836,12 @@ class EquivalentDocumentMatcher extends Matcher {
 class FakeImageComponentBuilder implements ComponentBuilder {
   const FakeImageComponentBuilder({
     required this.size,
+    this.color,
   });
 
   final ui.Size size;
+
+  final Color? color;
 
   @override
   SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
@@ -845,9 +860,12 @@ class FakeImageComponentBuilder implements ComponentBuilder {
       imageUrl: componentViewModel.imageUrl,
       selection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
-      imageBuilder: (context, imageUrl) => SizedBox(
-        height: size.height,
-        width: size.width,
+      imageBuilder: (context, imageUrl) => ColoredBox(
+        color: color ?? Colors.transparent,
+        child: SizedBox(
+          height: size.height,
+          width: size.width,
+        ),
       ),
     );
   }
