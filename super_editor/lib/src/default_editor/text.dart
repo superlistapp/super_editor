@@ -238,6 +238,123 @@ extension DocumentSelectionWithText on Document {
 
     return false;
   }
+
+  Set<Attribution> getAllAttributions(DocumentSelection selection) {
+    final attributions = <Attribution>{};
+
+    final nodes = getNodesInside(selection.base, selection.extent);
+    if (nodes.isEmpty) {
+      return attributions;
+    }
+
+    // Calculate a DocumentRange so we know which DocumentPosition
+    // belongs to the first node, and which belongs to the last node.
+    final nodeRange = getRangeBetween(selection.base, selection.extent);
+
+    for (final textNode in nodes) {
+      if (textNode is! TextNode) {
+        continue;
+      }
+
+      int startOffset = -1;
+      int endOffset = -1;
+
+      if (textNode == nodes.first && textNode == nodes.last) {
+        // Handle selection within a single node
+        final baseOffset = (selection.base.nodePosition as TextPosition).offset;
+        final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
+        startOffset = baseOffset < extentOffset ? baseOffset : extentOffset;
+        endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
+
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        endOffset -= 1;
+      } else if (textNode == nodes.first) {
+        // Handle partial node selection in first node.
+        startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
+        endOffset = max(textNode.text.text.length - 1, 0);
+      } else if (textNode == nodes.last) {
+        // Handle partial node selection in last node.
+        startOffset = 0;
+
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        endOffset = (nodeRange.end.nodePosition as TextPosition).offset - 1;
+      } else {
+        // Handle full node selection.
+        startOffset = 0;
+        endOffset = max(textNode.text.text.length - 1, 0);
+      }
+
+      final selectionRange = SpanRange(startOffset, endOffset);
+
+      final attributionsInRange = textNode //
+          .text
+          .getAllAttributionsThroughout(selectionRange);
+
+      attributions.addAll(attributionsInRange);
+    }
+    return attributions;
+  }
+
+  Set<T> getAttributionsByType<T>(DocumentSelection selection) {
+    final attributions = <T>{};
+
+    final nodes = getNodesInside(selection.base, selection.extent);
+    if (nodes.isEmpty) {
+      return attributions;
+    }
+
+    // Calculate a DocumentRange so we know which DocumentPosition
+    // belongs to the first node, and which belongs to the last node.
+    final nodeRange = getRangeBetween(selection.base, selection.extent);
+
+    for (final textNode in nodes) {
+      if (textNode is! TextNode) {
+        continue;
+      }
+
+      int startOffset = -1;
+      int endOffset = -1;
+
+      if (textNode == nodes.first && textNode == nodes.last) {
+        // Handle selection within a single node
+        final baseOffset = (selection.base.nodePosition as TextPosition).offset;
+        final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
+        startOffset = baseOffset < extentOffset ? baseOffset : extentOffset;
+        endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
+
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        endOffset -= 1;
+      } else if (textNode == nodes.first) {
+        // Handle partial node selection in first node.
+        startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
+        endOffset = max(textNode.text.text.length - 1, 0);
+      } else if (textNode == nodes.last) {
+        // Handle partial node selection in last node.
+        startOffset = 0;
+
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        endOffset = (nodeRange.end.nodePosition as TextPosition).offset - 1;
+      } else {
+        // Handle full node selection.
+        startOffset = 0;
+        endOffset = max(textNode.text.text.length - 1, 0);
+      }
+
+      final selectionRange = SpanRange(startOffset, endOffset);
+
+      final attributionsInRange = textNode //
+          .text
+          .getAllAttributionsThroughout(selectionRange)
+          .whereType<T>();
+
+      attributions.addAll(attributionsInRange);
+    }
+    return attributions;
+  }
 }
 
 extension Words on String {

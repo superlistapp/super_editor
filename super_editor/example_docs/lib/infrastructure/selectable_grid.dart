@@ -1,83 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
-import 'package:super_editor/super_editor.dart';
 
-/// A list where the user can navigate between its items and select one of them.
+/// A grid where the user can navigate between its items and select one of them.
 ///
 /// Includes the following keyboard selection behaviors:
 ///
 ///   * Pressing UP/DOWN moves the "active" item selection up/down.
-///   * Pressing UP with the first item active moves the active item selection to the last item.
-///   * Pressing DOWN with the last item active moves the active item selection to the first item.
+///   * Pressing LEFT/RIGHT moves the "active" item selection left/right.
 ///   * Pressing ENTER selects the currently active item.
-class ItemSelectionList<T> extends StatefulWidget {
-  const ItemSelectionList({
+class SelectableGrid<T> extends StatefulWidget {
+  const SelectableGrid({
     super.key,
     required this.value,
     required this.items,
     required this.itemBuilder,
-    this.separatorBuilder,
     this.onItemActivated,
     required this.onItemSelected,
     this.onCancel,
     this.focusNode,
-    this.axis = Axis.vertical,
+    required this.columnCount,
+    this.mainAxisExtent,
   });
 
   /// The currently selected value or `null` if no item is selected.
   final T? value;
 
-  /// The items that will be displayed in the popover list.
+  /// The items that will be displayed on the grid.
   ///
   /// For each item, [itemBuilder] is called to build its visual representation.
   final List<T> items;
 
-  /// Builds each item in the popover list.
+  /// Builds each item on the grid.
   ///
   /// This method is called for each item in [items], to build its visual representation.
   ///
   /// The provided `onTap` must be called when the item is tapped.
-  final SelectableListItemBuilder<T> itemBuilder;
+  final SelectableGridItemBuilder<T> itemBuilder;
 
-  /// Called when the user activates an item on the popover list.
+  /// Called when the user activates an item on the grid.
   ///
   /// The activation can be performed by:
-  ///    1. Opening the popover, when the selected item is activate.
-  ///    2. Pressing UP ARROW or DOWN ARROW.
+  ///    1. Pressing UP ARROW or DOWN ARROW.
+  ///    2. Pressing LEFT ARROW or RIGHT ARROW.
   final ValueChanged<T?>? onItemActivated;
 
-  /// Called when the user selects an item on the popover list.
+  /// Called when the user selects an item on the grid.
   ///
   /// The selection can be performed by:
-  ///    1. Tapping on an item in the popover list.
-  ///    2. Pressing ENTER when the popover list has an active item.
+  ///    1. Tapping on an item in the grid.
+  ///    2. Pressing ENTER when the grid has an active item.
   final ValueChanged<T?> onItemSelected;
 
   /// Called when the user presses ESCAPE.
   final VoidCallback? onCancel;
 
-  /// The [FocusNode] of the list.
+  /// The [FocusNode] of the grid.
   final FocusNode? focusNode;
 
-  final Axis axis;
+  /// How many columns the grid must have.
+  final int columnCount;
 
-  final IndexedWidgetBuilder? separatorBuilder;
+  /// The extent of each item on the grid.
+  final double? mainAxisExtent;
 
   @override
-  State<ItemSelectionList<T>> createState() => ItemSelectionListState<T>();
+  State<SelectableGrid<T>> createState() => _SelectableGridState<T>();
 }
 
-@visibleForTesting
-class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleTickerProviderStateMixin {
-  final GlobalKey _scrollableKey = GlobalKey();
+class _SelectableGridState<T> extends State<SelectableGrid<T>> with SingleTickerProviderStateMixin {
+  final ScrollController _scrollController = ScrollController();
 
-  @visibleForTesting
-  final ScrollController scrollController = ScrollController();
-
-  /// Holds keys to each item on the list.
+  /// Holds keys to each item on the grid.
   ///
-  /// Used to scroll the list to reveal the active item.
+  /// Used to scroll the grid to reveal the active item.
   final List<GlobalKey> _itemKeys = [];
 
   int? _activeIndex;
@@ -90,7 +85,7 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
 
   @override
   void dispose() {
-    scrollController.dispose();
+    _scrollController.dispose();
 
     super.dispose();
   }
@@ -110,7 +105,7 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
       return;
     }
 
-    // We just opened the popover.
+    // The grid was just displayed.
     // Jump to the active item without animation.
     _activateItem(selectedItemIndex, animationDuration: Duration.zero);
   }
@@ -131,12 +126,15 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
     //
     // Scrolls on the next frame to let the popover be laid-out first,
     // so we can access its RenderBox.
-    onNextFrame((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (!mounted) {
+        return;
+      }
       _scrollToShowActiveItem(animationDuration);
     });
   }
 
-  /// Scrolls the popover scrollable to display the selected item.
+  /// Scrolls the scrollable to display the selected item.
   void _scrollToShowActiveItem(Duration animationDuration) {
     if (_activeIndex == null) {
       return;
@@ -166,6 +164,8 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
       LogicalKeyboardKey.numpadEnter,
       LogicalKeyboardKey.arrowDown,
       LogicalKeyboardKey.arrowUp,
+      LogicalKeyboardKey.arrowLeft,
+      LogicalKeyboardKey.arrowRight,
       LogicalKeyboardKey.escape,
     ].contains(event.logicalKey)) {
       return KeyEventResult.ignored;
@@ -191,7 +191,7 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
 
     // The user pressed an arrow key. Update the active item.
     int? newActiveIndex;
-    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+    if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
       if (_activeIndex == null || _activeIndex! >= widget.items.length - 1) {
         // We don't have an active item or we are at the end of the list. Activate the first item.
         newActiveIndex = 0;
@@ -201,13 +201,29 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
       }
     }
 
-    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
       if (_activeIndex == null || _activeIndex! <= 0) {
         // We don't have an active item or we are at the beginning of the list. Activate the last item.
         newActiveIndex = widget.items.length - 1;
       } else {
         // Activate the previous item.
         newActiveIndex = _activeIndex! - 1;
+      }
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      newActiveIndex = (_activeIndex ?? 0) + widget.columnCount;
+      if (newActiveIndex >= widget.items.length - 1) {
+        // We don't have an active item or we are at the end of the list. Activate the first item.
+        newActiveIndex = 0;
+      }
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      newActiveIndex = (_activeIndex ?? 0) - widget.columnCount;
+      if (newActiveIndex <= 0) {
+        // We don't have an active item or we are at the beginning of the list. Activate the last item.
+        newActiveIndex = widget.items.length - 1;
       }
     }
 
@@ -228,64 +244,32 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
     return Focus(
       focusNode: widget.focusNode,
       onKeyEvent: _onKeyEvent,
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(
-          scrollbars: false,
-          overscroll: false,
-          physics: const ClampingScrollPhysics(),
+      child: GridView.builder(
+        clipBehavior: Clip.none,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: widget.columnCount,
+          mainAxisSpacing: 2,
+          mainAxisExtent: widget.mainAxisExtent,
         ),
-        child: PrimaryScrollController(
-          controller: scrollController,
-          child: Scrollbar(
-            thumbVisibility: true,
-            child: SingleChildScrollView(
-              key: _scrollableKey,
-              primary: true,
-              child: IntrinsicWidth(
-                child: _buildContainer(
-                  children: [
-                    for (int i = 0; i < widget.items.length; i++) ...[
-                      if (i > 0 && widget.separatorBuilder != null) //
-                        widget.separatorBuilder!(context, i),
-                      KeyedSubtree(
-                        key: _itemKeys[i],
-                        child: widget.itemBuilder(
-                          context,
-                          widget.items[i],
-                          i == _activeIndex,
-                          () => widget.onItemSelected(widget.items[i]),
-                        ),
-                      ),
-                    ]
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+        itemCount: widget.items.length,
+        itemBuilder: (context, index) {
+          return widget.itemBuilder(
+            context,
+            widget.items[index],
+            _activeIndex == index,
+            () => widget.onItemSelected(widget.items[index]),
+          );
+        },
       ),
     );
   }
-
-  Widget _buildContainer({required List<Widget> children}) {
-    return widget.axis == Axis.horizontal //
-        ? Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: children,
-          )
-        : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: children,
-          );
-  }
 }
 
-/// Builds a list item.
+/// Builds a grid item.
 ///
-/// [isActive] is `true` if [item] is the currently active item on the list, or `false` otherwise.
+/// [isActive] is `true` if [item] is the currently active item on the grid, or `false` otherwise.
 ///
-/// The active item is the currently focused item in the list, which can be selected by pressing ENTER.
+/// The active item is the currently focused item in the grid, which can be selected by pressing ENTER.
 ///
 /// The provided [onTap] must be called when the button is tapped.
-typedef SelectableListItemBuilder<T> = Widget Function(BuildContext context, T item, bool isActive, VoidCallback onTap);
+typedef SelectableGridItemBuilder<T> = Widget Function(BuildContext context, T item, bool isActive, VoidCallback onTap);
