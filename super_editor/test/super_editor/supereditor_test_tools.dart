@@ -839,8 +839,10 @@ class FakeImageComponentBuilder implements ComponentBuilder {
     this.color,
   });
 
+  /// The size of the image component.
   final ui.Size size;
 
+  /// The background color of the image.
   final Color? color;
 
   @override
