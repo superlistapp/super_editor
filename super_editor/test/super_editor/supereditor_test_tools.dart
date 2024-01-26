@@ -836,14 +836,14 @@ class EquivalentDocumentMatcher extends Matcher {
 class FakeImageComponentBuilder implements ComponentBuilder {
   const FakeImageComponentBuilder({
     required this.size,
-    this.color,
+    this.fillColor,
   });
 
   /// The size of the image component.
   final ui.Size size;
 
-  /// The background color of the image.
-  final Color? color;
+  /// The color that fills the entire image component.
+  final Color? fillColor;
 
   @override
   SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
@@ -863,7 +863,7 @@ class FakeImageComponentBuilder implements ComponentBuilder {
       selection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
       imageBuilder: (context, imageUrl) => ColoredBox(
-        color: color ?? Colors.transparent,
+        color: fillColor ?? Colors.transparent,
         child: SizedBox(
           height: size.height,
           width: size.width,

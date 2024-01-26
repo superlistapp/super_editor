@@ -72,7 +72,7 @@ Future<void> _pumpCaretTestApp(WidgetTester tester) async {
     [
       const FakeImageComponentBuilder(
         size: Size(double.infinity, 100),
-        color: Colors.yellow,
+        fillColor: Colors.yellow,
       ),
     ],
   ).pump();
