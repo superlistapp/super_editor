@@ -462,7 +462,7 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final currentParagraphLength = node.text.text.length;
+  final currentParagraphLength = node.text.length;
 
   // Send edit command.
   editContext.editor.execute([
@@ -661,7 +661,7 @@ ExecutionInstruction doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb({
     return ExecutionInstruction.blocked;
   }
 
-  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight && textNodePosition.offset < node.text.text.length) {
+  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight && textNodePosition.offset < node.text.length) {
     // We are not at the end of the node.
     // Let the IME handle the key event.
     return ExecutionInstruction.blocked;

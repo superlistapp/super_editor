@@ -1,5 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform;
+import 'package:flutter/foundation.dart' show ValueListenable, defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
@@ -8,6 +8,7 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
@@ -764,6 +765,7 @@ class SuperEditorState extends State<SuperEditor> {
             mobileToolbarKey,
             editContext.commonOps,
             SuperEditorAndroidControlsScope.rootOf(context),
+            editContext.composer.selectionNotifier,
           ),
           child: child,
         );
@@ -889,11 +891,13 @@ Widget defaultAndroidEditorToolbarBuilder(
   Key floatingToolbarKey,
   CommonEditorOperations editorOps,
   SuperEditorAndroidControlsController editorControlsController,
+  ValueListenable<DocumentSelection?> selectionNotifier,
 ) {
   return DefaultAndroidEditorToolbar(
     floatingToolbarKey: floatingToolbarKey,
     editorOps: editorOps,
     editorControlsController: editorControlsController,
+    selectionNotifier: selectionNotifier,
   );
 }
 
@@ -904,20 +908,31 @@ class DefaultAndroidEditorToolbar extends StatelessWidget {
     this.floatingToolbarKey,
     required this.editorOps,
     required this.editorControlsController,
+    required this.selectionNotifier,
   });
 
   final Key? floatingToolbarKey;
   final CommonEditorOperations editorOps;
   final SuperEditorAndroidControlsController editorControlsController;
+  final ValueListenable<DocumentSelection?> selectionNotifier;
 
   @override
   Widget build(BuildContext context) {
-    return AndroidTextEditingFloatingToolbar(
-      floatingToolbarKey: floatingToolbarKey,
-      onCopyPressed: _copy,
-      onCutPressed: _cut,
-      onPastePressed: _paste,
-      onSelectAllPressed: _selectAll,
+    return ValueListenableBuilder(
+      valueListenable: selectionNotifier,
+      builder: (context, selection, child) {
+        return AndroidTextEditingFloatingToolbar(
+          floatingToolbarKey: floatingToolbarKey,
+          onCopyPressed: selection == null || !selection.isCollapsed //
+              ? _copy
+              : null,
+          onCutPressed: selection == null || !selection.isCollapsed //
+              ? _cut
+              : null,
+          onPastePressed: _paste,
+          onSelectAllPressed: _selectAll,
+        );
+      },
     );
   }
 

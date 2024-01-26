@@ -492,6 +492,45 @@ Paragraph3""");
         expect(serializeDocumentToMarkdown(doc), '![some alt text](https://someimage.com/the/image.png)');
       });
 
+      test('image with size', () {
+        final doc = MutableDocument(nodes: [
+          ImageNode(
+            id: '1',
+            imageUrl: 'https://someimage.com/the/image.png',
+            altText: 'some alt text',
+            expectedBitmapSize: const ExpectedSize(500, 400),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), '![some alt text](https://someimage.com/the/image.png =500x400)');
+      });
+
+      test('image with width', () {
+        final doc = MutableDocument(nodes: [
+          ImageNode(
+            id: '1',
+            imageUrl: 'https://someimage.com/the/image.png',
+            altText: 'some alt text',
+            expectedBitmapSize: ExpectedSize(300, null),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), '![some alt text](https://someimage.com/the/image.png =300x)');
+      });
+
+      test('image with height', () {
+        final doc = MutableDocument(nodes: [
+          ImageNode(
+            id: '1',
+            imageUrl: 'https://someimage.com/the/image.png',
+            altText: 'some alt text',
+            expectedBitmapSize: ExpectedSize(null, 200),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), '![some alt text](https://someimage.com/the/image.png =x200)');
+      });
+
       test('horizontal rule', () {
         final doc = MutableDocument(nodes: [
           HorizontalRuleNode(
@@ -848,6 +887,71 @@ This is some code
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
         expect(image.altText, 'Image alt text');
+        expect(image.expectedBitmapSize, isNull);
+      });
+
+      test('image with size', () {
+        final codeBlockDoc =
+            deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png =500x200)');
+
+        final image = codeBlockDoc.nodes.first as ImageNode;
+        expect(image.imageUrl, 'https://images.com/some/image.png');
+        expect(image.altText, 'Image alt text');
+        expect(image.expectedBitmapSize?.width, 500.0);
+        expect(image.expectedBitmapSize?.height, 200.0);
+      });
+
+      test('image with size and title', () {
+        final codeBlockDoc = deserializeMarkdownToDocument(
+            '![Image alt text](https://images.com/some/image.png =500x200 "image title")');
+
+        final image = codeBlockDoc.nodes.first as ImageNode;
+        expect(image.imageUrl, 'https://images.com/some/image.png');
+        expect(image.altText, 'Image alt text');
+        expect(image.expectedBitmapSize?.width, 500.0);
+        expect(image.expectedBitmapSize?.height, 200.0);
+      });
+
+      test('image with width', () {
+        final codeBlockDoc =
+            deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png =500x)');
+
+        final image = codeBlockDoc.nodes.first as ImageNode;
+        expect(image.imageUrl, 'https://images.com/some/image.png');
+        expect(image.altText, 'Image alt text');
+        expect(image.expectedBitmapSize?.width, 500.0);
+        expect(image.expectedBitmapSize?.height, isNull);
+      });
+
+      test('image with height', () {
+        final codeBlockDoc =
+            deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png =x200)');
+
+        final image = codeBlockDoc.nodes.first as ImageNode;
+        expect(image.imageUrl, 'https://images.com/some/image.png');
+        expect(image.altText, 'Image alt text');
+        expect(image.expectedBitmapSize?.width, isNull);
+        expect(image.expectedBitmapSize?.height, 200.0);
+      });
+
+      test('image with size notation without width and height', () {
+        final codeBlockDoc = deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png =x)');
+
+        final image = codeBlockDoc.nodes.first as ImageNode;
+        expect(image.imageUrl, 'https://images.com/some/image.png');
+        expect(image.altText, 'Image alt text');
+        expect(image.expectedBitmapSize?.width, isNull);
+        expect(image.expectedBitmapSize?.height, isNull);
+      });
+
+      test('image with incomplete size notation', () {
+        final codeBlockDoc = deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png =)');
+
+        final image = codeBlockDoc.nodes.first as ImageNode;
+        expect(image.imageUrl, 'https://images.com/some/image.png');
+        expect(image.altText, 'Image alt text');
+        expect(image.expectedBitmapSize?.width, isNull);
+        expect(image.expectedBitmapSize?.height, isNull);
       });
 
       test('single unstyled paragraph', () {

@@ -92,14 +92,14 @@ class DocumentImeSerializer {
 
       // Cache mappings between the IME text range and the document position
       // so that we can easily convert between the two, when requested.
-      final imeRange = TextRange(start: characterCount, end: characterCount + node.text.text.length);
+      final imeRange = TextRange(start: characterCount, end: characterCount + node.text.length);
       editorImeLog.finer("IME range $imeRange -> text node content '${node.text.text}'");
       imeRangesToDocTextNodes[imeRange] = node.id;
       docTextNodesToImeRanges[node.id] = imeRange;
 
       // Concatenate this node's text with the previous nodes.
       buffer.write(node.text.text);
-      characterCount += node.text.text.length;
+      characterCount += node.text.length;
     }
 
     imeText = buffer.toString();
@@ -416,7 +416,7 @@ class DocumentImeSerializer {
 
       if (_doc.getNodeAt(restrictedEndNodeIndex) is TextNode) {
         restrictedEndNode = _doc.getNodeAt(restrictedEndNodeIndex);
-        restrictedEndPosition = TextNodePosition(offset: (restrictedEndNode as TextNode).text.text.length);
+        restrictedEndPosition = TextNodePosition(offset: (restrictedEndNode as TextNode).text.length);
       }
     }
 

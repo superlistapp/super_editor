@@ -25,6 +25,7 @@ class IOSFloatingCursor extends StatelessWidget {
       listenable: controller,
       builder: (context, _) {
         return Stack(
+          clipBehavior: Clip.none,
           children: [
             if (controller.isShowingFloatingCursor)
               Positioned(

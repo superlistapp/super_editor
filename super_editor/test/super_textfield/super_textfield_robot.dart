@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -121,6 +122,25 @@ extension SuperTextFieldRobot on WidgetTester {
     return gesture;
   }
 
+  /// Tap on an Android collapsed drag handle.
+  ///
+  /// {@macro supertextfield_finder}
+  Future<void> tapOnAndroidCollapsedHandle([Finder? superTextFieldFinder]) async {
+    final handleElement = find
+        .byWidgetPredicate(
+          (widget) =>
+              widget is AndroidSelectionHandle && //
+              widget.handleType == HandleType.collapsed,
+        )
+        .evaluate()
+        .firstOrNull;
+    assert(handleElement != null, "Tried to press down on Android collapsed handle but no handle was found.");
+    final renderHandle = handleElement!.renderObject as RenderBox;
+    final handleCenter = renderHandle.localToGlobal(renderHandle.size.center(Offset.zero));
+
+    await tapAt(handleCenter);
+  }
+
   /// Double taps in a [SuperTextField] at the given [offset]
   ///
   /// {@macro supertextfield_finder}
@@ -201,7 +221,14 @@ extension SuperTextFieldRobot on WidgetTester {
     Offset scrollOffset = Offset.zero,
   ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
-    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity, scrollOffset);
+    return await _tapAtTextPositionInTextLayout(
+      textField.textLayout,
+      textField.textLayoutOffsetInField,
+      textFieldBox,
+      offset,
+      textAffinity,
+      scrollOffset,
+    );
   }
 
   Future<bool> _tapAtTextPositionOnAndroid(
@@ -211,7 +238,14 @@ extension SuperTextFieldRobot on WidgetTester {
     Offset scrollOffset = Offset.zero,
   ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
-    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity, scrollOffset);
+    return await _tapAtTextPositionInTextLayout(
+      textField.textLayout,
+      textField.textLayoutOffsetInField,
+      textFieldBox,
+      offset,
+      textAffinity,
+      scrollOffset,
+    );
   }
 
   Future<bool> _tapAtTextPositionOnIOS(
@@ -221,11 +255,19 @@ extension SuperTextFieldRobot on WidgetTester {
     Offset scrollOffset = Offset.zero,
   ]) async {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
-    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity, scrollOffset);
+    return await _tapAtTextPositionInTextLayout(
+      textField.textLayout,
+      textField.textLayoutOffsetInField,
+      textFieldBox,
+      offset,
+      textAffinity,
+      scrollOffset,
+    );
   }
 
   Future<bool> _tapAtTextPositionInTextLayout(
     TextLayout textLayout,
+    Offset textOffsetInField, // i.e., the padding around the text
     RenderBox textFieldBox,
     int offset, [
     TextAffinity textAffinity = TextAffinity.downstream,
@@ -266,7 +308,7 @@ extension SuperTextFieldRobot on WidgetTester {
       );
     }
 
-    final globalTapOffset = adjustedOffset + textFieldBox.localToGlobal(Offset.zero);
+    final globalTapOffset = textOffsetInField + adjustedOffset + textFieldBox.localToGlobal(Offset.zero);
     await tapAt(globalTapOffset);
     return true;
   }

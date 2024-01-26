@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
+import 'package:super_editor/src/infrastructure/flutter/material_scrollbar.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -490,8 +491,8 @@ void main() {
       }
       final scrollOffsetInMiddleOfMomentum = scrollController.offset;
 
-      // Tap to stop the momentum.
-      await tester.tap(find.byType(SuperEditor));
+      // Tap down to stop the momentum.
+      final gesture = await tester.startGesture(tester.getCenter(find.byType(SuperEditor)));
 
       // Let any remaining momentum run (there shouldn't be any).
       await tester.pumpAndSettle();
@@ -499,7 +500,60 @@ void main() {
       // Ensure that the momentum stopped exactly where we tapped.
       expect(scrollOffsetInMiddleOfMomentum, scrollController.offset);
 
+      // Release the pointer.
+      await gesture.up();
+      await tester.pump();
+
       // Ensure that tapping on the editor didn't place the caret.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+    });
+
+    testWidgetsOnDesktop("stops momentum on tap down with trackpad and doesn't place the caret", (tester) async {
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument() //
+          .withLongDoc() //
+          .withScrollController(scrollController) //
+          .pump();
+
+      // Ensure the editor initially has no selection.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+      // Fling scroll the editor with the trackpad.
+      final scrollGesture = await tester.startGesture(
+        tester.getCenter(find.byType(SuperEditor)),
+        kind: PointerDeviceKind.trackpad,
+      );
+      await scrollGesture.moveBy(const Offset(0, -1000));
+      await scrollGesture.up();
+
+      // Pump a few frames of momentum.
+      for (int i = 0; i < 25; i += 1) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      final scrollOffsetInMiddleOfMomentum = scrollController.offset;
+
+      // Ensure the editor scrolled.
+      expect(scrollOffsetInMiddleOfMomentum, greaterThan(0.0));
+
+      // Tap down to stop the momentum.
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(SuperEditor)),
+        kind: PointerDeviceKind.trackpad,
+      );
+
+      // Let any remaining momentum run (there shouldn't be any).
+      await tester.pumpAndSettle();
+
+      // Ensure that the momentum stopped exactly where we tapped.
+      expect(scrollController.offset, scrollOffsetInMiddleOfMomentum);
+
+      // Release the pointer.
+      await gesture.up();
+      await tester.pump();
+
+      // Ensure that tapping on the editor didn't change the selection.
       expect(SuperEditorInspector.findDocumentSelection(), isNull);
     });
 
@@ -1126,6 +1180,60 @@ void main() {
           variant: _scrollDirectionVariant,
         );
       });
+    });
+
+    testWidgetsOnDesktop('shows scrollbar by default', (tester) async {
+      final scrollController = ScrollController();
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withEditorSize(const Size(300, 300))
+          .withScrollController(scrollController)
+          .pump();
+
+      // Ensure the editor is scrollable.
+      expect(scrollController.position.maxScrollExtent, greaterThan(0.0));
+
+      // Ensure the scrollbar is displayed.
+      expect(
+        find.descendant(
+          of: find.byType(SuperEditor),
+          matching: find.byType(ScrollbarWithCustomPhysics),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgetsOnDesktop('does not show scrollbar when ancestor ScrollConfiguration does not want one', (tester) async {
+      final scrollController = ScrollController();
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withEditorSize(const Size(300, 300))
+          .withScrollController(scrollController)
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: ScrollConfiguration(
+                  behavior: const ScrollBehavior().copyWith(scrollbars: false),
+                  child: superEditor,
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Ensure the editor is scrollable.
+      expect(scrollController.position.maxScrollExtent, greaterThan(0.0));
+
+      // Ensure no scrollbar is displayed.
+      expect(
+        find.descendant(
+          of: find.byType(SuperEditor),
+          matching: find.byType(ScrollbarWithCustomPhysics),
+        ),
+        findsNothing,
+      );
     });
   });
 }

@@ -55,16 +55,16 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
     if (widget.direction == TextAffinity.upstream) {
       // simulate pressing backspace
       _demoRobot
-        ..insertCaretAt(TextPosition(offset: _textFieldController.text.text.length))
+        ..insertCaretAt(TextPosition(offset: _textFieldController.text.length))
         ..pause(const Duration(seconds: 1))
-        ..backspaceCharacters(_textFieldController.text.text.length)
+        ..backspaceCharacters(_textFieldController.text.length)
         ..start();
     } else {
       // simulate pressing delete
       _demoRobot
         ..insertCaretAt(const TextPosition(offset: 0))
         ..pause(const Duration(seconds: 1))
-        ..deleteCharacters(_textFieldController.text.text.length)
+        ..deleteCharacters(_textFieldController.text.length)
         ..start();
     }
   }

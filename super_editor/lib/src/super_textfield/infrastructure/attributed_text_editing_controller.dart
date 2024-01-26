@@ -33,7 +33,7 @@ class AttributedTextEditingController with ChangeNotifier {
   }
 
   bool isSelectionWithinTextBounds(TextSelection selection) {
-    return selection.start <= text.text.length && selection.end <= text.text.length;
+    return selection.start <= text.length && selection.end <= text.length;
   }
 
   /// Updates the [composingAttributions] based on the current [selection]
@@ -49,7 +49,7 @@ class AttributedTextEditingController with ChangeNotifier {
       _composingAttributions
         ..clear()
         ..addAll(text.getAllAttributionsThroughout(
-          SpanRange(selection.start, selection.end),
+          selection.toSpanRange(),
         ));
     }
   }
@@ -281,7 +281,7 @@ class AttributedTextEditingController with ChangeNotifier {
     final updatedSelection = _moveSelectionForInsertion(
       selection: selection,
       insertIndex: selection.extentOffset,
-      newTextLength: text.text.length,
+      newTextLength: text.length,
     );
 
     update(
@@ -535,7 +535,7 @@ class AttributedTextEditingController with ChangeNotifier {
       return;
     }
 
-    if (selection.extentOffset >= text.text.length) {
+    if (selection.extentOffset >= text.length) {
       return;
     }
 
@@ -701,7 +701,7 @@ class AttributedTextEditingController with ChangeNotifier {
   void selectAll() {
     selection = TextSelection(
       baseOffset: 0,
-      extentOffset: text.text.length,
+      extentOffset: text.length,
     );
   }
 
@@ -789,7 +789,7 @@ class AttributedTextEditingController with ChangeNotifier {
       return;
     }
 
-    if (selection.extentOffset >= text.text.length) {
+    if (selection.extentOffset >= text.length) {
       // Can't move further right.
       return;
     }
@@ -797,7 +797,7 @@ class AttributedTextEditingController with ChangeNotifier {
     if (movementModifier == MovementModifier.line) {
       final endOfLine = textLayout.getPositionAtEndOfLine(TextPosition(offset: selection.extentOffset));
 
-      final endPosition = TextPosition(offset: text.text.length);
+      final endPosition = TextPosition(offset: text.length);
       final plainText = text.text;
 
       // Note: we compare offset values because we don't care if the affinitys are equal
@@ -841,7 +841,7 @@ class AttributedTextEditingController with ChangeNotifier {
       return;
     }
 
-    final newExtent = text.text.moveOffsetDownstreamByCharacter(selection.extentOffset) ?? text.text.length;
+    final newExtent = text.text.moveOffsetDownstreamByCharacter(selection.extentOffset) ?? text.length;
     selection = TextSelection(
       baseOffset: expandSelection ? selection.baseOffset : newExtent,
       extentOffset: newExtent,
@@ -866,7 +866,7 @@ class AttributedTextEditingController with ChangeNotifier {
 
       // If there is no line below the current selection, move selection
       // to the end of the available text.
-      newExtent ??= text.text.length;
+      newExtent ??= text.length;
     }
 
     selection = TextSelection(

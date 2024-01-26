@@ -162,7 +162,12 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       //
       // We don't do this when the user is dragging the caret because the user's finger position
       // and the auto-scrolling system should control the scroll offset in that case.
-      widget.textScrollController.ensureExtentIsVisible();
+      onNextFrame((timeStamp) {
+        // We adjust for the extent offset in the next frame because we need the
+        // underlying RenderParagraph to update first, so that we can inspect the
+        // text layout for the most recent text and selection.
+        widget.textScrollController.ensureExtentIsVisible();
+      });
     }
   }
 
@@ -178,7 +183,6 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     _log.fine('User released a tap');
 
     _selectionBeforeTap = widget.textController.selection;
-    _selectAtOffset(details.localPosition);
 
     if (widget.focusNode.hasFocus && widget.textController.isAttachedToIme) {
       widget.textController.showKeyboard();
@@ -229,7 +233,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     final tapTextPosition = _getTextPositionNearestToOffset(localOffset);
     if (tapTextPosition == null || tapTextPosition.offset < 0) {
       // This situation indicates the user tapped in empty space
-      widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.text.length);
+      widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.length);
       return;
     }
 
@@ -295,7 +299,6 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
   void _onPanUpdate(DragUpdateDetails details) {
     _log.fine('_onPanUpdate handle mode');
-
     if (!_isDraggingCaret) {
       return;
     }

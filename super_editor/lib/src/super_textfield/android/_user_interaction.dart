@@ -156,27 +156,17 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
       //
       // We don't do this when the user is dragging the caret because the user's finger position
       // and the auto-scrolling system should control the scroll offset in that case.
-      widget.textScrollController.ensureExtentIsVisible();
+      onNextFrame((timeStamp) {
+        // We adjust for the extent offset in the next frame because we need the
+        // underlying RenderParagraph to update first, so that we can inspect the
+        // text layout for the most recent text and selection.
+        widget.textScrollController.ensureExtentIsVisible();
+      });
     }
-  }
-
-  void _onTapDown(TapDownDetails details) {
-    _log.fine("User tapped down");
-    if (!widget.focusNode.hasFocus) {
-      _log.finer("Field isn't focused. Ignoring press.");
-      return;
-    }
-
-    // When the user drags, the toolbar should not be visible.
-    // A drag can begin with a tap down, so we hide the toolbar
-    // preemptively.
-    widget.editingOverlayController.hideToolbar();
   }
 
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
-
-    _selectAtOffset(details.localPosition);
 
     if (widget.focusNode.hasFocus && widget.textController.isAttachedToIme) {
       widget.textController.showKeyboard();
@@ -199,9 +189,8 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
         ? tapTextPosition == previousSelection.extent
         : tapTextPosition.offset >= previousSelection.start && tapTextPosition.offset <= previousSelection.end;
 
-    if (didTapOnExistingSelection) {
-      // Toggle the toolbar display when the user taps on the collapsed caret,
-      // or on top of an existing selection.
+    if (didTapOnExistingSelection && previousSelection.isCollapsed) {
+      // Toggle the toolbar display when the user taps on the collapsed caret.
       widget.editingOverlayController.toggleToolbar();
     } else {
       // The user tapped somewhere in the text outside any existing selection.
@@ -228,7 +217,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     final tapTextPosition = _getTextPositionAtOffset(localOffset);
     if (tapTextPosition == null) {
       // This situation indicates the user tapped in empty space
-      widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.text.length);
+      widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.length);
     } else {
       // Update the text selection to a collapsed selection where the user tapped.
       widget.textController.selection = tapTextPosition.offset >= 0
@@ -475,7 +464,6 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
             () => TapSequenceGestureRecognizer(),
             (TapSequenceGestureRecognizer recognizer) {
               recognizer
-                ..onTapDown = _onTapDown
                 ..onTapUp = _onTapUp
                 ..onDoubleTapDown = _onDoubleTapDown
                 ..onTripleTapDown = _onTripleTapDown

@@ -38,6 +38,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.textAlign = TextAlign.left,
+    this.padding,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
     this.minLines,
@@ -52,7 +53,6 @@ class SuperIOSTextField extends StatefulWidget {
     this.showComposingUnderline = true,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
-    this.padding,
   }) : super(key: key);
 
   /// [FocusNode] attached to this text field.
@@ -71,6 +71,10 @@ class SuperIOSTextField extends StatefulWidget {
   /// Text style factory that creates styles for the content in
   /// [textController] based on the attributions in that content.
   final AttributionStyleBuilder textStyleBuilder;
+
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
+  final EdgeInsets? padding;
 
   /// Policy for when the hint should be displayed.
   final HintBehavior hintBehavior;
@@ -151,10 +155,6 @@ class SuperIOSTextField extends StatefulWidget {
   /// Whether to paint debug guides.
   final bool showDebugPaint;
 
-  /// Padding placed around the text content of this text field, but within the
-  /// scrollable viewport.
-  final EdgeInsets? padding;
-
   @override
   State createState() => SuperIOSTextFieldState();
 }
@@ -189,7 +189,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   final _popoverController = OverlayPortalController();
 
   /// Notifies the popover toolbar to rebuild itself.
-  final _popoverRebuildSignal = SignalNotifier();
+  final _overlayControlsRebuildSignal = SignalNotifier();
 
   @override
   void initState() {
@@ -333,7 +333,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
     WidgetsBinding.instance.removeObserver(this);
 
-    _popoverRebuildSignal.dispose();
+    _overlayControlsRebuildSignal.dispose();
 
     super.dispose();
   }
@@ -356,6 +356,14 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
+
+  /// Calculates and returns the `Offset` from the top-left corner of this text field
+  /// to the top-left corner of the [textLayout] within this text field.
+  Offset get textLayoutOffsetInField {
+    final fieldBox = context.findRenderObject() as RenderBox;
+    final textLayoutBox = _textContentKey.currentContext!.findRenderObject() as RenderBox;
+    return textLayoutBox.localToGlobal(Offset.zero, ancestor: fieldBox);
+  }
 
   Rect? _getGlobalCaretRect() {
     if (!_textEditingController.selection.isValid || !_textEditingController.selection.isCollapsed) {
@@ -384,7 +392,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         _log.info('Attaching TextInputClient to TextInput');
         setState(() {
           if (!_textEditingController.selection.isValid) {
-            _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.text.length);
+            _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.length);
           }
 
           if (widget.imeConfiguration != null) {
@@ -435,7 +443,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   /// they're currently displayed.
   void _rebuildHandles() {
     if (!_popoverController.isShowing) {
-      _popoverRebuildSignal.notifyListeners();
+      _overlayControlsRebuildSignal.notifyListeners();
     }
   }
 
@@ -509,7 +517,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   Widget build(BuildContext context) {
     return OverlayPortal(
       controller: _popoverController,
-      overlayChildBuilder: _buildPopoverToolbar,
+      overlayChildBuilder: _buildOverlayIosControls,
       child: _buildTextField(),
     );
   }
@@ -542,38 +550,22 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
               minLines: widget.minLines,
               maxLines: widget.maxLines,
               lineHeight: widget.lineHeight,
+              padding: EdgeInsets.only(top: widget.padding?.top ?? 0, bottom: widget.padding?.bottom ?? 0),
               perLineAutoScrollDuration: const Duration(milliseconds: 100),
               showDebugPaint: widget.showDebugPaint,
-              padding: widget.padding,
-              child: ListenableBuilder(
-                listenable: _textEditingController,
-                builder: (context, _) {
-                  final isTextEmpty = _textEditingController.text.text.isEmpty;
-                  final showHint = widget.hintBuilder != null &&
-                      ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                          (isTextEmpty &&
-                              !_focusNode.hasFocus &&
-                              widget.hintBehavior == HintBehavior.displayHintUntilFocus));
-
-                  return CompositedTransformTarget(
+              child: FillWidthIfConstrained(
+                child: Padding(
+                  padding: EdgeInsets.only(left: widget.padding?.left ?? 0, right: widget.padding?.right ?? 0),
+                  child: CompositedTransformTarget(
                     link: _textContentLayerLink,
-                    child: Stack(
-                      children: [
-                        if (showHint) widget.hintBuilder!(context),
-                        _buildSelectableText(),
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: IOSFloatingCursor(
-                            controller: _floatingCursorController,
-                          ),
-                        ),
-                      ],
+                    child: ListenableBuilder(
+                      listenable: _textEditingController,
+                      builder: (context, _) {
+                        return _buildSelectableText();
+                      },
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
           ),
@@ -594,62 +586,76 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       caretStyle = caretStyle.copyWith(color: caretColorOverride);
     }
 
-    return FillWidthIfConstrained(
-      child: SuperText(
-        key: _textContentKey,
-        richText: textSpan,
-        textAlign: widget.textAlign,
-        textScaler: MediaQuery.textScalerOf(context),
-        layerBeneathBuilder: (context, textLayout) {
-          return Stack(
-            children: [
-              if (widget.textController?.selection.isValid == true)
-                // Selection highlight beneath the text.
-                TextLayoutSelectionHighlight(
-                  textLayout: textLayout,
-                  style: SelectionHighlightStyle(
-                    color: widget.selectionColor,
-                  ),
-                  selection: widget.textController?.selection,
-                ),
-              // Underline beneath the composing region.
-              if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
-                TextUnderlineLayer(
-                  textLayout: textLayout,
-                  underlines: [
-                    TextLayoutUnderline(
-                      style: UnderlineStyle(
-                        color: widget.textStyleBuilder({}).color ?? //
-                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
-                      ),
-                      range: widget.textController!.composingRegion,
-                    ),
-                  ],
-                ),
-            ],
-          );
-        },
-        layerAboveBuilder: (context, textLayout) {
-          if (!_focusNode.hasFocus) {
-            return const SizedBox();
-          }
+    return SuperText(
+      key: _textContentKey,
+      richText: textSpan,
+      textAlign: widget.textAlign,
+      textScaler: MediaQuery.textScalerOf(context),
+      layerBeneathBuilder: (context, textLayout) {
+        final isTextEmpty = _textEditingController.text.text.isEmpty;
+        final showHint = widget.hintBuilder != null &&
+            ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-          return TextLayoutCaret(
-            textLayout: textLayout,
-            style: widget.caretStyle,
-            position: _textEditingController.selection.isCollapsed //
-                ? _textEditingController.selection.extent
-                : null,
-            blinkTimingMode: widget.blinkTimingMode,
-          );
-        },
-      ),
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            if (widget.textController?.selection.isValid == true)
+              // Selection highlight beneath the text.
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: SelectionHighlightStyle(
+                  color: widget.selectionColor,
+                ),
+                selection: widget.textController?.selection,
+              ),
+            // Underline beneath the composing region.
+            if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
+              TextUnderlineLayer(
+                textLayout: textLayout,
+                underlines: [
+                  TextLayoutUnderline(
+                    style: UnderlineStyle(
+                      color: widget.textStyleBuilder({}).color ?? //
+                          (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                    ),
+                    range: widget.textController!.composingRegion,
+                  ),
+                ],
+              ),
+            if (showHint) //
+              widget.hintBuilder!(context),
+          ],
+        );
+      },
+      layerAboveBuilder: (context, textLayout) {
+        if (!_focusNode.hasFocus) {
+          return const SizedBox();
+        }
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            TextLayoutCaret(
+              textLayout: textLayout,
+              style: widget.caretStyle,
+              position: _textEditingController.selection.isCollapsed //
+                  ? _textEditingController.selection.extent
+                  : null,
+              blinkTimingMode: widget.blinkTimingMode,
+            ),
+            IOSFloatingCursor(
+              controller: _floatingCursorController,
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildPopoverToolbar(BuildContext context) {
+  Widget _buildOverlayIosControls(BuildContext context) {
     return ListenableBuilder(
-      listenable: _popoverRebuildSignal,
+      listenable: _overlayControlsRebuildSignal,
       builder: (context, _) {
         return IOSEditingControls(
           editingController: _editingOverlayController,

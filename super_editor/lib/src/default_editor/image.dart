@@ -11,9 +11,11 @@ class ImageNode extends BlockNode with ChangeNotifier {
   ImageNode({
     required this.id,
     required String imageUrl,
+    ExpectedSize? expectedBitmapSize,
     String altText = '',
     Map<String, dynamic>? metadata,
   })  : _imageUrl = imageUrl,
+        _expectedBitmapSize = expectedBitmapSize,
         _altText = altText {
     this.metadata = metadata;
 
@@ -30,6 +32,30 @@ class ImageNode extends BlockNode with ChangeNotifier {
       _imageUrl = newImageUrl;
       notifyListeners();
     }
+  }
+
+  /// The expected size of the image.
+  ///
+  /// Used to size the component while the image is still being loaded,
+  /// so the content don't shift after the image is loaded.
+  ///
+  /// It's technically permissible to provide only a single expected dimension,
+  /// however providing only a single dimension won't provide enough information
+  /// to size an image component before the image is loaded. Providing only a
+  /// width in a vertical layout won't have any visual effect. Providing only a height
+  /// in a vertical layout will likely take up more space or less space than the final
+  /// image because the final image will probably be scaled. Therefore, to take
+  /// advantage of [ExpectedSize], you should try to provide both dimensions.
+  ExpectedSize? get expectedBitmapSize => _expectedBitmapSize;
+  ExpectedSize? _expectedBitmapSize;
+  set expectedBitmapSize(ExpectedSize? newValue) {
+    if (newValue == _expectedBitmapSize) {
+      return;
+    }
+
+    _expectedBitmapSize = newValue;
+
+    notifyListeners();
   }
 
   String _altText;
@@ -80,6 +106,7 @@ class ImageComponentBuilder implements ComponentBuilder {
     return ImageComponentViewModel(
       nodeId: node.id,
       imageUrl: node.imageUrl,
+      expectedSize: node.expectedBitmapSize,
       selectionColor: const Color(0x00000000),
     );
   }
@@ -94,6 +121,7 @@ class ImageComponentBuilder implements ComponentBuilder {
     return ImageComponent(
       componentKey: componentContext.componentKey,
       imageUrl: componentViewModel.imageUrl,
+      expectedSize: componentViewModel.expectedSize,
       selection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
     );
@@ -106,11 +134,13 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.imageUrl,
+    this.expectedSize,
     this.selection,
     required this.selectionColor,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   String imageUrl;
+  ExpectedSize? expectedSize;
   UpstreamDownstreamNodeSelection? selection;
   Color selectionColor;
 
@@ -121,6 +151,7 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
       maxWidth: maxWidth,
       padding: padding,
       imageUrl: imageUrl,
+      expectedSize: expectedSize,
       selection: selection,
       selectionColor: selectionColor,
     );
@@ -148,6 +179,7 @@ class ImageComponent extends StatelessWidget {
     Key? key,
     required this.componentKey,
     required this.imageUrl,
+    this.expectedSize,
     this.selectionColor = Colors.blue,
     this.selection,
     this.imageBuilder,
@@ -155,6 +187,7 @@ class ImageComponent extends StatelessWidget {
 
   final GlobalKey componentKey;
   final String imageUrl;
+  final ExpectedSize? expectedSize;
   final Color selectionColor;
   final UpstreamDownstreamNodeSelection? selection;
 
@@ -182,6 +215,31 @@ class ImageComponent extends StatelessWidget {
                   : Image.network(
                       imageUrl,
                       fit: BoxFit.contain,
+                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                        if (frame != null) {
+                          // The image is already loaded. Use the image as is.
+                          return child;
+                        }
+
+                        if (expectedSize != null && expectedSize!.width != null && expectedSize!.height != null) {
+                          // Both width and height were provide.
+                          // Preserve the aspect ratio of the original image.
+                          return AspectRatio(
+                            aspectRatio: expectedSize!.aspectRatio,
+                            child: SizedBox(
+                              width: expectedSize!.width!.toDouble(),
+                              height: expectedSize!.height!.toDouble(),
+                            ),
+                          );
+                        }
+
+                        // The image is still loading and only one dimension was provided.
+                        // Use the given dimension.
+                        return SizedBox(
+                          width: expectedSize?.width?.toDouble(),
+                          height: expectedSize?.height?.toDouble(),
+                        );
+                      },
                     ),
             ),
           ),
@@ -189,4 +247,27 @@ class ImageComponent extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The expected size of a piece of content, such as an image that's loading.
+class ExpectedSize {
+  const ExpectedSize(this.width, this.height);
+
+  final int? width;
+  final int? height;
+
+  double get aspectRatio => height != null //
+      ? (width ?? 0) / height!
+      : throw UnsupportedError("Can't compute the aspect ratio with a null height");
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ExpectedSize && //
+          runtimeType == other.runtimeType &&
+          width == other.width &&
+          height == other.height;
+
+  @override
+  int get hashCode => width.hashCode ^ height.hashCode;
 }

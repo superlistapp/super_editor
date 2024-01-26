@@ -127,8 +127,11 @@ Widget _buildSuperTextField({
     text: AttributedText(text),
   );
 
-  return SizedBox(
+  return Container(
     width: 300,
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.green),
+    ),
     child: SuperTextField(
       configuration: configuration,
       textController: controller,

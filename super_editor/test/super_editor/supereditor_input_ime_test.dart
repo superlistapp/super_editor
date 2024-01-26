@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -279,7 +278,7 @@ void main() {
 
       // Ensure the text was inserted.
       expect(
-        SuperEditorInspector.findTextInParagraph('1').text,
+        SuperEditorInspector.findTextInComponent('1').text,
         'Going.',
       );
     });
@@ -621,7 +620,7 @@ Paragraph two
         ], getter: imeClientGetter);
 
         expect(
-          SuperEditorInspector.findTextInParagraph('1').text,
+          SuperEditorInspector.findTextInComponent('1').text,
           'Anonymous ',
         );
       });
@@ -666,7 +665,7 @@ Paragraph two
         ], getter: imeClientGetter);
 
         expect(
-          SuperEditorInspector.findTextInParagraph('1').text,
+          SuperEditorInspector.findTextInComponent('1').text,
           'Anonymous ',
         );
       });
@@ -907,7 +906,7 @@ Paragraph two
       );
 
       // Ensure the last character was deleted.
-      expect(SuperEditorInspector.findTextInParagraph(nodeId).text, 'This is a paragrap');
+      expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'This is a paragrap');
     });
 
     group('text serialization and selected content', () {

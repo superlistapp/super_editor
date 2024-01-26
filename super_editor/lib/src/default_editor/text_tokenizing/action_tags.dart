@@ -361,13 +361,13 @@ class ActionTagComposingReaction implements EditReaction {
   List<EditRequest> _healCancelledTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
     final cancelledTagRanges = node.text.getAttributionSpansInRange(
       attributionFilter: (a) => a == actionTagCancelledAttribution,
-      range: SpanRange(0, node.text.text.length - 1),
+      range: SpanRange(0, node.text.length - 1),
     );
 
     final changeRequests = <EditRequest>[];
 
     for (final range in cancelledTagRanges) {
-      final cancelledText = node.text.text.substring(range.start, range.end + 1); // +1 because substring is exclusive
+      final cancelledText = node.text.substring(range.start, range.end + 1); // +1 because substring is exclusive
       if (cancelledText == _tagRule.trigger) {
         // This is a legitimate cancellation attribution.
         continue;

@@ -1,7 +1,6 @@
 import 'package:example/demos/in_the_lab/in_the_lab_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_text_layout/super_text_layout.dart';
 
 class HashTagsFeatureDemo extends StatefulWidget {
   const HashTagsFeatureDemo({super.key});
@@ -23,12 +22,7 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
   void initState() {
     super.initState();
 
-    _document = MutableDocument(nodes: [
-      ParagraphNode(
-        id: Editor.createNodeId(),
-        text: AttributedText(""),
-      ),
-    ]);
+    _document = MutableDocument.empty();
     _composer = MutableDocumentComposer();
     _editor = Editor(
       editables: {

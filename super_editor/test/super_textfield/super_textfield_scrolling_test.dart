@@ -5,7 +5,9 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
+import 'package:super_editor/super_editor_test.dart';
 
+import '../test_tools.dart';
 import 'super_textfield_inspector.dart';
 import 'super_textfield_robot.dart';
 
@@ -22,6 +24,36 @@ void main() {
 
         // Ensure that the text field isn't scrollable (the content shouldn't exceed the viewport).
         expect(SuperTextFieldInspector.hasScrollableExtent(), isFalse);
+      });
+
+      testWidgetsOnAllPlatforms("auto scrolls when the user types beyond viewport edge", (tester) async {
+        const textFieldWidth = 400.0;
+
+        final controller = AttributedTextEditingController();
+        await _pumpSingleLineTextField(
+          tester,
+          controller: controller,
+          width: textFieldWidth,
+        );
+
+        // Place the caret at the beginning of the text.
+        await tester.placeCaretInSuperTextField(0);
+
+        // Ensure the text field has a selection.
+        expect(SuperTextFieldInspector.findSelection()!.isValid, isTrue);
+
+        // Type characters to the right, well beyond the right edge of the
+        // viewport. Ensure that the caret remains visible at all times.
+        const textToType = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna.";
+        for (int i = 0; i < textToType.length; i += 1) {
+          await tester.typeImeText(textToType[i]);
+          await tester.pump();
+
+          // Ensure that the caret is still visible.
+          // TODO: Change lessThanOrEqualTo() to strictly lessThan() after #1770
+          expect(SuperTextFieldInspector.findCaretRectInViewport()!.left, lessThanOrEqualTo(textFieldWidth),
+              reason: "Failed to auto-scroll on character $i - '${textToType[i]}'");
+        }
       });
 
       testWidgetsOnArbitraryDesktop("auto scrolls when caret moves beyond viewport edge", (tester) async {
@@ -54,6 +86,93 @@ void main() {
           expect(SuperTextFieldInspector.findCaretRectInViewport()!.left, lessThanOrEqualTo(textFieldWidth));
         }
       });
+
+      testWidgetsOnMobile("auto scrolls when caret is dragged into auto-scroll region", (tester) async {
+        const textFieldWidth = 400.0;
+
+        await _pumpSingleLineTextField(
+          tester,
+          controller: AttributedTextEditingController(
+            text: AttributedText(
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id."),
+          ),
+          width: textFieldWidth,
+        );
+
+        // Place the caret at the beginning of the text.
+        await tester.placeCaretInSuperTextField(0);
+
+        // Ensure the text field has a selection.
+        expect(SuperTextFieldInspector.findSelection()!.isValid, isTrue);
+
+        // Drag the caret from the left side of the text field to the right side
+        // of the text field and hold it in the auto-scroll region.
+        final drag = await tester.dragCaretByDistanceInSuperTextField(const Offset(textFieldWidth, 0));
+
+        // While holding the caret in the auto-scroll region, we expect the scroll offset to
+        // increase on every frame, until we get to the end.
+        var scrollOffset = SuperTextFieldInspector.findScrollOffset()!;
+        var previousScrollOffset = scrollOffset;
+        do {
+          previousScrollOffset = scrollOffset;
+
+          // Pump a frame to auto-scroll to the right. Pass a duration that's long enough
+          // to pass the minimum auto-scroll time in SuperTextField.
+          await tester.pump(const Duration(milliseconds: 50));
+
+          scrollOffset = SuperTextFieldInspector.findScrollOffset()!;
+
+          // Ensure that we haven't exceeded the max scroll offset. If there's a bug that allows
+          // us to exceed the max scroll offset, this test might run forever.
+          expect(
+            SuperTextFieldInspector.findScrollOffset(),
+            lessThanOrEqualTo(SuperTextFieldInspector.findMaxScrollOffset()!),
+            reason:
+                "While auto-scrolling to the right, we exceeded the max scroll offset of the text field, which should never be allowed to happen",
+          );
+        } while (scrollOffset > previousScrollOffset);
+
+        // Now that we've auto-scrolled as far to the right as possible, we should be
+        // at the max scroll offset.
+        expect(SuperTextFieldInspector.findScrollOffset(), SuperTextFieldInspector.findMaxScrollOffset());
+
+        // Drag all the way back to the left side of the text field.
+        //
+        // +20 to get past the auto-scroll boundary and then also add some
+        // scroll speed for a faster test run. Note: it seems that we need
+        // at least +2 to even trigger aut-scroll. The rest is for speed.
+        // This might be due to touch slop, or possibly some other gesture
+        // detail that impacts how far we initially dragged to the right.
+        await tester.dragContinuation(drag, const Offset(-(textFieldWidth + 20), 0));
+
+        // Now that we auto-scrolled all the way to the right, auto-scroll back all the way to
+        // the left.
+        do {
+          previousScrollOffset = scrollOffset;
+
+          // Pump a frame to auto-scroll to the right. Pass a duration that's long enough
+          // to pass the minimum auto-scroll time in SuperTextField.
+          await tester.pump(const Duration(milliseconds: 50));
+
+          scrollOffset = SuperTextFieldInspector.findScrollOffset()!;
+
+          // Ensure that we haven't exceeded the min scroll offset. If there's a bug that allows
+          // us to exceed the min scroll offset, this test might run forever.
+          expect(
+            SuperTextFieldInspector.findScrollOffset(),
+            greaterThanOrEqualTo(0),
+            reason:
+                "While auto-scrolling to the left, we exceeded the min scroll offset of the text field, which should never be allowed to happen",
+          );
+        } while (previousScrollOffset > scrollOffset);
+
+        // Now that we've auto-scrolled as far to the left as possible, we should be
+        // at the min scroll offset.
+        expect(SuperTextFieldInspector.findScrollOffset(), 0);
+
+        // Release the gesture so the test can end.
+        await drag.up();
+      });
     });
   });
 }
@@ -76,7 +195,7 @@ Future<void> _pumpSingleLineTextField(
                 SuperTextField(
                   textController: controller,
                   hintBuilder: _createHintBuilder("Hint text..."),
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                   minLines: 1,
                   maxLines: 1,
                   inputSource: TextInputSource.ime,

@@ -89,7 +89,7 @@ void main() {
             maxLines: 2,
             maxHeight: 50,
             maxWidth: 200,
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 24),
             configuration: SuperTextFieldPlatformConfiguration.android,
           ),
         )
@@ -101,7 +101,7 @@ void main() {
             maxLines: 2,
             maxHeight: 50,
             maxWidth: 200,
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 24),
             configuration: SuperTextFieldPlatformConfiguration.iOS,
           ),
         )
@@ -113,7 +113,7 @@ void main() {
             maxLines: 2,
             maxHeight: 50,
             maxWidth: 200,
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 24),
             configuration: SuperTextFieldPlatformConfiguration.desktop,
           ),
         );

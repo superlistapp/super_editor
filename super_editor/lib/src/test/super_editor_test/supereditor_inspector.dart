@@ -104,6 +104,27 @@ class SuperEditorInspector {
     return alignment.withinRect(rect);
   }
 
+  /// Returns the size of the component which renders the node with the given [nodeId].
+  ///
+  /// {@macro supereditor_finder}
+  static Size findComponentSize(String nodeId, [Finder? finder]) {
+    final documentLayout = findDocumentLayout(finder);
+    final component = documentLayout.getComponentByNodeId(nodeId);
+    assert(component != null);
+    final componentBox = component!.context.findRenderObject() as RenderBox;
+    return componentBox.size;
+  }
+
+  /// Returns the (x,y) offset for a caret, if that caret appeared at the given [position].
+  ///
+  /// {@macro supereditor_finder}
+  static Offset calculateOffsetForCaret(DocumentPosition position, [Finder? finder]) {
+    final documentLayout = findDocumentLayout(finder);
+    final positionRect = documentLayout.getRectForPosition(position);
+    assert(positionRect != null);
+    return positionRect!.topLeft;
+  }
+
   /// Returns `true` if the entire content rectangle at [position] is visible on
   /// screen, or `false` otherwise.
   ///
@@ -144,9 +165,19 @@ class SuperEditorInspector {
   /// [SuperEditor].
   ///
   /// {@macro supereditor_finder}
-  static AttributedText findTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
+  static AttributedText findTextInComponent(String nodeId, [Finder? superEditorFinder]) {
     final documentLayout = findDocumentLayout(superEditorFinder);
-    return (documentLayout.getComponentByNodeId(nodeId) as TextComponentState).widget.text;
+    final component = documentLayout.getComponentByNodeId(nodeId);
+
+    if (component is TextComponentState) {
+      return component.widget.text;
+    }
+
+    if (component is ProxyDocumentComponent) {
+      return (component.childDocumentComponentKey.currentState as TextComponentState).widget.text;
+    }
+
+    throw Exception('The component for node id $nodeId is not a TextComponent.');
   }
 
   /// Finds the paragraph with the given [nodeId] and returns the paragraph's content as a [TextSpan].
@@ -158,9 +189,9 @@ class SuperEditorInspector {
   static TextSpan findRichTextInParagraph(String nodeId, [Finder? superEditorFinder]) {
     final documentLayout = findDocumentLayout(superEditorFinder);
 
-    final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
+    final component = documentLayout.getComponentByNodeId(nodeId) as DocumentComponent;
     final superText = find
-        .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
+        .descendant(of: find.byWidget(component.widget), matching: find.byType(SuperText))
         .evaluate()
         .single
         .widget as SuperText;
@@ -542,6 +573,21 @@ class SuperEditorInspector {
       return findMobileDownstreamDragHandle(superEditorFinder);
     } else {
       return findMobileUpstreamDragHandle(superEditorFinder);
+    }
+  }
+
+  /// Finds the magnifier for a mobile `SuperEditor`.
+  static Finder findMobileMagnifier([Finder? superEditorFinder]) {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return find.byKey(DocumentKeys.magnifier);
+
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.fuchsia:
+        return FindsNothing();
     }
   }
 

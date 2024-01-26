@@ -67,7 +67,7 @@ class TextNode extends DocumentNode with ChangeNotifier {
   TextNodePosition get beginningPosition => const TextNodePosition(offset: 0);
 
   @override
-  TextNodePosition get endPosition => TextNodePosition(offset: text.text.length);
+  TextNodePosition get endPosition => TextNodePosition(offset: text.length);
 
   @override
   NodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
@@ -212,7 +212,7 @@ extension DocumentSelectionWithText on Document {
       } else if (textNode == nodes.first) {
         // Handle partial node selection in first node.
         startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
         startOffset = 0;
@@ -223,7 +223,7 @@ extension DocumentSelectionWithText on Document {
       } else {
         // Handle full node selection.
         startOffset = 0;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       }
 
       final selectionRange = SpanRange(startOffset, endOffset);
@@ -672,7 +672,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       return null;
     }
 
-    if (textPosition.offset > widget.text.text.length) {
+    if (textPosition.offset > widget.text.length) {
       // This text position does not represent a position within our text.
       return null;
     }
@@ -708,7 +708,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       return null;
     }
 
-    if (textPosition.offset >= widget.text.text.length) {
+    if (textPosition.offset >= widget.text.length) {
       // Can't move further right.
       return null;
     }
@@ -761,7 +761,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       return null;
     }
 
-    if (textNodePosition.offset < 0 || textNodePosition.offset > widget.text.text.length) {
+    if (textNodePosition.offset < 0 || textNodePosition.offset > widget.text.length) {
       // This text position does not represent a position within our text.
       return null;
     }
@@ -780,7 +780,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       return null;
     }
 
-    if (textNodePosition.offset < 0 || textNodePosition.offset > widget.text.text.length) {
+    if (textNodePosition.offset < 0 || textNodePosition.offset > widget.text.length) {
       // This text position does not represent a position within our text.
       return null;
     }
@@ -794,7 +794,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
 
   @override
   TextNodePosition getEndPosition() {
-    return TextNodePosition(offset: widget.text.text.length);
+    return TextNodePosition(offset: widget.text.length);
   }
 
   @override
@@ -838,7 +838,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   TextNodeSelection getSelectionOfEverything() {
     return TextNodeSelection(
       baseOffset: 0,
-      extentOffset: widget.text.text.length,
+      extentOffset: widget.text.length,
     );
   }
 
@@ -1011,6 +1011,47 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   }
 }
 
+/// A [ProxyDocumentComponent] that adds [TextComposable] capabilities so
+/// that simple text-based proxy components can meet their expected contract
+/// without going through the work of defining a stateful widget that mixes in
+/// the [ProxyDocumentComponent] methods.
+///
+/// Using a [ProxyTextDocumentComponent] is never technically necessary.
+/// Custom [DocumentComponent]s can achieve a similar result by mixing in
+/// [ProxyDocumentComponent] within a `State` object. This widget is provided
+/// as a convenience so that some components can be defined as stateless
+/// widgets while still providing access to component behaviors and text layout queries.
+class ProxyTextDocumentComponent extends StatefulWidget {
+  const ProxyTextDocumentComponent({
+    super.key,
+    required this.textComponentKey,
+    required this.child,
+  });
+
+  final GlobalKey textComponentKey;
+
+  /// The widget subtree, which must include a widget that implements `TextComposable`,
+  /// and that `TextComposable` must be bound to the given [textComponentKey].
+  final Widget child;
+
+  @override
+  State<ProxyTextDocumentComponent> createState() => _ProxyTextDocumentComponentState();
+}
+
+class _ProxyTextDocumentComponentState extends State<ProxyTextDocumentComponent>
+    with ProxyDocumentComponent<ProxyTextDocumentComponent>, ProxyTextComposable {
+  @override
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => widget.textComponentKey;
+
+  @override
+  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}
+
 class AddTextAttributionsRequest implements EditRequest {
   AddTextAttributionsRequest({
     required this.documentRange,
@@ -1076,7 +1117,7 @@ class AddTextAttributionsCommand implements EditCommand {
         // Handle partial node selection in first node.
         editorDocLog.info(' - selecting part of the first node: ${textNode.id}');
         startOffset = (normalRange.start.nodePosition as TextPosition).offset;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
         editorDocLog.info(' - adding part of the last node: ${textNode.id}');
@@ -1089,7 +1130,7 @@ class AddTextAttributionsCommand implements EditCommand {
         // Handle full node selection.
         editorDocLog.info(' - adding full node: ${textNode.id}');
         startOffset = 0;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       }
 
       final selectionRange = TextRange(start: startOffset, end: endOffset);
@@ -1187,7 +1228,7 @@ class RemoveTextAttributionsCommand implements EditCommand {
         // Handle partial node selection in first node.
         editorDocLog.info(' - selecting part of the first node: ${textNode.id}');
         startOffset = (normalizedRange.start.nodePosition as TextPosition).offset;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
         editorDocLog.info(' - adding part of the last node: ${textNode.id}');
@@ -1200,7 +1241,7 @@ class RemoveTextAttributionsCommand implements EditCommand {
         // Handle full node selection.
         editorDocLog.info(' - adding full node: ${textNode.id}');
         startOffset = 0;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       }
 
       final selectionRange = TextRange(start: startOffset, end: endOffset);
@@ -1306,7 +1347,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
         // Handle partial node selection in first node.
         editorDocLog.info(' - selecting part of the first node: ${textNode.id}');
         startOffset = (normalizedRange.start.nodePosition as TextPosition).offset;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
         editorDocLog.info(' - toggling part of the last node: ${textNode.id}');
@@ -1319,7 +1360,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
         // Handle full node selection.
         editorDocLog.info(' - toggling full node: ${textNode.id}');
         startOffset = 0;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.length - 1, 0);
       }
 
       final selectionRange = SpanRange(startOffset, endOffset);
@@ -1361,6 +1402,41 @@ class ToggleTextAttributionsCommand implements EditCommand {
     }
 
     editorDocLog.info(' - done toggling attributions');
+  }
+}
+
+/// Changes layout styles, like padding and width, of a component within a [SingleColumnDocumentLayout].
+class ChangeSingleColumnLayoutComponentStylesRequest implements EditRequest {
+  const ChangeSingleColumnLayoutComponentStylesRequest({
+    required this.nodeId,
+    required this.styles,
+  });
+
+  final String nodeId;
+  final SingleColumnLayoutComponentStyles styles;
+}
+
+class ChangeSingleColumnLayoutComponentStylesCommand implements EditCommand {
+  ChangeSingleColumnLayoutComponentStylesCommand({
+    required this.nodeId,
+    required this.styles,
+  });
+
+  final String nodeId;
+  final SingleColumnLayoutComponentStyles styles;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final node = document.getNodeById(nodeId)!;
+
+    styles.applyTo(node);
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(node.id),
+      ),
+    ]);
   }
 }
 

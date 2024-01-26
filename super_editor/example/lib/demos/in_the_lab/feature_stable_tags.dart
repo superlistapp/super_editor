@@ -26,12 +26,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
   void initState() {
     super.initState();
 
-    _document = MutableDocument(nodes: [
-      ParagraphNode(
-        id: Editor.createNodeId(),
-        text: AttributedText(""),
-      ),
-    ]);
+    _document = MutableDocument.empty();
     _composer = MutableDocumentComposer();
     _editor = Editor(
       editables: {
@@ -76,11 +71,11 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
 
         final userSpans = node.text.getAttributionSpansInRange(
           attributionFilter: (a) => a is CommittedStableTagAttribution,
-          range: SpanRange(0, node.text.text.length - 1),
+          range: SpanRange(0, node.text.length - 1),
         );
 
         for (final userSpan in userSpans) {
-          _users.add(node.text.text.substring(userSpan.start, userSpan.end + 1));
+          _users.add(node.text.substring(userSpan.start, userSpan.end + 1));
         }
       }
     });

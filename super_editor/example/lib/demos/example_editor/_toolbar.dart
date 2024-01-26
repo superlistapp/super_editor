@@ -355,7 +355,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         // the entire link attribution.
         text.removeAttribution(
           overlappingLinkSpan.attribution,
-          SpanRange(overlappingLinkSpan.start, overlappingLinkSpan.end),
+          overlappingLinkSpan.range,
         );
       }
     } else {
@@ -838,7 +838,7 @@ class _ImageFormatToolbarState extends State<ImageFormatToolbar> {
                   onPressed: _makeImageConfined,
                   icon: const Icon(Icons.photo_size_select_large),
                   splashRadius: 16,
-                  tooltip: AppLocalizations.of(context)!.labelBold,
+                  tooltip: AppLocalizations.of(context)!.labelLimitedWidth,
                 ),
               ),
               Center(
@@ -846,7 +846,7 @@ class _ImageFormatToolbarState extends State<ImageFormatToolbar> {
                   onPressed: _makeImageFullBleed,
                   icon: const Icon(Icons.photo_size_select_actual),
                   splashRadius: 16,
-                  tooltip: AppLocalizations.of(context)!.labelItalics,
+                  tooltip: AppLocalizations.of(context)!.labelFullWidth,
                 ),
               ),
             ],

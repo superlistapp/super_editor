@@ -286,7 +286,7 @@ void main() {
 
         // Ensure that the header became a paragraph.
         expect(headerNode.metadata["blockType"], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInParagraph(headerNode.id).text, "My Header");
+        expect(SuperEditorInspector.findTextInComponent(headerNode.id).text, "My Header");
       });
 
       testWidgetsOnAllPlatforms("blockquotes", (tester) async {
@@ -322,7 +322,7 @@ void main() {
 
         // Ensure that the blockquote became a paragraph.
         expect(blockquoteNode.metadata["blockType"], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInParagraph(blockquoteNode.id).text, "My Blockquote");
+        expect(SuperEditorInspector.findTextInComponent(blockquoteNode.id).text, "My Blockquote");
       });
 
       testWidgetsOnAllPlatforms("ordered list items", (tester) async {
@@ -360,7 +360,7 @@ void main() {
         final newNode = context.findEditContext().document.nodes.first;
         expect(newNode, isA<ParagraphNode>());
         expect(newNode.metadata["blockType"], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInParagraph(listItemNode.id).text, "My list item");
+        expect(SuperEditorInspector.findTextInComponent(listItemNode.id).text, "My list item");
       });
     });
   });

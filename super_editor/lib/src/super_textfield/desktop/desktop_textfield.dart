@@ -266,6 +266,14 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   @override
   ProseTextLayout get textLayout => _textKey.currentState!.textLayout;
 
+  /// Calculates and returns the `Offset` from the top-left corner of this text field
+  /// to the top-left corner of the [textLayout] within this text field.
+  Offset get textLayoutOffsetInField {
+    final fieldBox = context.findRenderObject() as RenderBox;
+    final textLayoutBox = _textKey.currentContext!.findRenderObject() as RenderBox;
+    return textLayoutBox.localToGlobal(Offset.zero, ancestor: fieldBox);
+  }
+
   @override
   @visibleForTesting
   DeltaTextInputClient get imeClient => _controller;
@@ -284,7 +292,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     //
     // This behavior matches Flutter's standard behavior.
     if (_focusNode.hasFocus && !_hasFocus && _controller.selection.extentOffset == -1) {
-      _controller.selection = TextSelection.collapsed(offset: _controller.text.text.length);
+      _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
     }
     if (!_focusNode.hasFocus) {
       // We lost focus. Clear the composing region.
@@ -337,7 +345,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       return 0;
     }
 
-    final offsetAtEndOfText = textLayout.getOffsetAtPosition(TextPosition(offset: _controller.text.text.length));
+    final offsetAtEndOfText = textLayout.getOffsetAtPosition(TextPosition(offset: _controller.text.length));
     int lineCount = (offsetAtEndOfText.dy / _getEstimatedLineHeight()).ceil();
 
     if (_controller.text.text.endsWith('\n')) {
@@ -406,13 +414,6 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                 _controller,
               },
               builder: (context) {
-                final isTextEmpty = _controller.text.text.isEmpty;
-                final showHint = widget.hintBuilder != null &&
-                    ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                        (isTextEmpty &&
-                            !_focusNode.hasFocus &&
-                            widget.hintBehavior == HintBehavior.displayHintUntilFocus));
-
                 return _buildDecoration(
                   child: SuperTextFieldScrollview(
                     key: _textScrollKey,
@@ -423,30 +424,15 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                     viewportHeight: _viewportHeight,
                     estimatedLineHeight: _getEstimatedLineHeight(),
                     isMultiline: isMultiline,
-                    child: Stack(
-                      children: [
-                        if (showHint) //
-                          FillWidthIfConstrained(
-                            child: Padding(
-                              // WARNING: Padding within the text scroll view must be placed here, under
-                              // FillWidthIfConstrained, rather than around it, because FillWidthIfConstrained makes
-                              // decisions about sizing that expects its child to fill all available space in the
-                              // ancestor Scrollable.
-                              padding: widget.padding,
-                              child: widget.hintBuilder!(context),
-                            ),
-                          ),
-                        FillWidthIfConstrained(
-                          child: Padding(
-                            // WARNING: Padding within the text scroll view must be placed here, under
-                            // FillWidthIfConstrained, rather than around it, because FillWidthIfConstrained makes
-                            // decisions about sizing that expects its child to fill all available space in the
-                            // ancestor Scrollable.
-                            padding: widget.padding,
-                            child: _buildSelectableText(),
-                          ),
-                        ),
-                      ],
+                    child: FillWidthIfConstrained(
+                      child: Padding(
+                        // WARNING: Padding within the text scroll view must be placed here, under
+                        // FillWidthIfConstrained, rather than around it, because FillWidthIfConstrained makes
+                        // decisions about sizing that expects its child to fill all available space in the
+                        // ancestor Scrollable.
+                        padding: widget.padding,
+                        child: _buildSelectableText(),
+                      ),
                     ),
                   ),
                 );
@@ -501,6 +487,11 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       textAlign: widget.textAlign,
       textScaler: _textScaler,
       layerBeneathBuilder: (context, textLayout) {
+        final isTextEmpty = _controller.text.text.isEmpty;
+        final showHint = widget.hintBuilder != null &&
+            ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+
         return Stack(
           children: [
             if (widget.textController?.selection.isValid == true)
@@ -523,6 +514,11 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                     range: widget.textController!.composingRegion,
                   ),
                 ],
+              ),
+            if (showHint) //
+              Align(
+                alignment: Alignment.centerLeft,
+                child: widget.hintBuilder!(context),
               ),
           ],
         );
@@ -961,8 +957,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     return Listener(
       onPointerSignal: _onPointerSignal,
       onPointerHover: (event) => _cancelScrollMomentum(),
-      onPointerDown: (event) => _cancelScrollMomentum(),
-      onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: GestureDetector(
         onSecondaryTapUp: _onRightClick,
         child: RawGestureDetector(
@@ -1288,7 +1282,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
         _log.info('Attaching TextInputClient to TextInput');
         setState(() {
           if (!_textController.selection.isValid) {
-            _textController.selection = TextSelection.collapsed(offset: _textController.text.text.length);
+            _textController.selection = TextSelection.collapsed(offset: _textController.text.length);
           }
 
           if (widget.imeConfiguration != null) {
@@ -1638,7 +1632,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
         .abs();
 
     final lastCharY =
-        _textLayout.getCharacterBox(TextPosition(offset: widget.textController.text.text.length - 1))?.top ?? 0.0;
+        _textLayout.getCharacterBox(TextPosition(offset: widget.textController.text.length - 1))?.top ?? 0.0;
     final isAtLastLine = extentOffset.dy == lastCharY;
 
     final beyondBottomExtent = max<double>(

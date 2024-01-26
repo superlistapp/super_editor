@@ -186,7 +186,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           other is TaskComponentViewModel &&
           runtimeType == other.runtimeType &&
           isComplete == other.isComplete &&
-          setComplete == other.setComplete &&
           text == other.text &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
@@ -200,7 +199,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   int get hashCode =>
       super.hashCode ^
       isComplete.hashCode ^
-      setComplete.hashCode ^
       text.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
@@ -526,7 +524,7 @@ class SplitExistingTaskCommand implements EditCommand {
     }
 
     // Ensure the split offset is valid.
-    if (splitOffset < 0 || splitOffset > node.text.text.length + 1) {
+    if (splitOffset < 0 || splitOffset > node.text.length + 1) {
       return;
     }
 
@@ -537,7 +535,7 @@ class SplitExistingTaskCommand implements EditCommand {
     );
 
     // Remove the text after the caret from the currently selected TaskNode.
-    node.text = node.text.removeRegion(startOffset: splitOffset, endOffset: node.text.text.length);
+    node.text = node.text.removeRegion(startOffset: splitOffset, endOffset: node.text.length);
 
     // Insert a new TextNode after the currently selected TaskNode.
     document.insertNodeAfter(existingNode: node, newNode: newTaskNode);
