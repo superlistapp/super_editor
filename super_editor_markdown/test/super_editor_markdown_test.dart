@@ -1130,6 +1130,68 @@ This is some code
         expect((document.nodes.first as ListItemNode).text.text, isEmpty);
       });
 
+      test('unordered list followd by empty list item', () {
+        const markdown = """- list item 1
+    - """;
+
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 1);
+
+        expect(document.nodes[0], isA<ListItemNode>());
+        expect((document.nodes[0] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
+      });
+
+      test('parses mixed unordered and ordered items', () {
+        const markdown = """
+1. Ordered 1
+   - Unordered 1
+   - Unordered 2
+
+2. Ordered 2
+   - Unordered 1
+   - Unordered 2
+
+3. Ordered 3
+   - Unordered 1
+   - Unordered 2""";
+
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 9);
+        for (final node in document.nodes) {
+          expect(node, isA<ListItemNode>());
+        }
+
+        expect((document.nodes[0] as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes[0] as ListItemNode).text.text, 'Ordered 1');
+
+        expect((document.nodes[1] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[1] as ListItemNode).text.text, 'Unordered 1');
+
+        expect((document.nodes[2] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[2] as ListItemNode).text.text, 'Unordered 2');
+
+        expect((document.nodes[3] as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes[3] as ListItemNode).text.text, 'Ordered 2');
+
+        expect((document.nodes[4] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[4] as ListItemNode).text.text, 'Unordered 1');
+
+        expect((document.nodes[5] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[5] as ListItemNode).text.text, 'Unordered 2');
+
+        expect((document.nodes[6] as ListItemNode).type, ListItemType.ordered);
+        expect((document.nodes[6] as ListItemNode).text.text, 'Ordered 3');
+
+        expect((document.nodes[7] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[7] as ListItemNode).text.text, 'Unordered 1');
+
+        expect((document.nodes[8] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[8] as ListItemNode).text.text, 'Unordered 2');
+      });
+
       test('unordered list with empty lines between items', () {
         const markdown = '''
  * list item 1
