@@ -87,6 +87,9 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
   /// The count of the list items currently being visited.
   ///
+  /// Being visited means that [visitElementBefore] was called for an element and
+  /// [visitElementAfter] wasn't called yet.
+  ///
   /// A list item might contain children with tags like `p` and `h2`. When it does,
   /// the list item text content is inside of its children and we only generate
   /// document nodes when we visit the list item's children.
@@ -619,7 +622,7 @@ class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
   @override
   bool canParse(md.BlockParser parser) {
     if (_standardNonParagraphBlockSyntaxes.any((e) => e.canParse(parser))) {
-      // Another parser wants to parse this input. Let the other parser run.
+      // A standard non-paragraph parser wants to parse this input. Let the other parser run.
       return false;
     }
 
@@ -630,7 +633,7 @@ class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
     }
 
     if (_isAtParagraphEnd(parser, ignoreEmptyBlocks: _endsWithHardLineBreak(parser.current))) {
-      // Ths input is at the end of a paragraph. Let other parsers run.
+      // Another parser wants to parse this input. Let the other parser run.
       return false;
     }
 
