@@ -150,12 +150,19 @@ class TextDeltasDocumentEditor {
         offset: delta.insertionOffset,
         affinity: delta.selection.affinity,
       )),
-    )!;
-
-    insert(insertionSelection, delta.textInserted);
+    );
 
     // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
+
+    if (insertionSelection == null) {
+      // An insertion was reported at an invalid offset. It could be the case
+      // that the IME reported the insertion before the first visible character. Fizzle.
+      editorImeLog.warning("Couldn't map the insertion position to a document position.");
+      return;
+    }
+
+    insert(insertionSelection, delta.textInserted);
 
     // Update the IME to document serialization based on the insertion changes.
     _serializedDoc = DocumentImeSerializer(
