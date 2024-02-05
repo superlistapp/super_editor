@@ -67,7 +67,7 @@ class _DocsEditorState extends State<DocsEditor> {
           composer: widget.composer,
           stylesheet: defaultStylesheet.copyWith(
             addRulesAfter: docsStylesheet,
-            inlineTextStyler: _applyStyles,
+            inlineTextStyler: _applyFontFamily,
           ),
           selectionStyle: _editorFocusNode.hasPrimaryFocus //
               ? _standardEditorSelectionStyle
@@ -90,18 +90,8 @@ class _DocsEditorState extends State<DocsEditor> {
     );
   }
 
-  TextStyle _applyStyles(Set<Attribution> attributions, TextStyle existingStyle) {
+  TextStyle _applyFontFamily(Set<Attribution> attributions, TextStyle existingStyle) {
     TextStyle styles = defaultInlineTextStyler(attributions, existingStyle);
-
-    final backgroundColorAttribution = attributions.whereType<BackgroundColorAttribution>().firstOrNull;
-    if (backgroundColorAttribution != null) {
-      styles = styles.copyWith(backgroundColor: backgroundColorAttribution.color);
-    }
-
-    final fontSizeAttribution = attributions.whereType<FontSizeAttribution>().firstOrNull;
-    if (fontSizeAttribution != null) {
-      styles = styles.copyWith(fontSize: fontSizeAttribution.fontSize);
-    }
 
     final fontFamilyAttribution = attributions.whereType<FontFamilyAttribution>().firstOrNull;
     if (fontFamilyAttribution != null) {
@@ -112,48 +102,6 @@ class _DocsEditorState extends State<DocsEditor> {
     }
 
     return styles;
-  }
-}
-
-// Selection styles when the editor has focus.
-const _standardEditorSelectionStyle = defaultSelectionStyle;
-
-// Selection styles when the editor doesn't have focus.
-final _unfocusedEditorSelectionStyle = SelectionStyles(
-  selectionColor: const Color(0xFFDDDDDD),
-  highlightEmptyTextBlocks: defaultSelectionStyle.highlightEmptyTextBlocks,
-);
-
-/// Attribution to be used within [AttributedText] to
-/// represent an inline span of a backgrounnd color change.
-///
-/// Every [BackgroundColorAttribution] is considered equivalent so
-/// that [AttributedText] prevents multiple [BackgroundColorAttribution]s
-/// from overlapping.
-class BackgroundColorAttribution implements Attribution {
-  BackgroundColorAttribution(this.color);
-
-  @override
-  String get id => "${color.value}";
-
-  final Color color;
-
-  @override
-  bool canMergeWith(Attribution other) {
-    return this == other;
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is BackgroundColorAttribution && runtimeType == other.runtimeType && color == other.color;
-
-  @override
-  int get hashCode => color.hashCode;
-
-  @override
-  String toString() {
-    return '[BackgroundColorAttribution]: $color';
   }
 }
 
@@ -190,35 +138,11 @@ class FontFamilyAttribution implements Attribution {
   }
 }
 
-/// Attribution to be used within [AttributedText] to
-/// represent an inline span of a font size change.
-///
-/// Every [FontSizeAttribution] is considered equivalent so
-/// that [AttributedText] prevents multiple [FontSizeAttribution]s
-/// from overlapping.
-class FontSizeAttribution implements Attribution {
-  FontSizeAttribution(this.fontSize);
+// Selection styles when the editor has focus.
+const _standardEditorSelectionStyle = defaultSelectionStyle;
 
-  @override
-  String get id => fontSize.toString();
-
-  final double fontSize;
-
-  @override
-  bool canMergeWith(Attribution other) {
-    return this == other;
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is FontSizeAttribution && runtimeType == other.runtimeType && fontSize == other.fontSize;
-
-  @override
-  int get hashCode => fontSize.hashCode;
-
-  @override
-  String toString() {
-    return '[FontSizeAttribution]: $fontSize';
-  }
-}
+// Selection styles when the editor doesn't have focus.
+final _unfocusedEditorSelectionStyle = SelectionStyles(
+  selectionColor: const Color(0xFFDDDDDD),
+  highlightEmptyTextBlocks: defaultSelectionStyle.highlightEmptyTextBlocks,
+);

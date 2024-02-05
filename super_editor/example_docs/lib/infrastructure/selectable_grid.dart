@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 ///   * Pressing UP/DOWN moves the "active" item selection up/down.
 ///   * Pressing LEFT/RIGHT moves the "active" item selection left/right.
 ///   * Pressing ENTER selects the currently active item.
-class SelectableGrid<T> extends StatefulWidget {
+class SelectableGrid<GridItemType> extends StatefulWidget {
   const SelectableGrid({
     super.key,
     required this.value,
@@ -23,33 +23,33 @@ class SelectableGrid<T> extends StatefulWidget {
   });
 
   /// The currently selected value or `null` if no item is selected.
-  final T? value;
+  final GridItemType? value;
 
   /// The items that will be displayed on the grid.
   ///
   /// For each item, [itemBuilder] is called to build its visual representation.
-  final List<T> items;
+  final List<GridItemType> items;
 
   /// Builds each item on the grid.
   ///
   /// This method is called for each item in [items], to build its visual representation.
   ///
   /// The provided `onTap` must be called when the item is tapped.
-  final SelectableGridItemBuilder<T> itemBuilder;
+  final SelectableGridItemBuilder<GridItemType> itemBuilder;
 
   /// Called when the user activates an item on the grid.
   ///
   /// The activation can be performed by:
   ///    1. Pressing UP ARROW or DOWN ARROW.
   ///    2. Pressing LEFT ARROW or RIGHT ARROW.
-  final ValueChanged<T?>? onItemActivated;
+  final ValueChanged<GridItemType?>? onItemActivated;
 
   /// Called when the user selects an item on the grid.
   ///
   /// The selection can be performed by:
   ///    1. Tapping on an item in the grid.
   ///    2. Pressing ENTER when the grid has an active item.
-  final ValueChanged<T?> onItemSelected;
+  final ValueChanged<GridItemType?> onItemSelected;
 
   /// Called when the user presses ESCAPE.
   final VoidCallback? onCancel;
@@ -64,10 +64,11 @@ class SelectableGrid<T> extends StatefulWidget {
   final double? mainAxisExtent;
 
   @override
-  State<SelectableGrid<T>> createState() => _SelectableGridState<T>();
+  State<SelectableGrid<GridItemType>> createState() => _SelectableGridState<GridItemType>();
 }
 
-class _SelectableGridState<T> extends State<SelectableGrid<T>> with SingleTickerProviderStateMixin {
+class _SelectableGridState<GridItemType> extends State<SelectableGrid<GridItemType>>
+    with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
 
   /// Holds keys to each item on the grid.

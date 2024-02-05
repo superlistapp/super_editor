@@ -74,6 +74,72 @@ class ColorAttribution implements Attribution {
 }
 
 /// Attribution to be used within [AttributedText] to
+/// represent an inline span of a backgrounnd color change.
+///
+/// Every [BackgroundColorAttribution] is considered equivalent so
+/// that [AttributedText] prevents multiple [BackgroundColorAttribution]s
+/// from overlapping.
+class BackgroundColorAttribution implements Attribution {
+  BackgroundColorAttribution(this.color);
+
+  @override
+  String get id => "${color.value}";
+
+  final Color color;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BackgroundColorAttribution && runtimeType == other.runtimeType && color == other.color;
+
+  @override
+  int get hashCode => color.hashCode;
+
+  @override
+  String toString() {
+    return '[BackgroundColorAttribution]: $color';
+  }
+}
+
+/// Attribution to be used within [AttributedText] to
+/// represent an inline span of a font size change.
+///
+/// Every [FontSizeAttribution] is considered equivalent so
+/// that [AttributedText] prevents multiple [FontSizeAttribution]s
+/// from overlapping.
+class FontSizeAttribution implements Attribution {
+  FontSizeAttribution(this.fontSize);
+
+  @override
+  String get id => fontSize.toString();
+
+  final double fontSize;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FontSizeAttribution && runtimeType == other.runtimeType && fontSize == other.fontSize;
+
+  @override
+  int get hashCode => fontSize.hashCode;
+
+  @override
+  String toString() {
+    return '[FontSizeAttribution]: $fontSize';
+  }
+}
+
+/// Attribution to be used within [AttributedText] to
 /// represent a link.
 ///
 /// Every [LinkAttribution] is considered equivalent so

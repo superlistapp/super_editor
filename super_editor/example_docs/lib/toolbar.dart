@@ -41,6 +41,11 @@ class DocsEditorToolbar extends StatefulWidget {
 }
 
 class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
+  /// Groups the aditional toolbar options popover, which is shown by tapping
+  /// the "more items" button with the popovers shown by the toolbar items,
+  /// like the color picker.
+  static const _tapRegionGroupId = 'docs_toolbar';
+
   final FocusNode _urlFocusNode = FocusNode();
   final PopoverController _linkPopoverController = PopoverController();
   ImeAttributedTextEditingController? _urlController;
@@ -49,11 +54,6 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   final FocusNode _searchFocusNode = FocusNode();
 
   TextItem _selectedZoom = const TextItem(id: '100', label: '100%');
-
-  /// Groups the aditional toolbar options popover, which is shown by tapping
-  /// the "more items" button with the popovers shown by the toolbar items,
-  /// like the color picker.
-  final _tapRegionGroupId = 'docs_toolbar';
 
   @override
   void initState() {
@@ -96,7 +96,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
     }
   }
 
-  void _changeZoomLevel(TextItem? zoomLevel) {
+  void _onChangeZoomLevelRequested(TextItem? zoomLevel) {
     if (zoomLevel == null) {
       return;
     }
@@ -134,7 +134,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   ///
   /// If [newFontFamily] is `null`, the font family attributions are removed and
   /// the default font family is applied.
-  void _changeFontFamily(String? newFontFamily) {
+  void _onChangeFontFamilyRequested(String? newFontFamily) {
     final selection = widget.composer.selection;
     if (selection == null) {
       return;
@@ -157,7 +157,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   }
 
   /// Changes the font size of the current selected range to reflect [newFontSize].
-  void _changeFontSize(int newFontSize) {
+  void _onChangeFontSizeRequested(int newFontSize) {
     final selection = widget.composer.selection;
     if (selection == null) {
       return;
@@ -179,17 +179,17 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   }
 
   /// Toggles the bold attribution on the current selected range.
-  void _toggleBold() {
+  void _onToggleBoldRequested() {
     _toggleAttribution(boldAttribution);
   }
 
   /// Toggles the italics attribution on the current selected range.
-  void _toggleItalics() {
+  void _onToggleItalicsRequested() {
     _toggleAttribution(italicsAttribution);
   }
 
   /// Toggles the underline attribution on the current selected range.
-  void _toggleUnderline() {
+  void _onToggleUnderlineRequested() {
     _toggleAttribution(underlineAttribution);
   }
 
@@ -197,7 +197,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   ///
   /// If [newColor] is `null`, the color attributions are removed and
   /// the default color is applied.
-  void _changeTextColor(Color? newColor) {
+  void _onChangeTextColorRequested(Color? newColor) {
     final selection = widget.composer.selection;
     if (selection == null) {
       return;
@@ -223,7 +223,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   ///
   /// If [newColor] is `null`, the background color attributions are removed and
   /// the default color is applied.
-  void _changeBackgroundColor(Color? newColor) {
+  void _onChangeBackgroundColorRequested(Color? newColor) {
     final selection = widget.composer.selection;
     if (selection == null) {
       return;
@@ -304,7 +304,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
 
   /// Converts the selected node to a [TaskNode], or to a
   /// [ParagraphNode] if it's already a [TaskNode].
-  void _toggleTaskNode() {
+  void _onToggleTaskNodeRequested() {
     final selection = widget.composer.selection;
     if (selection == null) {
       return;
@@ -324,7 +324,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
 
   /// Converts the selected node to a unordered [ListItemNode],
   /// or to a [ParagraphNode] if it's already a [ListItemNode].
-  void _toggleUnorderedListItem() {
+  void _onToggleUnorderedListItemRequested() {
     final selection = widget.composer.selection;
     if (selection == null) {
       return;
@@ -347,7 +347,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
 
   /// Converts the selected node to a ordered [ListItemNode],
   /// or to a [ParagraphNode] if it's already a [ListItemNode].
-  void _toggleOrderedListItem() {
+  void _onToggleOrderedListItemRequested() {
     final selection = widget.composer.selection;
     if (selection == null) {
       return;
@@ -369,7 +369,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   }
 
   /// Removes all attributions from the selected range.
-  void _clearFormatting() {
+  void _onClearFormattingRequested() {
     final selection = widget.composer.selection;
     if (selection == null) {
       return;
@@ -416,7 +416,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   }
 
   /// Reacts to the change of the alignment on the toolbar.
-  void _onAlignmentSelected(IconItem? selectedItem) {
+  void _onChangeAlignmentRequested(IconItem? selectedItem) {
     if (selectedItem != null) {
       setState(() {
         _changeAlignment(TextAlign.values.firstWhere((e) => e.name == selectedItem.id));
@@ -425,7 +425,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   }
 
   /// Reacts to the change of the block type on the toolbar.
-  void _onBlockTypeSelected(TextItem? selectedItem) {
+  void _onChangeBlockTypeRequested(TextItem? selectedItem) {
     if (selectedItem != null) {
       setState(() {
         _convertTextToNewType(selectedItem.id);
@@ -671,21 +671,21 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
                 widgets: [
                   _buildFontSizeSelector(attributions),
                   ToolbarImageButton(
-                    onPressed: _toggleBold,
+                    onPressed: _onToggleBoldRequested,
                     selected: _doesSelectionHaveAttributions({boldAttribution}),
                     hint: 'Bold',
                     child: const Icon(Icons.format_bold),
                   ),
                   const SizedBox(width: 2),
                   ToolbarImageButton(
-                    onPressed: _toggleItalics,
+                    onPressed: _onToggleItalicsRequested,
                     selected: _doesSelectionHaveAttributions({italicsAttribution}),
                     hint: 'Italic',
                     child: const Icon(Icons.format_italic),
                   ),
                   const SizedBox(width: 2),
                   ToolbarImageButton(
-                    onPressed: _toggleUnderline,
+                    onPressed: _onToggleUnderlineRequested,
                     selected: _doesSelectionHaveAttributions({underlineAttribution}),
                     hint: 'Underline',
                     child: const Icon(Icons.format_underline),
@@ -721,17 +721,17 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
                     child: const Icon(Icons.format_line_spacing),
                   ),
                   ToolbarImageButton(
-                    onPressed: _toggleTaskNode,
+                    onPressed: _onToggleTaskNodeRequested,
                     hint: 'Checklist',
                     child: const Icon(Icons.checklist),
                   ),
                   ToolbarImageButton(
-                    onPressed: _toggleUnorderedListItem,
+                    onPressed: _onToggleUnorderedListItemRequested,
                     hint: 'Bulleted list',
                     child: const Icon(Icons.format_list_bulleted),
                   ),
                   ToolbarImageButton(
-                    onPressed: _toggleOrderedListItem,
+                    onPressed: _onToggleOrderedListItemRequested,
                     hint: 'Numbered list',
                     child: const Icon(Icons.format_list_numbered),
                   ),
@@ -746,7 +746,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
                     child: const Icon(Icons.format_indent_increase),
                   ),
                   ToolbarImageButton(
-                    onPressed: _clearFormatting,
+                    onPressed: _onClearFormattingRequested,
                     hint: 'Clear formatting',
                     child: const Icon(Icons.format_clear),
                   ),
@@ -909,7 +909,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
           TextItem(id: '150', label: '150%'),
           TextItem(id: '200', label: '200%'),
         ],
-        onSelected: _changeZoomLevel,
+        onSelected: _onChangeZoomLevelRequested,
       ),
     );
   }
@@ -933,7 +933,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
           align: popoverAligner,
         ),
         items: _blockTypes,
-        onSelected: _onBlockTypeSelected,
+        onSelected: _onChangeBlockTypeRequested,
         itemBuilder: (context, item, isActive, onTap) => DecoratedBox(
           decoration: BoxDecoration(
             color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
@@ -987,7 +987,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         tapRegionGroupId: _tapRegionGroupId,
         value: textItem,
         items: _availableFonts.map((fontFamily) => TextItem(id: fontFamily, label: fontFamily)).toList(),
-        onSelected: (value) => _changeFontFamily(value?.id),
+        onSelected: (value) => _onChangeFontFamilyRequested(value?.id),
         buttonSize: const Size(97, 30),
         popoverGeometry: const PopoverGeometry(
           constraints: BoxConstraints.tightFor(width: 247),
@@ -1046,7 +1046,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
       waitDuration: _tooltipDelay,
       child: IncrementDecrementField(
         value: fontAttribution?.fontSize.toInt() ?? defaultFontSize,
-        onChange: _changeFontSize,
+        onChange: _onChangeFontSizeRequested,
       ),
     );
   }
@@ -1061,9 +1061,9 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
       child: ColorSelector(
         parentFocusNode: widget.editorFocusNode,
         tapRegionGroupId: _tapRegionGroupId,
-        onSelected: _changeTextColor,
-        color: colorAttribution?.color ?? Colors.black,
-        buttonBuilder: (_, color) => _buildTextColorIcon(color),
+        onSelected: _onChangeTextColorRequested,
+        selectedColor: colorAttribution?.color ?? Colors.black,
+        colorButtonBuilder: (_, color) => _buildTextColorIcon(color),
       ),
     );
   }
@@ -1096,10 +1096,10 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
       child: ColorSelector(
         parentFocusNode: widget.editorFocusNode,
         tapRegionGroupId: _tapRegionGroupId,
-        onSelected: _changeBackgroundColor,
+        onSelected: _onChangeBackgroundColorRequested,
         showClearButton: true,
-        color: colorAttribution?.color ?? Colors.black,
-        buttonBuilder: (_, color) => _buildBackgroundColorIcon(color),
+        selectedColor: colorAttribution?.color ?? Colors.black,
+        colorButtonBuilder: (_, color) => _buildBackgroundColorIcon(color),
       ),
     );
   }
@@ -1214,11 +1214,11 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
       child: IconSelector(
         parentFocusNode: widget.editorFocusNode,
         tapRegionGroupId: _tapRegionGroupId,
-        value: IconItem(
+        selectedIcon: IconItem(
           id: alignment.name,
           icon: _getTextAlignIcon(alignment),
         ),
-        items: const [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
+        icons: const [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
             .map(
               (alignment) => IconItem(
                 icon: _getTextAlignIcon(alignment),
@@ -1226,7 +1226,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
               ),
             )
             .toList(),
-        onSelected: _onAlignmentSelected,
+        onSelected: _onChangeAlignmentRequested,
       ),
     );
   }

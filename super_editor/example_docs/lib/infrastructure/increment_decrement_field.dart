@@ -4,7 +4,10 @@ import 'package:example_docs/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// A textfield that contains buttons to increment and decrement a [value].
+/// A Widget that allows the user to increment or decrement a [value].
+///
+/// Displays a textfield with the current [value], surrounded by the increment and
+/// decrement buttons.
 ///
 /// Selects all the content on the textfield upon focus.
 class IncrementDecrementField extends StatefulWidget {
@@ -17,10 +20,11 @@ class IncrementDecrementField extends StatefulWidget {
   /// The current value.
   final int value;
 
-  /// Called whenever the value changes.
+  /// Called when the user presses one of the buttons or when the user
+  /// presses ENTER on the textfield.
   ///
-  /// The value can change when the user presses one of the buttons
-  /// or when the user presses ENTER on the textfield.
+  /// If the user clears the textfield, no change is reported. Instead,
+  /// the textfield value is reset to the current [value].
   final void Function(int value) onChange;
 
   @override
@@ -62,6 +66,8 @@ class _IncrementDecrementFieldState extends State<IncrementDecrementField> {
       if (value != null) {
         widget.onChange(value);
       }
+
+      _controller.text = AttributedText(widget.value.toString());
     }
   }
 

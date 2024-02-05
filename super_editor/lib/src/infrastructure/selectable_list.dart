@@ -16,13 +16,13 @@ class ItemSelectionList<T> extends StatefulWidget {
     super.key,
     required this.value,
     required this.items,
+    this.axis = Axis.vertical,
     required this.itemBuilder,
     this.separatorBuilder,
     this.onItemActivated,
     required this.onItemSelected,
     this.onCancel,
     this.focusNode,
-    this.axis = Axis.vertical,
   });
 
   /// The currently selected value or `null` if no item is selected.
@@ -33,12 +33,20 @@ class ItemSelectionList<T> extends StatefulWidget {
   /// For each item, [itemBuilder] is called to build its visual representation.
   final List<T> items;
 
+  /// Determines if the list should be displayed vertically or horizontally.
+  final Axis axis;
+
   /// Builds each item in the popover list.
   ///
   /// This method is called for each item in [items], to build its visual representation.
   ///
   /// The provided `onTap` must be called when the item is tapped.
   final SelectableListItemBuilder<T> itemBuilder;
+
+  /// Builds a separator for each item in the list.
+  ///
+  /// If `null`, no separator is displayed.
+  final IndexedWidgetBuilder? separatorBuilder;
 
   /// Called when the user activates an item on the popover list.
   ///
@@ -59,10 +67,6 @@ class ItemSelectionList<T> extends StatefulWidget {
 
   /// The [FocusNode] of the list.
   final FocusNode? focusNode;
-
-  final Axis axis;
-
-  final IndexedWidgetBuilder? separatorBuilder;
 
   @override
   State<ItemSelectionList<T>> createState() => ItemSelectionListState<T>();
@@ -242,7 +246,7 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
               key: _scrollableKey,
               primary: true,
               child: IntrinsicWidth(
-                child: _buildContainer(
+                child: _buildItemsLayout(
                   children: [
                     for (int i = 0; i < widget.items.length; i++) ...[
                       if (i > 0 && widget.separatorBuilder != null) //
@@ -267,7 +271,9 @@ class ItemSelectionListState<T> extends State<ItemSelectionList<T>> with SingleT
     );
   }
 
-  Widget _buildContainer({required List<Widget> children}) {
+  /// Builds a `Row` or `Column` which displays the items, depending
+  /// whether the list is configured to be displayed horizontally or vertically.
+  Widget _buildItemsLayout({required List<Widget> children}) {
     return widget.axis == Axis.horizontal //
         ? Row(
             mainAxisSize: MainAxisSize.min,

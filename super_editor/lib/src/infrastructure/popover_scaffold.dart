@@ -28,9 +28,9 @@ class PopoverScaffold extends StatefulWidget {
     this.popoverGeometry = const PopoverGeometry(),
     this.popoverFocusNode,
     this.parentFocusNode,
+    this.tapRegionGroupId,
     this.boundaryKey,
     this.onTapOutside = _PopoverScaffoldState.closePopoverOnTapOutside,
-    this.tapRegionGroupId,
   });
 
   /// Shows and hides the popover.
@@ -68,6 +68,12 @@ class PopoverScaffold extends StatefulWidget {
   /// parent, thereby retaining focus for your widgets.
   final FocusNode? parentFocusNode;
 
+  /// A group ID for a tap region that is shared with the popover.
+  ///
+  /// Tapping on a [TapRegion] with the same [tapRegionGroupId]
+  /// won't invoke [onTapOutside].
+  final String? tapRegionGroupId;
+
   /// A [GlobalKey] to a widget that determines the bounds where the popover can be displayed.
   ///
   /// Passing a [boundaryKey] causes the popover to be confined to the bounds of the widget
@@ -80,12 +86,6 @@ class PopoverScaffold extends StatefulWidget {
   ///
   /// If `null`, tapping outside closes the popover.
   final void Function(PopoverController) onTapOutside;
-
-  /// A group ID for a tap region that is shared with the popover.
-  ///
-  /// Tapping on a [TapRegion] with the same [tapRegionGroupId]
-  /// won't invoke [onTapOutside].
-  final String? tapRegionGroupId;
 
   @override
   State<PopoverScaffold> createState() => _PopoverScaffoldState();

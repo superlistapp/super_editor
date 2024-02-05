@@ -33,6 +33,7 @@ class TextItemSelector extends StatefulWidget {
   const TextItemSelector({
     super.key,
     required this.parentFocusNode,
+    this.tapRegionGroupId,
     this.boundaryKey,
     required this.items,
     this.value,
@@ -41,7 +42,6 @@ class TextItemSelector extends StatefulWidget {
     this.buttonSize,
     this.itemBuilder = defaultPopoverListItemBuilder,
     this.separatorBuilder,
-    this.tapRegionGroupId,
   });
 
   /// The [FocusNode], to which the popover list's [FocusNode] will be added as a child.
@@ -59,6 +59,12 @@ class TextItemSelector extends StatefulWidget {
   /// you need to provide the [FocusNode] that the popover list should use as its
   /// parent, thereby retaining focus for your widgets.
   final FocusNode parentFocusNode;
+
+  /// A group ID for a tap region that is shared with the popover list.
+  ///
+  /// Tapping on a [TapRegion] with the same [tapRegionGroupId]
+  /// won't invoke [onTapOutside].
+  final String? tapRegionGroupId;
 
   /// A [GlobalKey] to a widget that determines the bounds where the popover list can be displayed.
   ///
@@ -103,8 +109,6 @@ class TextItemSelector extends StatefulWidget {
   ///
   /// The popover is first sized, then positioned.
   final PopoverGeometry? popoverGeometry;
-
-  final String? tapRegionGroupId;
 
   @override
   State<TextItemSelector> createState() => _TextItemSelectorState();

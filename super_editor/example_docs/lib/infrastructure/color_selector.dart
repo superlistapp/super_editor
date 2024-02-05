@@ -4,47 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// A selection control, which displays a button with the selected color, and upon tap, displays a
-/// popover grid of available colors, from which the user can select a different color.
-///
-/// Unlike Flutter `DropdownButton`, which displays the popover list in a separate route,
-/// this widget displays its popover grid in an `Overlay`. By using an `Overlay`, focus can be shared
-/// with the [parentFocusNode]. This means that when the popover grid requests focus, [parentFocusNode]
-/// still has non-primary focus.
-///
-/// The popover grid is positioned based on the following rules:
-///
-///    1. The popover is displayed below the selected item, if there's enough room, or
-///    2. The popover is displayed above the selected item, if there's enough room, or
-///    3. The popover is displayed with its bottom aligned with the bottom of
-///         the given boundary, and it covers the selected item.
-///
-/// The popover grid height is based on the following rules:
-///
-///    1. The popover is displayed as tall as all items in the grid, if there's enough room, or
-///    2. The popover is displayed as tall as the available space and becomes scrollable.
-///
-/// The popover grid includes keyboard selection behaviors:
-///
-///   * Pressing UP/DOWN moves the "active" item selection up/down.
-///   * Pressing LEFT/RIGHT moves the "active" item selection left/right.
-///   * Pressing UP with the first item active moves the active item selection to the last item.
-///   * Pressing DOWN with the last item active moves the active item selection to the first item.
-///   * Pressing ENTER selects the currently active item and closes the popover list.
+/// color picker with the available colors, from which the user can select a different color.
 class ColorSelector extends StatefulWidget {
   const ColorSelector({
     super.key,
     this.parentFocusNode,
+    this.tapRegionGroupId,
     this.boundaryKey,
-    this.color,
-    this.items = defaultColors,
-    required this.onSelected,
-    required this.buttonBuilder,
+    this.selectedColor,
+    this.colors = defaultColors,
     this.columnCount = 10,
     this.showClearButton = false,
-    this.tapRegionGroupId,
+    required this.onSelected,
+    required this.colorButtonBuilder,
   });
 
-  /// The [FocusNode], to which the popover grid's [FocusNode] will be added as a child.
+  /// The [FocusNode], to which the color picker's [FocusNode] will be added as a child.
   ///
   /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
   /// entire ancestor path to "have focus", but only the lowest level descendant
@@ -52,50 +27,52 @@ class ColorSelector extends StatefulWidget {
   /// widgets alter their presentation or behavior based on whether or not they
   /// currently have focus, even if they only have "non-primary focus".
   ///
-  /// When the popover grid of items is visible, that grid will have primary focus.
-  /// Moreover, because the popover grid is built in an `Overlay`, none of your
-  /// widgets are in the natural focus path for that popover grid. Therefore, if you
-  /// need your widget tree to retain focus while the popover grid is visible, then
-  /// you need to provide the [FocusNode] that the popover grid should use as its
+  /// When the color picker of items is visible, that grid will have primary focus.
+  /// Moreover, because the color picker is built in an `Overlay`, none of your
+  /// widgets are in the natural focus path for that color picker. Therefore, if you
+  /// need your widget tree to retain focus while the color picker is visible, then
+  /// you need to provide the [FocusNode] that the color picker should use as its
   /// parent, thereby retaining focus for your widgets.
   final FocusNode? parentFocusNode;
 
-  /// A [GlobalKey] to a widget that determines the bounds where the popover grid can be displayed.
+  /// A group ID for a tap region that is shared with the color picker.
   ///
-  /// As the popover grid follows the selected item, it can be displayed off-screen if this [ColorSelector]
+  /// Tapping on a [TapRegion] with the same [tapRegionGroupId]
+  /// won't invoke [onTapOutside].
+  final String? tapRegionGroupId;
+
+  /// A [GlobalKey] to a widget that determines the bounds where the color picker can be displayed.
+  ///
+  /// As the color picker follows the selected item, it can be displayed off-screen if this [ColorSelector]
   /// is close to the bottom of the screen.
   ///
-  /// Passing a [boundaryKey] causes the popover grid to be confined to the bounds of the widget
+  /// Passing a [boundaryKey] causes the color picker to be confined to the bounds of the widget
   /// bound to the [boundaryKey].
   ///
-  /// If `null`, the popover grid is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
+  /// If `null`, the color picker is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
   final GlobalKey? boundaryKey;
 
-  /// The currently selected value or `null` if no item is selected.
+  /// The currently selected color or `null` if no color is selected.
+  final Color? selectedColor;
+
+  /// The colors that will be displayed in the color picker.
   ///
-  /// This value is used to build the button.
-  final Color? color;
+  /// Each color is displayed as a circle.
+  final List<Color> colors;
 
-  /// The items that will be displayed in the popover grid.
-  ///
-  /// For each item, its color is displayed as a circle.
-  final List<Color> items;
-
-  /// Called when the user selects an item on the popover grid.
-  final void Function(Color? value) onSelected;
-
-  /// Builds the button of this [ColorSelector].
-  final Widget Function(BuildContext context, Color? selectedColor) buttonBuilder;
-
-  /// Defines the number of columns that the popover grid should have.
+  /// Defines the number of columns that the color picker should have.
   final int columnCount;
 
-  /// Whether or not the popover should display a "Clear" button.
+  /// Whether or not the color picker should display a "Clear" button.
   ///
   /// Pressing that button call [onSelected] with a `null` value.
   final bool showClearButton;
 
-  final String? tapRegionGroupId;
+  /// Called when the user selects an item on the color picker.
+  final void Function(Color? value) onSelected;
+
+  /// Builds the button of this [ColorSelector].
+  final Widget Function(BuildContext context, Color? selectedColor) colorButtonBuilder;
 
   @override
   State<ColorSelector> createState() => _ColorSelectorState();
@@ -105,7 +82,7 @@ class _ColorSelectorState extends State<ColorSelector> {
   /// Shows and hides the popover.
   final PopoverController _popoverController = PopoverController();
 
-  /// The [FocusNode] of the popover grid.
+  /// The [FocusNode] of the color picker.
   final FocusNode _popoverFocusNode = FocusNode();
 
   @override
@@ -120,10 +97,10 @@ class _ColorSelectorState extends State<ColorSelector> {
     widget.onSelected(value);
   }
 
-  /// Decides a font color for a [background] color based on the brightness of the [background].
+  /// Decides a foreground color for a [background] color based on the brightness of the [background].
   ///
   /// Returns [Colors.white] if [background] is a dark color and [Colors.black] otherwise.
-  Color _getFontColorForBackground(Color background) {
+  Color _getColorForCheckIcon(Color background) {
     // Adapted from https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color/3943023#3943023.
     final intensity = (0.299 * background.red) + (0.587 * background.green) + (0.114 * background.blue);
     return intensity > 130 ? Colors.black : Colors.white;
@@ -150,88 +127,12 @@ class _ColorSelectorState extends State<ColorSelector> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (widget.showClearButton) //
-                SizedBox(
-                  width: 243,
-                  height: 32,
-                  child: TextButton.icon(
-                    onPressed: () => _onItemSelected(null),
-                    style: ButtonStyle(
-                      foregroundColor: MaterialStateProperty.all(Colors.black),
-                      backgroundColor: MaterialStateProperty.resolveWith(getButtonColor),
-                      padding: MaterialStateProperty.all(const EdgeInsets.all(5)),
-                      shape: MaterialStateProperty.all(
-                        const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(5)),
-                        ),
-                      ),
-                    ),
-                    icon: const Icon(Icons.format_color_reset),
-                    label: const SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        'None',
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                  ),
-                ),
+                _buildClearButton(),
               if (widget.showClearButton) //
                 const SizedBox(height: 3),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: (widget.items.length / widget.columnCount * 20),
-                  maxWidth: 243,
-                ),
-                child: SelectableGrid<Color>(
-                  focusNode: _popoverFocusNode,
-                  value: widget.color,
-                  items: widget.items,
-                  itemBuilder: _buildPopoverGridItem,
-                  onItemSelected: _onItemSelected,
-                  onCancel: () => _popoverController.close(),
-                  columnCount: widget.columnCount,
-                  mainAxisExtent: 18,
-                ),
-              ),
-              SizedBox(
-                width: 243,
-                height: 24,
-                child: TextButton(
-                  onPressed: () {},
-                  style: ButtonStyle(
-                    foregroundColor: MaterialStateProperty.all(Colors.black),
-                    backgroundColor: MaterialStateProperty.resolveWith(getButtonColor),
-                    padding: MaterialStateProperty.all(const EdgeInsets.all(5)),
-                    shape: MaterialStateProperty.all(
-                      const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(5)),
-                      ),
-                    ),
-                  ),
-                  child: const SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      'Custom Colors',
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
-                    onPressed: () {},
-                    style: defaultToolbarButtonStyle,
-                    child: const Icon(Icons.add_circle_outline),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    style: defaultToolbarButtonStyle,
-                    child: const Icon(Icons.colorize),
-                  ),
-                ],
-              ),
+              _buildColorGrid(),
+              _buildCustomColorsButton(),
+              _buildFooterButtons(),
             ],
           ),
         ),
@@ -243,7 +144,54 @@ class _ColorSelectorState extends State<ColorSelector> {
     return TextButton(
       onPressed: () => _popoverController.open(),
       style: defaultToolbarButtonStyle,
-      child: widget.buttonBuilder(context, widget.color),
+      child: widget.colorButtonBuilder(context, widget.selectedColor),
+    );
+  }
+
+  Widget _buildClearButton() {
+    return SizedBox(
+      width: 243,
+      height: 32,
+      child: TextButton.icon(
+        onPressed: () => _onItemSelected(null),
+        style: ButtonStyle(
+          foregroundColor: MaterialStateProperty.all(Colors.black),
+          backgroundColor: MaterialStateProperty.resolveWith(getButtonColor),
+          padding: MaterialStateProperty.all(const EdgeInsets.all(5)),
+          shape: MaterialStateProperty.all(
+            const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5)),
+            ),
+          ),
+        ),
+        icon: const Icon(Icons.format_color_reset),
+        label: const SizedBox(
+          width: double.infinity,
+          child: Text(
+            'None',
+            textAlign: TextAlign.left,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildColorGrid() {
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: (widget.colors.length / widget.columnCount * 20),
+        maxWidth: 243,
+      ),
+      child: SelectableGrid<Color>(
+        focusNode: _popoverFocusNode,
+        value: widget.selectedColor,
+        items: widget.colors,
+        itemBuilder: _buildPopoverGridItem,
+        onItemSelected: _onItemSelected,
+        onCancel: () => _popoverController.close(),
+        columnCount: widget.columnCount,
+        mainAxisExtent: 18,
+      ),
     );
   }
 
@@ -267,14 +215,59 @@ class _ColorSelectorState extends State<ColorSelector> {
               ],
             ),
           ),
-          if (item == widget.color) //
+          if (item == widget.selectedColor) //
             Icon(
               Icons.check,
               size: 15,
-              color: _getFontColorForBackground(item),
+              color: _getColorForCheckIcon(item),
             )
         ],
       ),
+    );
+  }
+
+  Widget _buildCustomColorsButton() {
+    return SizedBox(
+      width: 243,
+      height: 24,
+      child: TextButton(
+        onPressed: () {},
+        style: ButtonStyle(
+          foregroundColor: MaterialStateProperty.all(Colors.black),
+          backgroundColor: MaterialStateProperty.resolveWith(getButtonColor),
+          padding: MaterialStateProperty.all(const EdgeInsets.all(5)),
+          shape: MaterialStateProperty.all(
+            const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5)),
+            ),
+          ),
+        ),
+        child: const SizedBox(
+          width: double.infinity,
+          child: Text(
+            'Custom Colors',
+            textAlign: TextAlign.left,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooterButtons() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextButton(
+          onPressed: () {},
+          style: defaultToolbarButtonStyle,
+          child: const Icon(Icons.add_circle_outline),
+        ),
+        TextButton(
+          onPressed: () {},
+          style: defaultToolbarButtonStyle,
+          child: const Icon(Icons.colorize),
+        ),
+      ],
     );
   }
 }

@@ -2,41 +2,17 @@ import 'package:example_docs/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// A selection control, which displays a button with the selected item, and upon tap, displays a
-/// popover list of available icons, from which the user can select a different option.
-///
-/// Unlike Flutter `DropdownButton`, which displays the popover list in a separate route,
-/// this widget displays its popover list in an `Overlay`. By using an `Overlay`, focus can be shared
-/// with the [parentFocusNode]. This means that when the popover list requests focus, [parentFocusNode]
-/// still has non-primary focus.
-///
-/// The popover list is positioned based on the following rules:
-///
-///    1. The popover is displayed below the selected item, if there's enough room, or
-///    2. The popover is displayed above the selected item, if there's enough room, or
-///    3. The popover is displayed with its bottom aligned with the bottom of
-///         the given boundary, and it covers the selected item.
-///
-/// The popover list height is based on the following rules:
-///
-///    1. The popover is displayed as tall as all items in the list, if there's enough room, or
-///    2. The popover is displayed as tall as the available space and becomes scrollable.
-///
-/// The popover list includes keyboard selection behaviors:
-///
-///   * Pressing UP/DOWN moves the "active" item selection up/down.
-///   * Pressing UP with the first item active moves the active item selection to the last item.
-///   * Pressing DOWN with the last item active moves the active item selection to the first item.
-///   * Pressing ENTER selects the currently active item and closes the popover list.
+/// A selection control, which displays a button with the selected icon, and upon tap, displays a
+/// popover list of available icons, from which the user can select a different icon.
 class IconSelector extends StatefulWidget {
   const IconSelector({
     super.key,
     this.parentFocusNode,
-    this.boundaryKey,
-    this.value,
-    required this.items,
-    required this.onSelected,
     this.tapRegionGroupId,
+    this.boundaryKey,
+    this.selectedIcon,
+    required this.icons,
+    required this.onSelected,
   });
 
   /// The [FocusNode], to which the popover list's [FocusNode] will be added as a child.
@@ -55,6 +31,12 @@ class IconSelector extends StatefulWidget {
   /// parent, thereby retaining focus for your widgets.
   final FocusNode? parentFocusNode;
 
+  /// A group ID for a tap region that is shared with the popover list.
+  ///
+  /// Tapping on a [TapRegion] with the same [tapRegionGroupId]
+  /// won't invoke [onTapOutside].
+  final String? tapRegionGroupId;
+
   /// A [GlobalKey] to a widget that determines the bounds where the popover list can be displayed.
   ///
   /// As the popover list follows the selected item, it can be displayed off-screen if this [IconSelector]
@@ -66,20 +48,14 @@ class IconSelector extends StatefulWidget {
   /// If `null`, the popover list is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
   final GlobalKey? boundaryKey;
 
-  /// The currently selected value or `null` if no item is selected.
-  ///
-  /// This value is used to build the button.
-  final IconItem? value;
+  /// The currently selected icon or `null` if no icon is selected.
+  final IconItem? selectedIcon;
 
-  /// The items that will be displayed in the popover list.
-  ///
-  /// For each item, its [IconItem.icon] is displayed.
-  final List<IconItem> items;
+  /// The icons that will be displayed in the popover list.
+  final List<IconItem> icons;
 
-  /// Called when the user selects an item on the popover list.
+  /// Called when the user selects an icon on the popover list.
   final void Function(IconItem? value) onSelected;
-
-  final String? tapRegionGroupId;
 
   @override
   State<IconSelector> createState() => _IconSelectorState();
@@ -121,8 +97,8 @@ class _IconSelectorState extends State<IconSelector> {
           child: ItemSelectionList<IconItem>(
             axis: Axis.horizontal,
             focusNode: _popoverFocusNode,
-            value: widget.value,
-            items: widget.items,
+            value: widget.selectedIcon,
+            items: widget.icons,
             itemBuilder: _buildItem,
             onItemSelected: _onItemSelected,
             onCancel: () => _popoverController.close(),
@@ -138,7 +114,7 @@ class _IconSelectorState extends State<IconSelector> {
       width: 30,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: item == widget.value
+        color: item == widget.selectedIcon
             ? toolbarButtonSelectedColor
             : isActive
                 ? Colors.grey.withOpacity(0.2)
@@ -155,9 +131,9 @@ class _IconSelectorState extends State<IconSelector> {
     return TextButton(
       onPressed: () => _popoverController.open(),
       style: defaultToolbarButtonStyle,
-      child: widget.value == null //
+      child: widget.selectedIcon == null //
           ? const SizedBox()
-          : Icon(widget.value!.icon),
+          : Icon(widget.selectedIcon!.icon),
     );
   }
 
