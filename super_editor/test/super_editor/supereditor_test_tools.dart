@@ -553,21 +553,15 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
   }
 
   List<SuperEditorLayerBuilder> _createOverlayBuilders() {
-    // At the moment, the only configuration for overlays that we support is whether or not
-    // to display the caret for expanded selections. Therefore, we show the default overlays
-    // except in the specific case where we want to hide the caret. In that case, we don't
-    // include the defaults - we provide a configured caret overlay builder, instead.
+    // We show the default overlays except in the cases where we want to hide the caret
+    // or use a custom `CaretStyle`. In those case, we don't include the defaults - we provide
+    // a configured caret overlay builder, instead.
     //
     // If you introduce further configuration to overlay builders, make sure that in the default
     // situation, we're using `defaultSuperEditorDocumentOverlayBuilders`, so that most tests
     // verify the defaults that most apps will use.
-    if (widget.testConfiguration.displayCaretWithExpandedSelection) {
-      return [
-        ...defaultSuperEditorDocumentOverlayBuilders.where((overlay) => overlay is! DefaultCaretOverlayBuilder),
-        DefaultCaretOverlayBuilder(
-          caretStyle: widget.testConfiguration.caretStyle ?? const CaretStyle(),
-        )
-      ];
+    if (widget.testConfiguration.displayCaretWithExpandedSelection && widget.testConfiguration.caretStyle == null) {
+      return defaultSuperEditorDocumentOverlayBuilders;
     }
 
     // Copy and modify the default overlay builders
