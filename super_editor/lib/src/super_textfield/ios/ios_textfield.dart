@@ -188,12 +188,22 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   // positions the invisible touch targets for base/extent dragging.
   final _popoverController = OverlayPortalController();
 
+  late final BlinkController _caretBlinkController;
+
   /// Notifies the popover toolbar to rebuild itself.
   final _overlayControlsRebuildSignal = SignalNotifier();
 
   @override
   void initState() {
     super.initState();
+
+    switch (widget.blinkTimingMode) {
+      case BlinkTimingMode.ticker:
+        _caretBlinkController = BlinkController(tickerProvider: this);
+      case BlinkTimingMode.timer:
+        _caretBlinkController = BlinkController.withTimer();
+    }
+
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
@@ -214,6 +224,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
     _editingOverlayController = IOSEditingOverlayController(
       textController: _textEditingController,
+      caretBlinkController: _caretBlinkController,
       toolbarFocalPoint: _toolbarLeaderLink,
       magnifierFocalPoint: _magnifierLeaderLink,
       overlayController: _overlayController,
@@ -330,6 +341,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     _textScrollController
       ..removeListener(_onTextScrollChange)
       ..dispose();
+
+    _caretBlinkController.dispose();
 
     WidgetsBinding.instance.removeObserver(this);
 
@@ -642,7 +655,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
               position: _textEditingController.selection.isCollapsed //
                   ? _textEditingController.selection.extent
                   : null,
-              blinkTimingMode: widget.blinkTimingMode,
+              blinkController: _caretBlinkController,
             ),
             IOSFloatingCursor(
               controller: _floatingCursorController,

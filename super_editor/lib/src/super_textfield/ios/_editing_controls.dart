@@ -155,13 +155,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   void _onBasePanStart(DragStartDetails details) {
     _log.fine('_onBasePanStart');
 
-    widget.editingController.hideToolbar();
-
-    widget.textScrollController.updateAutoScrollingForTouchOffset(
-      userInteractionOffsetInViewport:
-          (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(details.globalPosition),
-    );
-    widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
+    _onHandleDragStart(details);
 
     setState(() {
       _isDraggingBase = true;
@@ -176,6 +170,18 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   void _onExtentPanStart(DragStartDetails details) {
     _log.fine('_onExtentPanStart');
 
+    _onHandleDragStart(details);
+
+    setState(() {
+      _isDraggingBase = false;
+      _isDraggingExtent = true;
+      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
+    });
+  }
+
+  void _onHandleDragStart(DragStartDetails details) {
+    _log.fine('_onHandleDragStart()');
+
     widget.editingController.hideToolbar();
 
     widget.textScrollController.updateAutoScrollingForTouchOffset(
@@ -184,11 +190,10 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     );
     widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
 
-    setState(() {
-      _isDraggingBase = false;
-      _isDraggingExtent = true;
-      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
-    });
+    if (widget.editingController.textController.selection.isCollapsed) {
+      // The user is dragging the handle. Stop the caret from blinking while dragging.
+      widget.editingController.stopCaretBlinking();
+    }
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -246,6 +251,10 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
 
       if (!widget.editingController.textController.selection.isCollapsed) {
         widget.editingController.showToolbar();
+      } else {
+        // The user stopped dragging a handle and the selection is collapsed.
+        // Start the caret blinking again.
+        widget.editingController.startCaretBlinking();
       }
     });
   }
@@ -550,6 +559,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
 class IOSEditingOverlayController with ChangeNotifier {
   IOSEditingOverlayController({
     required this.textController,
+    required this.caretBlinkController,
     required LeaderLink toolbarFocalPoint,
     required LeaderLink magnifierFocalPoint,
     required this.overlayController,
@@ -576,6 +586,18 @@ class IOSEditingOverlayController with ChangeNotifier {
   /// selection. Those properties and behaviors are represented by
   /// this [textController].
   final AttributedTextEditingController textController;
+
+  final BlinkController caretBlinkController;
+
+  /// Starts the text field caret blinking.
+  void startCaretBlinking() {
+    caretBlinkController.startBlinking();
+  }
+
+  /// Stops the text field caret blinking.
+  void stopCaretBlinking() {
+    caretBlinkController.stopBlinking();
+  }
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   final MagnifierAndToolbarController overlayController;
