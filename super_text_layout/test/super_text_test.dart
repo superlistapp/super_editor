@@ -1,5 +1,3 @@
-import 'dart:ui' show ParagraphBuilder;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -7,7 +5,6 @@ import 'package:super_text_layout/super_text_layout.dart';
 import 'test_tools.dart';
 
 void main() {
-  ParagraphBuilder.setDisableRoundingHack(true);
   group("SuperText", () {
     testWidgets("renders text and layers in a single frame", (tester) async {
       bool didBuildLayerBeneath = false;
