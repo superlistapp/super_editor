@@ -5,6 +5,7 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
+import 'super_textfield_robot.dart';
 
 void main() {
   group("SuperTextField caret", () {
@@ -165,6 +166,199 @@ void main() {
       expect(caret.style.color, caretStyle.color);
       expect(caret.style.width, caretStyle.width);
       expect(caret.style.borderRadius, caretStyle.borderRadius);
+    });
+
+    testWidgetsOnMobile("does not blink while dragging the caret", (tester) async {
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
+      final controller = AttributedTextEditingController(
+        text: AttributedText(
+          'SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.',
+        ),
+      );
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            textController: controller,
+          ),
+        ),
+      );
+
+      await tester.placeCaretInSuperTextField(0);
+
+      // Configure BlinkController to animate, otherwise it won't blink.
+      BlinkController.indeterminateAnimationsEnabled = true;
+
+      // Drag caret by a small distance so that we trigger a user drag event.
+      // This drag event is continued down below so that we can check for caret blinking
+      // during a user drag.
+      final TestGesture gesture = await tester.dragCaretByDistanceInSuperTextField(const Offset(100, 100));
+      addTearDown(() => gesture.removePointer());
+
+      // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
+      // Test in half-flash period intervals as we don't know how much time has passed and
+      // we might get unlucky and check the visibility when the caret is momentarily
+      // invisible.
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+    });
+
+    testWidgetsOnMobile("does not blink while dragging expanded handles", (tester) async {
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
+      final controller = AttributedTextEditingController(
+        text: AttributedText(
+          'SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.',
+        ),
+      );
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            textController: controller,
+          ),
+        ),
+      );
+
+      await tester.doubleTapAtSuperTextField(0);
+
+      // Configure BlinkController to animate, otherwise it won't blink.
+      BlinkController.indeterminateAnimationsEnabled = true;
+
+      // Drag the upstream selection handle by a small distance so that we trigger a
+      // user drag event. This drag event is continued down below so that we can check
+      // for caret blinking during a user drag.
+      final TestGesture upstreamHandleGesture =
+          await tester.dragUpstreamMobileHandleByDistanceInSuperTextField(const Offset(100, 100));
+      addTearDown(() => upstreamHandleGesture.removePointer());
+
+      // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
+      // Test in half-flash period intervals as we don't know how much time has passed and
+      // we might get unlucky and check the visibility when the caret is momentarily
+      // invisible.
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      // End the current drag gesture before we start the downstream handle drag.
+      // We don't want multiple gesture pointers active at the same time.
+      await upstreamHandleGesture.up();
+      await tester.pump();
+
+      // Drag the downstream selection handle by a small distance so that we trigger a
+      // user drag event. This drag event is continued down below so that we can check
+      // for caret blinking during a user drag.
+      final TestGesture downstreamHandleGesture =
+          await tester.dragDownstreamMobileHandleByDistanceInSuperTextField(const Offset(100, 100));
+      addTearDown(() => downstreamHandleGesture.removePointer());
+
+      // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
+      // Test in half-flash period intervals as we don't know how much time has passed and
+      // we might get unlucky and check the visibility when the caret is momentarily
+      // invisible.
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+    });
+
+    testWidgetsOnAndroid("does not blink while dragging collapsed handle", (tester) async {
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
+      final controller = AttributedTextEditingController(
+        text: AttributedText(
+          'SuperTextField with a content that spans multiple lines of text to test scrolling with  a scrollbar.',
+        ),
+      );
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            textController: controller,
+          ),
+        ),
+      );
+
+      await tester.placeCaretInSuperTextField(0);
+
+      // Configure BlinkController to animate, otherwise it won't blink.
+      BlinkController.indeterminateAnimationsEnabled = true;
+
+      // Drag the collapsed handle by a small distance so that we trigger a
+      // user drag event. This drag event is continued down below so that we
+      // can check for caret blinking during a user drag.
+      final TestGesture gesture =
+          await tester.dragAndroidCollapsedHandleByDistanceInSuperTextField(const Offset(100, 100));
+      addTearDown(() => gesture.removePointer());
+
+      // Check for the caret visibility across 3-4 frames and ensure it doesn't blink.
+      // Test in half-flash period intervals as we don't know how much time has passed and
+      // we might get unlucky and check the visibility when the caret is momentarily
+      // invisible.
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
+
+      await tester.pump(flashPeriod ~/ 2);
+
+      // Ensure caret is visible.
+      expect(_isCaretVisible(tester), true);
     });
   });
 }

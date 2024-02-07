@@ -34,7 +34,7 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
   @override
   void initState() {
     super.initState();
-    _blinkController = _createBlinkController();
+    _blinkController = _obtainBlinkController();
     if (widget.blinkCaret) {
       _blinkController.startBlinking();
     }
@@ -56,7 +56,7 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
           oldBlinkController.dispose();
         });
       }
-      _blinkController = _createBlinkController();
+      _blinkController = _obtainBlinkController();
     }
 
     if (widget.position != oldWidget.position && widget.blinkCaret) {
@@ -75,9 +75,9 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
     super.dispose();
   }
 
-  BlinkController _createBlinkController() {
+  BlinkController _obtainBlinkController() {
     if (widget.blinkController != null) {
-      return _blinkController;
+      return widget.blinkController!;
     }
 
     switch (widget.blinkTimingMode) {
@@ -97,7 +97,7 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
   @visibleForTesting
   double? get caretHeight => isCaretPresent
       ? widget.textLayout.getHeightForCaret(widget.position!) ??
-      widget.textLayout.getLineHeightAtPosition(widget.position!)
+          widget.textLayout.getLineHeightAtPosition(widget.position!)
       : null;
 
   @visibleForTesting

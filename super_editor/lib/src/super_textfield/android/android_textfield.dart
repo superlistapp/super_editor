@@ -179,12 +179,22 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   // positions the invisible touch targets for base/extent dragging.
   final _popoverController = OverlayPortalController();
 
+  late final BlinkController _caretBlinkController;
+
   /// Notifies the popover toolbar to rebuild itself.
   final _popoverRebuildSignal = SignalNotifier();
 
   @override
   void initState() {
     super.initState();
+
+    switch (widget.blinkTimingMode) {
+      case BlinkTimingMode.ticker:
+        _caretBlinkController = BlinkController(tickerProvider: this);
+      case BlinkTimingMode.timer:
+        _caretBlinkController = BlinkController.withTimer();
+    }
+
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
@@ -198,6 +208,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
     _editingOverlayController = AndroidEditingOverlayController(
       textController: _textEditingController,
+      caretBlinkController: _caretBlinkController,
       magnifierFocalPoint: _magnifierLayerLink,
     );
 
@@ -309,6 +320,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     _textScrollController
       ..removeListener(_onTextScrollChange)
       ..dispose();
+
+    _caretBlinkController.dispose();
 
     _popoverRebuildSignal.dispose();
 
@@ -635,7 +648,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             position: _textEditingController.selection.isCollapsed //
                 ? _textEditingController.selection.extent
                 : null,
-            blinkTimingMode: widget.blinkTimingMode,
+            blinkController: _caretBlinkController,
           );
         },
       ),
