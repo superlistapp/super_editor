@@ -123,9 +123,8 @@ extension SuperTextFieldRobot on WidgetTester {
     return gesture;
   }
 
-  /// Drags the [SuperTextField] upstream handle by the given delta.
-  ///
-  /// Returns the [TestGesture] used to perform the drag.
+  /// Drags the [SuperTextField] upstream handle by the given delta and
+  /// returns the [TestGesture] used to perform the drag.
   ///
   /// {@macro supertextfield_finder}
   Future<TestGesture> dragUpstreamMobileHandleByDistanceInSuperTextField(
@@ -147,9 +146,8 @@ extension SuperTextFieldRobot on WidgetTester {
     throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
   }
 
-  /// Drags the [SuperTextField] downstream handle by the given delta.
-  ///
-  /// Returns the [TestGesture] used to perform the drag.
+  /// Drags the [SuperTextField] downstream handle by the given delta and
+  /// returns the [TestGesture] used to perform the drag.
   ///
   /// {@macro supertextfield_finder}
   Future<TestGesture> dragDownstreamMobileHandleByDistanceInSuperTextField(
@@ -171,9 +169,8 @@ extension SuperTextFieldRobot on WidgetTester {
     throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
   }
 
-  /// Drags the [SuperAndroidTextField] upstream handle by the given delta.
-  ///
-  /// Returns the [TestGesture] used to perform the drag.
+  /// Drags the [SuperAndroidTextField] upstream handle by the given delta and
+  /// returns the [TestGesture] used to perform the drag.
   ///
   /// {@macro supertextfield_finder}
   Future<TestGesture> _dragAndroidUpstreamHandleByDistanceInSuperTextField(
@@ -196,9 +193,8 @@ extension SuperTextFieldRobot on WidgetTester {
     return await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
   }
 
-  /// Drags the [SuperAndroidTextField] downstream handle by the given delta.
-  ///
-  /// Returns the [TestGesture] used to perform the drag.
+  /// Drags the [SuperAndroidTextField] downstream handle by the given delta and
+  /// returns the [TestGesture] used to perform the drag.
   ///
   /// {@macro supertextfield_finder}
   Future<TestGesture> _dragAndroidDownstreamHandleByDistanceInSuperTextField(
@@ -221,9 +217,8 @@ extension SuperTextFieldRobot on WidgetTester {
     return await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
   }
 
-  /// Drags the [SuperIOSTextField] upstream handle by the given delta.
-  ///
-  /// Returns the [TestGesture] used to perform the drag.
+  /// Drags the [SuperIOSTextField] upstream handle by the given delta and
+  /// returns the [TestGesture] used to perform the drag.
   ///
   /// {@macro supertextfield_finder}
   Future<TestGesture> _dragIOSUpstreamHandleByDistanceInSuperTextField(
@@ -246,9 +241,8 @@ extension SuperTextFieldRobot on WidgetTester {
     return await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
   }
 
-  /// Drags the [SuperIOSTextField] downstream handle by the given delta.
-  ///
-  /// Returns the [TestGesture] used to perform the drag.
+  /// Drags the [SuperIOSTextField] downstream handle by the given delta and
+  /// returns the [TestGesture] used to perform the drag.
   ///
   /// {@macro supertextfield_finder}
   Future<TestGesture> _dragIOSDownstreamHandleByDistanceInSuperTextField(
@@ -272,11 +266,9 @@ extension SuperTextFieldRobot on WidgetTester {
   }
 
   /// Drags the [SuperTextField] handle found by [superTextFieldHandleFinder] by
-  /// the given delta.
+  /// the given delta and returns the [TestGesture] used to perform the drag.
   ///
   /// Can be used to drag [SuperTextField] collapsed or expanded selection handles.
-  ///
-  /// Returns the [TestGesture] used to perform the drag.
   Future<TestGesture> _dragHandleByDistanceInSuperTextField(
     Finder superTextFieldHandleFinder,
     Offset delta,
