@@ -193,9 +193,7 @@ extension SuperTextFieldRobot on WidgetTester {
 
     expect(handleFinder, findsOne);
 
-    final gesture = await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
-
-    return gesture;
+    return await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
   }
 
   /// Drags the [SuperAndroidTextField] downstream handle by the given delta.
@@ -220,9 +218,7 @@ extension SuperTextFieldRobot on WidgetTester {
 
     expect(handleFinder, findsOne);
 
-    final gesture = await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
-
-    return gesture;
+    return await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
   }
 
   /// Drags the [SuperIOSTextField] upstream handle by the given delta.
@@ -247,9 +243,7 @@ extension SuperTextFieldRobot on WidgetTester {
 
     expect(handleFinder, findsOne);
 
-    final gesture = await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
-
-    return gesture;
+    return await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
   }
 
   /// Drags the [SuperIOSTextField] downstream handle by the given delta.
@@ -274,9 +268,7 @@ extension SuperTextFieldRobot on WidgetTester {
 
     expect(handleFinder, findsOne);
 
-    final gesture = await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
-
-    return gesture;
+    return await _dragHandleByDistanceInSuperTextField(handleFinder, delta);
   }
 
   /// Drags the [SuperTextField] handle found by [superTextFieldHandleFinder] by
