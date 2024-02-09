@@ -294,6 +294,11 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
       // When the user drags, the toolbar should not be visible.
       widget.editingOverlayController.hideToolbar();
+
+      if (widget.textController.selection.isCollapsed) {
+        // The user is dragging the caret. Stop the caret from blinking while dragging.
+        widget.editingOverlayController.stopCaretBlinking();
+      }
     });
   }
 
@@ -343,6 +348,10 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
       if (!widget.textController.selection.isCollapsed) {
         widget.editingOverlayController.showToolbar();
+      } else {
+        // The user stopped dragging the caret and the selection is collapsed.
+        // Start the caret blinking again.
+        widget.editingOverlayController.startCaretBlinking();
       }
     });
   }
