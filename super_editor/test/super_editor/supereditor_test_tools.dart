@@ -171,6 +171,11 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  TestSuperEditorConfigurator withCaretStyle({CaretStyle? caretStyle}) {
+    _config.caretStyle = caretStyle;
+    return this;
+  }
+
   /// Configures the [SuperEditor]'s [SoftwareKeyboardController].
   TestSuperEditorConfigurator withSoftwareKeyboardController(SoftwareKeyboardController controller) {
     _config.softwareKeyboardController = controller;
@@ -548,15 +553,14 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
   }
 
   List<SuperEditorLayerBuilder> _createOverlayBuilders() {
-    // At the moment, the only configuration for overlays that we support is whether or not
-    // to display the caret for expanded selections. Therefore, we show the default overlays
-    // except in the specific case where we want to hide the caret. In that case, we don't
-    // include the defaults - we provide a configured caret overlay builder, instead.
+    // We show the default overlays except in the cases where we want to hide the caret
+    // or use a custom `CaretStyle`. In those case, we don't include the defaults - we provide
+    // a configured caret overlay builder, instead.
     //
     // If you introduce further configuration to overlay builders, make sure that in the default
     // situation, we're using `defaultSuperEditorDocumentOverlayBuilders`, so that most tests
     // verify the defaults that most apps will use.
-    if (widget.testConfiguration.displayCaretWithExpandedSelection) {
+    if (widget.testConfiguration.displayCaretWithExpandedSelection && widget.testConfiguration.caretStyle == null) {
       return defaultSuperEditorDocumentOverlayBuilders;
     }
 
@@ -577,6 +581,7 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       // Displays caret for typical desktop use-cases.
       DefaultCaretOverlayBuilder(
         displayCaretWithExpandedSelection: widget.testConfiguration.displayCaretWithExpandedSelection,
+        caretStyle: widget.testConfiguration.caretStyle ?? const CaretStyle(),
       ),
     ];
   }
@@ -604,6 +609,7 @@ class SuperEditorTestConfiguration {
   SuperEditorSelectionPolicies? selectionPolicies;
   SelectionStyles? selectionStyles;
   bool displayCaretWithExpandedSelection = true;
+  CaretStyle? caretStyle;
   SoftwareKeyboardController? softwareKeyboardController;
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;
@@ -824,9 +830,14 @@ class EquivalentDocumentMatcher extends Matcher {
 class FakeImageComponentBuilder implements ComponentBuilder {
   const FakeImageComponentBuilder({
     required this.size,
+    this.fillColor,
   });
 
+  /// The size of the image component.
   final ui.Size size;
+
+  /// The color that fills the entire image component.
+  final Color? fillColor;
 
   @override
   SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
@@ -845,9 +856,12 @@ class FakeImageComponentBuilder implements ComponentBuilder {
       imageUrl: componentViewModel.imageUrl,
       selection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
-      imageBuilder: (context, imageUrl) => SizedBox(
-        height: size.height,
-        width: size.width,
+      imageBuilder: (context, imageUrl) => ColoredBox(
+        color: fillColor ?? Colors.transparent,
+        child: SizedBox(
+          height: size.height,
+          width: size.width,
+        ),
       ),
     );
   }
