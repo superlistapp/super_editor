@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-extension IsArrowKeyExtension on RawKeyEvent {
+extension IsArrowKeyExtension on KeyEvent {
   bool get isArrowKeyPressed =>
       logicalKey == LogicalKeyboardKey.arrowUp ||
       logicalKey == LogicalKeyboardKey.arrowDown ||

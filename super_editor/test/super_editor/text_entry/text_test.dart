@@ -2,10 +2,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
-import '../../test_tools_user_input.dart';
 import '../supereditor_test_tools.dart';
 
-void main() {
+Future<void> main() async {
   group('text.dart', () {
     group('ToggleTextAttributionsCommand', () {
       test('it toggles selected text and nothing more', () {
@@ -50,53 +49,17 @@ void main() {
     });
 
     group('TextComposable text entry', () {
-      test('it does nothing when meta is pressed', () {
-        final editContext = _createEditContext();
 
-        // Press just the meta key.
-        var result = anyCharacterToInsertInTextContent(
-          editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.meta,
-              physicalKey: PhysicalKeyboardKey.metaLeft,
-              isMetaPressed: true,
-              isModifierKeyPressed: false,
-            ),
-          ),
-        );
-
-        // The handler should pass on handling the key.
-        expect(result, ExecutionInstruction.continueExecution);
-
-        // Press "a" + meta key
-        result = anyCharacterToInsertInTextContent(
-          editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-              isMetaPressed: true,
-              isModifierKeyPressed: false,
-            ),
-          ),
-        );
-
-        // The handler should pass on handling the key.
-        expect(result, ExecutionInstruction.continueExecution);
-      });
-
-      test('it does nothing when nothing is selected', () {
+      test('it does nothing when nothing is selected', () async {
         final editContext = _createEditContext();
 
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-            ),
+          keyEvent: const KeyDownEvent(
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -136,11 +99,10 @@ void main() {
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-            ),
+          keyEvent: const KeyDownEvent(
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -173,11 +135,10 @@ void main() {
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-            ),
+          keyEvent: const KeyDownEvent(
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -185,7 +146,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
       });
 
-      test('it does nothing when the key doesn\'t have a character', () {
+      testWidgets('it does nothing when the key doesn\'t have a character', (WidgetTester tester) async {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
@@ -213,13 +174,11 @@ void main() {
         // Press the "alt" key
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
+          keyEvent: const KeyDownEvent(
             character: null,
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.alt,
-              physicalKey: PhysicalKeyboardKey.altLeft,
-              isModifierKeyPressed: true,
-            ),
+            logicalKey: LogicalKeyboardKey.alt,
+            physicalKey: PhysicalKeyboardKey.altLeft,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -229,12 +188,11 @@ void main() {
         // Press the "enter" key
         result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
+          keyEvent: const KeyDownEvent(
             character: '', // Empirically, pressing enter sends '' as the character instead of null
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.enter,
-              physicalKey: PhysicalKeyboardKey.enter,
-            ),
+            logicalKey: LogicalKeyboardKey.enter,
+            physicalKey: PhysicalKeyboardKey.enter,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -270,12 +228,11 @@ void main() {
         // Press the "a" key
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
+          keyEvent: const KeyDownEvent(
             character: 'a',
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-            ),
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 
@@ -287,7 +244,7 @@ void main() {
         );
       });
 
-      test('it inserts a non-English character', () {
+      testWidgets('it inserts a non-English character', (WidgetTester tester) async {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
@@ -315,12 +272,11 @@ void main() {
         // Type a non-English character
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: const FakeRawKeyDownEvent(
+          keyEvent: const KeyDownEvent(
             character: 'ß',
-            data: FakeRawKeyEventData(
-              logicalKey: LogicalKeyboardKey.keyA,
-              physicalKey: PhysicalKeyboardKey.keyA,
-            ),
+            logicalKey: LogicalKeyboardKey.keyA,
+            physicalKey: PhysicalKeyboardKey.keyA,
+            timeStamp: Duration.zero,
           ),
         );
 

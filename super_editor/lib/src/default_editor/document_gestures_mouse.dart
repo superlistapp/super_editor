@@ -170,9 +170,9 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   bool get _isShiftPressed =>
-      (RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
-          RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
-          RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift)) &&
+      (HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+          HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftRight) ||
+          HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shift)) &&
       // TODO: this condition doesn't belong here. Move it to where it applies
       _currentSelection != null;
 
