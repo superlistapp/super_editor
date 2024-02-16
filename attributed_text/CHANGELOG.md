@@ -1,4 +1,13 @@
-## [X.Y.Z] - ???
+## [0.3.0] - Feb, 2024
+ * [BREAKING] - `AttributedText` and `SpanRange` constructors now use positional parameters istead of named parameters.
+ * [FIX] - `AttributedText` now supports differents links for different URLs in the same text blob - previously all links were sent to the same URL withing a single `AttributedText`.
+ * [FIX] - `collapseSpans` now reports the correct ending index, which was previously off by one.
+ * `AttributedText` now has a substring method and length property to avoid needing to access the inner `text` string.
+ * `AttributionSpan` now has a `range` property to get a non-directional span of text.
+ * `AttributedText` can visit and report attribution spans instead of just visiting individual attribution markers.
+ * Added query methods:
+   * `getAttributionSpans()`
+   * `getAttributionSpansByFilter()`
  * `AttributedText` now allows you to `addAttribution()` without auto-merging with preceding and following attributions (#1198)
 
 ## [0.2.2] - May, 2023
