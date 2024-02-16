@@ -375,6 +375,8 @@ class ConvertSelectedTextNodeCommand implements EditCommand {
       ),
     ]);
   }
+
+  void undo(EditContext context) {}
 }
 
 class _TextNodeConversion {

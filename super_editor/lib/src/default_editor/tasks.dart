@@ -397,6 +397,12 @@ class ChangeTaskCompletionCommand implements EditCommand {
       ),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ConvertParagraphToTaskRequest implements EditRequest {
@@ -449,6 +455,12 @@ class ConvertParagraphToTaskCommand implements EditCommand {
       ReplaceNodeCommand(existingNodeId: existingNode.id, newNode: taskNode),
     );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ConvertTaskToParagraphCommand implements EditCommand {
@@ -481,6 +493,12 @@ class ConvertTaskToParagraphCommand implements EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class SplitExistingTaskRequest implements EditRequest {
@@ -574,6 +592,12 @@ class SplitExistingTaskCommand implements EditCommand {
       SplitTaskIntention.end(),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class SplitTaskIntention extends Intention {

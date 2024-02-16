@@ -262,6 +262,12 @@ class ConvertBlockquoteToParagraphCommand implements EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 ExecutionInstruction insertNewlineInBlockquote({
@@ -373,4 +379,10 @@ class SplitBlockquoteCommand implements EditCommand {
       ),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }

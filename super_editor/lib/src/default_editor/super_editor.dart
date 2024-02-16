@@ -20,6 +20,7 @@ import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/_styler_composing_region.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
+import 'package:super_editor/src/default_editor/undo_redo.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scaffold.dart';
@@ -1177,6 +1178,8 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
   cutWhenCmdXIsPressed,
+  undoWhenCmdZOrCtrlZIsPressed,
+  redoWhenCmdShiftZOrCtrlShiftZIsPressed,
   collapseSelectionWhenEscIsPressed,
   selectAllWhenCmdAIsPressed,
   moveLeftAndRightWithArrowKeys,
@@ -1218,6 +1221,8 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
   cutWhenCmdXIsPressed,
+  undoWhenCmdZOrCtrlZIsPressed,
+  redoWhenCmdShiftZOrCtrlShiftZIsPressed,
   selectAllWhenCmdAIsPressed,
   cmdBToToggleBold,
   cmdIToToggleItalics,

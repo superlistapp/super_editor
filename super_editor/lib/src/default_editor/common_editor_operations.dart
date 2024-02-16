@@ -2408,6 +2408,12 @@ class PasteEditorCommand implements EditCommand {
       ),
     );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class DeleteUpstreamCharacterRequest implements EditRequest {
@@ -2459,6 +2465,12 @@ class DeleteUpstreamCharacterCommand implements EditCommand {
         ),
       );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class DeleteDownstreamCharacterRequest implements EditRequest {
@@ -2503,4 +2515,10 @@ class DeleteDownstreamCharacterCommand implements EditCommand {
       ),
     );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }

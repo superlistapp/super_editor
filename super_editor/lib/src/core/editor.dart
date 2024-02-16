@@ -109,6 +109,16 @@ class Editor implements RequestDispatcher {
     _changeListeners.remove(listener);
   }
 
+  /// A stack of changes that have been made by this [Editor].
+  ///
+  /// The history stack might be used, for example, to implement undo.
+  final List<_ChangeBatch> _historyStack = <_ChangeBatch>[];
+
+  /// A stack of changes that have been undone and removed from the [_historyStack].
+  ///
+  /// The future stack might be used, for example, to implement redo.
+  final List<_ChangeBatch> _futureStack = <_ChangeBatch>[];
+
   /// An accumulation of changes during the current execution stack.
   ///
   /// This list is tracked in local state to facilitate reactions. When Reaction 1 runs,
@@ -126,27 +136,57 @@ class Editor implements RequestDispatcher {
   /// of [EditEvent]s.
   @override
   void execute(List<EditRequest> requests) {
-    // print("Request execution:");
-    // for (final request in requests) {
-    //   print(" - ${request.runtimeType}");
-    // }
+    print("Request execution:");
+    for (final request in requests) {
+      print(" - ${request.runtimeType}");
+    }
     // print(StackTrace.current);
+
+    final commands = requests.map((request) => _findCommandForRequest(request));
+
+    _executeCommands(commands, true);
+
+    print("Done executing requests: $requests");
+    print("");
+    print("");
+  }
+
+  void _executeCommands(Iterable<EditCommand> commands, bool shouldClearFutureStack) {
+    final allCommandsRun = <EditCommand>[];
+    final allEditEvents = <EditEvent>[];
 
     if (_activeCommandCount == 0) {
       // This is the start of a new transaction.
-      for (final editable in context._resources.values) {
-        editable.onTransactionStart();
-      }
+      _startEditablesTransaction();
     }
 
     _activeChangeList ??= <EditEvent>[];
     _activeCommandCount += 1;
 
-    for (final request in requests) {
+    for (final command in commands) {
+      print("Executing request: $command");
+
       // Execute the given request.
-      final command = _findCommandForRequest(request);
       final commandChanges = _executeCommand(command);
+
+      // Record all commands run and their changes within the overall batch of changes.
+      if (command.historyBehavior == HistoryBehavior.undoable) {
+        // Record the undoable command in the history stack.
+        allCommandsRun.add(command);
+        allEditEvents.addAll(commandChanges);
+
+        if (shouldClearFutureStack) {
+          // A new set of undoable commands were run. Clear the future stack so that the
+          // user can no longer redo changes that were previously undone.
+          _futureStack.clear();
+        }
+      }
+      // TODO: handle case where history behavior wants to clear all history.
+
       _activeChangeList!.addAll(commandChanges);
+
+      print("Done executing command: $command");
+      print("");
     }
 
     // Run reactions and notify listeners, but only do it once per batch of executions.
@@ -164,17 +204,39 @@ class Editor implements RequestDispatcher {
         _notifyListeners();
 
         // This is the end of a transaction.
-        for (final editable in context._resources.values) {
-          editable.onTransactionEnd(_activeChangeList!);
-        }
+        _endEditablesTransaction(_activeChangeList!);
       } else {
-        editorOpsLog.warning("We have an empty change list after processing one or more requests: $requests");
+        editorOpsLog.warning("We have an empty change list after processing one or more commands: $commands");
+      }
+
+      // Add the commands and their changes to the history stack so they can be undone.
+      print("After executing request...");
+      print(" - commands: $allCommandsRun");
+      print(" - events: $allEditEvents");
+      if (allCommandsRun.isNotEmpty) {
+        // At least one command was run that's undo-able. At it to the history stack.
+        _historyStack.add(_ChangeBatch(
+          allCommandsRun,
+          allEditEvents,
+        ));
       }
 
       _activeChangeList = null;
     }
 
     _activeCommandCount -= 1;
+  }
+
+  void _startEditablesTransaction() {
+    for (final editable in context._resources.values) {
+      editable.onTransactionStart();
+    }
+  }
+
+  void _endEditablesTransaction(List<EditEvent> changeList) {
+    for (final editable in context._resources.values) {
+      editable.onTransactionEnd(changeList);
+    }
   }
 
   EditCommand _findCommandForRequest(EditRequest request) {
@@ -198,17 +260,13 @@ class Editor implements RequestDispatcher {
     //
     // We make a copy of the change-list so that asynchronous listeners
     // don't lose the contents when we clear it.
-    final changeList = _commandExecutor.copyChangeList();
-
-    // TODO: we could run the reactions here. Do we give them all a single chance
-    //       to respond? Or do we keep running them until there aren't any further
-    //       changes?
+    final changeEvents = _commandExecutor.copyChangeList();
 
     // Reset the command executor so that it's ready for the next command
     // that comes in.
     _commandExecutor.reset();
 
-    return changeList;
+    return changeEvents;
   }
 
   void _reactToChanges() {
@@ -227,6 +285,83 @@ class Editor implements RequestDispatcher {
       listener.onEdit(changeList);
     }
   }
+
+  /// Returns `true` if there are commands that can be undone with [undo].
+  bool get hasUndoHistory => _historyStack.isNotEmpty;
+
+  /// Reverses the changes caused by the most recent batch of executed requests.
+  ///
+  /// Reversed changes can be re-applied with [redo]. However, if a new request is
+  /// submitted after [undo], then the [redo] stack will be reset, and the undone
+  /// changes will be lost forever.
+  void undo() {
+    print("undo()");
+    print("");
+    print("History:");
+    for (final event in _historyStack) {
+      print(" - commands: ${event.commands}");
+    }
+    print("");
+
+    if (_historyStack.isEmpty) {
+      return;
+    }
+
+    _startEditablesTransaction();
+
+    // Remove the latest event from the history stack so we can reverse it.
+    final latestEvent = _historyStack.removeLast();
+
+    final commandBatch = List.from(latestEvent.commands);
+
+    while (commandBatch.isNotEmpty) {
+      final command = commandBatch.removeLast();
+      print("Undoing command: $command");
+      command.undo(context, _commandExecutor);
+    }
+
+    // Now that the latest change is reversed, add it to the future stack so
+    // it can be redone, if desired.
+    _futureStack.insert(_futureStack.length, latestEvent);
+    print("After undoing the command, the future stack has ${_futureStack.length} items.");
+
+    // Report changes to the editables so the editables can notify their listeners.
+    final undoChanges = _commandExecutor.copyChangeList();
+    _endEditablesTransaction(undoChanges);
+  }
+
+  /// Returns `true` if there are commands that can be redone with [redo].
+  bool get hasRedoFuture => _futureStack.isNotEmpty;
+
+  /// Re-applies changes that were previously reversed by [undo].
+  ///
+  /// Changes that are reversed with [undo] only remain available for [redo] until
+  /// the next newly requested change is submitted. Once a new request is submitted,
+  /// all changes reversed by [undo] are cleared and are lost forever.
+  void redo() {
+    print("Redo()");
+    print(" - future stack length: ${_futureStack.length}");
+    if (_futureStack.isEmpty) {
+      return;
+    }
+
+    // Remove the undone event at the top of the future stack so we can redo it.
+    final oldestFutureEvent = _futureStack.removeLast();
+
+    // Rerun the commands.
+    _executeCommands(oldestFutureEvent.commands, false);
+
+    // Place the redone event at the top of the history stack so that it can be
+    // undone again, if desired.
+    _historyStack.insert(_historyStack.length, oldestFutureEvent);
+  }
+}
+
+class _ChangeBatch {
+  const _ChangeBatch(this.commands, this.changeEvents);
+
+  final List<EditCommand> commands;
+  final List<EditEvent> changeEvents;
 }
 
 /// An implementation of [CommandExecutor], designed for [Editor].
@@ -238,10 +373,14 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
   final _commandsBeingProcessed = EditorCommandQueue();
 
   final _changeList = <EditEvent>[];
+
   List<EditEvent> copyChangeList() => List.from(_changeList);
 
   @override
   void executeCommand(EditCommand command) {
+    print("DocumentEditorCommandExecutor executeCommand()");
+    print(" - new command: $command");
+    print(" - in middle of other commands? ${_commandsBeingProcessed.isCommandExecutionInProgress}");
     _commandsBeingProcessed.append(command);
 
     // Run the given command, and any other commands that it spawns.
@@ -296,6 +435,28 @@ abstract class RequestDispatcher {
 abstract class EditCommand {
   /// Executes this command and logs all changes with the [executor].
   void execute(EditContext context, CommandExecutor executor);
+
+  HistoryBehavior get historyBehavior;
+
+  void undo(EditContext context, CommandExecutor executor);
+}
+
+/// The way a command interacts with the history ledger, AKA "undo".
+enum HistoryBehavior {
+  /// The command can be undone and redone.
+  ///
+  /// For example: inserting text into a paragraph.
+  undoable,
+
+  /// The command cannot be undone, and it requires all earlier history to be
+  /// finalized (no earlier action can be undone after this).
+  resetHistory,
+
+  /// The command has no impact on history.
+  ///
+  /// For example: entering and exiting interaction mode, (possibly) activating and
+  /// deactivating bold/italics in the composer.
+  nonHistorical,
 }
 
 /// All resources that are available when executing [EditCommand]s, such as a document,
@@ -388,6 +549,8 @@ class EditorCommandQueue {
     // Set the active command to the next command in the backlog.
     _activeCommand = _commandBacklog.removeAt(0);
   }
+
+  bool get isCommandExecutionInProgress => _activeCommand != null;
 
   EditCommand? get activeCommand => _activeCommand;
 
@@ -730,12 +893,15 @@ class MutableDocument implements Document, Editable {
 
   @override
   void onTransactionEnd(List<EditEvent> edits) {
+    print("Document onTransactionEnd()");
     final documentChanges = edits.whereType<DocumentEdit>().map((edit) => edit.change).toList();
     if (documentChanges.isEmpty) {
+      print(" - no edits. Fizzling.");
       return;
     }
 
     final changeLog = DocumentChangeLog(documentChanges);
+    print(" - notifying document listeners.");
     for (final listener in _listeners) {
       listener(changeLog);
     }
