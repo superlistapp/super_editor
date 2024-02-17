@@ -222,7 +222,18 @@ void main() {
         final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
-        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+        await tester.placeCaretInParagraph(document.nodes.last.id, 6);
+
+        // Type at the end of the list item to generate a composing region,
+        // simulating the Samsung keyboard.
+        await tester.typeImeText('2');
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. Item 12',
+            selection: TextSelection.collapsed(offset: 9),
+            composing: TextRange.collapsed(9),
+          ),
+        ], getter: imeClientGetter);
 
         // Press enter to create a new list item.
         await tester.pressEnter();
@@ -232,7 +243,7 @@ void main() {
 
         // Ensure the existing item remains the same.
         expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+        expect((document.nodes.first as ListItemNode).text.text, "Item 12");
 
         // Ensure the new item has the correct list item type and indentation.
         expect(document.nodes.last, isA<ListItemNode>());
@@ -261,6 +272,17 @@ void main() {
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(document.nodes.first.id, 6);
 
+        // Type at the end of the list item to generate a composing region,
+        // simulating the Samsung keyboard.
+        await tester.typeImeText('2');
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. Item 12',
+            selection: TextSelection.collapsed(offset: 9),
+            composing: TextRange.collapsed(9),
+          ),
+        ], getter: imeClientGetter);
+
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText("\n");
 
@@ -269,7 +291,7 @@ void main() {
 
         // Ensure the existing item remains the same.
         expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+        expect((document.nodes.first as ListItemNode).text.text, "Item 12");
 
         // Ensure the new item has the correct list item type and indentation.
         expect(document.nodes.last, isA<ListItemNode>());
@@ -298,6 +320,17 @@ void main() {
         // Place the caret at the end of the list item.
         await tester.placeCaretInParagraph(document.nodes.first.id, 6);
 
+        // Type at the end of the list item to generate a composing region,
+        // simulating the Samsung keyboard.
+        await tester.typeImeText('2');
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. Item 12',
+            selection: TextSelection.collapsed(offset: 9),
+            composing: TextRange.collapsed(9),
+          ),
+        ], getter: imeClientGetter);
+
         // On iOS, pressing ENTER generates a newline action.
         await tester.testTextInput.receiveAction(TextInputAction.newline);
 
@@ -306,7 +339,7 @@ void main() {
 
         // Ensure the existing item remains the same.
         expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+        expect((document.nodes.first as ListItemNode).text.text, "Item 12");
 
         // Ensure the new item has the correct list item type and indentation.
         expect(document.nodes.last, isA<ListItemNode>());
