@@ -7,6 +7,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../test_runners.dart';
+import '../test_tools.dart';
 import '../test_tools_user_input.dart';
 import 'supereditor_test_tools.dart';
 import 'test_documents.dart';
@@ -820,6 +821,87 @@ Paragraph two
 
         // Ensure the text was replaced and the style was preserved.
         expect(testContext.document, equalsMarkdown('**Fixed **'));
+      });
+    });
+
+    group('on iPhone 13 (iOS 17.2) with korean keyboard', () {
+      testWidgetsOnIos('applies keyboard suggestions', (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the start of the paragraph.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Simulate the user typing "ㅅ".
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. ',
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaInsertion(
+            oldText: '. ',
+            textInserted: 'ㅅ',
+            insertionOffset: 2,
+            selection: TextSelection.collapsed(offset: 3, affinity: TextAffinity.downstream),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        // Simulate the user typing "ㅛ" and the IME converting the "ㅅㅛ" to "쇼".
+        await tester.ime.sendDeltas(const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. ㅅ',
+            selection: TextSelection(baseOffset: 1, extentOffset: 3, isDirectional: false),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaDeletion(
+            oldText: '. ㅅ',
+            deletedRange: TextRange(start: 1, end: 3),
+            selection: TextSelection.collapsed(
+              offset: 1,
+              affinity: TextAffinity.downstream,
+            ),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaInsertion(
+            oldText: '.',
+            textInserted: ' ',
+            insertionOffset: 1,
+            selection: TextSelection.collapsed(
+              offset: 2,
+              affinity: TextAffinity.downstream,
+            ),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaInsertion(
+            oldText: '. ',
+            textInserted: '쇼',
+            insertionOffset: 2,
+            selection: TextSelection.collapsed(
+              offset: 3,
+              affinity: TextAffinity.downstream,
+            ),
+            composing: TextRange(start: -1, end: -1),
+          )
+        ], getter: imeClientGetter);
+
+        // Ensure text and selection were updated.
+        expect(SuperEditorInspector.findTextInComponent('1').text, '쇼');
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 1),
+              ),
+            ),
+          ),
+        );
       });
     });
 
