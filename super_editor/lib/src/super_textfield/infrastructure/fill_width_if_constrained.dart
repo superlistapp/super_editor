@@ -75,8 +75,6 @@ class RenderFillWidthIfConstrained extends RenderProxyBox {
     BoxConstraints childConstraints = constraints;
 
     final ancestorViewportWidth = _findAncestorScrollableWidth();
-    print("Running layout on FillWidthIfConstrained");
-    print(" - provided viewport width: $ancestorViewportWidth");
 
     if (constraints.hasBoundedWidth) {
       // The available width is bounded, force the child to be as wide
