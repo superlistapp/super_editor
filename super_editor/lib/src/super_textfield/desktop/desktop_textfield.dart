@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -1783,14 +1784,58 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
       // See https://github.com/superlistapp/super_editor/issues/1628 for more details.
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-        child: SingleChildScrollView(
-          controller: widget.scrollController,
-          physics: const NeverScrollableScrollPhysics(),
-          scrollDirection: widget.isMultiline ? Axis.vertical : Axis.horizontal,
-          child: widget.child,
-        ),
+        child: LayoutBuilder(builder: (context, constraints) {
+          print("Building text field scrollview at width: ${constraints.maxWidth}");
+          return SingleChildScrollView(
+            controller: widget.scrollController,
+            physics: const NeverScrollableScrollPhysics(),
+            scrollDirection: widget.isMultiline ? Axis.vertical : Axis.horizontal,
+            child: _ReLayoutChildOnWidthChange(
+              widthBound: constraints.maxWidth,
+              child: widget.child,
+            ),
+          );
+        }),
       ),
     );
+  }
+}
+
+class _ReLayoutChildOnWidthChange extends SingleChildRenderObjectWidget {
+  const _ReLayoutChildOnWidthChange({
+    required this.widthBound,
+    required super.child,
+  });
+
+  final double widthBound;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) {
+    return _RenderReLayoutChildOnWidthChange(
+      widthBound: widthBound,
+    );
+  }
+}
+
+class _RenderReLayoutChildOnWidthChange extends RenderProxyBox {
+  _RenderReLayoutChildOnWidthChange({
+    required double widthBound,
+  }) : _widthBound = widthBound;
+
+  double _widthBound;
+  set widthBound(double newValue) {
+    if (newValue == _widthBound) {
+      return;
+    }
+
+    _widthBound = newValue;
+    markNeedsLayout();
+  }
+
+  @override
+  void performLayout() {
+    print("Running layout on text field");
+    super.performLayout();
   }
 }
 
