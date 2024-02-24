@@ -595,63 +595,61 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
-    return FillWidthIfConstrained(
-      child: SuperText(
-        key: _textContentKey,
-        richText: textSpan,
-        textAlign: widget.textAlign,
-        textScaler: MediaQuery.textScalerOf(context),
-        layerBeneathBuilder: (context, textLayout) {
-          final isTextEmpty = _textEditingController.text.text.isEmpty;
-          final showHint = widget.hintBuilder != null &&
-              ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                  (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+    return SuperText(
+      key: _textContentKey,
+      richText: textSpan,
+      textAlign: widget.textAlign,
+      textScaler: MediaQuery.textScalerOf(context),
+      layerBeneathBuilder: (context, textLayout) {
+        final isTextEmpty = _textEditingController.text.text.isEmpty;
+        final showHint = widget.hintBuilder != null &&
+            ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-          return Stack(
-            children: [
-              if (widget.textController?.selection.isValid == true)
-                // Selection highlight beneath the text.
-                TextLayoutSelectionHighlight(
-                  textLayout: textLayout,
-                  style: SelectionHighlightStyle(
-                    color: widget.selectionColor,
-                  ),
-                  selection: widget.textController?.selection,
+        return Stack(
+          children: [
+            if (widget.textController?.selection.isValid == true)
+              // Selection highlight beneath the text.
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: SelectionHighlightStyle(
+                  color: widget.selectionColor,
                 ),
-              // Underline beneath the composing region.
-              if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
-                TextUnderlineLayer(
-                  textLayout: textLayout,
-                  underlines: [
-                    TextLayoutUnderline(
-                      style: UnderlineStyle(
-                        color: widget.textStyleBuilder({}).color ?? //
-                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
-                      ),
-                      range: widget.textController!.composingRegion,
+                selection: widget.textController?.selection,
+              ),
+            // Underline beneath the composing region.
+            if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
+              TextUnderlineLayer(
+                textLayout: textLayout,
+                underlines: [
+                  TextLayoutUnderline(
+                    style: UnderlineStyle(
+                      color: widget.textStyleBuilder({}).color ?? //
+                          (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
                     ),
-                  ],
-                ),
-              if (showHint) //
-                widget.hintBuilder!(context),
-            ],
-          );
-        },
-        layerAboveBuilder: (context, textLayout) {
-          if (!_focusNode.hasFocus) {
-            return const SizedBox();
-          }
+                    range: widget.textController!.composingRegion,
+                  ),
+                ],
+              ),
+            if (showHint) //
+              widget.hintBuilder!(context),
+          ],
+        );
+      },
+      layerAboveBuilder: (context, textLayout) {
+        if (!_focusNode.hasFocus) {
+          return const SizedBox();
+        }
 
-          return TextLayoutCaret(
-            textLayout: textLayout,
-            style: widget.caretStyle,
-            position: _textEditingController.selection.isCollapsed //
-                ? _textEditingController.selection.extent
-                : null,
-            blinkController: _caretBlinkController,
-          );
-        },
-      ),
+        return TextLayoutCaret(
+          textLayout: textLayout,
+          style: widget.caretStyle,
+          position: _textEditingController.selection.isCollapsed //
+              ? _textEditingController.selection.extent
+              : null,
+          blinkController: _caretBlinkController,
+        );
+      },
     );
   }
 
