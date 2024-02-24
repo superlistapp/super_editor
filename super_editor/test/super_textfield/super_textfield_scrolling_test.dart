@@ -26,6 +26,18 @@ void main() {
         expect(SuperTextFieldInspector.hasScrollableExtent(), isFalse);
       });
 
+      testWidgetsOnAllPlatforms("scroll bar doesn't appear when viewport width slightly shrinks", (tester) async {
+        // Display a text field without an icon to the right.
+        await _pumpSingleLineTextField(tester);
+
+        // Pump a new frame where we add an icon to the right of the text field, slightly
+        // reducing the width of the text field.
+        await _pumpSingleLineTextField(tester, showClearIcon: true);
+
+        // Ensure that the text field isn't scrollable (the content shouldn't exceed the viewport).
+        expect(SuperTextFieldInspector.hasScrollableExtent(), isFalse);
+      });
+
       testWidgetsOnAllPlatforms("auto scrolls when the user types beyond viewport edge", (tester) async {
         const textFieldWidth = 400.0;
 
@@ -181,6 +193,7 @@ Future<void> _pumpSingleLineTextField(
   WidgetTester tester, {
   AttributedTextEditingController? controller,
   double? width,
+  bool showClearIcon = false,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -192,13 +205,24 @@ Future<void> _pumpSingleLineTextField(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SuperTextField(
-                  textController: controller,
-                  hintBuilder: _createHintBuilder("Hint text..."),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                  minLines: 1,
-                  maxLines: 1,
-                  inputSource: TextInputSource.ime,
+                Row(
+                  children: [
+                    Expanded(
+                      child: SuperTextField(
+                        textController: controller,
+                        hintBuilder: _createHintBuilder("Hint text..."),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                        minLines: 1,
+                        maxLines: 1,
+                        inputSource: TextInputSource.ime,
+                      ),
+                    ),
+                    if (showClearIcon) //
+                      const Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: Icon(Icons.clear, size: 16),
+                      ),
+                  ],
                 ),
               ],
             ),
