@@ -243,7 +243,18 @@ class DocumentImeSerializer {
     return true;
   }
 
+  /// Returns the first visible position in the IME content.
+  ///
+  /// If a placeholder is prepended, returns the first position after the placeholder,
+  /// otherwise, returns the first position.
+  TextPosition firstVisiblePosition() {
+    return didPrependPlaceholder //
+        ? TextPosition(offset: _prependedPlaceholder.length)
+        : const TextPosition(offset: 0);
+  }
+
   DocumentPosition _imeToDocumentPosition(TextPosition imePosition, {required bool isUpstream}) {
+    final affinity = isUpstream ? TextAffinity.upstream : TextAffinity.downstream;
     for (final range in imeRangesToDocTextNodes.keys) {
       if (range.start <= imePosition.offset && imePosition.offset <= range.end) {
         final node = _doc.getNodeById(imeRangesToDocTextNodes[range]!)!;
@@ -251,7 +262,7 @@ class DocumentImeSerializer {
         if (node is TextNode) {
           return DocumentPosition(
             nodeId: imeRangesToDocTextNodes[range]!,
-            nodePosition: TextNodePosition(offset: imePosition.offset - range.start),
+            nodePosition: TextNodePosition(offset: imePosition.offset - range.start, affinity: affinity),
           );
         } else {
           if (imePosition.offset <= range.start) {
