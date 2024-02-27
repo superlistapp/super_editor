@@ -2574,7 +2574,7 @@ Future<void> _pressShiftAltUpArrow(WidgetTester tester) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
   await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowUp, platform: 'macos');
   await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowUp, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.alt, platform: 'macos');
   await tester.sendKeyUpEvent(LogicalKeyboardKey.shift, platform: 'macos');
   await tester.pumpAndSettle();
 }
@@ -2584,7 +2584,7 @@ Future<void> _pressShiftAltDownArrow(WidgetTester tester) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
   await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowDown, platform: 'macos');
   await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowDown, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.alt, platform: 'macos');
   await tester.sendKeyUpEvent(LogicalKeyboardKey.shift, platform: 'macos');
   await tester.pumpAndSettle();
 }

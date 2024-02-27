@@ -6,9 +6,9 @@ import 'package:super_editor_markdown/src/markdown_to_document_parsing.dart';
 /// interpreting the clipboard content as Markdown.
 ExecutionInstruction pasteMarkdownOnCmdAndCtrlV({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 

@@ -1,3 +1,10 @@
+## [0.1.9] - Feb, 2024
+ * [FIX] - `BlinkController.isBlinking` now accounts for the use of `Timer`s in addition to `Ticker`s.
+ * [FIX] - Changing `textAlign` for `SuperText` correctly repositions carets, handles, and selection boxes for the newly aligned text.
+ * [FIX] - `TextLayoutCaret` now respects the controller given to the widget, instead of ignoring it.
+ * `TextLayout.getBoxesForSelection()` now allows you to choose between `tight` and `max` box sizes for each character box.
+   * Related: underlines are now continuous instead of being broken between characters.
+
 ## [0.1.8] - Dec, 2023
  * Added `TextUnderlineLayer` to draw underlines beneath text.
  * Added `collection` dependency.

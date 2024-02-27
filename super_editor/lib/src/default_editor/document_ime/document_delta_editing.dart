@@ -144,18 +144,31 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine(
         "Inserting text: '${delta.textInserted}', at insertion offset: ${delta.insertionOffset}, with ime selection: ${delta.selection}");
 
+    final insertionPosition = TextPosition(
+      offset: delta.insertionOffset,
+      affinity: delta.selection.affinity,
+    );
+
+    if (delta.textInserted == ' ' && _serializedDoc.isPositionInsidePlaceholder(insertionPosition)) {
+      // The IME is trying to insert a space inside the invisible range. This is a situation that happens
+      // on iOS when the user is composing a character at the beginning of a node using a korean keyboard.
+      // The IME deletes the first visible character and the space from the invisible characters,
+      // them it inserts the space back. We already adjust the deletion to avoid deleting the invisible space,
+      // so we should ignore this insertion.
+      //
+      // For more information, see #1828.
+      return;
+    }
+
     editorImeLog.fine("Converting IME insertion offset into a DocumentSelection");
     final insertionSelection = _serializedDoc.imeToDocumentSelection(
-      TextSelection.fromPosition(TextPosition(
-        offset: delta.insertionOffset,
-        affinity: delta.selection.affinity,
-      )),
+      TextSelection.fromPosition(insertionPosition),
     )!;
-
-    insert(insertionSelection, delta.textInserted);
 
     // Update the local IME value that changes with each delta.
     _previousImeValue = delta.apply(_previousImeValue);
+
+    insert(insertionSelection, delta.textInserted);
 
     // Update the IME to document serialization based on the insertion changes.
     _serializedDoc = DocumentImeSerializer(

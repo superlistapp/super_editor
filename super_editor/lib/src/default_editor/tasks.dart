@@ -287,9 +287,9 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
 
 ExecutionInstruction enterToInsertNewTask({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -324,9 +324,9 @@ ExecutionInstruction enterToInsertNewTask({
 
 ExecutionInstruction backspaceToConvertTaskToParagraph({
   required SuperEditorContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 

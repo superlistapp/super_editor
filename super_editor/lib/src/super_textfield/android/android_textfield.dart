@@ -472,10 +472,10 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   ///
   /// Some third party keyboards report backspace as a key press
   /// rather than a deletion delta, so we need to handle them manually
-  KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
-    _log.finer('_onKeyPressed - keyEvent: ${keyEvent.character}');
-    if (keyEvent is! RawKeyDownEvent) {
-      _log.finer('_onKeyPressed - not a "down" event. Ignoring.');
+  KeyEventResult _onKeyEventPressed(FocusNode focusNode, KeyEvent keyEvent) {
+    _log.finer('_onKeyEventPressed - keyEvent: ${keyEvent.character}');
+    if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+      _log.finer('_onKeyEventPressed - not a "down" event. Ignoring.');
       return KeyEventResult.ignored;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
@@ -543,7 +543,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       child: NonReparentingFocus(
         key: _textFieldKey,
         focusNode: _focusNode,
-        onKey: _onKeyPressed,
+        onKeyEvent: _onKeyEventPressed,
         child: CompositedTransformTarget(
           link: _textFieldLayerLink,
           child: AndroidTextFieldTouchInteractor(
@@ -595,63 +595,61 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
-    return FillWidthIfConstrained(
-      child: SuperText(
-        key: _textContentKey,
-        richText: textSpan,
-        textAlign: widget.textAlign,
-        textScaler: MediaQuery.textScalerOf(context),
-        layerBeneathBuilder: (context, textLayout) {
-          final isTextEmpty = _textEditingController.text.text.isEmpty;
-          final showHint = widget.hintBuilder != null &&
-              ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                  (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+    return SuperText(
+      key: _textContentKey,
+      richText: textSpan,
+      textAlign: widget.textAlign,
+      textScaler: MediaQuery.textScalerOf(context),
+      layerBeneathBuilder: (context, textLayout) {
+        final isTextEmpty = _textEditingController.text.text.isEmpty;
+        final showHint = widget.hintBuilder != null &&
+            ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-          return Stack(
-            children: [
-              if (widget.textController?.selection.isValid == true)
-                // Selection highlight beneath the text.
-                TextLayoutSelectionHighlight(
-                  textLayout: textLayout,
-                  style: SelectionHighlightStyle(
-                    color: widget.selectionColor,
-                  ),
-                  selection: widget.textController?.selection,
+        return Stack(
+          children: [
+            if (widget.textController?.selection.isValid == true)
+              // Selection highlight beneath the text.
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: SelectionHighlightStyle(
+                  color: widget.selectionColor,
                 ),
-              // Underline beneath the composing region.
-              if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
-                TextUnderlineLayer(
-                  textLayout: textLayout,
-                  underlines: [
-                    TextLayoutUnderline(
-                      style: UnderlineStyle(
-                        color: widget.textStyleBuilder({}).color ?? //
-                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
-                      ),
-                      range: widget.textController!.composingRegion,
+                selection: widget.textController?.selection,
+              ),
+            // Underline beneath the composing region.
+            if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
+              TextUnderlineLayer(
+                textLayout: textLayout,
+                underlines: [
+                  TextLayoutUnderline(
+                    style: UnderlineStyle(
+                      color: widget.textStyleBuilder({}).color ?? //
+                          (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
                     ),
-                  ],
-                ),
-              if (showHint) //
-                widget.hintBuilder!(context),
-            ],
-          );
-        },
-        layerAboveBuilder: (context, textLayout) {
-          if (!_focusNode.hasFocus) {
-            return const SizedBox();
-          }
+                    range: widget.textController!.composingRegion,
+                  ),
+                ],
+              ),
+            if (showHint) //
+              widget.hintBuilder!(context),
+          ],
+        );
+      },
+      layerAboveBuilder: (context, textLayout) {
+        if (!_focusNode.hasFocus) {
+          return const SizedBox();
+        }
 
-          return TextLayoutCaret(
-            textLayout: textLayout,
-            style: widget.caretStyle,
-            position: _textEditingController.selection.isCollapsed //
-                ? _textEditingController.selection.extent
-                : null,
-            blinkController: _caretBlinkController,
-          );
-        },
-      ),
+        return TextLayoutCaret(
+          textLayout: textLayout,
+          style: widget.caretStyle,
+          position: _textEditingController.selection.isCollapsed //
+              ? _textEditingController.selection.extent
+              : null,
+          blinkController: _caretBlinkController,
+        );
+      },
     );
   }
 
