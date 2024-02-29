@@ -5,6 +5,12 @@ import 'package:super_editor/super_editor.dart';
 
 /// A selection control, which displays a button with the selected color, and upon tap, displays a
 /// color picker with the available colors, from which the user can select a different color.
+///
+/// Includes the following keyboard selection behaviors:
+///
+///   * Pressing UP/DOWN moves the "active" color selection up/down.
+///   * Pressing LEFT/RIGHT moves the "active" color selection left/right.
+///   * Pressing ENTER selects the currently active color.
 class ColorSelector extends StatefulWidget {
   const ColorSelector({
     super.key,

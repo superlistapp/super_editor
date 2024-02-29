@@ -4,6 +4,13 @@ import 'package:super_editor/super_editor.dart';
 
 /// A selection control, which displays a button with the selected icon, and upon tap, displays a
 /// popover list of available icons, from which the user can select a different icon.
+///
+/// Includes the following keyboard selection behaviors:
+///
+///   * Pressing UP/DOWN moves the "active" icon selection up/down.
+///   * Pressing UP with the first icon active moves the active icon selection to the last icon.
+///   * Pressing DOWN with the last icon active moves the active icon selection to the first icon.
+///   * Pressing ENTER selects the currently active icon.
 class IconSelector extends StatefulWidget {
   const IconSelector({
     super.key,
