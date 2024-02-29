@@ -24,18 +24,7 @@ class IconSelector extends StatefulWidget {
 
   /// The [FocusNode], to which the popover list's [FocusNode] will be added as a child.
   ///
-  /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
-  /// entire ancestor path to "have focus", but only the lowest level descendant
-  /// in that path has "primary focus". This path is important because various
-  /// widgets alter their presentation or behavior based on whether or not they
-  /// currently have focus, even if they only have "non-primary focus".
-  ///
-  /// When the popover list of items is visible, that list will have primary focus.
-  /// Moreover, because the popover list is built in an `Overlay`, none of your
-  /// widgets are in the natural focus path for that popover list. Therefore, if you
-  /// need your widget tree to retain focus while the popover list is visible, then
-  /// you need to provide the [FocusNode] that the popover list should use as its
-  /// parent, thereby retaining focus for your widgets.
+  /// See [PopoverScaffold.parentFocusNode] for more information.
   final FocusNode? parentFocusNode;
 
   /// A group ID for a tap region that is shared with the popover list.
@@ -46,13 +35,7 @@ class IconSelector extends StatefulWidget {
 
   /// A [GlobalKey] to a widget that determines the bounds where the popover list can be displayed.
   ///
-  /// As the popover list follows the selected item, it can be displayed off-screen if this [IconSelector]
-  /// is close to the bottom of the screen.
-  ///
-  /// Passing a [boundaryKey] causes the popover list to be confined to the bounds of the widget
-  /// bound to the [boundaryKey].
-  ///
-  /// If `null`, the popover list is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
+  /// See [PopoverScaffold.boundaryKey] for more information.
   final GlobalKey? boundaryKey;
 
   /// The currently selected icon or `null` if no icon is selected.

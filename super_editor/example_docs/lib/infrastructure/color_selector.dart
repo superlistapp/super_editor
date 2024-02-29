@@ -27,18 +27,7 @@ class ColorSelector extends StatefulWidget {
 
   /// The [FocusNode], to which the color picker's [FocusNode] will be added as a child.
   ///
-  /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
-  /// entire ancestor path to "have focus", but only the lowest level descendant
-  /// in that path has "primary focus". This path is important because various
-  /// widgets alter their presentation or behavior based on whether or not they
-  /// currently have focus, even if they only have "non-primary focus".
-  ///
-  /// When the color picker of items is visible, that grid will have primary focus.
-  /// Moreover, because the color picker is built in an `Overlay`, none of your
-  /// widgets are in the natural focus path for that color picker. Therefore, if you
-  /// need your widget tree to retain focus while the color picker is visible, then
-  /// you need to provide the [FocusNode] that the color picker should use as its
-  /// parent, thereby retaining focus for your widgets.
+  /// See [PopoverScaffold.parentFocusNode] for more information.
   final FocusNode? parentFocusNode;
 
   /// A group ID for a tap region that is shared with the color picker.
@@ -49,13 +38,7 @@ class ColorSelector extends StatefulWidget {
 
   /// A [GlobalKey] to a widget that determines the bounds where the color picker can be displayed.
   ///
-  /// As the color picker follows the selected item, it can be displayed off-screen if this [ColorSelector]
-  /// is close to the bottom of the screen.
-  ///
-  /// Passing a [boundaryKey] causes the color picker to be confined to the bounds of the widget
-  /// bound to the [boundaryKey].
-  ///
-  /// If `null`, the color picker is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`.
+  /// See [PopoverScaffold.boundaryKey] for more information.
   final GlobalKey? boundaryKey;
 
   /// The currently selected color or `null` if no color is selected.
