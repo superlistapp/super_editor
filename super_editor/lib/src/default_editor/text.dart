@@ -239,6 +239,7 @@ extension DocumentSelectionWithText on Document {
     return false;
   }
 
+  /// Returns all attributions that appear throughout the entirety of the selected range.
   Set<Attribution> getAllAttributions(DocumentSelection selection) {
     final attributions = <Attribution>{};
 
@@ -297,6 +298,7 @@ extension DocumentSelectionWithText on Document {
     return attributions;
   }
 
+  /// Returns all attributions of type [T] that appear throughout the entirety of the selected range.
   Set<T> getAttributionsByType<T>(DocumentSelection selection) {
     final attributions = <T>{};
 
