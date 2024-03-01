@@ -112,7 +112,7 @@ class AttributedText {
     while (index <= range.end && attributionsThroughout.isNotEmpty) {
       final missingAttributions = <Attribution>{};
       for (final attribution in attributionsThroughout) {
-        if (!hasAttributionAt(index)) {
+        if (!hasAttributionAt(index, attribution: attribution)) {
           missingAttributions.add(attribution);
         }
       }

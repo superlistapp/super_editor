@@ -6,6 +6,7 @@ import 'attribution.dart';
 class ExpectedSpans {
   static const bold = NamedAttribution('bold');
   static const italics = NamedAttribution('italics');
+  static const underline = NamedAttribution('underline');
   static const strikethrough = NamedAttribution('strikethrough');
   static const hashTag = NamedAttribution('hashTag');
 
