@@ -114,10 +114,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
     if (node.type == ListItemType.ordered) {
       ordinalValue = 1;
       DocumentNode? nodeAbove = document.getNodeBefore(node);
-      while (nodeAbove != null &&
-          nodeAbove is ListItemNode &&
-          nodeAbove.type == ListItemType.ordered &&
-          nodeAbove.indent >= node.indent) {
+      while (nodeAbove != null && nodeAbove is ListItemNode && nodeAbove.indent >= node.indent) {
         if (nodeAbove.indent == node.indent) {
           ordinalValue = ordinalValue! + 1;
         }
