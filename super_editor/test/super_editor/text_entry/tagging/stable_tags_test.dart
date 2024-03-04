@@ -391,6 +391,50 @@ void main() {
         // Ensure that we received a notification when the tag was cancelled.
         expect(tagNotificationCount, 3);
       });
+
+      testWidgetsOnAllPlatforms("support emojis", (tester) async {
+        // Ensure we can type an emoji as first character
+        // https://github.com/superlistapp/super_editor/issues/1863 is fixed
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(""),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at the beginning of the paragraph.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Type an emoji as first charactet 💙
+        await tester.typeImeText("💙");
+
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 2),
+            ),
+          ),
+        );
+
+        //Place the caret before the emoji
+        await tester.pressLeftArrow();
+
+        // Type @, the TagRule trigger
+        // Ensure TagFinder.findTagArounPosition doesn't lead to a cropped emoji
+        // This would make Flutter ParagraphBuilder raise
+        // "Invalid argument(s): string is not well-formed UTF-16" on Flutter
+        await tester.typeImeText("@");
+
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@💙");
+      });
     });
 
     group("commits >", () {

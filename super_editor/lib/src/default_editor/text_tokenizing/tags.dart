@@ -23,6 +23,86 @@ class TagFinder {
       return null;
     }
 
+    int splitIndex = min(expansionPosition.offset - 1, rawText.length - 1);
+    splitIndex = max(splitIndex, 0);
+
+    if (tagRule.excludedCharacters.contains(rawText[splitIndex])) {
+      // The character where we're supposed to begin our expansion is a
+      // character that's not allowed in a tag. Therefore, no tag exists
+      // around the search offset.
+      return null;
+    }
+
+    // Create 2 splits of characters to navigate upstream and downstream the caret position.
+    final charactersBefore = rawText.substring(0, splitIndex).characters;
+    final iteratorUpstream = charactersBefore.iteratorAtEnd;
+
+    final charactersAfter = rawText.substring(splitIndex).characters;
+    final iteratorDownstream = charactersAfter.iterator;
+
+    if (iteratorUpstream.current != tagRule.trigger) {
+      while (iteratorUpstream.moveBack()) {
+        final current = iteratorUpstream.current;
+        if (tagRule.excludedCharacters.contains(current)) {
+          // The upstream character isn't allowed to appear in a tag. Break before moving
+          // the starting character index any further upstream.
+          break;
+        }
+
+        if (current == tagRule.trigger) {
+          // The character we just added to the token bounds is the trigger.
+          // We include it and stop looking any further upstream
+          iteratorUpstream.moveBack();
+          break;
+        }
+      }
+    }
+
+    while (iteratorDownstream.moveNext()) {
+      final current = iteratorDownstream.current;
+      if (current != tagRule.trigger && tagRule.excludedCharacters.contains(current)) {
+        break;
+      }
+    }
+
+    final tokenRange =
+        SpanRange(splitIndex - iteratorUpstream.stringAfterLength, splitIndex + iteratorDownstream.stringBeforeLength);
+    final tokenStartOffset = splitIndex - iteratorUpstream.stringAfterLength;
+
+    final tagText = text.substringInRange(tokenRange);
+    if (!tagText.startsWith(tagRule.trigger)) {
+      return null;
+    }
+
+    final tokenAttributions = text.getAttributionSpansInRange(attributionFilter: (a) => true, range: tokenRange);
+    if (!isTokenCandidate(tokenAttributions.map((span) => span.attribution).toSet())) {
+      return null;
+    }
+
+    final tagAroundPosition = TagAroundPosition(
+      indexedTag: IndexedTag(
+        Tag(tagRule.trigger, tagText.substring(1)),
+        nodeId,
+        tokenStartOffset,
+      ),
+      searchOffset: expansionPosition.offset,
+    );
+
+    return tagAroundPosition;
+  }
+
+  static TagAroundPosition? _previousVersionOffindTagAroundPosition({
+    required TagRule tagRule,
+    required String nodeId,
+    required AttributedText text,
+    required TextNodePosition expansionPosition,
+    required bool Function(Set<Attribution> tokenAttributions) isTokenCandidate,
+  }) {
+    final rawText = text.text;
+    if (rawText.isEmpty) {
+      return null;
+    }
+
     int tokenStartOffset = min(expansionPosition.offset - 1, rawText.length - 1);
     tokenStartOffset = max(tokenStartOffset, 0);
     if (tagRule.excludedCharacters.contains(rawText[tokenStartOffset])) {
