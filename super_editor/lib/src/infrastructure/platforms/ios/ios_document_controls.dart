@@ -624,7 +624,8 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   @visibleForTesting
   bool get isDownstreamHandleDisplayed => layoutData?.downstream != null;
 
-  _updateCaretFlash();
+  void _onSelectionChange() {
+    _updateCaretFlash();
     setState(() {
       // Schedule a new layout computation because the caret and/or handles need to move.
     });
