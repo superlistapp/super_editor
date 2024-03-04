@@ -625,9 +625,30 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   bool get isDownstreamHandleDisplayed => layoutData?.downstream != null;
 
   void _onSelectionChange() {
+    _updateCaretFlash();
     setState(() {
       // Schedule a new layout computation because the caret and/or handles need to move.
     });
+  }
+
+  void _updateCaretFlash() {
+    _caretBlinkController.jumpToOpaque();
+    _startOrStopBlinking();
+  }
+
+  void _startOrStopBlinking() {
+    // TODO: allow a configurable policy as to whether to show the caret at all when the selection is expanded: https://github.com/superlistapp/super_editor/issues/234
+    final wantsToBlink = widget.selection.value != null;
+    if (wantsToBlink && _caretBlinkController.isBlinking) {
+      return;
+    }
+    if (!wantsToBlink && !_caretBlinkController.isBlinking) {
+      return;
+    }
+
+    wantsToBlink //
+        ? _caretBlinkController.startBlinking()
+        : _caretBlinkController.stopBlinking();
   }
 
   void _onBlinkModeChange() {
