@@ -1443,7 +1443,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
     // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, SpanRange>();
-    bool alreadyHasAttributions = false;
+    int nodesAndSelectionsWithExistingSimilarAttributions = 0;
 
     for (final textNode in nodes) {
       if (textNode is! TextNode) {
@@ -1484,11 +1484,14 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
       final selectionRange = SpanRange(startOffset, endOffset);
 
-      alreadyHasAttributions = alreadyHasAttributions ||
-          textNode.text.hasAttributionsWithin(
-            attributions: attributions,
-            range: selectionRange,
-          );
+      final bool alreadyHasAttributions = textNode.text.hasAttributionsWithin(
+        attributions: attributions,
+        range: selectionRange,
+      );
+
+      if (alreadyHasAttributions) {
+        nodesAndSelectionsWithExistingSimilarAttributions++;
+      }
 
       nodesAndSelections.putIfAbsent(textNode, () => selectionRange);
     }
@@ -1498,6 +1501,12 @@ class ToggleTextAttributionsCommand implements EditCommand {
       for (Attribution attribution in attributions) {
         final node = entry.key;
         final range = entry.value;
+
+        if (nodesAndSelectionsWithExistingSimilarAttributions != nodesAndSelections.entries.length &&
+            node.text.hasAttributionsThroughout(attributions: attributions, range: range)) {
+          continue;
+        }
+
         editorDocLog.info(' - toggling attribution: $attribution. Range: $range');
 
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
