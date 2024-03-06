@@ -1443,7 +1443,10 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
     // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, SpanRange>();
-    int nodesAndSelectionsWithExistingSimilarAttributions = 0;
+
+    /// Number of nodes having all of the given attributions applied to any of
+    /// their characters.
+    int nodesWithExistingAttributions = 0;
 
     for (final textNode in nodes) {
       if (textNode is! TextNode) {
@@ -1490,7 +1493,9 @@ class ToggleTextAttributionsCommand implements EditCommand {
       );
 
       if (alreadyHasAttributions) {
-        nodesAndSelectionsWithExistingSimilarAttributions++;
+        // Each of the given attributions exists for atleast a single character within
+        // the current text node.
+        nodesWithExistingAttributions++;
       }
 
       nodesAndSelections.putIfAbsent(textNode, () => selectionRange);
@@ -1502,8 +1507,13 @@ class ToggleTextAttributionsCommand implements EditCommand {
         final node = entry.key;
         final range = entry.value;
 
-        if (nodesAndSelectionsWithExistingSimilarAttributions != nodesAndSelections.entries.length &&
-            node.text.hasAttributionsThroughout(attributions: attributions, range: range)) {
+        if (node.text.hasAttributionsThroughout(attributions: {attribution}, range: range) &&
+            nodesWithExistingAttributions != nodesAndSelections.entries.length) {
+          // Attribution is applied throughout this entire node and there is alteast one node
+          // that doesn't have this attribution. In that case, avoid toggling current node attribution
+          // as this indicates the current attribution should be applied across all the nodes.
+
+          editorDocLog.info(' - attribution not toggled: $attribution. Range: $range');
           continue;
         }
 
