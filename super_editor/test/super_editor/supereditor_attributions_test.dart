@@ -181,6 +181,155 @@ void main() {
           expect(doc, equalsMarkdown("[This is a linnk](https://google.com) pointing to google"));
         });
       });
+
+      group("when multiple nodes are selected", () {
+        testWidgetsOnAllPlatforms("toggles bold attribution across fully bold node and a plain node", (tester) async {
+          final context = await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphFullBoldThenParagraph(),
+              )
+              .pump();
+
+          final editor = context.editor;
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure bold attribution is applied partially to the first node.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**\n\nThis is the second node in a document.",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+          final secondNode = doc.getNodeById("2")!;
+
+          // Toggle bold attribution for both nodes.
+          editor.execute([
+            ToggleTextAttributionsRequest(
+              documentRange: DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: firstNode.beginningPosition,
+                ),
+                extent: DocumentPosition(
+                  nodeId: "2",
+                  nodePosition: secondNode.endPosition,
+                ),
+              ),
+              attributions: {boldAttribution},
+            ),
+          ]);
+
+          // Ensure bold attribution is applied to both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+            ),
+          );
+
+          // Toggle bold attribution for both nodes.
+          editor.execute([
+            ToggleTextAttributionsRequest(
+              documentRange: DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: firstNode.beginningPosition,
+                ),
+                extent: DocumentPosition(
+                  nodeId: "2",
+                  nodePosition: secondNode.endPosition,
+                ),
+              ),
+              attributions: {boldAttribution},
+            ),
+          ]);
+
+          // Ensure bold attribution was removed from both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.\n\nThis is the second node in a document.",
+            ),
+          );
+        });
+
+        testWidgetsOnAllPlatforms("toggles bold attribution across partially bold node and a plain node",
+            (tester) async {
+          final TestDocumentContext context = await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphPartiallyBoldThenParagraph(),
+              )
+              .pump();
+
+          final editor = context.editor;
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure bold attribution is applied to the first node.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first** node in a document.\n\nThis is the second node in a document.",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+          final secondNode = doc.getNodeById("2")!;
+
+          // Toggle bold attribution for both nodes.
+          editor.execute([
+            ToggleTextAttributionsRequest(
+              documentRange: DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: firstNode.beginningPosition,
+                ),
+                extent: DocumentPosition(
+                  nodeId: "2",
+                  nodePosition: secondNode.endPosition,
+                ),
+              ),
+              attributions: {boldAttribution},
+            ),
+          ]);
+
+          // Ensure bold attribution is applied to both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+            ),
+          );
+
+          // Toggle bold attribution for both nodes.
+          editor.execute([
+            ToggleTextAttributionsRequest(
+              documentRange: DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: firstNode.beginningPosition,
+                ),
+                extent: DocumentPosition(
+                  nodeId: "2",
+                  nodePosition: secondNode.endPosition,
+                ),
+              ),
+              attributions: {boldAttribution},
+            ),
+          ]);
+
+          // Ensure bold attribution was removed from both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.\n\nThis is the second node in a document.",
+            ),
+          );
+        });
+      });
     });
 
     group("applies color attributions", () {
@@ -396,3 +545,65 @@ void main() {
     });
   });
 }
+
+MutableDocument _paragraphFullBoldThenParagraph() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 36,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+          ),
+        ),
+      ],
+    );
+
+MutableDocument _paragraphPartiallyBoldThenParagraph() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 16,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+          ),
+        ),
+      ],
+    );
