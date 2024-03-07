@@ -36,7 +36,7 @@ class DeltaDocumentChangeListener {
             ..delete(change.deletedText.length),
         );
       } else if (change is NodeChangeEvent) {
-        // print(change);
+        throw UnsupportedError('Need more information on what changed.');
       } else if (change is NodeInsertedEvent) {
         changeDelta = (changeDelta ?? Delta()).compose(
           Delta()
