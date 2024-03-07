@@ -4,7 +4,7 @@ import 'package:js/js.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
 
 /// A convenience class that handles the ping-pong between the Dart side and the
-/// Javascript realm defined in web/index.html.
+/// Javascript realm defined in web/index.html for the example app.
 class JsGlue {
   const JsGlue();
 
