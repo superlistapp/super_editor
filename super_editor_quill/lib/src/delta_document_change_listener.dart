@@ -70,6 +70,8 @@ class DeltaDocumentChangeListener {
     }
   }
 
+  // TODO: figure out if we actually need to add `\n` at this level, or if it's
+  // more of a quill editor thing for full documents
   bool _willDocumentBeEmpty(List<DocumentChange> changes) {
     final nodesInDocument = _copy(_currentDocument) as MutableDocument;
     for (final change in changes) {
@@ -143,6 +145,9 @@ class DeltaDocumentChangeListener {
   }
 }
 
+// TODO: figure out how to either a) not have to "peek" at the document or
+// b) a nicer way to make sure the document does not change in the middle of
+// being peeked at
 Document _copy(Document document) {
   return MutableDocument(
     nodes: document.nodes.map((node) {
