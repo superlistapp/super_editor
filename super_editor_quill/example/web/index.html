@@ -38,9 +38,59 @@
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
+
+  <!-- QuillJS CSS & JS for the sample QuillJS editor -->
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.0-rc.2/dist/quill.snow.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.0-rc.2/dist/quill.js"></script>
 </head>
 <body>
   <script>
+    var quill;
+
+    // Waits until an element with the id "quill-editor" is available in the DOM,
+    // then calls [fn] and removes the periodic timer.
+    //
+    // We can't initialize the   Quill editor before it's available in the DOM, but
+    // for some reason, the `onPlatformViewCreated` callback from Flutter is called
+    // before the actual element is available in the DOM.
+    //
+    // A bit of an ugly hack but seems that it's necessary.
+    function waitUntilQuillEditorMounted(fn) {
+      var id;
+      id = setInterval(function() {
+        if (document.getElementById('quill-editor')) {
+          clearInterval(id);
+          fn();
+        }
+      }, 100);
+    }
+
+    // Sets up the Quill editor in the DOM element matching the provided [id].
+    //
+    // Called from the Dart side once the Flutter HtmlElementView is initialized.
+    function initializeQuillEditor() {
+      waitUntilQuillEditorMounted(function() {
+        quill = new Quill('#quill-editor', {theme: 'snow'});
+
+        // Sends the initial contents to the Dart side.
+        window.sendQuillContents(JSON.stringify(quill.getContents().ops));
+
+        quill.on("text-change", (delta, oldDelta, source) => {
+          window.onQuillTextChanged(
+            JSON.stringify(quill.getContents().ops),
+            JSON.stringify(delta.ops)
+          );
+        });
+      });
+    }
+
+    // Applies the given [delta] to the contents of the Quill editor.
+    //
+    // Called from the Dart side.
+    function updateQuillContents(delta) {
+      quill.updateContents(JSON.parse(delta));
+    }
+
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
       _flutter.loader.loadEntrypoint({

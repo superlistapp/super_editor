@@ -10,10 +10,22 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  super_editor: ^0.2.6 # TODO: We likely need to publish a new version
+  quill_delta: # TODO: Figure out what to do with this
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_test_robots:
   flutter_lints: ^3.0.0
+  test:
+
+dependency_overrides:
+  super_editor:
+    path: ../super_editor
+  quill_delta:
+    git:
+      url: https://github.com/superlistapp/quill-delta-dart.git
+      ref: master
 
 flutter:
