@@ -1,6 +1,8 @@
 import 'package:quill_delta/quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
 
+/// Translated QuillJS Deltas to SuperEditor EditRequests and executes them as
+/// one batch of requests.
 class DeltaApplier {
   const DeltaApplier({
     String Function() idGenerator = Editor.createNodeId,
@@ -8,6 +10,8 @@ class DeltaApplier {
 
   final String Function() _idGenerator;
 
+  /// Converts the [delta] to appropriate [EditRequest]s and executes them on
+  /// the given [editor].
   void apply(Editor editor, Delta delta) {
     final requests = <EditRequest>[];
     var offset = 0;

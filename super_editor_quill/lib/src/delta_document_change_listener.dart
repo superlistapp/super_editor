@@ -1,6 +1,7 @@
 import 'package:quill_delta/quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
 
+// TODO(roughike): this is a bit weird API - revisit it.
 class DeltaDocumentChangeListener {
   DeltaDocumentChangeListener({
     required this.peekAtDocument,
@@ -14,6 +15,8 @@ class DeltaDocumentChangeListener {
 
   late Document _currentDocument;
 
+  /// Converts the [changeLog] to a [Delta] change and calls [onDeltaChangeDetected]
+  /// when the change delta is not empty - i.e. when something actually changed.
   void call(DocumentChangeLog changeLog) {
     final appliedChanges = <DocumentChange>[];
     Delta? changeDelta;
