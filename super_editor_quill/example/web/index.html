@@ -47,7 +47,7 @@
   <script>
     var quill;
 
-    // Waits until an element with the id "quill-editor" is available in the DOM,
+    // Waits until an element with the id [domId] is available in the DOM,
     // then calls [fn] and removes the periodic timer.
     //
     // We can't initialize the   Quill editor before it's available in the DOM, but
@@ -55,27 +55,29 @@
     // before the actual element is available in the DOM.
     //
     // A bit of an ugly hack but seems that it's necessary.
-    function waitUntilQuillEditorMounted(fn) {
+    function waitUntilQuillEditorMounted(domId, fn) {
       var id;
       id = setInterval(function() {
-        if (document.getElementById('quill-editor')) {
+        if (document.getElementById(domId)) {
           clearInterval(id);
           fn();
         }
-      }, 100);
+      }, 10);
     }
 
-    // Sets up the Quill editor in the DOM element matching the provided [id].
+    // Sets up the Quill editor in the DOM element matching the provided [domId].
     //
     // Called from the Dart side once the Flutter HtmlElementView is initialized.
-    function initializeQuillEditor() {
-      waitUntilQuillEditorMounted(function() {
-        quill = new Quill('#quill-editor', {theme: 'snow'});
+    function initializeQuillEditor(domId) {
+      waitUntilQuillEditorMounted(domId, function() {
+        quill = new Quill(`#${domId}`, {theme: 'snow'});
 
         // Sends the initial contents to the Dart side.
         window.sendQuillContents(JSON.stringify(quill.getContents().ops));
 
-        quill.on("text-change", (delta, oldDelta, source) => {
+        // On every user-triggered editor update, send the full document contents
+        // and the change delta to the Dart side.
+        quill.on('text-change', (delta, oldDelta, source) => {
           window.onQuillTextChanged(
             JSON.stringify(quill.getContents().ops),
             JSON.stringify(delta.ops)

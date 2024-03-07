@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
@@ -8,14 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
 import 'package:super_editor_quill_example/js_glue.dart';
 
+String _quillEditorDomId(int counter) => 'quill-editor-$counter';
 const _jsGlue = JsGlue();
 
 void main() {
   platformViewRegistry.registerViewFactory(
     'quill-editor',
-    (_) {
-      return html.DivElement()..id = 'quill-editor';
-    },
+    (counter) => html.DivElement()..id = _quillEditorDomId(counter),
   );
 
   runApp(const MyApp());
@@ -96,6 +94,42 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
+  void _handleQuillContents(Delta contents) {
+    if (_applyingSuperEditorChange) return;
+    _applyingQuillChange = true;
+    const DeltaApplier().apply(_editor, contents);
+    _applyingQuillChange = false;
+    _initialized = true;
+
+    setState(() {
+      _deltaChangeLog.add((contents, null));
+    });
+  }
+
+  void _handleQuillTextChanged(Delta document, Delta change) {
+    if (_applyingSuperEditorChange) return;
+    _applyingQuillChange = true;
+    const DeltaApplier().apply(_editor, change);
+    _applyingQuillChange = false;
+
+    setState(() {
+      _deltaChangeLog.add((document, change));
+    });
+  }
+
+  void _handlePlatformViewCreated(int counter) {
+    _jsGlue
+      ..setInitialQuillContentsChangedListener(
+        _handleQuillContents,
+      )
+      ..setQuillTextChangedListener(
+        _handleQuillTextChanged,
+      )
+      ..initializeQuillEditor(
+        _quillEditorDomId(counter),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,16 +181,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           margin: const EdgeInsets.all(16),
                           child: HtmlElementView(
                             viewType: 'quill-editor',
-                            onPlatformViewCreated: (_) {
-                              _jsGlue
-                                ..setInitialQuillContentsChangedListener(
-                                  _handleQuillContents,
-                                )
-                                ..setQuillTextChangedListener(
-                                  _handleQuillTextChanged,
-                                );
-                              _jsGlue.initializeQuillEditor();
-                            },
+                            onPlatformViewCreated: _handlePlatformViewCreated,
                           ),
                         ),
                       ),
@@ -194,28 +219,5 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
     );
-  }
-
-  void _handleQuillContents(Delta contents) {
-    if (_applyingSuperEditorChange) return;
-    _applyingQuillChange = true;
-    const DeltaApplier().apply(_editor, contents);
-    _applyingQuillChange = false;
-    _initialized = true;
-
-    setState(() {
-      _deltaChangeLog.add((contents, null));
-    });
-  }
-
-  void _handleQuillTextChanged(Delta document, Delta change) {
-    if (_applyingSuperEditorChange) return;
-    _applyingQuillChange = true;
-    const DeltaApplier().apply(_editor, change);
-    _applyingQuillChange = false;
-
-    setState(() {
-      _deltaChangeLog.add((document, change));
-    });
   }
 }
