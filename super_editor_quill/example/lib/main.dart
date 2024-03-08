@@ -72,7 +72,9 @@ class _MyHomePageState extends State<MyHomePage> {
     _document.addListener((changeLog) {
       if (_initialized && _applyingQuillChange) return;
       _applyingSuperEditorChange = true;
-      listener(changeLog);
+
+      print(_document.nodes.single);
+      // listener(changeLog);
       _applyingSuperEditorChange = false;
     });
 

@@ -53,7 +53,39 @@ class DeltaApplier {
           );
         }
       } else if (operation.isRetain) {
-        offset = operation.length;
+        offset = offset + operation.length;
+
+        final attributes = operation.attributes ?? {};
+
+        if (attributes.isNotEmpty) {
+          final normalizedOffset = offset - 1;
+          final document =
+              editor.context.find<MutableDocument>(Editor.documentKey);
+          final start = _deltaPositionToDocumentPosition(
+            document: document,
+            pendingRequests: requests,
+            deltaPosition: normalizedOffset,
+          )!;
+          final end = _deltaPositionToDocumentPosition(
+            document: document,
+            pendingRequests: requests,
+            deltaPosition: normalizedOffset + operation.length,
+          )!;
+          final range = DocumentRange(start: start, end: end);
+
+          for (final attribute in attributes.entries) {
+            if (attribute.key == 'bold') {
+              if (attribute.value == true) {
+                requests.add(
+                  AddTextAttributionsRequest(
+                    documentRange: range,
+                    attributions: {boldAttribution},
+                  ),
+                );
+              }
+            }
+          }
+        }
       } else if (operation.isDelete) {
         final document =
             editor.context.find<MutableDocument>(Editor.documentKey);
@@ -113,6 +145,10 @@ DocumentPosition? _deltaPositionToDocumentPosition({
   var nodeIndex = 0;
 
   for (final node in document.nodes) {
+    if (node is! TextNode) {
+      throw UnimplementedError('Not handling other nodes than TextNodes yet.');
+    }
+
     final currentNodeLength = node is TextNode ? node.text.text.length : 0;
     if (currentAbsolutePosition + currentNodeLength >= deltaPosition) {
       return DocumentPosition(
@@ -131,7 +167,20 @@ DocumentPosition? _deltaPositionToDocumentPosition({
     currentAbsolutePosition++;
   }
 
-  throw StateError('not found');
+  final lastNode = document.nodes.last;
+  final lastNodeEndPosition = lastNode.endPosition;
+  if (lastNodeEndPosition is! TextNodePosition) {
+    throw UnimplementedError();
+  }
+
+  return DocumentPosition(
+    nodeId: lastNode.id,
+    nodePosition: TextNodePosition(
+      offset: lastNodeEndPosition.offset +
+          _shiftDeltaPositionBasedOnPendingRequests(pendingRequests),
+      affinity: lastNodeEndPosition.affinity,
+    ),
+  );
 }
 
 int _shiftDeltaPositionBasedOnPendingRequests(
