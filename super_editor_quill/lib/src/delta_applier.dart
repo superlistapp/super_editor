@@ -82,6 +82,13 @@ class DeltaApplier {
                     attributions: {boldAttribution},
                   ),
                 );
+              } else {
+                requests.add(
+                  RemoveTextAttributionsRequest(
+                    documentRange: range,
+                    attributions: {boldAttribution},
+                  ),
+                );
               }
             }
           }

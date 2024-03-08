@@ -734,6 +734,118 @@ void main() {
           ],
         );
       });
+
+      test(
+          'making already bold "abc" unbold one by one results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(editor, Delta()..retain(1, {'bold': null}));
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 1,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(1)
+            ..retain(1, {'bold': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(2)
+            ..retain(1, {'bold': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+            ),
+          ],
+        );
+      });
     });
   });
 }
