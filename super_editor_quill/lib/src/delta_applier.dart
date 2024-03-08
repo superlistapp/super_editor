@@ -1,13 +1,18 @@
 import 'package:quill_delta/quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
 
+import 'attributions.dart';
+
 /// Translated QuillJS Deltas to SuperEditor EditRequests and executes them as
 /// one batch of requests.
 class DeltaApplier {
-  const DeltaApplier({
+  DeltaApplier({
+    List<DeltaAttribution>? attributions,
     String Function() idGenerator = Editor.createNodeId,
-  }) : _idGenerator = idGenerator;
+  })  : _attributions = attributions ?? defaultAttributions,
+        _idGenerator = idGenerator;
 
+  final List<DeltaAttribution> _attributions;
   final String Function() _idGenerator;
 
   /// Converts the [delta] to appropriate [EditRequest]s and executes them on
@@ -74,22 +79,40 @@ class DeltaApplier {
           final range = DocumentRange(start: start, end: end);
 
           for (final attribute in attributes.entries) {
-            if (attribute.key == 'bold') {
-              if (attribute.value == true) {
-                requests.add(
-                  AddTextAttributionsRequest(
-                    documentRange: range,
-                    attributions: {boldAttribution},
-                  ),
+            final attribution = _attributions.singleWhere(
+              (e) => e.key == attribute.key,
+              orElse: () {
+                throw StateError(
+                  'No attribution handler implemented for ${attribute.key}',
                 );
-              } else {
-                requests.add(
-                  RemoveTextAttributionsRequest(
-                    documentRange: range,
-                    attributions: {boldAttribution},
-                  ),
-                );
-              }
+              },
+            );
+            final node = (document.getNodesInside(range.start, range.end).single
+                    as TextNode)
+                .text
+                .spans
+                .getAllAttributionsAt(
+                  (range.start.nodePosition as TextNodePosition).offset,
+                )
+                .singleOrNull;
+            if (attribute.value == false || attribute.value == null) {
+              requests.add(
+                RemoveTextAttributionsRequest(
+                  documentRange: range,
+                  attributions: {
+                    attribution.attribution(node!, attribute.value),
+                  },
+                ),
+              );
+            } else {
+              requests.add(
+                AddTextAttributionsRequest(
+                  documentRange: range,
+                  attributions: {
+                    attribution.attribution(node, attribute.value),
+                  },
+                ),
+              );
             }
           }
         }

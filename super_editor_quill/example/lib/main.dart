@@ -72,9 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _document.addListener((changeLog) {
       if (_initialized && _applyingQuillChange) return;
       _applyingSuperEditorChange = true;
-
-      print(_document.nodes.single);
-      // listener(changeLog);
+      listener(changeLog);
       _applyingSuperEditorChange = false;
     });
 
@@ -99,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _handleQuillContents(Delta contents) {
     if (_applyingSuperEditorChange) return;
     _applyingQuillChange = true;
-    const DeltaApplier().apply(_editor, contents);
+    DeltaApplier().apply(_editor, contents);
     _applyingQuillChange = false;
     _initialized = true;
 
@@ -111,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _handleQuillTextChanged(Delta document, Delta change) {
     if (_applyingSuperEditorChange) return;
     _applyingQuillChange = true;
-    const DeltaApplier().apply(_editor, change);
+    DeltaApplier().apply(_editor, change);
     _applyingQuillChange = false;
 
     setState(() {

@@ -1,6 +1,4 @@
-import 'package:quill_delta/quill_delta.dart';
-import 'package:super_editor/super_editor.dart';
-import 'package:super_editor_quill/src/delta_applier.dart';
+import 'package:super_editor_quill/super_editor_quill.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -835,6 +833,688 @@ void main() {
           Delta()
             ..retain(2)
             ..retain(1, {'bold': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+            ),
+          ],
+        );
+      });
+
+      test('making "abc" italic one by one results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(editor, Delta()..retain(1, {'italic': true}));
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(1)
+            ..retain(1, {'italic': true}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 1,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(2)
+            ..retain(1, {'italic': true}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      });
+
+      test(
+          'making already italic "abc" unitalic one by one results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(editor, Delta()..retain(1, {'italic': null}));
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 1,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(1)
+            ..retain(1, {'italic': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(2)
+            ..retain(1, {'italic': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+            ),
+          ],
+        );
+      });
+
+      test(
+          'making "abc" underlined one by one results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(editor, Delta()..retain(1, {'underline': true}));
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(1)
+            ..retain(1, {'underline': true}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 1,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(2)
+            ..retain(1, {'underline': true}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      });
+
+      test(
+          'making already underlined "abc" un-underlined one by one results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(editor, Delta()..retain(1, {'underline': null}));
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 1,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(1)
+            ..retain(1, {'underline': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(2)
+            ..retain(1, {'underline': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+            ),
+          ],
+        );
+      });
+
+      test('making "abc" linked one by one results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(
+          editor,
+          Delta()..retain(1, {'link': 'https://example.com'}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(1)
+            ..retain(1, {'link': 'https://example.com'}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 1,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(2)
+            ..retain(1, {'link': 'https://example.com'}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      });
+
+      test(
+          'making already linked "abc" un-linked one by one results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(editor, Delta()..retain(1, {'link': null}));
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 1,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(1)
+            ..retain(1, {'link': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(2)
+            ..retain(1, {'link': null}),
         );
         expect(
           document.nodes,
