@@ -83,6 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
         Editor.composerKey: _composer,
       },
       requestHandlers: [...defaultRequestHandlers],
+      reactionPipeline: [...defaultEditorReactions],
     );
   }
 

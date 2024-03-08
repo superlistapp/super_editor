@@ -1,5 +1,6 @@
 import 'package:quill_delta/quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_quill/super_editor_quill.dart';
 
 import 'attributions.dart';
 
@@ -7,12 +8,15 @@ import 'attributions.dart';
 /// one batch of requests.
 class DeltaApplier {
   DeltaApplier({
-    List<DeltaAttribution>? attributions,
+    List<DeltaBlockAttribution>? blockAttributions,
+    List<DeltaTextAttribution>? textAttributions,
     String Function() idGenerator = Editor.createNodeId,
-  })  : _attributions = attributions ?? defaultAttributions,
+  })  : _blockAttributions = blockAttributions ?? defaultBlockAttributions,
+        _textAttributions = textAttributions ?? defaultTextAttributions,
         _idGenerator = idGenerator;
 
-  final List<DeltaAttribution> _attributions;
+  final List<DeltaBlockAttribution> _blockAttributions;
+  final List<DeltaTextAttribution> _textAttributions;
   final String Function() _idGenerator;
 
   /// Converts the [delta] to appropriate [EditRequest]s and executes them on
@@ -79,11 +83,40 @@ class DeltaApplier {
           final range = DocumentRange(start: start, end: end);
 
           for (final attribute in attributes.entries) {
-            final attribution = _attributions.singleWhere(
+            final hasBlockAttribution = _blockAttributions
+                .any((element) => element.key == attribute.key);
+
+            if (hasBlockAttribution) {
+              assert(range.start.nodeId == range.end.nodeId);
+              final blockAttribution = _blockAttributions
+                  .singleWhere((element) => element.key == attribute.key);
+
+              if (attribute.value == false || attribute.value == null) {
+                requests.add(
+                  ChangeParagraphBlockTypeRequest(
+                    nodeId: range.end.nodeId,
+                    blockType:
+                        blockAttribution.attribution(null, attribute.value),
+                  ),
+                );
+              } else {
+                requests.add(
+                  ChangeParagraphBlockTypeRequest(
+                    nodeId: range.end.nodeId,
+                    blockType:
+                        blockAttribution.attribution(null, attribute.value),
+                  ),
+                );
+              }
+
+              continue;
+            }
+
+            final textAttribution = _textAttributions.singleWhere(
               (e) => e.key == attribute.key,
               orElse: () {
                 throw StateError(
-                  'No attribution handler implemented for ${attribute.key}',
+                  'No attribution handler implemented for ${attribute.key}: ${attribute.value}',
                 );
               },
             );
@@ -100,7 +133,7 @@ class DeltaApplier {
                 RemoveTextAttributionsRequest(
                   documentRange: range,
                   attributions: {
-                    attribution.attribution(node!, attribute.value),
+                    textAttribution.attribution(node!, attribute.value),
                   },
                 ),
               );
@@ -109,7 +142,7 @@ class DeltaApplier {
                 AddTextAttributionsRequest(
                   documentRange: range,
                   attributions: {
-                    attribution.attribution(node, attribute.value),
+                    textAttribution.attribution(node, attribute.value),
                   },
                 ),
               );

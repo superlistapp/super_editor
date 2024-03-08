@@ -1527,5 +1527,397 @@ void main() {
         );
       });
     });
+
+    group('paragraph block type conversions', () {
+      test(
+          'converting a paragraph to heading 1 and back results in correct document states',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Initial state
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+
+        // Add header 1 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': 1}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': header1Attribution},
+            ),
+          ],
+        );
+
+        // Remove header 1 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+      });
+
+      test(
+          'converting a paragraph to heading 2 and back results in correct document states',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Initial state
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+
+        // Add header 2 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': 2}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': header2Attribution},
+            ),
+          ],
+        );
+
+        // Remove header 2 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+      });
+
+      test(
+          'converting a paragraph to heading 3 and back results in correct document states',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Initial state
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+
+        // Add header 3 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': 3}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': header3Attribution},
+            ),
+          ],
+        );
+
+        // Remove header 3 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+      });
+
+      test(
+          'converting a paragraph to heading 4 and back results in correct document states',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Initial state
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+
+        // Add header 4 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': 4}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': header4Attribution},
+            ),
+          ],
+        );
+
+        // Remove header 4 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+      });
+
+      test(
+          'converting a paragraph to heading 5 and back results in correct document states',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Initial state
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+
+        // Add header 5 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': 5}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': header5Attribution},
+            ),
+          ],
+        );
+
+        // Remove header 5 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+      });
+
+      test(
+          'converting a paragraph to heading 6 and back results in correct document states',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Initial state
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+
+        // Add header 6 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': 6}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': header6Attribution},
+            ),
+          ],
+        );
+
+        // Remove header 6 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+      });
+    });
   });
 }
