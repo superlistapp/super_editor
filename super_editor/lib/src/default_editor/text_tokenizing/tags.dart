@@ -6,7 +6,6 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/strings.dart';
-import 'package:super_editor/super_editor.dart';
 
 /// A set of tools for finding tags within document text.
 class TagFinder {
