@@ -40,8 +40,10 @@ class TagFinder {
     final charactersAfter = rawText.substring(splitIndex).characters;
     final iteratorDownstream = charactersAfter.iterator;
 
+    var movedBack = iteratorUpstream.moveBack();
+
     if (iteratorUpstream.current != tagRule.trigger) {
-      while (iteratorUpstream.moveBack()) {
+      while (movedBack) {
         final current = iteratorUpstream.current;
         if (tagRule.excludedCharacters.contains(current)) {
           // The upstream character isn't allowed to appear in a tag. Break before moving
@@ -55,7 +57,10 @@ class TagFinder {
           iteratorUpstream.moveBack();
           break;
         }
+        movedBack = iteratorUpstream.moveBack();
       }
+    } else if (movedBack) {
+      iteratorUpstream.moveNext();
     }
 
     while (iteratorDownstream.moveNext()) {

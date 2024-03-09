@@ -100,7 +100,9 @@ void main() {
               ),
             ],
           ),
-          const TagRule(trigger: "@"),
+          plugin: StableTagPlugin(
+            tagRule: const TagRule(trigger: '@'),
+          ),
         );
 
         // Place the caret at "before |"
@@ -434,6 +436,47 @@ void main() {
 
         final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "@💙");
+      });
+
+      testWidgetsOnAllPlatforms("composing tag with consecutive trigger characters", (tester) async {
+        final plugin = StableTagPlugin();
+        await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+          plugin: plugin,
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Type two consecutive trigger characters.
+        await tester.typeImeText("@@");
+
+        final composingStableTag = plugin.tagIndex.composingStableTag.value!;
+
+        // Ensure the composing tag is correct is placed on the second @, with empty token.
+        expect(
+          composingStableTag,
+          const ComposingStableTag(
+              DocumentRange(
+                start: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 2),
+                ),
+                end: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 2),
+                ),
+              ),
+              ''),
+        );
+
+        final commitedTags = plugin.tagIndex.getCommittedTagsInTextNode('1');
+
+        expect(commitedTags.length, 1);
+
+        final commitTag = commitedTags.first;
+
+        // Ensure the committed tag is correct is the first @
+        expect(commitTag, const IndexedTag(Tag('@', ''), '1', 0));
       });
     });
 
@@ -1091,14 +1134,15 @@ void main() {
 
 Future<TestDocumentContext> _pumpTestEditor(
   WidgetTester tester,
-  MutableDocument document, [
-  TagRule tagRule = userTagRule,
-]) async {
+  MutableDocument document, {
+  SuperEditorPlugin? plugin,
+}) async {
   return await tester
       .createDocument()
       .withCustomContent(document)
-      .withPlugin(StableTagPlugin(
-        tagRule: tagRule,
-      ))
+      .withPlugin(plugin ??
+          StableTagPlugin(
+            tagRule: userTagRule,
+          ))
       .pump();
 }
