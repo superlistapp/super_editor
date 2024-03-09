@@ -114,6 +114,11 @@ extension CharacterMovement on String {
       throw Exception("Index '$textOffset' is out of string range. Length: $length");
     }
 
+    // print("_moveOffsetByCharacter");
+    // print(" - current text offset: $textOffset");
+    // print(" - characters to move: $characterCount");
+    // print(" - moving upstream? $upstream");
+
     // Create a character range, initially with zero length
     // Note that the getter for this object is confusingly named: it is an iterator but includes lots of functionality
     // beyond that interface, most importantly for us a range over this string that can be manipulated in terms of
@@ -124,11 +129,15 @@ extension CharacterMovement on String {
     // to us in terms of code units but the iterator deals in grapheme clusters, so we need to manually count the length
     // of each cluster until we reach the desired offset
     range.expandWhile((char) {
+      // print("Visiting a character: '$char' - length: ${char.length}");
       remainingOffset -= char.length;
+      // remainingOffset -= 1;
       return remainingOffset >= 0;
     });
     // Verify that the move is possible with the requested character count
     if (upstream ? range.current.length < characterCount : range.stringAfterLength < characterCount) {
+      // print(
+      //     "The move is not possible given the requested character count. characterCount: $characterCount, range length: ${range.current.length}, string after length: ${range.stringAfterLength}");
       return null;
     }
     // Expand or contract the range by the requested number of characters

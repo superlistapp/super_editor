@@ -23,7 +23,8 @@ class TagFinder {
       return null;
     }
 
-    int tokenStartOffset = min(expansionPosition.offset - 1, rawText.length - 1);
+    final upstreamFromExpansionPosition = rawText.moveOffsetUpstreamByCharacter(expansionPosition.offset) ?? 0;
+    int tokenStartOffset = min(upstreamFromExpansionPosition, rawText.length - 1);
     tokenStartOffset = max(tokenStartOffset, 0);
     if (tagRule.excludedCharacters.contains(rawText[tokenStartOffset])) {
       // The character where we're supposed to begin our expansion is a
@@ -35,6 +36,10 @@ class TagFinder {
     int tokenEndOffset = min(expansionPosition.offset - 1, rawText.length - 1);
     tokenEndOffset = max(tokenEndOffset, 0);
 
+    // Push upstream until we reach the start of the token, or the start of the available text.
+    //
+    // WARNING: This text offset push needs to move by character, which might be a multi-code-point
+    // character, like an emoji.
     if (rawText[tokenStartOffset] != tagRule.trigger) {
       while (tokenStartOffset > 0) {
         final upstreamCharacterIndex = rawText.moveOffsetUpstreamByCharacter(tokenStartOffset)!;
@@ -56,15 +61,27 @@ class TagFinder {
       }
     }
 
-    while (tokenEndOffset < rawText.length - 1) {
-      final downstreamCharacterIndex = rawText.moveOffsetDownstreamByCharacter(tokenEndOffset)!;
-      final downstreamCharacter = rawText[downstreamCharacterIndex];
-      if (downstreamCharacter != tagRule.trigger && tagRule.excludedCharacters.contains(downstreamCharacter)) {
+    // Push downstream until we reach the end of the token, or the end of the available text.
+    //
+    // WARNING: This text offset push needs to move by character, which might be a multi-code-point
+    // character, like an emoji.
+    int? nextCharacterOffset = rawText.moveOffsetDownstreamByCharacter(tokenEndOffset);
+    while (nextCharacterOffset != null && nextCharacterOffset < rawText.length) {
+      if (nextCharacterOffset >= rawText.length) {
         break;
       }
 
-      tokenEndOffset = downstreamCharacterIndex;
+      final downstreamCharacter = rawText[nextCharacterOffset];
+      if (downstreamCharacter != tagRule.trigger && tagRule.excludedCharacters.contains(downstreamCharacter)) {
+        // We've either run into a tag trigger character, or a character that's not allowed
+        // in a tag. Use the previous offset as the end-of-token offset.
+        break;
+      }
+
+      tokenEndOffset = nextCharacterOffset;
+      nextCharacterOffset = rawText.moveOffsetDownstreamByCharacter(tokenEndOffset);
     }
+
     // Make end off exclusive.
     tokenEndOffset += 1;
 

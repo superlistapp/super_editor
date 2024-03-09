@@ -650,6 +650,56 @@ void main() {
         );
       });
     });
+
+    group("emojis >", () {
+      // Based on bug https://github.com/superlistapp/super_editor/issues/1882
+      testWidgetsOnArbitraryDesktop("can appear at the beginning of text", (tester) async {
+        // This test essentially verifies that the tag action looks upstream and downstream by
+        // character, while accounting for multi-code-point characters like emojis.
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText("💙"),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at "💙|" (index is 2 because emoji has two code points).
+        await tester.placeCaretInParagraph("1", 2);
+
+        // Try to move the caret to the left side of the emoji.
+        await tester.pressLeftArrow();
+
+        // Ensure the caret is at the start of the text.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+
+        // Try to move the caret to the right side of the emoji.
+        await tester.pressRightArrow();
+
+        // Ensure the caret sits after the emoji.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 2),
+            ),
+          ),
+        );
+      });
+    });
   });
 }
 
