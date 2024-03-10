@@ -363,7 +363,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey);
     final lineHeight = _controller.text.text.isEmpty || textLayout == null
         ? 0.0
-        : textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
+        : textLayout.getHeightForCaret(const TextPosition(offset: 0)) ??
+            textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
     if (lineHeight > 0) {
       return lineHeight;
     }
