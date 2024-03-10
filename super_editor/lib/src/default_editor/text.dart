@@ -1444,8 +1444,6 @@ class ToggleTextAttributionsCommand implements EditCommand {
     // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, SpanRange>();
 
-    bool alreadyHasAttributions = true;
-
     for (final textNode in nodes) {
       if (textNode is! TextNode) {
         continue;
@@ -1485,28 +1483,29 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
       final selectionRange = SpanRange(startOffset, endOffset);
 
-      alreadyHasAttributions = alreadyHasAttributions &&
-          textNode.text.hasAttributionsWithin(
-            attributions: attributions,
-            range: selectionRange,
-          );
-
       nodesAndSelections.putIfAbsent(textNode, () => selectionRange);
     }
 
-    // Toggle attributions.
-    for (final entry in nodesAndSelections.entries) {
-      for (Attribution attribution in attributions) {
+    for (Attribution attribution in attributions) {
+      final allNodesHaveThisAttributionAppliedThroughout = nodesAndSelections.entries.every((entry) {
+        final node2 = entry.key;
+        final range2 = entry.value;
+        return node2.text.hasAttributionsThroughout(attributions: {attribution}, range: range2);
+      });
+
+      for (final entry in nodesAndSelections.entries) {
         final node = entry.key;
         final range = entry.value;
 
-        if (!alreadyHasAttributions && node.text.hasAttributionsThroughout(attributions: {attribution}, range: range)) {
-          // Attribution is applied throughout this entire node and there is alteast one node
-          // that doesn't have this attribution. In that case, avoid toggling current node attribution
-          // as this indicates the current attribution should be applied across all the nodes.
+        if (nodesAndSelections.length > 1) {
+          final bool hasAttributionAppliedThroughout =
+              node.text.hasAttributionsThroughout(attributions: {attribution}, range: range);
 
-          editorDocLog.info(' - attribution not toggled: $attribution. Range: $range');
-          continue;
+          if (hasAttributionAppliedThroughout) {
+            if (!allNodesHaveThisAttributionAppliedThroughout) {
+              continue;
+            }
+          }
         }
 
         editorDocLog.info(' - toggling attribution: $attribution. Range: $range');
