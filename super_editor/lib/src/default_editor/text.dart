@@ -1444,9 +1444,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
     // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, SpanRange>();
 
-    /// Number of nodes having all of the given attributions applied to any of
-    /// their characters.
-    int nodesWithExistingAttributions = 0;
+    bool alreadyHasAttributions = true;
 
     for (final textNode in nodes) {
       if (textNode is! TextNode) {
@@ -1487,16 +1485,11 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
       final selectionRange = SpanRange(startOffset, endOffset);
 
-      final bool alreadyHasAttributions = textNode.text.hasAttributionsWithin(
-        attributions: attributions,
-        range: selectionRange,
-      );
-
-      if (alreadyHasAttributions) {
-        // Each of the given attributions exists for atleast a single character within
-        // the current text node.
-        nodesWithExistingAttributions++;
-      }
+      alreadyHasAttributions = alreadyHasAttributions &&
+          textNode.text.hasAttributionsWithin(
+            attributions: attributions,
+            range: selectionRange,
+          );
 
       nodesAndSelections.putIfAbsent(textNode, () => selectionRange);
     }
@@ -1507,8 +1500,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
         final node = entry.key;
         final range = entry.value;
 
-        if (node.text.hasAttributionsThroughout(attributions: {attribution}, range: range) &&
-            nodesWithExistingAttributions != nodesAndSelections.entries.length) {
+        if (!alreadyHasAttributions && node.text.hasAttributionsThroughout(attributions: {attribution}, range: range)) {
           // Attribution is applied throughout this entire node and there is alteast one node
           // that doesn't have this attribution. In that case, avoid toggling current node attribution
           // as this indicates the current attribution should be applied across all the nodes.
