@@ -505,6 +505,34 @@ void main() {
   });
 }
 
+MutableDocument _paragraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+      ],
+    );
+
+MutableDocument _paragraphThenParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+          ),
+        ),
+      ],
+    );
+
 MutableDocument _paragraphFullBoldThenParagraph() => MutableDocument(
       nodes: [
         ParagraphNode(
@@ -566,3 +594,28 @@ MutableDocument _paragraphPartiallyBoldThenParagraph() => MutableDocument(
         ),
       ],
     );
+
+extension _GetDocumentPosition on DocumentNode {
+  DocumentPosition get beginningDocumentPosition {
+    return DocumentPosition(
+      nodeId: id,
+      nodePosition: beginningPosition,
+    );
+  }
+
+  DocumentPosition get endDocumentPosition {
+    return DocumentPosition(
+      nodeId: id,
+      nodePosition: endPosition,
+    );
+  }
+
+  DocumentPosition atOffset(int offset) {
+    return DocumentPosition(
+      nodeId: id,
+      nodePosition: TextNodePosition(
+        offset: offset,
+      ),
+    );
+  }
+}
