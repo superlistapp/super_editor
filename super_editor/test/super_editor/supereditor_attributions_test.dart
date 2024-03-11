@@ -7,6 +7,7 @@ import 'package:super_editor/src/test/ime.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
 
 import 'supereditor_test_tools.dart';
 import 'test_documents.dart';
@@ -184,14 +185,13 @@ void main() {
 
       group("when multiple nodes are selected", () {
         testWidgetsOnAllPlatforms("toggles bold attribution across fully bold node and a plain node", (tester) async {
-          final context = await tester //
+          await tester //
               .createDocument()
               .withCustomContent(
                 _paragraphFullBoldThenParagraph(),
               )
               .pump();
 
-          final editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           // Ensure bold attribution is applied partially to the first node.
@@ -206,21 +206,11 @@ void main() {
           final secondNode = doc.getNodeById("2")!;
 
           // Toggle bold attribution for both nodes.
-          editor.execute([
-            ToggleTextAttributionsRequest(
-              documentRange: DocumentSelection(
-                base: DocumentPosition(
-                  nodeId: "1",
-                  nodePosition: firstNode.beginningPosition,
-                ),
-                extent: DocumentPosition(
-                  nodeId: "2",
-                  nodePosition: secondNode.endPosition,
-                ),
-              ),
-              attributions: {boldAttribution},
-            ),
-          ]);
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            selectionBaseNode: firstNode,
+            selectionExtentNode: secondNode,
+            attributions: {boldAttribution},
+          );
 
           // Ensure bold attribution is applied to both nodes.
           expect(
@@ -231,21 +221,11 @@ void main() {
           );
 
           // Toggle bold attribution for both nodes.
-          editor.execute([
-            ToggleTextAttributionsRequest(
-              documentRange: DocumentSelection(
-                base: DocumentPosition(
-                  nodeId: "1",
-                  nodePosition: firstNode.beginningPosition,
-                ),
-                extent: DocumentPosition(
-                  nodeId: "2",
-                  nodePosition: secondNode.endPosition,
-                ),
-              ),
-              attributions: {boldAttribution},
-            ),
-          ]);
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            selectionBaseNode: firstNode,
+            selectionExtentNode: secondNode,
+            attributions: {boldAttribution},
+          );
 
           // Ensure bold attribution was removed from both nodes.
           expect(
@@ -258,14 +238,13 @@ void main() {
 
         testWidgetsOnAllPlatforms("toggles bold attribution across partially bold node and a plain node",
             (tester) async {
-          final TestDocumentContext context = await tester //
+          await tester //
               .createDocument()
               .withCustomContent(
                 _paragraphPartiallyBoldThenParagraph(),
               )
               .pump();
 
-          final editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           // Ensure bold attribution is applied to the first node.
@@ -280,21 +259,11 @@ void main() {
           final secondNode = doc.getNodeById("2")!;
 
           // Toggle bold attribution for both nodes.
-          editor.execute([
-            ToggleTextAttributionsRequest(
-              documentRange: DocumentSelection(
-                base: DocumentPosition(
-                  nodeId: "1",
-                  nodePosition: firstNode.beginningPosition,
-                ),
-                extent: DocumentPosition(
-                  nodeId: "2",
-                  nodePosition: secondNode.endPosition,
-                ),
-              ),
-              attributions: {boldAttribution},
-            ),
-          ]);
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            selectionBaseNode: firstNode,
+            selectionExtentNode: secondNode,
+            attributions: {boldAttribution},
+          );
 
           // Ensure bold attribution is applied to both nodes.
           expect(
@@ -305,21 +274,11 @@ void main() {
           );
 
           // Toggle bold attribution for both nodes.
-          editor.execute([
-            ToggleTextAttributionsRequest(
-              documentRange: DocumentSelection(
-                base: DocumentPosition(
-                  nodeId: "1",
-                  nodePosition: firstNode.beginningPosition,
-                ),
-                extent: DocumentPosition(
-                  nodeId: "2",
-                  nodePosition: secondNode.endPosition,
-                ),
-              ),
-              attributions: {boldAttribution},
-            ),
-          ]);
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            selectionBaseNode: firstNode,
+            selectionExtentNode: secondNode,
+            attributions: {boldAttribution},
+          );
 
           // Ensure bold attribution was removed from both nodes.
           expect(
