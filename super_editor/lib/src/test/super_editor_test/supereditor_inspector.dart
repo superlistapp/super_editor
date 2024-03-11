@@ -301,6 +301,33 @@ class SuperEditorInspector {
     return documentLayoutElement.state as DocumentLayout;
   }
 
+  /// Toggles given attributions for the given document selection.
+  ///
+  /// {@macro supereditor_finder}
+  static void toggleAttributionsForDocumentSelection({
+    required DocumentNode selectionBaseNode,
+    required DocumentNode selectionExtentNode,
+    required Set<Attribution> attributions,
+  }) {
+    final editor = findEditor();
+
+    return editor.execute([
+      ToggleTextAttributionsRequest(
+        documentRange: DocumentSelection(
+          base: DocumentPosition(
+            nodeId: selectionBaseNode.id,
+            nodePosition: selectionBaseNode.beginningPosition,
+          ),
+          extent: DocumentPosition(
+            nodeId: selectionExtentNode.id,
+            nodePosition: selectionExtentNode.endPosition,
+          ),
+        ),
+        attributions: attributions,
+      )
+    ]);
+  }
+
   /// Returns `true` if [SuperEditor]'s policy believes that a mobile toolbar should
   /// be visible right now, or `false` otherwise.
   ///
