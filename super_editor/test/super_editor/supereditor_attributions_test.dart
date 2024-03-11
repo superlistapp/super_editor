@@ -183,6 +183,211 @@ void main() {
         });
       });
 
+      group("when a single node is selected", () {
+        testWidgetsOnAllPlatforms("toggles attribution throughout a node", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphDoc(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure no attributions are applied to the node.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")! as TextNode;
+
+          // Toggle bold attribution for the selection.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: firstNode.endDocumentPosition,
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution is applied to the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**",
+            ),
+          );
+
+          // Toggle bold attribution for the selection.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: firstNode.endDocumentPosition,
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution was removed from the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.",
+            ),
+          );
+        });
+
+        testWidgetsOnAllPlatforms("toggles attribution for partial node selection", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphDoc(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure no attributions are applied to the node.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+
+          // Toggle bold attribution for the selection.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: firstNode.atOffset(17),
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution is applied to the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first** node in a document.",
+            ),
+          );
+
+          // Toggle bold attribution for the selection.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: firstNode.atOffset(17),
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution was removed from the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.",
+            ),
+          );
+        });
+
+        // toggles attribution for a partial text section within a fully attributed node
+        testWidgetsOnAllPlatforms("toggles attribution for a partially selected fully attributed node", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _fullyBoldParagraphDoc(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure bold attribution is applied to the node.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+
+          // Toggle bold attribution for the selection.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: firstNode.atOffset(17),
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution is removed for the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first** node in a document.**",
+            ),
+          );
+
+          // Toggle bold attribution for the selection.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: firstNode.atOffset(17),
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution is applied throughout the node.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first**** node in a document.**",
+            ),
+          );
+        });
+        testWidgetsOnAllPlatforms("toggles a different attribution for fully attributed node", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _fullyBoldParagraphDoc(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+
+          // Toggle italic attribution for the selection.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: firstNode.atOffset(17),
+            attributions: {italicsAttribution},
+          );
+
+          // Ensure italic attribution is applied to the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "***This is the first* node in a document.**",
+            ),
+          );
+
+          // Toggle bold attribution for the selection.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: firstNode.atOffset(17),
+            attributions: {italicsAttribution},
+          );
+
+          // Ensure bold attribution is applied throughout the node.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**",
+            ),
+          );
+        });
+      });
+
       group("when multiple nodes are selected", () {
         testWidgetsOnAllPlatforms("toggles attribution across multiple nodes", (tester) async {
           await tester //
@@ -300,7 +505,7 @@ void main() {
 
           final doc = SuperEditorInspector.findDocument()!;
 
-          // Ensure bold attribution is applied to the first node.
+          // Ensure bold attribution is applied partially to the first node.
           expect(
             doc,
             equalsMarkdown(
@@ -342,6 +547,219 @@ void main() {
           );
         });
       });
+
+      testWidgetsOnAllPlatforms("toggles an attribution across a fully attributed and partially attributed node",
+          (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(
+              _paragraphFullyBoldThenParagraphPartiallyBold(),
+            )
+            .pump();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure bold attribution is applied partially to first node and
+        // fully to second node.
+        expect(
+          doc,
+          equalsMarkdown(
+            "**This is the first** node in a document.\n\n**This is the second node in a document.**",
+          ),
+        );
+
+        final firstNode = doc.getNodeById("1")!;
+        final secondNode = doc.getNodeById("2")!;
+
+        // Toggle bold attribution for both nodes.
+        SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          base: firstNode.beginningDocumentPosition,
+          extent: secondNode.endDocumentPosition,
+          attributions: {boldAttribution},
+        );
+
+        // Ensure bold attribution is applied to both nodes.
+        expect(
+          doc,
+          equalsMarkdown(
+            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+          ),
+        );
+
+        // Toggle bold attribution for both nodes.
+        SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          base: firstNode.beginningDocumentPosition,
+          extent: secondNode.endDocumentPosition,
+          attributions: {boldAttribution},
+        );
+
+        // Ensure bold attribution was removed from both nodes.
+        expect(
+          doc,
+          equalsMarkdown(
+            "This is the first node in a document.\n\nThis is the second node in a document.",
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("toggles an attribution across multiple partially attributed node", (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(
+              _paragraphPartiallyBoldThenParagraphPartiallyBold(),
+            )
+            .pump();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure bold attribution is applied to the first node.
+        expect(
+          doc,
+          equalsMarkdown(
+            "**This is the first** node in a document.\n\n**This is the second** node in a document.",
+          ),
+        );
+
+        final firstNode = doc.getNodeById("1")!;
+        final secondNode = doc.getNodeById("2")!;
+
+        // Toggle bold attribution for both nodes.
+        SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          base: firstNode.beginningDocumentPosition,
+          extent: secondNode.endDocumentPosition,
+          attributions: {boldAttribution},
+        );
+
+        // Ensure bold attribution is applied to both nodes.
+        expect(
+          doc,
+          equalsMarkdown(
+            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+          ),
+        );
+
+        // Toggle bold attribution for both nodes.
+        SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          base: firstNode.beginningDocumentPosition,
+          extent: secondNode.endDocumentPosition,
+          attributions: {boldAttribution},
+        );
+
+        // Ensure bold attribution was removed from both nodes.
+        expect(
+          doc,
+          equalsMarkdown(
+            "This is the first node in a document.\n\nThis is the second node in a document.",
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("toggles an attribution across multiple fully attributed node", (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(
+              _paragraphFullBoldThenParagraphFullyBold(),
+            )
+            .pump();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure bold attribution is applied to both nodes.
+        expect(
+          doc,
+          equalsMarkdown(
+            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+          ),
+        );
+
+        final firstNode = doc.getNodeById("1")!;
+        final secondNode = doc.getNodeById("2")!;
+
+        // Toggle italic attribution for both nodes.
+        SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          base: firstNode.beginningDocumentPosition,
+          extent: secondNode.endDocumentPosition,
+          attributions: {italicsAttribution},
+        );
+
+        // Ensure the selection has both bold and italic attributions applied.
+        expect(
+          doc,
+          equalsMarkdown(
+            "***This is the first node in a document.***\n\n***This is the second node in a document.***",
+          ),
+        );
+
+        // Toggle bold attribution for both nodes.
+        SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          base: firstNode.beginningDocumentPosition,
+          extent: secondNode.endDocumentPosition,
+          attributions: {italicsAttribution},
+        );
+
+        // Ensure bold attribution was removed from both nodes.
+        expect(
+          doc,
+          equalsMarkdown(
+            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("toggles an attribution for a partial selection across multiple fully attributed node",
+          (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(
+              _paragraphFullBoldThenParagraphFullyBold(),
+            )
+            .pump();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure bold attribution is applied to the selection.
+        expect(
+          doc,
+          equalsMarkdown(
+            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+          ),
+        );
+
+        final firstNode = doc.getNodeById("1")!;
+        final secondNode = doc.getNodeById("2")!;
+
+        // Toggle bold attribution for both nodes.
+        SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          base: firstNode.beginningDocumentPosition,
+          extent: secondNode.atOffset(18),
+          attributions: {italicsAttribution},
+        );
+
+        // Ensure the selection has both bold and italic attributions applied.
+        expect(
+          doc,
+          equalsMarkdown(
+            "***This is the first node in a document.***\n\n***This is the second* node in a document.**",
+          ),
+        );
+
+        // Toggle bold attribution for both nodes.
+        SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          base: firstNode.beginningDocumentPosition,
+          extent: secondNode.atOffset(18),
+          attributions: {italicsAttribution},
+        );
+
+        // Ensure bold attribution was applied to both nodes.
+        expect(
+          doc,
+          equalsMarkdown(
+            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+          ),
+        );
+      });
+
+      // applies multiple attributions to multiple nodes
     });
 
     group("applies color attributions", () {
@@ -569,6 +987,30 @@ MutableDocument _paragraphDoc() => MutableDocument(
       ],
     );
 
+MutableDocument _fullyBoldParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+              "This is the first node in a document.",
+              AttributedSpans(
+                attributions: [
+                  const SpanMarker(
+                    attribution: boldAttribution,
+                    offset: 0,
+                    markerType: SpanMarkerType.start,
+                  ),
+                  const SpanMarker(
+                    attribution: boldAttribution,
+                    offset: 36,
+                    markerType: SpanMarkerType.end,
+                  ),
+                ],
+              )),
+        ),
+      ],
+    );
+
 MutableDocument _paragraphThenParagraphDoc() => MutableDocument(
       nodes: [
         ParagraphNode(
@@ -643,6 +1085,141 @@ MutableDocument _paragraphPartiallyBoldThenParagraph() => MutableDocument(
           id: "2",
           text: AttributedText(
             "This is the second node in a document.",
+          ),
+        ),
+      ],
+    );
+
+MutableDocument _paragraphFullyBoldThenParagraphPartiallyBold() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 16,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 37,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+
+MutableDocument _paragraphPartiallyBoldThenParagraphPartiallyBold() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 16,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 17,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+
+MutableDocument _paragraphFullBoldThenParagraphFullyBold() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 36,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: boldAttribution,
+                  offset: 37,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
           ),
         ),
       ],

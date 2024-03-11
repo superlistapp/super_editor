@@ -305,8 +305,8 @@ class SuperEditorInspector {
   ///
   /// {@macro supereditor_finder}
   static void toggleAttributionsForDocumentSelection({
-    required DocumentNode selectionBaseNode,
-    required DocumentNode selectionExtentNode,
+    required DocumentPosition base,
+    required DocumentPosition extent,
     required Set<Attribution> attributions,
   }) {
     final editor = findEditor();
@@ -314,14 +314,8 @@ class SuperEditorInspector {
     return editor.execute([
       ToggleTextAttributionsRequest(
         documentRange: DocumentSelection(
-          base: DocumentPosition(
-            nodeId: selectionBaseNode.id,
-            nodePosition: selectionBaseNode.beginningPosition,
-          ),
-          extent: DocumentPosition(
-            nodeId: selectionExtentNode.id,
-            nodePosition: selectionExtentNode.endPosition,
-          ),
+          base: base,
+          extent: extent,
         ),
         attributions: attributions,
       )
