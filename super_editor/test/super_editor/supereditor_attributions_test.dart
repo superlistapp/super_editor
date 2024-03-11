@@ -184,7 +184,60 @@ void main() {
       });
 
       group("when multiple nodes are selected", () {
-        testWidgetsOnAllPlatforms("toggles bold attribution across fully bold node and a plain node", (tester) async {
+        testWidgetsOnAllPlatforms("toggles attribution across multiple nodes", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphThenParagraphDoc(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure no attributions are applied.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.\n\nThis is the second node in a document.",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+          final secondNode = doc.getNodeById("2")!;
+
+          // Toggle bold attribution for both nodes.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution is applied to both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+            ),
+          );
+
+          // Toggle bold attribution for both nodes.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution was removed from both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.\n\nThis is the second node in a document.",
+            ),
+          );
+        });
+
+        testWidgetsOnAllPlatforms("toggles an attribution across a fully attributed node and a plain node",
+            (tester) async {
           await tester //
               .createDocument()
               .withCustomContent(
@@ -207,8 +260,8 @@ void main() {
 
           // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            selectionBaseNode: firstNode,
-            selectionExtentNode: secondNode,
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
             attributions: {boldAttribution},
           );
 
@@ -222,8 +275,8 @@ void main() {
 
           // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            selectionBaseNode: firstNode,
-            selectionExtentNode: secondNode,
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
             attributions: {boldAttribution},
           );
 
@@ -236,7 +289,7 @@ void main() {
           );
         });
 
-        testWidgetsOnAllPlatforms("toggles bold attribution across partially bold node and a plain node",
+        testWidgetsOnAllPlatforms("toggles an attribution across a partially attributed node and a plain node",
             (tester) async {
           await tester //
               .createDocument()
@@ -260,8 +313,8 @@ void main() {
 
           // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            selectionBaseNode: firstNode,
-            selectionExtentNode: secondNode,
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
             attributions: {boldAttribution},
           );
 
@@ -275,8 +328,8 @@ void main() {
 
           // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            selectionBaseNode: firstNode,
-            selectionExtentNode: secondNode,
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
             attributions: {boldAttribution},
           );
 
