@@ -28,7 +28,7 @@ class TagFinder {
 
     // Create 2 splits of characters to navigate upstream and downstream the caret position.
     // ex: "this is a very|long string"
-    // -> split around the caret into "this is a very" and "long string"
+    // -> split around the caret into charactersBefore="this is a very" and charactersAfter="long string"
     final charactersBefore = rawText.substring(0, splitIndex).characters;
     final iteratorUpstream = charactersBefore.iteratorAtEnd;
 
@@ -42,21 +42,23 @@ class TagFinder {
       return null;
     }
 
+    // Move upstream until we find the trigger character or an excluded character.
     while (iteratorUpstream.moveBack()) {
-      final current = iteratorUpstream.current;
-      if (tagRule.excludedCharacters.contains(current)) {
+      final currentCharacter = iteratorUpstream.current;
+      if (tagRule.excludedCharacters.contains(currentCharacter)) {
         // The upstream character isn't allowed to appear in a tag. end the search.
-        break;
+        return null;
       }
 
-      if (current == tagRule.trigger) {
+      if (currentCharacter == tagRule.trigger) {
         // The character we just added to the token bounds is the trigger.
-        // We include it and stop looking any further upstream
+        // We move back again to include it in the range and stop looking any further upstream
         iteratorUpstream.moveBack();
         break;
       }
     }
 
+    // Move downstream the caret position until we find excluded character or reach the end of the text.
     while (iteratorDownstream.moveNext()) {
       final current = iteratorDownstream.current;
       if (current != tagRule.trigger && tagRule.excludedCharacters.contains(current)) {
@@ -64,9 +66,8 @@ class TagFinder {
       }
     }
 
-    final tokenRange =
-        SpanRange(splitIndex - iteratorUpstream.stringAfterLength, splitIndex + iteratorDownstream.stringBeforeLength);
     final tokenStartOffset = splitIndex - iteratorUpstream.stringAfterLength;
+    final tokenRange = SpanRange(tokenStartOffset, splitIndex + iteratorDownstream.stringBeforeLength);
 
     final tagText = text.substringInRange(tokenRange);
     if (!tagText.startsWith(tagRule.trigger)) {
