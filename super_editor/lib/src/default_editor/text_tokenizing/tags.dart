@@ -84,7 +84,7 @@ class TagFinder {
       return null;
     }
 
-    final tagAroundPosition = TagAroundPosition(
+    return TagAroundPosition(
       indexedTag: IndexedTag(
         Tag(tagRule.trigger, tagText.substring(1)),
         nodeId,
@@ -92,8 +92,6 @@ class TagFinder {
       ),
       searchOffset: expansionPosition.offset,
     );
-
-    return tagAroundPosition;
   }
 
   /// Finds and returns all tags in the given [textNode], which meet the given [rule].
