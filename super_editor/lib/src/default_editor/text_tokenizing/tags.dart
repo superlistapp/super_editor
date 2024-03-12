@@ -51,8 +51,8 @@ class TagFinder {
       }
 
       if (currentCharacter == tagRule.trigger) {
-        // The character we just added to the token bounds is the trigger.
-        // We move back again to include it in the range and stop looking any further upstream
+        // The character we are reading is the trigger.
+        // We move the iteratorUpstream one last time to include the trigger in the tokenRange and stop looking any further upstream
         iteratorUpstream.moveBack();
         break;
       }
