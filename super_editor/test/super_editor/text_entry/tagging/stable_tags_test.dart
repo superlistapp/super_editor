@@ -29,6 +29,25 @@ void main() {
         );
       });
 
+      testWidgetsOnAllPlatforms("can start with a single character", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a stable tag.
+        await tester.typeImeText("@j");
+
+        // Ensure that the tag has a composing attribution.
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@j");
+        expect(
+          text.getAttributedRange({stableTagComposingAttribution}, 0),
+          const SpanRange(0, 1),
+        );
+      });
+
       testWidgetsOnAllPlatforms("can start between words", (tester) async {
         await _pumpTestEditor(
           tester,
@@ -598,17 +617,18 @@ void main() {
         expect(
           composingStableTag,
           const ComposingStableTag(
-              DocumentRange(
-                start: DocumentPosition(
-                  nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 2),
-                ),
-                end: DocumentPosition(
-                  nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 2),
-                ),
+            DocumentRange(
+              start: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 2),
               ),
-              ''),
+              end: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 2),
+              ),
+            ),
+            '',
+          ),
         );
 
         final commitedTags = plugin.tagIndex.getCommittedTagsInTextNode('1');
@@ -1163,17 +1183,18 @@ void main() {
         expect(
           composingStableTag,
           const ComposingStableTag(
-              DocumentRange(
-                start: DocumentPosition(
-                  nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 1),
-                ),
-                end: DocumentPosition(
-                  nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 3),
-                ),
+            DocumentRange(
+              start: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 1),
               ),
-              '💙'),
+              end: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 3),
+              ),
+            ),
+            '💙',
+          ),
         );
 
         // Move the caret after the emoji: @💙|
@@ -1217,8 +1238,23 @@ void main() {
         final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "💙@");
 
-        // Ensure the composing tag is empty (because no white space before @)
-        expect(plugin.tagIndex.composingStableTag.value, isNull);
+        // Ensure the composing tag is not null and empty
+        expect(
+          plugin.tagIndex.composingStableTag.value,
+          const ComposingStableTag(
+            DocumentRange(
+              start: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 3),
+              ),
+              end: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 3),
+              ),
+            ),
+            '',
+          ),
+        );
       });
 
       testWidgetsOnAllPlatforms("in the middle of a tag", (tester) async {
@@ -1247,17 +1283,18 @@ void main() {
         expect(
           composingStableTag,
           const ComposingStableTag(
-              DocumentRange(
-                start: DocumentPosition(
-                  nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 1),
-                ),
-                end: DocumentPosition(
-                  nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 21),
-                ),
+            DocumentRange(
+              start: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 1),
               ),
-              'Flutter💙SuperEditor'),
+              end: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 21),
+              ),
+            ),
+            'Flutter💙SuperEditor',
+          ),
         );
 
         // Commit the tag by typing a white space

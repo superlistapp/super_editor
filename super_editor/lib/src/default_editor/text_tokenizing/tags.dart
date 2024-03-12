@@ -23,44 +23,38 @@ class TagFinder {
       return null;
     }
 
-    int splitIndex = min(expansionPosition.offset - 1, rawText.length - 1);
+    int splitIndex = min(expansionPosition.offset, rawText.length);
     splitIndex = max(splitIndex, 0);
 
-    if (tagRule.excludedCharacters.contains(rawText[splitIndex])) {
-      // The character where we're supposed to begin our expansion is a
-      // character that's not allowed in a tag. Therefore, no tag exists
-      // around the search offset.
-      return null;
-    }
-
     // Create 2 splits of characters to navigate upstream and downstream the caret position.
+    // ex: "this is a very|long string"
+    // -> split around the caret into "this is a very" and "long string"
     final charactersBefore = rawText.substring(0, splitIndex).characters;
     final iteratorUpstream = charactersBefore.iteratorAtEnd;
 
     final charactersAfter = rawText.substring(splitIndex).characters;
     final iteratorDownstream = charactersAfter.iterator;
 
-    var movedBack = iteratorUpstream.moveBack();
+    if (charactersBefore.isNotEmpty && tagRule.excludedCharacters.contains(charactersBefore.last)) {
+      // The character where we're supposed to begin our expansion is a
+      // character that's not allowed in a tag. Therefore, no tag exists
+      // around the search offset.
+      return null;
+    }
 
-    if (iteratorUpstream.current != tagRule.trigger) {
-      while (movedBack) {
-        final current = iteratorUpstream.current;
-        if (tagRule.excludedCharacters.contains(current)) {
-          // The upstream character isn't allowed to appear in a tag. Break before moving
-          // the starting character index any further upstream.
-          break;
-        }
-
-        if (current == tagRule.trigger) {
-          // The character we just added to the token bounds is the trigger.
-          // We include it and stop looking any further upstream
-          iteratorUpstream.moveBack();
-          break;
-        }
-        movedBack = iteratorUpstream.moveBack();
+    while (iteratorUpstream.moveBack()) {
+      final current = iteratorUpstream.current;
+      if (tagRule.excludedCharacters.contains(current)) {
+        // The upstream character isn't allowed to appear in a tag. end the search.
+        break;
       }
-    } else if (movedBack) {
-      iteratorUpstream.moveNext();
+
+      if (current == tagRule.trigger) {
+        // The character we just added to the token bounds is the trigger.
+        // We include it and stop looking any further upstream
+        iteratorUpstream.moveBack();
+        break;
+      }
     }
 
     while (iteratorDownstream.moveNext()) {
