@@ -60,7 +60,7 @@ class TagFinder {
     // Move downstream the caret position until we find excluded character or reach the end of the text.
     while (iteratorDownstream.moveNext()) {
       final current = iteratorDownstream.current;
-      if (current != tagRule.trigger && tagRule.excludedCharacters.contains(current)) {
+      if (tagRule.excludedCharacters.contains(current)) {
         break;
       }
     }
