@@ -1107,7 +1107,8 @@ void main() {
     });
 
     group("emoji >", () {
-      testWidgetsOnAllPlatforms("typed as first character of a paragraph", (tester) async {
+      testWidgetsOnAllPlatforms("can be typed as first character of a paragraph without crashing the editor",
+          (tester) async {
         // Ensure we can type an emoji as first character without crashing
         // https://github.com/superlistapp/super_editor/issues/1863
         await _pumpTestEditor(
