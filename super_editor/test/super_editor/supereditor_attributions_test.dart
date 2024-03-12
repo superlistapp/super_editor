@@ -286,7 +286,6 @@ void main() {
           );
         });
 
-        // toggles attribution for a partial text section within a fully attributed node
         testWidgetsOnAllPlatforms("toggles attribution for a partially selected fully attributed node", (tester) async {
           await tester //
               .createDocument()
