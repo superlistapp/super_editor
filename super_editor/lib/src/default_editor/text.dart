@@ -1486,14 +1486,24 @@ class ToggleTextAttributionsCommand implements EditCommand {
       nodesAndSelections.putIfAbsent(textNode, () => selectionRange);
     }
 
+    // Attributions that exists throughout the entire selection.
+    List<Attribution> attributionsPresentThroughoutEntireSelection = [];
+
     for (Attribution attribution in attributions) {
-      final allNodesHaveThisAttributionAppliedThroughout = nodesAndSelections.entries.every((entry) {
+      final presentThroughoutEntireSelection = nodesAndSelections.entries.every((entry) {
         final node2 = entry.key;
         final range2 = entry.value;
         return node2.text.hasAttributionsThroughout(attributions: {attribution}, range: range2);
       });
 
-      for (final entry in nodesAndSelections.entries) {
+      if (presentThroughoutEntireSelection) {
+        /// Attribution exists across entire selection.
+        attributionsPresentThroughoutEntireSelection.add(attribution);
+      }
+    }
+
+    for (final entry in nodesAndSelections.entries) {
+      for (Attribution attribution in attributions) {
         final node = entry.key;
         final range = entry.value;
 
@@ -1502,7 +1512,13 @@ class ToggleTextAttributionsCommand implements EditCommand {
               node.text.hasAttributionsThroughout(attributions: {attribution}, range: range);
 
           if (hasAttributionAppliedThroughout) {
-            if (!allNodesHaveThisAttributionAppliedThroughout) {
+            // Attribution is already applied throughout the entire selection for this node.
+            if (!attributionsPresentThroughoutEntireSelection.contains(attribution)) {
+              // Attribution is not applied throughout the entire selection for all nodes. In this case,
+              // we want to only toggle the attribution for nodes that don't have it.
+
+              editorDocLog.info(' - attributions not toggled: $attribution. Range: $range');
+
               continue;
             }
           }

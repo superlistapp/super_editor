@@ -386,6 +386,57 @@ void main() {
             ),
           );
         });
+
+        testWidgetsOnAllPlatforms("toggles multiple attributions throughout a node", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphDoc(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure no attributions are applied.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+
+          // Toggle attributions for the node.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: firstNode.endDocumentPosition,
+            attributions: {italicsAttribution, boldAttribution},
+          );
+
+          // Ensure the attributions were applied.
+          expect(
+            doc,
+            equalsMarkdown(
+              "***This is the first node in a document.***",
+            ),
+          );
+
+          // Toggle attributions for the node.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: firstNode.endDocumentPosition,
+            attributions: {boldAttribution, italicsAttribution},
+          );
+
+          // Ensure all attributions are removed from the node.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.",
+            ),
+          );
+        });
       });
 
       group("when multiple nodes are selected", () {
@@ -759,7 +810,60 @@ void main() {
         );
       });
 
-      // applies multiple attributions to multiple nodes
+      testWidgetsOnAllPlatforms("toggles multiple attributions throughout multiple nodes", (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(
+              _paragraphThenParagraphDoc(),
+            )
+            .pump();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure no attributions are applied.
+        expect(
+          doc,
+          equalsMarkdown(
+            "This is the first node in a document.\n\nThis is the second node in a document.",
+          ),
+        );
+
+        final firstNode = doc.getNodeById("1")!;
+        final secondNode = doc.getNodeById("2")!;
+
+        // Toggle bold attribution for both nodes.
+        SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          base: firstNode.beginningDocumentPosition,
+          extent: secondNode.endDocumentPosition,
+          attributions: {
+            italicsAttribution,
+            boldAttribution,
+          },
+        );
+
+        // Ensure the selection has both bold and italic attributions applied.
+        expect(
+          doc,
+          equalsMarkdown(
+            "***This is the first node in a document.***\n\n***This is the second node in a document.***",
+          ),
+        );
+
+        // Toggle bold attribution for both nodes.
+        SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          base: firstNode.beginningDocumentPosition,
+          extent: secondNode.endDocumentPosition,
+          attributions: {boldAttribution, italicsAttribution},
+        );
+
+        // Ensure all attributions are removed from both nodes.
+        expect(
+          doc,
+          equalsMarkdown(
+            "This is the first node in a document.\n\nThis is the second node in a document.",
+          ),
+        );
+      });
     });
 
     group("applies color attributions", () {
