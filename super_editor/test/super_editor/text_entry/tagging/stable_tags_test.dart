@@ -1143,7 +1143,9 @@ void main() {
         expect(text.text, "💙");
       });
 
-      testWidgetsOnAllPlatforms("after trigger", (tester) async {
+      testWidgetsOnAllPlatforms("caret can move around emoji without breaking editor", (tester) async {
+        // We are doing this to ensure the plugin doesn't make the editor crash when moving caret around emoji.
+
         final plugin = StableTagPlugin();
         await _pumpTestEditor(
           tester,
@@ -1158,10 +1160,23 @@ void main() {
           plugin: plugin,
         );
 
-        // Place the caret after the emoji: 💙|
-        await tester.placeCaretInParagraph("1", 2);
+        // Place the caret before the emoji: |💙
+        await tester.placeCaretInParagraph("1", 0);
 
-        // Move the caret before the emoji: |💙
+        // Place the caret after the emoji: 💙|
+        await tester.pressRightArrow();
+
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 2),
+            ),
+          ),
+        );
+
+        // Move the caret back to initial position, before the emoji: |💙.
         await tester.pressLeftArrow();
 
         expect(
@@ -1174,12 +1189,37 @@ void main() {
           ),
         );
 
-        // Type @ and ensure the string is valid: @💙
-        await tester.typeImeText("@");
+        // Ensure the paragraph string is well formed: 💙
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "💙");
+      });
+
+      testWidgetsOnAllPlatforms("can be captured with trigger", (tester) async {
+        final plugin = StableTagPlugin();
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(""),
+              ),
+            ],
+          ),
+          plugin: plugin,
+        );
+
+        // Place the caret at the beginning of the paragraph.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Type @ to trigger a composing tag, followed by an emoji 💙
+        await tester.typeImeText("@💙");
+
+        // Ensure the paragraph string is well formed: @💙
         final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "@💙");
 
-        // Ensure the composing tag is on the emoji
+        // Ensure the composing tag is wrapping the emoji
         final composingStableTag = plugin.tagIndex.composingStableTag.value!;
         expect(
           composingStableTag,
@@ -1198,9 +1238,6 @@ void main() {
           ),
         );
 
-        // Move the caret after the emoji: @💙|
-        await tester.pressRightArrow();
-
         // Type a white space to commit the tag: @💙 |
         await tester.typeImeText(" ");
 
@@ -1215,7 +1252,7 @@ void main() {
         expect(plugin.tagIndex.composingStableTag.value, isNull);
       });
 
-      testWidgetsOnAllPlatforms("before trigger", (tester) async {
+      testWidgetsOnAllPlatforms("can be used before a trigger", (tester) async {
         final plugin = StableTagPlugin();
         await _pumpTestEditor(
           tester,
@@ -1233,9 +1270,8 @@ void main() {
         // Place the caret after the emoji: 💙|
         await tester.placeCaretInParagraph("1", 2);
 
-        // Type @ and ensure the string is valid: 💙@
+        // Type @ to trigger a composing tag and ensure the string is well formed: 💙@
         await tester.typeImeText("@");
-
         final text = SuperEditorInspector.findTextInComponent("1");
         expect(text.text, "💙@");
 
@@ -1258,7 +1294,7 @@ void main() {
         );
       });
 
-      testWidgetsOnAllPlatforms("in the middle of a tag", (tester) async {
+      testWidgetsOnAllPlatforms("can be used in the middle of a tag", (tester) async {
         final plugin = StableTagPlugin();
         await _pumpTestEditor(
           tester,
