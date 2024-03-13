@@ -495,11 +495,11 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
   /// block type, e.g., `"header1"` -> [header1Attribution].
   Attribution? _getBlockTypeAttribution(String? newType) {
     return switch (newType) {
-      'header1' => header1Attribution,
-      'header2' => header2Attribution,
-      'header3' => header3Attribution,
-      'blockquote' => blockquoteAttribution,
-      'paragraph' => paragraphAttribution,
+      BlockTypes.header1 => header1Attribution,
+      BlockTypes.header2 => header2Attribution,
+      BlockTypes.header3 => header3Attribution,
+      BlockTypes.blockquote => blockquoteAttribution,
+      BlockTypes.paragraph => paragraphAttribution,
       _ => null,
     };
   }
@@ -556,27 +556,27 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
 
   TextStyle _getDefaultTextStyleForBlockType(TextItem item) {
     return switch (item.id) {
-      'header1' => const TextStyle(
+      BlockTypes.header1 => const TextStyle(
           color: Color(0xFF333333),
           fontSize: 38,
           fontWeight: FontWeight.bold,
         ),
-      'header2' => const TextStyle(
+      BlockTypes.header2 => const TextStyle(
           color: Color(0xFF333333),
           fontSize: 26,
           fontWeight: FontWeight.bold,
         ),
-      'header3' => const TextStyle(
+      BlockTypes.header3 => const TextStyle(
           color: Color(0xFF333333),
           fontSize: 22,
           fontWeight: FontWeight.bold,
         ),
-      'paragraph' => const TextStyle(
+      BlockTypes.paragraph => const TextStyle(
           color: Colors.black,
           fontSize: 18,
           height: 1.4,
         ),
-      'blockquote' => const TextStyle(
+      BlockTypes.blockquote => const TextStyle(
           color: Colors.grey,
           fontSize: 20,
           fontWeight: FontWeight.bold,
@@ -894,7 +894,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
       waitDuration: _tooltipDelay,
       child: TextItemSelector(
         parentFocusNode: widget.editorFocusNode,
-        value: _selectedZoom,
+        selectedText: _selectedZoom,
         buttonSize: const Size(77, 30),
         popoverGeometry: const PopoverGeometry(
           constraints: BoxConstraints.tightFor(width: 77),
@@ -924,7 +924,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
       waitDuration: _tooltipDelay,
       child: TextItemSelector(
         parentFocusNode: widget.editorFocusNode,
-        value: currentBlockType != null //
+        selectedText: currentBlockType != null //
             ? _blockTypes.where((e) => e.id == currentBlockType).firstOrNull
             : null,
         buttonSize: const Size(122, 30),
@@ -985,7 +985,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
       child: TextItemSelector(
         parentFocusNode: widget.editorFocusNode,
         tapRegionGroupId: _tapRegionGroupId,
-        value: textItem,
+        selectedText: textItem,
         items: _availableFonts.map((fontFamily) => TextItem(id: fontFamily, label: fontFamily)).toList(),
         onSelected: (value) => _onChangeFontFamilyRequested(value?.id),
         buttonSize: const Size(97, 30),
@@ -1526,11 +1526,11 @@ final _availableFonts = [
 
 /// The block types displayed in the block type selector.
 const _blockTypes = [
-  TextItem(id: 'header1', label: 'Header 1'),
-  TextItem(id: 'header2', label: 'Header 2'),
-  TextItem(id: 'header3', label: 'Header 3'),
-  TextItem(id: 'paragraph', label: 'Normal Text'),
-  TextItem(id: 'blockquote', label: 'Blockquote'),
+  TextItem(id: BlockTypes.header1, label: 'Header 1'),
+  TextItem(id: BlockTypes.header2, label: 'Header 2'),
+  TextItem(id: BlockTypes.header3, label: 'Header 3'),
+  TextItem(id: BlockTypes.paragraph, label: 'Normal Text'),
+  TextItem(id: BlockTypes.blockquote, label: 'Blockquote'),
 ];
 
 const _tooltipDelay = Duration(milliseconds: 500);
@@ -1557,4 +1557,13 @@ FollowerAlignment _searchPopoverAligner(
     leaderAnchor: Alignment.topLeft,
     followerAnchor: Alignment.topLeft,
   );
+}
+
+/// Common identifiers for the block types used in the app.
+class BlockTypes {
+  static const header1 = 'header1';
+  static const header2 = 'header2';
+  static const header3 = 'header3';
+  static const blockquote = 'blockquote';
+  static const paragraph = 'paragraph';
 }

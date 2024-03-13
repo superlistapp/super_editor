@@ -2,62 +2,33 @@ import 'package:example_docs/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// A selection control, which displays a button with the selected item, and upon tap, displays a
-/// popover list of available text options, from which the user can select a different
-/// option.
+/// A selection control, which displays a button with the selected text, and upon tap, displays a
+/// popover list of available texts, from which the user can select a different text.
 ///
-/// Unlike Flutter `DropdownButton`, which displays the popover list in a separate route,
-/// this widget displays its popover list in an `Overlay`. By using an `Overlay`, focus can be shared
-/// with the [parentFocusNode]. This means that when the popover list requests focus, [parentFocusNode]
-/// still has non-primary focus.
+/// Includes the following keyboard selection behaviors:
 ///
-/// The popover list is positioned based on the following rules:
-///
-///    1. The popover is displayed below the selected item, if there's enough room, or
-///    2. The popover is displayed above the selected item, if there's enough room, or
-///    3. The popover is displayed with its bottom aligned with the bottom of
-///         the given boundary, and it covers the selected item.
-///
-/// The popover list height is based on the following rules:
-///
-///    1. The popover is displayed as tall as all items in the list, if there's enough room, or
-///    2. The popover is displayed as tall as the available space and becomes scrollable.
-///
-/// The popover list includes keyboard selection behaviors:
-///
-///   * Pressing UP/DOWN moves the "active" item selection up/down.
-///   * Pressing UP with the first item active moves the active item selection to the last item.
-///   * Pressing DOWN with the last item active moves the active item selection to the first item.
-///   * Pressing ENTER selects the currently active item and closes the popover list.
+///   * Pressing UP/DOWN moves the "active" text selection up/down.
+///   * Pressing UP with the first text active moves the active text selection to the last text.
+///   * Pressing DOWN with the last text active moves the active text selection to the first text.
+///   * Pressing ENTER selects the currently active text.
 class TextItemSelector extends StatefulWidget {
   const TextItemSelector({
     super.key,
     required this.parentFocusNode,
     this.tapRegionGroupId,
     this.boundaryKey,
+    this.selectedText,
     required this.items,
-    this.value,
-    required this.onSelected,
     this.popoverGeometry,
     this.buttonSize,
     this.itemBuilder = defaultPopoverListItemBuilder,
     this.separatorBuilder,
+    required this.onSelected,
   });
 
   /// The [FocusNode], to which the popover list's [FocusNode] will be added as a child.
   ///
-  /// In Flutter, [FocusNode]s have parents and children. This relationship allows an
-  /// entire ancestor path to "have focus", but only the lowest level descendant
-  /// in that path has "primary focus". This path is important because various
-  /// widgets alter their presentation or behavior based on whether or not they
-  /// currently have focus, even if they only have "non-primary focus".
-  ///
-  /// When the popover list of items is visible, that list will have primary focus.
-  /// Moreover, because the popover list is built in an `Overlay`, none of your
-  /// widgets are in the natural focus path for that popover list. Therefore, if you
-  /// need your widget tree to retain focus while the popover list is visible, then
-  /// you need to provide the [FocusNode] that the popover list should use as its
-  /// parent, thereby retaining focus for your widgets.
+  /// See [PopoverScaffold.parentFocusNode] for more information.
   final FocusNode parentFocusNode;
 
   /// A group ID for a tap region that is shared with the popover list.
@@ -68,27 +39,18 @@ class TextItemSelector extends StatefulWidget {
 
   /// A [GlobalKey] to a widget that determines the bounds where the popover list can be displayed.
   ///
-  /// As the popover list follows the selected item, it can be displayed off-screen if this [TextItemSelector]
-  /// is close to the bottom of the screen.
-  ///
-  /// Passing a [boundaryKey] causes the popover list to be confined to the bounds of the widget
-  /// bound to the [boundaryKey].
-  ///
-  /// If `null`, the popover list is confined to the screen bounds, defined by the result of `MediaQuery.sizeOf`
+  /// See [PopoverScaffold.boundaryKey] for more information.
   final GlobalKey? boundaryKey;
+
+  /// The currently selected text or `null` if no text is selected.
+  ///
+  /// This value is used to build the button.
+  final TextItem? selectedText;
 
   /// The items that will be displayed in the popover list.
   ///
   /// For each item, its [TextItem.label] is displayed.
   final List<TextItem> items;
-
-  /// The currently selected value or `null` if no item is selected.
-  ///
-  /// This value is used to build the button.
-  final TextItem? value;
-
-  /// Called when the user selects an item on the popover list.
-  final void Function(TextItem? value) onSelected;
 
   /// Builds each item on the list.
   ///
@@ -109,6 +71,9 @@ class TextItemSelector extends StatefulWidget {
   ///
   /// The popover is first sized, then positioned.
   final PopoverGeometry? popoverGeometry;
+
+  /// Called when the user selects an item on the popover list.
+  final void Function(TextItem? value) onSelected;
 
   @override
   State<TextItemSelector> createState() => _TextItemSelectorState();
@@ -174,7 +139,7 @@ class _TextItemSelectorState extends State<TextItemSelector> {
           child: SizedBox(
             width: (widget.buttonSize?.width ?? 97) - 30,
             child: Text(
-              widget.value?.label ?? '',
+              widget.selectedText?.label ?? '',
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.left,
               style: TextStyle(
@@ -203,7 +168,7 @@ class _TextItemSelectorState extends State<TextItemSelector> {
       child: SizedBox(
         child: ItemSelectionList<TextItem>(
           focusNode: _focusNode,
-          value: widget.value,
+          value: widget.selectedText,
           items: widget.items,
           itemBuilder: widget.itemBuilder,
           separatorBuilder: widget.separatorBuilder,

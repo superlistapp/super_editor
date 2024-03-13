@@ -11,16 +11,19 @@ import 'package:flutter/services.dart';
 class SelectableGrid<GridItemType> extends StatefulWidget {
   const SelectableGrid({
     super.key,
+    this.focusNode,
     required this.value,
     required this.items,
     required this.itemBuilder,
+    required this.columnCount,
+    this.mainAxisExtent,
     this.onItemActivated,
     required this.onItemSelected,
     this.onCancel,
-    this.focusNode,
-    required this.columnCount,
-    this.mainAxisExtent,
   });
+
+  /// The [FocusNode] of the grid.
+  final FocusNode? focusNode;
 
   /// The currently selected value or `null` if no item is selected.
   final GridItemType? value;
@@ -36,6 +39,12 @@ class SelectableGrid<GridItemType> extends StatefulWidget {
   ///
   /// The provided `onTap` must be called when the item is tapped.
   final SelectableGridItemBuilder<GridItemType> itemBuilder;
+
+  /// How many columns the grid must have.
+  final int columnCount;
+
+  /// The extent of each item on the grid.
+  final double? mainAxisExtent;
 
   /// Called when the user activates an item on the grid.
   ///
@@ -53,15 +62,6 @@ class SelectableGrid<GridItemType> extends StatefulWidget {
 
   /// Called when the user presses ESCAPE.
   final VoidCallback? onCancel;
-
-  /// The [FocusNode] of the grid.
-  final FocusNode? focusNode;
-
-  /// How many columns the grid must have.
-  final int columnCount;
-
-  /// The extent of each item on the grid.
-  final double? mainAxisExtent;
 
   @override
   State<SelectableGrid<GridItemType>> createState() => _SelectableGridState<GridItemType>();
