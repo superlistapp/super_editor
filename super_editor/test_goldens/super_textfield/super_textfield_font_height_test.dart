@@ -40,7 +40,7 @@ void main() {
                     color: Colors.black,
                     fontSize: 14,
                     leadingDistribution: TextLeadingDistribution.even,
-                    height: 2.0,
+                    height: 6.0,
                   ),
                   minLines: 1,
                   maxLines: 1,
