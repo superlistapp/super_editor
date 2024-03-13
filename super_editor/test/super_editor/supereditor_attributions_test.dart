@@ -224,7 +224,7 @@ void main() {
             attributions: {boldAttribution},
           );
 
-          // Ensure attribution was removed from the.
+          // Ensure attribution was removed from the selection.
           expect(
             doc,
             equalsMarkdown(
@@ -259,7 +259,7 @@ void main() {
             attributions: {boldAttribution},
           );
 
-          // Ensure attribution was applied.
+          // Ensure attribution was applied to the selection.
           expect(
             doc,
             equalsMarkdown(
@@ -273,7 +273,7 @@ void main() {
             attributions: {boldAttribution},
           );
 
-          // Ensure attribution was removed.
+          // Ensure attribution was removed from the selection.
           expect(
             doc,
             equalsMarkdown(
@@ -308,7 +308,7 @@ void main() {
             attributions: {boldAttribution},
           );
 
-          // Ensure bold attribution is removed.
+          // Ensure bold attribution is removed from the selection.
           expect(
             doc,
             equalsMarkdown(
@@ -340,6 +340,7 @@ void main() {
 
           final doc = SuperEditorInspector.findDocument()!;
 
+          // Ensure bold attribution is present.
           expect(
             doc,
             equalsMarkdown(
@@ -349,7 +350,6 @@ void main() {
 
           final firstNode = doc.getNodeById("1")!;
 
-          // Toggle italic attribution for the selection.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             base: firstNode.beginningDocumentPosition,
             extent: firstNode.atOffset(17),
@@ -364,7 +364,6 @@ void main() {
             ),
           );
 
-          // Toggle bold attribution for the selection.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             base: firstNode.beginningDocumentPosition,
             extent: firstNode.atOffset(17),
@@ -400,14 +399,13 @@ void main() {
 
           final firstNode = doc.getNodeById("1")!;
 
-          // Toggle attributions for the node.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             base: firstNode.beginningDocumentPosition,
             extent: firstNode.endDocumentPosition,
             attributions: {italicsAttribution, boldAttribution},
           );
 
-          // Ensure the attributions were applied.
+          // Ensure both bold and italic attributions were applied throughout the node.
           expect(
             doc,
             equalsMarkdown(
@@ -415,7 +413,6 @@ void main() {
             ),
           );
 
-          // Toggle attributions for the node.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             base: firstNode.beginningDocumentPosition,
             extent: firstNode.endDocumentPosition,
@@ -454,14 +451,13 @@ void main() {
           final firstNode = doc.getNodeById("1")!;
           final secondNode = doc.getNodeById("2")!;
 
-          // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             base: firstNode.beginningDocumentPosition,
             extent: secondNode.endDocumentPosition,
             attributions: {boldAttribution},
           );
 
-          // Ensure bold attribution is applied to both nodes.
+          // Ensure bold attribution is applied throughout both nodes.
           expect(
             doc,
             equalsMarkdown(
@@ -469,7 +465,6 @@ void main() {
             ),
           );
 
-          // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             base: firstNode.beginningDocumentPosition,
             extent: secondNode.endDocumentPosition,
@@ -496,7 +491,7 @@ void main() {
 
           final doc = SuperEditorInspector.findDocument()!;
 
-          // Ensure bold attribution is applied partially to the first node.
+          // Ensure bold attribution is applied throughout the first node.
           expect(
             doc,
             equalsMarkdown(
@@ -507,14 +502,13 @@ void main() {
           final firstNode = doc.getNodeById("1")!;
           final secondNode = doc.getNodeById("2")!;
 
-          // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             base: firstNode.beginningDocumentPosition,
             extent: secondNode.endDocumentPosition,
             attributions: {boldAttribution},
           );
 
-          // Ensure bold attribution is applied to both nodes.
+          // Ensure bold attribution is applied throughout both nodes.
           expect(
             doc,
             equalsMarkdown(
@@ -522,7 +516,6 @@ void main() {
             ),
           );
 
-          // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             base: firstNode.beginningDocumentPosition,
             extent: secondNode.endDocumentPosition,
@@ -560,14 +553,13 @@ void main() {
           final firstNode = doc.getNodeById("1")!;
           final secondNode = doc.getNodeById("2")!;
 
-          // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             base: firstNode.beginningDocumentPosition,
             extent: secondNode.endDocumentPosition,
             attributions: {boldAttribution},
           );
 
-          // Ensure bold attribution is applied to both nodes.
+          // Ensure bold attribution is applied throughout the both nodes.
           expect(
             doc,
             equalsMarkdown(
@@ -575,7 +567,6 @@ void main() {
             ),
           );
 
-          // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             base: firstNode.beginningDocumentPosition,
             extent: secondNode.endDocumentPosition,
@@ -604,7 +595,7 @@ void main() {
         final doc = SuperEditorInspector.findDocument()!;
 
         // Ensure bold attribution is applied partially to first node and
-        // fully to second node.
+        // throughout the second node.
         expect(
           doc,
           equalsMarkdown(
@@ -615,14 +606,13 @@ void main() {
         final firstNode = doc.getNodeById("1")!;
         final secondNode = doc.getNodeById("2")!;
 
-        // Toggle bold attribution for both nodes.
         SuperEditorInspector.toggleAttributionsForDocumentSelection(
           base: firstNode.beginningDocumentPosition,
           extent: secondNode.endDocumentPosition,
           attributions: {boldAttribution},
         );
 
-        // Ensure bold attribution is applied to both nodes.
+        // Ensure bold attribution is applied throughout the both nodes.
         expect(
           doc,
           equalsMarkdown(
@@ -630,7 +620,6 @@ void main() {
           ),
         );
 
-        // Toggle bold attribution for both nodes.
         SuperEditorInspector.toggleAttributionsForDocumentSelection(
           base: firstNode.beginningDocumentPosition,
           extent: secondNode.endDocumentPosition,
@@ -656,7 +645,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Ensure bold attribution is applied to the first node.
+        // Ensure bold attribution is applied partially across both nodes.
         expect(
           doc,
           equalsMarkdown(
@@ -667,14 +656,13 @@ void main() {
         final firstNode = doc.getNodeById("1")!;
         final secondNode = doc.getNodeById("2")!;
 
-        // Toggle bold attribution for both nodes.
         SuperEditorInspector.toggleAttributionsForDocumentSelection(
           base: firstNode.beginningDocumentPosition,
           extent: secondNode.endDocumentPosition,
           attributions: {boldAttribution},
         );
 
-        // Ensure bold attribution is applied to both nodes.
+        // Ensure bold attribution is applied throughout the both nodes.
         expect(
           doc,
           equalsMarkdown(
@@ -682,7 +670,6 @@ void main() {
           ),
         );
 
-        // Toggle bold attribution for both nodes.
         SuperEditorInspector.toggleAttributionsForDocumentSelection(
           base: firstNode.beginningDocumentPosition,
           extent: secondNode.endDocumentPosition,
@@ -708,7 +695,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Ensure bold attribution is applied to both nodes.
+        // Ensure bold attribution is applied throughout both nodes.
         expect(
           doc,
           equalsMarkdown(
@@ -719,14 +706,13 @@ void main() {
         final firstNode = doc.getNodeById("1")!;
         final secondNode = doc.getNodeById("2")!;
 
-        // Toggle italic attribution for both nodes.
         SuperEditorInspector.toggleAttributionsForDocumentSelection(
           base: firstNode.beginningDocumentPosition,
           extent: secondNode.endDocumentPosition,
           attributions: {italicsAttribution},
         );
 
-        // Ensure the selection has both bold and italic attributions applied.
+        // Ensure both bold and italic attributions were applied throughout the selection.
         expect(
           doc,
           equalsMarkdown(
@@ -734,7 +720,6 @@ void main() {
           ),
         );
 
-        // Toggle bold attribution for both nodes.
         SuperEditorInspector.toggleAttributionsForDocumentSelection(
           base: firstNode.beginningDocumentPosition,
           extent: secondNode.endDocumentPosition,
@@ -761,7 +746,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Ensure bold attribution is applied to the selection.
+        // Ensure bold attribution is applied throughout the selection.
         expect(
           doc,
           equalsMarkdown(
@@ -772,14 +757,14 @@ void main() {
         final firstNode = doc.getNodeById("1")!;
         final secondNode = doc.getNodeById("2")!;
 
-        // Toggle bold attribution for both nodes.
         SuperEditorInspector.toggleAttributionsForDocumentSelection(
           base: firstNode.beginningDocumentPosition,
           extent: secondNode.atOffset(18),
           attributions: {italicsAttribution},
         );
 
-        // Ensure the selection has both bold and italic attributions applied.
+        // Ensure both bold and italic attributions were applied throughout
+        // the selection.
         expect(
           doc,
           equalsMarkdown(
@@ -787,14 +772,14 @@ void main() {
           ),
         );
 
-        // Toggle bold attribution for both nodes.
         SuperEditorInspector.toggleAttributionsForDocumentSelection(
           base: firstNode.beginningDocumentPosition,
           extent: secondNode.atOffset(18),
           attributions: {italicsAttribution},
         );
 
-        // Ensure bold attribution was applied to both nodes.
+        // Ensure italic attribution was removed from the selection while keeping the bold
+        // attribution.
         expect(
           doc,
           equalsMarkdown(
@@ -813,7 +798,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Ensure no attributions are applied.
+        // Ensure no attributions are present.
         expect(
           doc,
           equalsMarkdown(
@@ -824,7 +809,6 @@ void main() {
         final firstNode = doc.getNodeById("1")!;
         final secondNode = doc.getNodeById("2")!;
 
-        // Toggle bold attribution for both nodes.
         SuperEditorInspector.toggleAttributionsForDocumentSelection(
           base: firstNode.beginningDocumentPosition,
           extent: secondNode.endDocumentPosition,
@@ -834,7 +818,7 @@ void main() {
           },
         );
 
-        // Ensure the selection has both bold and italic attributions applied.
+        // Ensure both bold and italic attributions were applied throughout the selection.
         expect(
           doc,
           equalsMarkdown(
@@ -849,7 +833,7 @@ void main() {
           attributions: {boldAttribution, italicsAttribution},
         );
 
-        // Ensure all attributions are removed from both nodes.
+        // Ensure both bold and italic attributions were removed from the selection.
         expect(
           doc,
           equalsMarkdown(
