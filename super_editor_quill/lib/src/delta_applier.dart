@@ -1,22 +1,50 @@
-import 'package:quill_delta/quill_delta.dart';
-import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
 
-import 'attributions.dart';
+typedef _DeltaAttributor = Attribution Function(
+  Attribution? attribution,
+  Object? value,
+);
+
+typedef Attributors = Map<String, _DeltaAttributor>;
+
+final _defaultBlockAttributors = <String, _DeltaAttributor>{
+  'header': (_, value) {
+    if (value == null || value == false) return paragraphAttribution;
+
+    if (value == 1) return header1Attribution;
+    if (value == 2) return header2Attribution;
+    if (value == 3) return header3Attribution;
+    if (value == 4) return header4Attribution;
+    if (value == 5) return header5Attribution;
+    if (value == 6) return header6Attribution;
+
+    throw UnimplementedError('Unknown header value: $value');
+  },
+};
+
+final _defaultTextAttributors = <String, _DeltaAttributor>{
+  'bold': (_, __) => boldAttribution,
+  'italic': (_, __) => italicsAttribution,
+  'underline': (_, __) => underlineAttribution,
+  'link': (attribution, url) {
+    // TODO: This is not the clearest API by any means
+    return attribution ?? LinkAttribution(url: Uri.parse(url as String));
+  },
+};
 
 /// Translated QuillJS Deltas to SuperEditor EditRequests and executes them as
 /// one batch of requests.
 class DeltaApplier {
   DeltaApplier({
-    List<DeltaBlockAttribution>? blockAttributions,
-    List<DeltaTextAttribution>? textAttributions,
+    Attributors? blockAttributors,
+    Attributors? textAttributors,
     String Function() idGenerator = Editor.createNodeId,
-  })  : _blockAttributions = blockAttributions ?? defaultBlockAttributions,
-        _textAttributions = textAttributions ?? defaultTextAttributions,
+  })  : _blockAttributors = blockAttributors ?? _defaultBlockAttributors,
+        _textAttributors = textAttributors ?? _defaultTextAttributors,
         _idGenerator = idGenerator;
 
-  final List<DeltaBlockAttribution> _blockAttributions;
-  final List<DeltaTextAttribution> _textAttributions;
+  final Attributors _blockAttributors;
+  final Attributors _textAttributors;
   final String Function() _idGenerator;
 
   /// Converts the [delta] to appropriate [EditRequest]s and executes them on
@@ -83,28 +111,26 @@ class DeltaApplier {
           final range = DocumentRange(start: start, end: end);
 
           for (final attribute in attributes.entries) {
-            final hasBlockAttribution = _blockAttributions
-                .any((element) => element.key == attribute.key);
+            final hasBlockAttribution =
+                _blockAttributors.containsKey(attribute.key);
 
             if (hasBlockAttribution) {
+              assert(!_textAttributors.containsKey(attribute.key));
               assert(range.start.nodeId == range.end.nodeId);
-              final blockAttribution = _blockAttributions
-                  .singleWhere((element) => element.key == attribute.key);
+              final blockAttribution = _blockAttributors[attribute.key]!;
 
               if (attribute.value == false || attribute.value == null) {
                 requests.add(
                   ChangeParagraphBlockTypeRequest(
                     nodeId: range.end.nodeId,
-                    blockType:
-                        blockAttribution.attribution(null, attribute.value),
+                    blockType: blockAttribution(null, attribute.value),
                   ),
                 );
               } else {
                 requests.add(
                   ChangeParagraphBlockTypeRequest(
                     nodeId: range.end.nodeId,
-                    blockType:
-                        blockAttribution.attribution(null, attribute.value),
+                    blockType: blockAttribution(null, attribute.value),
                   ),
                 );
               }
@@ -112,14 +138,13 @@ class DeltaApplier {
               continue;
             }
 
-            final textAttribution = _textAttributions.singleWhere(
-              (e) => e.key == attribute.key,
-              orElse: () {
-                throw StateError(
-                  'No attribution handler implemented for ${attribute.key}: ${attribute.value}',
-                );
-              },
-            );
+            if (!_textAttributors.containsKey(attribute.key)) {
+              throw StateError(
+                'No attribution handler implemented for ${attribute.key}: ${attribute.value}',
+              );
+            }
+
+            final textAttribution = _textAttributors[attribute.key]!;
             final node = (document.getNodesInside(range.start, range.end).single
                     as TextNode)
                 .text
@@ -133,7 +158,7 @@ class DeltaApplier {
                 RemoveTextAttributionsRequest(
                   documentRange: range,
                   attributions: {
-                    textAttribution.attribution(node!, attribute.value),
+                    textAttribution(node!, attribute.value),
                   },
                 ),
               );
@@ -142,7 +167,7 @@ class DeltaApplier {
                 AddTextAttributionsRequest(
                   documentRange: range,
                   attributions: {
-                    textAttribution.attribution(node, attribute.value),
+                    textAttribution(node, attribute.value),
                   },
                 ),
               );
@@ -212,6 +237,8 @@ DocumentPosition? _deltaPositionToDocumentPosition({
       throw UnimplementedError('Not handling other nodes than TextNodes yet.');
     }
 
+    // TODO: Handle other types than TextNodes
+    // ignore: unnecessary_type_check
     final currentNodeLength = node is TextNode ? node.text.text.length : 0;
     if (currentAbsolutePosition + currentNodeLength >= deltaPosition) {
       return DocumentPosition(
