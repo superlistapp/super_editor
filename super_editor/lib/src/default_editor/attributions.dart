@@ -51,7 +51,7 @@ class ColorAttribution implements Attribution {
   const ColorAttribution(this.color);
 
   @override
-  String get id => "${color.value}";
+  String get id => 'color';
 
   final Color color;
 
@@ -80,10 +80,10 @@ class ColorAttribution implements Attribution {
 /// that [AttributedText] prevents multiple [BackgroundColorAttribution]s
 /// from overlapping.
 class BackgroundColorAttribution implements Attribution {
-  BackgroundColorAttribution(this.color);
+  const BackgroundColorAttribution(this.color);
 
   @override
-  String get id => "${color.value}";
+  String get id => 'background_color';
 
   final Color color;
 
@@ -113,10 +113,10 @@ class BackgroundColorAttribution implements Attribution {
 /// that [AttributedText] prevents multiple [FontSizeAttribution]s
 /// from overlapping.
 class FontSizeAttribution implements Attribution {
-  FontSizeAttribution(this.fontSize);
+  const FontSizeAttribution(this.fontSize);
 
   @override
-  String get id => fontSize.toString();
+  String get id => 'font_size';
 
   final double fontSize;
 
