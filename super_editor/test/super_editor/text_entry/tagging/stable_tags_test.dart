@@ -29,6 +29,25 @@ void main() {
         );
       });
 
+      testWidgetsOnAllPlatforms("can start with a single character", (tester) async {
+        await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a stable tag.
+        await tester.typeImeText("@j");
+
+        // Ensure that the tag has a composing attribution.
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@j");
+        expect(
+          text.getAttributedRange({stableTagComposingAttribution}, 0),
+          const SpanRange(0, 1),
+        );
+      });
+
       testWidgetsOnAllPlatforms("can start between words", (tester) async {
         await _pumpTestEditor(
           tester,
@@ -393,91 +412,6 @@ void main() {
         // Ensure that we received a notification when the tag was cancelled.
         expect(tagNotificationCount, 3);
       });
-
-      testWidgetsOnAllPlatforms("support emojis", (tester) async {
-        // Ensure we can type an emoji as first character
-        // https://github.com/superlistapp/super_editor/issues/1863 is fixed
-        await _pumpTestEditor(
-          tester,
-          MutableDocument(
-            nodes: [
-              ParagraphNode(
-                id: "1",
-                text: AttributedText(""),
-              ),
-            ],
-          ),
-        );
-
-        // Place the caret at the beginning of the paragraph.
-        await tester.placeCaretInParagraph("1", 0);
-
-        // Type an emoji as first charactet 💙
-        await tester.typeImeText("💙");
-
-        expect(
-          SuperEditorInspector.findDocumentSelection(),
-          const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 2),
-            ),
-          ),
-        );
-
-        //Place the caret before the emoji
-        await tester.pressLeftArrow();
-
-        // Type @, the TagRule trigger
-        // Ensure TagFinder.findTagArounPosition doesn't lead to a cropped emoji
-        // This would make Flutter ParagraphBuilder raise
-        // "Invalid argument(s): string is not well-formed UTF-16" on Flutter
-        await tester.typeImeText("@");
-
-        final text = SuperEditorInspector.findTextInComponent("1");
-        expect(text.text, "@💙");
-      });
-
-      testWidgetsOnAllPlatforms("composing tag with consecutive trigger characters", (tester) async {
-        final plugin = StableTagPlugin();
-        await _pumpTestEditor(
-          tester,
-          singleParagraphEmptyDoc(),
-          plugin: plugin,
-        );
-        await tester.placeCaretInParagraph("1", 0);
-
-        // Type two consecutive trigger characters.
-        await tester.typeImeText("@@");
-
-        final composingStableTag = plugin.tagIndex.composingStableTag.value!;
-
-        // Ensure the composing tag is correct is placed on the second @, with empty token.
-        expect(
-          composingStableTag,
-          const ComposingStableTag(
-              DocumentRange(
-                start: DocumentPosition(
-                  nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 2),
-                ),
-                end: DocumentPosition(
-                  nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 2),
-                ),
-              ),
-              ''),
-        );
-
-        final commitedTags = plugin.tagIndex.getCommittedTagsInTextNode('1');
-
-        expect(commitedTags.length, 1);
-
-        final commitTag = commitedTags.first;
-
-        // Ensure the committed tag is correct is the first @
-        expect(commitTag, const IndexedTag(Tag('@', ''), '1', 0));
-      });
     });
 
     group("commits >", () {
@@ -663,6 +597,48 @@ void main() {
           text.getAttributedRange({const CommittedStableTagAttribution("john")}, 7),
           const SpanRange(7, 11),
         );
+      });
+
+      testWidgetsOnAllPlatforms("with consecutive triggers", (tester) async {
+        final plugin = StableTagPlugin();
+        await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+          plugin: plugin,
+        );
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Type two consecutive trigger characters.
+        await tester.typeImeText("@@");
+
+        final composingStableTag = plugin.tagIndex.composingStableTag.value!;
+
+        // Ensure the composing tag is placed on the second @, with empty token.
+        expect(
+          composingStableTag,
+          const ComposingStableTag(
+            DocumentRange(
+              start: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 2),
+              ),
+              end: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 2),
+              ),
+            ),
+            '',
+          ),
+        );
+
+        final commitedTags = plugin.tagIndex.getCommittedTagsInTextNode('1');
+
+        expect(commitedTags.length, 1);
+
+        final commitTag = commitedTags.first;
+
+        // Ensure the committed tag is the first @
+        expect(commitTag, const IndexedTag(Tag('@', ''), '1', 0));
       });
     });
 
@@ -1127,6 +1103,208 @@ void main() {
             ),
           ),
         );
+      });
+    });
+
+    group("emoji >", () {
+      testWidgetsOnAllPlatforms("typed as first character of a paragraph", (tester) async {
+        // Ensure we can type an emoji as first character without crashing
+        // https://github.com/superlistapp/super_editor/issues/1863
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(""),
+              ),
+            ],
+          ),
+        );
+
+        // Place the caret at the beginning of the paragraph.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Type an emoji as first charactet 💙
+        await tester.typeImeText("💙");
+
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 2),
+            ),
+          ),
+        );
+
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "💙");
+      });
+
+      testWidgetsOnAllPlatforms("after trigger", (tester) async {
+        final plugin = StableTagPlugin();
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText("💙"),
+              ),
+            ],
+          ),
+          plugin: plugin,
+        );
+
+        // Place the caret after the emoji: 💙|
+        await tester.placeCaretInParagraph("1", 2);
+
+        // Move the caret before the emoji: |💙
+        await tester.pressLeftArrow();
+
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+
+        // Type @ and ensure the string is valid: @💙
+        await tester.typeImeText("@");
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@💙");
+
+        // Ensure the composing tag is on the emoji
+        final composingStableTag = plugin.tagIndex.composingStableTag.value!;
+        expect(
+          composingStableTag,
+          const ComposingStableTag(
+            DocumentRange(
+              start: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 1),
+              ),
+              end: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 3),
+              ),
+            ),
+            '💙',
+          ),
+        );
+
+        // Move the caret after the emoji: @💙|
+        await tester.pressRightArrow();
+
+        // Type a white space to commit the tag: @💙 |
+        await tester.typeImeText(" ");
+
+        final commitedTags = plugin.tagIndex.getCommittedTagsInTextNode('1');
+
+        expect(commitedTags.length, 1);
+
+        final commitTag = commitedTags.first;
+
+        // Ensure the committed tag is the emoji and the composing tag is removed
+        expect(commitTag, const IndexedTag(Tag('@', '💙'), '1', 0));
+        expect(plugin.tagIndex.composingStableTag.value, isNull);
+      });
+
+      testWidgetsOnAllPlatforms("before trigger", (tester) async {
+        final plugin = StableTagPlugin();
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText("💙"),
+              ),
+            ],
+          ),
+          plugin: plugin,
+        );
+
+        // Place the caret after the emoji: 💙|
+        await tester.placeCaretInParagraph("1", 2);
+
+        // Type @ and ensure the string is valid: 💙@
+        await tester.typeImeText("@");
+
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "💙@");
+
+        // Ensure the composing tag is not null and empty
+        expect(
+          plugin.tagIndex.composingStableTag.value,
+          const ComposingStableTag(
+            DocumentRange(
+              start: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 3),
+              ),
+              end: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 3),
+              ),
+            ),
+            '',
+          ),
+        );
+      });
+
+      testWidgetsOnAllPlatforms("in the middle of a tag", (tester) async {
+        final plugin = StableTagPlugin();
+        await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(""),
+              ),
+            ],
+          ),
+          plugin: plugin,
+        );
+
+        // Place the caret at the beginning of the paragraph.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Start compsing a tag with an emoji in the middle
+        await tester.typeImeText("@Flutter💙SuperEditor");
+
+        // Ensure the composing tag is valid
+        final composingStableTag = plugin.tagIndex.composingStableTag.value!;
+        expect(
+          composingStableTag,
+          const ComposingStableTag(
+            DocumentRange(
+              start: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 1),
+              ),
+              end: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 21),
+              ),
+            ),
+            'Flutter💙SuperEditor',
+          ),
+        );
+
+        // Commit the tag by typing a white space
+        await tester.typeImeText(" ");
+
+        // Ensure the tag is commited and the composing tag is reset
+        final commitedTags = plugin.tagIndex.getCommittedTagsInTextNode('1');
+        expect(commitedTags.length, 1);
+        expect(commitedTags.first, const IndexedTag(Tag('@', 'Flutter💙SuperEditor'), '1', 0));
+        expect(plugin.tagIndex.composingStableTag.value, isNull);
       });
     });
   });
