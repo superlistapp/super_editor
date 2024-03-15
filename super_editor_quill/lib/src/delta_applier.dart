@@ -146,28 +146,29 @@ class DeltaApplier {
 
             final textAttribution = _textAttributors[attribute.key]!;
             final node = (document.getNodesInside(range.start, range.end).single
-                    as TextNode)
-                .text
-                .spans
+                as TextNode);
+            final shiftedRange = _shiftRange(node, document, range);
+            final existingAttribution = node.text.spans
                 .getAllAttributionsAt(
                   (range.start.nodePosition as TextNodePosition).offset,
                 )
                 .singleOrNull;
+
             if (attribute.value == false || attribute.value == null) {
               requests.add(
                 RemoveTextAttributionsRequest(
-                  documentRange: range,
+                  documentRange: shiftedRange,
                   attributions: {
-                    textAttribution(node!, attribute.value),
+                    textAttribution(existingAttribution, attribute.value),
                   },
                 ),
               );
             } else {
               requests.add(
                 AddTextAttributionsRequest(
-                  documentRange: range,
+                  documentRange: shiftedRange,
                   attributions: {
-                    textAttribution(node, attribute.value),
+                    textAttribution(existingAttribution, attribute.value),
                   },
                 ),
               );
@@ -204,6 +205,24 @@ class DeltaApplier {
       editor.execute(requests);
     }
   }
+}
+
+// In Delta format, applying attributions to the following "\n" of every block
+// applies the attributions to the whole block.
+DocumentRange _shiftRange(
+  TextNode node,
+  Document document,
+  DocumentRange range,
+) {
+  return range.end.nodePosition == node.endPosition
+      ? DocumentRange(
+          start: DocumentPosition(
+            nodeId: node.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+          end: range.end,
+        )
+      : range;
 }
 
 int? _deltaPositionToDocumentNodeIndex({
