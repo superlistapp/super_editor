@@ -1,3 +1,4 @@
+import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
 
 typedef _DeltaAttributor = Attribution Function(
@@ -148,18 +149,8 @@ class DeltaApplier {
             final textAttribution = _textAttributors[attribute.key]!;
 
             if (attribute.value == null) {
-              final existingAttribution = ((document
-                      .getNodesInside(start, end)
-                      .single) as ParagraphNode)
-                  .text
-                  .spans
-                  .getAttributionSpansInRange(
-                    attributionFilter: (_) => true,
-                    start: startOffset,
-                    end: endOffset,
-                  )
-                  .single
-                  .attribution;
+              final existingAttribution =
+                  _findExistingAttribution(document: document, range: range);
               requests.add(
                 RemoveTextAttributionsRequest(
                   documentRange: range,
@@ -209,6 +200,27 @@ class DeltaApplier {
     if (requests.isNotEmpty) {
       editor.execute(requests);
     }
+  }
+
+  Attribution _findExistingAttribution({
+    required Document document,
+    required DocumentRange range,
+  }) {
+    final node = (document.getNodesInside(range.start, range.end).single)
+        as ParagraphNode;
+    final shiftedRange = node.computeSelection(
+      base: range.start.nodePosition,
+      extent: range.end.nodePosition,
+    );
+
+    return node.text.spans
+        .getAttributionSpansInRange(
+          attributionFilter: (_) => true,
+          start: shiftedRange.start,
+          end: shiftedRange.end,
+        )
+        .single
+        .attribution;
   }
 }
 

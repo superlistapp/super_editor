@@ -1801,6 +1801,225 @@ void main() {
           ],
         );
       });
+
+      test(
+          'making the whole paragraph unlinked over multiple lines results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ParagraphNode(
+              id: 'node-2',
+              text: AttributedText(
+                'def',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ParagraphNode(
+              id: 'node-3',
+              text: AttributedText(
+                'ghi',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(
+          editor,
+          Delta()..retain(3, {'link': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+            ),
+            ParagraphNode(
+              id: 'node-2',
+              text: AttributedText(
+                'def',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ParagraphNode(
+              id: 'node-3',
+              text: AttributedText(
+                'ghi',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(4)
+            ..retain(3, {'link': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+            ),
+            ParagraphNode(
+              id: 'node-2',
+              text: AttributedText('def'),
+            ),
+            ParagraphNode(
+              id: 'node-3',
+              text: AttributedText(
+                'ghi',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(8)
+            ..retain(3, {'link': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+            ),
+            ParagraphNode(
+              id: 'node-2',
+              text: AttributedText('def'),
+            ),
+            ParagraphNode(
+              id: 'node-3',
+              text: AttributedText('ghi'),
+            ),
+          ],
+        );
+      });
     });
 
     group('paragraph block type conversions', () {
