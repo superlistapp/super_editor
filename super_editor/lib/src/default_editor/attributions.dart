@@ -51,7 +51,7 @@ class ColorAttribution implements Attribution {
   const ColorAttribution(this.color);
 
   @override
-  String get id => "${color.value}";
+  String get id => 'color';
 
   final Color color;
 
@@ -70,6 +70,72 @@ class ColorAttribution implements Attribution {
   @override
   String toString() {
     return '[ColorAttribution]: $color';
+  }
+}
+
+/// Attribution to be used within [AttributedText] to
+/// represent an inline span of a backgrounnd color change.
+///
+/// Every [BackgroundColorAttribution] is considered equivalent so
+/// that [AttributedText] prevents multiple [BackgroundColorAttribution]s
+/// from overlapping.
+class BackgroundColorAttribution implements Attribution {
+  const BackgroundColorAttribution(this.color);
+
+  @override
+  String get id => 'background_color';
+
+  final Color color;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BackgroundColorAttribution && runtimeType == other.runtimeType && color == other.color;
+
+  @override
+  int get hashCode => color.hashCode;
+
+  @override
+  String toString() {
+    return '[BackgroundColorAttribution]: $color';
+  }
+}
+
+/// Attribution to be used within [AttributedText] to
+/// represent an inline span of a font size change.
+///
+/// Every [FontSizeAttribution] is considered equivalent so
+/// that [AttributedText] prevents multiple [FontSizeAttribution]s
+/// from overlapping.
+class FontSizeAttribution implements Attribution {
+  const FontSizeAttribution(this.fontSize);
+
+  @override
+  String get id => 'font_size';
+
+  final double fontSize;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FontSizeAttribution && runtimeType == other.runtimeType && fontSize == other.fontSize;
+
+  @override
+  int get hashCode => fontSize.hashCode;
+
+  @override
+  String toString() {
+    return '[FontSizeAttribution]: $fontSize';
   }
 }
 
