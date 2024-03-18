@@ -1734,7 +1734,73 @@ void main() {
             ),
           ],
         );
-      }, skip: 'Re-enable later');
+      });
+
+      test(
+          'making the whole paragraph linked and unlinked results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+            ),
+          ],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(
+          editor,
+          Delta()..retain(3, {'link': 'https://example.com'}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(
+                        url: Uri.parse('https://example.com'),
+                      ),
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(editor, Delta()..retain(3, {'link': null}));
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+            ),
+          ],
+        );
+      });
     });
 
     group('paragraph block type conversions', () {

@@ -112,6 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _applyingQuillChange = true;
     DeltaApplier().apply(_editor, change);
     _applyingQuillChange = false;
+    print(_document.nodes);
 
     setState(() {
       _deltaChangeLog.add((document, change));

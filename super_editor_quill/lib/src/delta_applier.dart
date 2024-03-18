@@ -1,11 +1,14 @@
 import 'package:super_editor_quill/super_editor_quill.dart';
 
-typedef _DeltaAttributor = Attribution Function(Object? value);
+typedef _DeltaAttributor = Attribution Function(
+  Attribution? existingAttribution,
+  Object? value,
+);
 
 typedef Attributors = Map<String, _DeltaAttributor>;
 
 final _defaultBlockAttributors = <String, _DeltaAttributor>{
-  'header': (value) {
+  'header': (_, value) {
     if (value == null || value == false) return paragraphAttribution;
 
     if (value == 1) return header1Attribution;
@@ -20,12 +23,12 @@ final _defaultBlockAttributors = <String, _DeltaAttributor>{
 };
 
 final _defaultTextAttributors = <String, _DeltaAttributor>{
-  'bold': (_) => boldAttribution,
-  'italic': (_) => italicsAttribution,
-  'underline': (_) => underlineAttribution,
-  'link': (url) {
-    // TODO: This is not the clearest API by any means
-    return LinkAttribution(url: Uri.parse(url as String));
+  'bold': (_, __) => boldAttribution,
+  'italic': (_, __) => italicsAttribution,
+  'underline': (_, __) => underlineAttribution,
+  'link': (existingAttribution, url) {
+    return existingAttribution ??
+        LinkAttribution(url: Uri.parse(url as String));
   },
 };
 
@@ -121,14 +124,14 @@ class DeltaApplier {
                 requests.add(
                   ChangeParagraphBlockTypeRequest(
                     nodeId: range.end.nodeId,
-                    blockType: blockAttribution(attribute.value),
+                    blockType: blockAttribution(null, attribute.value),
                   ),
                 );
               } else {
                 requests.add(
                   ChangeParagraphBlockTypeRequest(
                     nodeId: range.end.nodeId,
-                    blockType: blockAttribution(attribute.value),
+                    blockType: blockAttribution(null, attribute.value),
                   ),
                 );
               }
@@ -144,12 +147,24 @@ class DeltaApplier {
 
             final textAttribution = _textAttributors[attribute.key]!;
 
-            if (attribute.value == false || attribute.value == null) {
+            if (attribute.value == null) {
+              final existingAttribution = ((document
+                      .getNodesInside(start, end)
+                      .single) as ParagraphNode)
+                  .text
+                  .spans
+                  .getAttributionSpansInRange(
+                    attributionFilter: (_) => true,
+                    start: startOffset,
+                    end: endOffset,
+                  )
+                  .single
+                  .attribution;
               requests.add(
                 RemoveTextAttributionsRequest(
                   documentRange: range,
                   attributions: {
-                    textAttribution(attribute.value),
+                    textAttribution(existingAttribution, attribute.value),
                   },
                 ),
               );
@@ -158,7 +173,7 @@ class DeltaApplier {
                 AddTextAttributionsRequest(
                   documentRange: range,
                   attributions: {
-                    textAttribution(attribute.value),
+                    textAttribution(null, attribute.value),
                   },
                 ),
               );
@@ -195,24 +210,6 @@ class DeltaApplier {
       editor.execute(requests);
     }
   }
-}
-
-// In Delta format, applying attributions to the following "\n" of every block
-// applies the attributions to the whole block.
-DocumentRange _shiftRange(
-  TextNode node,
-  Document document,
-  DocumentRange range,
-) {
-  return range.end.nodePosition == node.endPosition
-      ? DocumentRange(
-          start: DocumentPosition(
-            nodeId: node.id,
-            nodePosition: const TextNodePosition(offset: 0),
-          ),
-          end: range.end,
-        )
-      : range;
 }
 
 int? _deltaPositionToDocumentNodeIndex({
