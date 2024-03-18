@@ -1,4 +1,3 @@
-import 'package:super_editor_quill/src/delta_position_figure_outer.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
 
 typedef _DeltaAttributor = Attribution Function(Object? value);
@@ -29,8 +28,6 @@ final _defaultTextAttributors = <String, _DeltaAttributor>{
     return LinkAttribution(url: Uri.parse(url as String));
   },
 };
-
-const _figureOuter = DeltaPositionFigureOuter();
 
 /// Translated QuillJS Deltas to SuperEditor EditRequests and executes them as
 /// one batch of requests.
@@ -90,27 +87,26 @@ class DeltaApplier {
           );
         }
       } else if (operation.isRetain) {
-        offset = offset + operation.length;
+        final startOffset = offset;
+        final endOffset = offset + operation.length;
+        offset = endOffset;
 
         final attributes = operation.attributes ?? {};
 
         if (attributes.isNotEmpty) {
-          final normalizedOffset = offset - 1;
           final document =
               editor.context.find<MutableDocument>(Editor.documentKey);
           final start = _deltaPositionToDocumentPosition(
             document: document,
             pendingRequests: requests,
-            deltaPosition: normalizedOffset,
+            deltaPosition: startOffset,
           )!;
           final end = _deltaPositionToDocumentPosition(
             document: document,
             pendingRequests: requests,
-            deltaPosition: normalizedOffset + operation.length,
+            deltaPosition: endOffset,
           )!;
           final range = DocumentRange(start: start, end: end);
-          final endOfTheBlock =
-              _figureOuter.isAtTheEndOfABlock(document, offset);
 
           for (final attribute in attributes.entries) {
             final hasBlockAttribution =
@@ -147,40 +143,25 @@ class DeltaApplier {
             }
 
             final textAttribution = _textAttributors[attribute.key]!;
-            final affectedNodes = document
-                .getNodesInside(range.start, range.end)
-                .cast<TextNode>();
 
-            for (final node in affectedNodes) {
-              final shiftedRange = endOfTheBlock
-                  ? DocumentRange(
-                      start: DocumentPosition(
-                        nodeId: node.id,
-                        nodePosition: const TextNodePosition(offset: 0),
-                      ),
-                      end: range.end,
-                    )
-                  : range;
-
-              if (attribute.value == false || attribute.value == null) {
-                requests.add(
-                  RemoveTextAttributionsRequest(
-                    documentRange: shiftedRange,
-                    attributions: {
-                      textAttribution(attribute.value),
-                    },
-                  ),
-                );
-              } else {
-                requests.add(
-                  AddTextAttributionsRequest(
-                    documentRange: shiftedRange,
-                    attributions: {
-                      textAttribution(attribute.value),
-                    },
-                  ),
-                );
-              }
+            if (attribute.value == false || attribute.value == null) {
+              requests.add(
+                RemoveTextAttributionsRequest(
+                  documentRange: range,
+                  attributions: {
+                    textAttribution(attribute.value),
+                  },
+                ),
+              );
+            } else {
+              requests.add(
+                AddTextAttributionsRequest(
+                  documentRange: range,
+                  attributions: {
+                    textAttribution(attribute.value),
+                  },
+                ),
+              );
             }
           }
         }

@@ -733,6 +733,52 @@ void main() {
         );
       });
 
+      test('making last character bold results in correct document state', () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(2)
+            ..retain(1, {'bold': true}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      });
+
       test(
           'making the whole line of text bold results in correct document state',
           () {
