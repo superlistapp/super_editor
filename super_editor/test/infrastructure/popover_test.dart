@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
@@ -81,6 +82,75 @@ void main() {
 
       // Ensure the popover was closed.
       expect(find.byType(RoundedRectanglePopoverAppearance), findsNothing);
+    });
+
+    testWidgetsOnAllPlatforms('does not close popover when tapping a widget with the same tap region groupId',
+        (tester) async {
+      final popoverController = PopoverController();
+
+      const tapRegionGroupId = 'popover_scaffold';
+
+      /// Pumps a tree with a PopoverScaffold at the top and a Button at the bottom,
+      /// with a space between them.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 200,
+              height: 500,
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: SizedBox(
+                      width: 200,
+                      height: 200,
+                      child: PopoverScaffold(
+                        tapRegionGroupId: tapRegionGroupId,
+                        controller: popoverController,
+                        buttonBuilder: (context) => const SizedBox(),
+                        popoverBuilder: (context) => const RoundedRectanglePopoverAppearance(
+                          child: SizedBox(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    child: TapRegion(
+                      groupId: tapRegionGroupId,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        child: const SizedBox(
+                          height: 200,
+                          width: 200,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Ensure the popover isn't displayed.
+      expect(find.byType(RoundedRectanglePopoverAppearance), findsNothing);
+
+      // Show the popover.
+      popoverController.open();
+      await tester.pump();
+
+      // Ensure the popover is displayed.
+      expect(find.byType(RoundedRectanglePopoverAppearance), findsOneWidget);
+
+      // Tap the button.
+      await tester.tap(find.byType(ElevatedButton));
+      await tester.pump();
+
+      // Ensure the popover is still displayed.
+      expect(find.byType(RoundedRectanglePopoverAppearance), findsOneWidget);
     });
 
     testWidgetsOnAllPlatforms('enforces the given popover geometry', (tester) async {

@@ -1,7 +1,9 @@
 import 'package:example_docs/app_menu.dart';
 import 'package:example_docs/editor.dart';
 import 'package:example_docs/theme.dart';
+import 'package:example_docs/toolbar.dart';
 import 'package:flutter/material.dart';
+import 'package:super_editor/super_editor.dart';
 
 class DocsApp extends StatelessWidget {
   const DocsApp({super.key});
@@ -21,25 +23,69 @@ class DocsApp extends StatelessWidget {
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  const MainScreen({
+    super.key,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
+  final FocusNode _editorFocusNode = FocusNode();
+  late MutableDocument _document;
+  late MutableDocumentComposer _composer;
+  late Editor _editor;
+
+  int _zoomLevel = 100;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _document = _createInitialDocument();
+    _composer = MutableDocumentComposer();
+    _editor = createDefaultDocumentEditor(document: _document, composer: _composer);
+  }
+
+  @override
+  void dispose() {
+    _editor.dispose();
+    _composer.dispose();
+    _document.dispose();
+    _editorFocusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-        backgroundColor: Color(0xFFf9fbfd),
+    return Scaffold(
+        backgroundColor: const Color(0xFFf9fbfd),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _AppHeaderPane(),
-            SizedBox(height: 4),
-            Divider(height: 1, thickness: 1, color: Color(0xFFc4c7c5)),
+            _AppHeaderPane(
+              editorFocusNode: _editorFocusNode,
+              document: _document,
+              editor: _editor,
+              composer: _composer,
+              onZoomChange: (zoom) => setState(() {
+                _zoomLevel = zoom;
+              }),
+            ),
+            const SizedBox(height: 4),
+            const Divider(height: 1, thickness: 1, color: Color(0xFFc4c7c5)),
             Expanded(
-              child: DocsEditor(),
+              child: Transform.scale(
+                alignment: Alignment.topCenter,
+                scale: _zoomLevel / 100.0,
+                child: DocsEditor(
+                  focusNode: _editorFocusNode,
+                  document: _document,
+                  composer: _composer,
+                  editor: _editor,
+                ),
+              ),
             ),
           ],
         ));
@@ -49,7 +95,19 @@ class _MainScreenState extends State<MainScreen> {
 /// The pane that appears at the top of the app, which includes the document title, app menu,
 /// and editor toolbar.
 class _AppHeaderPane extends StatelessWidget {
-  const _AppHeaderPane({super.key});
+  const _AppHeaderPane({
+    required this.editorFocusNode,
+    required this.document,
+    required this.editor,
+    required this.composer,
+    required this.onZoomChange,
+  });
+
+  final FocusNode editorFocusNode;
+  final Document document;
+  final Editor editor;
+  final MutableDocumentComposer composer;
+  final void Function(int zoom) onZoomChange;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +117,13 @@ class _AppHeaderPane extends StatelessWidget {
         children: [
           _buildTitleAndMenuBar(),
           const SizedBox(height: 16),
-          const _DocsEditorToolbar(),
+          DocsEditorToolbar(
+            editorFocusNode: editorFocusNode,
+            document: document,
+            editor: editor,
+            composer: composer,
+            onZoomChange: onZoomChange,
+          ),
         ],
       ),
     );
@@ -137,25 +201,31 @@ class _AppHeaderPane extends StatelessWidget {
   }
 }
 
-/// The application toolbar that includes document editing options such as font family,
-/// font size, text alignment, etc.
-class _DocsEditorToolbar extends StatefulWidget {
-  const _DocsEditorToolbar();
-
-  @override
-  State<_DocsEditorToolbar> createState() => _DocsEditorToolbarState();
-}
-
-class _DocsEditorToolbarState extends State<_DocsEditorToolbar> {
-  @override
-  Widget build(BuildContext context) {
-    return const Material(
-      color: toolbarBackgroundColor,
-      shape: StadiumBorder(),
-      child: SizedBox(
-        width: double.infinity,
-        height: 36,
+// Creates the document that's initially displayed when the app launches.
+MutableDocument _createInitialDocument() {
+  return MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText("Welcome to a Super Editor version of Docs!"),
+        metadata: {
+          "blockType": header1Attribution,
+        },
       ),
-    );
-  }
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText("By: The Super Editor Team"),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(
+            "This is an example document editor experience, which is meant to mimic the UX of Google Docs. We created this example app to ensure that common desktop word processing UX can be built with Super Editor."),
+      ),
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(
+            "A typical desktop word processor is comprised of a pane at the top of the window, which includes some combination of information about the current document, as well as toolbars that present editing options. The remainder of the window is filled by an editable document."),
+      ),
+    ],
+  );
 }
