@@ -1,3 +1,4 @@
+import 'package:quill_delta/quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
 
 typedef _DeltaAttributor = Attribution Function(
