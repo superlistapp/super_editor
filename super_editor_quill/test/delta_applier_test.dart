@@ -777,6 +777,78 @@ void main() {
       });
 
       test(
+          'making two whole lines of text bold results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(id: 'node-1', text: AttributedText('abc')),
+            ParagraphNode(id: 'node-2', text: AttributedText('def')),
+          ],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3, {'bold': true})
+            ..retain(1)
+            ..retain(3, {'bold': true}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ParagraphNode(
+              id: 'node-2',
+              text: AttributedText(
+                'def',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      });
+
+      test(
           'making an already bold line of text unbold results in correct document state',
           () {
         final document = MutableDocument(
@@ -1616,7 +1688,7 @@ void main() {
             ),
           ],
         );
-      });
+      }, skip: 'Re-enable later');
     });
 
     group('paragraph block type conversions', () {

@@ -1,14 +1,12 @@
+import 'package:super_editor_quill/src/delta_position_figure_outer.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
 
-typedef _DeltaAttributor = Attribution Function(
-  Attribution? attribution,
-  Object? value,
-);
+typedef _DeltaAttributor = Attribution Function(Object? value);
 
 typedef Attributors = Map<String, _DeltaAttributor>;
 
 final _defaultBlockAttributors = <String, _DeltaAttributor>{
-  'header': (_, value) {
+  'header': (value) {
     if (value == null || value == false) return paragraphAttribution;
 
     if (value == 1) return header1Attribution;
@@ -23,14 +21,16 @@ final _defaultBlockAttributors = <String, _DeltaAttributor>{
 };
 
 final _defaultTextAttributors = <String, _DeltaAttributor>{
-  'bold': (_, __) => boldAttribution,
-  'italic': (_, __) => italicsAttribution,
-  'underline': (_, __) => underlineAttribution,
-  'link': (attribution, url) {
+  'bold': (_) => boldAttribution,
+  'italic': (_) => italicsAttribution,
+  'underline': (_) => underlineAttribution,
+  'link': (url) {
     // TODO: This is not the clearest API by any means
-    return attribution ?? LinkAttribution(url: Uri.parse(url as String));
+    return LinkAttribution(url: Uri.parse(url as String));
   },
 };
+
+const _figureOuter = DeltaPositionFigureOuter();
 
 /// Translated QuillJS Deltas to SuperEditor EditRequests and executes them as
 /// one batch of requests.
@@ -109,6 +109,8 @@ class DeltaApplier {
             deltaPosition: normalizedOffset + operation.length,
           )!;
           final range = DocumentRange(start: start, end: end);
+          final endOfTheBlock =
+              _figureOuter.isAtTheEndOfABlock(document, offset);
 
           for (final attribute in attributes.entries) {
             final hasBlockAttribution =
@@ -123,14 +125,14 @@ class DeltaApplier {
                 requests.add(
                   ChangeParagraphBlockTypeRequest(
                     nodeId: range.end.nodeId,
-                    blockType: blockAttribution(null, attribute.value),
+                    blockType: blockAttribution(attribute.value),
                   ),
                 );
               } else {
                 requests.add(
                   ChangeParagraphBlockTypeRequest(
                     nodeId: range.end.nodeId,
-                    blockType: blockAttribution(null, attribute.value),
+                    blockType: blockAttribution(attribute.value),
                   ),
                 );
               }
@@ -145,33 +147,40 @@ class DeltaApplier {
             }
 
             final textAttribution = _textAttributors[attribute.key]!;
-            final node = (document.getNodesInside(range.start, range.end).single
-                as TextNode);
-            final shiftedRange = _shiftRange(node, document, range);
-            final existingAttribution = node.text.spans
-                .getAllAttributionsAt(
-                  (range.start.nodePosition as TextNodePosition).offset,
-                )
-                .singleOrNull;
+            final affectedNodes = document
+                .getNodesInside(range.start, range.end)
+                .cast<TextNode>();
 
-            if (attribute.value == false || attribute.value == null) {
-              requests.add(
-                RemoveTextAttributionsRequest(
-                  documentRange: shiftedRange,
-                  attributions: {
-                    textAttribution(existingAttribution, attribute.value),
-                  },
-                ),
-              );
-            } else {
-              requests.add(
-                AddTextAttributionsRequest(
-                  documentRange: shiftedRange,
-                  attributions: {
-                    textAttribution(existingAttribution, attribute.value),
-                  },
-                ),
-              );
+            for (final node in affectedNodes) {
+              final shiftedRange = endOfTheBlock
+                  ? DocumentRange(
+                      start: DocumentPosition(
+                        nodeId: node.id,
+                        nodePosition: const TextNodePosition(offset: 0),
+                      ),
+                      end: range.end,
+                    )
+                  : range;
+
+              if (attribute.value == false || attribute.value == null) {
+                requests.add(
+                  RemoveTextAttributionsRequest(
+                    documentRange: shiftedRange,
+                    attributions: {
+                      textAttribution(attribute.value),
+                    },
+                  ),
+                );
+              } else {
+                requests.add(
+                  AddTextAttributionsRequest(
+                    documentRange: shiftedRange,
+                    attributions: {
+                      textAttribution(attribute.value),
+                    },
+                  ),
+                );
+              }
             }
           }
         }
@@ -300,6 +309,9 @@ int _shiftDeltaPositionBasedOnPendingRequests(
   for (final request in pendingRequests) {
     if (request is InsertTextRequest) {
       result += request.textToInsert.length;
+    } else if (request is AddTextAttributionsRequest ||
+        request is RemoveTextAttributionsRequest) {
+      // No-op
     } else {
       throw StateError('Cannot handle $request');
     }
