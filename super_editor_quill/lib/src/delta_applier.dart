@@ -1,17 +1,12 @@
 import 'package:quill_delta/quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
 
-typedef _DeltaAttributor = Attribution Function(
-  Attribution? existingAttribution,
-  Object? value,
-);
+typedef _DeltaAttributor = Attribution Function(Object value);
 
 typedef Attributors = Map<String, _DeltaAttributor>;
 
 final _defaultBlockAttributors = <String, _DeltaAttributor>{
-  'header': (_, value) {
-    if (value == null || value == false) return paragraphAttribution;
-
+  'header': (value) {
     if (value == 1) return header1Attribution;
     if (value == 2) return header2Attribution;
     if (value == 3) return header3Attribution;
@@ -24,12 +19,11 @@ final _defaultBlockAttributors = <String, _DeltaAttributor>{
 };
 
 final _defaultTextAttributors = <String, _DeltaAttributor>{
-  'bold': (_, __) => boldAttribution,
-  'italic': (_, __) => italicsAttribution,
-  'underline': (_, __) => underlineAttribution,
-  'link': (existingAttribution, url) {
-    return existingAttribution ??
-        LinkAttribution(url: Uri.parse(url as String));
+  'bold': (_) => boldAttribution,
+  'italic': (_) => italicsAttribution,
+  'underline': (_) => underlineAttribution,
+  'link': (url) {
+    return LinkAttribution(url: Uri.parse(url as String));
   },
 };
 
@@ -121,18 +115,20 @@ class DeltaApplier {
               assert(range.start.nodeId == range.end.nodeId);
               final blockAttribution = _blockAttributors[attribute.key]!;
 
-              if (attribute.value == false || attribute.value == null) {
+              if (attribute.value == null) {
+                // Removing the block type attribution makes the block type into
+                // just a plain paragraph.
                 requests.add(
                   ChangeParagraphBlockTypeRequest(
                     nodeId: range.end.nodeId,
-                    blockType: blockAttribution(null, attribute.value),
+                    blockType: paragraphAttribution,
                   ),
                 );
               } else {
                 requests.add(
                   ChangeParagraphBlockTypeRequest(
                     nodeId: range.end.nodeId,
-                    blockType: blockAttribution(null, attribute.value),
+                    blockType: blockAttribution(attribute.value),
                   ),
                 );
               }
@@ -146,25 +142,22 @@ class DeltaApplier {
               );
             }
 
-            final textAttribution = _textAttributors[attribute.key]!;
-
             if (attribute.value == null) {
               final existingAttribution =
                   _findExistingAttribution(document: document, range: range);
               requests.add(
                 RemoveTextAttributionsRequest(
                   documentRange: range,
-                  attributions: {
-                    textAttribution(existingAttribution, attribute.value),
-                  },
+                  attributions: {existingAttribution},
                 ),
               );
             } else {
+              final textAttribution = _textAttributors[attribute.key]!;
               requests.add(
                 AddTextAttributionsRequest(
                   documentRange: range,
                   attributions: {
-                    textAttribution(null, attribute.value),
+                    textAttribution(attribute.value),
                   },
                 ),
               );
