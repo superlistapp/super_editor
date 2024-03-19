@@ -7,130 +7,262 @@ import 'package:super_editor_markdown/src/markdown_to_document_parsing.dart';
 
 void main() {
   group("Super Editor Markdown style reaction >", () {
-    testWidgets("bold", (tester) async {
-      final document = deserializeMarkdownToDocument("Hello **bold");
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+    group("at beginning of paragraph >", () {
+      testWidgets("bold", (tester) async {
+        final document = deserializeMarkdownToDocument("");
+        final composer = MutableDocumentComposer();
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: document,
-              composer: composer,
-              plugins: {
-                MarkdownInlineStylePlugin(),
-              },
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                document: document,
+                composer: composer,
+                plugins: {
+                  MarkdownInlineStylePlugin(),
+                },
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      final nodeId = document.nodes.first.id;
-      await tester.placeCaretInParagraph(nodeId, 12);
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+        await tester.typeImeText("**bold**");
 
-      await tester.typeImeText("**");
-      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello bold");
-      expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
-        const SpanMarker(attribution: boldAttribution, offset: 6, markerType: SpanMarkerType.start),
-        const SpanMarker(attribution: boldAttribution, offset: 9, markerType: SpanMarkerType.end),
-      ]);
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "bold");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+          const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: boldAttribution, offset: 3, markerType: SpanMarkerType.end),
+        ]);
+      });
+
+      testWidgets("italics", (tester) async {
+        final document = deserializeMarkdownToDocument("");
+        final composer = MutableDocumentComposer();
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                document: document,
+                composer: composer,
+                plugins: {
+                  MarkdownInlineStylePlugin(),
+                },
+              ),
+            ),
+          ),
+        );
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+        await tester.typeImeText("*italics*");
+
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "italics");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+          const SpanMarker(attribution: italicsAttribution, offset: 0, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: italicsAttribution, offset: 6, markerType: SpanMarkerType.end),
+        ]);
+      });
+
+      testWidgets("strikethrough", (tester) async {
+        final document = deserializeMarkdownToDocument("");
+        final composer = MutableDocumentComposer();
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                document: document,
+                composer: composer,
+                plugins: {
+                  MarkdownInlineStylePlugin(),
+                },
+              ),
+            ),
+          ),
+        );
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 20);
+        await tester.typeImeText("~strikethrough~");
+
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "strikethrough");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+          const SpanMarker(attribution: strikethroughAttribution, offset: 0, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: strikethroughAttribution, offset: 12, markerType: SpanMarkerType.end),
+        ]);
+      });
+
+      testWidgets("links", (tester) async {
+        final document = deserializeMarkdownToDocument("");
+        final composer = MutableDocumentComposer();
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                document: document,
+                composer: composer,
+                plugins: {
+                  MarkdownInlineStylePlugin(),
+                },
+              ),
+            ),
+          ),
+        );
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 33);
+        await tester.typeImeText("[my link](http://google.com)");
+
+        final linkAttribution = LinkAttribution(url: Uri.parse("http://google.com"));
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "my link");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+          SpanMarker(attribution: linkAttribution, offset: 0, markerType: SpanMarkerType.start),
+          SpanMarker(attribution: linkAttribution, offset: 6, markerType: SpanMarkerType.end),
+        ]);
+      });
     });
 
-    testWidgets("italics", (tester) async {
-      final document = deserializeMarkdownToDocument("Hello *italics");
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+    group("in middle of paragraph >", () {
+      testWidgets("bold", (tester) async {
+        final document = deserializeMarkdownToDocument("Hello");
+        final composer = MutableDocumentComposer();
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: document,
-              composer: composer,
-              plugins: {
-                MarkdownInlineStylePlugin(),
-              },
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                document: document,
+                composer: composer,
+                plugins: {
+                  MarkdownInlineStylePlugin(),
+                },
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      final nodeId = document.nodes.first.id;
-      await tester.placeCaretInParagraph(nodeId, 14);
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 5);
 
-      await tester.typeImeText("*");
-      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello italics");
-      expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
-        const SpanMarker(attribution: italicsAttribution, offset: 6, markerType: SpanMarkerType.start),
-        const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.end),
-      ]);
-    });
+        await tester.typeImeText(" **bold**");
 
-    testWidgets("strikethrough", (tester) async {
-      final document = deserializeMarkdownToDocument("Hello ~strikethrough");
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello bold");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+          const SpanMarker(attribution: boldAttribution, offset: 6, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: boldAttribution, offset: 9, markerType: SpanMarkerType.end),
+        ]);
+      });
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: document,
-              composer: composer,
-              plugins: {
-                MarkdownInlineStylePlugin(),
-              },
+      testWidgets("italics", (tester) async {
+        final document = deserializeMarkdownToDocument("Hello");
+        final composer = MutableDocumentComposer();
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                document: document,
+                composer: composer,
+                plugins: {
+                  MarkdownInlineStylePlugin(),
+                },
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      final nodeId = document.nodes.first.id;
-      await tester.placeCaretInParagraph(nodeId, 20);
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 5);
 
-      await tester.typeImeText("~");
-      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello strikethrough");
-      expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
-        const SpanMarker(attribution: strikethroughAttribution, offset: 6, markerType: SpanMarkerType.start),
-        const SpanMarker(attribution: strikethroughAttribution, offset: 18, markerType: SpanMarkerType.end),
-      ]);
-    });
+        await tester.typeImeText(" *italics*");
 
-    testWidgets("links", (tester) async {
-      final document = deserializeMarkdownToDocument("Hello [my link](http://google.com");
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello italics");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+          const SpanMarker(attribution: italicsAttribution, offset: 6, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.end),
+        ]);
+      });
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: document,
-              composer: composer,
-              plugins: {
-                MarkdownInlineStylePlugin(),
-              },
+      testWidgets("strikethrough", (tester) async {
+        final document = deserializeMarkdownToDocument("Hello");
+        final composer = MutableDocumentComposer();
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                document: document,
+                composer: composer,
+                plugins: {
+                  MarkdownInlineStylePlugin(),
+                },
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      final nodeId = document.nodes.first.id;
-      await tester.placeCaretInParagraph(nodeId, 33);
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 5);
 
-      await tester.typeImeText(")");
+        await tester.typeImeText(" ~strikethrough~");
 
-      final linkAttribution = LinkAttribution(url: Uri.parse("http://google.com"));
-      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello my link");
-      expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
-        SpanMarker(attribution: linkAttribution, offset: 6, markerType: SpanMarkerType.start),
-        SpanMarker(attribution: linkAttribution, offset: 12, markerType: SpanMarkerType.end),
-      ]);
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello strikethrough");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+          const SpanMarker(attribution: strikethroughAttribution, offset: 6, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: strikethroughAttribution, offset: 18, markerType: SpanMarkerType.end),
+        ]);
+      });
+
+      testWidgets("links", (tester) async {
+        final document = deserializeMarkdownToDocument("Hello");
+        final composer = MutableDocumentComposer();
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                document: document,
+                composer: composer,
+                plugins: {
+                  MarkdownInlineStylePlugin(),
+                },
+              ),
+            ),
+          ),
+        );
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 5);
+
+        await tester.typeImeText(" [my link](http://google.com)");
+
+        final linkAttribution = LinkAttribution(url: Uri.parse("http://google.com"));
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello my link");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+          SpanMarker(attribution: linkAttribution, offset: 6, markerType: SpanMarkerType.start),
+          SpanMarker(attribution: linkAttribution, offset: 12, markerType: SpanMarkerType.end),
+        ]);
+      });
     });
 
     testWidgets("multiple styles", (tester) async {

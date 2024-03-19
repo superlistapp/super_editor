@@ -145,6 +145,14 @@ class MarkdownInlineStyleReaction implements EditReaction {
       return [];
     }
 
+    if (afterMarkdownText.text.trim().isEmpty) {
+      // The parsed text is empty. This means that parsing went from some content to
+      // no content. This can happen when Markdown syntax appears at the beginning of
+      // a text blob, e.g., "*", "**", etc. To prevent that syntax from immediately
+      // disappearing, we filter out that case here.
+      return [];
+    }
+
     // Some kind of change was made to the text via Markdown syntax. Calculate the text and
     // attribution differences that came from parsing the Markdown and then create change
     // requests that will change the existing text into text with inline Markdown applied.
