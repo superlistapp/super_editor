@@ -2020,6 +2020,105 @@ void main() {
           ],
         );
       });
+
+      test(
+          'removing bold attributions from a paragraph that has multiple attributions applied results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    // bold
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                    // italics
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                    // underline
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(editor, Delta()..retain(3, {'bold': null}));
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    // italics
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: italicsAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                    // underline
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: underlineAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      });
     });
 
     group('paragraph block type conversions', () {

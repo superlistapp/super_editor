@@ -1,12 +1,34 @@
 import 'package:quill_delta/quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
 
-typedef _DeltaAttributor = Attribution Function(Object value);
+abstract interface class DeltaAttribution {
+  const DeltaAttribution();
 
-typedef Attributors = Map<String, _DeltaAttributor>;
+  String get deltaAttributeKey;
+  bool typeMatchesSuperEditorAttribution(Attribution attribution);
+  Attribution toSuperEditorAttribution(Object value);
+}
 
-final _defaultBlockAttributors = <String, _DeltaAttributor>{
-  'header': (value) {
+class DeltaHeaderAttribution implements DeltaAttribution {
+  const DeltaHeaderAttribution();
+
+  @override
+  String get deltaAttributeKey => 'header';
+
+  @override
+  bool typeMatchesSuperEditorAttribution(Attribution attribution) {
+    return {
+      header1Attribution,
+      header2Attribution,
+      header3Attribution,
+      header4Attribution,
+      header5Attribution,
+      header6Attribution
+    }.contains(attribution);
+  }
+
+  @override
+  Attribution toSuperEditorAttribution(Object value) {
     if (value == 1) return header1Attribution;
     if (value == 2) return header2Attribution;
     if (value == 3) return header3Attribution;
@@ -15,31 +37,102 @@ final _defaultBlockAttributors = <String, _DeltaAttributor>{
     if (value == 6) return header6Attribution;
 
     throw UnimplementedError('Unknown header value: $value');
-  },
-};
+  }
+}
 
-final _defaultTextAttributors = <String, _DeltaAttributor>{
-  'bold': (_) => boldAttribution,
-  'italic': (_) => italicsAttribution,
-  'underline': (_) => underlineAttribution,
-  'link': (url) {
-    return LinkAttribution(url: Uri.parse(url as String));
-  },
-};
+class DeltaBoldAttribution implements DeltaAttribution {
+  const DeltaBoldAttribution();
+
+  @override
+  String get deltaAttributeKey => 'bold';
+
+  @override
+  bool typeMatchesSuperEditorAttribution(Attribution attribution) {
+    return attribution == boldAttribution;
+  }
+
+  @override
+  Attribution toSuperEditorAttribution(Object value) {
+    return boldAttribution;
+  }
+}
+
+class DeltaItalicsAttribution implements DeltaAttribution {
+  const DeltaItalicsAttribution();
+
+  @override
+  String get deltaAttributeKey => 'italic';
+
+  @override
+  bool typeMatchesSuperEditorAttribution(Attribution attribution) {
+    return attribution == italicsAttribution;
+  }
+
+  @override
+  Attribution toSuperEditorAttribution(Object value) {
+    return italicsAttribution;
+  }
+}
+
+class DeltaUnderlineAttribution implements DeltaAttribution {
+  const DeltaUnderlineAttribution();
+
+  @override
+  String get deltaAttributeKey => 'underline';
+
+  @override
+  bool typeMatchesSuperEditorAttribution(Attribution attribution) {
+    return attribution == underlineAttribution;
+  }
+
+  @override
+  Attribution toSuperEditorAttribution(Object value) {
+    return underlineAttribution;
+  }
+}
+
+class DeltaLinkAttribution implements DeltaAttribution {
+  const DeltaLinkAttribution();
+
+  @override
+  String get deltaAttributeKey => 'link';
+
+  @override
+  bool typeMatchesSuperEditorAttribution(Attribution attribution) {
+    return attribution.id ==
+        LinkAttribution(url: Uri.parse('https://doesnotmatter.com')).id;
+  }
+
+  @override
+  Attribution toSuperEditorAttribution(Object value) {
+    return LinkAttribution(url: Uri.parse(value as String));
+  }
+}
+
+const _defaultBlockAttributions = <DeltaAttribution>[
+  DeltaHeaderAttribution(),
+];
+
+const _defaultTextAttributions = <DeltaAttribution>[
+  DeltaBoldAttribution(),
+  DeltaItalicsAttribution(),
+  DeltaUnderlineAttribution(),
+  DeltaLinkAttribution(),
+];
 
 /// Translated QuillJS Deltas to SuperEditor EditRequests and executes them as
 /// one batch of requests.
 class DeltaApplier {
-  DeltaApplier({
-    Attributors? blockAttributors,
-    Attributors? textAttributors,
+  const DeltaApplier({
+    List<DeltaAttribution> blockAttributions = _defaultBlockAttributions,
+    List<DeltaAttribution> textAttributions = _defaultTextAttributions,
     String Function() idGenerator = Editor.createNodeId,
-  })  : _blockAttributors = blockAttributors ?? _defaultBlockAttributors,
-        _textAttributors = textAttributors ?? _defaultTextAttributors,
+  })  : _blockAttributions = blockAttributions,
+        _textAttributions = textAttributions,
         _idGenerator = idGenerator;
 
-  final Attributors _blockAttributors;
-  final Attributors _textAttributors;
+  final List<DeltaAttribution> _blockAttributions;
+  final List<DeltaAttribution> _textAttributions;
   final String Function() _idGenerator;
 
   /// Converts the [delta] to appropriate [EditRequest]s and executes them on
@@ -107,13 +200,21 @@ class DeltaApplier {
           final range = DocumentRange(start: start, end: end);
 
           for (final attribute in attributes.entries) {
-            final hasBlockAttribution =
-                _blockAttributors.containsKey(attribute.key);
+            final hasBlockAttribution = _blockAttributions.any(
+              (attribution) => attribution.deltaAttributeKey == attribute.key,
+            );
 
             if (hasBlockAttribution) {
-              assert(!_textAttributors.containsKey(attribute.key));
+              assert(
+                !_textAttributions.any(
+                  (attribution) =>
+                      attribution.deltaAttributeKey == attribute.key,
+                ),
+              );
               assert(range.start.nodeId == range.end.nodeId);
-              final blockAttribution = _blockAttributors[attribute.key]!;
+              final blockAttribution = _blockAttributions.singleWhere(
+                (attribution) => attribution.deltaAttributeKey == attribute.key,
+              );
 
               if (attribute.value == null) {
                 // Removing the block type attribution makes the block type into
@@ -128,7 +229,8 @@ class DeltaApplier {
                 requests.add(
                   ChangeParagraphBlockTypeRequest(
                     nodeId: range.end.nodeId,
-                    blockType: blockAttribution(attribute.value),
+                    blockType: blockAttribution
+                        .toSuperEditorAttribution(attribute.value),
                   ),
                 );
               }
@@ -136,15 +238,24 @@ class DeltaApplier {
               continue;
             }
 
-            if (!_textAttributors.containsKey(attribute.key)) {
+            if (!_textAttributions.any(
+              (attribution) => attribution.deltaAttributeKey == attribute.key,
+            )) {
               throw StateError(
                 'No attribution handler implemented for ${attribute.key}: ${attribute.value}',
               );
             }
 
+            final textAttribution = _textAttributions.singleWhere(
+              (attribution) => attribution.deltaAttributeKey == attribute.key,
+            );
             if (attribute.value == null) {
-              final existingAttribution =
-                  _findExistingAttribution(document: document, range: range);
+              final existingAttribution = _findExistingAttribution(
+                document: document,
+                range: range,
+                testAgainstSuperEditorAttribution:
+                    textAttribution.typeMatchesSuperEditorAttribution,
+              );
               requests.add(
                 RemoveTextAttributionsRequest(
                   documentRange: range,
@@ -152,12 +263,11 @@ class DeltaApplier {
                 ),
               );
             } else {
-              final textAttribution = _textAttributors[attribute.key]!;
               requests.add(
                 AddTextAttributionsRequest(
                   documentRange: range,
                   attributions: {
-                    textAttribution(attribute.value),
+                    textAttribution.toSuperEditorAttribution(attribute.value),
                   },
                 ),
               );
@@ -198,6 +308,7 @@ class DeltaApplier {
   Attribution _findExistingAttribution({
     required Document document,
     required DocumentRange range,
+    required bool Function(Attribution) testAgainstSuperEditorAttribution,
   }) {
     final node = (document.getNodesInside(range.start, range.end).single)
         as ParagraphNode;
@@ -208,7 +319,7 @@ class DeltaApplier {
 
     return node.text.spans
         .getAttributionSpansInRange(
-          attributionFilter: (_) => true,
+          attributionFilter: testAgainstSuperEditorAttribution,
           start: shiftedRange.start,
           end: shiftedRange.end,
         )
