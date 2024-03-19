@@ -696,6 +696,9 @@ class _ExpandingCommand implements EditCommand {
   final _ExpandingCommandRequest request;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final paragraph = document.getNodeAt(0) as ParagraphNode;

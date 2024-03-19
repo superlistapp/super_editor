@@ -47,6 +47,16 @@ class TaskNode extends TextNode {
   }
 
   @override
+  TaskNode copy() {
+    return TaskNode(
+      id: id,
+      text: text.copyText(0),
+      metadata: Map.from(metadata),
+      isComplete: isComplete,
+    );
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other && other is TaskNode && runtimeType == other.runtimeType && isComplete == other.isComplete;
@@ -383,6 +393,9 @@ class ChangeTaskCompletionCommand implements EditCommand {
   final bool isComplete;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final taskNode = context.find<MutableDocument>(Editor.documentKey).getNodeById(nodeId);
     if (taskNode is! TaskNode) {
@@ -430,6 +443,9 @@ class ConvertParagraphToTaskCommand implements EditCommand {
   final bool isComplete;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final existingNode = document.getNodeById(nodeId);
@@ -459,6 +475,9 @@ class ConvertTaskToParagraphCommand implements EditCommand {
 
   final String nodeId;
   final Map<String, dynamic>? paragraphMetadata;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -505,6 +524,9 @@ class SplitExistingTaskCommand implements EditCommand {
   final String nodeId;
   final int splitOffset;
   final String? newNodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext editContext, CommandExecutor executor) {

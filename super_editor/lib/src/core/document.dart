@@ -381,6 +381,8 @@ abstract class DocumentNode implements ChangeNotifier {
   /// Returns a copy of this node's metadata.
   Map<String, dynamic> copyMetadata() => Map.from(_metadata);
 
+  DocumentNode copy();
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

@@ -165,6 +165,11 @@ class TextNode extends DocumentNode with ChangeNotifier {
   }
 
   @override
+  TextNode copy() {
+    return TextNode(id: id, text: text.copyText(0), metadata: Map.from(metadata));
+  }
+
+  @override
   String toString() => '[TextNode] - text: $text, metadata: ${copyMetadata()}';
 
   @override
@@ -1198,6 +1203,9 @@ class AddTextAttributionsCommand implements EditCommand {
   final bool autoMerge;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     editorDocLog.info('Executing AddTextAttributionsCommand');
     final document = context.find<MutableDocument>(Editor.documentKey);
@@ -1307,6 +1315,9 @@ class RemoveTextAttributionsCommand implements EditCommand {
 
   final DocumentRange documentRange;
   final Set<Attribution> attributions;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1421,6 +1432,9 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
   final DocumentRange documentRange;
   final Set<Attribution> attributions;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   // TODO: The structure of this command looks nearly identical to the two other attribution
   // commands above. We collect nodes and then we loop through them to apply an operation.
@@ -1545,6 +1559,9 @@ class ChangeSingleColumnLayoutComponentStylesCommand implements EditCommand {
   final SingleColumnLayoutComponentStyles styles;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId)!;
@@ -1583,6 +1600,9 @@ class InsertTextCommand implements EditCommand {
   final Set<Attribution> attributions;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
 
@@ -1592,6 +1612,8 @@ class InsertTextCommand implements EditCommand {
       return;
     }
 
+    print("Inserting text: '$textToInsert'");
+
     final textPosition = documentPosition.nodePosition as TextPosition;
     final textOffset = textPosition.offset;
     textNode.text = textNode.text.insertString(
@@ -1599,6 +1621,7 @@ class InsertTextCommand implements EditCommand {
       startOffset: textOffset,
       applyAttributions: attributions,
     );
+    print("Updated node text: '${textNode.text}'");
 
     executor.logChanges([
       DocumentEdit(
@@ -1733,6 +1756,9 @@ class InsertAttributedTextCommand implements EditCommand {
 
   final DocumentPosition documentPosition;
   final AttributedText textToInsert;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
