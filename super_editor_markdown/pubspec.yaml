@@ -13,7 +13,7 @@ dependencies:
 
   super_editor: ^0.2.5
   logging: ^1.0.1
-  markdown: ^4.0.0
+  markdown: ^5.0.0
   diff_match_patch: ^0.4.1
 
 dependency_overrides:

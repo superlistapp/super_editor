@@ -1469,6 +1469,14 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
       newStyle = newStyle.copyWith(
         color: attribution.color,
       );
+    } else if (attribution is BackgroundColorAttribution) {
+      newStyle = newStyle.copyWith(
+        backgroundColor: attribution.color,
+      );
+    } else if (attribution is FontSizeAttribution) {
+      newStyle = newStyle.copyWith(
+        fontSize: attribution.fontSize,
+      );
     } else if (attribution is LinkAttribution) {
       newStyle = newStyle.copyWith(
         color: Colors.lightBlue,

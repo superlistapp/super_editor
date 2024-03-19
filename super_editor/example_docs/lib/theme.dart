@@ -1,4 +1,5 @@
-import 'package:flutter/painting.dart';
+import 'package:flutter/material.dart';
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// The background color of the window panes, such as the background of the
@@ -14,6 +15,53 @@ const menuButtonHorizontalPadding = 8.0;
 /// The background color of the app toolbar, i.e., the toolbar with options for font
 /// family, font size, text alignment.
 const toolbarBackgroundColor = Color(0xFFedf2fa);
+
+/// The background color of a selected button on the toolbar, i.e., the color of a
+/// bold button when the selection is bold.
+const toolbarButtonSelectedColor = Color(0xFFd3e3fd);
+
+/// The background color of a hovered button on the toolbar.
+const toolbarButtonHoveredColor = Color(0xFFE1E6ED);
+
+/// The background color of a pressed button on the toolbar.
+const toolbarButtonPressedColor = Color(0xFFDAE0E6);
+
+/// The color of the vertical divider of the toolbar.
+const toolbarDividerColor = Color(0xFFC7C7C7);
+
+/// Computes the background color for toolbar buttons.
+Color? getButtonColor(Set<MaterialState> states) {
+  if (states.contains(MaterialState.pressed)) {
+    return toolbarButtonPressedColor;
+  }
+
+  if (states.contains(MaterialState.selected)) {
+    return toolbarButtonSelectedColor;
+  }
+
+  if (states.contains(MaterialState.hovered)) {
+    return toolbarButtonHoveredColor;
+  }
+
+  return Colors.transparent;
+}
+
+final defaultToolbarButtonStyle = ButtonStyle(
+  backgroundColor: MaterialStateProperty.resolveWith(getButtonColor),
+  overlayColor: MaterialStateProperty.all(Colors.transparent),
+  foregroundColor: MaterialStateProperty.all(Colors.black),
+  fixedSize: MaterialStateProperty.all(const Size(30, 30)),
+  minimumSize: MaterialStateProperty.all(const Size(30, 30)),
+  maximumSize: MaterialStateProperty.all(const Size(30, 30)),
+  iconSize: MaterialStateProperty.all(18),
+  padding: MaterialStateProperty.all(EdgeInsets.zero),
+  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+    RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(4.0),
+    ),
+  ),
+  shadowColor: MaterialStateProperty.all(Colors.transparent),
+);
 
 final docsStylesheet = [
   StyleRule(
@@ -77,3 +125,11 @@ final docsStylesheet = [
     },
   ),
 ];
+
+FollowerAlignment popoverAligner(Rect globalLeaderRect, Size followerSize, Size screenSize, GlobalKey? boundaryKey) {
+  return const FollowerAlignment(
+    leaderAnchor: Alignment.bottomLeft,
+    followerAnchor: Alignment.topLeft,
+    followerOffset: Offset(0, 1),
+  );
+}
