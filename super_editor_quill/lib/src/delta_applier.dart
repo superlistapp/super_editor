@@ -211,28 +211,34 @@ class DeltaApplier {
                       attribution.deltaAttributeKey == attribute.key,
                 ),
               );
-              assert(range.start.nodeId == range.end.nodeId);
-              final blockAttribution = _blockAttributions.singleWhere(
-                (attribution) => attribution.deltaAttributeKey == attribute.key,
-              );
 
-              if (attribute.value == null) {
-                // Removing the block type attribution makes the block type into
-                // just a plain paragraph.
-                requests.add(
-                  ChangeParagraphBlockTypeRequest(
-                    nodeId: range.end.nodeId,
-                    blockType: paragraphAttribution,
-                  ),
+              final nodesInRange =
+                  document.getNodesInside(range.start, range.end);
+
+              for (final node in nodesInRange) {
+                final blockAttribution = _blockAttributions.singleWhere(
+                  (attribution) =>
+                      attribution.deltaAttributeKey == attribute.key,
                 );
-              } else {
-                requests.add(
-                  ChangeParagraphBlockTypeRequest(
-                    nodeId: range.end.nodeId,
-                    blockType: blockAttribution
-                        .toSuperEditorAttribution(attribute.value),
-                  ),
-                );
+
+                if (attribute.value == null) {
+                  // Removing the block type attribution makes the block type into
+                  // just a plain paragraph.
+                  requests.add(
+                    ChangeParagraphBlockTypeRequest(
+                      nodeId: node.id,
+                      blockType: paragraphAttribution,
+                    ),
+                  );
+                } else {
+                  requests.add(
+                    ChangeParagraphBlockTypeRequest(
+                      nodeId: node.id,
+                      blockType: blockAttribution
+                          .toSuperEditorAttribution(attribute.value),
+                    ),
+                  );
+                }
               }
 
               continue;
@@ -404,7 +410,8 @@ int _shiftDeltaPositionBasedOnPendingRequests(
     if (request is InsertTextRequest) {
       result += request.textToInsert.length;
     } else if (request is AddTextAttributionsRequest ||
-        request is RemoveTextAttributionsRequest) {
+        request is RemoveTextAttributionsRequest ||
+        request is ChangeParagraphBlockTypeRequest) {
       // No-op
     } else {
       throw StateError('Cannot handle $request');

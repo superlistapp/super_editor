@@ -2511,6 +2511,91 @@ void main() {
           ],
         );
       });
+
+      test(
+          'converting three paragraphs to heading 1 and back results in correct document states',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(id: 'node-1', text: AttributedText('abc')),
+            ParagraphNode(id: 'node-2', text: AttributedText('def')),
+            ParagraphNode(id: 'node-3', text: AttributedText('ghi')),
+          ],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Add header 1 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': 1})
+            ..retain(3)
+            ..retain(1, {'header': 1})
+            ..retain(3)
+            ..retain(1, {'header': 1}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': header1Attribution},
+            ),
+            ParagraphNode(
+              id: 'node-2',
+              text: AttributedText('def'),
+              metadata: {'blockType': header1Attribution},
+            ),
+            ParagraphNode(
+              id: 'node-3',
+              text: AttributedText('ghi'),
+              metadata: {'blockType': header1Attribution},
+            ),
+          ],
+        );
+
+        // Remove header 1 attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(3)
+            ..retain(1, {'header': null})
+            ..retain(3)
+            ..retain(1, {'header': null})
+            ..retain(3)
+            ..retain(1, {'header': null}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText('abc'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+            ParagraphNode(
+              id: 'node-2',
+              text: AttributedText('def'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+            ParagraphNode(
+              id: 'node-3',
+              text: AttributedText('ghi'),
+              metadata: {'blockType': paragraphAttribution},
+            ),
+          ],
+        );
+      });
     });
   });
 }
