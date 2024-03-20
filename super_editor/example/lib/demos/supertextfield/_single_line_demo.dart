@@ -1,6 +1,7 @@
 import 'package:example/demos/supertextfield/demo_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '_robot.dart';
 
@@ -46,9 +47,9 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
     _textFieldController
       ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText();
-    _demoRobot
-      ..typeText(AttributedText('Hello World! This is a robot typing some text into a SuperTextField.'))
-      ..start();
+    // _demoRobot
+    //   ..typeText(AttributedText('Hello World! This is a robot typing some text into a SuperTextField.'))
+    //   ..start();
   }
 
   void _restartDemo() {
@@ -76,35 +77,38 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
                 },
                 child: SizedBox(
                   width: double.infinity,
-                  child: SuperDesktopTextField(
-                    key: _textKey,
-                    textController: _textFieldController,
-                    focusNode: _focusNode,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decorationBuilder: (context, child) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: _focusNode!.hasFocus ? Colors.blue : Colors.grey.shade300,
-                            width: 1,
-                          ),
-                        ),
-                        child: child,
-                      );
-                    },
-                    hintBuilder: (context) {
-                      return const Text(
-                        'enter some text',
+                  child: ColoredBox(
+                    color: Colors.yellow,
+                    child: SuperTextField(
+                      textController: _textFieldController,
+                      focusNode: _focusNode,
+                      hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                      inputSource: TextInputSource.ime,
+                      maxLines: 1,
+                      minLines: 1,
+                      textStyleBuilder: (_) => TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        height: 1.8,
+                        leadingDistribution: TextLeadingDistribution.even,
+                      ),
+                      controlsColor: Colors.red,
+                      selectionColor: Colors.green,
+                      caretStyle: CaretStyle(
+                        width: 1,
+                        color: Colors.blue,
+                      ),
+                      blinkTimingMode: BlinkTimingMode.timer,
+                      hintBuilder: (_) => Text(
+                        'Type an URL',
                         style: TextStyle(
                           color: Colors.grey,
+                          height: 1.8,
+                          fontSize: 14,
+                          leadingDistribution: TextLeadingDistribution.even,
                         ),
-                      );
-                    },
-                    hintBehavior: HintBehavior.displayHintUntilTextEntered,
-                    textStyleBuilder: demoTextStyleBuilder,
-                    minLines: 1,
-                    maxLines: 1,
+                      ),
+                    ),
                   ),
                 ),
               ),
