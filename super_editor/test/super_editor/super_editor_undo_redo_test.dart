@@ -80,75 +80,15 @@ void main() {
     });
 
     testWidgetsOnMac("type by character", (widgetTester) async {
-      final editContext = await widgetTester //
+      await widgetTester //
           .createDocument()
           .withSingleEmptyParagraph()
           .pump();
-      final editor = editContext.editor;
 
       await widgetTester.placeCaretInParagraph("1", 0);
 
       // Type characters.
       await widgetTester.typeImeText("Hello");
-      // editor.execute([
-      //   InsertTextRequest(
-      //     documentPosition: const DocumentPosition(
-      //       nodeId: "1",
-      //       nodePosition: TextNodePosition(offset: 0),
-      //     ),
-      //     textToInsert: "H",
-      //     attributions: {},
-      //   ),
-      // ]);
-      // await widgetTester.pump();
-
-      // editor.execute([
-      //   InsertTextRequest(
-      //     documentPosition: const DocumentPosition(
-      //       nodeId: "1",
-      //       nodePosition: TextNodePosition(offset: 1),
-      //     ),
-      //     textToInsert: "e",
-      //     attributions: {},
-      //   ),
-      // ]);
-      // await widgetTester.pump();
-      //
-      // editor.execute([
-      //   InsertTextRequest(
-      //     documentPosition: const DocumentPosition(
-      //       nodeId: "1",
-      //       nodePosition: TextNodePosition(offset: 2),
-      //     ),
-      //     textToInsert: "l",
-      //     attributions: {},
-      //   ),
-      // ]);
-      // await widgetTester.pump();
-      //
-      // editor.execute([
-      //   InsertTextRequest(
-      //     documentPosition: const DocumentPosition(
-      //       nodeId: "1",
-      //       nodePosition: TextNodePosition(offset: 3),
-      //     ),
-      //     textToInsert: "l",
-      //     attributions: {},
-      //   ),
-      // ]);
-      // await widgetTester.pump();
-      //
-      // editor.execute([
-      //   InsertTextRequest(
-      //     documentPosition: const DocumentPosition(
-      //       nodeId: "1",
-      //       nodePosition: TextNodePosition(offset: 4),
-      //     ),
-      //     textToInsert: "o",
-      //     attributions: {},
-      //   ),
-      // ]);
-      // await widgetTester.pump();
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "Hello");
       expect(
@@ -164,8 +104,7 @@ void main() {
       print("------ STARTING UNDOS --------");
 
       // Undo the event.
-      await widgetTester.pressCmdZ(); // Undo composing region.
-      await widgetTester.pressCmdZ(); // Undo text.
+      await widgetTester.pressCmdZ();
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "Hell");
       expect(
@@ -178,8 +117,7 @@ void main() {
         ),
       );
 
-      await widgetTester.pressCmdZ(); // Undo composing region.
-      await widgetTester.pressCmdZ(); // Undo text.
+      await widgetTester.pressCmdZ();
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "Hel");
       expect(
@@ -192,8 +130,7 @@ void main() {
         ),
       );
 
-      await widgetTester.pressCmdZ(); // Undo composing region.
-      await widgetTester.pressCmdZ(); // Undo text.
+      await widgetTester.pressCmdZ();
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "He");
       expect(
@@ -206,8 +143,7 @@ void main() {
         ),
       );
 
-      await widgetTester.pressCmdZ(); // Undo composing region.
-      await widgetTester.pressCmdZ(); // Undo text.
+      await widgetTester.pressCmdZ();
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "H");
       expect(
@@ -220,8 +156,7 @@ void main() {
         ),
       );
 
-      await widgetTester.pressCmdZ(); // Undo composing region.
-      await widgetTester.pressCmdZ(); // Undo text.
+      await widgetTester.pressCmdZ();
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "");
       expect(
@@ -236,27 +171,22 @@ void main() {
 
       print("---------- STARTING REDOS -----------");
 
-      await widgetTester.pressCmdShiftZ(); // Insert text
-      await widgetTester.pressCmdShiftZ(); // Change composing region
+      await widgetTester.pressCmdShiftZ();
       _expectDocumentWithCaret("H", "1", 1);
       print("--------");
 
-      await widgetTester.pressCmdShiftZ(); // Insert text
-      await widgetTester.pressCmdShiftZ(); // Change composing region
+      await widgetTester.pressCmdShiftZ();
       _expectDocumentWithCaret("He", "1", 2);
       print("--------");
 
-      await widgetTester.pressCmdShiftZ(); // Insert text
-      await widgetTester.pressCmdShiftZ(); // Change composing region
+      await widgetTester.pressCmdShiftZ();
       _expectDocumentWithCaret("Hel", "1", 3);
       print("--------");
 
-      await widgetTester.pressCmdShiftZ(); // Insert text
-      await widgetTester.pressCmdShiftZ(); // Change composing region
+      await widgetTester.pressCmdShiftZ();
       _expectDocumentWithCaret("Hell", "1", 4);
 
-      await widgetTester.pressCmdShiftZ(); // Insert text
-      await widgetTester.pressCmdShiftZ(); // Change composing region
+      await widgetTester.pressCmdShiftZ();
       _expectDocumentWithCaret("Hello", "1", 5);
     });
   });

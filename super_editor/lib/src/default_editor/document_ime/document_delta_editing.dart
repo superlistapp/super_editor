@@ -70,6 +70,10 @@ class TextDeltasDocumentEditor {
       composing: _serializedDoc.documentToImeRange(_serializedDoc.composingRegion),
     );
 
+    // Start an editor transaction so that all changes made during this delta
+    // application is considered a single undo-able change.
+    editor.startTransaction();
+
     for (final delta in textEditingDeltas) {
       editorImeLog.info("---------------------------------------------------");
 
@@ -106,6 +110,9 @@ class TextDeltasDocumentEditor {
       ]);
     }
     editorImeLog.fine("Document composing region: ${composingRegion.value}");
+
+    // End the editor transaction for all deltas in this call.
+    editor.endTransaction();
 
     _nextImeValue = null;
   }

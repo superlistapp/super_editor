@@ -123,6 +123,41 @@ class Editor implements RequestDispatcher {
   /// Tracks the number of request executions that are in the process of running.
   int _activeCommandCount = 0;
 
+  bool _isInTransaction = false;
+  CommandTransaction? _openTransaction;
+
+  /// Starts a transaction that runs across multiple calls to [execute], until [endTransaction]
+  /// is called.
+  ///
+  /// Typically, a transaction only includes the [EditRequest]s that are passed to a single
+  /// call to [execute]. That's useful in the nominal case where editing code knows everything
+  /// that needs to execute at one time. However, sometimes the later [EditRequest] within a
+  /// single transaction can't be configured until the editing code inspects the [Document]
+  /// after some earlier [EditRequest]. In this situation, the editing code needs to be able
+  /// to run [execute] multiple times while having all [EditRequest]s still considered to be
+  /// part of the same transaction.
+  ///
+  /// Does nothing if a transaction is already in-progress.
+  void startTransaction() {
+    if (_isInTransaction) {
+      return;
+    }
+
+    _isInTransaction = true;
+  }
+
+  /// Ends a transaction that was started with a call to [startTransaction].
+  ///
+  /// Does nothing if a transaction is not in-progress.
+  void endTransaction() {
+    if (!_isInTransaction) {
+      return;
+    }
+
+    _isInTransaction = false;
+    _openTransaction = null;
+  }
+
   /// Executes the given [requests].
   ///
   /// Any changes that result from the given [requests] are reported to listeners as a series
@@ -158,9 +193,25 @@ class Editor implements RequestDispatcher {
     }
 
     if (undoableCommands.isNotEmpty) {
-      _commandHistory.add(
-        CommandTransaction(undoableCommands),
-      );
+      if (_isInTransaction) {
+        if (_openTransaction == null) {
+          // We're in a multi-execution transaction, but this is the first list of undoable
+          // commands that have been run for this transaction. Create the transaction object
+          // and remember it for future calls to `execute()`.
+          _openTransaction = CommandTransaction(undoableCommands);
+          _commandHistory.add(_openTransaction!);
+        } else {
+          // We're in a multi-execution transaction, and that transaction already contains
+          // some number of commands. Add these commands to it.
+          _openTransaction!.commands.addAll(undoableCommands);
+        }
+      } else {
+        // We're not running a multi-execution transaction. Therefore, the list of commands
+        // run within this call constitutes a full transaction. Add it to the history.
+        _commandHistory.add(
+          CommandTransaction(undoableCommands),
+        );
+      }
     }
 
     // Run reactions and notify listeners, but only do it once per batch of executions.
