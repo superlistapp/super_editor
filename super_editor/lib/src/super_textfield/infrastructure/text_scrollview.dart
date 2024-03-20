@@ -1256,7 +1256,8 @@ class _RenderTextViewport extends RenderProxyBox {
     }
 
     final textLayout = _textKey.currentState!.textLayout;
-    double lineHeight = textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
+    double lineHeight = textLayout.getHeightForCaret(const TextPosition(offset: 0)) ??
+        textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
     _log.finer(' - line height at position 0: $lineHeight');
 
     // We got 0.0 for the line height at the beginning of text. Maybe the
