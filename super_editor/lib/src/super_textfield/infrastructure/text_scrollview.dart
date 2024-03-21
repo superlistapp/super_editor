@@ -1256,6 +1256,10 @@ class _RenderTextViewport extends RenderProxyBox {
     }
 
     final textLayout = _textKey.currentState!.textLayout;
+
+    // We don't expect getHeightForCaret to ever return null, but since its return type is nullable,
+    // we use getLineHeightAtPosition as a backup.
+    // More information in https://github.com/flutter/flutter/issues/145507.
     double lineHeight = textLayout.getHeightForCaret(const TextPosition(offset: 0)) ??
         textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
     _log.finer(' - line height at position 0: $lineHeight');
