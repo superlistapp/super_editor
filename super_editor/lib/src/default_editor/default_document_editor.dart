@@ -59,6 +59,12 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           attributions: request.attributions,
         )
       : null,
+  (request) => request is InsertAttributedTextRequest
+      ? InsertAttributedTextCommand(
+          documentPosition: request.documentPosition,
+          textToInsert: request.textToInsert,
+        )
+      : null,
   (request) => request is PasteStructuredContentEditorRequest
       ? PasteStructuredContentEditorCommand(
           content: request.content,
