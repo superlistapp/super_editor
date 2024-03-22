@@ -139,23 +139,29 @@ class Editor implements RequestDispatcher {
   ///
   /// Does nothing if a transaction is already in-progress.
   void startTransaction() {
+    print("START TRANSACTION");
     if (_isInTransaction) {
       return;
     }
 
     _isInTransaction = true;
+
+    _onTransactionStart();
   }
 
   /// Ends a transaction that was started with a call to [startTransaction].
   ///
   /// Does nothing if a transaction is not in-progress.
   void endTransaction() {
+    print("END TRANSACTION");
     if (!_isInTransaction) {
       return;
     }
 
     _isInTransaction = false;
     _openTransaction = null;
+
+    _onTransactionEnd();
   }
 
   /// Executes the given [requests].
@@ -170,11 +176,8 @@ class Editor implements RequestDispatcher {
     }
     // print(StackTrace.current);
 
-    if (_activeCommandCount == 0) {
-      // This is the start of a new transaction.
-      for (final editable in context._resources.values) {
-        editable.onTransactionStart();
-      }
+    if (_activeCommandCount == 0 && !_isInTransaction) {
+      _onTransactionStart();
     }
 
     _activeChangeList ??= <EditEvent>[];
@@ -219,24 +222,8 @@ class Editor implements RequestDispatcher {
     // would also run the reactions and notify listeners. At best this would result in
     // many superfluous calls, but in practice it would probably break lots of features
     // by notifying listeners too early, and running the same reactions over and over.
-    if (_activeCommandCount == 1) {
-      if (_activeChangeList!.isNotEmpty) {
-        // Run all reactions. These reactions will likely call `execute()` again, with
-        // their own requests, to make additional changes.
-        _reactToChanges();
-
-        // Notify all listeners that care about changes, but won't spawn additional requests.
-        _notifyListeners();
-
-        // This is the end of a transaction.
-        for (final editable in context._resources.values) {
-          editable.onTransactionEnd(_activeChangeList!);
-        }
-      } else {
-        editorOpsLog.warning("We have an empty change list after processing one or more requests: $requests");
-      }
-
-      _activeChangeList = null;
+    if (_activeCommandCount == 1 && !_isInTransaction) {
+      _onTransactionEnd();
     }
 
     _activeCommandCount -= 1;
@@ -274,6 +261,31 @@ class Editor implements RequestDispatcher {
     _commandExecutor.reset();
 
     return changeList;
+  }
+
+  void _onTransactionStart() {
+    for (final editable in context._resources.values) {
+      editable.onTransactionStart();
+    }
+  }
+
+  void _onTransactionEnd() {
+    if (_activeChangeList!.isNotEmpty) {
+      // TODO: We need to determine at this point whether to process reactios as a new
+      //       transaction or as part of this existing transaction.
+      // Run all reactions. These reactions will likely call `execute()` again, with
+      // their own requests, to make additional changes.
+      _reactToChanges();
+
+      // Notify all listeners that care about changes, but won't spawn additional requests.
+      _notifyListeners();
+    }
+
+    for (final editable in context._resources.values) {
+      editable.onTransactionEnd(_activeChangeList!);
+    }
+
+    _activeChangeList = null;
   }
 
   void _reactToChanges() {

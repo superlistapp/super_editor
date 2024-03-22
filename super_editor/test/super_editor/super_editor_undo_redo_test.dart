@@ -1,5 +1,5 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
@@ -101,10 +101,8 @@ void main() {
         ),
       );
 
-      print("------ STARTING UNDOS --------");
-
       // Undo the event.
-      await widgetTester.pressCmdZ();
+      await widgetTester.pressCmdZ(widgetTester);
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "Hell");
       expect(
@@ -117,7 +115,7 @@ void main() {
         ),
       );
 
-      await widgetTester.pressCmdZ();
+      await widgetTester.pressCmdZ(widgetTester);
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "Hel");
       expect(
@@ -130,7 +128,7 @@ void main() {
         ),
       );
 
-      await widgetTester.pressCmdZ();
+      await widgetTester.pressCmdZ(widgetTester);
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "He");
       expect(
@@ -143,7 +141,7 @@ void main() {
         ),
       );
 
-      await widgetTester.pressCmdZ();
+      await widgetTester.pressCmdZ(widgetTester);
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "H");
       expect(
@@ -156,7 +154,7 @@ void main() {
         ),
       );
 
-      await widgetTester.pressCmdZ();
+      await widgetTester.pressCmdZ(widgetTester);
 
       expect(SuperEditorInspector.findTextInComponent("1").text, "");
       expect(
@@ -169,25 +167,40 @@ void main() {
         ),
       );
 
-      print("---------- STARTING REDOS -----------");
-
-      await widgetTester.pressCmdShiftZ();
+      await widgetTester.pressCmdShiftZ(widgetTester);
       _expectDocumentWithCaret("H", "1", 1);
-      print("--------");
 
-      await widgetTester.pressCmdShiftZ();
+      await widgetTester.pressCmdShiftZ(widgetTester);
       _expectDocumentWithCaret("He", "1", 2);
-      print("--------");
 
-      await widgetTester.pressCmdShiftZ();
+      await widgetTester.pressCmdShiftZ(widgetTester);
       _expectDocumentWithCaret("Hel", "1", 3);
-      print("--------");
 
-      await widgetTester.pressCmdShiftZ();
+      await widgetTester.pressCmdShiftZ(widgetTester);
       _expectDocumentWithCaret("Hell", "1", 4);
 
-      await widgetTester.pressCmdShiftZ();
+      await widgetTester.pressCmdShiftZ(widgetTester);
       _expectDocumentWithCaret("Hello", "1", 5);
+    });
+
+    testWidgetsOnMac("convert to horizontal rule", (widgetTester) async {
+      final editContext = await widgetTester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .pump();
+
+      await widgetTester.placeCaretInParagraph("1", 0);
+
+      await widgetTester.typeImeText("--- ");
+      expect(editContext.document.nodes.first, isA<HorizontalRuleNode>());
+
+      print("");
+      print("------- UNDO ------");
+      print("");
+      await widgetTester.pressCmdZ(widgetTester);
+
+      expect(editContext.document.nodes.first, isA<ParagraphNode>());
+      expect(SuperEditorInspector.findTextInComponent(editContext.document.nodes.first.id).text, "--- ");
     });
   });
 }
@@ -203,46 +216,4 @@ void _expectDocumentWithCaret(String documentContent, String caretNodeId, int ca
       ),
     ),
   );
-}
-
-extension on WidgetTester {
-  Future<void> pressCmdZ() async {
-    await sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
-    await sendKeyEvent(LogicalKeyboardKey.keyZ);
-    await sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
-
-    await pump();
-  }
-
-  Future<void> pressCmdShiftZ() async {
-    await sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
-    await sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-
-    await sendKeyEvent(LogicalKeyboardKey.keyZ);
-
-    await sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-    await sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
-
-    await pump();
-  }
-
-  Future<void> pressCtrlZ() async {
-    await sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-    await sendKeyEvent(LogicalKeyboardKey.keyZ);
-    await sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-
-    await pump();
-  }
-
-  Future<void> pressCtrlShiftZ() async {
-    await sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-    await sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-
-    await sendKeyEvent(LogicalKeyboardKey.keyZ);
-
-    await sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-    await sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-
-    await pump();
-  }
 }

@@ -260,10 +260,12 @@ class HorizontalRuleConversionReaction implements EditReaction {
 
   @override
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    print("HR Reaction");
     if (changeList.length < 2) {
       // This reaction requires at least an insertion event and a selection change event.
       // There are less than two events in the the change list, therefore this reaction
       // shouldn't apply. Fizzle.
+      print("Less than 2 changes in change list - fizzling.");
       return;
     }
 
@@ -271,10 +273,12 @@ class HorizontalRuleConversionReaction implements EditReaction {
 
     final didTypeSpace = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpace) {
+      print("User didn't type a space - fizzling");
       return;
     }
 
-    final edit = changeList[changeList.length - 2] as DocumentEdit;
+    // final edit = changeList[changeList.length - 2] as DocumentEdit;
+    final edit = changeList.reversed.firstWhere((edit) => edit is DocumentEdit) as DocumentEdit;
     if (edit.change is! TextInsertionEvent) {
       // This reaction requires that the two last events are an insertion event
       // followed by a selection change event.
@@ -286,9 +290,11 @@ class HorizontalRuleConversionReaction implements EditReaction {
     final paragraph = document.getNodeById(textInsertionEvent.nodeId) as TextNode;
     final match = _hrPattern.firstMatch(paragraph.text.text)?.group(0);
     if (match == null) {
+      print("No HR pattern match. Fizzling.");
       return;
     }
 
+    print("User inserted HR pattern. Replacing text with HR.");
     // The user typed a horizontal rule pattern at the beginning of a paragraph.
     // - Remove the dashes and the space.
     // - Insert a horizontal rule before the paragraph.
@@ -935,19 +941,33 @@ class EditInspector {
       return false;
     }
 
-    // If the user typed a space, then the last event should be a selection change.
-    final selectionEvent = edits[edits.length - 1];
-    if (selectionEvent is! SelectionChangeEvent) {
+    // If the user typed a space, then the final document edit should be a text
+    // insertion event with a space " ".
+    DocumentEdit? lastDocumentEditEvent;
+    SelectionChangeEvent? lastSelectionChangeEvent;
+    print("Inspecting ${edits.length} edits");
+    for (int i = edits.length - 1; i >= 0; i -= 1) {
+      print("Index: $i");
+      if (edits[i] is DocumentEdit) {
+        lastDocumentEditEvent = edits[i] as DocumentEdit;
+      } else if (lastSelectionChangeEvent == null && edits[i] is SelectionChangeEvent) {
+        lastSelectionChangeEvent = edits[i] as SelectionChangeEvent;
+      }
+
+      if (lastDocumentEditEvent != null) {
+        break;
+      }
+    }
+    if (lastDocumentEditEvent == null) {
+      print("There was no document edit. Fizzling.");
+      return false;
+    }
+    if (lastSelectionChangeEvent == null) {
+      print("There was no selection change after inserting space. Fizzling.");
       return false;
     }
 
-    // If the user typed a space, then the second to last event should be a text
-    // insertion event with a space " ".
-    final edit = edits[edits.length - 2];
-    if (edit is! DocumentEdit) {
-      return false;
-    }
-    final textInsertionEvent = edit.change;
+    final textInsertionEvent = lastDocumentEditEvent.change;
     if (textInsertionEvent is! TextInsertionEvent) {
       return false;
     }
@@ -955,7 +975,7 @@ class EditInspector {
       return false;
     }
 
-    if (selectionEvent.newSelection!.extent.nodeId != textInsertionEvent.nodeId) {
+    if (lastSelectionChangeEvent.newSelection!.extent.nodeId != textInsertionEvent.nodeId) {
       return false;
     }
 
