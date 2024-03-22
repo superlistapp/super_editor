@@ -527,8 +527,13 @@ class UnderlineSyntax extends md.TagSyntax {
   UnderlineSyntax() : super('¬', requiresDelimiterRun: true, allowIntraWord: true);
 
   @override
-  md.Node close(md.InlineParser parser, md.Delimiter opener, md.Delimiter closer,
-      {required List<md.Node> Function() getChildren}) {
+  md.Node? close(
+    md.InlineParser parser,
+    md.Delimiter opener,
+    md.Delimiter? closer, {
+    String? tag,
+    required List<md.Node> Function() getChildren,
+  }) {
     return md.Element('u', getChildren());
   }
 }
