@@ -76,6 +76,9 @@ class Editor implements RequestDispatcher {
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
 
+  final _commandHistory = <CommandTransaction>[];
+  final _commandFuture = <CommandTransaction>[];
+
   /// A pipeline of objects that receive change-lists from command execution
   /// and get the first opportunity to spawn additional commands before the
   /// change list is dispatched to regular listeners.
@@ -120,33 +123,98 @@ class Editor implements RequestDispatcher {
   /// Tracks the number of request executions that are in the process of running.
   int _activeCommandCount = 0;
 
+  bool _isInTransaction = false;
+  CommandTransaction? _openTransaction;
+
+  /// Starts a transaction that runs across multiple calls to [execute], until [endTransaction]
+  /// is called.
+  ///
+  /// Typically, a transaction only includes the [EditRequest]s that are passed to a single
+  /// call to [execute]. That's useful in the nominal case where editing code knows everything
+  /// that needs to execute at one time. However, sometimes the later [EditRequest] within a
+  /// single transaction can't be configured until the editing code inspects the [Document]
+  /// after some earlier [EditRequest]. In this situation, the editing code needs to be able
+  /// to run [execute] multiple times while having all [EditRequest]s still considered to be
+  /// part of the same transaction.
+  ///
+  /// Does nothing if a transaction is already in-progress.
+  void startTransaction() {
+    print("START TRANSACTION");
+    if (_isInTransaction) {
+      return;
+    }
+
+    _isInTransaction = true;
+
+    _onTransactionStart();
+  }
+
+  /// Ends a transaction that was started with a call to [startTransaction].
+  ///
+  /// Does nothing if a transaction is not in-progress.
+  void endTransaction() {
+    print("END TRANSACTION");
+    if (!_isInTransaction) {
+      return;
+    }
+
+    _isInTransaction = false;
+    _openTransaction = null;
+
+    _onTransactionEnd();
+  }
+
   /// Executes the given [requests].
   ///
   /// Any changes that result from the given [requests] are reported to listeners as a series
   /// of [EditEvent]s.
   @override
   void execute(List<EditRequest> requests) {
-    // print("Request execution:");
-    // for (final request in requests) {
-    //   print(" - ${request.runtimeType}");
-    // }
+    print("Request execution:");
+    for (final request in requests) {
+      print(" - ${request.runtimeType}");
+    }
     // print(StackTrace.current);
 
-    if (_activeCommandCount == 0) {
-      // This is the start of a new transaction.
-      for (final editable in context._resources.values) {
-        editable.onTransactionStart();
-      }
+    if (_activeCommandCount == 0 && !_isInTransaction) {
+      _onTransactionStart();
     }
 
     _activeChangeList ??= <EditEvent>[];
     _activeCommandCount += 1;
 
+    final undoableCommands = <EditCommand>[];
     for (final request in requests) {
       // Execute the given request.
       final command = _findCommandForRequest(request);
       final commandChanges = _executeCommand(command);
       _activeChangeList!.addAll(commandChanges);
+
+      if (command.historyBehavior == HistoryBehavior.undoable) {
+        undoableCommands.add(command);
+      }
+    }
+
+    if (undoableCommands.isNotEmpty) {
+      if (_isInTransaction) {
+        if (_openTransaction == null) {
+          // We're in a multi-execution transaction, but this is the first list of undoable
+          // commands that have been run for this transaction. Create the transaction object
+          // and remember it for future calls to `execute()`.
+          _openTransaction = CommandTransaction(undoableCommands);
+          _commandHistory.add(_openTransaction!);
+        } else {
+          // We're in a multi-execution transaction, and that transaction already contains
+          // some number of commands. Add these commands to it.
+          _openTransaction!.commands.addAll(undoableCommands);
+        }
+      } else {
+        // We're not running a multi-execution transaction. Therefore, the list of commands
+        // run within this call constitutes a full transaction. Add it to the history.
+        _commandHistory.add(
+          CommandTransaction(undoableCommands),
+        );
+      }
     }
 
     // Run reactions and notify listeners, but only do it once per batch of executions.
@@ -154,24 +222,8 @@ class Editor implements RequestDispatcher {
     // would also run the reactions and notify listeners. At best this would result in
     // many superfluous calls, but in practice it would probably break lots of features
     // by notifying listeners too early, and running the same reactions over and over.
-    if (_activeCommandCount == 1) {
-      if (_activeChangeList!.isNotEmpty) {
-        // Run all reactions. These reactions will likely call `execute()` again, with
-        // their own requests, to make additional changes.
-        _reactToChanges();
-
-        // Notify all listeners that care about changes, but won't spawn additional requests.
-        _notifyListeners();
-
-        // This is the end of a transaction.
-        for (final editable in context._resources.values) {
-          editable.onTransactionEnd(_activeChangeList!);
-        }
-      } else {
-        editorOpsLog.warning("We have an empty change list after processing one or more requests: $requests");
-      }
-
-      _activeChangeList = null;
+    if (_activeCommandCount == 1 && !_isInTransaction) {
+      _onTransactionEnd();
     }
 
     _activeCommandCount -= 1;
@@ -211,11 +263,114 @@ class Editor implements RequestDispatcher {
     return changeList;
   }
 
+  void _onTransactionStart() {
+    for (final editable in context._resources.values) {
+      editable.onTransactionStart();
+    }
+  }
+
+  void _onTransactionEnd() {
+    if (_activeChangeList!.isNotEmpty) {
+      // TODO: We need to determine at this point whether to process reactios as a new
+      //       transaction or as part of this existing transaction.
+      // Run all reactions. These reactions will likely call `execute()` again, with
+      // their own requests, to make additional changes.
+      _reactToChanges();
+
+      // Notify all listeners that care about changes, but won't spawn additional requests.
+      _notifyListeners();
+    }
+
+    for (final editable in context._resources.values) {
+      editable.onTransactionEnd(_activeChangeList!);
+    }
+
+    _activeChangeList = null;
+  }
+
   void _reactToChanges() {
     for (final reaction in reactionPipeline) {
       // Note: we pass the active change list because reactions will cause more
       // changes to be added to that list.
       reaction.react(context, this, _activeChangeList!);
+    }
+  }
+
+  void undo() {
+    print("Running undo()");
+    if (_commandHistory.isEmpty) {
+      return;
+    }
+
+    print("History before undo:");
+    for (final transaction in _commandHistory) {
+      print(" - transaction");
+      for (final command in transaction.commands) {
+        print("   - ${command.runtimeType}");
+      }
+    }
+    print("---");
+
+    // Move the latest command from the history to the future.
+    _commandFuture.add(_commandHistory.removeLast());
+
+    for (final editable in context._resources.values) {
+      // Don't let editables notify listeners during undo.
+      editable.onTransactionStart();
+
+      // Revert all editables to the last snapshot.
+      editable.reset();
+    }
+
+    // Replay all history except for the most recent command transaction.
+    final changeEvents = <EditEvent>[];
+    for (final commandTransaction in _commandHistory) {
+      print("Starting a command transaction.");
+      for (final command in commandTransaction.commands) {
+        print("Executing command: ${command.runtimeType}");
+        // We re-run the commands without tracking changes and without running reactions
+        // because any relevant reactions should have run the first time around, and already
+        // submitted their commands.
+        final commandChanges = _executeCommand(command);
+        changeEvents.addAll(commandChanges);
+      }
+      print("Ending a command transaction.");
+    }
+
+    for (final editable in context._resources.values) {
+      // Let editables start notifying listeners again.
+      editable.onTransactionEnd(changeEvents);
+    }
+  }
+
+  void redo() {
+    print("Running redo()");
+    if (_commandFuture.isEmpty) {
+      return;
+    }
+
+    print("Future transaction:");
+    for (final command in _commandFuture.last.commands) {
+      print(" - ${command.runtimeType}");
+    }
+
+    for (final editable in context._resources.values) {
+      // Don't let editables notify listeners during redo.
+      editable.onTransactionStart();
+    }
+
+    final commandTransaction = _commandFuture.removeLast();
+    final edits = <EditEvent>[];
+    for (final command in commandTransaction.commands) {
+      final commandEdits = _executeCommand(command);
+      edits.addAll(commandEdits);
+    }
+    _commandHistory.add(commandTransaction);
+    print("Done with redo()");
+
+    for (final editable in context._resources.values) {
+      // Let editables start notifying listeners again.
+      editable.onTransactionEnd(edits);
     }
   }
 
@@ -227,6 +382,12 @@ class Editor implements RequestDispatcher {
       listener.onEdit(changeList);
     }
   }
+}
+
+class CommandTransaction {
+  const CommandTransaction(this.commands);
+
+  final List<EditCommand> commands;
 }
 
 /// An implementation of [CommandExecutor], designed for [Editor].
@@ -284,6 +445,8 @@ abstract mixin class Editable {
   /// A transaction that was previously started with [onTransactionStart] has now ended, this
   /// [Editable] should notify interested parties of changes.
   void onTransactionEnd(List<EditEvent> edits) {}
+
+  void reset() {}
 }
 
 /// An object that processes [EditRequest]s.
@@ -296,6 +459,23 @@ abstract class RequestDispatcher {
 abstract class EditCommand {
   /// Executes this command and logs all changes with the [executor].
   void execute(EditContext context, CommandExecutor executor);
+
+  /// The desired "undo" behavior of this command.
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+}
+
+/// The way a command interacts with the history ledger, AKA "undo".
+enum HistoryBehavior {
+  /// The command can be undone and redone.
+  ///
+  /// For example: inserting text into a paragraph.
+  undoable,
+
+  /// The command has no impact on history.
+  ///
+  /// For example: entering and exiting interaction mode, (possibly) activating and
+  /// deactivating bold/italics in the composer.
+  nonHistorical,
 }
 
 /// All resources that are available when executing [EditCommand]s, such as a document,
@@ -496,6 +676,8 @@ class MutableDocument implements Document, Editable {
     List<DocumentNode>? nodes,
   }) : _nodes = nodes ?? [] {
     _refreshNodeIdCaches();
+
+    _latestNodesSnapshot = _nodes.map((node) => node.copy()).toList();
   }
 
   /// Creates an [Document] with a single [ParagraphNode].
@@ -515,6 +697,9 @@ class MutableDocument implements Document, Editable {
   void dispose() {
     _listeners.clear();
   }
+
+  late final List<DocumentNode> _latestNodesSnapshot;
+  bool _didReset = false;
 
   final List<DocumentNode> _nodes;
 
@@ -731,14 +916,32 @@ class MutableDocument implements Document, Editable {
   @override
   void onTransactionEnd(List<EditEvent> edits) {
     final documentChanges = edits.whereType<DocumentEdit>().map((edit) => edit.change).toList();
-    if (documentChanges.isEmpty) {
+    if (documentChanges.isEmpty && !_didReset) {
       return;
     }
+    _didReset = false;
 
     final changeLog = DocumentChangeLog(documentChanges);
     for (final listener in _listeners) {
       listener(changeLog);
     }
+  }
+
+  @override
+  void reset() {
+    print("Resetting the MutableDocument");
+
+    _nodes
+      ..clear()
+      ..addAll(_latestNodesSnapshot.map((node) => node.copy()).toList());
+    _refreshNodeIdCaches();
+
+    _didReset = true;
+
+    for (final node in _nodes) {
+      print("$node");
+    }
+    print("");
   }
 
   /// Updates all the maps which use the node id as the key.

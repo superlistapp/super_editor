@@ -246,6 +246,9 @@ class ConvertBlockquoteToParagraphCommand implements EditCommand {
   final String nodeId;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
@@ -334,6 +337,9 @@ class SplitBlockquoteCommand implements EditCommand {
   final String nodeId;
   final TextPosition splitPosition;
   final String newNodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

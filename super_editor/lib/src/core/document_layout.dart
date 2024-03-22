@@ -25,10 +25,13 @@ class DocumentLayoutEditable implements Editable {
   DocumentLayout get documentLayout => _documentLayoutResolver();
 
   @override
+  void onTransactionStart() {}
+
+  @override
   void onTransactionEnd(List<EditEvent> edits) {}
 
   @override
-  void onTransactionStart() {}
+  void reset() {}
 }
 
 /// Abstract representation of a document layout.

@@ -316,6 +316,9 @@ class DeleteUpstreamAtBeginningOfBlockNodeCommand implements EditCommand {
   final DocumentNode node;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);

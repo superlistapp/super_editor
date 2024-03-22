@@ -39,6 +39,9 @@ class PasteStructuredContentEditorCommand implements EditCommand {
   final DocumentPosition _pastePosition;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     if (_content.isEmpty) {
       // Nothing to paste. Return.
@@ -608,6 +611,9 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditCommand {
   final String nodeId;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
 
@@ -659,6 +665,9 @@ class DeleteContentCommand implements EditCommand {
   });
 
   final DocumentRange documentRange;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1036,6 +1045,9 @@ class DeleteNodeCommand implements EditCommand {
   });
 
   final String nodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

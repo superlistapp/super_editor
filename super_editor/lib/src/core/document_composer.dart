@@ -108,6 +108,7 @@ class MutableDocumentComposer extends DocumentComposer implements Editable {
 
   bool _isInTransaction = false;
   bool _didChangeSelectionDuringTransaction = false;
+  bool _didReset = false;
 
   /// Sets the current [selection] for a [Document].
   ///
@@ -117,6 +118,8 @@ class MutableDocumentComposer extends DocumentComposer implements Editable {
       _didChangeSelectionDuringTransaction = true;
     }
 
+    print("Changing selection in composer to:");
+    print("$newSelection");
     _latestSelectionChange = DocumentSelectionChange(
       selection: newSelection,
       reason: reason,
@@ -140,9 +143,7 @@ class MutableDocumentComposer extends DocumentComposer implements Editable {
   @override
   void onTransactionStart() {
     _selectionNotifier.pauseNotifications();
-
     _composingRegion.pauseNotifications();
-
     _isInInteractionMode.pauseNotifications();
 
     _isInTransaction = true;
@@ -157,10 +158,27 @@ class MutableDocumentComposer extends DocumentComposer implements Editable {
     if (_latestSelectionChange != null && _didChangeSelectionDuringTransaction) {
       _streamController.sink.add(_latestSelectionChange!);
     }
-
     _composingRegion.resumeNotifications();
-
     _isInInteractionMode.resumeNotifications();
+
+    if (_didReset) {
+      print("Force notifying composer listeners. Current selection is:");
+      print("${_selectionNotifier.value}");
+      // Our state was reset (possibly for to undo an operation). Anything may have changed.
+      // Force notify all listeners.
+      _didReset = false;
+      _selectionNotifier.notifyListeners();
+      _composingRegion.notifyListeners();
+      _isInInteractionMode.notifyListeners();
+    }
+  }
+
+  @override
+  void reset() {
+    _selectionNotifier.value = null;
+    _latestSelectionChange = null;
+    _composingRegion.value = null;
+    _didReset = true;
   }
 }
 
@@ -344,10 +362,15 @@ class ChangeSelectionCommand implements EditCommand {
   final String reason;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final initialSelection = composer.selection;
 
+    print("ChangeSelectionCommand - Changing selection to:");
+    print("$newSelection");
     composer.setSelectionWithReason(newSelection, reason);
 
     executor.logChanges([
@@ -481,6 +504,9 @@ class ChangeComposingRegionCommand implements EditCommand {
   final DocumentRange? composingRegion;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final initialComposingRegion = composer.composingRegion.value;
@@ -524,6 +550,9 @@ class ChangeInteractionModeCommand implements EditCommand {
   });
 
   final bool isInteractionModeDesired;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.nonHistorical;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

@@ -82,6 +82,17 @@ class ListItemNode extends TextNode {
   }
 
   @override
+  ListItemNode copy() {
+    return ListItemNode(
+      id: id,
+      text: text.copyText(0),
+      itemType: type,
+      indent: indent,
+      metadata: Map.from(metadata),
+    );
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other &&
@@ -522,6 +533,9 @@ class IndentListItemCommand implements EditCommand {
   final String nodeId;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
@@ -555,6 +569,9 @@ class UnIndentListItemCommand implements EditCommand {
   });
 
   final String nodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -601,6 +618,9 @@ class ConvertListItemToParagraphCommand implements EditCommand {
   final Map<String, dynamic>? paragraphMetadata;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
@@ -645,6 +665,9 @@ class ConvertParagraphToListItemCommand implements EditCommand {
   final ListItemType type;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
@@ -683,6 +706,9 @@ class ChangeListItemTypeCommand implements EditCommand {
 
   final String nodeId;
   final ListItemType newType;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -726,6 +752,9 @@ class SplitListItemCommand implements EditCommand {
   final String nodeId;
   final TextPosition splitPosition;
   final String newNodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

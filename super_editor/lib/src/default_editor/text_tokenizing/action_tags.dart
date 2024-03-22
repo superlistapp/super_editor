@@ -114,6 +114,9 @@ class SubmitComposingActionTagRequest implements EditRequest {
 
 class SubmitComposingActionTagCommand implements EditCommand {
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
@@ -187,6 +190,9 @@ class CancelComposingActionTagCommand implements EditCommand {
   const CancelComposingActionTagCommand(this._tagRule);
 
   final TagRule _tagRule;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

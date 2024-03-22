@@ -33,6 +33,11 @@ class ParagraphNode extends TextNode {
       putMetadataValue("blockType", paragraphAttribution);
     }
   }
+
+  @override
+  ParagraphNode copy() {
+    return ParagraphNode(id: id, text: text.copyText(0), metadata: Map.from(metadata));
+  }
 }
 
 class ParagraphComponentBuilder implements ComponentBuilder {
@@ -231,6 +236,9 @@ class ChangeParagraphAlignmentCommand implements EditCommand {
   final TextAlign alignment;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
 
@@ -294,6 +302,9 @@ class ChangeParagraphBlockTypeCommand implements EditCommand {
   final Attribution? blockType;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
 
@@ -335,6 +346,9 @@ class CombineParagraphsCommand implements EditCommand {
 
   final String firstNodeId;
   final String secondNodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -445,6 +459,9 @@ class SplitParagraphCommand implements EditCommand {
   final bool replicateExistingMetadata;
   // TODO: remove the attribution filter and move the decision to an EditReaction in #1296
   final AttributionFilter attributionsToExtendToNewParagraph;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -562,6 +579,9 @@ class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
   DeleteUpstreamAtBeginningOfParagraphCommand(this.node);
 
   final DocumentNode node;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -770,6 +790,9 @@ class DeleteParagraphCommand implements EditCommand {
   });
 
   final String nodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

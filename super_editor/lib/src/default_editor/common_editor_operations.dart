@@ -2258,6 +2258,9 @@ class PasteEditorCommand implements EditCommand {
   final DocumentComposer _composer;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
@@ -2418,6 +2421,9 @@ class DeleteUpstreamCharacterCommand implements EditCommand {
   const DeleteUpstreamCharacterCommand();
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
@@ -2467,6 +2473,9 @@ class DeleteDownstreamCharacterRequest implements EditRequest {
 
 class DeleteDownstreamCharacterCommand implements EditCommand {
   const DeleteDownstreamCharacterCommand();
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

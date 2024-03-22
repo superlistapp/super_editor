@@ -172,6 +172,9 @@ class FillInComposingUserTagCommand implements EditCommand {
   final TagRule _tagRule;
 
   @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
@@ -282,6 +285,9 @@ class CancelComposingStableTagCommand implements EditCommand {
   const CancelComposingStableTagCommand(this._tagRule);
 
   final TagRule _tagRule;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1075,6 +1081,13 @@ class StableTagIndex with ChangeNotifier implements Editable {
       _didChange = false;
       notifyListeners();
     }
+  }
+
+  @override
+  void reset() {
+    _composingStableTag.value = null;
+    _committedTags.clear();
+    _cancelledTags.clear();
   }
 }
 
