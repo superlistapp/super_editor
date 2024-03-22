@@ -523,13 +523,13 @@ abstract class ElementToNodeConverter {
 /// Markdown with surrounding `¬` tags, e.g., "this is ¬underline¬ text".
 ///
 /// This [TagSyntax] produces `Element`s with a `u` tag.
-class UnderlineSyntax extends md.DelimiterSyntax {
+class UnderlineSyntax extends md.TagSyntax {
   UnderlineSyntax() : super('¬', requiresDelimiterRun: true, allowIntraWord: true);
 
   @override
-    md.Node? close(
+  md.Node? close(
     md.InlineParser parser,
-    covariant md.SimpleDelimiter opener,
+    md.Delimiter opener,
     md.Delimiter? closer, {
     String? tag,
     required List<md.Node> Function() getChildren,
