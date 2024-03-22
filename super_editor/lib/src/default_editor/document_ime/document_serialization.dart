@@ -243,6 +243,16 @@ class DocumentImeSerializer {
     return true;
   }
 
+  /// Returns the first visible position in the IME content.
+  ///
+  /// If a placeholder is prepended, returns the first position after the placeholder,
+  /// otherwise, returns the first position.
+  TextPosition get firstVisiblePosition {
+    return didPrependPlaceholder //
+        ? TextPosition(offset: _prependedPlaceholder.length)
+        : const TextPosition(offset: 0);
+  }
+
   DocumentPosition _imeToDocumentPosition(TextPosition imePosition, {required bool isUpstream}) {
     for (final range in imeRangesToDocTextNodes.keys) {
       if (range.start <= imePosition.offset && imePosition.offset <= range.end) {
