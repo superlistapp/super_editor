@@ -529,7 +529,7 @@ class UnderlineSyntax extends md.TagSyntax {
   @override
   md.Node? close(
     md.InlineParser parser,
-    covariant md.SimpleDelimiter opener,
+    md.Delimiter opener,
     md.Delimiter? closer, {
     String? tag,
     required List<md.Node> Function() getChildren,
