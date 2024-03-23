@@ -581,372 +581,372 @@ void main() {
             ),
           );
         });
-      });
 
-      testWidgetsOnAllPlatforms("toggles an attribution across a fully attributed and partially attributed node",
-          (tester) async {
-        await tester //
-            .createDocument()
-            .withCustomContent(
-              _paragraphFullyBoldThenParagraphPartiallyBold(),
-            )
-            .pump();
+        testWidgetsOnAllPlatforms("toggles an attribution across a fully attributed and partially attributed node",
+            (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphFullyBoldThenParagraphPartiallyBold(),
+              )
+              .pump();
 
-        final doc = SuperEditorInspector.findDocument()!;
+          final doc = SuperEditorInspector.findDocument()!;
 
-        // Ensure bold attribution is applied partially to first node and
-        // throughout the second node.
-        expect(
-          doc,
-          equalsMarkdown(
-            "**This is the first** node in a document.\n\n**This is the second node in a document.**",
-          ),
-        );
-
-        final firstNode = doc.getNodeById("1")!;
-        final secondNode = doc.getNodeById("2")!;
-
-        SuperEditorInspector.toggleAttributionsForDocumentSelection(
-          base: firstNode.beginningDocumentPosition,
-          extent: secondNode.endDocumentPosition,
-          attributions: {boldAttribution},
-        );
-
-        // Ensure bold attribution is applied throughout the both nodes.
-        expect(
-          doc,
-          equalsMarkdown(
-            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
-          ),
-        );
-
-        SuperEditorInspector.toggleAttributionsForDocumentSelection(
-          base: firstNode.beginningDocumentPosition,
-          extent: secondNode.endDocumentPosition,
-          attributions: {boldAttribution},
-        );
-
-        // Ensure bold attribution was removed from both nodes.
-        expect(
-          doc,
-          equalsMarkdown(
-            "This is the first node in a document.\n\nThis is the second node in a document.",
-          ),
-        );
-      });
-
-      testWidgetsOnAllPlatforms("toggles an attribution across multiple partially attributed node", (tester) async {
-        await tester //
-            .createDocument()
-            .withCustomContent(
-              _paragraphPartiallyBoldThenParagraphPartiallyBold(),
-            )
-            .pump();
-
-        final doc = SuperEditorInspector.findDocument()!;
-
-        // Ensure bold attribution is applied partially across both nodes.
-        expect(
-          doc,
-          equalsMarkdown(
-            "**This is the first** node in a document.\n\n**This is the second** node in a document.",
-          ),
-        );
-
-        final firstNode = doc.getNodeById("1")!;
-        final secondNode = doc.getNodeById("2")!;
-
-        SuperEditorInspector.toggleAttributionsForDocumentSelection(
-          base: firstNode.beginningDocumentPosition,
-          extent: secondNode.endDocumentPosition,
-          attributions: {boldAttribution},
-        );
-
-        // Ensure bold attribution is applied throughout the both nodes.
-        expect(
-          doc,
-          equalsMarkdown(
-            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
-          ),
-        );
-
-        SuperEditorInspector.toggleAttributionsForDocumentSelection(
-          base: firstNode.beginningDocumentPosition,
-          extent: secondNode.endDocumentPosition,
-          attributions: {boldAttribution},
-        );
-
-        // Ensure bold attribution was removed from both nodes.
-        expect(
-          doc,
-          equalsMarkdown(
-            "This is the first node in a document.\n\nThis is the second node in a document.",
-          ),
-        );
-      });
-
-      testWidgetsOnAllPlatforms("toggles an attribution across multiple fully attributed node", (tester) async {
-        await tester //
-            .createDocument()
-            .withCustomContent(
-              _paragraphFullBoldThenParagraphFullyBold(),
-            )
-            .pump();
-
-        final doc = SuperEditorInspector.findDocument()!;
-
-        // Ensure bold attribution is applied throughout both nodes.
-        expect(
-          doc,
-          equalsMarkdown(
-            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
-          ),
-        );
-
-        final firstNode = doc.getNodeById("1")!;
-        final secondNode = doc.getNodeById("2")!;
-
-        SuperEditorInspector.toggleAttributionsForDocumentSelection(
-          base: firstNode.beginningDocumentPosition,
-          extent: secondNode.endDocumentPosition,
-          attributions: {italicsAttribution},
-        );
-
-        // Ensure both bold and italic attributions were applied throughout the selection.
-        expect(
-          doc,
-          equalsMarkdown(
-            "***This is the first node in a document.***\n\n***This is the second node in a document.***",
-          ),
-        );
-
-        SuperEditorInspector.toggleAttributionsForDocumentSelection(
-          base: firstNode.beginningDocumentPosition,
-          extent: secondNode.endDocumentPosition,
-          attributions: {italicsAttribution},
-        );
-
-        // Ensure bold attribution was removed from both nodes.
-        expect(
-          doc,
-          equalsMarkdown(
-            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
-          ),
-        );
-      });
-
-      testWidgetsOnAllPlatforms("toggles an attribution for a partial selection across multiple fully attributed node",
-          (tester) async {
-        await tester //
-            .createDocument()
-            .withCustomContent(
-              _paragraphFullBoldThenParagraphFullyBold(),
-            )
-            .pump();
-
-        final doc = SuperEditorInspector.findDocument()!;
-
-        // Ensure bold attribution is applied throughout the selection.
-        expect(
-          doc,
-          equalsMarkdown(
-            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
-          ),
-        );
-
-        final firstNode = doc.getNodeById("1")!;
-        final secondNode = doc.getNodeById("2")!;
-
-        SuperEditorInspector.toggleAttributionsForDocumentSelection(
-          base: firstNode.beginningDocumentPosition,
-          extent: secondNode.atOffset(18),
-          attributions: {italicsAttribution},
-        );
-
-        // Ensure both bold and italic attributions were applied throughout
-        // the selection.
-        expect(
-          doc,
-          equalsMarkdown(
-            "***This is the first node in a document.***\n\n***This is the second* node in a document.**",
-          ),
-        );
-
-        SuperEditorInspector.toggleAttributionsForDocumentSelection(
-          base: firstNode.beginningDocumentPosition,
-          extent: secondNode.atOffset(18),
-          attributions: {italicsAttribution},
-        );
-
-        // Ensure italic attribution was removed from the selection while keeping the bold
-        // attribution.
-        expect(
-          doc,
-          equalsMarkdown(
-            "**This is the first node in a document.**\n\n**This is the second node in a document.**",
-          ),
-        );
-      });
-
-      testWidgetsOnAllPlatforms("toggles multiple attributions throughout multiple nodes", (tester) async {
-        await tester //
-            .createDocument()
-            .withCustomContent(
-              _paragraphThenParagraphDoc(),
-            )
-            .pump();
-
-        final doc = SuperEditorInspector.findDocument()!;
-
-        // Ensure no attributions are present.
-        expect(
-          doc,
-          equalsMarkdown(
-            "This is the first node in a document.\n\nThis is the second node in a document.",
-          ),
-        );
-
-        final firstNode = doc.getNodeById("1")!;
-        final secondNode = doc.getNodeById("2")!;
-
-        SuperEditorInspector.toggleAttributionsForDocumentSelection(
-          base: firstNode.beginningDocumentPosition,
-          extent: secondNode.endDocumentPosition,
-          attributions: {
-            italicsAttribution,
-            boldAttribution,
-          },
-        );
-
-        // Ensure both bold and italic attributions were applied throughout the selection.
-        expect(
-          doc,
-          equalsMarkdown(
-            "***This is the first node in a document.***\n\n***This is the second node in a document.***",
-          ),
-        );
-
-        // Toggle bold attribution for both nodes.
-        SuperEditorInspector.toggleAttributionsForDocumentSelection(
-          base: firstNode.beginningDocumentPosition,
-          extent: secondNode.endDocumentPosition,
-          attributions: {boldAttribution, italicsAttribution},
-        );
-
-        // Ensure both bold and italic attributions were removed from the selection.
-        expect(
-          doc,
-          equalsMarkdown(
-            "This is the first node in a document.\n\nThis is the second node in a document.",
-          ),
-        );
-      });
-    });
-
-    group("applies color attributions", () {
-      testWidgetsOnAllPlatforms("to full text", (tester) async {
-        await tester //
-            .createDocument()
-            .withCustomContent(
-              singleParagraphFullColor(),
-            )
-            .pump();
-
-        // Ensure the text is colored orange.
-        expect(
-          SuperEditorInspector.findRichTextInParagraph("1").style?.color,
-          Colors.orange,
-        );
-      });
-
-      testWidgetsOnAllPlatforms("to partial text", (tester) async {
-        await tester //
-            .createDocument()
-            .withCustomContent(
-              singleParagraphWithPartialColor(),
-            )
-            .pump();
-
-        // Ensure the first span is colored black.
-        expect(
-          SuperEditorInspector.findRichTextInParagraph("1")
-              .getSpanForPosition(const TextPosition(offset: 0))!
-              .style!
-              .color,
-          Colors.black,
-        );
-
-        // Ensure the second span is colored orange.
-        expect(
-          SuperEditorInspector.findRichTextInParagraph("1")
-              .getSpanForPosition(const TextPosition(offset: 5))!
-              .style!
-              .color,
-          Colors.orange,
-        );
-      });
-    });
-
-    group("doesn't apply attributions", () {
-      testWidgetsOnAllPlatforms("when typing before the start of the attributed text", (tester) async {
-        await tester //
-            .createDocument()
-            .fromMarkdown("A **bold** text")
-            .withInputSource(TextInputSource.ime)
-            .pump();
-
-        final doc = SuperEditorInspector.findDocument()!;
-
-        // Place the caret at |bold.
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 2);
-
-        // Type some letters.
-        await tester.typeImeText("very ");
-
-        // Ensure the bold attribution wasn't applied to the inserted text.
-        expect(doc, equalsMarkdown("A very **bold** text"));
-      });
-    });
-
-    group("doesn't clear attributions", () {
-      testWidgetsOnAllPlatforms("when changing the selection affinity", (tester) async {
-        final context = await tester //
-            .createDocument()
-            .fromMarkdown("This text should be")
-            .withInputSource(TextInputSource.ime)
-            .pump();
-
-        final doc = context.findEditContext().document;
-        final composer = context.findEditContext().composer;
-
-        // Place the caret at the end of the paragraph.
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 19);
-
-        // Toggle the bold attribution.
-        composer.preferences.toggleStyle(boldAttribution);
-        await tester.pump();
-
-        // Ensure we have an upstream selection.
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).affinity, TextAffinity.upstream);
-
-        // Simulate the IME sending us a selection at the same offset
-        // but with a different affinity.
-        await tester.ime.sendDeltas(
-          [
-            const TextEditingDeltaNonTextUpdate(
-              oldText: ". This text should be",
-              selection: TextSelection.collapsed(offset: 21, affinity: TextAffinity.downstream),
-              composing: TextRange.empty,
+          // Ensure bold attribution is applied partially to first node and
+          // throughout the second node.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first** node in a document.\n\n**This is the second node in a document.**",
             ),
-          ],
-          getter: imeClientGetter,
-        );
+          );
 
-        // Type text at the end of the paragraph.
-        await tester.typeImeText(" bold");
+          final firstNode = doc.getNodeById("1")!;
+          final secondNode = doc.getNodeById("2")!;
 
-        // Ensure the bold attribution is applied.
-        expect(doc, equalsMarkdown("This text should be** bold**"));
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution is applied throughout the both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+            ),
+          );
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution was removed from both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.\n\nThis is the second node in a document.",
+            ),
+          );
+        });
+
+        testWidgetsOnAllPlatforms("toggles an attribution across multiple partially attributed node", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphPartiallyBoldThenParagraphPartiallyBold(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure bold attribution is applied partially across both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first** node in a document.\n\n**This is the second** node in a document.",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+          final secondNode = doc.getNodeById("2")!;
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution is applied throughout the both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+            ),
+          );
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
+            attributions: {boldAttribution},
+          );
+
+          // Ensure bold attribution was removed from both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.\n\nThis is the second node in a document.",
+            ),
+          );
+        });
+
+        testWidgetsOnAllPlatforms("toggles an attribution across multiple fully attributed node", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphFullBoldThenParagraphFullyBold(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure bold attribution is applied throughout both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+          final secondNode = doc.getNodeById("2")!;
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
+            attributions: {italicsAttribution},
+          );
+
+          // Ensure both bold and italic attributions were applied throughout the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "***This is the first node in a document.***\n\n***This is the second node in a document.***",
+            ),
+          );
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
+            attributions: {italicsAttribution},
+          );
+
+          // Ensure bold attribution was removed from both nodes.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+            ),
+          );
+        });
+
+        testWidgetsOnAllPlatforms(
+            "toggles an attribution for a partial selection across multiple fully attributed node", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphFullBoldThenParagraphFullyBold(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure bold attribution is applied throughout the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+          final secondNode = doc.getNodeById("2")!;
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.atOffset(18),
+            attributions: {italicsAttribution},
+          );
+
+          // Ensure both bold and italic attributions were applied throughout
+          // the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "***This is the first node in a document.***\n\n***This is the second* node in a document.**",
+            ),
+          );
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.atOffset(18),
+            attributions: {italicsAttribution},
+          );
+
+          // Ensure italic attribution was removed from the selection while keeping the bold
+          // attribution.
+          expect(
+            doc,
+            equalsMarkdown(
+              "**This is the first node in a document.**\n\n**This is the second node in a document.**",
+            ),
+          );
+        });
+
+        testWidgetsOnAllPlatforms("toggles multiple attributions throughout multiple nodes", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphThenParagraphDoc(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Ensure no attributions are present.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.\n\nThis is the second node in a document.",
+            ),
+          );
+
+          final firstNode = doc.getNodeById("1")!;
+          final secondNode = doc.getNodeById("2")!;
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
+            attributions: {
+              italicsAttribution,
+              boldAttribution,
+            },
+          );
+
+          // Ensure both bold and italic attributions were applied throughout the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "***This is the first node in a document.***\n\n***This is the second node in a document.***",
+            ),
+          );
+
+          // Toggle bold attribution for both nodes.
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            base: firstNode.beginningDocumentPosition,
+            extent: secondNode.endDocumentPosition,
+            attributions: {boldAttribution, italicsAttribution},
+          );
+
+          // Ensure both bold and italic attributions were removed from the selection.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.\n\nThis is the second node in a document.",
+            ),
+          );
+        });
+      });
+
+      group("applies color attributions", () {
+        testWidgetsOnAllPlatforms("to full text", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                singleParagraphFullColor(),
+              )
+              .pump();
+
+          // Ensure the text is colored orange.
+          expect(
+            SuperEditorInspector.findRichTextInParagraph("1").style?.color,
+            Colors.orange,
+          );
+        });
+
+        testWidgetsOnAllPlatforms("to partial text", (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                singleParagraphWithPartialColor(),
+              )
+              .pump();
+
+          // Ensure the first span is colored black.
+          expect(
+            SuperEditorInspector.findRichTextInParagraph("1")
+                .getSpanForPosition(const TextPosition(offset: 0))!
+                .style!
+                .color,
+            Colors.black,
+          );
+
+          // Ensure the second span is colored orange.
+          expect(
+            SuperEditorInspector.findRichTextInParagraph("1")
+                .getSpanForPosition(const TextPosition(offset: 5))!
+                .style!
+                .color,
+            Colors.orange,
+          );
+        });
+      });
+
+      group("doesn't apply attributions", () {
+        testWidgetsOnAllPlatforms("when typing before the start of the attributed text", (tester) async {
+          await tester //
+              .createDocument()
+              .fromMarkdown("A **bold** text")
+              .withInputSource(TextInputSource.ime)
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Place the caret at |bold.
+          await tester.placeCaretInParagraph(doc.nodes.first.id, 2);
+
+          // Type some letters.
+          await tester.typeImeText("very ");
+
+          // Ensure the bold attribution wasn't applied to the inserted text.
+          expect(doc, equalsMarkdown("A very **bold** text"));
+        });
+      });
+
+      group("doesn't clear attributions", () {
+        testWidgetsOnAllPlatforms("when changing the selection affinity", (tester) async {
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown("This text should be")
+              .withInputSource(TextInputSource.ime)
+              .pump();
+
+          final doc = context.findEditContext().document;
+          final composer = context.findEditContext().composer;
+
+          // Place the caret at the end of the paragraph.
+          await tester.placeCaretInParagraph(doc.nodes.first.id, 19);
+
+          // Toggle the bold attribution.
+          composer.preferences.toggleStyle(boldAttribution);
+          await tester.pump();
+
+          // Ensure we have an upstream selection.
+          expect((composer.selection!.extent.nodePosition as TextNodePosition).affinity, TextAffinity.upstream);
+
+          // Simulate the IME sending us a selection at the same offset
+          // but with a different affinity.
+          await tester.ime.sendDeltas(
+            [
+              const TextEditingDeltaNonTextUpdate(
+                oldText: ". This text should be",
+                selection: TextSelection.collapsed(offset: 21, affinity: TextAffinity.downstream),
+                composing: TextRange.empty,
+              ),
+            ],
+            getter: imeClientGetter,
+          );
+
+          // Type text at the end of the paragraph.
+          await tester.typeImeText(" bold");
+
+          // Ensure the bold attribution is applied.
+          expect(doc, equalsMarkdown("This text should be** bold**"));
+        });
       });
     });
 
