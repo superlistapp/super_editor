@@ -39,7 +39,7 @@ packages:
       path: "../../attributed_text"
       relative: true
     source: path
-    version: "0.2.2"
+    version: "0.3.0"
   boolean_selector:
     dependency: transitive
     description:
@@ -158,10 +158,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_test_robots
-      sha256: a95004a952e079abafabda4685615f8cafe4603bf100eda937a0a038998b7533
+      sha256: bccae4f8d67d0bc0c79d1c31f4dc2db09beb35545563a5bd27d0a792c9d26446
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.22"
+    version: "0.0.23"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
@@ -544,7 +544,7 @@ packages:
       path: "../../super_text_layout"
       relative: true
     source: path
-    version: "0.1.8"
+    version: "0.1.9"
   term_glyph:
     dependency: transitive
     description:
@@ -669,10 +669,10 @@ packages:
     dependency: transitive
     description:
       name: vm_service
-      sha256: a2662fb1f114f4296cf3f5a50786a2d888268d7776cf681aa17d660ffa23b246
+      sha256: e7d5ecd604e499358c5fe35ee828c0298a320d54455e791e9dcf73486bc8d9f0
       url: "https://pub.dev"
     source: hosted
-    version: "14.0.0"
+    version: "14.1.0"
   watcher:
     dependency: transitive
     description:
@@ -730,5 +730,5 @@ packages:
     source: hosted
     version: "3.1.2"
 sdks:
-  dart: ">=3.3.0-279.1.beta <4.0.0"
+  dart: ">=3.3.0 <4.0.0"
   flutter: ">=3.18.0-18.0.pre.54"
