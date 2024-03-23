@@ -1073,21 +1073,13 @@ MutableDocument _fullyBoldParagraphDoc() => MutableDocument(
         ParagraphNode(
           id: "1",
           text: AttributedText(
-              "This is the first node in a document.",
-              AttributedSpans(
-                attributions: [
-                  const SpanMarker(
-                    attribution: boldAttribution,
-                    offset: 0,
-                    markerType: SpanMarkerType.start,
-                  ),
-                  const SpanMarker(
-                    attribution: boldAttribution,
-                    offset: 36,
-                    markerType: SpanMarkerType.end,
-                  ),
-                ],
-              )),
+            "This is the first node in a document.",
+            _createAttributedSpansForAttribution(
+              attribution: boldAttribution,
+              startOffset: 0,
+              endOffset: 36,
+            ),
+          ),
         ),
       ],
     );
@@ -1115,19 +1107,10 @@ MutableDocument _paragraphFullBoldThenParagraph() => MutableDocument(
           id: "1",
           text: AttributedText(
             "This is the first node in a document.",
-            AttributedSpans(
-              attributions: [
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 0,
-                  markerType: SpanMarkerType.start,
-                ),
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 36,
-                  markerType: SpanMarkerType.end,
-                ),
-              ],
+            _createAttributedSpansForAttribution(
+              attribution: boldAttribution,
+              startOffset: 0,
+              endOffset: 36,
             ),
           ),
         ),
@@ -1146,19 +1129,10 @@ MutableDocument _paragraphPartiallyBoldThenParagraph() => MutableDocument(
           id: "1",
           text: AttributedText(
             "This is the first node in a document.",
-            AttributedSpans(
-              attributions: [
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 0,
-                  markerType: SpanMarkerType.start,
-                ),
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 16,
-                  markerType: SpanMarkerType.end,
-                ),
-              ],
+            _createAttributedSpansForAttribution(
+              attribution: boldAttribution,
+              startOffset: 0,
+              endOffset: 16,
             ),
           ),
         ),
@@ -1177,19 +1151,10 @@ MutableDocument _paragraphFullyBoldThenParagraphPartiallyBold() => MutableDocume
           id: "1",
           text: AttributedText(
             "This is the first node in a document.",
-            AttributedSpans(
-              attributions: [
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 0,
-                  markerType: SpanMarkerType.start,
-                ),
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 16,
-                  markerType: SpanMarkerType.end,
-                ),
-              ],
+            _createAttributedSpansForAttribution(
+              attribution: boldAttribution,
+              startOffset: 0,
+              endOffset: 16,
             ),
           ),
         ),
@@ -1197,19 +1162,10 @@ MutableDocument _paragraphFullyBoldThenParagraphPartiallyBold() => MutableDocume
           id: "2",
           text: AttributedText(
             "This is the second node in a document.",
-            AttributedSpans(
-              attributions: [
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 0,
-                  markerType: SpanMarkerType.start,
-                ),
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 37,
-                  markerType: SpanMarkerType.end,
-                ),
-              ],
+            _createAttributedSpansForAttribution(
+              attribution: boldAttribution,
+              startOffset: 0,
+              endOffset: 37,
             ),
           ),
         ),
@@ -1222,19 +1178,10 @@ MutableDocument _paragraphPartiallyBoldThenParagraphPartiallyBold() => MutableDo
           id: "1",
           text: AttributedText(
             "This is the first node in a document.",
-            AttributedSpans(
-              attributions: [
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 0,
-                  markerType: SpanMarkerType.start,
-                ),
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 16,
-                  markerType: SpanMarkerType.end,
-                ),
-              ],
+            _createAttributedSpansForAttribution(
+              attribution: boldAttribution,
+              startOffset: 0,
+              endOffset: 16,
             ),
           ),
         ),
@@ -1242,19 +1189,10 @@ MutableDocument _paragraphPartiallyBoldThenParagraphPartiallyBold() => MutableDo
           id: "2",
           text: AttributedText(
             "This is the second node in a document.",
-            AttributedSpans(
-              attributions: [
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 0,
-                  markerType: SpanMarkerType.start,
-                ),
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 17,
-                  markerType: SpanMarkerType.end,
-                ),
-              ],
+            _createAttributedSpansForAttribution(
+              attribution: boldAttribution,
+              startOffset: 0,
+              endOffset: 17,
             ),
           ),
         ),
@@ -1267,19 +1205,10 @@ MutableDocument _paragraphFullBoldThenParagraphFullyBold() => MutableDocument(
           id: "1",
           text: AttributedText(
             "This is the first node in a document.",
-            AttributedSpans(
-              attributions: [
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 0,
-                  markerType: SpanMarkerType.start,
-                ),
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 36,
-                  markerType: SpanMarkerType.end,
-                ),
-              ],
+            _createAttributedSpansForAttribution(
+              attribution: boldAttribution,
+              startOffset: 0,
+              endOffset: 36,
             ),
           ),
         ),
@@ -1287,19 +1216,10 @@ MutableDocument _paragraphFullBoldThenParagraphFullyBold() => MutableDocument(
           id: "2",
           text: AttributedText(
             "This is the second node in a document.",
-            AttributedSpans(
-              attributions: [
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 0,
-                  markerType: SpanMarkerType.start,
-                ),
-                const SpanMarker(
-                  attribution: boldAttribution,
-                  offset: 37,
-                  markerType: SpanMarkerType.end,
-                ),
-              ],
+            _createAttributedSpansForAttribution(
+              attribution: boldAttribution,
+              startOffset: 0,
+              endOffset: 37,
             ),
           ),
         ),
@@ -1329,4 +1249,27 @@ extension _GetDocumentPosition on DocumentNode {
       ),
     );
   }
+}
+
+/// Creates an [AttributedSpans] for the [attribution] starting at [startOffset]
+/// and ending at [endOffset].
+AttributedSpans _createAttributedSpansForAttribution({
+  required NamedAttribution attribution,
+  required int startOffset,
+  required int endOffset,
+}) {
+  return AttributedSpans(
+    attributions: [
+      SpanMarker(
+        attribution: attribution,
+        offset: startOffset,
+        markerType: SpanMarkerType.start,
+      ),
+      SpanMarker(
+        attribution: attribution,
+        offset: endOffset,
+        markerType: SpanMarkerType.end,
+      ),
+    ],
+  );
 }
