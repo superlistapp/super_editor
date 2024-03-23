@@ -1444,6 +1444,8 @@ class ToggleTextAttributionsCommand implements EditCommand {
     // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, SpanRange>();
 
+    bool alreadyHasAttributions = true;
+
     for (final textNode in nodes) {
       if (textNode is! TextNode) {
         continue;
@@ -1483,23 +1485,13 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
       final selectionRange = SpanRange(startOffset, endOffset);
 
+      alreadyHasAttributions = alreadyHasAttributions &&
+          textNode.text.hasAttributionsThroughout(
+            attributions: attributions,
+            range: selectionRange,
+          );
+
       nodesAndSelections.putIfAbsent(textNode, () => selectionRange);
-    }
-
-    // Attributions that exists throughout the entire selection.
-    List<Attribution> attributionsPresentThroughoutEntireSelection = [];
-
-    for (Attribution attribution in attributions) {
-      final presentThroughoutEntireSelection = nodesAndSelections.entries.every((entry) {
-        final node2 = entry.key;
-        final range2 = entry.value;
-        return node2.text.hasAttributionsThroughout(attributions: {attribution}, range: range2);
-      });
-
-      if (presentThroughoutEntireSelection) {
-        /// Attribution exists across entire selection.
-        attributionsPresentThroughoutEntireSelection.add(attribution);
-      }
     }
 
     for (final entry in nodesAndSelections.entries) {
@@ -1507,36 +1499,40 @@ class ToggleTextAttributionsCommand implements EditCommand {
         final node = entry.key;
         final range = entry.value;
 
-        if (nodesAndSelections.length > 1) {
-          final bool hasAttributionAppliedThroughout =
-              node.text.hasAttributionsThroughout(attributions: {attribution}, range: range);
-
-          if (hasAttributionAppliedThroughout) {
-            // Attribution is already applied throughout the entire selection for this node.
-            if (!attributionsPresentThroughoutEntireSelection.contains(attribution)) {
-              // Attribution is not applied throughout the entire selection for all nodes. In this case,
-              // we want to only toggle the attribution for nodes that don't have it.
-
-              editorDocLog.info(' - attributions not toggled: $attribution. Range: $range');
-
-              continue;
-            }
-          }
-        }
-
         editorDocLog.info(' - toggling attribution: $attribution. Range: $range');
 
-        // Create a new AttributedText with updated attribution spans, so that the presentation system can
-        // see that we made a change, and re-renders the text in the document.
-        node.text = AttributedText(
-          node.text.text,
-          node.text.spans.copy()
-            ..toggleAttribution(
-              attribution: attribution,
-              start: range.start,
-              end: range.end,
-            ),
-        );
+        if (alreadyHasAttributions) {
+          // Attribution is present throughout the user selection. Remove attribution.
+
+          editorDocLog.info(' - Removing attribution: $attribution. Range: $range');
+
+          // Create a new AttributedText with updated attribution spans, so that the presentation system can
+          // see that we made a change, and re-renders the text in the document.
+          node.text = AttributedText(
+              node.text.text,
+              node.text.spans.copy()
+                ..removeAttribution(
+                  attributionToRemove: attribution,
+                  start: range.start,
+                  end: range.end,
+                ));
+        } else {
+          // Attribution isn't present throughout the user selection. Apply attribution.
+
+          editorDocLog.info(' - Adding attribution: $attribution. Range: $range');
+
+          // Create a new AttributedText with updated attribution spans, so that the presentation system can
+          // see that we made a change, and re-renders the text in the document.
+          node.text = AttributedText(
+            node.text.text,
+            node.text.spans.copy()
+              ..addAttribution(
+                newAttribution: attribution,
+                start: range.start,
+                end: range.end,
+              ),
+          );
+        }
 
         executor.logChanges([
           DocumentEdit(
