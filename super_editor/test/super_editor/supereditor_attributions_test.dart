@@ -205,9 +205,11 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: firstNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: firstNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure attribution was applied throughout the selection.
@@ -219,9 +221,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: firstNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: firstNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure attribution was removed from the selection.
@@ -254,9 +258,11 @@ void main() {
           final firstNode = doc.getNodeById("1")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: firstNode.atOffset(17),
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: firstNode.atOffset(17),
+            ),
+            {boldAttribution},
           );
 
           // Ensure attribution was applied to the selection.
@@ -268,9 +274,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: firstNode.atOffset(17),
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: firstNode.atOffset(17),
+            ),
+            {boldAttribution},
           );
 
           // Ensure attribution was removed from the selection.
@@ -303,9 +311,11 @@ void main() {
           final firstNode = doc.getNodeById("1")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: firstNode.atOffset(17),
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: firstNode.atOffset(17),
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution is removed from the selection.
@@ -317,9 +327,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: firstNode.atOffset(17),
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: firstNode.atOffset(17),
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution is applied throughout the node.
@@ -351,9 +363,11 @@ void main() {
           final firstNode = doc.getNodeById("1")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: firstNode.atOffset(17),
-            attributions: {italicsAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: firstNode.atOffset(17),
+            ),
+            {italicsAttribution},
           );
 
           // Ensure italic attribution is applied to the selection.
@@ -365,9 +379,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: firstNode.atOffset(17),
-            attributions: {italicsAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: firstNode.atOffset(17),
+            ),
+            {italicsAttribution},
           );
 
           // Ensure bold attribution is applied throughout the node.
@@ -400,9 +416,11 @@ void main() {
           final firstNode = doc.getNodeById("1")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: firstNode.endDocumentPosition,
-            attributions: {italicsAttribution, boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: firstNode.endDocumentPosition,
+            ),
+            {italicsAttribution, boldAttribution},
           );
 
           // Ensure both bold and italic attributions were applied throughout the node.
@@ -414,9 +432,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: firstNode.endDocumentPosition,
-            attributions: {boldAttribution, italicsAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: firstNode.endDocumentPosition,
+            ),
+            {boldAttribution, italicsAttribution},
           );
 
           // Ensure all attributions are removed from the node.
@@ -452,9 +472,11 @@ void main() {
           final secondNode = doc.getNodeById("2")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution is applied throughout both nodes.
@@ -466,9 +488,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution was removed from both nodes.
@@ -503,9 +527,11 @@ void main() {
           final secondNode = doc.getNodeById("2")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution is applied throughout both nodes.
@@ -517,9 +543,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution was removed from both nodes.
@@ -554,9 +582,11 @@ void main() {
           final secondNode = doc.getNodeById("2")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution is applied throughout the both nodes.
@@ -568,9 +598,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution was removed from both nodes.
@@ -606,9 +638,11 @@ void main() {
           final secondNode = doc.getNodeById("2")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution is applied throughout the both nodes.
@@ -620,9 +654,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution was removed from both nodes.
@@ -656,9 +692,11 @@ void main() {
           final secondNode = doc.getNodeById("2")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution is applied throughout the both nodes.
@@ -670,9 +708,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
           );
 
           // Ensure bold attribution was removed from both nodes.
@@ -706,9 +746,11 @@ void main() {
           final secondNode = doc.getNodeById("2")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {italicsAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {italicsAttribution},
           );
 
           // Ensure both bold and italic attributions were applied throughout the selection.
@@ -720,9 +762,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {italicsAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {italicsAttribution},
           );
 
           // Ensure bold attribution was removed from both nodes.
@@ -757,9 +801,11 @@ void main() {
           final secondNode = doc.getNodeById("2")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.atOffset(18),
-            attributions: {italicsAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.atOffset(18),
+            ),
+            {italicsAttribution},
           );
 
           // Ensure both bold and italic attributions were applied throughout
@@ -772,9 +818,11 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.atOffset(18),
-            attributions: {italicsAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.atOffset(18),
+            ),
+            {italicsAttribution},
           );
 
           // Ensure italic attribution was removed from the selection while keeping the bold
@@ -809,9 +857,11 @@ void main() {
           final secondNode = doc.getNodeById("2")!;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {
               italicsAttribution,
               boldAttribution,
             },
@@ -827,9 +877,11 @@ void main() {
 
           // Toggle bold attribution for both nodes.
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            base: firstNode.beginningDocumentPosition,
-            extent: secondNode.endDocumentPosition,
-            attributions: {boldAttribution, italicsAttribution},
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution, italicsAttribution},
           );
 
           // Ensure both bold and italic attributions were removed from the selection.

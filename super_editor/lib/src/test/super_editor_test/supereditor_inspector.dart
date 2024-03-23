@@ -301,22 +301,19 @@ class SuperEditorInspector {
     return documentLayoutElement.state as DocumentLayout;
   }
 
-  /// Toggles given attributions for the given document selection.
+  /// Toggles given [attributions] for the [documentSelection].
   ///
   /// {@macro supereditor_finder}
-  static void toggleAttributionsForDocumentSelection({
-    required DocumentPosition base,
-    required DocumentPosition extent,
-    required Set<Attribution> attributions,
-  }) {
-    final editor = findEditor();
+  static void toggleAttributionsForDocumentSelection(
+    DocumentSelection documentSelection,
+    Set<Attribution> attributions, [
+    Finder? superEditorFinder,
+  ]) {
+    final editor = findEditor(superEditorFinder);
 
     return editor.execute([
       ToggleTextAttributionsRequest(
-        documentRange: DocumentSelection(
-          base: base,
-          extent: extent,
-        ),
+        documentRange: documentSelection,
         attributions: attributions,
       )
     ]);
