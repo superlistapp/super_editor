@@ -1286,6 +1286,12 @@ class AddTextAttributionsCommand implements EditCommand {
 
     editorDocLog.info(' - done adding attributions');
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class RemoveTextAttributionsRequest implements EditRequest {
@@ -1397,6 +1403,12 @@ class RemoveTextAttributionsCommand implements EditCommand {
 
     editorDocLog.info(' - done adding attributions');
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ToggleTextAttributionsRequest implements EditRequest {
@@ -1522,6 +1534,12 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
     editorDocLog.info(' - done toggling attributions');
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 /// Changes layout styles, like padding and width, of a component within a [SingleColumnDocumentLayout].
@@ -1557,6 +1575,12 @@ class ChangeSingleColumnLayoutComponentStylesCommand implements EditCommand {
       ),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class InsertTextRequest implements EditRequest {
@@ -1581,6 +1605,8 @@ class InsertTextCommand implements EditCommand {
   final DocumentPosition documentPosition;
   final String textToInsert;
   final Set<Attribution> attributions;
+
+  ChangeSelectionCommand? _changeSelectionCommand;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1610,22 +1636,60 @@ class InsertTextCommand implements EditCommand {
       ),
     ]);
 
-    executor.executeCommand(
-      ChangeSelectionCommand(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(
-              offset: textOffset + textToInsert.length,
-              affinity: textPosition.affinity,
-            ),
+    _changeSelectionCommand = ChangeSelectionCommand(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: textNode.id,
+          nodePosition: TextNodePosition(
+            offset: textOffset + textToInsert.length,
+            affinity: textPosition.affinity,
           ),
         ),
-        SelectionChangeType.insertContent,
-        SelectionReason.userInteraction,
-        notifyListeners: false,
       ),
+      SelectionChangeType.insertContent,
+      SelectionReason.userInteraction,
+      notifyListeners: false,
     );
+
+    executor.executeCommand(
+      _changeSelectionCommand!,
+    );
+  }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {
+    print("Undo'ing InsertTextCommand");
+
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    final textNode = document.getNodeById(documentPosition.nodeId);
+    if (textNode is! TextNode) {
+      editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
+      return;
+    }
+
+    final textPosition = documentPosition.nodePosition as TextPosition;
+    final textOffset = textPosition.offset;
+    print("Text node before removal: ${textNode.text.text}");
+    print(" - insert offset: $textOffset");
+    print(" - text to insert: '$textToInsert'");
+    textNode.text = textNode.text.removeRegion(startOffset: textOffset, endOffset: textOffset + textToInsert.length);
+    print("Text node after removal: ${textNode.text.text}");
+
+    executor.logChanges([
+      DocumentEdit(
+        TextDeletedEvent(
+          textNode.id,
+          offset: textOffset,
+          deletedText: AttributedText(textToInsert),
+        ),
+      ),
+    ]);
+
+    _changeSelectionCommand!.undo(context, executor);
   }
 }
 
@@ -1723,6 +1787,12 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
       ),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class InsertAttributedTextCommand implements EditCommand {
@@ -1756,6 +1826,12 @@ class InsertAttributedTextCommand implements EditCommand {
       ),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 ExecutionInstruction anyCharacterToInsertInTextContent({
@@ -1874,6 +1950,12 @@ class InsertCharacterAtCaretCommand extends EditCommand {
       executor: executor,
     );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 void _deleteExpandedSelection({

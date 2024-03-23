@@ -326,7 +326,7 @@ class ChangeSelectionRequest implements EditRequest {
 /// An [EditCommand] that changes the [DocumentSelection] in the [DocumentComposer]
 /// to the [newSelection].
 class ChangeSelectionCommand implements EditCommand {
-  const ChangeSelectionCommand(
+  ChangeSelectionCommand(
     this.newSelection,
     this.changeType,
     this.reason, {
@@ -343,17 +343,37 @@ class ChangeSelectionCommand implements EditCommand {
 
   final String reason;
 
+  DocumentSelection? _initialSelection;
+
   @override
   void execute(EditContext context, CommandExecutor executor) {
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
-    final initialSelection = composer.selection;
+    _initialSelection = composer.selection;
 
     composer.setSelectionWithReason(newSelection, reason);
 
     executor.logChanges([
       SelectionChangeEvent(
-        oldSelection: initialSelection,
+        oldSelection: _initialSelection,
         newSelection: newSelection,
+        changeType: changeType,
+        reason: reason,
+      )
+    ]);
+  }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+    composer.setSelectionWithReason(_initialSelection, reason);
+
+    executor.logChanges([
+      SelectionChangeEvent(
+        oldSelection: newSelection,
+        newSelection: _initialSelection,
         changeType: changeType,
         reason: reason,
       )
@@ -494,6 +514,12 @@ class ChangeComposingRegionCommand implements EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ClearComposingRegionRequest implements EditRequest {
@@ -529,4 +555,10 @@ class ChangeInteractionModeCommand implements EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     context.find<MutableDocumentComposer>(Editor.composerKey).setIsInteractionMode(isInteractionModeDesired);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.nonHistorical;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }

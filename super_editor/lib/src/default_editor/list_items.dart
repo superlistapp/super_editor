@@ -539,6 +539,12 @@ class IndentListItemCommand implements EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class UnIndentListItemRequest implements EditRequest {
@@ -579,6 +585,12 @@ class UnIndentListItemCommand implements EditCommand {
       );
     }
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ConvertListItemToParagraphRequest implements EditRequest {
@@ -623,6 +635,12 @@ class ConvertListItemToParagraphCommand implements EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ConvertParagraphToListItemRequest implements EditRequest {
@@ -663,6 +681,12 @@ class ConvertParagraphToListItemCommand implements EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ChangeListItemTypeRequest implements EditRequest {
@@ -702,6 +726,12 @@ class ChangeListItemTypeCommand implements EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class SplitListItemRequest implements EditRequest {
@@ -785,6 +815,12 @@ class SplitListItemCommand implements EditCommand {
       SplitListItemIntention.end(),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class SplitListItemIntention extends Intention {

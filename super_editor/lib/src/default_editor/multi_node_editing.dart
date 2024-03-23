@@ -250,6 +250,12 @@ class PasteStructuredContentEditorCommand implements EditCommand {
 
     return true;
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class InsertNodeAtIndexRequest implements EditRequest {
@@ -281,6 +287,12 @@ class InsertNodeAtIndexCommand extends EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class InsertNodeBeforeNodeRequest implements EditRequest {
@@ -314,6 +326,12 @@ class InsertNodeBeforeNodeCommand extends EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class InsertNodeAfterNodeRequest implements EditRequest {
@@ -347,6 +365,12 @@ class InsertNodeAfterNodeCommand extends EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class InsertNodeAtCaretRequest implements EditRequest {
@@ -476,6 +500,12 @@ class InsertNodeAtCaretCommand extends EditCommand {
       SelectionReason.userInteraction,
     ));
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class MoveNodeRequest implements EditRequest {
@@ -544,6 +574,12 @@ class MoveNodeCommand extends EditCommand {
     // Report all the node movements.
     executor.logChanges(nodeMoveEvents);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ReplaceNodeRequest implements EditRequest {
@@ -580,6 +616,12 @@ class ReplaceNodeCommand extends EditCommand {
       ),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ReplaceNodeWithEmptyParagraphWithCaretRequest implements EditRequest {
@@ -643,6 +685,12 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditCommand {
       notifyListeners: false,
     ));
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class DeleteContentRequest implements EditRequest {
@@ -1002,6 +1050,12 @@ class DeleteContentCommand implements EditCommand {
       ];
     }
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 /// Request to handle a collapsed selection upstream deletion at the
@@ -1057,4 +1111,10 @@ class DeleteNodeCommand implements EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }

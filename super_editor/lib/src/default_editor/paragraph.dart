@@ -261,6 +261,12 @@ class ChangeParagraphAlignmentCommand implements EditCommand {
       ),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ChangeParagraphBlockTypeRequest implements EditRequest {
@@ -306,6 +312,12 @@ class ChangeParagraphBlockTypeCommand implements EditCommand {
       ),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 /// [EditRequest] to combine the [ParagraphNode] with [firstNodeId] with the [ParagraphNode] after it, which
@@ -389,6 +401,12 @@ class CombineParagraphsCommand implements EditCommand {
       ),
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class SplitParagraphRequest implements EditRequest {
@@ -556,6 +574,12 @@ class SplitParagraphCommand implements EditCommand {
       ]);
     }
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
@@ -698,6 +722,12 @@ class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
       ),
     );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class Intention implements EditEvent {
@@ -793,6 +823,12 @@ class DeleteParagraphCommand implements EditCommand {
       )
     ]);
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 /// When the caret is collapsed at the beginning of a ParagraphNode

@@ -37,7 +37,7 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
         )
       : null,
   (request) => request is ClearSelectionRequest
-      ? const ChangeSelectionCommand(
+      ? ChangeSelectionCommand(
           null,
           SelectionChangeType.clearSelection,
           SelectionReason.userInteraction,

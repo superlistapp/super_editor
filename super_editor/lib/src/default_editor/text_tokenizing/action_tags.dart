@@ -160,6 +160,12 @@ class SubmitComposingActionTagCommand implements EditCommand {
       ),
     );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 /// An [EditRequest] that cancels an on-going action tag composition near the user's selection.
@@ -256,6 +262,12 @@ class CancelComposingActionTagCommand implements EditCommand {
       ),
     );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 class ActionTagComposingReaction implements EditReaction {

@@ -394,4 +394,10 @@ class DeleteUpstreamAtBeginningOfBlockNodeCommand implements EditCommand {
       ),
     );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }

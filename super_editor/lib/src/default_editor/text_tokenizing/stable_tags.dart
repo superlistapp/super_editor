@@ -255,6 +255,12 @@ class FillInComposingUserTagCommand implements EditCommand {
       ),
     );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 /// An [EditRequest] that cancels an on-going stable tag composition near the user's selection.
@@ -351,6 +357,12 @@ class CancelComposingStableTagCommand implements EditCommand {
       ),
     );
   }
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void undo(EditContext context, CommandExecutor executor) {}
 }
 
 extension StableTagIndexEditable on EditContext {
