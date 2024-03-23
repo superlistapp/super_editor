@@ -5,7 +5,6 @@ import 'package:characters/characters.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/infrastructure/strings.dart';
 
 /// A set of tools for finding tags within document text.
 class TagFinder {
@@ -23,55 +22,51 @@ class TagFinder {
       return null;
     }
 
-    int tokenStartOffset = min(expansionPosition.offset - 1, rawText.length - 1);
-    tokenStartOffset = max(tokenStartOffset, 0);
-    if (tagRule.excludedCharacters.contains(rawText[tokenStartOffset])) {
+    int splitIndex = min(expansionPosition.offset, rawText.length);
+    splitIndex = max(splitIndex, 0);
+
+    // Create 2 splits of characters to navigate upstream and downstream the caret position.
+    // ex: "this is a very|long string"
+    // -> split around the caret into charactersBefore="this is a very" and charactersAfter="long string"
+    final charactersBefore = rawText.substring(0, splitIndex).characters;
+    final iteratorUpstream = charactersBefore.iteratorAtEnd;
+
+    final charactersAfter = rawText.substring(splitIndex).characters;
+    final iteratorDownstream = charactersAfter.iterator;
+
+    if (charactersBefore.isNotEmpty && tagRule.excludedCharacters.contains(charactersBefore.last)) {
       // The character where we're supposed to begin our expansion is a
       // character that's not allowed in a tag. Therefore, no tag exists
       // around the search offset.
       return null;
     }
 
-    int tokenEndOffset = min(expansionPosition.offset - 1, rawText.length - 1);
-    tokenEndOffset = max(tokenEndOffset, 0);
-
-    if (rawText[tokenStartOffset] != tagRule.trigger) {
-      while (tokenStartOffset > 0) {
-        final upstreamCharacterIndex = rawText.moveOffsetUpstreamByCharacter(tokenStartOffset)!;
-        final upstreamCharacter = rawText[upstreamCharacterIndex];
-        if (tagRule.excludedCharacters.contains(upstreamCharacter)) {
-          // The upstream character isn't allowed to appear in a tag. Break before moving
-          // the starting character index any further upstream.
-          break;
-        }
-
-        // Move the starting character index upstream.
-        tokenStartOffset = upstreamCharacterIndex;
-
-        if (upstreamCharacter == tagRule.trigger) {
-          // The character we just added to the token bounds is the trigger.
-          // We don't want to move the start any further upstream.
-          break;
-        }
+    // Move upstream until we find the trigger character or an excluded character.
+    while (iteratorUpstream.moveBack()) {
+      final currentCharacter = iteratorUpstream.current;
+      if (tagRule.excludedCharacters.contains(currentCharacter)) {
+        // The upstream character isn't allowed to appear in a tag. end the search.
+        return null;
       }
-    }
 
-    while (tokenEndOffset < rawText.length - 1) {
-      final downstreamCharacterIndex = rawText.moveOffsetDownstreamByCharacter(tokenEndOffset)!;
-      final downstreamCharacter = rawText[downstreamCharacterIndex];
-      if (downstreamCharacter != tagRule.trigger && tagRule.excludedCharacters.contains(downstreamCharacter)) {
+      if (currentCharacter == tagRule.trigger) {
+        // The character we are reading is the trigger.
+        // We move the iteratorUpstream one last time to include the trigger in the tokenRange and stop looking any further upstream
+        iteratorUpstream.moveBack();
         break;
       }
-
-      tokenEndOffset = downstreamCharacterIndex;
     }
-    // Make end off exclusive.
-    tokenEndOffset += 1;
 
-    final tokenRange = SpanRange(tokenStartOffset, tokenEndOffset);
-    if (tokenRange.end - tokenRange.start <= 0) {
-      return null;
+    // Move downstream the caret position until we find excluded character or reach the end of the text.
+    while (iteratorDownstream.moveNext()) {
+      final current = iteratorDownstream.current;
+      if (tagRule.excludedCharacters.contains(current)) {
+        break;
+      }
     }
+
+    final tokenStartOffset = splitIndex - iteratorUpstream.stringAfterLength;
+    final tokenRange = SpanRange(tokenStartOffset, splitIndex + iteratorDownstream.stringBeforeLength);
 
     final tagText = text.substringInRange(tokenRange);
     if (!tagText.startsWith(tagRule.trigger)) {
@@ -83,7 +78,7 @@ class TagFinder {
       return null;
     }
 
-    final tagAroundPosition = TagAroundPosition(
+    return TagAroundPosition(
       indexedTag: IndexedTag(
         Tag(tagRule.trigger, tagText.substring(1)),
         nodeId,
@@ -91,8 +86,6 @@ class TagFinder {
       ),
       searchOffset: expansionPosition.offset,
     );
-
-    return tagAroundPosition;
   }
 
   /// Finds and returns all tags in the given [textNode], which meet the given [rule].
