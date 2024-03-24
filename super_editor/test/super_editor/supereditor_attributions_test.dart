@@ -194,15 +194,13 @@ void main() {
 
           final doc = SuperEditorInspector.findDocument()!;
 
-          // Ensure no attributions are present.
-          expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.",
-            ),
-          );
-
           final firstNode = doc.getNodeById("1")! as TextNode;
+
+          // Ensure markers are empty.
+          expect(
+            firstNode.text.spans.markers,
+            isEmpty,
+          );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
@@ -228,12 +226,10 @@ void main() {
             {boldAttribution},
           );
 
-          // Ensure attribution was removed from the selection.
+          // Ensure bold attribution was removed from the selection.
           expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.",
-            ),
+            firstNode.text.spans.markers,
+            isEmpty,
           );
         });
 
@@ -247,15 +243,13 @@ void main() {
 
           final doc = SuperEditorInspector.findDocument()!;
 
-          // Ensure no attributions are present.
-          expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.",
-            ),
-          );
+          final firstNode = doc.getNodeById("1")! as TextNode;
 
-          final firstNode = doc.getNodeById("1")!;
+          // Ensure markers are empty.
+          expect(
+            firstNode.text.spans.markers,
+            isEmpty,
+          );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
@@ -281,12 +275,10 @@ void main() {
             {boldAttribution},
           );
 
-          // Ensure attribution was removed from the selection.
+          // Ensure bold attribution was removed from the selection.
           expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.",
-            ),
+            firstNode.text.spans.markers,
+            isEmpty,
           );
         });
 
@@ -405,15 +397,13 @@ void main() {
 
           final doc = SuperEditorInspector.findDocument()!;
 
-          // Ensure no attributions are present.
-          expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.",
-            ),
-          );
+          final firstNode = doc.getNodeById("1")! as TextNode;
 
-          final firstNode = doc.getNodeById("1")!;
+          // Ensure markers are empty.
+          expect(
+            firstNode.text.spans.markers,
+            isEmpty,
+          );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
@@ -439,12 +429,10 @@ void main() {
             {boldAttribution, italicsAttribution},
           );
 
-          // Ensure all attributions are removed from the node.
+          // Ensure both bold and italic attributions are removed from the node.
           expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.",
-            ),
+            firstNode.text.spans.markers,
+            isEmpty,
           );
         });
       });
@@ -460,16 +448,14 @@ void main() {
 
           final doc = SuperEditorInspector.findDocument()!;
 
-          // Ensure no attributions are present.
-          expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.\n\nThis is the second node in a document.",
-            ),
-          );
+          final firstNode = doc.getNodeById("1")! as TextNode;
+          final secondNode = doc.getNodeById("2")! as TextNode;
 
-          final firstNode = doc.getNodeById("1")!;
-          final secondNode = doc.getNodeById("2")!;
+          // Ensure markers are empty for both nodes.
+          expect(
+            firstNode.text.spans.markers.isEmpty && secondNode.text.spans.markers.isEmpty,
+            true,
+          );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
@@ -497,10 +483,8 @@ void main() {
 
           // Ensure bold attribution was removed from both nodes.
           expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.\n\nThis is the second node in a document.",
-            ),
+            firstNode.text.spans.markers.isEmpty && secondNode.text.spans.markers.isEmpty,
+            true,
           );
         });
 
@@ -523,8 +507,8 @@ void main() {
             ),
           );
 
-          final firstNode = doc.getNodeById("1")!;
-          final secondNode = doc.getNodeById("2")!;
+          final firstNode = doc.getNodeById("1")! as TextNode;
+          final secondNode = doc.getNodeById("2")! as TextNode;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
@@ -552,10 +536,8 @@ void main() {
 
           // Ensure bold attribution was removed from both nodes.
           expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.\n\nThis is the second node in a document.",
-            ),
+            firstNode.text.spans.markers.isEmpty && secondNode.text.spans.markers.isEmpty,
+            true,
           );
         });
 
@@ -578,8 +560,8 @@ void main() {
             ),
           );
 
-          final firstNode = doc.getNodeById("1")!;
-          final secondNode = doc.getNodeById("2")!;
+          final firstNode = doc.getNodeById("1")! as TextNode;
+          final secondNode = doc.getNodeById("2")! as TextNode;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
@@ -607,10 +589,8 @@ void main() {
 
           // Ensure bold attribution was removed from both nodes.
           expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.\n\nThis is the second node in a document.",
-            ),
+            firstNode.text.spans.markers.isEmpty && secondNode.text.spans.markers.isEmpty,
+            true,
           );
         });
 
@@ -634,8 +614,8 @@ void main() {
             ),
           );
 
-          final firstNode = doc.getNodeById("1")!;
-          final secondNode = doc.getNodeById("2")!;
+          final firstNode = doc.getNodeById("1")! as TextNode;
+          final secondNode = doc.getNodeById("2")! as TextNode;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
@@ -663,10 +643,8 @@ void main() {
 
           // Ensure bold attribution was removed from both nodes.
           expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.\n\nThis is the second node in a document.",
-            ),
+            firstNode.text.spans.markers.isEmpty && secondNode.text.spans.markers.isEmpty,
+            true,
           );
         });
 
@@ -688,8 +666,8 @@ void main() {
             ),
           );
 
-          final firstNode = doc.getNodeById("1")!;
-          final secondNode = doc.getNodeById("2")!;
+          final firstNode = doc.getNodeById("1")! as TextNode;
+          final secondNode = doc.getNodeById("2")! as TextNode;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
@@ -717,10 +695,8 @@ void main() {
 
           // Ensure bold attribution was removed from both nodes.
           expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.\n\nThis is the second node in a document.",
-            ),
+            firstNode.text.spans.markers.isEmpty && secondNode.text.spans.markers.isEmpty,
+            true,
           );
         });
 
@@ -769,7 +745,7 @@ void main() {
             {italicsAttribution},
           );
 
-          // Ensure bold attribution was removed from both nodes.
+          // Ensure italic attribution was removed from both nodes.
           expect(
             doc,
             equalsMarkdown(
@@ -845,16 +821,14 @@ void main() {
 
           final doc = SuperEditorInspector.findDocument()!;
 
-          // Ensure no attributions are present.
-          expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.\n\nThis is the second node in a document.",
-            ),
-          );
+          final firstNode = doc.getNodeById("1")! as TextNode;
+          final secondNode = doc.getNodeById("2")! as TextNode;
 
-          final firstNode = doc.getNodeById("1")!;
-          final secondNode = doc.getNodeById("2")!;
+          // Ensure markers are empty for both nodes.
+          expect(
+            firstNode.text.spans.markers.isEmpty && secondNode.text.spans.markers.isEmpty,
+            true,
+          );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
@@ -884,12 +858,10 @@ void main() {
             {boldAttribution, italicsAttribution},
           );
 
-          // Ensure both bold and italic attributions were removed from the selection.
+          // Ensure markers are empty for both nodes.
           expect(
-            doc,
-            equalsMarkdown(
-              "This is the first node in a document.\n\nThis is the second node in a document.",
-            ),
+            firstNode.text.spans.markers.isEmpty && secondNode.text.spans.markers.isEmpty,
+            true,
           );
         });
       });
