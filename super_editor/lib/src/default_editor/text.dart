@@ -1509,13 +1509,12 @@ class ToggleTextAttributionsCommand implements EditCommand {
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
           node.text = AttributedText(
-              node.text.text,
-              node.text.spans.copy()
-                ..removeAttribution(
-                  attributionToRemove: attribution,
-                  start: range.start,
-                  end: range.end,
-                ));
+            node.text.text,
+            node.text.spans.copy(),
+          )..removeAttribution(
+              attribution,
+              range,
+            );
         } else {
           // Attribution isn't present throughout the user selection. Apply attribution.
 
@@ -1525,13 +1524,11 @@ class ToggleTextAttributionsCommand implements EditCommand {
           // see that we made a change, and re-renders the text in the document.
           node.text = AttributedText(
             node.text.text,
-            node.text.spans.copy()
-              ..addAttribution(
-                newAttribution: attribution,
-                start: range.start,
-                end: range.end,
-              ),
-          );
+            node.text.spans.copy(),
+          )..addAttribution(
+              attribution,
+              range,
+            );
         }
 
         executor.logChanges([
