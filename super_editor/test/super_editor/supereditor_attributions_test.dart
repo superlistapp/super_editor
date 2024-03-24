@@ -334,6 +334,7 @@ void main() {
             ),
           );
         });
+
         testWidgetsOnAllPlatforms("toggles a different attribution for fully attributed node", (tester) async {
           await tester //
               .createDocument()
