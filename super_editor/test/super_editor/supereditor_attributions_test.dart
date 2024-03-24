@@ -233,7 +233,7 @@ void main() {
           );
         });
 
-        testWidgetsOnAllPlatforms("toggles attribution for partial node selection", (tester) async {
+        testWidgetsOnAllPlatforms("toggles attribution on a partial node selection", (tester) async {
           await tester //
               .createDocument()
               .withCustomContent(
@@ -282,7 +282,8 @@ void main() {
           );
         });
 
-        testWidgetsOnAllPlatforms("toggles attribution for a partially selected fully attributed node", (tester) async {
+        testWidgetsOnAllPlatforms("toggles an attribution within a sub-range of an existing same attribution",
+            (tester) async {
           await tester //
               .createDocument()
               .withCustomContent(
@@ -335,7 +336,8 @@ void main() {
           );
         });
 
-        testWidgetsOnAllPlatforms("toggles a different attribution for fully attributed node", (tester) async {
+        testWidgetsOnAllPlatforms("toggles a different attribution within a sub-range of another existing attribution",
+            (tester) async {
           await tester //
               .createDocument()
               .withCustomContent(
@@ -439,7 +441,7 @@ void main() {
       });
 
       group("when multiple nodes are selected", () {
-        testWidgetsOnAllPlatforms("toggles attribution across multiple nodes", (tester) async {
+        testWidgetsOnAllPlatforms("toggles attribution throughout multiple nodes", (tester) async {
           await tester //
               .createDocument()
               .withCustomContent(
@@ -489,8 +491,8 @@ void main() {
           );
         });
 
-        testWidgetsOnAllPlatforms("toggles an attribution across a fully attributed node and a plain node",
-            (tester) async {
+        testWidgetsOnAllPlatforms(
+            "toggles an attribution across nodes with the attribution applied throughout first node", (tester) async {
           await tester //
               .createDocument()
               .withCustomContent(
@@ -546,7 +548,8 @@ void main() {
           );
         });
 
-        testWidgetsOnAllPlatforms("toggles an attribution across a partially attributed node and a plain node",
+        testWidgetsOnAllPlatforms(
+            "toggles an attribution across nodes with the attribution applied partially within first node",
             (tester) async {
           await tester //
               .createDocument()
@@ -603,7 +606,8 @@ void main() {
           );
         });
 
-        testWidgetsOnAllPlatforms("toggles an attribution across a fully attributed and partially attributed node",
+        testWidgetsOnAllPlatforms(
+            "toggles an attribution across nodes with the attribution applied throughout and partially within first and second node respectively",
             (tester) async {
           await tester //
               .createDocument()
@@ -661,7 +665,9 @@ void main() {
           );
         });
 
-        testWidgetsOnAllPlatforms("toggles an attribution across multiple partially attributed node", (tester) async {
+        testWidgetsOnAllPlatforms(
+            "toggles an attribution across nodes with the attribution applied partially within all nodes",
+            (tester) async {
           await tester //
               .createDocument()
               .withCustomContent(
@@ -717,7 +723,9 @@ void main() {
           );
         });
 
-        testWidgetsOnAllPlatforms("toggles an attribution across multiple fully attributed node", (tester) async {
+        testWidgetsOnAllPlatforms(
+            "toggles a different attribution across nodes with an existing attribution applied throughout them",
+            (tester) async {
           await tester //
               .createDocument()
               .withCustomContent(
@@ -772,7 +780,8 @@ void main() {
         });
 
         testWidgetsOnAllPlatforms(
-            "toggles an attribution for a partial selection across multiple fully attributed node", (tester) async {
+            "toggles a different attribution partially across nodes with an existing attribution applied throughout them",
+            (tester) async {
           await tester //
               .createDocument()
               .withCustomContent(
