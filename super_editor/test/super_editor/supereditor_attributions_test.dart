@@ -520,6 +520,10 @@ void main() {
           );
 
           // Ensure bold attribution is applied throughout both nodes.
+          //
+          // The toggled attribution already existed across the selection. In
+          // such cases, the attribution is applied throughout the selection without removing it from
+          // any of the node selections that already have it.
           expect(
             doc,
             equalsMarkdown(
@@ -573,6 +577,10 @@ void main() {
           );
 
           // Ensure bold attribution is applied throughout the both nodes.
+          //
+          // The toggled attribution already existed across the selection.In
+          // such cases, the attribution is applied throughout the selection without removing it from
+          // any of the node selections that already have it.
           expect(
             doc,
             equalsMarkdown(
@@ -627,6 +635,10 @@ void main() {
           );
 
           // Ensure bold attribution is applied throughout the both nodes.
+          //
+          // The toggled attribution already existed across the selection. In
+          // such cases, the attribution is applied throughout the selection without removing it from
+          // any of the node selections that already have it.
           expect(
             doc,
             equalsMarkdown(
@@ -679,6 +691,10 @@ void main() {
           );
 
           // Ensure bold attribution is applied throughout the both nodes.
+          //
+          // The toggled attribution already existed across the selection. In
+          // such cases, the attribution is applied throughout the selection without removing it from
+          // any of the node selections that already have it.
           expect(
             doc,
             equalsMarkdown(
