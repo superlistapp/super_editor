@@ -1131,16 +1131,18 @@ This is some code
       });
 
       test('unordered list followd by empty list item', () {
-        const markdown = """- list item 1
-    - """;
-
+        const markdown = "- list item 1\n- ";
         final document = deserializeMarkdownToDocument(markdown);
 
-        expect(document.nodes.length, 1);
+        expect(document.nodes.length, 2);
 
         expect(document.nodes[0], isA<ListItemNode>());
         expect((document.nodes[0] as ListItemNode).type, ListItemType.unordered);
         expect((document.nodes[0] as ListItemNode).text.text, 'list item 1');
+
+        expect(document.nodes[1], isA<ListItemNode>());
+        expect((document.nodes[1] as ListItemNode).type, ListItemType.unordered);
+        expect((document.nodes[1] as ListItemNode).text.text, '');
       });
 
       test('parses mixed unordered and ordered items', () {
@@ -1434,8 +1436,20 @@ with multiple lines
         expect(document.nodes[25], isA<ParagraphNode>());
       });
 
-      test('paragraph with strikethrough', () {
+      test('paragraph with strikethrough with single tilda', () {
         final doc = deserializeMarkdownToDocument('~This is~ a paragraph.');
+        final styledText = (doc.nodes[0] as ParagraphNode).text;
+
+        // Ensure text within the range is attributed.
+        expect(styledText.getAllAttributionsAt(0).contains(strikethroughAttribution), true);
+        expect(styledText.getAllAttributionsAt(6).contains(strikethroughAttribution), true);
+
+        // Ensure text outside the range isn't attributed.
+        expect(styledText.getAllAttributionsAt(7).contains(strikethroughAttribution), false);
+      });
+
+      test('paragraph with strikethrough with two tildas', () {
+        final doc = deserializeMarkdownToDocument('~~This is~~ a paragraph.');
         final styledText = (doc.nodes[0] as ParagraphNode).text;
 
         // Ensure text within the range is attributed.
