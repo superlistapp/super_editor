@@ -890,6 +890,114 @@ void main() {
             true,
           );
         });
+
+        testWidgetsOnAllPlatforms(
+            "toggles attribution for a selection going halfway from first node and halfway within second node",
+            (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphThenParagraphDoc(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          final firstNode = doc.getNodeById("1")! as TextNode;
+          final secondNode = doc.getNodeById("2")! as TextNode;
+
+          // Ensure markers are empty for both nodes.
+          expect(
+            firstNode.text.spans.markers.isEmpty && secondNode.text.spans.markers.isEmpty,
+            true,
+          );
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            DocumentSelection(
+              base: firstNode.atOffset(18),
+              extent: secondNode.atOffset(18),
+            ),
+            {boldAttribution},
+          );
+
+          // Ensure bold attribution was applied.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first **node in a document.**\n\n**This is the second** node in a document.",
+            ),
+          );
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            DocumentSelection(
+              base: firstNode.atOffset(18),
+              extent: secondNode.atOffset(18),
+            ),
+            {boldAttribution},
+          );
+
+          // Ensure markers are empty for both nodes.
+          expect(
+            firstNode.text.spans.markers.isEmpty && secondNode.text.spans.markers.isEmpty,
+            true,
+          );
+        });
+
+        testWidgetsOnAllPlatforms(
+            "toggles attribution for a selection going halfway in first node till the halfway into the third node",
+            (tester) async {
+          await tester //
+              .createDocument()
+              .withCustomContent(
+                _paragraphThenParagraphThenParagraphDoc(),
+              )
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          final firstNode = doc.getNodeById("1")! as TextNode;
+          final thirdNode = doc.getNodeById("3")! as TextNode;
+
+          // Ensure no attributions are present.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.\n\nThis is the second node in a document.\n\nThis is the third node in a document.",
+            ),
+          );
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            DocumentSelection(
+              base: firstNode.atOffset(18),
+              extent: thirdNode.atOffset(18),
+            ),
+            {boldAttribution},
+          );
+
+          // Ensure bold attributions were applied.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first **node in a document.**\n\n**This is the second node in a document.**\n\n**This is the third **node in a document.",
+            ),
+          );
+
+          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+            DocumentSelection(
+              base: firstNode.atOffset(18),
+              extent: thirdNode.atOffset(18),
+            ),
+            {boldAttribution},
+          );
+
+          // Ensure no attributions are present.
+          expect(
+            doc,
+            equalsMarkdown(
+              "This is the first node in a document.\n\nThis is the second node in a document.\n\nThis is the third node in a document.",
+            ),
+          );
+        });
       });
 
       group("applies color attributions", () {
@@ -1146,6 +1254,29 @@ MutableDocument _paragraphThenParagraphDoc() => MutableDocument(
           id: "2",
           text: AttributedText(
             "This is the second node in a document.",
+          ),
+        ),
+      ],
+    );
+
+MutableDocument _paragraphThenParagraphThenParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "3",
+          text: AttributedText(
+            "This is the third node in a document.",
           ),
         ),
       ],
