@@ -277,3 +277,118 @@ MutableDocument singleParagraphFullColor() => MutableDocument(
         )
       ],
     );
+
+MutableDocument paragraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+      ],
+    );
+
+MutableDocument paragraphThenParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+          ),
+        ),
+      ],
+    );
+
+MutableDocument paragraphThenParagraphThenParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "3",
+          text: AttributedText(
+            "This is the third node in a document.",
+          ),
+        ),
+      ],
+    );
+
+MutableDocument fullyBoldParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+            AttributedSpans(attributions: [
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 36,
+                markerType: SpanMarkerType.end,
+              ),
+            ]),
+          ),
+        ),
+      ],
+    );
+
+MutableDocument paragraphFullBoldThenParagraphFullyBold() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+            AttributedSpans(attributions: [
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 36,
+                markerType: SpanMarkerType.end,
+              ),
+            ]),
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+            AttributedSpans(attributions: [
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 37,
+                markerType: SpanMarkerType.end,
+              ),
+            ]),
+          ),
+        ),
+      ],
+    );

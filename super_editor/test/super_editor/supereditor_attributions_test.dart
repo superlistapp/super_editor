@@ -188,7 +188,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _paragraphDoc(),
+                paragraphDoc(),
               )
               .pump();
 
@@ -203,10 +203,7 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: firstNode.endDocumentPosition,
-            ),
+            firstNode.selectionBetween(0, firstNode.text.length),
             {boldAttribution},
           );
 
@@ -219,10 +216,7 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: firstNode.endDocumentPosition,
-            ),
+            firstNode.selectionBetween(0, firstNode.text.length),
             {boldAttribution},
           );
 
@@ -237,7 +231,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _paragraphDoc(),
+                paragraphDoc(),
               )
               .pump();
 
@@ -252,10 +246,7 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: firstNode.atOffset(17),
-            ),
+            firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
 
@@ -268,10 +259,7 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: firstNode.atOffset(17),
-            ),
+            firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
 
@@ -287,7 +275,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _fullyBoldParagraphDoc(),
+                fullyBoldParagraphDoc(),
               )
               .pump();
 
@@ -301,13 +289,10 @@ void main() {
             ),
           );
 
-          final firstNode = doc.getNodeById("1")!;
+          final firstNode = doc.getNodeById("1")! as TextNode;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: firstNode.atOffset(17),
-            ),
+            firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
 
@@ -320,10 +305,7 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: firstNode.atOffset(17),
-            ),
+            firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
 
@@ -341,7 +323,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _fullyBoldParagraphDoc(),
+                fullyBoldParagraphDoc(),
               )
               .pump();
 
@@ -355,13 +337,10 @@ void main() {
             ),
           );
 
-          final firstNode = doc.getNodeById("1")!;
+          final firstNode = doc.getNodeById("1")! as TextNode;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: firstNode.atOffset(17),
-            ),
+            firstNode.selectionBetween(0, 17),
             {italicsAttribution},
           );
 
@@ -374,10 +353,7 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: firstNode.atOffset(17),
-            ),
+            firstNode.selectionBetween(0, 17),
             {italicsAttribution},
           );
 
@@ -394,7 +370,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _paragraphDoc(),
+                paragraphDoc(),
               )
               .pump();
 
@@ -409,10 +385,7 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: firstNode.endDocumentPosition,
-            ),
+            firstNode.selectionBetween(0, firstNode.text.length),
             {italicsAttribution, boldAttribution},
           );
 
@@ -425,10 +398,7 @@ void main() {
           );
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: firstNode.endDocumentPosition,
-            ),
+            firstNode.selectionBetween(0, firstNode.text.length),
             {boldAttribution, italicsAttribution},
           );
 
@@ -445,7 +415,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _paragraphThenParagraphDoc(),
+                paragraphThenParagraphDoc(),
               )
               .pump();
 
@@ -729,7 +699,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _paragraphFullBoldThenParagraphFullyBold(),
+                paragraphFullBoldThenParagraphFullyBold(),
               )
               .pump();
 
@@ -785,7 +755,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _paragraphFullBoldThenParagraphFullyBold(),
+                paragraphFullBoldThenParagraphFullyBold(),
               )
               .pump();
 
@@ -799,13 +769,13 @@ void main() {
             ),
           );
 
-          final firstNode = doc.getNodeById("1")!;
-          final secondNode = doc.getNodeById("2")!;
+          final firstNode = doc.getNodeById("1")! as TextNode;
+          final secondNode = doc.getNodeById("2")! as TextNode;
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
-              extent: secondNode.atOffset(18),
+              extent: secondNode.positionAt(18),
             ),
             {italicsAttribution},
           );
@@ -822,7 +792,7 @@ void main() {
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
-              extent: secondNode.atOffset(18),
+              extent: secondNode.positionAt(18),
             ),
             {italicsAttribution},
           );
@@ -841,7 +811,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _paragraphThenParagraphDoc(),
+                paragraphThenParagraphDoc(),
               )
               .pump();
 
@@ -897,7 +867,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _paragraphThenParagraphDoc(),
+                paragraphThenParagraphDoc(),
               )
               .pump();
 
@@ -914,8 +884,8 @@ void main() {
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
-              base: firstNode.atOffset(18),
-              extent: secondNode.atOffset(18),
+              base: firstNode.positionAt(18),
+              extent: secondNode.positionAt(18),
             ),
             {boldAttribution},
           );
@@ -930,8 +900,8 @@ void main() {
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
-              base: firstNode.atOffset(18),
-              extent: secondNode.atOffset(18),
+              base: firstNode.positionAt(18),
+              extent: secondNode.positionAt(18),
             ),
             {boldAttribution},
           );
@@ -949,7 +919,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                _paragraphThenParagraphThenParagraphDoc(),
+                paragraphThenParagraphThenParagraphDoc(),
               )
               .pump();
 
@@ -968,8 +938,8 @@ void main() {
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
-              base: firstNode.atOffset(18),
-              extent: thirdNode.atOffset(18),
+              base: firstNode.positionAt(18),
+              extent: thirdNode.positionAt(18),
             ),
             {boldAttribution},
           );
@@ -984,8 +954,8 @@ void main() {
 
           SuperEditorInspector.toggleAttributionsForDocumentSelection(
             DocumentSelection(
-              base: firstNode.atOffset(18),
-              extent: thirdNode.atOffset(18),
+              base: firstNode.positionAt(18),
+              extent: thirdNode.positionAt(18),
             ),
             {boldAttribution},
           );
@@ -1215,73 +1185,6 @@ void main() {
   });
 }
 
-MutableDocument _paragraphDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-          ),
-        ),
-      ],
-    );
-
-MutableDocument _fullyBoldParagraphDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-            _createAttributedSpansForAttribution(
-              attribution: boldAttribution,
-              startOffset: 0,
-              endOffset: 36,
-            ),
-          ),
-        ),
-      ],
-    );
-
-MutableDocument _paragraphThenParagraphDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-          ),
-        ),
-        ParagraphNode(
-          id: "2",
-          text: AttributedText(
-            "This is the second node in a document.",
-          ),
-        ),
-      ],
-    );
-
-MutableDocument _paragraphThenParagraphThenParagraphDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-          ),
-        ),
-        ParagraphNode(
-          id: "2",
-          text: AttributedText(
-            "This is the second node in a document.",
-          ),
-        ),
-        ParagraphNode(
-          id: "3",
-          text: AttributedText(
-            "This is the third node in a document.",
-          ),
-        ),
-      ],
-    );
-
 MutableDocument _paragraphFullBoldThenParagraph() => MutableDocument(
       nodes: [
         ParagraphNode(
@@ -1380,33 +1283,6 @@ MutableDocument _paragraphPartiallyBoldThenParagraphPartiallyBold() => MutableDo
       ],
     );
 
-MutableDocument _paragraphFullBoldThenParagraphFullyBold() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-            _createAttributedSpansForAttribution(
-              attribution: boldAttribution,
-              startOffset: 0,
-              endOffset: 36,
-            ),
-          ),
-        ),
-        ParagraphNode(
-          id: "2",
-          text: AttributedText(
-            "This is the second node in a document.",
-            _createAttributedSpansForAttribution(
-              attribution: boldAttribution,
-              startOffset: 0,
-              endOffset: 37,
-            ),
-          ),
-        ),
-      ],
-    );
-
 extension _GetDocumentPosition on DocumentNode {
   DocumentPosition get beginningDocumentPosition {
     return DocumentPosition(
@@ -1419,15 +1295,6 @@ extension _GetDocumentPosition on DocumentNode {
     return DocumentPosition(
       nodeId: id,
       nodePosition: endPosition,
-    );
-  }
-
-  DocumentPosition atOffset(int offset) {
-    return DocumentPosition(
-      nodeId: id,
-      nodePosition: TextNodePosition(
-        offset: offset,
-      ),
     );
   }
 }
