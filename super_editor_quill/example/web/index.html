@@ -70,21 +70,6 @@
     // Called from the Dart side once the Flutter HtmlElementView is initialized.
     function initializeQuillEditor(domId) {
       waitUntilQuillEditorMounted(domId, function() {
-        var Embed = Quill.import('blots/block/embed');
-
-        class Hr extends Embed {
-          static create(value) {
-              let node = super.create(value);
-              // give it some margin
-              node.setAttribute('style', "height:0px; margin-top:10px; margin-bottom:10px;");
-              return node;
-          }
-        }
-
-        Hr.blotName = 'hr';
-        Hr.className = 'my-hr';
-        Hr.tagName = 'hr';
-
         quill = new Quill(`#${domId}`, {
           theme: 'snow',
           modules: {
@@ -95,14 +80,24 @@
               ],
               handlers: {
                 'hr': function(value) {
-                  this.quill.format('hr', true);
+                  const range = quill.getSelection(true);
+                  quill.insertText(range.index, '\n', Quill.sources.USER);
+                  quill.insertEmbed(range.index + 1, 'hr', true, Quill.sources.USER);
+                  quill.setSelection(range.index + 2, Quill.sources.SILENT);
                 }
               }
             }
           }
         });
 
-        Quill.register({'formats/hr': Hr});
+        var BlockEmbed = Quill.import('blots/block/embed');
+
+        class HorizontalRuleBlot extends BlockEmbed {
+          static blotName = 'hr';
+          static tagName = 'hr';
+        }
+
+        Quill.register({'formats/hr': HorizontalRuleBlot});
 
         // Sends the initial contents to the Dart side.
         window.sendQuillContents(JSON.stringify(quill.getContents().ops));
