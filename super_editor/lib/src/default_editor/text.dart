@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -1276,9 +1277,15 @@ class AddTextAttributionsCommand implements EditCommand {
               autoMerge: autoMerge,
             ),
         );
+
         executor.logChanges([
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            AttributionChangeEvent(
+              nodeId: node.id,
+              change: AttributionChange.added,
+              range: range,
+              attributions: attributions,
+            ),
           ),
         ]);
       }
@@ -1389,7 +1396,12 @@ class RemoveTextAttributionsCommand implements EditCommand {
 
         executor.logChanges([
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            AttributionChangeEvent(
+              nodeId: node.id,
+              change: AttributionChange.removed,
+              range: range,
+              attributions: attributions,
+            ),
           ),
         ]);
       }
@@ -1531,9 +1543,15 @@ class ToggleTextAttributionsCommand implements EditCommand {
             );
         }
 
+        final wasAttributionAdded = node.text.hasAttributionAt(range.start, attribution: attribution);
         executor.logChanges([
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            AttributionChangeEvent(
+              nodeId: node.id,
+              change: wasAttributionAdded ? AttributionChange.added : AttributionChange.removed,
+              range: range,
+              attributions: attributions,
+            ),
           ),
         ]);
       }
@@ -1541,6 +1559,41 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
     editorDocLog.info(' - done toggling attributions');
   }
+}
+
+/// A [NodeChangeEvent] for the addition or removal of a set of attributions.
+class AttributionChangeEvent extends NodeChangeEvent {
+  AttributionChangeEvent({
+    required String nodeId,
+    required this.change,
+    required this.range,
+    required this.attributions,
+  }) : super(nodeId);
+
+  final AttributionChange change;
+  final SpanRange range;
+  final Set<Attribution> attributions;
+
+  @override
+  String toString() => "AttributionChangeEvent ('$nodeId' - ${range.start} -> ${range.end} ($change): '$attributions')";
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is AttributionChangeEvent &&
+          runtimeType == other.runtimeType &&
+          change == other.change &&
+          range == other.range &&
+          const DeepCollectionEquality().equals(attributions, other.attributions);
+
+  @override
+  int get hashCode => super.hashCode ^ change.hashCode ^ range.hashCode ^ attributions.hashCode;
+}
+
+enum AttributionChange {
+  added,
+  removed;
 }
 
 /// Changes layout styles, like padding and width, of a component within a [SingleColumnDocumentLayout].
@@ -1771,7 +1824,11 @@ class InsertAttributedTextCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(textNode.id),
+        TextInsertionEvent(
+          nodeId: textNode.id,
+          offset: textOffset,
+          text: textToInsert,
+        ),
       ),
     ]);
   }
