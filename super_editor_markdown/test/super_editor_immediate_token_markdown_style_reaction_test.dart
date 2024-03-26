@@ -465,6 +465,70 @@ void main() {
       ]);
     });
 
+    testWidgets("replicates same ambiguity behaviors as other products", (tester) async {
+      // This test verifies that the reaction does the same thing as Notion and Linear
+      // when given a specific ambiguous input.
+      final document = deserializeMarkdownToDocument("Hello");
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+              plugins: {
+                MarkdownImmediateTokenInlineStylePlugin(),
+              },
+            ),
+          ),
+        ),
+      );
+
+      final nodeId = document.nodes.first.id;
+      await tester.placeCaretInParagraph(nodeId, 5);
+
+      // "**this*" should do nothing because the downstream syntax doesn't have a
+      // balancing upstream syntax. We don't peel a single "*" out of the upstream "**".
+      await tester.typeImeText(" **this*");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello **this*");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), isEmpty);
+
+      // Type " and *" which results in a segment of "* and *". This segment shouldn't be
+      // applied as Markdown because we ignore situations where the downstream syntax
+      // immediately follows a space.
+      await tester.typeImeText(" and *");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello **this* and *");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), isEmpty);
+
+      // Surround "that" with italics "*". This should be found and applied.
+      await tester.typeImeText("that*");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello **this* and that");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+        const SpanMarker(attribution: italicsAttribution, offset: 18, markerType: SpanMarkerType.start),
+        const SpanMarker(attribution: italicsAttribution, offset: 21, markerType: SpanMarkerType.end),
+      ]);
+
+      await tester.typeImeText("*");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello **this* and that*");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+        const SpanMarker(attribution: italicsAttribution, offset: 18, markerType: SpanMarkerType.start),
+        const SpanMarker(attribution: italicsAttribution, offset: 21, markerType: SpanMarkerType.end),
+      ]);
+
+      // Surround "this* and that" with bold "**" on both side. This should be found and applied.
+      await tester.typeImeText("*");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Hello this* and that");
+      expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+        const SpanMarker(attribution: boldAttribution, offset: 6, markerType: SpanMarkerType.start),
+        const SpanMarker(attribution: italicsAttribution, offset: 16, markerType: SpanMarkerType.start),
+        const SpanMarker(attribution: italicsAttribution, offset: 19, markerType: SpanMarkerType.end),
+        const SpanMarker(attribution: boldAttribution, offset: 19, markerType: SpanMarkerType.end),
+      ]);
+    });
+
     group("does not parse upstream syntax creation >", () {
       testWidgets("italics", (tester) async {
         final document = deserializeMarkdownToDocument("Hello italics*");

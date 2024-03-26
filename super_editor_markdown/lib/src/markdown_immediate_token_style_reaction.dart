@@ -93,7 +93,10 @@ class MarkdownImmediateTokenInlineStyleReaction implements EditReaction {
       return;
     }
 
+    print("Text before applying Markdown: '${(document.getNodeById(extent.nodeId) as TextNode).text.text}'");
     requestDispatcher.execute(changeRequests);
+    print("Text after applying Markdown: '${(document.getNodeById(extent.nodeId) as TextNode).text.text}'");
+    print("");
   }
 
   /// Finds and returns the node IDs for every [TextNode] that was altered during this
@@ -185,32 +188,60 @@ class _UpstreamInlineMarkdownParser {
       return null;
     }
 
+    print("Inspecting text for Markdown: '${attributedText.text}'");
+
     int offset = caretOffset - 1;
-    _UpstreamMarkdownSyntaxParser? successfulParser;
-    do {
-      // Update all existing possible syntaxes and also add new possible syntaxes.
-      _updateAndFindSyntaxes(attributedText.text[offset], offset);
-
-      // Check if any possible syntax has completed into a valid Markdown syntax.
-      successfulParser = _possibleSyntaxes.firstWhereOrNull((parser) => parser.isValid && parser.isComplete);
-
+    // Add new possible syntaxes for the given character.
+    final styleSyntax = _StyleUpstreamMarkdownSyntaxParser.maybeCreateForCharacter(attributedText.text[offset], offset);
+    if (styleSyntax != null) {
+      _possibleSyntaxes.add(styleSyntax);
+    }
+    // final linkSyntax = _LinkMarkdownSyntaxParser.maybeCreateForCharacter(character, characterIndex);
+    // if (linkSyntax != null) {
+    //   _possibleSyntaxes.add(linkSyntax);
+    // }
+    final successfulParsers = <_UpstreamMarkdownSyntaxParser>[];
+    while (offset > 0 && _possibleSyntaxes.isNotEmpty) {
       offset -= 1;
-    } while (offset >= 0 && attributedText.text[offset] != " " && _possibleSyntaxes.isNotEmpty);
+      print("Inspecting text index: $offset");
+      print(
+          "'${attributedText.text.substring(0, offset)}'>${attributedText.text[offset]}<'${offset < attributedText.length - 1 ? attributedText.text.substring(offset + 1) : ""}'");
 
-    if (successfulParser == null) {
+      // Update all existing possible syntaxes and also add new possible syntaxes.
+      _updatePossibleSyntaxes(attributedText.text[offset], offset);
+
+      // Store any successful parsers on a stack. We keep searching after successful
+      // parsing because some parsers are essentially supersets of others, e.g., "*"
+      // will succeed when we really want to keep parsing and find "**".
+      successfulParsers.addAll(_possibleSyntaxes.where((parser) => parser.isComplete && parser.isValid));
+      _possibleSyntaxes.removeWhere((parser) => parser.isComplete);
+
+      if (offset > 0) {
+        // There's still at least one character upstream from this one. Make sure
+        // that all of our successful parsers are allowed to appear after that
+        // upstream character.
+        final upstreamCharacter = attributedText.text[offset - 1];
+        successfulParsers.removeWhere((parser) => !parser.canFollowCharacter(upstreamCharacter));
+      }
+      print("");
+    }
+
+    if (successfulParsers.isEmpty) {
+      print("No parsers found Markdown");
       return null;
     }
 
+    print("Found ${successfulParsers.length} successful parser");
+    final successfulParser = successfulParsers.last;
     return _InlineMarkdownRun(
       successfulParser.calculateFinalText(attributedText),
-      // +1 because we always -1 in the loop above, even when we found what we're looking for.
-      offset + 1,
+      offset,
       // Note: end offset is exclusive.
       caretOffset,
     );
   }
 
-  void _updateAndFindSyntaxes(String character, int characterIndex) {
+  void _updatePossibleSyntaxes(String character, int characterIndex) {
     // Update all existing possible syntaxes.
     for (int i = _possibleSyntaxes.length - 1; i >= 0; i -= 1) {
       // Add the latest character to the existing syntax parser.
@@ -221,16 +252,6 @@ class _UpstreamInlineMarkdownParser {
         _possibleSyntaxes.removeAt(i);
       }
     }
-
-    // Add new possible syntaxes for the given character.
-    final styleSyntax = _StyleUpstreamMarkdownSyntaxParser.maybeCreateForCharacter(character, characterIndex);
-    if (styleSyntax != null) {
-      _possibleSyntaxes.add(styleSyntax);
-    }
-    // final linkSyntax = _LinkMarkdownSyntaxParser.maybeCreateForCharacter(character, characterIndex);
-    // if (linkSyntax != null) {
-    //   _possibleSyntaxes.add(linkSyntax);
-    // }
   }
 }
 
@@ -275,6 +296,13 @@ abstract interface class _UpstreamMarkdownSyntaxParser {
   /// After prepending a character, clients should check [isValid] to ensure that this
   /// syntax is still a valid Markdown syntax.
   void prependCharacter(String character);
+
+  /// Returns `true` if this completed syntax is allowed to immediately follow the given
+  /// [character], or `false` if following the [character] would invalidate this syntax.
+  ///
+  /// For example, it's legal to apply italics in strings like " *italics*" and "h*italics*"
+  /// but it's not appropriate to apply italics when there are more "*" such as "**italics*".
+  bool canFollowCharacter(String character);
 
   /// Calculates the [AttributedText] that should replace the [existingText] based on the
   /// parsed Markdown.
@@ -330,14 +358,16 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
       _phase = _lookingForCloseSyntax;
     }
 
-    _allParsedText.write(_triggerCharacter);
+    _allParsedText = _triggerCharacter;
     _currentIndex = _triggerIndex;
+
+    print("Starting possible syntax with '$_triggerCharacter` at text offset $_triggerIndex");
   }
 
   final String _triggerCharacter;
   final int _triggerIndex;
   final int _maxSyntaxLength;
-  final _allParsedText = StringBuffer();
+  String _allParsedText = "";
   late int _currentIndex;
 
   String _closingSyntax;
@@ -354,7 +384,10 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
 
   @override
   void prependCharacter(String character) {
-    _allParsedText.write(character);
+    print("Prepending character '$character' on to text: '${_allParsedText.toString()}, start: $_currentIndex");
+    print(" - current closing syntax: $_closingSyntax");
+    print(" - current opening syntax: $_openingSyntax");
+    _allParsedText = "$character$_allParsedText";
     _currentIndex -= 1;
 
     switch (_phase) {
@@ -363,6 +396,7 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
           // We found another character that belongs to our style syntax, e.g.,
           // from "*" to "**", from "_" to "__".
           _closingSyntax = "$character$_closingSyntax";
+          print("Added to _closingSyntax: '$_closingSyntax'");
         } else {
           // We've moved from the closing syntax into the styled content.
           _phase = _lookingForOpenSyntax;
@@ -372,11 +406,16 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
           // Prepend the current character to what might end up being the starting
           // syntax.
           _openingSyntax = "$character$_openingSyntax";
+          print("Added to _openingSyntax: '$_openingSyntax'");
+        } else {
+          _openingSyntax = "";
+          print("Reset _openingSyntax because we hit a non-trigger character.");
         }
 
         if (_openingSyntax == _closingSyntax) {
           // We just found an opening syntax that matches our closing syntax.
           // Therefore, we have found a complete Markdown run.
+          print("This syntax is complete.");
           _isComplete = true;
           _phase = _done;
         }
@@ -384,8 +423,16 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
         // More characters were added after already finding a complete Markdown
         // style. This changes the syntax from valid to invalid because its now
         // more than just a style.
+        print("Added more character after done. Now it's invalid.");
         _isValid = false;
     }
+  }
+
+  @override
+  bool canFollowCharacter(String character) {
+    print("Syntax was asked if it can follow: '$character'");
+    return character == " ";
+    // return character != _triggerCharacter;
   }
 
   @override
@@ -400,6 +447,8 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
           "Can't calculate inline Markdown text for a parser whose content is invalid: '${_allParsedText.toString()}'.");
     }
 
+    print("Calculating final text - opening: $_openingSyntax, closing: $_closingSyntax");
+
     final newStyles = <Attribution>{};
     switch (_openingSyntax) {
       case "***":
@@ -407,9 +456,11 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
         newStyles.addAll([italicsAttribution, boldAttribution]);
       case "**":
       case "__":
+        print("Adding bold for **");
         newStyles.add(boldAttribution);
       case "*":
       case "_":
+        print("Adding italic for *");
         newStyles.add(italicsAttribution);
       case "~":
         newStyles.add(strikethroughAttribution);
