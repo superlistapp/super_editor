@@ -163,19 +163,30 @@ class DeltaApplier {
             ),
           );
         } else {
+          final data = operation.data;
           final position = _deltaPositionToDocumentPosition(
             document: document,
             pendingRequests: requests,
             deltaPosition: offset,
-          );
+          )!;
 
-          requests.add(
-            InsertTextRequest(
-              documentPosition: position!,
-              textToInsert: operation.data as String,
-              attributions: {},
-            ),
-          );
+          if (data is String) {
+            requests.add(
+              InsertTextRequest(
+                documentPosition: position,
+                textToInsert: data,
+                attributions: {},
+              ),
+            );
+          } else {
+            assert(data is Map);
+            requests.addAll([
+              InsertNodeBeforeNodeRequest(
+                existingNodeId: position.nodeId,
+                newNode: HorizontalRuleNode(id: _idGenerator()),
+              ),
+            ]);
+          }
         }
       } else if (operation.isRetain) {
         final startOffset = offset;
@@ -294,11 +305,23 @@ class DeltaApplier {
           deltaPosition: offset + operation.length,
         )!;
 
-        requests.add(
-          DeleteContentRequest(
-            documentRange: DocumentRange(start: start, end: end),
-          ),
-        );
+        final deletionWithinSingleBlock =
+            document.getNodesInside(start, end).length == 1;
+        final deletedNode = document.getNodeById(start.nodeId) as ParagraphNode;
+
+        if (_upcomingDocumentNodeCount(document, requests) > 1 &&
+            deletionWithinSingleBlock &&
+            start.nodePosition == deletedNode.beginningPosition &&
+            end.nodePosition == deletedNode.endPosition) {
+          assert(start.nodeId == end.nodeId);
+          requests.add(DeleteNodeRequest(nodeId: start.nodeId));
+        } else {
+          requests.add(
+            DeleteContentRequest(
+              documentRange: DocumentRange(start: start, end: end),
+            ),
+          );
+        }
 
         offset = 0;
       } else {
@@ -411,7 +434,11 @@ int _shiftDeltaPositionBasedOnPendingRequests(
       result += request.textToInsert.length;
     } else if (request is AddTextAttributionsRequest ||
         request is RemoveTextAttributionsRequest ||
-        request is ChangeParagraphBlockTypeRequest) {
+        request is ChangeParagraphBlockTypeRequest ||
+
+        // TODO: These affect positioning so they need to be shifted most likely
+        request is InsertNodeBeforeNodeRequest ||
+        request is DeleteNodeRequest) {
       // No-op
     } else {
       throw StateError('Cannot handle $request');
@@ -419,4 +446,29 @@ int _shiftDeltaPositionBasedOnPendingRequests(
   }
 
   return result;
+}
+
+int _upcomingDocumentNodeCount(
+    Document document, List<EditRequest> pendingRequests) {
+  var count = document.nodes.length;
+  for (final request in pendingRequests) {
+    if (_isInsertNodeRequest(request)) {
+      count++;
+    } else if (_isDeleteNodeRequest(request)) {
+      count--;
+    }
+  }
+
+  return count;
+}
+
+bool _isInsertNodeRequest(EditRequest request) {
+  return request is InsertNodeAtIndexRequest ||
+      request is InsertNodeBeforeNodeRequest ||
+      request is InsertNodeAfterNodeRequest ||
+      request is InsertNodeAtCaretRequest;
+}
+
+bool _isDeleteNodeRequest(EditRequest request) {
+  return request is DeleteNodeRequest;
 }

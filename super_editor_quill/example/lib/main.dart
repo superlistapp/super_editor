@@ -98,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _handleQuillContents(Delta contents) {
     if (_applyingSuperEditorChange) return;
     _applyingQuillChange = true;
-    DeltaApplier().apply(_editor, contents);
+    const DeltaApplier().apply(_editor, contents);
     _applyingQuillChange = false;
     _initialized = true;
 
@@ -110,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _handleQuillTextChanged(Delta document, Delta change) {
     if (_applyingSuperEditorChange) return;
     _applyingQuillChange = true;
-    DeltaApplier().apply(_editor, change);
+    const DeltaApplier().apply(_editor, change);
     _applyingQuillChange = false;
 
     setState(() {

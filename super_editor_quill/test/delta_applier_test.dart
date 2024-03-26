@@ -2597,5 +2597,31 @@ void main() {
         );
       });
     });
+
+    group('blocks/embeds', () {
+      test('hr', () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText(''))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Add hr attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..insert({'hr': true})
+            ..delete(1),
+        );
+        expect(document.nodes, [HorizontalRuleNode(id: 'node-1')]);
+      });
+    });
   });
 }
