@@ -76,12 +76,19 @@
             toolbar: {
               container: [
                 [{'header': [false, 1, 2, 3, 4, 5, 6]}],
-                ['bold', 'italic', 'underline', 'link', 'hr']
+                ['bold', 'italic', 'underline', 'link', 'hr', 'img']
               ],
               handlers: {
                 'hr': function(value) {
                   const range = quill.getSelection(true);
                   quill.insertEmbed(range.index, 'hr', true, Quill.sources.USER);
+                  quill.setSelection(range.index + 1, Quill.sources.SILENT);
+                },
+                'img': function(value) {
+                  const range = quill.getSelection(true);
+                  quill.insertEmbed(range.index, 'image', {
+                    url: 'https://picsum.photos/200'
+                  }, Quill.sources.USER);
                   quill.setSelection(range.index + 1, Quill.sources.SILENT);
                 }
               }
@@ -96,7 +103,25 @@
           static tagName = 'hr';
         }
 
+        class ImageBlot extends BlockEmbed {
+          static blotName = 'image';
+          static tagName = 'img';
+
+          static create(value) {
+            const node = super.create();
+            node.setAttribute('src', value.url);
+            return node;
+          }
+
+          static value(node) {
+            return {
+              url: node.getAttribute('src')
+            };
+          }
+        }
+
         Quill.register({'formats/hr': HorizontalRuleBlot});
+        Quill.register({'formats/image': ImageBlot});
 
         // Sends the initial contents to the Dart side.
         window.sendQuillContents(JSON.stringify(quill.getContents().ops));
