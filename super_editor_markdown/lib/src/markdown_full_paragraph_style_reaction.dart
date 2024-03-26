@@ -18,7 +18,7 @@ import 'package:super_editor_markdown/src/markdown_to_document_parsing.dart';
 /// simplicity. If multi-node syntax recognition and application is needed, this plugin can
 /// be updated for that purpose.
 ///
-/// To add this plugin to a [SuperEditor] widget, provide a [MarkdownInlineStylePlugin] in
+/// To add this plugin to a [SuperEditor] widget, provide a [MarkdownFullParagraphInlineStylePlugin] in
 /// the `plugins` property.
 ///
 ///   SuperEditor(
@@ -35,9 +35,9 @@ import 'package:super_editor_markdown/src/markdown_to_document_parsing.dart';
 ///   markdownInlineStylePlugin.attach(editor);
 ///
 ///
-class MarkdownInlineStylePlugin extends SuperEditorPlugin {
-  MarkdownInlineStylePlugin() {
-    _markdownInlineStyleReaction = MarkdownInlineStyleReaction();
+class MarkdownFullParagraphInlineStylePlugin extends SuperEditorPlugin {
+  MarkdownFullParagraphInlineStylePlugin() {
+    _markdownInlineStyleReaction = MarkdownFullParagraphInlineStyleReaction();
   }
 
   /// An [EditReaction] that finds and converts Markdown styling into attributed
@@ -55,13 +55,18 @@ class MarkdownInlineStylePlugin extends SuperEditorPlugin {
   }
 }
 
-class MarkdownInlineStyleReaction implements EditReaction {
-  MarkdownInlineStyleReaction();
+class MarkdownFullParagraphInlineStyleReaction implements EditReaction {
+  MarkdownFullParagraphInlineStyleReaction();
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     if (changeList.whereType<DocumentEdit>().isEmpty) {
       // No edits means no Markdown insertions. Nothing for this plugin to do.
+      return;
+    }
+    if (changeList.where((edit) => edit is DocumentEdit && edit.change is TextInsertionEvent).isEmpty) {
+      // TODO: account for paste behaviors.
+      // No text insertions. Nothing for this plugin to do.
       return;
     }
 

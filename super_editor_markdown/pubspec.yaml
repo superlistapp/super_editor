@@ -15,6 +15,7 @@ dependencies:
   logging: ^1.0.1
   markdown: ^5.0.0
   diff_match_patch: ^0.4.1
+  collection: ^1.18.0
 
 dependency_overrides:
   # Override to local mono-repo path so devs can test this repo

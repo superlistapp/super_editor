@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
-import 'package:super_editor_markdown/src/markdown_style_reaction.dart';
+import 'package:super_editor_markdown/src/markdown_full_paragraph_style_reaction.dart';
 import 'package:super_editor_markdown/src/markdown_to_document_parsing.dart';
 
 void main() {
@@ -21,7 +21,7 @@ void main() {
                 document: document,
                 composer: composer,
                 plugins: {
-                  MarkdownInlineStylePlugin(),
+                  MarkdownFullParagraphInlineStylePlugin(),
                 },
               ),
             ),
@@ -52,7 +52,7 @@ void main() {
                 document: document,
                 composer: composer,
                 plugins: {
-                  MarkdownInlineStylePlugin(),
+                  MarkdownFullParagraphInlineStylePlugin(),
                 },
               ),
             ),
@@ -83,7 +83,7 @@ void main() {
                 document: document,
                 composer: composer,
                 plugins: {
-                  MarkdownInlineStylePlugin(),
+                  MarkdownFullParagraphInlineStylePlugin(),
                 },
               ),
             ),
@@ -114,7 +114,7 @@ void main() {
                 document: document,
                 composer: composer,
                 plugins: {
-                  MarkdownInlineStylePlugin(),
+                  MarkdownFullParagraphInlineStylePlugin(),
                 },
               ),
             ),
@@ -148,7 +148,7 @@ void main() {
                 document: document,
                 composer: composer,
                 plugins: {
-                  MarkdownInlineStylePlugin(),
+                  MarkdownFullParagraphInlineStylePlugin(),
                 },
               ),
             ),
@@ -180,7 +180,7 @@ void main() {
                 document: document,
                 composer: composer,
                 plugins: {
-                  MarkdownInlineStylePlugin(),
+                  MarkdownFullParagraphInlineStylePlugin(),
                 },
               ),
             ),
@@ -212,7 +212,7 @@ void main() {
                 document: document,
                 composer: composer,
                 plugins: {
-                  MarkdownInlineStylePlugin(),
+                  MarkdownFullParagraphInlineStylePlugin(),
                 },
               ),
             ),
@@ -244,7 +244,7 @@ void main() {
                 document: document,
                 composer: composer,
                 plugins: {
-                  MarkdownInlineStylePlugin(),
+                  MarkdownFullParagraphInlineStylePlugin(),
                 },
               ),
             ),
@@ -265,6 +265,37 @@ void main() {
       });
     });
 
+    group("prevented deserializations >", () {
+      testWidgets("unbalanced italics", (tester) async {
+        final document = deserializeMarkdownToDocument("");
+        final composer = MutableDocumentComposer();
+        final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                document: document,
+                composer: composer,
+                plugins: {
+                  MarkdownFullParagraphInlineStylePlugin(),
+                },
+              ),
+            ),
+          ),
+        );
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        await tester.typeImeText("**noitalics*");
+
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "**noitalics*");
+        expect((document.nodes.first as ParagraphNode).text.spans.markers.isEmpty, isTrue);
+      });
+    });
+
     testWidgets("multiple styles", (tester) async {
       final document = deserializeMarkdownToDocument("Hello");
       final composer = MutableDocumentComposer();
@@ -278,7 +309,7 @@ void main() {
               document: document,
               composer: composer,
               plugins: {
-                MarkdownInlineStylePlugin(),
+                MarkdownFullParagraphInlineStylePlugin(),
               },
             ),
           ),
@@ -351,7 +382,7 @@ void main() {
               document: document,
               composer: composer,
               plugins: {
-                MarkdownInlineStylePlugin(),
+                MarkdownFullParagraphInlineStylePlugin(),
               },
             ),
           ),
@@ -408,7 +439,7 @@ void main() {
                 document: document,
                 composer: composer,
                 plugins: {
-                  MarkdownInlineStylePlugin(),
+                  MarkdownFullParagraphInlineStylePlugin(),
                 },
               ),
             ),
@@ -446,7 +477,7 @@ void main() {
                 document: document,
                 composer: composer,
                 plugins: {
-                  MarkdownInlineStylePlugin(),
+                  MarkdownFullParagraphInlineStylePlugin(),
                 },
               ),
             ),
