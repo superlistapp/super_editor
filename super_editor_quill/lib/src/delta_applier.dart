@@ -171,11 +171,14 @@ class DeltaApplier {
           )!;
 
           if (data is String) {
+            final attributions = _deltaAttributesToSuperEditorAttributions(
+              operation.attributes ?? {},
+            );
             requests.add(
               InsertTextRequest(
                 documentPosition: position,
                 textToInsert: data,
-                attributions: {},
+                attributions: attributions,
               ),
             );
           } else {
@@ -354,6 +357,30 @@ class DeltaApplier {
         )
         .single
         .attribution;
+  }
+
+  Set<Attribution> _deltaAttributesToSuperEditorAttributions(
+    Map<String, dynamic> attributes,
+  ) {
+    final attributions = <Attribution>{};
+    for (final attribute in attributes.entries) {
+      if (!_textAttributions.any(
+        (attribution) => attribution.deltaAttributeKey == attribute.key,
+      )) {
+        throw StateError(
+          'No attribution handler implemented for ${attribute.key}: ${attribute.value}',
+        );
+      }
+
+      final textAttribution = _textAttributions.singleWhere(
+        (attribution) => attribution.deltaAttributeKey == attribute.key,
+      );
+
+      attributions
+          .add(textAttribution.toSuperEditorAttribution(attribute.value));
+    }
+
+    return attributions;
   }
 }
 

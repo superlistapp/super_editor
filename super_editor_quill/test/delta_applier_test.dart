@@ -627,6 +627,112 @@ void main() {
     });
 
     group('rich text tests', () {
+      test('inserting bold "abc" one by one results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText(''))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+        );
+
+        applier.apply(editor, Delta()..insert('a', {'bold': true}));
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'a',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(1)
+            ..insert('b', {'bold': true}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'ab',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 1,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(2)
+            ..insert('c', {'bold': true}),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(
+              id: 'node-1',
+              text: AttributedText(
+                'abc',
+                AttributedSpans(
+                  attributions: const [
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: boldAttribution,
+                      offset: 2,
+                      markerType: SpanMarkerType.end,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      });
+
       test('making "abc" bold one by one results in correct document state',
           () {
         final document = MutableDocument(
