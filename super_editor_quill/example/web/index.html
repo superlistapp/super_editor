@@ -81,9 +81,8 @@
               handlers: {
                 'hr': function(value) {
                   const range = quill.getSelection(true);
-                  quill.insertText(range.index, '\n', Quill.sources.USER);
-                  quill.insertEmbed(range.index + 1, 'hr', true, Quill.sources.USER);
-                  quill.setSelection(range.index + 2, Quill.sources.SILENT);
+                  quill.insertEmbed(range.index, 'hr', true, Quill.sources.USER);
+                  quill.setSelection(range.index + 1, Quill.sources.SILENT);
                 }
               }
             }
