@@ -301,24 +301,6 @@ class SuperEditorInspector {
     return documentLayoutElement.state as DocumentLayout;
   }
 
-  /// Toggles given [attributions] for the [documentSelection].
-  ///
-  /// {@macro supereditor_finder}
-  static void toggleAttributionsForDocumentSelection(
-    DocumentSelection documentSelection,
-    Set<Attribution> attributions, [
-    Finder? superEditorFinder,
-  ]) {
-    final editor = findEditor(superEditorFinder);
-
-    return editor.execute([
-      ToggleTextAttributionsRequest(
-        documentRange: documentSelection,
-        attributions: attributions,
-      )
-    ]);
-  }
-
   /// Returns `true` if [SuperEditor]'s policy believes that a mobile toolbar should
   /// be visible right now, or `false` otherwise.
   ///

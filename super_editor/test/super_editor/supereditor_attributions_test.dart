@@ -202,7 +202,7 @@ void main() {
             isEmpty,
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, firstNode.text.length),
             {boldAttribution},
           );
@@ -215,7 +215,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, firstNode.text.length),
             {boldAttribution},
           );
@@ -245,7 +245,7 @@ void main() {
             isEmpty,
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
@@ -258,7 +258,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
@@ -291,7 +291,7 @@ void main() {
 
           final firstNode = doc.getNodeById("1")! as TextNode;
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
@@ -304,7 +304,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
@@ -339,7 +339,7 @@ void main() {
 
           final firstNode = doc.getNodeById("1")! as TextNode;
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {italicsAttribution},
           );
@@ -352,7 +352,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {italicsAttribution},
           );
@@ -384,7 +384,7 @@ void main() {
             isEmpty,
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, firstNode.text.length),
             {italicsAttribution, boldAttribution},
           );
@@ -397,7 +397,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, firstNode.text.length),
             {boldAttribution, italicsAttribution},
           );
@@ -430,7 +430,7 @@ void main() {
             true,
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -446,7 +446,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -483,7 +483,7 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
           final secondNode = doc.getNodeById("2")! as TextNode;
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -503,7 +503,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -541,7 +541,7 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
           final secondNode = doc.getNodeById("2")! as TextNode;
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -561,7 +561,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -600,7 +600,7 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
           final secondNode = doc.getNodeById("2")! as TextNode;
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -620,7 +620,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -658,7 +658,7 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
           final secondNode = doc.getNodeById("2")! as TextNode;
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -678,7 +678,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -716,7 +716,7 @@ void main() {
           final firstNode = doc.getNodeById("1")!;
           final secondNode = doc.getNodeById("2")!;
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -732,7 +732,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -772,7 +772,7 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
           final secondNode = doc.getNodeById("2")! as TextNode;
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.positionAt(18),
@@ -789,7 +789,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.positionAt(18),
@@ -826,7 +826,7 @@ void main() {
             true,
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -846,7 +846,7 @@ void main() {
           );
 
           // Toggle bold attribution for both nodes.
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -882,7 +882,7 @@ void main() {
             true,
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.positionAt(18),
               extent: secondNode.positionAt(18),
@@ -898,7 +898,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.positionAt(18),
               extent: secondNode.positionAt(18),
@@ -936,7 +936,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.positionAt(18),
               extent: thirdNode.positionAt(18),
@@ -952,7 +952,7 @@ void main() {
             ),
           );
 
-          SuperEditorInspector.toggleAttributionsForDocumentSelection(
+          _toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.positionAt(18),
               extent: thirdNode.positionAt(18),
@@ -1320,4 +1320,20 @@ AttributedSpans _createAttributedSpansForAttribution({
       ),
     ],
   );
+}
+
+/// Toggles given [attributions] for the [documentSelection].
+void _toggleAttributionsForDocumentSelection(
+  DocumentSelection documentSelection,
+  Set<Attribution> attributions, [
+  Finder? superEditorFinder,
+]) {
+  final editor = SuperEditorInspector.findEditor(superEditorFinder);
+
+  return editor.execute([
+    ToggleTextAttributionsRequest(
+      documentRange: documentSelection,
+      attributions: attributions,
+    )
+  ]);
 }
