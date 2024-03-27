@@ -289,5 +289,110 @@ void main() {
         expect(doc, equalsMarkdown("This text should be** bold**"));
       });
     });
+
+    testWidgetsOnArbitraryDesktop('does not merge different colors', (tester) async {
+      final context = await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      final editor = context.editor;
+
+      // Apply a yellow color to the word "Lorem".
+      editor.execute([
+        AddTextAttributionsRequest(
+          documentRange: const DocumentRange(
+            start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
+            end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 5)),
+          ),
+          attributions: {const ColorAttribution(Colors.yellow)},
+        ),
+      ]);
+
+      // Try to apply a red color to the range "L|ore|m". This should fail
+      // because we can't apply two different colors to the same range.
+      expect(
+        () => editor.execute([
+          AddTextAttributionsRequest(
+            documentRange: const DocumentRange(
+              start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 1)),
+              end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 3)),
+            ),
+            attributions: {const ColorAttribution(Colors.red)},
+          ),
+        ]),
+        throwsException,
+      );
+    });
+
+    testWidgetsOnArbitraryDesktop('does not merge different background colors', (tester) async {
+      final context = await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      final editor = context.editor;
+
+      // Apply a yellow background to the word "Lorem".
+      editor.execute([
+        AddTextAttributionsRequest(
+          documentRange: const DocumentRange(
+            start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
+            end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 5)),
+          ),
+          attributions: {const BackgroundColorAttribution(Colors.yellow)},
+        ),
+      ]);
+
+      // Try to apply a red background to the range "L|ore|m". This should fail
+      // because we can't apply two different background colors to the same range.
+      expect(
+        () => editor.execute([
+          AddTextAttributionsRequest(
+            documentRange: const DocumentRange(
+              start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 1)),
+              end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 3)),
+            ),
+            attributions: {const BackgroundColorAttribution(Colors.red)},
+          ),
+        ]),
+        throwsException,
+      );
+    });
+
+    testWidgetsOnArbitraryDesktop('does not merge different font sizes', (tester) async {
+      final context = await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      final editor = context.editor;
+
+      // Apply a font size of 14 to the word "Lorem".
+      editor.execute([
+        AddTextAttributionsRequest(
+          documentRange: const DocumentRange(
+            start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
+            end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 5)),
+          ),
+          attributions: {const FontSizeAttribution(14)},
+        ),
+      ]);
+
+      // Try to apply a font size of 16 to the range "L|ore|m". This should fail
+      // because we can't apply two different font sizes to the same range.
+      expect(
+        () => editor.execute([
+          AddTextAttributionsRequest(
+            documentRange: const DocumentRange(
+              start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 1)),
+              end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 3)),
+            ),
+            attributions: {const FontSizeAttribution(16)},
+          ),
+        ]),
+        throwsException,
+      );
+    });
   });
 }

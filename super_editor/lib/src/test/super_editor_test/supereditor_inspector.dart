@@ -80,6 +80,17 @@ class SuperEditorInspector {
     return superEditor.editContext.composer.selection;
   }
 
+  /// Returns the current composing region for the [SuperEditor] matched by
+  /// [finder], or the singular [SuperEditor] in the widget tree, if [finder]
+  /// is `null`.
+  ///
+  /// {@macro supereditor_finder}
+  static DocumentRange? findComposingRegion([Finder? finder]) {
+    final element = (finder ?? find.byType(SuperEditor)).evaluate().single as StatefulElement;
+    final superEditor = element.state as SuperEditorState;
+    return superEditor.editContext.composer.composingRegion.value;
+  }
+
   /// Returns the (x,y) offset for the caret that's currently visible in the document.
   static Offset findCaretOffsetInDocument([Finder? finder]) {
     final caret = find.byKey(DocumentKeys.caret).evaluate().singleOrNull?.renderObject as RenderBox?;
