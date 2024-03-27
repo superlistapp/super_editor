@@ -2705,9 +2705,64 @@ void main() {
     });
 
     group('blocks/embeds', () {
-      test('hr', () {
+      test(
+          'replacing existing paragraph with hr results in correct document state',
+          () {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText(''))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Replace the paragraph with hr
+        applier.apply(
+          editor,
+          Delta()
+            ..insert({'hr': true})
+            ..delete(1),
+        );
+        expect(document.nodes, [HorizontalRuleNode(id: 'node-1')]);
+      });
+
+      test(
+          'adding hr to the start of the document results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText(''))],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Add hr attribution
+        applier.apply(editor, Delta()..insert({'hr': true}));
+        expect(
+          document.nodes,
+          [
+            HorizontalRuleNode(id: 'node-1'),
+            ParagraphNode(id: 'node-1', text: AttributedText('')),
+          ],
+        );
+      });
+
+      test(
+          'adding hr to the end of the document results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
         final composer = MutableDocumentComposer();
         final editor = Editor(
@@ -2723,10 +2778,16 @@ void main() {
         applier.apply(
           editor,
           Delta()
-            ..insert({'hr': true})
-            ..delete(1),
+            ..retain(4)
+            ..insert({'hr': true}),
         );
-        expect(document.nodes, [HorizontalRuleNode(id: 'node-1')]);
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(id: 'node-1', text: AttributedText('abc')),
+            HorizontalRuleNode(id: 'node-1'),
+          ],
+        );
       });
     });
   });
