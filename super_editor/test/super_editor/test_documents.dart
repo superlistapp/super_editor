@@ -44,6 +44,57 @@ MutableDocument singleParagraphDoc() => MutableDocument(
       ],
     );
 
+MutableDocument singleParagraphDocShortText() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+      ],
+    );
+
+MutableDocument twoParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+          ),
+        ),
+      ],
+    );
+
+MutableDocument threeParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "3",
+          text: AttributedText(
+            "This is the third node in a document.",
+          ),
+        ),
+      ],
+    );
+
 MutableDocument singleParagraphWithLinkDoc() => MutableDocument(
       nodes: [
         ParagraphNode(
@@ -278,58 +329,7 @@ MutableDocument singleParagraphFullColor() => MutableDocument(
       ],
     );
 
-MutableDocument paragraphDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-          ),
-        ),
-      ],
-    );
-
-MutableDocument paragraphThenParagraphDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-          ),
-        ),
-        ParagraphNode(
-          id: "2",
-          text: AttributedText(
-            "This is the second node in a document.",
-          ),
-        ),
-      ],
-    );
-
-MutableDocument paragraphThenParagraphThenParagraphDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-          ),
-        ),
-        ParagraphNode(
-          id: "2",
-          text: AttributedText(
-            "This is the second node in a document.",
-          ),
-        ),
-        ParagraphNode(
-          id: "3",
-          text: AttributedText(
-            "This is the third node in a document.",
-          ),
-        ),
-      ],
-    );
-
-MutableDocument fullyBoldParagraphDoc() => MutableDocument(
+MutableDocument singleParagraphDocAllBold() => MutableDocument(
       nodes: [
         ParagraphNode(
           id: "1",
@@ -352,7 +352,7 @@ MutableDocument fullyBoldParagraphDoc() => MutableDocument(
       ],
     );
 
-MutableDocument paragraphFullBoldThenParagraphFullyBold() => MutableDocument(
+MutableDocument twoParagraphDocAllBold() => MutableDocument(
       nodes: [
         ParagraphNode(
           id: "1",

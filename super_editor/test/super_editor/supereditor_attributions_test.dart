@@ -188,7 +188,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                paragraphDoc(),
+                singleParagraphDocShortText(),
               )
               .pump();
 
@@ -231,7 +231,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                paragraphDoc(),
+                singleParagraphDocShortText(),
               )
               .pump();
 
@@ -275,7 +275,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                fullyBoldParagraphDoc(),
+                singleParagraphDocAllBold(),
               )
               .pump();
 
@@ -323,7 +323,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                fullyBoldParagraphDoc(),
+                singleParagraphDocAllBold(),
               )
               .pump();
 
@@ -370,7 +370,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                paragraphDoc(),
+                singleParagraphDocShortText(),
               )
               .pump();
 
@@ -415,7 +415,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                paragraphThenParagraphDoc(),
+                twoParagraphDoc(),
               )
               .pump();
 
@@ -699,7 +699,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                paragraphFullBoldThenParagraphFullyBold(),
+                twoParagraphDocAllBold(),
               )
               .pump();
 
@@ -755,7 +755,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                paragraphFullBoldThenParagraphFullyBold(),
+                twoParagraphDocAllBold(),
               )
               .pump();
 
@@ -811,7 +811,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                paragraphThenParagraphDoc(),
+                twoParagraphDoc(),
               )
               .pump();
 
@@ -867,7 +867,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                paragraphThenParagraphDoc(),
+                twoParagraphDoc(),
               )
               .pump();
 
@@ -919,7 +919,7 @@ void main() {
           await tester //
               .createDocument()
               .withCustomContent(
-                paragraphThenParagraphThenParagraphDoc(),
+                threeParagraphDoc(),
               )
               .pump();
 
