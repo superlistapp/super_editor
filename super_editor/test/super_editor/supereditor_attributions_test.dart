@@ -185,13 +185,14 @@ void main() {
 
       group("when a single node is selected", () {
         testWidgetsOnAllPlatforms("toggles attribution throughout a node", (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 singleParagraphDocShortText(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           final firstNode = doc.getNodeById("1")! as TextNode;
@@ -202,7 +203,7 @@ void main() {
             isEmpty,
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, firstNode.text.length),
             {boldAttribution},
           );
@@ -215,7 +216,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, firstNode.text.length),
             {boldAttribution},
           );
@@ -228,13 +229,14 @@ void main() {
         });
 
         testWidgetsOnAllPlatforms("toggles attribution on a partial node selection", (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 singleParagraphDocShortText(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           final firstNode = doc.getNodeById("1")! as TextNode;
@@ -245,7 +247,7 @@ void main() {
             isEmpty,
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
@@ -258,7 +260,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
@@ -272,13 +274,14 @@ void main() {
 
         testWidgetsOnAllPlatforms("toggles an attribution within a sub-range of an existing same attribution",
             (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 singleParagraphDocAllBold(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           // Ensure bold attribution is present.
@@ -291,7 +294,7 @@ void main() {
 
           final firstNode = doc.getNodeById("1")! as TextNode;
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
@@ -304,7 +307,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {boldAttribution},
           );
@@ -320,13 +323,14 @@ void main() {
 
         testWidgetsOnAllPlatforms("toggles a different attribution within a sub-range of another existing attribution",
             (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 singleParagraphDocAllBold(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           // Ensure bold attribution is present.
@@ -339,7 +343,7 @@ void main() {
 
           final firstNode = doc.getNodeById("1")! as TextNode;
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {italicsAttribution},
           );
@@ -352,7 +356,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, 17),
             {italicsAttribution},
           );
@@ -367,13 +371,14 @@ void main() {
         });
 
         testWidgetsOnAllPlatforms("toggles multiple attributions throughout a node", (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 singleParagraphDocShortText(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           final firstNode = doc.getNodeById("1")! as TextNode;
@@ -384,7 +389,7 @@ void main() {
             isEmpty,
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, firstNode.text.length),
             {italicsAttribution, boldAttribution},
           );
@@ -397,7 +402,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             firstNode.selectionBetween(0, firstNode.text.length),
             {boldAttribution, italicsAttribution},
           );
@@ -412,13 +417,14 @@ void main() {
 
       group("when multiple nodes are selected", () {
         testWidgetsOnAllPlatforms("toggles attribution throughout multiple nodes", (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 twoParagraphDoc(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           final firstNode = doc.getNodeById("1")! as TextNode;
@@ -430,7 +436,7 @@ void main() {
             true,
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -446,7 +452,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -463,12 +469,14 @@ void main() {
 
         testWidgetsOnAllPlatforms(
             "toggles an attribution across nodes with the attribution applied throughout first node", (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 _paragraphFullBoldThenParagraph(),
               )
               .pump();
+
+          final Editor editor = context.editor;
 
           final doc = SuperEditorInspector.findDocument()!;
 
@@ -483,13 +491,15 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
           final secondNode = doc.getNodeById("2")! as TextNode;
 
-          _toggleAttributionsForDocumentSelection(
-            DocumentSelection(
-              base: firstNode.beginningDocumentPosition,
-              extent: secondNode.endDocumentPosition,
-            ),
-            {boldAttribution},
-          );
+          editor.execute([
+            ToggleTextAttributionsRequest(
+              documentRange: DocumentSelection(
+                base: firstNode.beginningDocumentPosition,
+                extent: secondNode.endDocumentPosition,
+              ),
+              attributions: {boldAttribution},
+            )
+          ]);
 
           // Ensure bold attribution is applied throughout both nodes.
           //
@@ -503,7 +513,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -521,13 +531,14 @@ void main() {
         testWidgetsOnAllPlatforms(
             "toggles an attribution across nodes with the attribution applied partially within first node",
             (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 _paragraphPartiallyBoldThenParagraph(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           // Ensure bold attribution is applied partially to the first node.
@@ -541,7 +552,7 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
           final secondNode = doc.getNodeById("2")! as TextNode;
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -561,7 +572,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -579,13 +590,14 @@ void main() {
         testWidgetsOnAllPlatforms(
             "toggles an attribution across nodes with the attribution applied throughout and partially within first and second node respectively",
             (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 _paragraphFullyBoldThenParagraphPartiallyBold(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           // Ensure bold attribution is applied partially to first node and
@@ -600,7 +612,7 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
           final secondNode = doc.getNodeById("2")! as TextNode;
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -620,7 +632,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -638,13 +650,14 @@ void main() {
         testWidgetsOnAllPlatforms(
             "toggles an attribution across nodes with the attribution applied partially within all nodes",
             (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 _paragraphPartiallyBoldThenParagraphPartiallyBold(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           // Ensure bold attribution is applied partially across both nodes.
@@ -658,7 +671,7 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
           final secondNode = doc.getNodeById("2")! as TextNode;
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -678,7 +691,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -696,13 +709,14 @@ void main() {
         testWidgetsOnAllPlatforms(
             "toggles a different attribution across nodes with an existing attribution applied throughout them",
             (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 twoParagraphDocAllBold(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           // Ensure bold attribution is applied throughout both nodes.
@@ -716,7 +730,7 @@ void main() {
           final firstNode = doc.getNodeById("1")!;
           final secondNode = doc.getNodeById("2")!;
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -732,7 +746,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -752,13 +766,14 @@ void main() {
         testWidgetsOnAllPlatforms(
             "toggles a different attribution partially across nodes with an existing attribution applied throughout them",
             (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 twoParagraphDocAllBold(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           // Ensure bold attribution is applied throughout the selection.
@@ -772,7 +787,7 @@ void main() {
           final firstNode = doc.getNodeById("1")! as TextNode;
           final secondNode = doc.getNodeById("2")! as TextNode;
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.positionAt(18),
@@ -789,7 +804,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.positionAt(18),
@@ -808,13 +823,14 @@ void main() {
         });
 
         testWidgetsOnAllPlatforms("toggles multiple attributions throughout multiple nodes", (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 twoParagraphDoc(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           final firstNode = doc.getNodeById("1")! as TextNode;
@@ -826,7 +842,7 @@ void main() {
             true,
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -846,7 +862,7 @@ void main() {
           );
 
           // Toggle bold attribution for both nodes.
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.beginningDocumentPosition,
               extent: secondNode.endDocumentPosition,
@@ -864,13 +880,14 @@ void main() {
         testWidgetsOnAllPlatforms(
             "toggles attribution for a selection going halfway from first node and halfway within second node",
             (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 twoParagraphDoc(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           final firstNode = doc.getNodeById("1")! as TextNode;
@@ -882,7 +899,7 @@ void main() {
             true,
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.positionAt(18),
               extent: secondNode.positionAt(18),
@@ -898,7 +915,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.positionAt(18),
               extent: secondNode.positionAt(18),
@@ -916,13 +933,14 @@ void main() {
         testWidgetsOnAllPlatforms(
             "toggles attribution for a selection going halfway in first node till the halfway into the third node",
             (tester) async {
-          await tester //
+          final TestDocumentContext context = await tester //
               .createDocument()
               .withCustomContent(
                 threeParagraphDoc(),
               )
               .pump();
 
+          final Editor editor = context.editor;
           final doc = SuperEditorInspector.findDocument()!;
 
           final firstNode = doc.getNodeById("1")! as TextNode;
@@ -936,7 +954,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.positionAt(18),
               extent: thirdNode.positionAt(18),
@@ -952,7 +970,7 @@ void main() {
             ),
           );
 
-          _toggleAttributionsForDocumentSelection(
+          editor.toggleAttributionsForDocumentSelection(
             DocumentSelection(
               base: firstNode.positionAt(18),
               extent: thirdNode.positionAt(18),
@@ -1299,6 +1317,21 @@ extension _GetDocumentPosition on DocumentNode {
   }
 }
 
+extension _ToggleAttributions on Editor {
+  /// Toggles given [attributions] for the [documentSelection].
+  void toggleAttributionsForDocumentSelection(
+    DocumentSelection documentSelection,
+    Set<Attribution> attributions,
+  ) {
+    return execute([
+      ToggleTextAttributionsRequest(
+        documentRange: documentSelection,
+        attributions: attributions,
+      )
+    ]);
+  }
+}
+
 /// Creates an [AttributedSpans] for the [attribution] starting at [startOffset]
 /// and ending at [endOffset].
 AttributedSpans _createAttributedSpansForAttribution({
@@ -1320,20 +1353,4 @@ AttributedSpans _createAttributedSpansForAttribution({
       ),
     ],
   );
-}
-
-/// Toggles given [attributions] for the [documentSelection].
-void _toggleAttributionsForDocumentSelection(
-  DocumentSelection documentSelection,
-  Set<Attribution> attributions, [
-  Finder? superEditorFinder,
-]) {
-  final editor = SuperEditorInspector.findEditor(superEditorFinder);
-
-  return editor.execute([
-    ToggleTextAttributionsRequest(
-      documentRange: documentSelection,
-      attributions: attributions,
-    )
-  ]);
 }
