@@ -25,13 +25,6 @@ MutableDocument hrThenParagraphDoc() => MutableDocument(
 
 MutableDocument singleParagraphEmptyDoc() => MutableDocument.empty("1");
 
-MutableDocument twoParagraphEmptyDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(id: "1", text: AttributedText()),
-        ParagraphNode(id: "2", text: AttributedText()),
-      ],
-    );
-
 MutableDocument singleParagraphDoc() => MutableDocument(
       nodes: [
         ParagraphNode(
@@ -50,46 +43,6 @@ MutableDocument singleParagraphDocShortText() => MutableDocument(
           id: "1",
           text: AttributedText(
             "This is the first node in a document.",
-          ),
-        ),
-      ],
-    );
-
-MutableDocument twoParagraphDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-          ),
-        ),
-        ParagraphNode(
-          id: "2",
-          text: AttributedText(
-            "This is the second node in a document.",
-          ),
-        ),
-      ],
-    );
-
-MutableDocument threeParagraphDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-          ),
-        ),
-        ParagraphNode(
-          id: "2",
-          text: AttributedText(
-            "This is the second node in a document.",
-          ),
-        ),
-        ParagraphNode(
-          id: "3",
-          text: AttributedText(
-            "This is the third node in a document.",
           ),
         ),
       ],
@@ -122,6 +75,167 @@ MutableDocument singleParagraphWithLinkDoc() => MutableDocument(
 MutableDocument singleBlockDoc() => MutableDocument(
       nodes: [
         HorizontalRuleNode(id: "1"),
+      ],
+    );
+
+MutableDocument singleParagraphWithPartialColor() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: '1',
+          text: AttributedText(
+            'abcdefghij',
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 5,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 9,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        )
+      ],
+    );
+
+MutableDocument singleParagraphFullColor() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: '1',
+          text: AttributedText(
+            'abcdefghij',
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 9,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        )
+      ],
+    );
+
+MutableDocument singleParagraphDocAllBold() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+            AttributedSpans(attributions: [
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 36,
+                markerType: SpanMarkerType.end,
+              ),
+            ]),
+          ),
+        ),
+      ],
+    );
+
+MutableDocument twoParagraphEmptyDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(id: "1", text: AttributedText()),
+        ParagraphNode(id: "2", text: AttributedText()),
+      ],
+    );
+
+MutableDocument twoParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+          ),
+        ),
+      ],
+    );
+
+MutableDocument twoParagraphDocAllBold() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+            AttributedSpans(attributions: [
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 36,
+                markerType: SpanMarkerType.end,
+              ),
+            ]),
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+            AttributedSpans(attributions: [
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              const SpanMarker(
+                attribution: boldAttribution,
+                offset: 37,
+                markerType: SpanMarkerType.end,
+              ),
+            ]),
+          ),
+        ),
+      ],
+    );
+
+MutableDocument threeParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            "This is the first node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "2",
+          text: AttributedText(
+            "This is the second node in a document.",
+          ),
+        ),
+        ParagraphNode(
+          id: "3",
+          text: AttributedText(
+            "This is the third node in a document.",
+          ),
+        ),
       ],
     );
 
@@ -274,120 +388,6 @@ MutableDocument longDoc() => MutableDocument(
           id: "20",
           text: AttributedText(
             'Etiam id lacus interdum, efficitur ex convallis, accumsan ipsum. Integer faucibus mollis mauris, a suscipit ante mollis vitae. Fusce justo metus, congue non lectus ac, luctus rhoncus tellus. Phasellus vitae fermentum orci, sit amet sodales orci. Fusce at ante iaculis nunc aliquet pharetra. Nam placerat, nisl in gravida lacinia, nisl nibh feugiat nunc, in sagittis nisl sapien nec arcu. Nunc gravida faucibus massa, sit amet accumsan dolor feugiat in. Mauris ut elementum leo.',
-          ),
-        ),
-      ],
-    );
-
-MutableDocument singleParagraphWithPartialColor() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: '1',
-          text: AttributedText(
-            'abcdefghij',
-            AttributedSpans(
-              attributions: [
-                const SpanMarker(
-                  attribution: ColorAttribution(Colors.orange),
-                  offset: 5,
-                  markerType: SpanMarkerType.start,
-                ),
-                const SpanMarker(
-                  attribution: ColorAttribution(Colors.orange),
-                  offset: 9,
-                  markerType: SpanMarkerType.end,
-                ),
-              ],
-            ),
-          ),
-        )
-      ],
-    );
-
-MutableDocument singleParagraphFullColor() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: '1',
-          text: AttributedText(
-            'abcdefghij',
-            AttributedSpans(
-              attributions: [
-                const SpanMarker(
-                  attribution: ColorAttribution(Colors.orange),
-                  offset: 0,
-                  markerType: SpanMarkerType.start,
-                ),
-                const SpanMarker(
-                  attribution: ColorAttribution(Colors.orange),
-                  offset: 9,
-                  markerType: SpanMarkerType.end,
-                ),
-              ],
-            ),
-          ),
-        )
-      ],
-    );
-
-MutableDocument singleParagraphDocAllBold() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-            AttributedSpans(attributions: [
-              const SpanMarker(
-                attribution: boldAttribution,
-                offset: 0,
-                markerType: SpanMarkerType.start,
-              ),
-              const SpanMarker(
-                attribution: boldAttribution,
-                offset: 36,
-                markerType: SpanMarkerType.end,
-              ),
-            ]),
-          ),
-        ),
-      ],
-    );
-
-MutableDocument twoParagraphDocAllBold() => MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: "1",
-          text: AttributedText(
-            "This is the first node in a document.",
-            AttributedSpans(attributions: [
-              const SpanMarker(
-                attribution: boldAttribution,
-                offset: 0,
-                markerType: SpanMarkerType.start,
-              ),
-              const SpanMarker(
-                attribution: boldAttribution,
-                offset: 36,
-                markerType: SpanMarkerType.end,
-              ),
-            ]),
-          ),
-        ),
-        ParagraphNode(
-          id: "2",
-          text: AttributedText(
-            "This is the second node in a document.",
-            AttributedSpans(attributions: [
-              const SpanMarker(
-                attribution: boldAttribution,
-                offset: 0,
-                markerType: SpanMarkerType.start,
-              ),
-              const SpanMarker(
-                attribution: boldAttribution,
-                offset: 37,
-                markerType: SpanMarkerType.end,
-              ),
-            ]),
           ),
         ),
       ],
