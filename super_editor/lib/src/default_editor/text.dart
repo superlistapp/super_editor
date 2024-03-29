@@ -1443,7 +1443,8 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
     // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, SpanRange>();
-    bool alreadyHasAttributions = false;
+
+    bool alreadyHasAttributions = true;
 
     for (final textNode in nodes) {
       if (textNode is! TextNode) {
@@ -1484,8 +1485,8 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
       final selectionRange = SpanRange(startOffset, endOffset);
 
-      alreadyHasAttributions = alreadyHasAttributions ||
-          textNode.text.hasAttributionsWithin(
+      alreadyHasAttributions = alreadyHasAttributions &&
+          textNode.text.hasAttributionsThroughout(
             attributions: attributions,
             range: selectionRange,
           );
@@ -1493,24 +1494,42 @@ class ToggleTextAttributionsCommand implements EditCommand {
       nodesAndSelections.putIfAbsent(textNode, () => selectionRange);
     }
 
-    // Toggle attributions.
     for (final entry in nodesAndSelections.entries) {
       for (Attribution attribution in attributions) {
         final node = entry.key;
         final range = entry.value;
+
         editorDocLog.info(' - toggling attribution: $attribution. Range: $range');
 
-        // Create a new AttributedText with updated attribution spans, so that the presentation system can
-        // see that we made a change, and re-renders the text in the document.
-        node.text = AttributedText(
-          node.text.text,
-          node.text.spans.copy()
-            ..toggleAttribution(
-              attribution: attribution,
-              start: range.start,
-              end: range.end,
-            ),
-        );
+        if (alreadyHasAttributions) {
+          // Attribution is present throughout the user selection. Remove attribution.
+
+          editorDocLog.info(' - Removing attribution: $attribution. Range: $range');
+
+          // Create a new AttributedText with updated attribution spans, so that the presentation system can
+          // see that we made a change, and re-renders the text in the document.
+          node.text = AttributedText(
+            node.text.text,
+            node.text.spans.copy(),
+          )..removeAttribution(
+              attribution,
+              range,
+            );
+        } else {
+          // Attribution isn't present throughout the user selection. Apply attribution.
+
+          editorDocLog.info(' - Adding attribution: $attribution. Range: $range');
+
+          // Create a new AttributedText with updated attribution spans, so that the presentation system can
+          // see that we made a change, and re-renders the text in the document.
+          node.text = AttributedText(
+            node.text.text,
+            node.text.spans.copy(),
+          )..addAttribution(
+              attribution,
+              range,
+            );
+        }
 
         executor.logChanges([
           DocumentEdit(
