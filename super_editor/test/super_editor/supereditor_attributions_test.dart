@@ -3,9 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
-import 'package:super_editor/src/test/ime.dart';
-import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
-import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -1093,6 +1090,91 @@ void main() {
           // Ensure the bold attribution is applied.
           expect(doc, equalsMarkdown("This text should be** bold**"));
         });
+      });
+
+      testWidgetsOnArbitraryDesktop(
+          "and reports attribution change events when an attribution is added, removed, and toggled", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .pump();
+
+        // Select the first word.
+        await tester.doubleTapInParagraph("1", 1);
+
+        // Listen for change events.
+        final editor = context.editor;
+        List<EditEvent>? changes;
+        editor.addListener(FunctionalEditListener((List<EditEvent> changeList) {
+          changes = changeList;
+        }));
+
+        // Apply bold attribution.
+        await tester.pressCmdB();
+
+        // Ensure that the change event includes the added attribution.
+        expect(changes, isNotNull);
+        expect(
+          changes,
+          [
+            DocumentEdit(
+              AttributionChangeEvent(
+                nodeId: "1",
+                change: AttributionChange.added,
+                attributions: {boldAttribution},
+                range: const SpanRange(0, 4),
+              ),
+            ),
+          ],
+        );
+
+        // Expand the selection to include the second word.
+        await tester.pressShiftAltRightArrow();
+
+        // Toggle bold, which should add bold only to the second word.
+        await tester.pressCmdB();
+
+        // Ensure that the bold change is reported across the entire selected range.
+        //
+        // NOTE: There's an argument to be made that this change event should only
+        //       include the range of text that was previously not bold, and now is
+        //       bold. E.g., given the text "Lorem ipsum", because "Lorem" is already
+        //       bold, the event should report " ipsum" as adding bold. I chose not to
+        //       worry about that distinction because at the moment it doesn't seem that
+        //       we need the distinction, and it would require more rework to achieve that
+        //       distinction. If it's eventually needed, it would be reasonable to
+        //       implement that approach, instead.
+        expect(
+          changes,
+          [
+            DocumentEdit(
+              AttributionChangeEvent(
+                nodeId: "1",
+                change: AttributionChange.added,
+                attributions: {boldAttribution},
+                range: const SpanRange(0, 10),
+              ),
+            ),
+          ],
+        );
+
+        // Remove the bold attribution by toggling bold again.
+        await tester.pressCmdB();
+
+        // Ensure that we received a removal change event.
+        expect(
+          changes,
+          [
+            DocumentEdit(
+              AttributionChangeEvent(
+                nodeId: "1",
+                change: AttributionChange.removed,
+                attributions: {boldAttribution},
+                range: const SpanRange(0, 10),
+              ),
+            ),
+          ],
+        );
       });
     });
 
