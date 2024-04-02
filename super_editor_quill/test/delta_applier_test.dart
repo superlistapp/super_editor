@@ -3,22 +3,20 @@ import 'package:test/test.dart';
 
 void main() {
   group('DeltaApplier', () {
-    var nodeCount = 0;
-    late DeltaApplier applier;
-
-    setUp(() {
-      nodeCount = 0;
-      applier = DeltaApplier(
+    DeltaApplier deltaApplier(Document document) {
+      var nodeCount = document.nodes.length;
+      return DeltaApplier(
         idGenerator: () {
           nodeCount++;
           return 'node-$nodeCount';
         },
       );
-    });
+    }
 
     group('simple plain text tests', () {
       test('inserting "\\n" results in correct document state', () {
         final document = MutableDocument();
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -42,6 +40,7 @@ void main() {
 
       test('inserting "abc" one by one results in correct document state', () {
         final document = MutableDocument.empty('node-1');
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -75,6 +74,7 @@ void main() {
           'inserting "abc" as single change, then deleting it as single change, results in correct document state',
           () {
         final document = MutableDocument.empty('node-1');
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -113,6 +113,7 @@ void main() {
           'inserting "abc" one by one, then deleting it one by one, results in correct document state',
           () {
         final document = MutableDocument.empty('node-1');
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -224,6 +225,7 @@ void main() {
           'inserting "abc" as single change, then deleting "b", results in correct document state',
           () {
         final document = MutableDocument.empty('node-1');
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -267,6 +269,7 @@ void main() {
           'inserting "abc" as single change, then deleting "a", results in correct document state',
           () {
         final document = MutableDocument.empty('node-1');
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -305,6 +308,7 @@ void main() {
           'inserting "abc" as single change, then deleting "a", results in correct document state',
           () {
         final document = MutableDocument.empty('node-1');
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -343,6 +347,7 @@ void main() {
           'inserting "abc" as single change, then inserting a newline, results in correct document state',
           () {
         final document = MutableDocument();
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -423,6 +428,7 @@ void main() {
           'inserting "abc" as single change, inserting a newline, inserting "def", and inserting newline results in correct document state',
           () {
         final document = MutableDocument();
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -528,6 +534,7 @@ void main() {
           'inserting "abc" as single change, inserting a newline, inserting "def", and deleting "f" results in correct document state',
           () {
         final document = MutableDocument();
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -632,6 +639,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText(''))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -738,6 +746,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -843,6 +852,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -891,6 +901,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -937,6 +948,7 @@ void main() {
             ParagraphNode(id: 'node-2', text: AttributedText('def')),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -1027,6 +1039,7 @@ void main() {
             ),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -1075,6 +1088,7 @@ void main() {
             ),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -1165,6 +1179,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -1293,6 +1308,7 @@ void main() {
             ),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -1384,6 +1400,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -1512,6 +1529,7 @@ void main() {
             ),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -1602,6 +1620,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -1749,6 +1768,7 @@ void main() {
             ),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -1853,6 +1873,7 @@ void main() {
             ),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -1987,6 +2008,7 @@ void main() {
             ),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2177,6 +2199,7 @@ void main() {
             ),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2234,6 +2257,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2299,6 +2323,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2364,6 +2389,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2429,6 +2455,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2494,6 +2521,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2559,6 +2587,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2628,6 +2657,7 @@ void main() {
             ParagraphNode(id: 'node-3', text: AttributedText('ghi')),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2711,6 +2741,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText(''))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2728,7 +2759,7 @@ void main() {
             ..insert({'hr': true})
             ..delete(1),
         );
-        expect(document.nodes, [HorizontalRuleNode(id: 'node-1')]);
+        expect(document.nodes, [HorizontalRuleNode(id: 'node-2')]);
       });
 
       test(
@@ -2737,6 +2768,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText(''))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2752,7 +2784,7 @@ void main() {
         expect(
           document.nodes,
           [
-            HorizontalRuleNode(id: 'node-1'),
+            HorizontalRuleNode(id: 'node-2'),
             ParagraphNode(id: 'node-1', text: AttributedText('')),
           ],
         );
@@ -2764,6 +2796,7 @@ void main() {
         final document = MutableDocument(
           nodes: [ParagraphNode(id: 'node-1', text: AttributedText('abc'))],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2785,7 +2818,7 @@ void main() {
           document.nodes,
           [
             ParagraphNode(id: 'node-1', text: AttributedText('abc')),
-            HorizontalRuleNode(id: 'node-1'),
+            HorizontalRuleNode(id: 'node-2'),
           ],
         );
       });
@@ -2798,6 +2831,7 @@ void main() {
             HorizontalRuleNode(id: 'node-2'),
           ],
         );
+        final applier = deltaApplier(document);
         final composer = MutableDocumentComposer();
         final editor = Editor(
           editables: {
@@ -2820,7 +2854,7 @@ void main() {
           [
             ParagraphNode(id: 'node-1', text: AttributedText('abc')),
             HorizontalRuleNode(id: 'node-2'),
-            ParagraphNode(id: 'node-1', text: AttributedText('def')),
+            ParagraphNode(id: 'node-3', text: AttributedText('def')),
           ],
         );
       });
