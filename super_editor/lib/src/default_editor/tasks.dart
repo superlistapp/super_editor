@@ -312,12 +312,17 @@ ExecutionInstruction enterToInsertNewTask({
 
   final splitOffset = (selection.extent.nodePosition as TextNodePosition).offset;
 
-  editContext.editor.execute([
-    SplitExistingTaskRequest(
-      existingNodeId: node.id,
-      splitOffset: splitOffset,
-    ),
-  ]);
+  // If the task text is empty, convert it to paragraph.
+  if (node.text.text.isEmpty) {
+    editContext.commonOps.convertToParagraph();
+  } else {
+    editContext.editor.execute([
+      SplitExistingTaskRequest(
+        existingNodeId: node.id,
+        splitOffset: splitOffset,
+      ),
+    ]);
+  }
 
   return ExecutionInstruction.haltExecution;
 }
