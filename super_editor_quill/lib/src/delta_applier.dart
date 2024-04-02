@@ -1,5 +1,6 @@
 import 'package:quill_delta/quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_quill/super_editor_quill.dart';
 
 abstract interface class DeltaAttribution {
   const DeltaAttribution();
@@ -184,10 +185,16 @@ class DeltaApplier {
           } else {
             assert(data is Map);
             requests.addAll([
-              InsertNodeBeforeNodeRequest(
-                existingNodeId: position.nodeId,
-                newNode: HorizontalRuleNode(id: _idGenerator()),
-              ),
+              if (offset == 0)
+                InsertNodeBeforeNodeRequest(
+                  existingNodeId: position.nodeId,
+                  newNode: HorizontalRuleNode(id: _idGenerator()),
+                )
+              else
+                InsertNodeAfterNodeRequest(
+                  existingNodeId: position.nodeId,
+                  newNode: HorizontalRuleNode(id: _idGenerator()),
+                ),
             ]);
           }
         }
@@ -465,6 +472,7 @@ int _shiftDeltaPositionBasedOnPendingRequests(
 
         // TODO: These affect positioning so they need to be shifted most likely
         request is InsertNodeBeforeNodeRequest ||
+        request is InsertNodeAfterNodeRequest ||
         request is DeleteNodeRequest) {
       // No-op
     } else {
