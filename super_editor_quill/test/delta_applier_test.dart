@@ -2789,6 +2789,41 @@ void main() {
           ],
         );
       });
+
+      test('adding a paragraph after a hr results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(id: 'node-1', text: AttributedText('abc')),
+            HorizontalRuleNode(id: 'node-2'),
+          ],
+        );
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Add hr attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(5)
+            ..insert('def'),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(id: 'node-1', text: AttributedText('abc')),
+            HorizontalRuleNode(id: 'node-2'),
+            ParagraphNode(id: 'node-1', text: AttributedText('def')),
+          ],
+        );
+      });
     });
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:quill_delta/quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
@@ -175,13 +177,29 @@ class DeltaApplier {
             final attributions = _deltaAttributesToSuperEditorAttributions(
               operation.attributes ?? {},
             );
-            requests.add(
-              InsertTextRequest(
-                documentPosition: position,
-                textToInsert: data,
-                attributions: attributions,
-              ),
-            );
+            if (position.nodePosition is! TextNodePosition) {
+              if (attributions.isNotEmpty) {
+                throw UnimplementedError('TODO: Handle this case');
+              }
+
+              requests.add(
+                InsertNodeAfterNodeRequest(
+                  existingNodeId: position.nodeId,
+                  newNode: ParagraphNode(
+                    id: _idGenerator(),
+                    text: AttributedText(data, AttributedSpans()),
+                  ),
+                ),
+              );
+            } else {
+              requests.add(
+                InsertTextRequest(
+                  documentPosition: position,
+                  textToInsert: data,
+                  attributions: attributions,
+                ),
+              );
+            }
           } else {
             assert(data is Map);
             requests.addAll([
@@ -418,18 +436,21 @@ DocumentPosition? _deltaPositionToDocumentPosition({
   var nodeIndex = 0;
 
   for (final node in document.nodes) {
-    if (node is! TextNode) {
-      throw UnimplementedError('Not handling other nodes than TextNodes yet.');
-    }
-
-    // TODO: Handle other types than TextNodes
-    // ignore: unnecessary_type_check
     final currentNodeLength = node is TextNode ? node.text.text.length : 0;
     if (currentAbsolutePosition + currentNodeLength >= deltaPosition) {
+      late NodePosition nodePosition;
+
+      if (node is TextNode) {
+        nodePosition =
+            TextNodePosition(offset: deltaPosition - contentLength - nodeIndex);
+      } else {
+        nodePosition =
+            const UpstreamDownstreamNodePosition(TextAffinity.downstream);
+      }
+
       return DocumentPosition(
         nodeId: node.id,
-        nodePosition:
-            TextNodePosition(offset: deltaPosition - contentLength - nodeIndex),
+        nodePosition: nodePosition,
       );
     }
 
@@ -444,18 +465,20 @@ DocumentPosition? _deltaPositionToDocumentPosition({
 
   final lastNode = document.nodes.last;
   final lastNodeEndPosition = lastNode.endPosition;
-  if (lastNodeEndPosition is! TextNodePosition) {
-    throw UnimplementedError();
-  }
+  late NodePosition nodePosition;
 
-  return DocumentPosition(
-    nodeId: lastNode.id,
-    nodePosition: TextNodePosition(
+  if (lastNodeEndPosition is TextNodePosition) {
+    nodePosition = TextNodePosition(
       offset: lastNodeEndPosition.offset +
           _shiftDeltaPositionBasedOnPendingRequests(pendingRequests),
       affinity: lastNodeEndPosition.affinity,
-    ),
-  );
+    );
+  } else {
+    nodePosition =
+        const UpstreamDownstreamNodePosition(TextAffinity.downstream);
+  }
+
+  return DocumentPosition(nodeId: lastNode.id, nodePosition: nodePosition);
 }
 
 int _shiftDeltaPositionBasedOnPendingRequests(
