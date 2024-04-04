@@ -166,16 +166,16 @@ class DeltaApplier {
           );
         } else {
           final data = operation.data;
-          final position = _deltaPositionToDocumentPosition(
-            document: document,
-            pendingRequests: requests,
-            deltaPosition: offset,
-          )!;
 
           if (data is String) {
             final attributions = _deltaAttributesToSuperEditorAttributions(
               operation.attributes ?? {},
             );
+            final position = _deltaPositionToDocumentPosition(
+              document: document,
+              pendingRequests: requests,
+              deltaPosition: offset,
+            )!;
             if (position.nodePosition is! TextNodePosition) {
               if (attributions.isNotEmpty) {
                 throw UnimplementedError('TODO: Handle this case');
@@ -202,7 +202,14 @@ class DeltaApplier {
           } else {
             assert(data is Map);
             final nodeId = _findNodeIdToInsertAfter(document, offset);
-            if (offset == 0) {
+            if (nodeId == null) {
+              requests.add(
+                InsertNodeAtIndexRequest(
+                  nodeIndex: 0,
+                  newNode: HorizontalRuleNode(id: _idGenerator()),
+                ),
+              );
+            } else if (offset == 0) {
               requests.add(
                 InsertNodeBeforeNodeRequest(
                   existingNodeId: nodeId,
@@ -426,9 +433,9 @@ int? _deltaPositionToDocumentNodeIndex({
   return position == null ? null : document.getNodeIndexById(position.nodeId);
 }
 
-String _findNodeIdToInsertAfter(Document document, int absolutePosition) {
+String? _findNodeIdToInsertAfter(Document document, int absolutePosition) {
   if (absolutePosition == 0) {
-    return document.nodes.first.id;
+    return document.nodes.firstOrNull?.id;
   }
 
   var position = absolutePosition;
@@ -442,9 +449,11 @@ String _findNodeIdToInsertAfter(Document document, int absolutePosition) {
         }
       }
     } else {
-      throw UnimplementedError(
-        'Not handling anything else than TextNodes for now.',
-      );
+      position--;
+
+      if (position == 0) {
+        return node.id;
+      }
     }
   }
 

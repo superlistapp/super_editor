@@ -2897,6 +2897,59 @@ void main() {
           ],
         );
       });
+
+      test(
+          'adding three hrs after each other results in correct document state',
+          () {
+        final document = MutableDocument(nodes: []);
+        final applier = deltaApplier(document);
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Add hr attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..insert({
+              'insert': {'hr': true}
+            }),
+        );
+
+        // Add hr attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(1)
+            ..insert({
+              'insert': {'hr': true}
+            }),
+        );
+
+        // Add hr attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(2)
+            ..insert({
+              'insert': {'hr': true}
+            }),
+        );
+        expect(
+          document.nodes,
+          [
+            HorizontalRuleNode(id: 'node-1'),
+            HorizontalRuleNode(id: 'node-2'),
+            HorizontalRuleNode(id: 'node-3'),
+          ],
+        );
+      });
     });
   });
 }
