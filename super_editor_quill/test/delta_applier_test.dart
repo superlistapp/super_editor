@@ -2858,6 +2858,45 @@ void main() {
           ],
         );
       });
+
+      test(
+          'adding a hr between two paragraphs results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(id: 'node-1', text: AttributedText('abc')),
+            ParagraphNode(id: 'node-2', text: AttributedText('def')),
+          ],
+        );
+        final applier = deltaApplier(document);
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Add hr attribution
+        applier.apply(
+          editor,
+          Delta()
+            ..retain(4)
+            ..insert({
+              'insert': {'hr': true}
+            }),
+        );
+        expect(
+          document.nodes,
+          [
+            ParagraphNode(id: 'node-1', text: AttributedText('abc')),
+            HorizontalRuleNode(id: 'node-3'),
+            ParagraphNode(id: 'node-2', text: AttributedText('def')),
+          ],
+        );
+      });
     });
   });
 }

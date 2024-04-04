@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:quill_delta/quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_editor_quill/super_editor_quill.dart';
 
 abstract interface class DeltaAttribution {
   const DeltaAttribution();
@@ -202,18 +201,22 @@ class DeltaApplier {
             }
           } else {
             assert(data is Map);
-            requests.addAll([
-              if (offset == 0)
+            final nodeId = _findNodeIdToInsertAfter(document, offset);
+            if (offset == 0) {
+              requests.add(
                 InsertNodeBeforeNodeRequest(
-                  existingNodeId: position.nodeId,
-                  newNode: HorizontalRuleNode(id: _idGenerator()),
-                )
-              else
-                InsertNodeAfterNodeRequest(
-                  existingNodeId: position.nodeId,
+                  existingNodeId: nodeId,
                   newNode: HorizontalRuleNode(id: _idGenerator()),
                 ),
-            ]);
+              );
+            } else {
+              requests.add(
+                InsertNodeAfterNodeRequest(
+                  existingNodeId: nodeId,
+                  newNode: HorizontalRuleNode(id: _idGenerator()),
+                ),
+              );
+            }
           }
         }
       } else if (operation.isRetain) {
@@ -421,6 +424,31 @@ int? _deltaPositionToDocumentNodeIndex({
   );
 
   return position == null ? null : document.getNodeIndexById(position.nodeId);
+}
+
+String _findNodeIdToInsertAfter(Document document, int absolutePosition) {
+  if (absolutePosition == 0) {
+    return document.nodes.first.id;
+  }
+
+  var position = absolutePosition;
+  for (final node in document.nodes) {
+    if (node is TextNode) {
+      for (var i = 0; i < node.text.length + 1; i++) {
+        position--;
+
+        if (position == 0) {
+          return node.id;
+        }
+      }
+    } else {
+      throw UnimplementedError(
+        'Not handling anything else than TextNodes for now.',
+      );
+    }
+  }
+
+  throw StateError('Position not found.');
 }
 
 DocumentPosition? _deltaPositionToDocumentPosition({
