@@ -111,6 +111,37 @@ class DeltaLinkAttribution implements DeltaAttribution {
   }
 }
 
+abstract interface class DeltaBlock {
+  const DeltaBlock();
+
+  String get deltaAttributeKey;
+  DocumentNode createDocumentNode(String id, Object? value);
+}
+
+class HorizontalRuleDeltaBlock implements DeltaBlock {
+  const HorizontalRuleDeltaBlock();
+
+  @override
+  String get deltaAttributeKey => 'hr';
+
+  @override
+  DocumentNode createDocumentNode(String id, Object? value) {
+    return HorizontalRuleNode(id: id);
+  }
+}
+
+class ImageDeltaBlock implements DeltaBlock {
+  const ImageDeltaBlock();
+
+  @override
+  String get deltaAttributeKey => 'image';
+
+  @override
+  DocumentNode createDocumentNode(String id, Object? value) {
+    return ImageNode(id: id, imageUrl: value as String);
+  }
+}
+
 const _defaultBlockAttributions = <DeltaAttribution>[
   DeltaHeaderAttribution(),
 ];
@@ -120,6 +151,11 @@ const _defaultTextAttributions = <DeltaAttribution>[
   DeltaItalicsAttribution(),
   DeltaUnderlineAttribution(),
   DeltaLinkAttribution(),
+];
+
+const _deltaBlocks = <DeltaBlock>[
+  HorizontalRuleDeltaBlock(),
+  ImageDeltaBlock(),
 ];
 
 /// Translated QuillJS Deltas to SuperEditor EditRequests and executes them as
@@ -201,26 +237,34 @@ class DeltaApplier {
             }
           } else {
             assert(data is Map);
+            if ((data as Map).length != 1) {
+              throw UnimplementedError();
+            }
+
             final nodeId = _findNodeIdToInsertAfter(document, offset);
+            final deltaBlockType = data.entries.single.key;
+            final deltaBlock = _deltaBlocks
+                .singleWhere(
+                  (block) => block.deltaAttributeKey == deltaBlockType,
+                )
+                .createDocumentNode(_idGenerator(), data.entries.single.value);
+
             if (nodeId == null) {
               requests.add(
-                InsertNodeAtIndexRequest(
-                  nodeIndex: 0,
-                  newNode: HorizontalRuleNode(id: _idGenerator()),
-                ),
+                InsertNodeAtIndexRequest(nodeIndex: 0, newNode: deltaBlock),
               );
             } else if (offset == 0) {
               requests.add(
                 InsertNodeBeforeNodeRequest(
                   existingNodeId: nodeId,
-                  newNode: HorizontalRuleNode(id: _idGenerator()),
+                  newNode: deltaBlock,
                 ),
               );
             } else {
               requests.add(
                 InsertNodeAfterNodeRequest(
                   existingNodeId: nodeId,
-                  newNode: HorizontalRuleNode(id: _idGenerator()),
+                  newNode: deltaBlock,
                 ),
               );
             }

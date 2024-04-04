@@ -2884,9 +2884,7 @@ void main() {
           editor,
           Delta()
             ..retain(4)
-            ..insert({
-              'insert': {'hr': true}
-            }),
+            ..insert({'hr': true}),
         );
         expect(
           document.nodes,
@@ -2914,22 +2912,14 @@ void main() {
         );
 
         // Add hr attribution
-        applier.apply(
-          editor,
-          Delta()
-            ..insert({
-              'insert': {'hr': true}
-            }),
-        );
+        applier.apply(editor, Delta()..insert({'hr': true}));
 
         // Add hr attribution
         applier.apply(
           editor,
           Delta()
             ..retain(1)
-            ..insert({
-              'insert': {'hr': true}
-            }),
+            ..insert({'hr': true}),
         );
 
         // Add hr attribution
@@ -2937,9 +2927,7 @@ void main() {
           editor,
           Delta()
             ..retain(2)
-            ..insert({
-              'insert': {'hr': true}
-            }),
+            ..insert({'hr': true}),
         );
         expect(
           document.nodes,
@@ -2947,6 +2935,37 @@ void main() {
             HorizontalRuleNode(id: 'node-1'),
             HorizontalRuleNode(id: 'node-2'),
             HorizontalRuleNode(id: 'node-3'),
+          ],
+        );
+      });
+
+      test(
+          'adding image to the start of the document results in correct document state',
+          () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: 'node-1', text: AttributedText(''))],
+        );
+        final applier = deltaApplier(document);
+        final composer = MutableDocumentComposer();
+        final editor = Editor(
+          editables: {
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
+          },
+          requestHandlers: [...defaultRequestHandlers],
+          reactionPipeline: [...defaultEditorReactions],
+        );
+
+        // Add image attribution
+        applier.apply(
+          editor,
+          Delta()..insert({'image': 'https://example.com/image.png'}),
+        );
+        expect(
+          document.nodes,
+          [
+            ImageNode(id: 'node-2', imageUrl: 'https://example.com/image.png'),
+            ParagraphNode(id: 'node-1', text: AttributedText('')),
           ],
         );
       });
