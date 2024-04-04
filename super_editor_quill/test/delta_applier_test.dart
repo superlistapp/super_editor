@@ -2959,7 +2959,10 @@ void main() {
         // Add image attribution
         applier.apply(
           editor,
-          Delta()..insert({'image': 'https://example.com/image.png'}),
+          Delta()
+            ..insert({
+              'image': {'url': 'https://example.com/image.png'},
+            }),
         );
         expect(
           document.nodes,

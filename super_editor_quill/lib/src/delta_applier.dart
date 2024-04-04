@@ -138,7 +138,8 @@ class ImageDeltaBlock implements DeltaBlock {
 
   @override
   DocumentNode createDocumentNode(String id, Object? value) {
-    return ImageNode(id: id, imageUrl: value as String);
+    final attributes = (value as Map).cast<String, Object>();
+    return ImageNode(id: id, imageUrl: attributes['url'] as String);
   }
 }
 
@@ -235,12 +236,7 @@ class DeltaApplier {
                 ),
               );
             }
-          } else {
-            assert(data is Map);
-            if ((data as Map).length != 1) {
-              throw UnimplementedError();
-            }
-
+          } else if (data is Map) {
             final nodeId = _findNodeIdToInsertAfter(document, offset);
             final deltaBlockType = data.entries.single.key;
             final deltaBlock = _deltaBlocks
@@ -268,6 +264,8 @@ class DeltaApplier {
                 ),
               );
             }
+          } else {
+            throw ArgumentError.value(data, 'data');
           }
         }
       } else if (operation.isRetain) {
