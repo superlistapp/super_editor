@@ -380,10 +380,10 @@ Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListIt
   return Align(
     alignment: Alignment.centerRight,
     child: Text.rich(
-      // Place a zero-width joiner before the bullet point to make it properly aligned. Without this,
-      // the bullet point is not vertically centered with the text, even when setting the textStyle
-      // on the whole rich text or WidgetSpan.
       TextSpan(
+        // Place a zero-width joiner before the bullet point to make it properly aligned. Without this,
+        // the bullet point is not vertically centered with the text, even when setting the textStyle
+        // on the whole rich text or WidgetSpan.
         text: '\u200C',
         style: textStyle,
         children: [
