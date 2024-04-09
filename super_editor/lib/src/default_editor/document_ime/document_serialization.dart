@@ -236,6 +236,12 @@ class DocumentImeSerializer {
       return false;
     }
 
+    if (imePosition.offset <= -1) {
+      // This isn't a valid text position. For example, when a composing region is reported
+      // with an offset of `-1`, it means that there isn't a composing region on the IME.
+      return false;
+    }
+
     if (imePosition.offset >= _prependedPlaceholder.length) {
       return false;
     }
