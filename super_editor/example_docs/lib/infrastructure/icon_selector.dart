@@ -1,5 +1,6 @@
 import 'package:example_docs/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:overlord/overlord.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// A selection control, which displays a button with the selected icon, and upon tap, displays a
@@ -75,7 +76,7 @@ class _IconSelectorState extends State<IconSelector> {
       parentFocusNode: widget.parentFocusNode,
       popoverGeometry: const PopoverGeometry(
         constraints: BoxConstraints(minHeight: 40),
-        align: popoverAligner,
+        aligner: FunctionalPopoverAligner(popoverAligner),
       ),
       popoverBuilder: (context) => Material(
         elevation: 8,

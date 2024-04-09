@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -1276,9 +1277,15 @@ class AddTextAttributionsCommand implements EditCommand {
               autoMerge: autoMerge,
             ),
         );
+
         executor.logChanges([
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            AttributionChangeEvent(
+              nodeId: node.id,
+              change: AttributionChange.added,
+              range: range,
+              attributions: attributions,
+            ),
           ),
         ]);
       }
@@ -1389,7 +1396,12 @@ class RemoveTextAttributionsCommand implements EditCommand {
 
         executor.logChanges([
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            AttributionChangeEvent(
+              nodeId: node.id,
+              change: AttributionChange.removed,
+              range: range,
+              attributions: attributions,
+            ),
           ),
         ]);
       }
@@ -1443,7 +1455,8 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
     // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, SpanRange>();
-    bool alreadyHasAttributions = false;
+
+    bool alreadyHasAttributions = true;
 
     for (final textNode in nodes) {
       if (textNode is! TextNode) {
@@ -1484,8 +1497,8 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
       final selectionRange = SpanRange(startOffset, endOffset);
 
-      alreadyHasAttributions = alreadyHasAttributions ||
-          textNode.text.hasAttributionsWithin(
+      alreadyHasAttributions = alreadyHasAttributions &&
+          textNode.text.hasAttributionsThroughout(
             attributions: attributions,
             range: selectionRange,
           );
@@ -1493,28 +1506,52 @@ class ToggleTextAttributionsCommand implements EditCommand {
       nodesAndSelections.putIfAbsent(textNode, () => selectionRange);
     }
 
-    // Toggle attributions.
     for (final entry in nodesAndSelections.entries) {
       for (Attribution attribution in attributions) {
         final node = entry.key;
         final range = entry.value;
+
         editorDocLog.info(' - toggling attribution: $attribution. Range: $range');
 
-        // Create a new AttributedText with updated attribution spans, so that the presentation system can
-        // see that we made a change, and re-renders the text in the document.
-        node.text = AttributedText(
-          node.text.text,
-          node.text.spans.copy()
-            ..toggleAttribution(
-              attribution: attribution,
-              start: range.start,
-              end: range.end,
-            ),
-        );
+        if (alreadyHasAttributions) {
+          // Attribution is present throughout the user selection. Remove attribution.
 
+          editorDocLog.info(' - Removing attribution: $attribution. Range: $range');
+
+          // Create a new AttributedText with updated attribution spans, so that the presentation system can
+          // see that we made a change, and re-renders the text in the document.
+          node.text = AttributedText(
+            node.text.text,
+            node.text.spans.copy(),
+          )..removeAttribution(
+              attribution,
+              range,
+            );
+        } else {
+          // Attribution isn't present throughout the user selection. Apply attribution.
+
+          editorDocLog.info(' - Adding attribution: $attribution. Range: $range');
+
+          // Create a new AttributedText with updated attribution spans, so that the presentation system can
+          // see that we made a change, and re-renders the text in the document.
+          node.text = AttributedText(
+            node.text.text,
+            node.text.spans.copy(),
+          )..addAttribution(
+              attribution,
+              range,
+            );
+        }
+
+        final wasAttributionAdded = node.text.hasAttributionAt(range.start, attribution: attribution);
         executor.logChanges([
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            AttributionChangeEvent(
+              nodeId: node.id,
+              change: wasAttributionAdded ? AttributionChange.added : AttributionChange.removed,
+              range: range,
+              attributions: attributions,
+            ),
           ),
         ]);
       }
@@ -1522,6 +1559,41 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
     editorDocLog.info(' - done toggling attributions');
   }
+}
+
+/// A [NodeChangeEvent] for the addition or removal of a set of attributions.
+class AttributionChangeEvent extends NodeChangeEvent {
+  AttributionChangeEvent({
+    required String nodeId,
+    required this.change,
+    required this.range,
+    required this.attributions,
+  }) : super(nodeId);
+
+  final AttributionChange change;
+  final SpanRange range;
+  final Set<Attribution> attributions;
+
+  @override
+  String toString() => "AttributionChangeEvent ('$nodeId' - ${range.start} -> ${range.end} ($change): '$attributions')";
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is AttributionChangeEvent &&
+          runtimeType == other.runtimeType &&
+          change == other.change &&
+          range == other.range &&
+          const DeepCollectionEquality().equals(attributions, other.attributions);
+
+  @override
+  int get hashCode => super.hashCode ^ change.hashCode ^ range.hashCode ^ attributions.hashCode;
+}
+
+enum AttributionChange {
+  added,
+  removed;
 }
 
 /// Changes layout styles, like padding and width, of a component within a [SingleColumnDocumentLayout].
@@ -1759,7 +1831,11 @@ class InsertAttributedTextCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(textNode.id),
+        TextInsertionEvent(
+          nodeId: textNode.id,
+          offset: textOffset,
+          text: textToInsert,
+        ),
       ),
     ]);
   }

@@ -392,8 +392,8 @@ Paragraph3""");
                 '',
                 AttributedSpans(
                   attributions: [
-                    SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
-                    SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.end),
+                    const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.end),
                   ],
                 ),
               ),
@@ -404,8 +404,8 @@ Paragraph3""");
                 '',
                 AttributedSpans(
                   attributions: [
-                    SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
-                    SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.end),
+                    const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.end),
                   ],
                 ),
               ),
@@ -511,7 +511,7 @@ Paragraph3""");
             id: '1',
             imageUrl: 'https://someimage.com/the/image.png',
             altText: 'some alt text',
-            expectedBitmapSize: ExpectedSize(300, null),
+            expectedBitmapSize: const ExpectedSize(300, null),
           ),
         ]);
 
@@ -524,7 +524,7 @@ Paragraph3""");
             id: '1',
             imageUrl: 'https://someimage.com/the/image.png',
             altText: 'some alt text',
-            expectedBitmapSize: ExpectedSize(null, 200),
+            expectedBitmapSize: const ExpectedSize(null, 200),
           ),
         ]);
 

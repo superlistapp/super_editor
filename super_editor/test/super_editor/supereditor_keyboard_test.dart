@@ -284,6 +284,38 @@ void main() {
       });
     });
 
+    testWidgetsOnMacWeb("on web moves caret to beginning of line when CMD + LEFT_ARROW is pressed", (tester) async {
+      final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: TextInputSource.ime);
+
+      // Simulate the user pressing CMD + LEFT ARROW, which generates a delta moving
+      // the selection to the beginning of the line.
+      await tester.ime.sendDeltas([
+        const TextEditingDeltaNonTextUpdate(
+          oldText: '. This is some testing text.',
+          selection: TextSelection.collapsed(offset: 12),
+          composing: TextRange.empty,
+        ),
+        const TextEditingDeltaNonTextUpdate(
+          oldText: '. This is some testing text.',
+          selection: TextSelection.collapsed(offset: 0),
+          composing: TextRange.collapsed(0),
+        ),
+      ], getter: imeClientGetter);
+
+      // Ensure the selection and composing region were updated.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        selectionEquivalentTo(_caretInParagraph(nodeId, 0)),
+      );
+      expect(
+        SuperEditorInspector.findComposingRegion(),
+        DocumentRange(
+          start: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 0)),
+          end: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 0)),
+        ),
+      );
+    });
+
     testAllInputsOnAllPlatforms('does nothing without primary focus', (
       tester, {
       required TextInputSource inputSource,
