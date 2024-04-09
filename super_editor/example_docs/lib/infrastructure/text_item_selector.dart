@@ -1,5 +1,6 @@
 import 'package:example_docs/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:overlord/overlord.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// A selection control, which displays a button with the selected text, and upon tap, displays a
@@ -119,7 +120,8 @@ class _TextItemSelectorState extends State<TextItemSelector> {
       controller: _popoverController,
       buttonBuilder: _buildButton,
       popoverBuilder: _buildPopover,
-      popoverGeometry: widget.popoverGeometry ?? const PopoverGeometry(align: popoverAligner),
+      popoverGeometry:
+          widget.popoverGeometry ?? const PopoverGeometry(aligner: FunctionalPopoverAligner(popoverAligner)),
     );
   }
 

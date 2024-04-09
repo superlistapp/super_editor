@@ -9,6 +9,7 @@ import 'package:example_docs/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:overlord/overlord.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// The application toolbar that includes document editing options such as font family,
@@ -769,7 +770,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
       onTapOutside: (controller) => _searchPopoverController.close(),
       controller: _searchPopoverController,
       popoverGeometry: const PopoverGeometry(
-        align: _searchPopoverAligner,
+        aligner: FunctionalPopoverAligner(_searchPopoverAligner),
       ),
       buttonBuilder: (context) => _buildSearchButton(expanded: expanded),
       popoverBuilder: (context) => _buildSearchPopover(),
@@ -898,7 +899,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         buttonSize: const Size(77, 30),
         popoverGeometry: const PopoverGeometry(
           constraints: BoxConstraints.tightFor(width: 77),
-          align: popoverAligner,
+          aligner: FunctionalPopoverAligner(popoverAligner),
         ),
         items: const [
           TextItem(id: '50', label: '50%'),
@@ -930,7 +931,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         buttonSize: const Size(122, 30),
         popoverGeometry: const PopoverGeometry(
           constraints: BoxConstraints.tightFor(width: 220),
-          align: popoverAligner,
+          aligner: FunctionalPopoverAligner(popoverAligner),
         ),
         items: _blockTypes,
         onSelected: _onChangeBlockTypeRequested,
@@ -991,7 +992,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         buttonSize: const Size(97, 30),
         popoverGeometry: const PopoverGeometry(
           constraints: BoxConstraints.tightFor(width: 247),
-          align: popoverAligner,
+          aligner: FunctionalPopoverAligner(popoverAligner),
         ),
         itemBuilder: (context, item, isActive, onTap) => DecoratedBox(
           decoration: BoxDecoration(
@@ -1290,7 +1291,7 @@ class _GroupedToolbarItensState extends State<_GroupedToolbarItens> {
             tapRegionGroupId: widget.tapRegionGroupId,
             onTapOutside: (controller) => _popoverController.close(),
             controller: _popoverController,
-            popoverGeometry: PopoverGeometry(align: _aditionalItensAligner),
+            popoverGeometry: PopoverGeometry(aligner: FunctionalPopoverAligner(_aditionalItensAligner)),
             buttonBuilder: (context) => TextButton(
               onPressed: () => _popoverController.open(),
               style: defaultToolbarButtonStyle,

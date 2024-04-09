@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:overlord/overlord.dart';
 import 'package:super_editor/super_editor.dart';
 
 import 'theme.dart';
@@ -152,39 +153,41 @@ class _DocsAppMenuState extends State<DocsAppMenu> {
 /// of the menu button that launched it.
 class DocsAppMenuPopoverGeometry extends PopoverGeometry {
   @override
-  PopoverAligner get align => (Rect globalLeaderRect, Size followerSize, Size screenSize, GlobalKey? boundaryKey) {
-        final boundsBox = boundaryKey?.currentContext?.findRenderObject() as RenderBox?;
-        final bounds = boundsBox != null
-            ? Rect.fromPoints(
-                boundsBox.localToGlobal(Offset.zero),
-                boundsBox.localToGlobal(boundsBox.size.bottomRight(Offset.zero)),
-              )
-            : Offset.zero & screenSize;
-        late FollowerAlignment alignment;
+  PopoverAligner get aligner => FunctionalPopoverAligner(
+        (Rect globalLeaderRect, Size followerSize, Size screenSize, GlobalKey? boundaryKey) {
+          final boundsBox = boundaryKey?.currentContext?.findRenderObject() as RenderBox?;
+          final bounds = boundsBox != null
+              ? Rect.fromPoints(
+                  boundsBox.localToGlobal(Offset.zero),
+                  boundsBox.localToGlobal(boundsBox.size.bottomRight(Offset.zero)),
+                )
+              : Offset.zero & screenSize;
+          late FollowerAlignment alignment;
 
-        if (globalLeaderRect.bottom + followerSize.height < bounds.bottom) {
-          // The follower fits below the leader.
-          alignment = const FollowerAlignment(
-            leaderAnchor: Alignment.bottomLeft,
-            followerAnchor: Alignment.topLeft,
-          );
-        } else if (globalLeaderRect.top - followerSize.height > bounds.top) {
-          // The follower fits above the leader.
-          alignment = const FollowerAlignment(
-            leaderAnchor: Alignment.bottomLeft,
-            followerAnchor: Alignment.topLeft,
-          );
-        } else {
-          // There isn't enough room to fully display the follower below or above the leader.
-          // Pin the popover list to the bottom, letting the follower cover the leader.
-          alignment = const FollowerAlignment(
-            leaderAnchor: Alignment.bottomLeft,
-            followerAnchor: Alignment.topLeft,
-          );
-        }
+          if (globalLeaderRect.bottom + followerSize.height < bounds.bottom) {
+            // The follower fits below the leader.
+            alignment = const FollowerAlignment(
+              leaderAnchor: Alignment.bottomLeft,
+              followerAnchor: Alignment.topLeft,
+            );
+          } else if (globalLeaderRect.top - followerSize.height > bounds.top) {
+            // The follower fits above the leader.
+            alignment = const FollowerAlignment(
+              leaderAnchor: Alignment.bottomLeft,
+              followerAnchor: Alignment.topLeft,
+            );
+          } else {
+            // There isn't enough room to fully display the follower below or above the leader.
+            // Pin the popover list to the bottom, letting the follower cover the leader.
+            alignment = const FollowerAlignment(
+              leaderAnchor: Alignment.bottomLeft,
+              followerAnchor: Alignment.topLeft,
+            );
+          }
 
-        return alignment;
-      };
+          return alignment;
+        },
+      );
 
   @override
   BoxConstraints get constraints => const BoxConstraints.tightFor(width: 250);
