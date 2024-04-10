@@ -35,30 +35,6 @@ MutableDocument deserializeMarkdownToDocument(
       const _EmptyLinePreservingParagraphSyntax(),
       const _TaskSyntax(),
     ],
-    inlineSyntaxes: [
-      md.EmailAutolinkSyntax(),
-      md.AutolinkSyntax(),
-      md.LineBreakSyntax(),
-      // Allow any punctuation to be escaped.
-      md.EscapeSyntax(),
-      // Unbalanced emphasis - "**text*", "*text**".
-      md.TextSyntax(r'\*{', startCharacter: _space),
-      // "*" surrounded by spaces is left alone.
-      md.TextSyntax(r' \* ', startCharacter: _space),
-      // "_" surrounded by spaces is left alone.
-      md.TextSyntax(r' _ ', startCharacter: _space),
-      // Parse "**strong**" and "*emphasis*" tags.
-      md.TagSyntax(
-        r'^\s*(\*)[^\*]+\*\s*$|^\s*(\*{2})[^\*]+\*{2}\s*$|^\s*(\*{3})[^\*]+\*{3}\s*$',
-        requiresDelimiterRun: true,
-      ),
-      // md.TagSyntax(r'\*+', requiresDelimiterRun: true),
-      // Parse "__strong__" and "_emphasis_" tags.
-      md.TagSyntax(r'_+', requiresDelimiterRun: true),
-      md.CodeSyntax(),
-      // We will add the LinkSyntax once we know about the specific link resolver.
-    ],
-    withDefaultInlineSyntaxes: false,
   );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
 
@@ -419,26 +395,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
           UnderlineSyntax(),
           if (syntax == MarkdownSyntax.superEditor) //
             SuperEditorImageSyntax(),
-          md.EmailAutolinkSyntax(),
-          md.AutolinkSyntax(),
-          md.LineBreakSyntax(),
-          // Allow any punctuation to be escaped.
-          md.EscapeSyntax(),
-          // Unbalanced emphasis - "**text*", "*text**".
-          md.TextSyntax(r'\*{', startCharacter: _space),
-          // "*" surrounded by spaces is left alone.
-          md.TextSyntax(r' \* ', startCharacter: _space),
-          // "_" surrounded by spaces is left alone.
-          md.TextSyntax(r' _ ', startCharacter: _space),
-          // Parse "**strong**" and "*emphasis*" tags.
-          // FIXME: Somehow we lost this syntax when I reset the 'markdown' package dep. Maybe I implemented it in the package and then erased it.
-          // md.BalancedTagSyntax(r'\*+'),
-          // Parse "__strong__" and "_emphasis_" tags.
-          md.TagSyntax(r'_+', requiresDelimiterRun: true),
-          md.CodeSyntax(),
-          // We will add the LinkSyntax once we know about the specific link resolver.
         ],
-        withDefaultInlineSyntaxes: false,
         encodeHtml: _encodeHtml,
       ),
     );
@@ -450,9 +407,6 @@ class _MarkdownToDocument implements md.NodeVisitor {
     return inlineVisitor;
   }
 }
-
-/// Space character.
-const int _space = 0x20;
 
 /// Parses inline markdown content.
 ///
