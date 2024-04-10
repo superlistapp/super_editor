@@ -7,9 +7,6 @@ import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 import 'super_editor_syntax.dart';
 
-/// Space character.
-const int $space = 0x20;
-
 /// Parses the given [markdown] and deserializes it into a [MutableDocument].
 ///
 /// The given [syntax] controls how the [markdown] is parsed, e.g., [MarkdownSyntax.normal]
@@ -26,7 +23,6 @@ MutableDocument deserializeMarkdownToDocument(
   List<ElementToNodeConverter> customElementToNodeConverters = const [],
   bool encodeHtml = false,
 }) {
-  print("deserializeMarkdownToDocument()");
   final markdownLines = const LineSplitter().convert(markdown);
 
   final markdownDoc = md.Document(
@@ -46,11 +42,11 @@ MutableDocument deserializeMarkdownToDocument(
       // Allow any punctuation to be escaped.
       md.EscapeSyntax(),
       // Unbalanced emphasis - "**text*", "*text**".
-      md.TextSyntax(r'\*{', startCharacter: $space),
+      md.TextSyntax(r'\*{', startCharacter: _space),
       // "*" surrounded by spaces is left alone.
-      md.TextSyntax(r' \* ', startCharacter: $space),
+      md.TextSyntax(r' \* ', startCharacter: _space),
       // "_" surrounded by spaces is left alone.
-      md.TextSyntax(r' _ ', startCharacter: $space),
+      md.TextSyntax(r' _ ', startCharacter: _space),
       // Parse "**strong**" and "*emphasis*" tags.
       md.TagSyntax(
         r'^\s*(\*)[^\*]+\*\s*$|^\s*(\*{2})[^\*]+\*{2}\s*$|^\s*(\*{3})[^\*]+\*{3}\s*$',
@@ -429,13 +425,14 @@ class _MarkdownToDocument implements md.NodeVisitor {
           // Allow any punctuation to be escaped.
           md.EscapeSyntax(),
           // Unbalanced emphasis - "**text*", "*text**".
-          md.TextSyntax(r'\*{', startCharacter: $space),
+          md.TextSyntax(r'\*{', startCharacter: _space),
           // "*" surrounded by spaces is left alone.
-          md.TextSyntax(r' \* ', startCharacter: $space),
+          md.TextSyntax(r' \* ', startCharacter: _space),
           // "_" surrounded by spaces is left alone.
-          md.TextSyntax(r' _ ', startCharacter: $space),
+          md.TextSyntax(r' _ ', startCharacter: _space),
           // Parse "**strong**" and "*emphasis*" tags.
-          md.BalancedTagSyntax(r'\*+'),
+          // FIXME: Somehow we lost this syntax when I reset the 'markdown' package dep. Maybe I implemented it in the package and then erased it.
+          // md.BalancedTagSyntax(r'\*+'),
           // Parse "__strong__" and "_emphasis_" tags.
           md.TagSyntax(r'_+', requiresDelimiterRun: true),
           md.CodeSyntax(),
@@ -453,6 +450,9 @@ class _MarkdownToDocument implements md.NodeVisitor {
     return inlineVisitor;
   }
 }
+
+/// Space character.
+const int _space = 0x20;
 
 /// Parses inline markdown content.
 ///

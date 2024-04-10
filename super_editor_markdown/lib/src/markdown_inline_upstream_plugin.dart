@@ -1,27 +1,18 @@
-import 'package:collection/collection.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// A [SuperEditorPlugin] that finds inline Markdown syntax immediately upstream from the
 /// caret and converts it into attributions.
 ///
-/// Inline Markdown syntax includes things like `**token**` for bold, `*token*` for
-/// italics, `~token~` for strikethrough, and `[token](url)` for hyperlinks.
+/// See [MarkdownInlineUpstreamSyntaxReaction] to learn more about how Markdown is located
+/// and applied by this plugin.
 ///
-/// When this plugin finds inline Markdown syntax, that syntax is removed when the corresponding
-/// attribution is applied. For example, "**bold**" becomes "bold" with a bold attribution
-/// applied to it.
-///
-/// This plugin only identifies spans of Markdown styles within individual [TextNode]s, which
-/// immediately precedes the caret. For example, "Hello **bold**|" will apply the bold style,
-/// but "Hello **bold** wo|" won't apply bold.
-///
-/// To add this plugin to a [SuperEditor] widget, provide a [MarkdownImmediateTokenInlineStylePlugin] in
+/// To add this plugin to a [SuperEditor] widget, provide a [MarkdownInlineUpstreamSyntaxPlugin] in
 /// the `plugins` property.
 ///
 ///   SuperEditor(
 ///     //...
 ///     plugins: {
-///       markdownInlineStylePlugin,
+///       markdownInlineUpstreamSyntaxPlugin,
 ///     },
 ///   );
 ///
@@ -29,31 +20,55 @@ import 'package:super_editor/super_editor.dart';
 /// widget, call [attach] with the given [Editor]. When that [Editor] is no longer needed,
 /// call [detach] to clean up all plugin references.
 ///
-///   markdownInlineStylePlugin.attach(editor);
+///   markdownInlineUpstreamSyntaxPlugin.attach(editor);
 ///
 ///
-class MarkdownImmediateTokenInlineStylePlugin extends SuperEditorPlugin {
-  MarkdownImmediateTokenInlineStylePlugin() {
-    _markdownInlineStyleReaction = MarkdownImmediateTokenInlineStyleReaction();
+class MarkdownInlineUpstreamSyntaxPlugin extends SuperEditorPlugin {
+  MarkdownInlineUpstreamSyntaxPlugin({
+    List<UpstreamMarkdownInlineSyntax> parsers = defaultUpstreamInlineMarkdownParsers,
+  }) {
+    _markdownInlineUpstreamSyntaxReaction = MarkdownInlineUpstreamSyntaxReaction(parsers);
   }
 
   /// An [EditReaction] that finds and converts Markdown styling into attributed
   /// styles.
-  late EditReaction _markdownInlineStyleReaction;
+  late final EditReaction _markdownInlineUpstreamSyntaxReaction;
 
   @override
   void attach(Editor editor) {
-    editor.reactionPipeline.insert(0, _markdownInlineStyleReaction);
+    editor.reactionPipeline.insert(0, _markdownInlineUpstreamSyntaxReaction);
   }
 
   @override
   void detach(Editor editor) {
-    editor.reactionPipeline.remove(_markdownInlineStyleReaction);
+    editor.reactionPipeline.remove(_markdownInlineUpstreamSyntaxReaction);
   }
 }
 
-class MarkdownImmediateTokenInlineStyleReaction implements EditReaction {
-  MarkdownImmediateTokenInlineStyleReaction();
+const defaultUpstreamInlineMarkdownParsers = [
+  StyleUpstreamMarkdownSyntaxParser(),
+];
+
+/// An [EditReaction] that finds inline Markdown syntax immediately upstream from the
+/// caret and converts it into attributions.
+///
+/// Inline Markdown syntax includes things like `**token**` for bold, `*token*` for
+/// italics, and `~token~` for strikethrough. Links aren't included because their complex
+/// syntax makes upstream parsing a poor strategy for identifying them. For linkification,
+/// consider using a batch Markdown parsing approach, or consider identifying URLs directly,
+/// without requiring any Markdown syntax.
+///
+/// When this reaction finds inline Markdown syntax, that syntax is removed when the corresponding
+/// attribution is applied. For example, "**bold**" becomes "bold" with a bold attribution
+/// applied to it.
+///
+/// This reaction only identifies spans of Markdown styles within individual [TextNode]s, which
+/// immediately precedes the caret. For example, "Hello **bold**|" will apply the bold style,
+/// but "Hello **bold** wo|" won't apply bold.
+class MarkdownInlineUpstreamSyntaxReaction implements EditReaction {
+  const MarkdownInlineUpstreamSyntaxReaction(this._parsers);
+
+  final List<UpstreamMarkdownInlineSyntax> _parsers;
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
@@ -62,7 +77,7 @@ class MarkdownImmediateTokenInlineStyleReaction implements EditReaction {
       return;
     }
     if (changeList.where((edit) => edit is DocumentEdit && edit.change is TextInsertionEvent).isEmpty) {
-      // No text insertions. Nothing for this plugin to do.
+      // No text insertions. Nothing for this reaction to do.
       return;
     }
 
@@ -70,7 +85,7 @@ class MarkdownImmediateTokenInlineStyleReaction implements EditReaction {
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     final selection = composer.selection;
     if (selection == null) {
-      // No selection, so no caret for us to search before.
+      // No selection, so no caret for us to search upstream.
       return;
     }
     if (!selection.isCollapsed) {
@@ -87,16 +102,13 @@ class MarkdownImmediateTokenInlineStyleReaction implements EditReaction {
       return;
     }
 
-    final changeRequests = _applyInlineMarkdownBeforeCaret(document, extent);
-    if (changeRequests.isEmpty) {
+    final editRequests = _applyInlineMarkdownBeforeCaret(document, extent);
+    if (editRequests.isEmpty) {
       // No inline Markdown was applied. Fizzle.
       return;
     }
 
-    print("Text before applying Markdown: '${(document.getNodeById(extent.nodeId) as TextNode).text.text}'");
-    requestDispatcher.execute(changeRequests);
-    print("Text after applying Markdown: '${(document.getNodeById(extent.nodeId) as TextNode).text.text}'");
-    print("");
+    requestDispatcher.execute(editRequests);
   }
 
   /// Finds and returns the node IDs for every [TextNode] that was altered during this
@@ -129,7 +141,11 @@ class MarkdownImmediateTokenInlineStyleReaction implements EditReaction {
   ) {
     final editedNode = document.getNodeById(caretPosition.nodeId) as TextNode;
     final caretOffset = (caretPosition.nodePosition as TextNodePosition).offset;
-    final inlineParser = _UpstreamInlineMarkdownParser(editedNode.text, caretOffset: caretOffset);
+    final inlineParser = _UpstreamInlineMarkdownParser(
+      _parsers,
+      editedNode.text,
+      caretOffset: caretOffset,
+    );
 
     final markdownRun = inlineParser.findMarkdown();
     if (markdownRun == null) {
@@ -137,6 +153,7 @@ class MarkdownImmediateTokenInlineStyleReaction implements EditReaction {
     }
 
     return [
+      // Delete the whole run of Markdown text, e.g., "**my bold**".
       DeleteContentRequest(
         documentRange: DocumentRange(
           start: DocumentPosition(
@@ -149,18 +166,21 @@ class MarkdownImmediateTokenInlineStyleReaction implements EditReaction {
           ),
         ),
       ),
+      // Insert the non-Markdown content with styles, e.g., "bold" with a bold attribution.
       InsertAttributedTextRequest(
         DocumentPosition(
           nodeId: editedNode.id,
           nodePosition: TextNodePosition(offset: markdownRun.start),
         ),
-        markdownRun.appliedText,
+        markdownRun.replacementText,
       ),
+      // Adjust the caret position to reflect any Markdown syntax characters that
+      // were removed.
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: editedNode.id,
-            nodePosition: TextNodePosition(offset: markdownRun.start + markdownRun.appliedText.length),
+            nodePosition: TextNodePosition(offset: markdownRun.start + markdownRun.replacementText.length),
           ),
         ),
         SelectionChangeType.alteredContent,
@@ -170,16 +190,45 @@ class MarkdownImmediateTokenInlineStyleReaction implements EditReaction {
   }
 }
 
+/// A specialized Markdown parser that starts a given caret offset and then works its
+/// way upstream to find inline Markdown tokens.
+///
+/// The parser finds and returns a single [_InlineMarkdownRun], if one exists.
+///
+/// The parser moves character by character upstream from the caret. Each time the
+/// parser encounters a character that might be part of the end of an inline syntax,
+/// that possible token is added to a set of candidates. When the upstream parser
+/// locates a corresponding upstream inline syntax token, the completed syntax is
+/// added to a set of completed syntaxes.
+///
+/// The reason that multiple completed syntaxes are tracked is because the Markdown
+/// syntax allows for ambiguities.
+///
+/// For example, the parser finds
+///
+///   "*word**|"
+///
+/// Notice that "*word*" is a completed token, but it' very likely that if
+/// the parser moves one more character upstream, it will find...
+///
+///   "**word**|"
+///
+/// In this case, the parser wants to apply bold, not italics. Therefore,
+/// the heuristic that makes sense is to keep parsing upstream until there
+/// aren't any possible matches left, and then apply whichever syntax was
+/// completed last.
 class _UpstreamInlineMarkdownParser {
   _UpstreamInlineMarkdownParser(
+    this.parsers,
     this.attributedText, {
     required this.caretOffset,
   });
 
+  final List<UpstreamMarkdownInlineSyntax> parsers;
   final AttributedText attributedText;
   final int caretOffset;
 
-  final _possibleSyntaxes = <_UpstreamMarkdownSyntaxParser>[];
+  final _possibleSyntaxes = <UpstreamMarkdownToken>[];
 
   _InlineMarkdownRun? findMarkdown() {
     if (caretOffset == 0) {
@@ -188,26 +237,28 @@ class _UpstreamInlineMarkdownParser {
       return null;
     }
 
-    print("Inspecting text for Markdown: '${attributedText.text}'");
-
     int offset = caretOffset - 1;
-    // Add new possible syntaxes for the given character.
-    final styleSyntax = _StyleUpstreamMarkdownSyntaxParser.maybeCreateForCharacter(attributedText.text[offset], offset);
-    if (styleSyntax != null) {
-      _possibleSyntaxes.add(styleSyntax);
-    }
-    // final linkSyntax = _LinkMarkdownSyntaxParser.maybeCreateForCharacter(character, characterIndex);
-    // if (linkSyntax != null) {
-    //   _possibleSyntaxes.add(linkSyntax);
+
+    // Start visiting upstream characters by visiting the first character
+    // and checking for possible syntaxes.
+    // final styleSyntax =
+    //     StyleUpstreamMarkdownSyntaxParser._maybeCreateForCharacter(attributedText.text[offset], offset);
+    // if (styleSyntax != null) {
+    //   _possibleSyntaxes.add(styleSyntax);
     // }
-    final successfulParsers = <_UpstreamMarkdownSyntaxParser>[];
+    for (final parser in parsers) {
+      final markdownToken = parser.startWith(attributedText.text[offset], offset);
+      if (markdownToken != null) {
+        _possibleSyntaxes.add(markdownToken);
+      }
+    }
+
+    final successfulParsers = <UpstreamMarkdownToken>[];
     while (offset > 0 && _possibleSyntaxes.isNotEmpty) {
       offset -= 1;
-      print("Inspecting text index: $offset");
-      print(
-          "'${attributedText.text.substring(0, offset)}'>${attributedText.text[offset]}<'${offset < attributedText.length - 1 ? attributedText.text.substring(offset + 1) : ""}'");
 
-      // Update all existing possible syntaxes and also add new possible syntaxes.
+      // Update all existing possible syntaxes and remove any possible syntaxes
+      // that are now invalid due to the new character.
       _updatePossibleSyntaxes(attributedText.text[offset], offset);
 
       // Store any successful parsers on a stack. We keep searching after successful
@@ -220,19 +271,27 @@ class _UpstreamInlineMarkdownParser {
         // There's still at least one character upstream from this one. Make sure
         // that all of our successful parsers are allowed to appear after that
         // upstream character.
+        //
+        // An example where this check is needed is the following:
+        //
+        //   We found "*word*"
+        //
+        //   Actual text is "**word*"
+        //
+        // Finding a completed syntax isn't enough. We need to ensure that the
+        // immediate upstream character before the syntax doesn't invalidate it.
         final upstreamCharacter = attributedText.text[offset - 1];
         successfulParsers.removeWhere((parser) => !parser.canFollowCharacter(upstreamCharacter));
       }
-      print("");
     }
 
     if (successfulParsers.isEmpty) {
-      print("No parsers found Markdown");
       return null;
     }
 
-    print("Found ${successfulParsers.length} successful parser");
+    // Select the completed syntax that we found last.
     final successfulParser = successfulParsers.last;
+
     return _InlineMarkdownRun(
       successfulParser.calculateFinalText(attributedText),
       offset,
@@ -255,7 +314,30 @@ class _UpstreamInlineMarkdownParser {
   }
 }
 
-abstract interface class _UpstreamMarkdownSyntaxParser {
+/// A parser for a specific set of inline Markdown syntaxes, based on
+/// the offset of a caret.
+///
+/// The syntax that's parsed is determined by the implementer.
+abstract interface class UpstreamMarkdownInlineSyntax {
+  /// Checks the given [character], and if that [character] might represent
+  /// the trailing end of an inline token, that token is returned, otherwise
+  /// `null` is returned.
+  ///
+  /// The given [atTextIndex] is the index of the [character] within the
+  /// larger text blob.
+  ///
+  /// For example, given a starting [character] of "*", a token might be
+  /// returned which is capable of identifying italics "*" and bold "**".
+  /// But if the [character] is "#", then `null` is returned because no
+  /// Markdown syntax ends with a "#".
+  UpstreamMarkdownToken? startWith(String character, int atTextIndex);
+}
+
+/// A Markdown token that's assembled by a specific [UpstreamMarkdownInlineSyntax].
+///
+/// An [UpstreamMarkdownToken] grows one character at a time until it either completes
+/// a valid Markdown token, or reaches a point where it's an invalid Markdown token.
+abstract interface class UpstreamMarkdownToken {
   /// Whether this parser still contains a valid syntax.
   ///
   /// Upstream parsers are told to consume one character after another with
@@ -267,12 +349,8 @@ abstract interface class _UpstreamMarkdownSyntaxParser {
   /// Whether the current text within this parser represents a complete Markdown
   /// syntax.
   ///
-  /// For style parsers, the parser is considered complete when it finds both
-  /// opening and closing syntaxes of the same form, e.g., "*italics*" or "**bold**".
-  ///
-  /// For a link parser, the syntax needs to full close the link. For example,
-  /// "link](google.com)" is valid as we parse upstream, but it's not complete.
-  /// "[a link](google.com)" is both valid and complete.
+  /// The parser is considered complete when it finds both opening and closing
+  /// syntaxes of the same form, e.g., "*italics*" or "**bold**".
   bool get isComplete;
 
   /// Prepends the given upstream [character] to this syntax and then re-evaluates
@@ -309,44 +387,51 @@ abstract interface class _UpstreamMarkdownSyntaxParser {
   ///
   /// This should only be called when [isComplete] is `true`.
   ///
-  /// The final text is calculated, rather than returned, because the final attributions
-  /// might be based on existing attributions. For example, applying bold shouldn't remove
-  /// existing italics, and vis-a-versa. But this decision about which attributions to
-  /// retain needs to a per-parser responsibility. For example, it might not make sense
-  /// to retain bold or italics if the user applies an inline code style.
+  /// The final text is calculated based on a given [existingText], rather than returned
+  /// in isolation, because the final attributions might be based on existing attributions.
+  /// For example, applying bold shouldn't remove existing italics, and vis-a-versa.
+  /// But this decision about which attributions to retain needs to be a per-parser
+  /// responsibility. For example, it might not make sense to retain bold or italics if
+  /// the user applies an inline code style.
   AttributedText calculateFinalText(AttributedText existingText);
 }
 
-class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParser {
-  static const _possibleStartCharacters = {"*", "_", "~", "`"};
+/// An [UpstreamMarkdownInlineSyntax] that parses standard Markdown styles, e.g.,
+/// bold, italics, code, strikethrough.
+class StyleUpstreamMarkdownSyntaxParser implements UpstreamMarkdownInlineSyntax {
+  const StyleUpstreamMarkdownSyntaxParser();
 
-  /// Inspects the given [character] and if its a style character such as "*", "_", "~",
-  /// it might be the closing character of a Markdown style, and a new
-  /// [_StyleUpstreamMarkdownSyntaxParser] is returned, otherwise `null` is returned.
-  static _StyleUpstreamMarkdownSyntaxParser? maybeCreateForCharacter(String character, int characterIndex) {
-    if (!_possibleStartCharacters.contains(character)) {
+  @override
+  UpstreamMarkdownToken? startWith(String character, int atTextIndex) {
+    if (!StyleUpstreamMarkdownToken.possibleStartCharacters.contains(character)) {
       return null;
     }
 
     switch (character) {
       case "*":
       case "_":
-        return _StyleUpstreamMarkdownSyntaxParser(character, 3, characterIndex);
+        return StyleUpstreamMarkdownToken(character, 3, atTextIndex);
       case "~":
       case "`":
-        return _StyleUpstreamMarkdownSyntaxParser(character, 1, characterIndex);
+        return StyleUpstreamMarkdownToken(character, 1, atTextIndex);
       default:
         throw Exception("Unrecognized Markdown style trigger: '$character'");
     }
   }
+}
+
+/// An [UpstreamMarkdownToken] that applies standard inline Markdown styles,
+/// e.g., bold, italics, strikethrough, and code.
+class StyleUpstreamMarkdownToken implements UpstreamMarkdownToken {
+  static const possibleStartCharacters = {"*", "_", "~", "`"};
 
   static const _lookingForCloseSyntax = 1;
   static const _lookingForOpenSyntax = 2;
   static const _done = 3;
 
-  _StyleUpstreamMarkdownSyntaxParser(this._triggerCharacter, this._maxSyntaxLength, this._triggerIndex)
+  StyleUpstreamMarkdownToken(this._triggerCharacter, this._maxSyntaxLength, this._triggerIndex)
       : assert(_triggerCharacter.length == 1),
-        assert(_possibleStartCharacters.contains(_triggerCharacter)),
+        assert(possibleStartCharacters.contains(_triggerCharacter)),
         _closingSyntax = _triggerCharacter {
     if (_maxSyntaxLength == 1) {
       // Only one closing character is allowed, so we start off already looking
@@ -360,8 +445,6 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
 
     _allParsedText = _triggerCharacter;
     _currentIndex = _triggerIndex;
-
-    print("Starting possible syntax with '$_triggerCharacter` at text offset $_triggerIndex");
   }
 
   final String _triggerCharacter;
@@ -384,9 +467,6 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
 
   @override
   void prependCharacter(String character) {
-    print("Prepending character '$character' on to text: '${_allParsedText.toString()}, start: $_currentIndex");
-    print(" - current closing syntax: $_closingSyntax");
-    print(" - current opening syntax: $_openingSyntax");
     _allParsedText = "$character$_allParsedText";
     _currentIndex -= 1;
 
@@ -396,7 +476,6 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
           // We found another character that belongs to our style syntax, e.g.,
           // from "*" to "**", from "_" to "__".
           _closingSyntax = "$character$_closingSyntax";
-          print("Added to _closingSyntax: '$_closingSyntax'");
         } else {
           // We've moved from the closing syntax into the styled content.
           _phase = _lookingForOpenSyntax;
@@ -406,16 +485,13 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
           // Prepend the current character to what might end up being the starting
           // syntax.
           _openingSyntax = "$character$_openingSyntax";
-          print("Added to _openingSyntax: '$_openingSyntax'");
         } else {
           _openingSyntax = "";
-          print("Reset _openingSyntax because we hit a non-trigger character.");
         }
 
         if (_openingSyntax == _closingSyntax) {
           // We just found an opening syntax that matches our closing syntax.
           // Therefore, we have found a complete Markdown run.
-          print("This syntax is complete.");
           _isComplete = true;
           _phase = _done;
         }
@@ -423,16 +499,13 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
         // More characters were added after already finding a complete Markdown
         // style. This changes the syntax from valid to invalid because its now
         // more than just a style.
-        print("Added more character after done. Now it's invalid.");
         _isValid = false;
     }
   }
 
   @override
   bool canFollowCharacter(String character) {
-    print("Syntax was asked if it can follow: '$character'");
     return character == " ";
-    // return character != _triggerCharacter;
   }
 
   @override
@@ -447,8 +520,6 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
           "Can't calculate inline Markdown text for a parser whose content is invalid: '${_allParsedText.toString()}'.");
     }
 
-    print("Calculating final text - opening: $_openingSyntax, closing: $_closingSyntax");
-
     final newStyles = <Attribution>{};
     switch (_openingSyntax) {
       case "***":
@@ -456,11 +527,9 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
         newStyles.addAll([italicsAttribution, boldAttribution]);
       case "**":
       case "__":
-        print("Adding bold for **");
         newStyles.add(boldAttribution);
       case "*":
       case "_":
-        print("Adding italic for *");
         newStyles.add(italicsAttribution);
       case "~":
         newStyles.add(strikethroughAttribution);
@@ -484,122 +553,22 @@ class _StyleUpstreamMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParse
   }
 }
 
-// class _LinkMarkdownSyntaxParser implements _UpstreamMarkdownSyntaxParser {
-//   /// Inspects the given [character] and if its a ")", it might be the closing
-//   /// character of a Markdown link and a new [_LinkMarkdownSyntaxParser] is
-//   /// returned, otherwise `null` is returned.
-//   static _LinkMarkdownSyntaxParser? maybeCreateForCharacter(String character, int characterIndex) {
-//     if (character != ")") {
-//       return null;
-//     }
-//     return _LinkMarkdownSyntaxParser(characterIndex);
-//   }
-//
-//   static const _lookingForUrlOpen = 1;
-//   static const _lookingForLinkClose = 2;
-//   static const _lookingForLinkOpen = 3;
-//   static const _done = 4;
-//
-//   _LinkMarkdownSyntaxParser(this._triggerIndex) : _currentSyntax = ")" {
-//     _allParsedText = ")";
-//     _currentIndex = _triggerIndex;
-//   }
-//
-//   int _triggerIndex;
-//   String _allParsedText = "";
-//   late int _currentIndex;
-//
-//   String _currentSyntax;
-//   String _url = "";
-//   String _link = "";
-//   int _phase = 1;
-//
-//   @override
-//   bool get isValid => _isValid;
-//   bool _isValid = true;
-//
-//   @override
-//   bool get isComplete => _isComplete;
-//   bool _isComplete = false;
-//
-//   @override
-//   void prependCharacter(String character) {
-//     _allParsedText = "$character$_allParsedText";
-//     print("Trying to find Markdown link in: '$_allParsedText'");
-//     _currentIndex -= 1;
-//     if (!_isValid) {
-//       return;
-//     }
-//
-//     _currentSyntax = "$character$_currentSyntax";
-//
-//     switch (_phase) {
-//       case _lookingForUrlOpen:
-//         if (character == "(") {
-//           _phase = _lookingForLinkClose;
-//         } else {
-//           // This character is part of the URL.
-//           _url = "$character$_url";
-//         }
-//       case _lookingForLinkClose:
-//         if (character == "]") {
-//           _phase = _lookingForLinkOpen;
-//         } else {
-//           // We expect "]" appear immediately upstream from "(", but it's not.
-//           // This is not a valid link syntax.
-//           _isValid = false;
-//           return;
-//         }
-//       case _lookingForLinkOpen:
-//         if (character == "[") {
-//           _isComplete = true;
-//         } else {
-//           // This character is part of the link label.
-//           _link = "$character$_link";
-//         }
-//       case _done:
-//         // More characters were added after already finding a complete Markdown
-//         // link. This changes the syntax from valid to invalid because its now
-//         // more than just a link.
-//         _isValid = false;
-//     }
-//   }
-//
-//   @override
-//   AttributedText calculateFinalText(AttributedText existingText) {
-//     if (!_isComplete) {
-//       throw Exception(
-//         "Can't calculate inline Markdown text for a parser (Links) whose content is incomplete: '${_allParsedText.toString()}'.",
-//       );
-//     }
-//     if (!_isValid) {
-//       throw Exception(
-//           "Can't calculate inline Markdown text for a parser (Links) whose content is invalid: '${_allParsedText.toString()}'.");
-//     }
-//
-//     print("Calculating final text:");
-//     print(" - total text: '${_allParsedText.toString()}'");
-//     print(" - link: $_link");
-//     print(" - URL: $_url");
-//
-//     // Copy the link text out of the existing text. For example, if the existing text
-//     // is "Hello [my link](http://google.com)" we want to copy "my link".
-//     //
-//     // At this point in the process, the `_currentIndex` points to the character one place
-//     // upstream from the opening "[".
-//     final styledLink = existingText.copyText(_currentIndex + 1, _currentIndex + 1 + _link.length)
-//       ..addAttribution(
-//         LinkAttribution(url: Uri.parse(_url)),
-//         SpanRange(0, _link.length - 1),
-//       );
-//     return styledLink;
-//   }
-// }
-
+/// The span of text where a Markdown snippet resides, e.g., "**bold**",
+/// and the [AttributedText] that should replace it, e.g., "bold" with
+/// a bold attribution.
 class _InlineMarkdownRun {
-  const _InlineMarkdownRun(this.appliedText, this.start, this.end);
+  const _InlineMarkdownRun(this.replacementText, this.start, this.end);
 
-  final AttributedText appliedText;
+  /// A snippet of text with some kind of Markdown syntax applied to it.
+  ///
+  /// The Markdown syntax is included in this value, e.g., "**word**.
+  final AttributedText replacementText;
+
+  /// The index of the first character of a Markdown snippet within a larger
+  /// piece of text.
   final int start;
+
+  /// The index immediately after the last character of a Markdown snippet
+  /// within a larger piece of text.
   final int end;
 }
