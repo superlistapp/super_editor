@@ -417,7 +417,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
               androidToolbarBuilder: (_) => _buildAndroidFloatingToolbar(),
               overlayController: _overlayController,
               plugins: {
-                MarkdownImmediateTokenInlineStylePlugin(),
+                MarkdownInlineUpstreamSyntaxPlugin(),
               },
             ),
           ),
