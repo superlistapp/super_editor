@@ -23,7 +23,7 @@ MutableDocument deserializeMarkdownToDocument(
   List<ElementToNodeConverter> customElementToNodeConverters = const [],
   bool encodeHtml = false,
 }) {
-  final markdownLines = const LineSplitter().convert(markdown);
+  final markdownLines = const LineSplitter().convert(markdown).map(md.Line.new).toList(growable: false);
 
   final markdownDoc = md.Document(
     blockSyntaxes: [
@@ -391,7 +391,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
       text,
       md.Document(
         inlineSyntaxes: [
-          md.StrikethroughSyntax(),
+          StrikethroughSyntaxFix(),
           UnderlineSyntax(),
           if (syntax == MarkdownSyntax.superEditor) //
             SuperEditorImageSyntax(),
@@ -519,23 +519,46 @@ abstract class ElementToNodeConverter {
   DocumentNode? handleElement(md.Element element);
 }
 
-/// A Markdown [TagSyntax] that matches underline spans of text, which are represented in
+/// A Markdown [md.DelimiterSyntax] that matches underline spans of text, which are represented in
 /// Markdown with surrounding `¬` tags, e.g., "this is ¬underline¬ text".
 ///
-/// This [TagSyntax] produces `Element`s with a `u` tag.
-class UnderlineSyntax extends md.TagSyntax {
-  UnderlineSyntax() : super('¬', requiresDelimiterRun: true, allowIntraWord: true);
+/// This [md.DelimiterSyntax] produces `Element`s with a `u` tag.
+class UnderlineSyntax extends md.DelimiterSyntax {
+  UnderlineSyntax()
+      : super(
+          '¬',
+          requiresDelimiterRun: true,
+          allowIntraWord: true,
+          tags: [md.DelimiterTag('u', 1)],
+        );
 
   @override
-  md.Node? close(
+  Iterable<md.Node>? close(
     md.InlineParser parser,
     md.Delimiter opener,
     md.Delimiter? closer, {
     String? tag,
     required List<md.Node> Function() getChildren,
   }) {
-    return md.Element('u', getChildren());
+    return [md.Element('u', getChildren())];
   }
+}
+
+/// A Markdown [md.DelimiterSyntax] that matches strikethrough spans of text, which are represented in
+/// Markdown with surrounding `~` tags, e.g., "this is ~strikethrough~ text" or "tis is ~~strikethrough~~ text".
+///
+/// The default [md.StrikethroughSyntax] works only with double `~` tags.
+//
+// TODO(anyone): remove when new version of markdown package with [single tilda strikethrough](https://github.com/dart-lang/markdown/pull/595)
+//               syntax fix is released (v7.2.3).
+class StrikethroughSyntaxFix extends md.DelimiterSyntax {
+  StrikethroughSyntaxFix()
+      : super(
+          '~+',
+          requiresDelimiterRun: true,
+          allowIntraWord: true,
+          tags: [md.DelimiterTag('del', 1), md.DelimiterTag('del', 2)],
+        );
 }
 
 /// Parses a paragraph preceded by an alignment token.
@@ -549,7 +572,7 @@ class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax 
 
   @override
   bool canParse(md.BlockParser parser) {
-    if (!_alignmentNotationPattern.hasMatch(parser.current)) {
+    if (!_alignmentNotationPattern.hasMatch(parser.current.content)) {
       return false;
     }
 
@@ -565,7 +588,7 @@ class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax 
     /// We found a paragraph alignment token, but the block after the alignment token isn't a paragraph.
     /// Therefore, the paragraph alignment token is actually regular content. This parser doesn't need to
     /// take any action.
-    if (_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(nextLine))) {
+    if (_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(nextLine.content))) {
       return false;
     }
 
@@ -576,7 +599,7 @@ class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax 
 
   @override
   md.Node? parse(md.BlockParser parser) {
-    final match = _alignmentNotationPattern.firstMatch(parser.current);
+    final match = _alignmentNotationPattern.firstMatch(parser.current.content);
 
     // We've parsed the alignment token on the current line. We know a paragraph starts on the
     // next line. Move the parser to the next line so that we can parse the paragraph.
@@ -631,13 +654,13 @@ class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
       return false;
     }
 
-    if (parser.current.isEmpty) {
+    if (parser.current.content.isEmpty) {
       // We consider this input to be a separator between blocks because
       // it started with an empty line. We want to parse this input.
       return true;
     }
 
-    if (_isAtParagraphEnd(parser, ignoreEmptyBlocks: _endsWithHardLineBreak(parser.current))) {
+    if (_isAtParagraphEnd(parser, ignoreEmptyBlocks: _endsWithHardLineBreak(parser.current.content))) {
       // Another parser wants to parse this input. Let the other parser run.
       return false;
     }
@@ -649,12 +672,12 @@ class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
   @override
   md.Node? parse(md.BlockParser parser) {
     final childLines = <String>[];
-    final startsWithEmptyLine = parser.current.isEmpty;
+    final startsWithEmptyLine = parser.current.content.isEmpty;
 
     // A hard line break causes the next line to be treated
     // as part of the same paragraph, except if the next line is
     // the beginning of another block element.
-    bool hasHardLineBreak = _endsWithHardLineBreak(parser.current);
+    bool hasHardLineBreak = _endsWithHardLineBreak(parser.current.content);
 
     if (startsWithEmptyLine) {
       // The parser started at an empty line.
@@ -670,7 +693,7 @@ class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
         return null;
       }
 
-      if (!_blankLinePattern.hasMatch(parser.current)) {
+      if (!parser.current.isBlankLine) {
         // We found an empty line, but the following line isn't blank.
         // As there is no hard line break, the first line is consumed
         // as a separator between blocks.
@@ -683,7 +706,7 @@ class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
       childLines.add('');
 
       // Check for a hard line break, so we consume the next line if we found one.
-      hasHardLineBreak = _endsWithHardLineBreak(parser.current);
+      hasHardLineBreak = _endsWithHardLineBreak(parser.current.content);
       parser.advance();
     }
 
@@ -692,9 +715,9 @@ class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
     // ends with a hard line break.
     while (!_isAtParagraphEnd(parser, ignoreEmptyBlocks: hasHardLineBreak)) {
       final currentLine = parser.current;
-      childLines.add(currentLine);
+      childLines.add(currentLine.content);
 
-      hasHardLineBreak = _endsWithHardLineBreak(currentLine);
+      hasHardLineBreak = _endsWithHardLineBreak(currentLine.content);
 
       parser.advance();
     }
@@ -778,7 +801,7 @@ class _TaskSyntax extends md.BlockSyntax {
 
   @override
   md.Node? parse(md.BlockParser parser) {
-    final match = pattern.firstMatch(parser.current);
+    final match = pattern.firstMatch(parser.current.content);
     if (match == null) {
       return null;
     }
@@ -796,10 +819,10 @@ class _TaskSyntax extends md.BlockSyntax {
     // - find a blank line OR
     // - find the start of another block element (including another task)
     while (!parser.isDone &&
-        !_blankLinePattern.hasMatch(parser.current) &&
-        !_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(parser.current))) {
+        !parser.current.isBlankLine &&
+        !_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(parser.current.content))) {
       buffer.write('\n');
-      buffer.write(parser.current);
+      buffer.write(parser.current.content);
 
       parser.advance();
     }
@@ -833,7 +856,7 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
 
   @override
   bool canParse(md.BlockParser parser) {
-    if (!_alignmentNotationPattern.hasMatch(parser.current)) {
+    if (!_alignmentNotationPattern.hasMatch(parser.current.content)) {
       return false;
     }
 
@@ -847,7 +870,7 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
     }
 
     // Only parse if the next line is header.
-    if (!_headerSyntax.pattern.hasMatch(nextLine)) {
+    if (!_headerSyntax.pattern.hasMatch(nextLine.content)) {
       return false;
     }
 
@@ -856,7 +879,7 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
 
   @override
   md.Node? parse(md.BlockParser parser) {
-    final match = _alignmentNotationPattern.firstMatch(parser.current);
+    final match = _alignmentNotationPattern.firstMatch(parser.current.content);
 
     // We've parsed the alignment token on the current line. We know a header starts on the
     // next line. Move the parser to the next line so that we can parse the header.
@@ -890,9 +913,6 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
     }
   }
 }
-
-/// Matches empty lines or lines containing only whitespace.
-final _blankLinePattern = RegExp(r'^(?:[ \t]*)$');
 
 const List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
   md.HeaderSyntax(),
