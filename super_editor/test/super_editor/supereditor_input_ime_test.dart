@@ -991,6 +991,48 @@ Paragraph two
       expect(SuperEditorInspector.findTextInComponent(nodeId).text, 'This is a paragrap');
     });
 
+    testWidgetsOnWebDesktop('merges paragraphs backspace at the beginning of a paragraph', (tester) async {
+      await tester //
+          .createDocument()
+          .fromMarkdown('''
+Paragraph one
+
+Paragraph two
+''')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final doc = SuperEditorInspector.findDocument()!;
+
+      // Place caret at the start of the second paragraph.
+      await tester.placeCaretInParagraph(doc.nodes[1].id, 0);
+
+      // Simulates the user pressing BACKSPACE, which generates a deletion delta.
+      // This deletion will cause the two paragraphs to be merged.
+      await tester.ime.sendDeltas(
+        const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '. Paragraph two',
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaDeletion(
+            oldText: '. Paragraph two',
+            deletedRange: TextRange(start: 1, end: 2),
+            selection: TextSelection.collapsed(offset: 1),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Ensure the paragraph was merged.
+      expect(
+        (doc.nodes[0] as ParagraphNode).text.text,
+        'Paragraph oneParagraph two',
+      );
+    });
+
     group('text serialization and selected content', () {
       test('within a single node is reported as a TextEditingValue', () {
         const text = "This is a paragraph of text.";
