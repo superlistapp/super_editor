@@ -828,6 +828,56 @@ void main() {
         expect(spans[1].end, 10);
       });
     });
+
+    group("AttributedText copy method", () {
+      test("should return a copy of the AttributedText object", () {
+        final attributedText = AttributedText(
+          'Sample Text',
+          AttributedSpans(),
+        );
+
+        final copy = attributedText.copy();
+
+        expect(identical(copy, attributedText), isFalse);
+        expect(copy.text, attributedText.text);
+        expect(copy.spans, attributedText.spans);
+      });
+
+      test("should create a deep copy", () {
+        final original = AttributedText(
+          'abcdefghij',
+          AttributedSpans(
+            attributions: [
+              const SpanMarker(
+                  attribution: ExpectedSpans.bold,
+                  offset: 2,
+                  markerType: SpanMarkerType.start),
+              const SpanMarker(
+                  attribution: ExpectedSpans.italics,
+                  offset: 4,
+                  markerType: SpanMarkerType.start),
+              const SpanMarker(
+                  attribution: ExpectedSpans.bold,
+                  offset: 5,
+                  markerType: SpanMarkerType.end),
+              const SpanMarker(
+                  attribution: ExpectedSpans.italics,
+                  offset: 7,
+                  markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+
+        final copy = original.copy();
+
+        // Verify that modifying the copy doesn't affect the original
+        copy.spans.removeAttribution(
+            attributionToRemove: ExpectedSpans.bold, start: 2, end: 5);
+
+        expect(original.text, equals(copy.text));
+        expect(original.spans.markers.length, isNot(copy.spans.markers.length));
+      });
+    });
   });
 }
 
