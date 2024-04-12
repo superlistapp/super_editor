@@ -30,7 +30,7 @@ dependencies:
   logging: ^1.0.1
   super_text_layout: ^0.1.9
   url_launcher: ^6.1.9
-  uuid: ^3.0.3
+  uuid: ^4.0.0
   overlord: ^0.0.3+5
 
   # Dependencies for testing tools that we ship with super_editor
