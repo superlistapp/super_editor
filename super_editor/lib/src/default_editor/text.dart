@@ -1797,6 +1797,13 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
   }
 }
 
+class InsertAttributedTextRequest implements EditRequest {
+  const InsertAttributedTextRequest(this.documentPosition, this.textToInsert);
+
+  final DocumentPosition documentPosition;
+  final AttributedText textToInsert;
+}
+
 class InsertAttributedTextCommand implements EditCommand {
   InsertAttributedTextCommand({
     required this.documentPosition,
