@@ -530,8 +530,7 @@ class UnderlineSyntax extends md.TagSyntax {
   md.Node? close(
     md.InlineParser parser,
     md.Delimiter opener,
-    md.Delimiter? closer, {
-    String? tag,
+    md.Delimiter closer, {
     required List<md.Node> Function() getChildren,
   }) {
     return md.Element('u', getChildren());

@@ -1193,6 +1193,7 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
         return;
       case SelectionChangeType.placeCaret:
       case SelectionChangeType.collapseSelection:
+      case SelectionChangeType.alteredContent:
       case SelectionChangeType.deleteContent:
         // Move the caret to the nearest edge of the tag.
         _moveCaretToNearestTagEdge(requestDispatcher, selectionChangeEvent, textNode.id, tagAroundCaret);
@@ -1241,6 +1242,7 @@ class AdjustSelectionAroundTagReaction implements EditReaction {
         // safe and do nothing in this case.
         return;
       case SelectionChangeType.placeExtent:
+      case SelectionChangeType.alteredContent:
       case SelectionChangeType.deleteContent:
         if (tagAroundCaret == null) {
           return;
