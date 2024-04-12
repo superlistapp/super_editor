@@ -160,7 +160,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   }
 
   @override
-  AutofillScope? get currentAutofillScope => throw UnimplementedError();
+  AutofillScope? get currentAutofillScope => null;
 
   @override
   TextEditingValue get currentTextEditingValue => _currentTextEditingValue;
