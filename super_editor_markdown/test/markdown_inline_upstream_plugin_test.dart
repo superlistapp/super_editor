@@ -9,24 +9,7 @@ void main() {
   group("Super Editor upstream Markdown reaction >", () {
     group("at beginning of paragraph >", () {
       testWidgets("bold", (tester) async {
-        final document = deserializeMarkdownToDocument("");
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                plugins: {
-                  MarkdownInlineUpstreamSyntaxPlugin(),
-                },
-              ),
-            ),
-          ),
-        );
+        final (document, _) = await _pumpScaffold(tester);
 
         final nodeId = document.nodes.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
@@ -40,24 +23,7 @@ void main() {
       });
 
       testWidgets("italics", (tester) async {
-        final document = deserializeMarkdownToDocument("");
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                plugins: {
-                  MarkdownInlineUpstreamSyntaxPlugin(),
-                },
-              ),
-            ),
-          ),
-        );
+        final (document, _) = await _pumpScaffold(tester);
 
         final nodeId = document.nodes.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
@@ -71,24 +37,7 @@ void main() {
       });
 
       testWidgets("strikethrough", (tester) async {
-        final document = deserializeMarkdownToDocument("");
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                plugins: {
-                  MarkdownInlineUpstreamSyntaxPlugin(),
-                },
-              ),
-            ),
-          ),
-        );
+        final (document, _) = await _pumpScaffold(tester);
 
         final nodeId = document.nodes.first.id;
         await tester.placeCaretInParagraph(nodeId, 20);
@@ -103,24 +52,7 @@ void main() {
 
       group("unbalanced >", () {
         testWidgets("bold then italics", (tester) async {
-          final document = deserializeMarkdownToDocument("");
-          final composer = MutableDocumentComposer();
-          final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: editor,
-                  document: document,
-                  composer: composer,
-                  plugins: {
-                    MarkdownInlineUpstreamSyntaxPlugin(),
-                  },
-                ),
-              ),
-            ),
-          );
+          final (document, _) = await _pumpScaffold(tester);
 
           final nodeId = document.nodes.first.id;
           await tester.placeCaretInParagraph(nodeId, 0);
@@ -131,24 +63,7 @@ void main() {
         });
 
         testWidgets("italics then bold", (tester) async {
-          final document = deserializeMarkdownToDocument("");
-          final composer = MutableDocumentComposer();
-          final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: editor,
-                  document: document,
-                  composer: composer,
-                  plugins: {
-                    MarkdownInlineUpstreamSyntaxPlugin(),
-                  },
-                ),
-              ),
-            ),
-          );
+          final (document, _) = await _pumpScaffold(tester);
 
           final nodeId = document.nodes.first.id;
           await tester.placeCaretInParagraph(nodeId, 0);
@@ -165,24 +80,7 @@ void main() {
 
     group("in middle of paragraph >", () {
       testWidgets("bold", (tester) async {
-        final document = deserializeMarkdownToDocument("Hello");
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                plugins: {
-                  MarkdownInlineUpstreamSyntaxPlugin(),
-                },
-              ),
-            ),
-          ),
-        );
+        final (document, _) = await _pumpScaffold(tester, "Hello");
 
         final nodeId = document.nodes.first.id;
         await tester.placeCaretInParagraph(nodeId, 5);
@@ -197,24 +95,7 @@ void main() {
       });
 
       testWidgets("italics", (tester) async {
-        final document = deserializeMarkdownToDocument("Hello");
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                plugins: {
-                  MarkdownInlineUpstreamSyntaxPlugin(),
-                },
-              ),
-            ),
-          ),
-        );
+        final (document, _) = await _pumpScaffold(tester, "Hello");
 
         final nodeId = document.nodes.first.id;
         await tester.placeCaretInParagraph(nodeId, 5);
@@ -229,24 +110,7 @@ void main() {
       });
 
       testWidgets("strikethrough", (tester) async {
-        final document = deserializeMarkdownToDocument("Hello");
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                plugins: {
-                  MarkdownInlineUpstreamSyntaxPlugin(),
-                },
-              ),
-            ),
-          ),
-        );
+        final (document, _) = await _pumpScaffold(tester, "Hello");
 
         final nodeId = document.nodes.first.id;
         await tester.placeCaretInParagraph(nodeId, 5);
@@ -262,24 +126,7 @@ void main() {
 
       group("unbalanced >", () {
         testWidgets("bold then italics", (tester) async {
-          final document = deserializeMarkdownToDocument("Hello");
-          final composer = MutableDocumentComposer();
-          final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: editor,
-                  document: document,
-                  composer: composer,
-                  plugins: {
-                    MarkdownInlineUpstreamSyntaxPlugin(),
-                  },
-                ),
-              ),
-            ),
-          );
+          final (document, _) = await _pumpScaffold(tester, "Hello");
 
           final nodeId = document.nodes.first.id;
           await tester.placeCaretInParagraph(nodeId, 5);
@@ -290,24 +137,7 @@ void main() {
         });
 
         testWidgets("italics then bold", (tester) async {
-          final document = deserializeMarkdownToDocument("Hello");
-          final composer = MutableDocumentComposer();
-          final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: editor,
-                  document: document,
-                  composer: composer,
-                  plugins: {
-                    MarkdownInlineUpstreamSyntaxPlugin(),
-                  },
-                ),
-              ),
-            ),
-          );
+          final (document, _) = await _pumpScaffold(tester, "Hello");
 
           final nodeId = document.nodes.first.id;
           await tester.placeCaretInParagraph(nodeId, 5);
@@ -324,24 +154,7 @@ void main() {
 
     group("prevented deserializations >", () {
       testWidgets("unbalanced italics", (tester) async {
-        final document = deserializeMarkdownToDocument("");
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                plugins: {
-                  MarkdownInlineUpstreamSyntaxPlugin(),
-                },
-              ),
-            ),
-          ),
-        );
+        final (document, _) = await _pumpScaffold(tester, "");
 
         final nodeId = document.nodes.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
@@ -354,24 +167,7 @@ void main() {
     });
 
     testWidgets("multiple styles", (tester) async {
-      final document = deserializeMarkdownToDocument("Hello");
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: document,
-              composer: composer,
-              plugins: {
-                MarkdownInlineUpstreamSyntaxPlugin(),
-              },
-            ),
-          ),
-        ),
-      );
+      final (document, _) = await _pumpScaffold(tester, "Hello");
 
       final nodeId = document.nodes.first.id;
       await tester.placeCaretInParagraph(nodeId, 5);
@@ -409,24 +205,7 @@ void main() {
     });
 
     testWidgets("preserves non-Markdown attributions", (tester) async {
-      final document = deserializeMarkdownToDocument("Hello *italics");
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: document,
-              composer: composer,
-              plugins: {
-                MarkdownInlineUpstreamSyntaxPlugin(),
-              },
-            ),
-          ),
-        ),
-      );
+      final (document, editor) = await _pumpScaffold(tester, "Hello *italics");
 
       final nodeId = document.nodes.first.id;
 
@@ -467,24 +246,7 @@ void main() {
     testWidgets("replicates same ambiguity behaviors as other products", (tester) async {
       // This test verifies that the reaction does the same thing as Notion and Linear
       // when given a specific ambiguous input.
-      final document = deserializeMarkdownToDocument("Hello");
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: document,
-              composer: composer,
-              plugins: {
-                MarkdownInlineUpstreamSyntaxPlugin(),
-              },
-            ),
-          ),
-        ),
-      );
+      final (document, _) = await _pumpScaffold(tester, "Hello");
 
       final nodeId = document.nodes.first.id;
       await tester.placeCaretInParagraph(nodeId, 5);
@@ -530,24 +292,7 @@ void main() {
 
     group("does not parse upstream syntax creation >", () {
       testWidgets("italics", (tester) async {
-        final document = deserializeMarkdownToDocument("Hello italics*");
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                plugins: {
-                  MarkdownInlineUpstreamSyntaxPlugin(),
-                },
-              ),
-            ),
-          ),
-        );
+        final (document, _) = await _pumpScaffold(tester, "Hello italics*");
 
         final nodeId = document.nodes.first.id;
         await tester.placeCaretInParagraph(nodeId, 6);
@@ -565,24 +310,7 @@ void main() {
       });
 
       testWidgets("bold", (tester) async {
-        final document = deserializeMarkdownToDocument("Hello bold**");
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                plugins: {
-                  MarkdownInlineUpstreamSyntaxPlugin(),
-                },
-              ),
-            ),
-          ),
-        );
+        final (document, _) = await _pumpScaffold(tester, "Hello bold**");
 
         final nodeId = document.nodes.first.id;
         await tester.placeCaretInParagraph(nodeId, 6);
@@ -609,4 +337,27 @@ void main() {
       });
     });
   });
+}
+
+Future<(Document, Editor)> _pumpScaffold(WidgetTester tester, [String initialMarkdown = ""]) async {
+  final document = deserializeMarkdownToDocument(initialMarkdown);
+  final composer = MutableDocumentComposer();
+  final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: SuperEditor(
+          editor: editor,
+          document: document,
+          composer: composer,
+          plugins: {
+            MarkdownInlineUpstreamSyntaxPlugin(),
+          },
+        ),
+      ),
+    ),
+  );
+
+  return (document, editor);
 }

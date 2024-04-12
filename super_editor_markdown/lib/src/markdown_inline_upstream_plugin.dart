@@ -113,15 +113,15 @@ class MarkdownInlineUpstreamSyntaxReaction implements EditReaction {
 
   /// Finds and returns the node IDs for every [TextNode] that was altered during this
   /// transaction.
-  List<String> _findEditedTextNodes(Document document, List<EditEvent> changeList) {
-    final editedTextNodes = <String, String>{};
+  Set<String> _findEditedTextNodes(Document document, List<EditEvent> changeList) {
+    final editedTextNodes = <String>{};
     for (final change in changeList) {
       if (change is! DocumentEdit || change.change is! NodeDocumentChange) {
         continue;
       }
 
       final nodeId = (change.change as NodeDocumentChange).nodeId;
-      if (editedTextNodes.containsKey(nodeId)) {
+      if (editedTextNodes.contains(nodeId)) {
         continue;
       }
 
@@ -129,10 +129,10 @@ class MarkdownInlineUpstreamSyntaxReaction implements EditReaction {
         continue;
       }
 
-      editedTextNodes[nodeId] = document.getNodeById(nodeId)!.id;
+      editedTextNodes.add(nodeId);
     }
 
-    return editedTextNodes.values.toList();
+    return editedTextNodes;
   }
 
   List<EditRequest> _applyInlineMarkdownBeforeCaret(
@@ -241,11 +241,6 @@ class _UpstreamInlineMarkdownParser {
 
     // Start visiting upstream characters by visiting the first character
     // and checking for possible syntaxes.
-    // final styleSyntax =
-    //     StyleUpstreamMarkdownSyntaxParser._maybeCreateForCharacter(attributedText.text[offset], offset);
-    // if (styleSyntax != null) {
-    //   _possibleSyntaxes.add(styleSyntax);
-    // }
     for (final parser in parsers) {
       final markdownToken = parser.startWith(attributedText.text[offset], offset);
       if (markdownToken != null) {
