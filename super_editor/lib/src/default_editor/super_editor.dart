@@ -995,6 +995,8 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
 /// from the plugin, so that the [SuperEditor] widget can pass those extensions as properties
 /// during a widget build.
 abstract class SuperEditorPlugin {
+  const SuperEditorPlugin();
+
   /// Adds desired behaviors to the given [editor].
   void attach(Editor editor) {}
 

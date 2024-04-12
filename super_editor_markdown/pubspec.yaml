@@ -13,7 +13,7 @@ dependencies:
 
   super_editor: ^0.2.5
   logging: ^1.0.1
-  markdown: ^4.0.0
+  markdown: ^5.0.0
 
 dependency_overrides:
   # Override to local mono-repo path so devs can test this repo
