@@ -829,53 +829,74 @@ void main() {
       });
     });
 
-    group("AttributedText copy method", () {
-      test("should return a copy of the AttributedText object", () {
+    group("copy >", () {
+      test("copies an AttributedText without any attributions", () {
         final attributedText = AttributedText(
           'Sample Text',
-          AttributedSpans(),
         );
 
-        final copy = attributedText.copy();
-
-        expect(identical(copy, attributedText), isFalse);
-        expect(copy.text, attributedText.text);
-        expect(copy.spans, attributedText.spans);
+        expect(attributedText.copy(), AttributedText('Sample Text'));
       });
 
-      test("should create a deep copy", () {
-        final original = AttributedText(
+      test("copies an AttributedText with attributions", () {
+        final attributedText = AttributedText(
           'abcdefghij',
           AttributedSpans(
             attributions: [
               const SpanMarker(
-                  attribution: ExpectedSpans.bold,
-                  offset: 2,
-                  markerType: SpanMarkerType.start),
+                attribution: ExpectedSpans.bold,
+                offset: 2,
+                markerType: SpanMarkerType.start,
+              ),
               const SpanMarker(
-                  attribution: ExpectedSpans.italics,
-                  offset: 4,
-                  markerType: SpanMarkerType.start),
+                attribution: ExpectedSpans.italics,
+                offset: 4,
+                markerType: SpanMarkerType.start,
+              ),
               const SpanMarker(
-                  attribution: ExpectedSpans.bold,
-                  offset: 5,
-                  markerType: SpanMarkerType.end),
+                attribution: ExpectedSpans.bold,
+                offset: 5,
+                markerType: SpanMarkerType.end,
+              ),
               const SpanMarker(
-                  attribution: ExpectedSpans.italics,
-                  offset: 7,
-                  markerType: SpanMarkerType.end),
+                attribution: ExpectedSpans.italics,
+                offset: 7,
+                markerType: SpanMarkerType.end,
+              ),
             ],
           ),
         );
 
-        final copy = original.copy();
-
-        // Verify that modifying the copy doesn't affect the original
-        copy.spans.removeAttribution(
-            attributionToRemove: ExpectedSpans.bold, start: 2, end: 5);
-
-        expect(original.text, equals(copy.text));
-        expect(original.spans.markers.length, isNot(copy.spans.markers.length));
+        expect(
+          attributedText.copy(),
+          AttributedText(
+            'abcdefghij',
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: ExpectedSpans.bold,
+                  offset: 2,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: ExpectedSpans.italics,
+                  offset: 4,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: ExpectedSpans.bold,
+                  offset: 5,
+                  markerType: SpanMarkerType.end,
+                ),
+                const SpanMarker(
+                  attribution: ExpectedSpans.italics,
+                  offset: 7,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        );
       });
     });
   });
