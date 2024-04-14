@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -14,6 +13,7 @@ import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
+import 'package:super_editor/src/infrastructure/platforms/windows/windows_ime.dart';
 
 import '../document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_delta_editing.dart';
@@ -478,7 +478,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
     return SuperEditorImeDebugVisuals(
       imeConnection: _imeConnection,
       child: Actions(
-        actions: defaultTargetPlatform == TargetPlatform.macOS ? disabledMacIntents : {},
+        actions: CurrentPlatform.isApple ? disabledMacIntents : disabledWindowsIntents,
         child: SuperEditorHardwareKeyHandler(
           focusNode: _focusNode,
           editContext: widget.editContext,

@@ -409,6 +409,9 @@ class TestSuperEditorConfigurator {
     }
     return MaterialApp(
       theme: _config.appTheme,
+      // Add our own version of the shortcuts so we can use
+      // the web shortcuts in tests.
+      shortcuts: defaultFlutterShortcuts,
       home: Scaffold(
         body: superEditor,
       ),

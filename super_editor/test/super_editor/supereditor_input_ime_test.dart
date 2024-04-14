@@ -959,6 +959,26 @@ Paragraph two
       }, variant: inputSourceVariant);
     });
 
+    testWidgetsOnWebDesktop('inside a CustomScrollView > enters a space character with SPACE', (tester) async {
+      final testContext = await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .insideCustomScrollView()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = testContext.document.nodes.first.id;
+
+      // Place the caret at the beginning of the paragraph.
+      await tester.placeCaretInParagraph(nodeId, 0);
+
+      // Press space to insert a space character.
+      await _typeSpaceAdaptive(tester);
+
+      // Ensure the space character was inserted.
+      expect(SuperEditorInspector.findTextInComponent(nodeId).text, ' ');
+    });
+
     testWidgetsOnWebDesktop('deletes a character with backspace', (tester) async {
       final testContext = await tester //
           .createDocument()
@@ -1493,4 +1513,21 @@ class _TestImeOverrides extends DeltaTextInputClientDecorator {
   void performAction(TextInputAction action) {
     performActionCallback(action);
   }
+}
+
+/// Simulates pressing the SPACE key.
+///
+/// First, this method simulates pressing the SPACE key on a physical keyboard. If that key event goes unhandled
+/// then this method generates an insertion delta of " ".
+///
+// TODO: extract this to the flutter_test_robots package.
+Future<void> _typeSpaceAdaptive(WidgetTester tester) async {
+  final handled = await tester.sendKeyEvent(LogicalKeyboardKey.space);
+
+  if (handled) {
+    await tester.pumpAndSettle();
+    return;
+  }
+
+  await tester.typeImeText(' ');
 }

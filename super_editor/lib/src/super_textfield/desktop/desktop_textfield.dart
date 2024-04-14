@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -21,6 +20,7 @@ import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
+import 'package:super_editor/src/infrastructure/platforms/windows/windows_ime.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_field_scroller.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
@@ -461,7 +461,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required Widget child,
   }) {
     return Actions(
-      actions: defaultTargetPlatform == TargetPlatform.macOS ? disabledMacIntents : {},
+      actions: CurrentPlatform.isApple ? disabledMacIntents : disabledWindowsIntents,
       child: SuperTextFieldKeyboardInteractor(
         focusNode: _focusNode,
         textFieldContext: _textFieldContext,
