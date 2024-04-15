@@ -361,9 +361,14 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     // directly use _textKey.currentState!.textLayout because using it
     // we can't check for null.
     final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey);
+
+    // We don't expect getHeightForCaret to ever return null, but since its return type is nullable,
+    // we use getLineHeightAtPosition as a backup.
+    // More information in https://github.com/flutter/flutter/issues/145507.
     final lineHeight = _controller.text.text.isEmpty || textLayout == null
         ? 0.0
-        : textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
+        : textLayout.getHeightForCaret(const TextPosition(offset: 0)) ??
+            textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
     if (lineHeight > 0) {
       return lineHeight;
     }

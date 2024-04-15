@@ -236,11 +236,30 @@ class DocumentImeSerializer {
       return false;
     }
 
+    if (imePosition.offset <= -1) {
+      // The given imePosition might be a selection or a composing region.
+      // The IME composing position always has a value. When the IME wants
+      // to describe the absence of a composing region, the offset is set to -1.
+      // Therefore, this position refers to the absence of a composing region, so
+      // this position isn't sitting in the placeholder.
+      return false;
+    }
+
     if (imePosition.offset >= _prependedPlaceholder.length) {
       return false;
     }
 
     return true;
+  }
+
+  /// Returns the first visible position in the IME content.
+  ///
+  /// If a placeholder is prepended, returns the first position after the placeholder,
+  /// otherwise, returns the first position.
+  TextPosition get firstVisiblePosition {
+    return didPrependPlaceholder //
+        ? TextPosition(offset: _prependedPlaceholder.length)
+        : const TextPosition(offset: 0);
   }
 
   DocumentPosition _imeToDocumentPosition(TextPosition imePosition, {required bool isUpstream}) {
