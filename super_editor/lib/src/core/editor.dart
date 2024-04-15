@@ -264,27 +264,40 @@ class Editor implements RequestDispatcher {
   }
 
   void _onTransactionStart() {
+    print("_onTransactionStart()");
     for (final editable in context._resources.values) {
       editable.onTransactionStart();
     }
   }
 
   void _onTransactionEnd() {
+    print("_onTransactionEnd() - active change list: $_activeChangeList");
     if (_activeChangeList!.isNotEmpty) {
+      print("_onTransactionEnd() - active change is non-empty - calling _reactToChanges()");
       // TODO: We need to determine at this point whether to process reactios as a new
       //       transaction or as part of this existing transaction.
       // Run all reactions. These reactions will likely call `execute()` again, with
       // their own requests, to make additional changes.
-      _reactToChanges();
+      try {
+        _reactToChanges();
+      } catch (exception, stacktrace) {
+        print("Error running _reactToChanges");
+        print(exception);
+        print("$stacktrace");
+        rethrow;
+      }
 
       // Notify all listeners that care about changes, but won't spawn additional requests.
       _notifyListeners();
     }
+    print("_onTransactionEnd() - done reacting to changes");
 
     for (final editable in context._resources.values) {
+      print("_onTransactionEnd() - ending transaction on editable: $editable");
       editable.onTransactionEnd(_activeChangeList!);
     }
 
+    print("Null'ing out the active change list after ending the transaction");
     _activeChangeList = null;
   }
 
@@ -292,6 +305,7 @@ class Editor implements RequestDispatcher {
     for (final reaction in reactionPipeline) {
       // Note: we pass the active change list because reactions will cause more
       // changes to be added to that list.
+      print("_reactToChanges() - processing reaction. Active change list: $_activeChangeList");
       reaction.react(context, this, _activeChangeList!);
     }
   }
