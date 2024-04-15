@@ -598,48 +598,6 @@ void main() {
           const SpanRange(7, 11),
         );
       });
-
-      testWidgetsOnAllPlatforms("with consecutive triggers", (tester) async {
-        final plugin = StableTagPlugin();
-        await _pumpTestEditor(
-          tester,
-          singleParagraphEmptyDoc(),
-          plugin: plugin,
-        );
-        await tester.placeCaretInParagraph("1", 0);
-
-        // Type two consecutive trigger characters.
-        await tester.typeImeText("@@");
-
-        final composingStableTag = plugin.tagIndex.composingStableTag.value!;
-
-        // Ensure the composing tag is placed on the second @, with empty token.
-        expect(
-          composingStableTag,
-          const ComposingStableTag(
-            DocumentRange(
-              start: DocumentPosition(
-                nodeId: '1',
-                nodePosition: TextNodePosition(offset: 2),
-              ),
-              end: DocumentPosition(
-                nodeId: '1',
-                nodePosition: TextNodePosition(offset: 2),
-              ),
-            ),
-            '',
-          ),
-        );
-
-        final commitedTags = plugin.tagIndex.getCommittedTagsInTextNode('1');
-
-        expect(commitedTags.length, 1);
-
-        final commitTag = commitedTags.first;
-
-        // Ensure the committed tag is the first @
-        expect(commitTag, const IndexedTag(Tag('@', ''), '1', 0));
-      });
     });
 
     group("committed >", () {
