@@ -85,6 +85,20 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
   final _listItemTypeStack = <ListItemType>[];
 
+  /// The count of the list items currently being visited.
+  ///
+  /// Being visited means that [visitElementBefore] was called for an element and
+  /// [visitElementAfter] wasn't called yet.
+  ///
+  /// A list item might contain children with tags like `p` and `h2`. When it does,
+  /// the list item text content is inside of its children and we only generate
+  /// document nodes when we visit the list item's children.
+  ///
+  /// We track the item count because when there are sublists, [visitElementBefore] is
+  /// called for the sublist item before [visitElementAfter] is called for the
+  /// main list item.
+  int _listItemVisitedCount = 0;
+
   /// If `true`, special HTML symbols are encoded with HTML escape codes, otherwise those
   /// symbols are left as-is.
   ///
@@ -99,6 +113,18 @@ class _MarkdownToDocument implements md.NodeVisitor {
         _content.add(node);
         return true;
       }
+    }
+
+    if (_listItemVisitedCount > 0 &&
+        !const ['li', 'ul', 'ol'].contains(element.tag) &&
+        (element.children == null || element.children!.isEmpty || element.children!.length == 1)) {
+      // We are visiting the text content of a list item. Add a list item node to the document.
+      _addListItem(
+        element,
+        listItemType: _listItemTypeStack.last,
+        indent: _listItemTypeStack.length - 1,
+      );
+      return false;
     }
 
     // TODO: re-organize parsing such that visitElementBefore collects
@@ -164,24 +190,25 @@ class _MarkdownToDocument implements md.NodeVisitor {
           throw Exception('Tried to parse a markdown list item but the list item type was null');
         }
 
+        // Mark that we are visiting a list item.
+        _listItemVisitedCount += 1;
+
+        if (element.children != null &&
+            element.children!.isNotEmpty &&
+            element.children!.first is! md.UnparsedContent) {
+          // The list item content is inside of its child's element. Wait until we visit
+          // the list item's children to generate a list node.
+          return true;
+        }
+
+        // We already have the content of the list item, generate a list node.
         _addListItem(
           element,
           listItemType: _listItemTypeStack.last,
           indent: _listItemTypeStack.length - 1,
         );
+        break;
 
-        if (element.children == null) {
-          // There isn't any children to visit.
-          return false;
-        }
-
-        // A list item might contain a "p" tag child if it's separated
-        // by a blank line. Only visit its children if it contains a child list.
-        return element.children!.any(
-          (child) =>
-              child is md.Element && //
-              const ['ol', 'ul'].contains(child.tag),
-        );
       case 'hr':
         _addHorizontalRule();
         break;
@@ -196,6 +223,9 @@ class _MarkdownToDocument implements md.NodeVisitor {
   @override
   void visitElementAfter(md.Element element) {
     switch (element.tag) {
+      case 'li':
+        _listItemVisitedCount -= 1;
+        break;
       // A list has ended. Pop the most recent list type from the stack.
       case 'ul':
       case 'ol':
@@ -497,8 +527,12 @@ class UnderlineSyntax extends md.TagSyntax {
   UnderlineSyntax() : super('¬', requiresDelimiterRun: true, allowIntraWord: true);
 
   @override
-  md.Node close(md.InlineParser parser, md.Delimiter opener, md.Delimiter closer,
-      {required List<md.Node> Function() getChildren}) {
+  md.Node? close(
+    md.InlineParser parser,
+    md.Delimiter opener,
+    md.Delimiter closer, {
+    required List<md.Node> Function() getChildren,
+  }) {
     return md.Element('u', getChildren());
   }
 }
@@ -590,7 +624,26 @@ class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
   bool canEndBlock(md.BlockParser parser) => false;
 
   @override
-  bool canParse(md.BlockParser parser) => !_standardNonParagraphBlockSyntaxes.any((e) => e.canParse(parser));
+  bool canParse(md.BlockParser parser) {
+    if (_standardNonParagraphBlockSyntaxes.any((e) => e.canParse(parser))) {
+      // A standard non-paragraph parser wants to parse this input. Let the other parser run.
+      return false;
+    }
+
+    if (parser.current.isEmpty) {
+      // We consider this input to be a separator between blocks because
+      // it started with an empty line. We want to parse this input.
+      return true;
+    }
+
+    if (_isAtParagraphEnd(parser, ignoreEmptyBlocks: _endsWithHardLineBreak(parser.current))) {
+      // Another parser wants to parse this input. Let the other parser run.
+      return false;
+    }
+
+    // The input is a paragraph. We want to parse it.
+    return true;
+  }
 
   @override
   md.Node? parse(md.BlockParser parser) {
@@ -666,7 +719,8 @@ class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
       return true;
     }
     for (final syntax in parser.blockSyntaxes) {
-      if (!(syntax is md.EmptyBlockSyntax && ignoreEmptyBlocks) &&
+      if (syntax != this &&
+          !(syntax is md.EmptyBlockSyntax && ignoreEmptyBlocks) &&
           syntax.canParse(parser) &&
           syntax.canEndBlock(parser)) {
         return true;

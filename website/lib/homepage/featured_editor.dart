@@ -239,7 +239,7 @@ MutableDocument _createInitialDocument() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text: 'A supercharged rich text editor for Flutter',
+          'A supercharged rich text editor for Flutter',
         ),
         metadata: {
           'blockType': header1Attribution,
@@ -249,8 +249,8 @@ MutableDocument _createInitialDocument() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text: 'The missing WYSIWYG editor for Flutter.',
-          spans: AttributedSpans(
+          'The missing WYSIWYG editor for Flutter.',
+          AttributedSpans(
             attributions: [
               const SpanMarker(
                 attribution: boldAttribution,
@@ -269,9 +269,8 @@ MutableDocument _createInitialDocument() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text:
-              'Open source and written entirely in Dart. Comes with a modular architecture that allows you to customize it to your needs.',
-          spans: AttributedSpans(
+          'Open source and written entirely in Dart. Comes with a modular architecture that allows you to customize it to your needs.',
+          AttributedSpans(
             attributions: [
               const SpanMarker(
                 attribution: _underlineAttribution,
@@ -290,7 +289,7 @@ MutableDocument _createInitialDocument() {
       ParagraphNode(
         id: Editor.createNodeId(),
         text: AttributedText(
-          text: 'Try it right here >>',
+          'Try it right here >>',
         ),
       ),
     ],

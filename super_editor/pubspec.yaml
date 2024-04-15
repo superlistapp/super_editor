@@ -21,34 +21,30 @@ dependencies:
   flutter:
     sdk: flutter
 
-  attributed_text: ^0.2.2
+  attributed_text: ^0.3.0
   characters: ^1.2.0
   collection: ^1.15.0
   follow_the_leader: ^0.0.4+7
   http: ">=0.13.1 <2.0.0"
   linkify: ^5.0.0
   logging: ^1.0.1
-  super_text_layout: ^0.1.8
+  super_text_layout: ^0.1.9
   url_launcher: ^6.1.9
-  uuid: ^3.0.3
-  overlord: ^0.0.3+4
+  uuid: ^4.0.0
+  overlord: ^0.0.3+5
 
   # Dependencies for testing tools that we ship with super_editor
   flutter_test:
     sdk: flutter
-  flutter_test_robots: 0.0.22
+  flutter_test_robots: 0.0.23
 
 dependency_overrides:
   #  # Override to local mono-repo path so devs can test this repo
   #  # against changes that they're making to other mono-repo packages
-  attributed_text:
-    path: ../attributed_text
-  super_text_layout:
-    path: ../super_text_layout
-#
-#  flutter_test_robots:
-#    git:
-#      url: https://github.com/Flutter-Bounty-Hunters/flutter_test_robots
+#  attributed_text:
+#    path: ../attributed_text
+#  super_text_layout:
+#    path: ../super_text_layout
 
 dev_dependencies:
   flutter_lints: ^2.0.1

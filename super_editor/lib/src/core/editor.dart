@@ -441,6 +441,13 @@ class DocumentEdit implements EditEvent {
 
   @override
   String toString() => "DocumentEdit -> $change";
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is DocumentEdit && runtimeType == other.runtimeType && change == other.change;
+
+  @override
+  int get hashCode => change.hashCode;
 }
 
 /// An object that's notified with a change list from one or more

@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:super_editor/super_editor.dart';
 
 import 'theme.dart';
@@ -8,35 +9,48 @@ import 'theme.dart';
 /// This is the primary editing experience for the app. A [DocsEditor] takes up
 /// all the space beneath the app header pane.
 class DocsEditor extends StatefulWidget {
-  const DocsEditor({super.key});
+  const DocsEditor({
+    super.key,
+    this.focusNode,
+    required this.document,
+    required this.composer,
+    required this.editor,
+  });
+
+  final FocusNode? focusNode;
+  final MutableDocument document;
+  final MutableDocumentComposer composer;
+  final Editor editor;
 
   @override
   State<DocsEditor> createState() => _DocsEditorState();
 }
 
 class _DocsEditorState extends State<DocsEditor> {
-  late MutableDocument _document;
-  late MutableDocumentComposer _composer;
-  late Editor _editor;
-
-  final _editorFocusNode = FocusNode();
+  late FocusNode _editorFocusNode;
 
   @override
   void initState() {
     super.initState();
+    _editorFocusNode = widget.focusNode ?? FocusNode();
+  }
 
-    _document = _createInitialDocument();
-    _composer = MutableDocumentComposer();
-    _editor = createDefaultDocumentEditor(document: _document, composer: _composer);
+  @override
+  void didUpdateWidget(covariant DocsEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusNode != widget.focusNode) {
+      if (oldWidget.focusNode == null) {
+        _editorFocusNode.dispose();
+      }
+      _editorFocusNode = widget.focusNode ?? FocusNode();
+    }
   }
 
   @override
   void dispose() {
-    _editorFocusNode.dispose();
-
-    _editor.dispose();
-    _composer.dispose();
-    _document.dispose();
+    if (widget.focusNode == null) {
+      _editorFocusNode.dispose();
+    }
 
     super.dispose();
   }
@@ -48,11 +62,12 @@ class _DocsEditorState extends State<DocsEditor> {
       builder: (context, child) {
         return SuperEditor(
           focusNode: _editorFocusNode,
-          editor: _editor,
-          document: _document,
-          composer: _composer,
+          editor: widget.editor,
+          document: widget.document,
+          composer: widget.composer,
           stylesheet: defaultStylesheet.copyWith(
             addRulesAfter: docsStylesheet,
+            inlineTextStyler: _applyFontFamily,
           ),
           selectionStyle: _editorFocusNode.hasPrimaryFocus //
               ? _standardEditorSelectionStyle
@@ -66,9 +81,60 @@ class _DocsEditorState extends State<DocsEditor> {
               displayCaretWithExpandedSelection: false,
             ),
           ],
+          componentBuilders: [
+            ...defaultComponentBuilders,
+            TaskComponentBuilder(widget.editor),
+          ],
         );
       },
     );
+  }
+
+  TextStyle _applyFontFamily(Set<Attribution> attributions, TextStyle existingStyle) {
+    TextStyle styles = defaultInlineTextStyler(attributions, existingStyle);
+
+    final fontFamilyAttribution = attributions.whereType<FontFamilyAttribution>().firstOrNull;
+    if (fontFamilyAttribution != null) {
+      styles = GoogleFonts.getFont(
+        fontFamilyAttribution.fontFamily,
+        textStyle: styles,
+      );
+    }
+
+    return styles;
+  }
+}
+
+/// Attribution to be used within [AttributedText] to
+/// represent an inline span of a font family change.
+///
+/// Every [FontFamilyAttribution] is considered equivalent so
+/// that [AttributedText] prevents multiple [FontFamilyAttribution]s
+/// from overlapping.
+class FontFamilyAttribution implements Attribution {
+  FontFamilyAttribution(this.fontFamily);
+
+  @override
+  String get id => fontFamily;
+
+  final String fontFamily;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FontFamilyAttribution && runtimeType == other.runtimeType && fontFamily == other.fontFamily;
+
+  @override
+  int get hashCode => fontFamily.hashCode;
+
+  @override
+  String toString() {
+    return '[FontFamilyAttribution]: $fontFamily';
   }
 }
 
@@ -80,32 +146,3 @@ final _unfocusedEditorSelectionStyle = SelectionStyles(
   selectionColor: const Color(0xFFDDDDDD),
   highlightEmptyTextBlocks: defaultSelectionStyle.highlightEmptyTextBlocks,
 );
-
-// Creates the document that's initially displayed when the app launches.
-MutableDocument _createInitialDocument() {
-  return MutableDocument(
-    nodes: [
-      ParagraphNode(
-        id: Editor.createNodeId(),
-        text: AttributedText("Welcome to a Super Editor version of Docs!"),
-        metadata: {
-          "blockType": header1Attribution,
-        },
-      ),
-      ParagraphNode(
-        id: Editor.createNodeId(),
-        text: AttributedText("By: The Super Editor Team"),
-      ),
-      ParagraphNode(
-        id: Editor.createNodeId(),
-        text: AttributedText(
-            "This is an example document editor experience, which is meant to mimic the UX of Google Docs. We created this example app to ensure that common desktop word processing UX can be built with Super Editor."),
-      ),
-      ParagraphNode(
-        id: Editor.createNodeId(),
-        text: AttributedText(
-            "A typical desktop word processor is comprised of a pane at the top of the window, which includes some combination of information about the current document, as well as toolbars that present editing options. The remainder of the window is filled by an editable document."),
-      ),
-    ],
-  );
-}

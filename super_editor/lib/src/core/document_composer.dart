@@ -452,6 +452,10 @@ enum SelectionChangeType {
   /// Change the selection as the result of inserting content, e.g., typing a character, pasting content.
   insertContent,
 
+  /// Change the selection as the result of a content modification without explicit intervention
+  /// by the user, e.g., Markdown "**bold**|" serialized to "bold|"
+  alteredContent,
+
   /// Change the selection by deleting content, e.g., pressing backspace or delete.
   deleteContent,
 

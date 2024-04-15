@@ -2,6 +2,7 @@ import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 import '_example_document.dart';
 import '_toolbar.dart';
@@ -415,6 +416,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
               keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
               androidToolbarBuilder: (_) => _buildAndroidFloatingToolbar(),
               overlayController: _overlayController,
+              plugins: {
+                MarkdownInlineUpstreamSyntaxPlugin(),
+              },
             ),
           ),
         ),

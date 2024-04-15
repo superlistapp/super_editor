@@ -14,6 +14,7 @@ import 'package:super_editor/src/default_editor/selection_upstream_downstream.da
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
 import 'document_serialization.dart';
 
@@ -97,9 +98,12 @@ class TextDeltasDocumentEditor {
     // the IME composing region.
     editorImeLog.fine("After applying all deltas, converting the final composing region to a document range.");
     editorImeLog.fine("Raw IME delta composing region: ${textEditingDeltas.last.composing}");
+
+    DocumentRange? docComposingRegion = _calculateNewComposingRegion(textEditingDeltas);
+
     editor.execute([
       ChangeComposingRegionRequest(
-        _serializedDoc.imeToDocumentRange(textEditingDeltas.last.composing),
+        docComposingRegion,
       ),
     ]);
     editorImeLog.fine("Document composing region: ${composingRegion.value}");
@@ -257,8 +261,9 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine("OS-side selection - ${delta.selection}");
     editorImeLog.fine("OS-side composing - ${delta.composing}");
 
-    final docSelection = _serializedDoc.imeToDocumentSelection(delta.selection);
-    final docComposingRegion = _serializedDoc.imeToDocumentRange(delta.composing);
+    DocumentSelection? docSelection = _calculateNewDocumentSelection(delta);
+    DocumentRange? docComposingRegion = _calculateNewComposingRegion([delta]);
+
     if (docSelection != null) {
       // We got a selection from the platform.
       // This could happen in some software keyboards, like GBoard,
@@ -603,5 +608,40 @@ class TextDeltasDocumentEditor {
     // Update and add mapping from IME TextRanges to Document nodes.
     _serializedDoc.imeRangesToDocTextNodes[topImeToDocTextRange] = originNode.id;
     _serializedDoc.imeRangesToDocTextNodes[bottomImeToDocTextRange] = newNode.id;
+  }
+
+  DocumentSelection? _calculateNewDocumentSelection(TextEditingDelta delta) {
+    if (CurrentPlatform.isWeb &&
+        delta.selection.isCollapsed &&
+        _serializedDoc.isPositionInsidePlaceholder(delta.selection.extent)) {
+      // On web, pressing CMD + LEFT ARROW generates a non-text delta moving
+      // the selection to the first character. However, the first character is in a region
+      // invisible to the user. Adjust the document selection to be the first visible character.
+      // Expanded selection are already adjusted by the serializer.
+      return _serializedDoc.imeToDocumentSelection(
+        TextSelection.collapsed(
+          offset: _serializedDoc.firstVisiblePosition.offset,
+        ),
+      );
+    }
+    return _serializedDoc.imeToDocumentSelection(delta.selection);
+  }
+
+  DocumentRange? _calculateNewComposingRegion(List<TextEditingDelta> deltas) {
+    final lastDelta = deltas.last;
+    if (CurrentPlatform.isWeb &&
+        lastDelta.composing.isCollapsed &&
+        _serializedDoc.isPositionInsidePlaceholder(TextPosition(offset: lastDelta.composing.end))) {
+      // On web, pressing CMD + LEFT ARROW generates a non-text delta moving
+      // the selection, and possibly the composing region to the first character. However, the first character
+      // is in a region invisible to the user. Adjust the document composing region to be the first visible character.
+      // Expanded regions are already adjusted by the serializer.
+      return _serializedDoc.imeToDocumentRange(
+        TextRange.collapsed(
+          _serializedDoc.firstVisiblePosition.offset,
+        ),
+      );
+    }
+    return _serializedDoc.imeToDocumentRange(lastDelta.composing);
   }
 }

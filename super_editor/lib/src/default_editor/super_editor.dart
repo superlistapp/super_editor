@@ -1009,6 +1009,8 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
 /// from the plugin, so that the [SuperEditor] widget can pass those extensions as properties
 /// during a widget build.
 abstract class SuperEditorPlugin {
+  const SuperEditorPlugin();
+
   /// Adds desired behaviors to the given [editor].
   void attach(Editor editor) {}
 
@@ -1482,6 +1484,14 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
     } else if (attribution is ColorAttribution) {
       newStyle = newStyle.copyWith(
         color: attribution.color,
+      );
+    } else if (attribution is BackgroundColorAttribution) {
+      newStyle = newStyle.copyWith(
+        backgroundColor: attribution.color,
+      );
+    } else if (attribution is FontSizeAttribution) {
+      newStyle = newStyle.copyWith(
+        fontSize: attribution.fontSize,
       );
     } else if (attribution is LinkAttribution) {
       newStyle = newStyle.copyWith(
