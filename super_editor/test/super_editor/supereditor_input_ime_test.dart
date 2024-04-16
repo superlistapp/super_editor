@@ -959,7 +959,8 @@ Paragraph two
       }, variant: inputSourceVariant);
     });
 
-    testWidgetsOnWebDesktop('inside a CustomScrollView > enters a space character with SPACE', (tester) async {
+    testWidgetsOnWebDesktop('inside a CustomScrollView > inserts space instead of scrolling with SPACEBAR',
+        (tester) async {
       final testContext = await tester //
           .createDocument()
           .withSingleEmptyParagraph()

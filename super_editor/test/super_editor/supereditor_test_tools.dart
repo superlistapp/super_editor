@@ -9,6 +9,7 @@ import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 import 'package:text_table/text_table.dart';
 
+import '../test_tools_user_input.dart';
 import 'test_documents.dart';
 
 /// Extensions on [WidgetTester] that configure and pump [SuperEditor]
@@ -409,8 +410,12 @@ class TestSuperEditorConfigurator {
     }
     return MaterialApp(
       theme: _config.appTheme,
-      // Add our own version of the shortcuts so we can use
-      // the web shortcuts in tests.
+      // By default, Flutter chooses the shortcuts based on the platform. For "native" platforms,
+      // the defaults already work correctly, because we set `debugDefaultTargetPlatformOverride` to force
+      // the desired platform. However, for web Flutter checks for `kIsWeb`, which we can't control.
+      //
+      // Use our own version of the shortcuts, so we can set `debugIsWebOverride` to `true` to force
+      // Flutter to pick the web shortcuts.
       shortcuts: defaultFlutterShortcuts,
       home: Scaffold(
         body: superEditor,

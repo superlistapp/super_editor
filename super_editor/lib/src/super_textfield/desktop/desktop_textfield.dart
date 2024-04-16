@@ -8,6 +8,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/actions.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
@@ -20,7 +21,6 @@ import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
-import 'package:super_editor/src/infrastructure/platforms/windows/windows_ime.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_field_scroller.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
@@ -461,7 +461,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required Widget child,
   }) {
     return Actions(
-      actions: CurrentPlatform.isApple ? disabledMacIntents : disabledWindowsIntents,
+      actions: CurrentPlatform.isApple ? disabledMacIntents : disabledNonAppleIntents,
       child: SuperTextFieldKeyboardInteractor(
         focusNode: _focusNode,
         textFieldContext: _textFieldContext,
