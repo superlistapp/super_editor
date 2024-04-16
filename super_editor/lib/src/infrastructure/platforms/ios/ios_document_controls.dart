@@ -569,8 +569,6 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     widget.selection.addListener(_onSelectionChange);
     widget.shouldCaretBlink.addListener(_onBlinkModeChange);
     widget.floatingCursorController?.isActive.addListener(_onFloatingCursorActivationChange);
-
-    _onBlinkModeChange();
   }
 
   @override
