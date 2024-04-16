@@ -217,6 +217,24 @@ class SuperEditorInspector {
     return findRichTextInParagraph(nodeId, superEditorFinder).style;
   }
 
+  /// Finds the ordered list item with the given [nodeId] and returns its index on the list.
+  ///
+  /// List items are indexed starting from 1.
+  ///
+  /// {@macro supereditor_finder}
+  static int findListItemOrdinal(String nodeId, [Finder? superEditorFinder]) {
+    final listItem = find
+        .ancestor(
+          of: find.byWidget(SuperEditorInspector.findWidgetForComponent(nodeId)),
+          matching: find.byType(OrderedListItemComponent),
+        )
+        .evaluate()
+        .single
+        .widget as OrderedListItemComponent;
+
+    return listItem.listIndex;
+  }
+
   /// Calculates the delta between the center of the character at [textOffset1] and and the
   /// center of the character at [textOffset2] within the node with the given [nodeId].
   ///
