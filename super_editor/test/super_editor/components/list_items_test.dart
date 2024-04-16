@@ -517,7 +517,7 @@ void main() {
             .createDocument()
             .fromMarkdown("""
 - First unordered item
-- Second unoredered item
+- Second unordered item
 1. First ordered item
 2. Second ordered item""") //
             .pump();
