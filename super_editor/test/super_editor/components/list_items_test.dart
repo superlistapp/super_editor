@@ -512,6 +512,50 @@ void main() {
         expect(secondOrderedItem.listIndex, 2);
       });
 
+      testWidgetsOnArbitraryDesktop('starts sequence in the first ordered item', (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("""
+- First unordered item
+- Second unoredered item
+1. First ordered item
+2. Second ordered item""") //
+            .pump();
+
+        expect(context.document.nodes.length, 4);
+
+        // Ensure the nodes have the correct type.
+        expect(context.document.nodes[0], isA<ListItemNode>());
+        expect((context.document.nodes[0] as ListItemNode).type, ListItemType.unordered);
+
+        expect(context.document.nodes[1], isA<ListItemNode>());
+        expect((context.document.nodes[1] as ListItemNode).type, ListItemType.unordered);
+
+        expect(context.document.nodes[2], isA<ListItemNode>());
+        expect((context.document.nodes[2] as ListItemNode).type, ListItemType.ordered);
+
+        expect(context.document.nodes[3], isA<ListItemNode>());
+        expect((context.document.nodes[3] as ListItemNode).type, ListItemType.ordered);
+
+        // Ensure the sequence started only after the first ordered item, i.e., the unordered items
+        // didn't affect the sequence.
+        final firstOrderedItem = tester.widget<OrderedListItemComponent>(
+          find.ancestor(
+            of: find.byWidget(SuperEditorInspector.findWidgetForComponent(context.document.nodes[2].id)),
+            matching: find.byType(OrderedListItemComponent),
+          ),
+        );
+        expect(firstOrderedItem.listIndex, 1);
+
+        final secondOrderedItem = tester.widget<OrderedListItemComponent>(
+          find.ancestor(
+            of: find.byWidget(SuperEditorInspector.findWidgetForComponent(context.document.nodes[3].id)),
+            matching: find.byType(OrderedListItemComponent),
+          ),
+        );
+        expect(secondOrderedItem.listIndex, 2);
+      });
+
       testWidgetsOnArbitraryDesktop('does not keep sequence for items split by paragraphs', (tester) async {
         final context = await tester //
             .createDocument()
