@@ -637,7 +637,7 @@ class LinkifyReaction implements EditReaction {
       final uri = _parseLink(word);
 
       text.addAttribution(
-        LinkAttribution(url: uri),
+        LinkAttribution.fromUri(uri),
         SpanRange(wordStartOffset, endOffset - 1),
       );
     }
@@ -798,8 +798,8 @@ class LinkifyReaction implements EditReaction {
     // link attribution that reflects the edited URL text. We do that below.
     if (updatePolicy == LinkUpdatePolicy.update) {
       changedNodeText.addAttribution(
-        LinkAttribution(
-          url: _parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
+        LinkAttribution.fromUri(
+          _parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
         ),
         rangeToUpdate,
       );

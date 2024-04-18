@@ -384,7 +384,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
     final trimmedRange = _trimTextRangeWhitespace(text, selectionRange);
 
-    final linkAttribution = LinkAttribution(url: Uri.parse(url));
+    final linkAttribution = LinkAttribution.fromUri(Uri.parse(url));
 
     widget.editor!.execute([
       AddTextAttributionsRequest(
