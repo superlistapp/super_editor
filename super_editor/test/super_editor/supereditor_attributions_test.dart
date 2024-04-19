@@ -584,6 +584,50 @@ void main() {
           );
         });
 
+        testWidgetsOnAllPlatforms("toggles an attribution when selection starts at the end of the upstream node",
+            (tester) async {
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown("First node\n\nSecond node")
+              .pump();
+
+          final editor = context.editor;
+          final document = context.document;
+
+          final firstNode = document.nodes[0] as ParagraphNode;
+          final secondNode = document.nodes[1] as ParagraphNode;
+
+          // Apply the bold attribution, starting after the last character of the first node.
+          editor.toggleAttributionsForDocumentSelection(
+            DocumentSelection(
+              base: firstNode.endDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
+          );
+
+          // Ensure bold attribution is applied only to the second node. Since the selection starts at the
+          // end of the first node, there's no text there to apply the attribution to.
+          expect(
+            document,
+            equalsMarkdown(
+              "First node\n\n**Second node**",
+            ),
+          );
+
+          // Remove the bold attribution, starting after the last character of the first node.
+          editor.toggleAttributionsForDocumentSelection(
+            DocumentSelection(
+              base: firstNode.endDocumentPosition,
+              extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
+          );
+
+          // Ensure bold attribution was removed.
+          expect(secondNode.text.spans.markers.isEmpty, true);
+        });
+
         testWidgetsOnAllPlatforms(
             "toggles an attribution across nodes with the attribution applied throughout and partially within first and second node respectively",
             (tester) async {

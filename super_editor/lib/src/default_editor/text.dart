@@ -1495,6 +1495,12 @@ class ToggleTextAttributionsCommand implements EditCommand {
         endOffset = max(textNode.text.length - 1, 0);
       }
 
+      if (startOffset >= textNode.text.length) {
+        // The selection begins after the last character in the node. There's no text
+        // to toggle any attributions. Skip this node.
+        continue;
+      }
+
       final selectionRange = SpanRange(startOffset, endOffset);
 
       alreadyHasAttributions = alreadyHasAttributions &&
