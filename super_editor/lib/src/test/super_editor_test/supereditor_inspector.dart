@@ -217,9 +217,9 @@ class SuperEditorInspector {
     return findRichTextInParagraph(nodeId, superEditorFinder).style;
   }
 
-  /// Finds the ordered list item with the given [nodeId] and returns its index on the list.
+  /// Finds the ordered list item with the given [nodeId] and returns its ordinal value.
   ///
-  /// List items are indexed starting from 1.
+  /// List items ordinals start from 1.
   ///
   /// {@macro supereditor_finder}
   static int findListItemOrdinal(String nodeId, [Finder? superEditorFinder]) {
