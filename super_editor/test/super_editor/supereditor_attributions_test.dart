@@ -584,7 +584,8 @@ void main() {
           );
         });
 
-        testWidgetsOnAllPlatforms("toggles an attribution when selection starts at the end of the upstream node",
+        testWidgetsOnAllPlatforms(
+            "toggles an attribution when selection spans multiple nodes and starts at the end of the first selected node",
             (tester) async {
           final context = await tester //
               .createDocument()
