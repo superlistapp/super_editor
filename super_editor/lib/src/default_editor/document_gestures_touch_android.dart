@@ -13,6 +13,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -655,7 +656,38 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     widget.dragHandleAutoScroller.value!.ensureOffsetIsVisible(extentOffsetInViewport);
   }
 
-  void _onDocumentChange(_) {
+  void _onDocumentChange(DocumentChangeLog changeLog) {
+    final selectionAfterChange = widget.selection.value;
+    final areExpandedHandlesVisible = _controlsController!.shouldShowExpandedHandles.value == true;
+
+    // Checks whether a deletion ocurred and caused the selection to collapse.
+    //
+    // Even though we are checking against the new selection, if the user deleted text while the selection
+    // was expanded, the new selection will have the same offset. We use the selection after the document
+    // changes because the changelog doesn't contain selection change events.
+    //
+    // The reason of expanded handles being allowed to be visible even when the selection is collapsed is
+    // that dragging an expanded handle can cause the selection to collapse. The drag handle remains visible
+    // so the user can continue dragging, possibly causing the selection to expand again.
+    final deletionCausedSelectionToCollapse = areExpandedHandlesVisible &&
+        selectionAfterChange != null &&
+        selectionAfterChange.isCollapsed &&
+        changeLog.changes
+            .whereType<TextDeletedEvent>()
+            .where((deletion) =>
+                deletion.nodeId == selectionAfterChange.start.nodeId &&
+                deletion.offset == (selectionAfterChange.start.nodePosition as TextNodePosition).offset)
+            .isNotEmpty;
+
+    if (deletionCausedSelectionToCollapse) {
+      _controlsController!
+        ..hideCollapsedHandle()
+        ..hideExpandedHandles()
+        ..hideMagnifier()
+        ..hideToolbar()
+        ..blinkCaret();
+    }
+
     onNextFrame((_) {
       _ensureSelectionExtentIsVisible();
     });
