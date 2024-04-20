@@ -460,8 +460,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required bool isMultiline,
     required Widget child,
   }) {
-    return Actions(
-      actions: CurrentPlatform.isApple ? disabledMacIntents : disabledNonAppleIntents,
+    return IntentBlocker(
+      intents: CurrentPlatform.isApple ? appleBlockedIntents : nonAppleBlockedIntents,
       child: SuperTextFieldKeyboardInteractor(
         focusNode: _focusNode,
         textFieldContext: _textFieldContext,
