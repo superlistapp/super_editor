@@ -512,6 +512,37 @@ void main() {
         expect(secondOrderedItem.listIndex, 2);
       });
 
+      testWidgetsOnArbitraryDesktop('keeps sequence for items split by ordered list items with higher indentation',
+          (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("""
+ 1. list item 1
+ 2. list item 2
+    1. list item 2.1
+    2. list item 2.2
+ 3. list item 3
+    1. list item 3.1
+""") //
+            .pump();
+
+        expect(context.document.nodes.length, 6);
+
+        // Ensure the nodes have the correct type.
+        for (int i = 0; i < 6; i++) {
+          expect(context.document.nodes[i], isA<ListItemNode>());
+          expect((context.document.nodes[i] as ListItemNode).type, ListItemType.ordered);
+        }
+
+        // Ensure the sequence was kept.
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[0].id), 1);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[1].id), 2);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[2].id), 1);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[3].id), 2);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[4].id), 3);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[5].id), 1);
+      });
+
       testWidgetsOnArbitraryDesktop('restarts item order when separated by an unordered item', (tester) async {
         final context = await tester //
             .createDocument()
