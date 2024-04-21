@@ -1480,6 +1480,14 @@ class ToggleTextAttributionsCommand implements EditCommand {
         editorDocLog.info(' - selecting part of the first node: ${textNode.id}');
         startOffset = (normalizedRange.start.nodePosition as TextPosition).offset;
         endOffset = max(textNode.text.length - 1, 0);
+
+        if (startOffset >= textNode.text.length) {
+          // The range spans multiple nodes, starting at the end of the first node of the
+          // range. From the first node's perspective, this is equivalent to a collapsed
+          // selection at the end of the node. There's no text to toggle any attributions.
+          // Skip this node.
+          continue;
+        }
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
         editorDocLog.info(' - toggling part of the last node: ${textNode.id}');
@@ -1488,6 +1496,14 @@ class ToggleTextAttributionsCommand implements EditCommand {
         // -1 because TextPosition's offset indexes the character after the
         // selection, not the final character in the selection.
         endOffset = (normalizedRange.end.nodePosition as TextPosition).offset - 1;
+
+        if (endOffset <= 0) {
+          // The range spans multiple nodes, ending at the beginning of the last node of the
+          // range. From the last node's perspective, this is equivalent to a collapsed
+          // selection at the beginning of the node. There's no text to toggle any attributions.
+          // Skip this node.
+          continue;
+        }
       } else {
         // Handle full node selection.
         editorDocLog.info(' - toggling full node: ${textNode.id}');
