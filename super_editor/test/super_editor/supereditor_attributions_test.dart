@@ -587,6 +587,9 @@ void main() {
         testWidgetsOnAllPlatforms(
             "toggles an attribution when selection spans multiple nodes and starts at the end of the first selected node",
             (tester) async {
+          // Test situations where the selection starts after the last character of the first selected node. See #1948
+          // for more information.
+
           final context = await tester //
               .createDocument()
               .fromMarkdown("First node\n\nSecond node")
@@ -621,6 +624,56 @@ void main() {
             DocumentSelection(
               base: firstNode.endDocumentPosition,
               extent: secondNode.endDocumentPosition,
+            ),
+            {boldAttribution},
+          );
+
+          // Ensure bold attribution was removed.
+          expect(secondNode.text.spans.markers.isEmpty, true);
+        });
+
+        testWidgetsOnAllPlatforms(
+            "toggles an attribution when selection spans multiple nodes and ends at the beginning of the last selected node",
+            (tester) async {
+          // Test situations where the selection ends before the first character of the last selected node. See #1948
+          // for more information.
+
+          final context = await tester //
+              .createDocument()
+              .fromMarkdown("First node\n\nSecond node")
+              .pump();
+
+          final editor = context.editor;
+          final document = context.document;
+
+          final firstNode = document.nodes[0] as ParagraphNode;
+          final secondNode = document.nodes[1] as ParagraphNode;
+
+          // Apply the bold attribution, with a selection that start at the beginning of the first node and ends
+          // before the first character of the second node.
+          editor.toggleAttributionsForDocumentSelection(
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.beginningDocumentPosition,
+            ),
+            {boldAttribution},
+          );
+
+          // Ensure bold attribution is applied only to the first node. Since the selection ends before the first
+          // character of the second node, there's no text there to apply the attribution to.
+          expect(
+            document,
+            equalsMarkdown(
+              "**First node**\n\nSecond node",
+            ),
+          );
+
+          // Remove the bold attribution, with a selection that start at the beginning of the first node and ends
+          // before the first character of the second node.
+          editor.toggleAttributionsForDocumentSelection(
+            DocumentSelection(
+              base: firstNode.beginningDocumentPosition,
+              extent: secondNode.beginningDocumentPosition,
             ),
             {boldAttribution},
           );

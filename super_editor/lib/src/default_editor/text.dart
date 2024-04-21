@@ -1497,7 +1497,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
         // selection, not the final character in the selection.
         endOffset = (normalizedRange.end.nodePosition as TextPosition).offset - 1;
 
-        if (endOffset == 0) {
+        if (endOffset <= 0) {
           // The range spans multiple nodes, ending at the beginning of the last node of the
           // range. From the last node's perspective, this is equivalent to a collapsed
           // selection at the beginning of the node. There's no text to toggle any attributions.
