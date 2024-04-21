@@ -112,10 +112,18 @@ class ListItemComponentBuilder implements ComponentBuilder {
 
     int? ordinalValue;
     if (node.type == ListItemType.ordered) {
+      // Counts the number of ordered list items above the current node with the same indentation level. Ordered
+      // list items with the same indentation level might be separated by ordered or unordered list items with
+      // different indentation levels.
       ordinalValue = 1;
       DocumentNode? nodeAbove = document.getNodeBefore(node);
       while (nodeAbove != null && nodeAbove is ListItemNode && nodeAbove.indent >= node.indent) {
         if (nodeAbove.indent == node.indent) {
+          if (nodeAbove.type != ListItemType.ordered) {
+            // We found an unordered list item with the same indentation level as the ordered list item.
+            // Other ordered list items aboce this one do not belong to the same list.
+            break;
+          }
           ordinalValue = ordinalValue! + 1;
         }
         nodeAbove = document.getNodeBefore(nodeAbove);
