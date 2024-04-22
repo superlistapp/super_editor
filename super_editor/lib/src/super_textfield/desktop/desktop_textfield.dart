@@ -4,11 +4,11 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/actions.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
@@ -460,8 +460,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required bool isMultiline,
     required Widget child,
   }) {
-    return Actions(
-      actions: defaultTargetPlatform == TargetPlatform.macOS ? disabledMacIntents : {},
+    return IntentBlocker(
+      intents: CurrentPlatform.isApple ? appleBlockedIntents : nonAppleBlockedIntents,
       child: SuperTextFieldKeyboardInteractor(
         focusNode: _focusNode,
         textFieldContext: _textFieldContext,
