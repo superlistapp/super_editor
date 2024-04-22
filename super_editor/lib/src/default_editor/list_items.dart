@@ -330,11 +330,15 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = widget.styleBuilder({});
+    // Usually, the font size is obtained via the stylesheet. But the attributions might
+    // also contain a FontSizeAttribution, which overrides the stylesheet. Use the attributions
+    // of the first character to determine the text style.
+    final attributions = widget.text.getAllAttributionsAt(0).toSet();
+    final textStyle = widget.styleBuilder(attributions);
+
     final indentSpace = widget.indentCalculator(textStyle, widget.indent);
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.25));
-    const manualVerticalAdjustment = 3.0;
 
     return ProxyTextDocumentComponent(
       key: widget.componentKey,
@@ -344,7 +348,6 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
         children: [
           Container(
             width: indentSpace,
-            margin: const EdgeInsets.only(top: manualVerticalAdjustment),
             decoration: BoxDecoration(
               border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
             ),
@@ -376,16 +379,38 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
 typedef UnorderedListItemDotBuilder = Widget Function(BuildContext, UnorderedListItemComponent);
 
 Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListItemComponent component) {
+  // Usually, the font size is obtained via the stylesheet. But the attributions might
+  // also contain a FontSizeAttribution, which overrides the stylesheet. Use the attributions
+  // of the first character to determine the text style.
+  final attributions = component.text.getAllAttributionsAt(0).toSet();
+  final textStyle = component.styleBuilder(attributions);
+
   return Align(
     alignment: Alignment.centerRight,
-    child: Container(
-      width: 4,
-      height: 4,
-      margin: const EdgeInsets.only(right: 10),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: component.styleBuilder({}).color,
+    child: Text.rich(
+      TextSpan(
+        // Place a zero-width joiner before the bullet point to make it properly aligned. Without this,
+        // the bullet point is not vertically centered with the text, even when setting the textStyle
+        // on the whole rich text or WidgetSpan.
+        text: '\u200C',
+        style: textStyle,
+        children: [
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Container(
+              width: 4,
+              height: 4,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: textStyle.color,
+              ),
+            ),
+          ),
+        ],
       ),
+      // Don't scale the dot.
+      textScaler: const TextScaler.linear(1.0),
     ),
   );
 }
@@ -448,7 +473,12 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = widget.styleBuilder({});
+    // Usually, the font size is obtained via the stylesheet. But the attributions might
+    // also contain a FontSizeAttribution, which overrides the stylesheet. Use the attributions
+    // of the first character to determine the text style.
+    final attributions = widget.text.getAllAttributionsAt(0).toSet();
+    final textStyle = widget.styleBuilder(attributions);
+
     final indentSpace = widget.indentCalculator(textStyle, widget.indent);
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.0));
@@ -497,6 +527,12 @@ double _defaultIndentCalculator(TextStyle textStyle, int indent) {
 }
 
 Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListItemComponent component) {
+  // Usually, the font size is obtained via the stylesheet. But the attributions might
+  // also contain a FontSizeAttribution, which overrides the stylesheet. Use the attributions
+  // of the first character to determine the text style.
+  final attributions = component.text.getAllAttributionsAt(0).toSet();
+  final textStyle = component.styleBuilder(attributions);
+
   return OverflowBox(
     maxWidth: double.infinity,
     maxHeight: double.infinity,
@@ -507,7 +543,7 @@ Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListIt
         child: Text(
           '${component.listIndex}.',
           textAlign: TextAlign.right,
-          style: component.styleBuilder({}).copyWith(),
+          style: textStyle,
         ),
       ),
     ),
