@@ -1129,7 +1129,6 @@ class CommonEditorOperations {
       } else {
         editor.execute([const DeleteUpstreamCharacterRequest()]);
         return true;
-        // return _deleteUpstreamCharacter();
       }
     }
 
@@ -2448,6 +2447,8 @@ class DeleteUpstreamCharacterCommand implements EditCommand {
     final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextOffset);
 
     // Delete the selected content.
+    print(
+        "Deleting character at $previousCharacterOffset. Moving selection to: ${textNode.selectionAt(previousCharacterOffset)}");
     executor
       ..executeCommand(
         DeleteContentCommand(

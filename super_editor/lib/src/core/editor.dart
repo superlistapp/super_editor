@@ -124,7 +124,11 @@ class Editor implements RequestDispatcher {
   int _activeCommandCount = 0;
 
   bool _isInTransaction = false;
-  CommandTransaction? _openTransaction;
+  bool _isImplicitTransaction = false;
+  CommandTransaction? _transaction;
+
+  /// Whether the editor is currently running reactions for the current transaction.
+  bool _isReacting = false;
 
   /// Starts a transaction that runs across multiple calls to [execute], until [endTransaction]
   /// is called.
@@ -139,29 +143,46 @@ class Editor implements RequestDispatcher {
   ///
   /// Does nothing if a transaction is already in-progress.
   void startTransaction() {
-    print("START TRANSACTION");
     if (_isInTransaction) {
       return;
     }
 
+    print("STARTING TRANSACTION");
     _isInTransaction = true;
+    _activeChangeList = <EditEvent>[];
+    // ignore: prefer_const_constructors
+    _transaction = CommandTransaction([]);
 
     _onTransactionStart();
+    print("TRANSACTION WAS STARTED");
   }
 
   /// Ends a transaction that was started with a call to [startTransaction].
   ///
   /// Does nothing if a transaction is not in-progress.
   void endTransaction() {
-    print("END TRANSACTION");
     if (!_isInTransaction) {
       return;
     }
 
-    _isInTransaction = false;
-    _openTransaction = null;
+    if (_transaction!.commands.isNotEmpty) {
+      _commandHistory.add(_transaction!);
+    }
 
+    // Now that an atomic set of changes have completed, let the reactions followup
+    // with more changes, such as auto-correction, tagging, etc.
+    _reactToChanges();
+
+    _isInTransaction = false;
+    _isImplicitTransaction = false;
+    _transaction = null;
+
+    // Note: The transaction isn't fully considered over until after the reactions run.
+    // This is because the reactions need access to the change list from the previous
+    // transaction.
     _onTransactionEnd();
+
+    print("TRANSACTION WAS ENDED");
   }
 
   /// Executes the given [requests].
@@ -170,17 +191,25 @@ class Editor implements RequestDispatcher {
   /// of [EditEvent]s.
   @override
   void execute(List<EditRequest> requests) {
+    if (requests.isEmpty) {
+      // No changes were requested. Don't waste time starting and ending transactions, etc.
+      print("No requests were given");
+      print(StackTrace.current);
+      return;
+    }
+
     print("Request execution:");
     for (final request in requests) {
       print(" - ${request.runtimeType}");
     }
-    // print(StackTrace.current);
 
     if (_activeCommandCount == 0 && !_isInTransaction) {
-      _onTransactionStart();
+      // No transaction was explicitly requested, but all changes exist in a transaction.
+      // Automatically start one, and then end the transaction after the current changes.
+      _isImplicitTransaction = true;
+      startTransaction();
     }
 
-    _activeChangeList ??= <EditEvent>[];
     _activeCommandCount += 1;
 
     final undoableCommands = <EditCommand>[];
@@ -196,34 +225,11 @@ class Editor implements RequestDispatcher {
     }
 
     if (undoableCommands.isNotEmpty) {
-      if (_isInTransaction) {
-        if (_openTransaction == null) {
-          // We're in a multi-execution transaction, but this is the first list of undoable
-          // commands that have been run for this transaction. Create the transaction object
-          // and remember it for future calls to `execute()`.
-          _openTransaction = CommandTransaction(undoableCommands);
-          _commandHistory.add(_openTransaction!);
-        } else {
-          // We're in a multi-execution transaction, and that transaction already contains
-          // some number of commands. Add these commands to it.
-          _openTransaction!.commands.addAll(undoableCommands);
-        }
-      } else {
-        // We're not running a multi-execution transaction. Therefore, the list of commands
-        // run within this call constitutes a full transaction. Add it to the history.
-        _commandHistory.add(
-          CommandTransaction(undoableCommands),
-        );
-      }
+      _transaction!.commands.addAll(undoableCommands);
     }
 
-    // Run reactions and notify listeners, but only do it once per batch of executions.
-    // If we reacted and notified listeners on every execution, then every sub-request
-    // would also run the reactions and notify listeners. At best this would result in
-    // many superfluous calls, but in practice it would probably break lots of features
-    // by notifying listeners too early, and running the same reactions over and over.
-    if (_activeCommandCount == 1 && !_isInTransaction) {
-      _onTransactionEnd();
+    if (_activeCommandCount == 1 && _isImplicitTransaction && !_isReacting) {
+      endTransaction();
     }
 
     _activeCommandCount -= 1;
@@ -271,27 +277,6 @@ class Editor implements RequestDispatcher {
   }
 
   void _onTransactionEnd() {
-    print("_onTransactionEnd() - active change list: $_activeChangeList");
-    if (_activeChangeList!.isNotEmpty) {
-      print("_onTransactionEnd() - active change is non-empty - calling _reactToChanges()");
-      // TODO: We need to determine at this point whether to process reactios as a new
-      //       transaction or as part of this existing transaction.
-      // Run all reactions. These reactions will likely call `execute()` again, with
-      // their own requests, to make additional changes.
-      try {
-        _reactToChanges();
-      } catch (exception, stacktrace) {
-        print("Error running _reactToChanges");
-        print(exception);
-        print("$stacktrace");
-        rethrow;
-      }
-
-      // Notify all listeners that care about changes, but won't spawn additional requests.
-      _notifyListeners();
-    }
-    print("_onTransactionEnd() - done reacting to changes");
-
     for (final editable in context._resources.values) {
       print("_onTransactionEnd() - ending transaction on editable: $editable");
       editable.onTransactionEnd(_activeChangeList!);
@@ -302,12 +287,26 @@ class Editor implements RequestDispatcher {
   }
 
   void _reactToChanges() {
+    if (_activeChangeList!.isEmpty) {
+      return;
+    }
+
+    print("${DateTime.now().microsecondsSinceEpoch} _reactToChanges()");
+    _isReacting = true;
     for (final reaction in reactionPipeline) {
       // Note: we pass the active change list because reactions will cause more
       // changes to be added to that list.
-      print("_reactToChanges() - processing reaction. Active change list: $_activeChangeList");
+      print(
+          "${DateTime.now().microsecondsSinceEpoch} Running reaction ${reaction.runtimeType}. Active change list: $_activeChangeList");
       reaction.react(context, this, _activeChangeList!);
     }
+    print("${DateTime.now().microsecondsSinceEpoch} DONE _reactToChanges()");
+
+    // FIXME: try removing this notify listeners
+    // Notify all listeners that care about changes, but won't spawn additional requests.
+    _notifyListeners();
+
+    _isReacting = false;
   }
 
   void undo() {
@@ -327,6 +326,10 @@ class Editor implements RequestDispatcher {
 
     // Move the latest command from the history to the future.
     _commandFuture.add(_commandHistory.removeLast());
+    print("The commands being undone are:");
+    for (final command in _commandHistory.last.commands) {
+      print("  - ${command.runtimeType}");
+    }
 
     for (final editable in context._resources.values) {
       // Don't let editables notify listeners during undo.

@@ -360,6 +360,8 @@ class PatternTagReaction implements EditReaction {
     editorPatternTagsLog.fine(
         "Found a pattern tag around caret: '${tagAroundCaret.indexedTag.tag}' - surrounding it with an attribution: ${tagAroundCaret.indexedTag.startOffset} -> ${tagAroundCaret.indexedTag.endOffset}");
 
+    print(
+        "FOUND A TAG: ${selectedNode.text.substring(tagAroundCaret.indexedTag.startOffset, tagAroundCaret.indexedTag.endOffset)}");
     requestDispatcher.execute([
       // Remove the old pattern tag attribution(s).
       RemoveTextAttributionsRequest(
@@ -468,6 +470,11 @@ class PatternTagReaction implements EditReaction {
 
         triggerSymbolIndex = nextTriggerSymbolIndex;
       }
+    }
+
+    if (spanRemovals.isEmpty) {
+      // We didn't find any tags to break up. No need to submit change requests.
+      return;
     }
 
     // Execute the attribution removals and additions.

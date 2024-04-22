@@ -101,72 +101,23 @@ void main() {
         ),
       );
 
-      // Undo the event.
+      // --- Undo character insertions ---
       await widgetTester.pressCmdZ(widgetTester);
-
-      expect(SuperEditorInspector.findTextInComponent("1").text, "Hell");
-      expect(
-        SuperEditorInspector.findDocumentSelection(),
-        const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: "1",
-            nodePosition: TextNodePosition(offset: 4),
-          ),
-        ),
-      );
+      _expectDocumentWithCaret("Hell", "1", 4);
 
       await widgetTester.pressCmdZ(widgetTester);
-
-      expect(SuperEditorInspector.findTextInComponent("1").text, "Hel");
-      expect(
-        SuperEditorInspector.findDocumentSelection(),
-        const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: "1",
-            nodePosition: TextNodePosition(offset: 3),
-          ),
-        ),
-      );
+      _expectDocumentWithCaret("Hel", "1", 3);
 
       await widgetTester.pressCmdZ(widgetTester);
-
-      expect(SuperEditorInspector.findTextInComponent("1").text, "He");
-      expect(
-        SuperEditorInspector.findDocumentSelection(),
-        const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: "1",
-            nodePosition: TextNodePosition(offset: 2),
-          ),
-        ),
-      );
+      _expectDocumentWithCaret("He", "1", 2);
 
       await widgetTester.pressCmdZ(widgetTester);
-
-      expect(SuperEditorInspector.findTextInComponent("1").text, "H");
-      expect(
-        SuperEditorInspector.findDocumentSelection(),
-        const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: "1",
-            nodePosition: TextNodePosition(offset: 1),
-          ),
-        ),
-      );
+      _expectDocumentWithCaret("H", "1", 1);
 
       await widgetTester.pressCmdZ(widgetTester);
+      _expectDocumentWithCaret("", "1", 0);
 
-      expect(SuperEditorInspector.findTextInComponent("1").text, "");
-      expect(
-        SuperEditorInspector.findDocumentSelection(),
-        const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: "1",
-            nodePosition: TextNodePosition(offset: 0),
-          ),
-        ),
-      );
-
+      //----- Redo Changes ----
       await widgetTester.pressCmdShiftZ(widgetTester);
       _expectDocumentWithCaret("H", "1", 1);
 
