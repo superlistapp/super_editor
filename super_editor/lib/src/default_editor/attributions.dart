@@ -163,6 +163,11 @@ class LinkAttribution implements Attribution {
   /// The URL associated with the attributed text, as a `String`.
   final String url;
 
+  /// Attempts to parse the [url] as a [Uri], and returns `true` if the [url]
+  /// is successfully parsed, or `false` if parsing fails, such as due to the [url]
+  /// including an invalid scheme, separator syntax, extra segments, etc.
+  bool get hasValidUri => Uri.tryParse(url) != null;
+
   /// The URL associated with the attributed text, as a `Uri`.
   ///
   /// Accessing the [uri] throws an exception if the [url] isn't valid.
