@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -9,10 +8,10 @@ import 'package:super_editor/src/default_editor/debug_visualization.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/actions.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
-import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
 import '../document_hardware_keyboard/document_input_keyboard.dart';
@@ -477,8 +476,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   Widget build(BuildContext context) {
     return SuperEditorImeDebugVisuals(
       imeConnection: _imeConnection,
-      child: Actions(
-        actions: defaultTargetPlatform == TargetPlatform.macOS ? disabledMacIntents : {},
+      child: IntentBlocker(
+        intents: CurrentPlatform.isApple ? appleBlockedIntents : nonAppleBlockedIntents,
         child: SuperEditorHardwareKeyHandler(
           focusNode: _focusNode,
           editContext: widget.editContext,
