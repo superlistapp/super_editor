@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 /// Widget that displays [content] above a number of [underlays], and beneath a number of
@@ -208,31 +209,42 @@ class ContentLayersElement extends RenderObjectElement {
 
     contentLayersLog.finer("Checking underlays");
     for (final underlay in _underlays) {
-      contentLayersLog.finer(" - Is underlay ($underlay) subtree dirty? ${_isSubtreeDirty(underlay)}");
+      contentLayersLog.finer(() => " - Is underlay ($underlay) subtree dirty? ${_isSubtreeDirty(underlay)}");
       hasDirtyElements = hasDirtyElements || _isSubtreeDirty(underlay);
     }
 
     contentLayersLog.finer("Checking overlays");
     for (final overlay in _overlays) {
-      contentLayersLog.finer(" - Is overlay ($overlay) subtree dirty? ${_isSubtreeDirty(overlay)}");
+      contentLayersLog.finer(() => " - Is overlay ($overlay) subtree dirty? ${_isSubtreeDirty(overlay)}");
       hasDirtyElements = hasDirtyElements || _isSubtreeDirty(overlay);
     }
 
     return hasDirtyElements;
   }
 
-  bool _isSubtreeDirty(Element element) {
-    contentLayersLog.finest("Finding dirty children for: $element");
-    if (element.dirty) {
-      contentLayersLog.finest("Found a dirty child: $element");
-      return true;
-    }
+  static bool _isDirty = false;
 
-    bool isDirty = false;
-    element.visitChildren((childElement) {
-      isDirty = isDirty || _isSubtreeDirty(childElement);
-    });
-    return isDirty;
+  // This is intentionally static to prevent closure allocation during
+  // the traversal of the element tree.
+  static void _isSubtreeDirtyVisitor(Element element) {
+    // Can't use the () => message syntax because it allocates a closure.
+    if (contentLayersLog.isLoggable(Level.FINEST)) {
+      contentLayersLog.finest("Finding dirty children for: $element");
+    }
+    if (element.dirty) {
+      if (contentLayersLog.isLoggable(Level.FINEST)) {
+        contentLayersLog.finest("Found a dirty child: $element");
+      }
+      _isDirty = true;
+      return;
+    }
+    element.visitChildren(_isSubtreeDirtyVisitor);
+  }
+
+  bool _isSubtreeDirty(Element element) {
+    _isDirty = false;
+    element.visitChildren(_isSubtreeDirtyVisitor);
+    return _isDirty;
   }
 
   void _onContentBuildScheduled() {
