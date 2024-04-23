@@ -228,13 +228,19 @@ class ContentLayersElement extends RenderObjectElement {
   // the traversal of the element tree.
   static void _isSubtreeDirtyVisitor(Element element) {
     // Can't use the () => message syntax because it allocates a closure.
-    if (contentLayersLog.isLoggable(Level.FINEST)) {
-      contentLayersLog.finest("Finding dirty children for: $element");
-    }
-    if (element.dirty) {
+    assert(() {
       if (contentLayersLog.isLoggable(Level.FINEST)) {
-        contentLayersLog.finest("Found a dirty child: $element");
+        contentLayersLog.finest("Finding dirty children for: $element");
       }
+      return true;
+    }());
+    if (element.dirty) {
+      assert(() {
+        if (contentLayersLog.isLoggable(Level.FINEST)) {
+          contentLayersLog.finest("Found a dirty child: $element");
+        }
+        return true;
+      }());
       _isDirty = true;
       return;
     }
