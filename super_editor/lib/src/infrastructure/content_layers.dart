@@ -224,7 +224,13 @@ class ContentLayersElement extends RenderObjectElement {
 
   static bool _isDirty = false;
 
-  // This is intentionally static to prevent closure allocation during
+  bool _isSubtreeDirty(Element element) {
+    _isDirty = false;
+    element.visitChildren(_isSubtreeDirtyVisitor);
+    return _isDirty;
+  }
+
+// This is intentionally static to prevent closure allocation during
   // the traversal of the element tree.
   static void _isSubtreeDirtyVisitor(Element element) {
     // Can't use the () => message syntax because it allocates a closure.
@@ -245,12 +251,6 @@ class ContentLayersElement extends RenderObjectElement {
       return;
     }
     element.visitChildren(_isSubtreeDirtyVisitor);
-  }
-
-  bool _isSubtreeDirty(Element element) {
-    _isDirty = false;
-    element.visitChildren(_isSubtreeDirtyVisitor);
-    return _isDirty;
   }
 
   void _onContentBuildScheduled() {
