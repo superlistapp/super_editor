@@ -675,8 +675,26 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     }
 
     if (selection.isCollapsed) {
+      Rect caretRect = documentLayout.getEdgeForPosition(selection.extent)!;
+
+      // Default caret wid used by IOSCollapsedHandle.
+      const caretWidth = 2;
+
+      final layerBox = context.findRenderObject() as RenderBox?;
+      if (layerBox != null && layerBox.hasSize && caretRect.left + caretWidth >= layerBox.size.width) {
+        // Ajust the caret position to make it entirely visible because it's currently placed
+        // partially or entirely outside of the layers' bounds. This can happen for downstream selections
+        // of block components that take all the available width.
+        caretRect = Rect.fromLTWH(
+          layerBox.size.width - caretWidth,
+          caretRect.top,
+          caretRect.width,
+          caretRect.height,
+        );
+      }
+
       return DocumentSelectionLayout(
-        caret: documentLayout.getRectForPosition(selection.extent)!,
+        caret: caretRect,
       );
     } else {
       return DocumentSelectionLayout(
