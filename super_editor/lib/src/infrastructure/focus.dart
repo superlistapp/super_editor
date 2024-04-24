@@ -52,13 +52,6 @@ class _NonReparentingFocusState extends State<NonReparentingFocus> {
   }
 
   @override
-  void deactivate() {
-    super.deactivate();
-    // See _FocusState.deactivate.
-    _keyboardFocusAttachment.reparent();
-  }
-
-  @override
   void didUpdateWidget(NonReparentingFocus oldWidget) {
     super.didUpdateWidget(oldWidget);
 
