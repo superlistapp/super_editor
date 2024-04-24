@@ -677,7 +677,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     if (selection.isCollapsed) {
       Rect caretRect = documentLayout.getEdgeForPosition(selection.extent)!;
 
-      // Default caret wid used by IOSCollapsedHandle.
+      // Default caret width used by IOSCollapsedHandle.
       const caretWidth = 2;
 
       final layerBox = context.findRenderObject() as RenderBox?;

@@ -315,7 +315,7 @@ class AndroidControlsDocumentLayerState
     if (selection.isCollapsed && !_controlsController!.shouldShowExpandedHandles.value) {
       Rect caretRect = documentLayout.getEdgeForPosition(selection.extent)!;
 
-      // Default caret wid used by IOSCollapsedHandle.
+      // Default caret width used by the Android caret.
       const caretWidth = 2;
 
       final layerBox = context.findRenderObject() as RenderBox?;
