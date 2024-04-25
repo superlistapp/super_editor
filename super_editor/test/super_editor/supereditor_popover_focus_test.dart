@@ -127,7 +127,7 @@ Future<void> _hidePopover(WidgetTester tester) async {
   await tester.pump();
 }
 
-class _Popover extends StatelessWidget {
+class _Popover extends StatefulWidget {
   const _Popover({
     Key? key,
     required this.editorFocusNode,
@@ -138,15 +138,28 @@ class _Popover extends StatelessWidget {
   final FocusNode textFieldFocusNode;
 
   @override
+  State<_Popover> createState() => _PopoverState();
+}
+
+class _PopoverState extends State<_Popover> {
+  final _popoverFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _popoverFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(minWidth: 300, minHeight: 56),
-        child: FocusWithCustomParent(
-          parentFocusNode: editorFocusNode,
-          focusNode: textFieldFocusNode,
+        child: Focus(
+          focusNode: _popoverFocusNode,
+          parentNode: widget.editorFocusNode,
           child: SuperTextField(
-            focusNode: textFieldFocusNode,
+            focusNode: widget.textFieldFocusNode,
             lineHeight: 20,
           ),
         ),
