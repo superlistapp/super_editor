@@ -7,7 +7,6 @@ import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_input_configuration.dart';
-import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
@@ -538,7 +537,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   Widget _buildTextField() {
     return TapRegion(
       groupId: widget.tapRegionGroupId,
-      child: NonReparentingFocus(
+      child: Focus(
         key: _textFieldKey,
         focusNode: _focusNode,
         child: CompositedTransformTarget(
