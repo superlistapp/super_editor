@@ -619,6 +619,7 @@ Second Paragraph
       // result.
 
       final textFieldFocus = FocusNode();
+      final subtreeFocus = FocusNode();
       final editorFocus = FocusNode();
       await tester
           .createDocument()
@@ -630,9 +631,9 @@ Second Paragraph
               home: Scaffold(
                 body: Column(
                   children: [
-                    FocusWithCustomParent(
-                      focusNode: textFieldFocus,
-                      parentFocusNode: editorFocus,
+                    Focus(
+                      focusNode: subtreeFocus,
+                      parentNode: editorFocus,
                       child: SuperTextField(
                         focusNode: textFieldFocus,
                         // We put the SuperTextField in keyboard mode so that the SuperTextField
@@ -686,6 +687,7 @@ Second Paragraph
       // result.
 
       final textFieldFocus = FocusNode();
+      final subtreeFocus = FocusNode();
       final editorFocus = FocusNode();
       await tester
           .createDocument()
@@ -700,9 +702,9 @@ Second Paragraph
               home: Scaffold(
                 body: Column(
                   children: [
-                    FocusWithCustomParent(
-                      focusNode: textFieldFocus,
-                      parentFocusNode: editorFocus,
+                    Focus(
+                      focusNode: subtreeFocus,
+                      parentNode: editorFocus,
                       child: SuperTextField(
                         focusNode: textFieldFocus,
                         // We put the SuperTextField in keyboard mode so that the SuperTextField
@@ -752,6 +754,7 @@ Second Paragraph
 
     testWidgetsOnAllPlatforms("retains selection when user types in sub-focus text field", (tester) async {
       final textFieldFocus = FocusNode();
+      final subTreeFocusNode = FocusNode();
       final textFieldController = ImeAttributedTextEditingController();
       final editorFocus = FocusNode();
       const initialEditorSelection = DocumentSelection(
@@ -772,9 +775,9 @@ Second Paragraph
               home: Scaffold(
                 body: Column(
                   children: [
-                    FocusWithCustomParent(
-                      focusNode: textFieldFocus,
-                      parentFocusNode: editorFocus,
+                    Focus(
+                      focusNode: subTreeFocusNode,
+                      parentNode: editorFocus,
                       child: SuperTextField(
                         focusNode: textFieldFocus,
                         textController: textFieldController,

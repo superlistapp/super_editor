@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/actions.dart';
-import 'package:super_editor/src/infrastructure/focus.dart';
 
 /// A popover that shares focus with a `SuperEditor`.
 ///
@@ -53,9 +52,9 @@ class SuperEditorPopover extends StatelessWidget {
   Widget build(BuildContext context) {
     return IntentBlocker(
       intents: appleBlockedIntents,
-      child: FocusWithCustomParent(
+      child: Focus(
         focusNode: popoverFocusNode,
-        parentFocusNode: editorFocusNode,
+        parentNode: editorFocusNode,
         onKeyEvent: onKeyEvent,
         child: child,
       ),

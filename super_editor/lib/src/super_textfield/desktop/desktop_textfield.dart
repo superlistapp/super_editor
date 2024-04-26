@@ -14,7 +14,6 @@ import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/material_scrollbar.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_input_configuration.dart';
-import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
@@ -1125,7 +1124,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
 
   @override
   Widget build(BuildContext context) {
-    return NonReparentingFocus(
+    return Focus(
       focusNode: widget.focusNode,
       onKeyEvent: _onKeyPressed,
       child: widget.child,
