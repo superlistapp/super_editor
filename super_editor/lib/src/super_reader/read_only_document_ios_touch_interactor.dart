@@ -247,7 +247,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   //       not collapsed/upstream/downstream. Change the type once it's working.
   HandleType? _dragHandleType;
 
-  final _magnifierOffset = ValueNotifier<Offset?>(null);
+  final _magnifierFocalPoint = ValueNotifier<Offset?>(null);
 
   Timer? _tapDownLongPressTimer;
   Offset? _globalTapDownOffset;
@@ -484,7 +484,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       return;
     }
 
-    _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalTapDownOffset!));
+    _updateMagnifierFocalPoint();
     _controlsController!
       ..hideToolbar()
       ..showMagnifier();
@@ -764,7 +764,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
     _controlsController!.showMagnifier();
 
-    _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(details.globalPosition));
+    _updateMagnifierFocalPoint();
   }
 
   void _updateSelectionForNewDragHandleLocation() {
@@ -790,7 +790,6 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
   void _onPanEnd(DragEndDetails details) {
     scrollPosition.removeListener(_onAutoScrollChange);
-    _magnifierOffset.value = null;
 
     if (_scrollingDrag != null) {
       // The user was performing a drag gesture to scroll the document.
@@ -810,7 +809,6 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
   void _onPanCancel() {
     scrollPosition.removeListener(_onAutoScrollChange);
-    _magnifierOffset.value = null;
 
     if (_scrollingDrag != null) {
       // The user was performing a drag gesture to scroll the document.
@@ -908,9 +906,8 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _updateMagnifierFocalPointOnAutoScrollFrame() {
-    if (_magnifierOffset.value != null) {
-      final interactorBox = context.findRenderObject() as RenderBox;
-      _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalDragOffset!));
+    if (_magnifierFocalPoint.value != null) {
+      _updateMagnifierFocalPoint();
     }
   }
 
@@ -923,6 +920,28 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       // This is needed to allow the user to stop scrolling by tapping down.
       scrollPosition.context.setIgnorePointer(false);
     });
+  }
+
+  /// Updates the magnifier focal point in relation to the current drag position.
+  void _updateMagnifierFocalPoint() {
+    late DocumentPosition? docPositionToMagnify;
+
+    if (_globalTapDownOffset != null) {
+      // A drag isn't happening. Magnify the position that the user tapped.
+      docPositionToMagnify =
+          _docLayout.getDocumentPositionNearestToOffset(_globalTapDownOffset! + Offset(0, scrollPosition.pixels));
+    } else {
+      final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
+      final dragScrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
+      docPositionToMagnify = _docLayout
+          .getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
+    }
+
+    final centerOfContentAtOffset = _interactorOffsetToDocumentOffset(
+      _docLayout.getRectForPosition(docPositionToMagnify!)!.center,
+    );
+
+    _magnifierFocalPoint.value = centerOfContentAtOffset;
   }
 
   @override
@@ -1000,7 +1019,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
   Widget _buildMagnifierFocalPoint() {
     return ValueListenableBuilder(
-      valueListenable: _magnifierOffset,
+      valueListenable: _magnifierFocalPoint,
       builder: (context, magnifierOffset, child) {
         if (magnifierOffset == null) {
           return const SizedBox();
@@ -1098,19 +1117,68 @@ class SuperReaderIosMagnifierOverlayManager extends StatefulWidget {
 }
 
 @visibleForTesting
-class SuperReaderIosMagnifierOverlayManagerState extends State<SuperReaderIosMagnifierOverlayManager> {
+class SuperReaderIosMagnifierOverlayManagerState extends State<SuperReaderIosMagnifierOverlayManager>
+    with SingleTickerProviderStateMixin {
   final OverlayPortalController _overlayPortalController = OverlayPortalController();
   SuperReaderIosControlsController? _controlsContext;
 
+  late final AnimationController _animationController;
+
+  /// Wether or not the magnifier should be displayed.
+  ///
+  /// This is different from [SuperEditorIosControlsController.shouldShowMagnifier] because
+  /// [_showMagnifier] becomes false only when the exit animation finishes.
+  late ValueNotifier<bool> _showMagnifier;
+
   @visibleForTesting
   bool get wantsToDisplayMagnifier => _controlsContext!.shouldShowMagnifier.value;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: defaultIosMagnifierAnimationDuration,
+      reverseDuration: defaultIosMagnifierExitAnimationDuration,
+    );
+    _animationController.addStatusListener(_hideMagnifierOnAnimationEnd);
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     _controlsContext = SuperReaderIosControlsScope.rootOf(context);
+    _controlsContext!.shouldShowMagnifier.addListener(_onShouldShowMagnifierChanged);
+    _showMagnifier = ValueNotifier(_controlsContext!.shouldShowMagnifier.value);
+
     _overlayPortalController.show();
+  }
+
+  @override
+  void dispose() {
+    _controlsContext!.shouldShowMagnifier.removeListener(_onShouldShowMagnifierChanged);
+    _animationController.dispose();
+    _showMagnifier.dispose();
+    super.dispose();
+  }
+
+  void _onShouldShowMagnifierChanged() {
+    if (_controlsContext!.shouldShowMagnifier.value) {
+      _showMagnifier.value = true;
+      _animationController.forward();
+    } else {
+      // The desire to show the magnifier changed from visible to invisible. Run the exit
+      // animation and set the magnifier to invisible when the animation finishes.
+      _animationController.reverse();
+    }
+  }
+
+  /// Hides the magnifier if the exit animation has finished.
+  void _hideMagnifierOnAnimationEnd(AnimationStatus status) {
+    if (status == AnimationStatus.dismissed && !_controlsContext!.shouldShowMagnifier.value) {
+      _showMagnifier.value = false;
+    }
   }
 
   @override
@@ -1129,7 +1197,7 @@ class SuperReaderIosMagnifierOverlayManagerState extends State<SuperReaderIosMag
     // position a Leader with a LeaderLink. This magnifier follows that Leader
     // via the LeaderLink.
     return ValueListenableBuilder(
-      valueListenable: _controlsContext!.shouldShowMagnifier,
+      valueListenable: _showMagnifier,
       builder: (context, shouldShowMagnifier, child) {
         if (!shouldShowMagnifier) {
           return const SizedBox();
@@ -1151,8 +1219,9 @@ class SuperReaderIosMagnifierOverlayManagerState extends State<SuperReaderIosMag
 
     return IOSFollowingMagnifier.roundedRectangle(
       magnifierKey: magnifierKey,
+      animationController: _animationController,
       leaderLink: magnifierFocalPoint,
-      offsetFromFocalPoint: const Offset(0, -72),
+      offsetFromFocalPoint: const Offset(0, -230),
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -85,7 +87,8 @@ class IOSEditingControls extends StatefulWidget {
   State createState() => _IOSEditingControlsState();
 }
 
-class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBindingObserver {
+class _IOSEditingControlsState extends State<IOSEditingControls>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -107,6 +110,9 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   Offset? _globalDragOffset;
   Offset? _localDragOffset;
 
+  late final AnimationController _animationController;
+  final ValueNotifier<bool> _showMagnifier = ValueNotifier<bool>(false);
+
   @override
   void initState() {
     super.initState();
@@ -114,6 +120,14 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     WidgetsBinding.instance.addObserver(this);
 
     widget.editingController.textController.addListener(_rebuildOnNextFrame);
+
+    widget.editingController.shouldShowMagnifier.addListener(_onWantsToShowMagnifierChanged);
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: defaultIosMagnifierAnimationDuration,
+      reverseDuration: defaultIosMagnifierExitAnimationDuration,
+    );
   }
 
   @override
@@ -124,11 +138,18 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
       oldWidget.editingController.textController.removeListener(_rebuildOnNextFrame);
       widget.editingController.textController.addListener(_rebuildOnNextFrame);
     }
+
+    if (widget.editingController.shouldShowMagnifier != oldWidget.editingController.shouldShowMagnifier) {
+      oldWidget.editingController.shouldShowMagnifier.removeListener(_onWantsToShowMagnifierChanged);
+      widget.editingController.shouldShowMagnifier.addListener(_onWantsToShowMagnifierChanged);
+    }
   }
 
   @override
   void dispose() {
     widget.editingController.textController.removeListener(_rebuildOnNextFrame);
+    widget.editingController.shouldShowMagnifier.removeListener(_onWantsToShowMagnifierChanged);
+    _animationController.dispose();
 
     WidgetsBinding.instance.removeObserver(this);
 
@@ -276,6 +297,15 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     return _textLayout.getOffsetAtPosition(position);
   }
 
+  void _onWantsToShowMagnifierChanged() {
+    if (widget.editingController.isMagnifierVisible) {
+      _animationController.forward();
+      _showMagnifier.value = true;
+    } else {
+      _animationController.reverse();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textFieldRenderObject = context.findRenderObject();
@@ -295,10 +325,8 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
               ..._buildDraggableOverlayHandles(),
               // Build the editing toolbar
               _buildToolbar(),
-              // Build the focal point for the magnifier
-              if (_isDraggingBase || _isDraggingExtent) _buildMagnifierFocalPoint(),
               // Build the magnifier
-              if (widget.editingController.isMagnifierVisible) _buildMagnifier(),
+              _buildMagnifier(),
             ],
           );
         });
@@ -520,20 +548,6 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     );
   }
 
-  Widget _buildMagnifierFocalPoint() {
-    // When the user is dragging a handle in this overlay, we
-    // are responsible for positioning the focal point for the
-    // magnifier to follow. We do that here.
-    return Positioned(
-      left: _localDragOffset!.dx,
-      top: _localDragOffset!.dy,
-      child: Leader(
-        link: widget.editingController.magnifierFocalPoint,
-        child: const SizedBox(width: 1, height: 1),
-      ),
-    );
-  }
-
   Widget _buildMagnifier() {
     // Display a magnifier that tracks a focal point.
     //
@@ -543,11 +557,19 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     // When some other interaction wants to show the magnifier, then
     // that other area of the widget tree is responsible for
     // positioning the LayerLink target.
-    return Center(
-      child: IOSFollowingMagnifier.roundedRectangle(
-        leaderLink: widget.editingController.magnifierFocalPoint,
-        offsetFromFocalPoint: const Offset(0, -72),
-      ),
+    return ValueListenableBuilder(
+      valueListenable: _showMagnifier,
+      builder: (context, showMagnifier, child) {
+        if (!showMagnifier) {
+          return const SizedBox();
+        }
+
+        return IOSFollowingMagnifier.roundedRectangle(
+          leaderLink: widget.editingController.magnifierFocalPoint,
+          animationController: _animationController,
+          offsetFromFocalPoint: const Offset(0, -230),
+        );
+      },
     );
   }
 
@@ -621,6 +643,8 @@ class IOSEditingOverlayController with ChangeNotifier {
   final LeaderLink _magnifierFocalPoint;
 
   bool get isMagnifierVisible => overlayController.shouldDisplayMagnifier;
+  final ValueNotifier<bool> _shouldShowMagnifier = ValueNotifier<bool>(false);
+  ValueListenable<bool> get shouldShowMagnifier => _shouldShowMagnifier;
 
   void showMagnifier(Offset globalOffset) {
     overlayController.showMagnifier();
@@ -644,6 +668,7 @@ class IOSEditingOverlayController with ChangeNotifier {
   }
 
   void _overlayControllerChanged() {
+    _shouldShowMagnifier.value = overlayController.shouldDisplayMagnifier;
     notifyListeners();
   }
 }

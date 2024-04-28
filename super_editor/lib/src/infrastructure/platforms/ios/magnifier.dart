@@ -1,14 +1,18 @@
-import 'package:flutter/widgets.dart';
+import 'dart:math';
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
-import 'package:super_editor/src/super_textfield/infrastructure/magnifier.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/outer_box_shadow.dart';
+import 'package:super_editor/super_editor.dart';
 
 /// An iOS magnifying glass that follows a [LayerLink].
-class IOSFollowingMagnifier extends StatelessWidget {
+class IOSFollowingMagnifier extends StatefulWidget {
   const IOSFollowingMagnifier.roundedRectangle({
     Key? key,
     this.magnifierKey,
     required this.leaderLink,
+    required this.animationController,
     this.offsetFromFocalPoint = Offset.zero,
   }) : magnifierBuilder = _roundedRectangleMagnifierBuilder;
 
@@ -16,6 +20,7 @@ class IOSFollowingMagnifier extends StatelessWidget {
     Key? key,
     this.magnifierKey,
     required this.leaderLink,
+    required this.animationController,
     this.offsetFromFocalPoint = Offset.zero,
   }) : magnifierBuilder = _circleMagnifierBuilder;
 
@@ -23,6 +28,7 @@ class IOSFollowingMagnifier extends StatelessWidget {
     Key? key,
     this.magnifierKey,
     required this.leaderLink,
+    required this.animationController,
     this.offsetFromFocalPoint = Offset.zero,
     required this.magnifierBuilder,
   }) : super(key: key);
@@ -31,35 +37,98 @@ class IOSFollowingMagnifier extends StatelessWidget {
   final LeaderLink leaderLink;
   final Offset offsetFromFocalPoint;
   final MagnifierBuilder magnifierBuilder;
+  final AnimationController animationController;
+
+  @override
+  State<IOSFollowingMagnifier> createState() => _IOSFollowingMagnifierState();
+}
+
+class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> {
+  late CurvedAnimation _animation;
+
+  @override
+  void initState() {
+    _animation = CurvedAnimation(
+      parent: widget.animationController,
+      curve: Curves.easeOut,
+    );
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _animation.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Follower.withOffset(
-      link: leaderLink,
-      leaderAnchor: Alignment.topCenter,
-      followerAnchor: Alignment.bottomCenter,
-      offset: offsetFromFocalPoint,
-      child: magnifierBuilder(
-        context,
-        offsetFromFocalPoint,
-        magnifierKey,
-      ),
+    final borderColor = SuperEditorIosControlsScope.maybeRootOf(context)?.handleColor ?? Theme.of(context).primaryColor;
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        final percentage = _animation.value;
+
+        return Follower.withOffset(
+          link: widget.leaderLink,
+          leaderAnchor: Alignment.center,
+          followerAnchor: Alignment.topLeft,
+          offset: Offset(
+            widget.offsetFromFocalPoint.dx,
+            // Animate the magnfier up on entrance and down on exit.
+            widget.offsetFromFocalPoint.dy * percentage,
+          ),
+          // Theoretically, we should be able to use a leaderAnchor and followerAnchor of "center"
+          // and avoid the following FractionalTranslation. However, when centering the follower,
+          // we don't get the expect focal point within the magnified area. It's off-center. I'm not
+          // sure why that happens, but using a followerAnchor of "topLeft" and then pulling back
+          // by 50% solve the problem.
+          child: FractionalTranslation(
+            translation: const Offset(-0.5, -0.5),
+            child: Transform.scale(
+              scaleY: max(percentage, 0.3),
+              scaleX: percentage,
+              child: Opacity(
+                opacity: max(percentage, 0.3),
+                child: widget.magnifierBuilder(
+                  context,
+                  MagnifierInfo(
+                    // In theory, the offsetFromFocalPoint should either be `widget.offsetFromFocalPoint.dy` to match
+                    // the actual offset, or it should be `widget.offsetFromFocalPoint.dy / magnificationLevel`. Neither
+                    // of those align the focal point correctly. The following offset was found empirically to give the
+                    // desired results.
+                    offsetFromFocalPoint: Offset(
+                      widget.offsetFromFocalPoint.dx - 23,
+                      widget.offsetFromFocalPoint.dy + 140,
+                    ),
+                    animationPercentage: percentage,
+                    borderColor: borderColor,
+                  ),
+                  widget.magnifierKey,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
 
-typedef MagnifierBuilder = Widget Function(BuildContext, Offset offsetFromFocalPoint, [Key? magnifierKey]);
+typedef MagnifierBuilder = Widget Function(BuildContext, MagnifierInfo magnifierInfo, [Key? magnifierKey]);
 
-Widget _roundedRectangleMagnifierBuilder(BuildContext context, Offset offsetFromFocalPoint, [Key? magnifierKey]) =>
+Widget _roundedRectangleMagnifierBuilder(BuildContext context, MagnifierInfo magnifierInfo, [Key? magnifierKey]) =>
     IOSRoundedRectangleMagnifyingGlass(
       key: magnifierKey,
-      offsetFromFocalPoint: offsetFromFocalPoint,
+      offsetFromFocalPoint: magnifierInfo.offsetFromFocalPoint,
+      animationPercentage: magnifierInfo.animationPercentage,
+      borderColor: magnifierInfo.borderColor,
     );
 
-Widget _circleMagnifierBuilder(BuildContext context, Offset offsetFromFocalPoint, [Key? magnifierKey]) =>
+Widget _circleMagnifierBuilder(BuildContext context, MagnifierInfo magnifierInfo, [Key? magnifierKey]) =>
     IOSCircleMagnifyingGlass(
       key: magnifierKey,
-      offsetFromFocalPoint: offsetFromFocalPoint,
+      offsetFromFocalPoint: magnifierInfo.offsetFromFocalPoint,
     );
 
 class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
@@ -68,36 +137,51 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
   const IOSRoundedRectangleMagnifyingGlass({
     super.key,
     this.offsetFromFocalPoint = Offset.zero,
+    this.animationPercentage = 100.0,
+    required this.borderColor,
   });
 
   final Offset offsetFromFocalPoint;
+  final double animationPercentage;
+  final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
+    final percent = animationPercentage;
+    const size = Size(133, 96);
+
+    final borderWidth = lerpDouble(60.0, 3.0, percent)!;
+    final borderRadius = lerpDouble(20.0, 50.0, percent)!;
+
     return Stack(
       children: [
+        MagnifyingGlass(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+          ),
+          size: size,
+          offsetFromFocalPoint: Offset(offsetFromFocalPoint.dx, offsetFromFocalPoint.dy),
+          magnificationScale: _magnification,
+        ),
         Container(
-          width: 72,
-          height: 48,
-          decoration: const ShapeDecoration(
+          width: size.width,
+          height: size.height,
+          decoration: ShapeDecoration(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(24)),
+              borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+              side: BorderSide(
+                color: borderColor,
+                width: borderWidth,
+              ),
             ),
-            shadows: [
+            color: borderColor.withOpacity(1 - percent),
+            shadows: const [
               OuterBoxShadow(
                 color: Color(0x33000000),
                 blurRadius: 4,
               ),
             ],
           ),
-        ),
-        MagnifyingGlass(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(24)),
-          ),
-          size: const Size(72, 48),
-          offsetFromFocalPoint: offsetFromFocalPoint,
-          magnificationScale: _magnification,
         ),
       ],
     );
@@ -154,4 +238,17 @@ class IOSCircleMagnifyingGlass extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Parameters used to render the magnifier.
+class MagnifierInfo {
+  MagnifierInfo({
+    required this.offsetFromFocalPoint,
+    this.animationPercentage = 100.0,
+    required this.borderColor,
+  });
+
+  final Offset offsetFromFocalPoint;
+  final double animationPercentage;
+  final Color borderColor;
 }

@@ -132,6 +132,10 @@ typedef DocumentFloatingToolbarBuilder = Widget Function(
 /// ```
 typedef DocumentMagnifierBuilder = Widget Function(BuildContext, Key magnifierKey, LeaderLink focalPoint);
 
+/// A [DocumentMagnifierBuilder] that animates the magnifier's appearance and disappearance.
+typedef DocumentAnimatedMagnifierBuilder = Widget Function(
+    BuildContext, Key magnifierKey, LeaderLink focalPoint, AnimationController animationController);
+
 /// Global flag that disables long-press selection for Android and iOS, as a hack for Superlist, because
 /// Superlist has a custom long-press behavior per-component.
 ///

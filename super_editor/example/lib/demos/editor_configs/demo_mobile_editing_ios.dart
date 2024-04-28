@@ -14,7 +14,7 @@ class MobileEditingIOSDemo extends StatefulWidget {
   State<MobileEditingIOSDemo> createState() => _MobileEditingIOSDemoState();
 }
 
-class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
+class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> with SingleTickerProviderStateMixin {
   final GlobalKey _docLayoutKey = GlobalKey();
 
   late MutableDocument _doc;
@@ -133,12 +133,14 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     );
   }
 
-  Widget _buildIosMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint) {
+  Widget _buildIosMagnifier(
+      BuildContext context, Key magnifierKey, LeaderLink focalPoint, AnimationController animationController) {
     return Center(
       child: IOSFollowingMagnifier.roundedRectangle(
         magnifierKey: magnifierKey,
         leaderLink: focalPoint,
-        offsetFromFocalPoint: const Offset(0, -72),
+        offsetFromFocalPoint: const Offset(0, -230),
+        animationController: animationController,
       ),
     );
   }
