@@ -343,6 +343,37 @@ void main() {
       expect(scrollController.offset, scrollController.position.maxScrollExtent);
     });
 
+    testWidgetsOnArbitraryDesktop("does not stop momentum on mouse move", (tester) async {
+      final scrollController = ScrollController();
+
+      // Pump a reader with a small size to make it scrollable.
+      await tester //
+          .createDocument() //
+          .withCustomContent(longTextDoc()) //
+          .withScrollController(scrollController) //
+          .withEditorSize(const Size(300, 300))
+          .pump();
+
+      // Fling scroll with the trackpad to generate momentum.
+      await tester.trackpadFling(
+        find.byType(SuperReader),
+        const Offset(0.0, -300),
+        300.0,
+      );
+
+      final scrollOffsetInMiddleOfMomentum = scrollController.offset;
+
+      // Move the mouse around.
+      final gesture = await tester.createGesture();
+      await gesture.moveTo(tester.getTopLeft(find.byType(SuperReader)));
+
+      // Let any momentum run.
+      await tester.pumpAndSettle();
+
+      // Ensure that the momentum didn't stop due to mouse movement.
+      expect(scrollOffsetInMiddleOfMomentum, lessThan(scrollController.offset));
+    });
+
     group("when all content fits in the viewport", () {
       testWidgetsOnDesktop(
         "trackpad doesn't scroll content",

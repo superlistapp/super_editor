@@ -185,7 +185,6 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   }
 
   void _onMouseMove(PointerHoverEvent event) {
-    _cancelScrollMomentum();
     _updateMouseCursor(event.position);
     _lastHoverOffset = event.position;
   }
@@ -462,13 +461,6 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   void _scrollVertically(double delta) {
     widget.autoScroller.jumpBy(delta);
     _updateDragSelection();
-  }
-
-  /// Beginning with Flutter 3.3.3, we are responsible for starting and
-  /// stopping scroll momentum. This method cancels any scroll momentum
-  /// in our scroll controller.
-  void _cancelScrollMomentum() {
-    widget.autoScroller.goIdle();
   }
 
   void _updateDragSelection() {
