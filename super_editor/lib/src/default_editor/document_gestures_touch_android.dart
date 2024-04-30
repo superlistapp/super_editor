@@ -796,8 +796,14 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _showAndHideEditingControlsAfterTapSelection(didTapOnExistingSelection: didTapOnExistingSelection);
 
-    // Show the software keyboard.
-    widget.softwareKeyboardController.open();
+    if (didTapOnExistingSelection && widget.softwareKeyboardController.hasDelegate) {
+      // The user tapped on the existing selection while the IME connection
+      // is open. Show the software keyboard.
+      //
+      // If the user didn't tap on an existing selection, the software keyboard will
+      // already be visible.
+      widget.softwareKeyboardController.open();
+    }
 
     widget.focusNode.requestFocus();
   }
