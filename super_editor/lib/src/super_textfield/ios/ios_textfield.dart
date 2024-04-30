@@ -399,36 +399,44 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   DeltaTextInputClient get imeClient => _textEditingController;
 
   void _updateSelectionAndImeConnectionOnFocusChange() {
-    if (_focusNode.hasFocus) {
-      if (!_textEditingController.isAttachedToIme) {
-        _log.info('Attaching TextInputClient to TextInput');
+    // The focus change callback might be invoked in the build phase. It that's the case,
+    // defer the setState call until the end of the frame.
+    WidgetsBinding.instance.runAsSoonAsPossible(() {
+      if (!mounted) {
+        return;
+      }
+
+      if (_focusNode.hasFocus) {
+        if (!_textEditingController.isAttachedToIme) {
+          _log.info('Attaching TextInputClient to TextInput');
+          setState(() {
+            if (!_textEditingController.selection.isValid) {
+              _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.length);
+            }
+
+            if (widget.imeConfiguration != null) {
+              _textEditingController.attachToImeWithConfig(widget.imeConfiguration!);
+            } else {
+              _textEditingController.attachToIme(
+                textInputAction: widget.textInputAction ?? TextInputAction.done,
+                textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
+              );
+            }
+
+            _autoScrollToKeepTextFieldVisible();
+            _showHandles();
+          });
+        }
+      } else {
+        _log.info('Lost focus. Detaching TextInputClient from TextInput.');
         setState(() {
-          if (!_textEditingController.selection.isValid) {
-            _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.length);
-          }
-
-          if (widget.imeConfiguration != null) {
-            _textEditingController.attachToImeWithConfig(widget.imeConfiguration!);
-          } else {
-            _textEditingController.attachToIme(
-              textInputAction: widget.textInputAction ?? TextInputAction.done,
-              textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
-            );
-          }
-
-          _autoScrollToKeepTextFieldVisible();
-          _showHandles();
+          _textEditingController.detachFromIme();
+          _textEditingController.selection = const TextSelection.collapsed(offset: -1);
+          _textEditingController.composingRegion = TextRange.empty;
+          _removeEditingOverlayControls();
         });
       }
-    } else {
-      _log.info('Lost focus. Detaching TextInputClient from TextInput.');
-      setState(() {
-        _textEditingController.detachFromIme();
-        _textEditingController.selection = const TextSelection.collapsed(offset: -1);
-        _textEditingController.composingRegion = TextRange.empty;
-        _removeEditingOverlayControls();
-      });
-    }
+    });
   }
 
   void _onTextOrSelectionChange() {
