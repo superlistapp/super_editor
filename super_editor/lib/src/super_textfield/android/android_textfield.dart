@@ -382,8 +382,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
   void _updateSelectionAndImeConnectionOnFocusChange() {
-    // The focus change callback might be invoked in the build phase. It that's the case,
-    // defer the setState call until the end of the frame.
+    // The focus change callback might be invoked in the build phase, usually when used inside
+    // an OverlayPortal. If that's the case, defer the setState call until the end of the frame.
     WidgetsBinding.instance.runAsSoonAsPossible(() {
       if (!mounted) {
         return;

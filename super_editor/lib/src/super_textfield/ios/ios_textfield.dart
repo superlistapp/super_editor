@@ -399,8 +399,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   DeltaTextInputClient get imeClient => _textEditingController;
 
   void _updateSelectionAndImeConnectionOnFocusChange() {
-    // The focus change callback might be invoked in the build phase. It that's the case,
-    // defer the setState call until the end of the frame.
+    // The focus change callback might be invoked in the build phase, usually when used inside
+    // an OverlayPortal. If that's the case, defer the setState call until the end of the frame.
     WidgetsBinding.instance.runAsSoonAsPossible(() {
       if (!mounted) {
         return;
