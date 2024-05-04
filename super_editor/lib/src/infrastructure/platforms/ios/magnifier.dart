@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -44,30 +43,20 @@ class IOSFollowingMagnifier extends StatefulWidget {
 }
 
 class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> {
-  late CurvedAnimation _animation;
+  late final Color handleColor;
 
   @override
-  void initState() {
-    _animation = CurvedAnimation(
-      parent: widget.animationController,
-      curve: Curves.easeOut,
-    );
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _animation.dispose();
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    handleColor = SuperEditorIosControlsScope.maybeRootOf(context)?.handleColor ?? Theme.of(context).primaryColor;
   }
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = SuperEditorIosControlsScope.maybeRootOf(context)?.handleColor ?? Theme.of(context).primaryColor;
     return AnimatedBuilder(
-      animation: _animation,
+      animation: widget.animationController,
       builder: (context, child) {
-        final percentage = _animation.value;
+        final percentage = widget.animationController.value;
 
         return Follower.withOffset(
           link: widget.leaderLink,
@@ -85,28 +74,21 @@ class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> {
           // by 50% solve the problem.
           child: FractionalTranslation(
             translation: const Offset(-0.5, -0.5),
-            child: Transform.scale(
-              scaleY: max(percentage, 0.3),
-              scaleX: percentage,
-              child: Opacity(
-                opacity: max(percentage, 0.3),
-                child: widget.magnifierBuilder(
-                  context,
-                  MagnifierInfo(
-                    // In theory, the offsetFromFocalPoint should either be `widget.offsetFromFocalPoint.dy` to match
-                    // the actual offset, or it should be `widget.offsetFromFocalPoint.dy / magnificationLevel`. Neither
-                    // of those align the focal point correctly. The following offset was found empirically to give the
-                    // desired results.
-                    offsetFromFocalPoint: Offset(
-                      widget.offsetFromFocalPoint.dx - 23,
-                      widget.offsetFromFocalPoint.dy + 140,
-                    ),
-                    animationPercentage: percentage,
-                    borderColor: borderColor,
-                  ),
-                  widget.magnifierKey,
+            child: widget.magnifierBuilder(
+              context,
+              MagnifierInfo(
+                // In theory, the offsetFromFocalPoint should either be `widget.offsetFromFocalPoint.dy` to match
+                // the actual offset, or it should be `widget.offsetFromFocalPoint.dy / magnificationLevel`. Neither
+                // of those align the focal point correctly. The following offset was found empirically to give the
+                // desired results.
+                offsetFromFocalPoint: Offset(
+                  widget.offsetFromFocalPoint.dx - 23,
+                  (widget.offsetFromFocalPoint.dy + 140) * percentage,
                 ),
+                animationPercentage: widget.animationController.value,
+                borderColor: handleColor,
               ),
+              widget.magnifierKey,
             ),
           ),
         );
@@ -137,7 +119,7 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
   const IOSRoundedRectangleMagnifyingGlass({
     super.key,
     this.offsetFromFocalPoint = Offset.zero,
-    this.animationPercentage = 100.0,
+    this.animationPercentage = 1.0,
     required this.borderColor,
   });
 
@@ -147,43 +129,56 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percent = animationPercentage;
-    const size = Size(133, 96);
+    final percent = Curves.easeOut.transform(animationPercentage);
 
-    final borderWidth = lerpDouble(60.0, 3.0, percent)!;
-    final borderRadius = lerpDouble(20.0, 50.0, percent)!;
+    final height = lerpDouble(30, 96, percent)!;
+    final width = lerpDouble(4, 133, percent)!;
+    final size = Size(width, height);
 
-    return Stack(
-      children: [
-        MagnifyingGlass(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
-          ),
-          size: size,
-          offsetFromFocalPoint: Offset(offsetFromFocalPoint.dx, offsetFromFocalPoint.dy),
-          magnificationScale: _magnification,
-        ),
-        Container(
-          width: size.width,
-          height: size.height,
-          decoration: ShapeDecoration(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
-              side: BorderSide(
-                color: borderColor,
-                width: borderWidth,
+    final tintOpacity = 1.0 - Curves.easeIn.transform(animationPercentage);
+    final borderRadius = lerpDouble(30.0, 50.0, percent)!;
+    final borderWidth = lerpDouble(15.0, 3.0, percent)!;
+
+    return SizedBox(
+      width: size.width,
+      height: size.height,
+      child: ClipRRect(
+        borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+        child: Stack(
+          children: [
+            if (percent >= 0.3)
+              MagnifyingGlass(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+                ),
+                size: size,
+                offsetFromFocalPoint: Offset(offsetFromFocalPoint.dx, offsetFromFocalPoint.dy),
+                magnificationScale: _magnification,
+              ),
+            Opacity(
+              opacity: Curves.easeOutQuint.transform(percent),
+              child: Container(
+                decoration: ShapeDecoration(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+                    side: BorderSide(
+                      color: borderColor,
+                      width: borderWidth,
+                    ),
+                  ),
+                  color: borderColor.withOpacity(tintOpacity),
+                  shadows: const [
+                    OuterBoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
               ),
             ),
-            color: borderColor.withOpacity(1 - percent),
-            shadows: const [
-              OuterBoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 4,
-              ),
-            ],
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

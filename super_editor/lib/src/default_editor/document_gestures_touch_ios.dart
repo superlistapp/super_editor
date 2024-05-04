@@ -1893,5 +1893,5 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
   }
 }
 
-const defaultIosMagnifierAnimationDuration = Duration(milliseconds: 150);
-const defaultIosMagnifierExitAnimationDuration = Duration(milliseconds: 100);
+const defaultIosMagnifierAnimationDuration = Duration(milliseconds: 180);
+const defaultIosMagnifierExitAnimationDuration = Duration(milliseconds: 150);
