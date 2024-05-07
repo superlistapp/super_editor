@@ -125,7 +125,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
 
     _animationController = AnimationController(
       vsync: this,
-      duration: defaultIosMagnifierAnimationDuration,
+      duration: defaultIosMagnifierEnterAnimationDuration,
       reverseDuration: defaultIosMagnifierExitAnimationDuration,
     );
   }

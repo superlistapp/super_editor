@@ -1138,7 +1138,7 @@ class SuperReaderIosMagnifierOverlayManagerState extends State<SuperReaderIosMag
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: defaultIosMagnifierAnimationDuration,
+      duration: defaultIosMagnifierEnterAnimationDuration,
       reverseDuration: defaultIosMagnifierExitAnimationDuration,
     );
     _animationController.addStatusListener(_hideMagnifierOnAnimationEnd);

@@ -283,7 +283,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   Offset? _startDragPositionOffset;
   double? _dragStartScrollOffset;
   Offset? _globalDragOffset;
-  final _magnifierFocalPoint = ValueNotifier<Offset?>(null);
+
+  /// The [Offset] of the magnifier's focal point in the [DocumentLayout] coordinate space.
+  final _magnifierFocalPointInContentSpace = ValueNotifier<Offset?>(null);
   Offset? _dragEndInInteractor;
   DragMode? _dragMode;
   // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
@@ -577,7 +579,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _updateMagnifierFocalPoint();
+    _placeFocalPointNearTouchOffset();
     _controlsController!
       ..hideToolbar()
       ..showMagnifier();
@@ -957,7 +959,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       dragEndInViewport: dragEndInViewport,
     );
 
-    _updateMagnifierFocalPoint();
+    _placeFocalPointNearTouchOffset();
   }
 
   void _updateSelectionForNewDragHandleLocation() {
@@ -1084,8 +1086,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _updateMagnifierFocalPointOnAutoScrollFrame() {
-    if (_magnifierFocalPoint.value != null) {
-      _updateMagnifierFocalPoint();
+    if (_magnifierFocalPointInContentSpace.value != null) {
+      _placeFocalPointNearTouchOffset();
     }
   }
 
@@ -1237,7 +1239,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   /// Updates the magnifier focal point in relation to the current drag position.
-  void _updateMagnifierFocalPoint() {
+  void _placeFocalPointNearTouchOffset() {
     late DocumentPosition? docPositionToMagnify;
 
     if (_globalTapDownOffset != null) {
@@ -1255,7 +1257,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _docLayout.getRectForPosition(docPositionToMagnify!)!.center,
     );
 
-    _magnifierFocalPoint.value = centerOfContentAtOffset;
+    _magnifierFocalPointInContentSpace.value = centerOfContentAtOffset;
   }
 
   @override
@@ -1333,7 +1335,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   Widget _buildMagnifierFocalPoint() {
     return ValueListenableBuilder(
-      valueListenable: _magnifierFocalPoint,
+      valueListenable: _magnifierFocalPointInContentSpace,
       builder: (context, magnifierFocalPoint, child) {
         if (magnifierFocalPoint == null) {
           return const SizedBox();
@@ -1456,7 +1458,7 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
   ///
   /// This is different from [SuperEditorIosControlsController.shouldShowMagnifier] because
   /// [_showMagnifier] becomes false only when the exit animation finishes.
-  late ValueNotifier<bool> _showMagnifier;
+  final ValueNotifier<bool> _showMagnifier = ValueNotifier(false);
 
   @visibleForTesting
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
@@ -1466,7 +1468,7 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: defaultIosMagnifierAnimationDuration,
+      duration: defaultIosMagnifierEnterAnimationDuration,
       reverseDuration: defaultIosMagnifierExitAnimationDuration,
     );
     _animationController.addStatusListener(_hideMagnifierOnAnimationEnd);
@@ -1478,7 +1480,7 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
 
     _controlsController = SuperEditorIosControlsScope.rootOf(context);
     _controlsController!.shouldShowMagnifier.addListener(_onShouldShowMagnifierChanged);
-    _showMagnifier = ValueNotifier(_controlsController!.shouldShowMagnifier.value);
+    _showMagnifier.value = _controlsController!.shouldShowMagnifier.value;
 
     _overlayPortalController.show();
   }
@@ -1893,5 +1895,6 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
   }
 }
 
-const defaultIosMagnifierAnimationDuration = Duration(milliseconds: 180);
+const defaultIosMagnifierEnterAnimationDuration = Duration(milliseconds: 180);
 const defaultIosMagnifierExitAnimationDuration = Duration(milliseconds: 150);
+const defaultIosMagnifierAnimationCurve = Curves.easeInOut;

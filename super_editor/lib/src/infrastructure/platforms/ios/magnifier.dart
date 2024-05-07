@@ -76,7 +76,7 @@ class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> {
             translation: const Offset(-0.5, -0.5),
             child: widget.magnifierBuilder(
               context,
-              MagnifierInfo(
+              IosMagnifierViewModel(
                 // In theory, the offsetFromFocalPoint should either be `widget.offsetFromFocalPoint.dy` to match
                 // the actual offset, or it should be `widget.offsetFromFocalPoint.dy / magnificationLevel`. Neither
                 // of those align the focal point correctly. The following offset was found empirically to give the
@@ -97,9 +97,10 @@ class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> {
   }
 }
 
-typedef MagnifierBuilder = Widget Function(BuildContext, MagnifierInfo magnifierInfo, [Key? magnifierKey]);
+typedef MagnifierBuilder = Widget Function(BuildContext, IosMagnifierViewModel magnifierInfo, [Key? magnifierKey]);
 
-Widget _roundedRectangleMagnifierBuilder(BuildContext context, MagnifierInfo magnifierInfo, [Key? magnifierKey]) =>
+Widget _roundedRectangleMagnifierBuilder(BuildContext context, IosMagnifierViewModel magnifierInfo,
+        [Key? magnifierKey]) =>
     IOSRoundedRectangleMagnifyingGlass(
       key: magnifierKey,
       offsetFromFocalPoint: magnifierInfo.offsetFromFocalPoint,
@@ -107,7 +108,7 @@ Widget _roundedRectangleMagnifierBuilder(BuildContext context, MagnifierInfo mag
       borderColor: magnifierInfo.borderColor,
     );
 
-Widget _circleMagnifierBuilder(BuildContext context, MagnifierInfo magnifierInfo, [Key? magnifierKey]) =>
+Widget _circleMagnifierBuilder(BuildContext context, IosMagnifierViewModel magnifierInfo, [Key? magnifierKey]) =>
     IOSCircleMagnifyingGlass(
       key: magnifierKey,
       offsetFromFocalPoint: magnifierInfo.offsetFromFocalPoint,
@@ -129,7 +130,7 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percent = Curves.easeOut.transform(animationPercentage);
+    final percent = defaultIosMagnifierAnimationCurve.transform(animationPercentage);
 
     final height = lerpDouble(30, 96, percent)!;
     final width = lerpDouble(4, 133, percent)!;
@@ -235,9 +236,9 @@ class IOSCircleMagnifyingGlass extends StatelessWidget {
   }
 }
 
-/// Parameters used to render the magnifier.
-class MagnifierInfo {
-  MagnifierInfo({
+/// Parameters used to render an iOS magnifier.
+class IosMagnifierViewModel {
+  IosMagnifierViewModel({
     required this.offsetFromFocalPoint,
     this.animationPercentage = 100.0,
     required this.borderColor,
