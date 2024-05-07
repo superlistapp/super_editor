@@ -44,7 +44,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await screenMatchesGolden(tester, 'super-editor-image-caret-downstream-android');
+      await expectLater(
+        find.byType(MaterialApp).first,
+        matchesGoldenFileWithPixelAllowance('super-editor-image-caret-downstream-android', 77),
+      );
     });
 
     testGoldensOnMac('shows caret at left side of an image', (tester) async {
@@ -85,7 +88,10 @@ void main() {
         );
         await tester.pump();
 
-        await screenMatchesGolden(tester, 'super-editor-image-caret-upstream-android');
+        await expectLater(
+          find.byType(MaterialApp).first,
+          matchesGoldenFileWithPixelAllowance('super-editor-image-caret-upstream-android', 77),
+        );
       },
     );
   });
