@@ -140,7 +140,8 @@ class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> with Sing
                     widget.offsetFromFocalPoint.dx - 23,
                     (widget.offsetFromFocalPoint.dy + 140) * percentage,
                   ),
-                  animationPercentage: _animationController.value,
+                  animationValue: _animationController.value,
+                  animationDirection: _animationController.status,
                   borderColor: handleColor,
                 ),
                 widget.magnifierKey,
@@ -160,7 +161,7 @@ Widget _roundedRectangleMagnifierBuilder(BuildContext context, IosMagnifierViewM
     IOSRoundedRectangleMagnifyingGlass(
       key: magnifierKey,
       offsetFromFocalPoint: magnifierInfo.offsetFromFocalPoint,
-      animationPercentage: magnifierInfo.animationPercentage,
+      animationValue: magnifierInfo.animationValue,
       borderColor: magnifierInfo.borderColor,
     );
 
@@ -176,23 +177,23 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
   const IOSRoundedRectangleMagnifyingGlass({
     super.key,
     this.offsetFromFocalPoint = Offset.zero,
-    this.animationPercentage = 1.0,
+    this.animationValue = 1.0,
     required this.borderColor,
   });
 
   final Offset offsetFromFocalPoint;
-  final double animationPercentage;
+  final double animationValue;
   final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
-    final percent = defaultIosMagnifierAnimationCurve.transform(animationPercentage);
+    final percent = defaultIosMagnifierAnimationCurve.transform(animationValue);
 
     final height = lerpDouble(30, 96, percent)!;
     final width = lerpDouble(4, 133, percent)!;
     final size = Size(width, height);
 
-    final tintOpacity = 1.0 - Curves.easeIn.transform(animationPercentage);
+    final tintOpacity = 1.0 - Curves.easeIn.transform(animationValue);
     final borderRadius = lerpDouble(30.0, 50.0, percent)!;
     final borderWidth = lerpDouble(15.0, 3.0, percent)!;
 
@@ -296,11 +297,13 @@ class IOSCircleMagnifyingGlass extends StatelessWidget {
 class IosMagnifierViewModel {
   IosMagnifierViewModel({
     required this.offsetFromFocalPoint,
-    this.animationPercentage = 100.0,
+    this.animationValue = 1.0,
+    this.animationDirection = AnimationStatus.forward,
     required this.borderColor,
   });
 
   final Offset offsetFromFocalPoint;
-  final double animationPercentage;
+  final double animationValue;
+  final AnimationStatus animationDirection;
   final Color borderColor;
 }
