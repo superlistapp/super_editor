@@ -137,11 +137,11 @@ MutableDocument _createInitialDocument() {
             AttributedSpans(
               attributions: [
                 SpanMarker(
-                    attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                    attribution: LinkAttribution.fromUri(Uri.https('example.org', '')),
                     offset: 30,
                     markerType: SpanMarkerType.start),
                 SpanMarker(
-                    attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                    attribution: LinkAttribution.fromUri(Uri.https('example.org', '')),
                     offset: 35,
                     markerType: SpanMarkerType.end),
               ],
