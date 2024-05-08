@@ -160,7 +160,7 @@ class SuperEditorIosControlsController {
   /// (Optional) Builder to create the visual representation of the magnifier.
   ///
   /// If [magnifierBuilder] is `null`, a default iOS magnifier is displayed.
-  final DocumentAnimatedMagnifierBuilder? magnifierBuilder;
+  final DocumentMagnifierBuilder? magnifierBuilder;
 
   /// Whether the iOS floating toolbar should be displayed right now.
   ValueListenable<bool> get shouldShowToolbar => _shouldShowToolbar;
@@ -1452,63 +1452,14 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
   final OverlayPortalController _overlayPortalController = OverlayPortalController();
   SuperEditorIosControlsController? _controlsController;
 
-  late AnimationController _animationController;
-
-  /// Wether or not the magnifier should be displayed.
-  ///
-  /// This is different from [SuperEditorIosControlsController.shouldShowMagnifier] because
-  /// [_showMagnifier] becomes false only when the exit animation finishes.
-  final ValueNotifier<bool> _showMagnifier = ValueNotifier(false);
-
   @visibleForTesting
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
   @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: defaultIosMagnifierEnterAnimationDuration,
-      reverseDuration: defaultIosMagnifierExitAnimationDuration,
-    );
-    _animationController.addStatusListener(_hideMagnifierOnAnimationEnd);
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     _controlsController = SuperEditorIosControlsScope.rootOf(context);
-    _controlsController!.shouldShowMagnifier.addListener(_onShouldShowMagnifierChanged);
-    _showMagnifier.value = _controlsController!.shouldShowMagnifier.value;
-
     _overlayPortalController.show();
-  }
-
-  @override
-  void dispose() {
-    _controlsController!.shouldShowMagnifier.removeListener(_onShouldShowMagnifierChanged);
-    _showMagnifier.dispose();
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _onShouldShowMagnifierChanged() {
-    if (_controlsController!.shouldShowMagnifier.value) {
-      _showMagnifier.value = true;
-      _animationController.forward();
-    } else {
-      // The desire to show the magnifier changed from visible to invisible. Run the exit
-      // animation and set the magnifier to invisible when the animation finishes.
-      _animationController.reverse();
-    }
-  }
-
-  /// Hides the magnifier if the exit animation has finished.
-  void _hideMagnifierOnAnimationEnd(AnimationStatus status) {
-    if (status == AnimationStatus.dismissed && !_controlsController!.shouldShowMagnifier.value) {
-      _showMagnifier.value = false;
-    }
   }
 
   @override
@@ -1527,22 +1478,26 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     // position a Leader with a LeaderLink. This magnifier follows that Leader
     // via the LeaderLink.
     return ValueListenableBuilder(
-      valueListenable: _showMagnifier,
+      valueListenable: _controlsController!.shouldShowMagnifier,
       builder: (context, shouldShowMagnifier, child) {
-        if (!shouldShowMagnifier) {
-          return const SizedBox();
-        }
-
-        return child!;
+        return _controlsController!.magnifierBuilder != null //
+            ? _controlsController!.magnifierBuilder!(
+                context,
+                DocumentKeys.magnifier,
+                _controlsController!.magnifierFocalPoint,
+                shouldShowMagnifier,
+              )
+            : _buildDefaultMagnifier(
+                context,
+                DocumentKeys.magnifier,
+                _controlsController!.magnifierFocalPoint,
+                shouldShowMagnifier,
+              );
       },
-      child: _controlsController!.magnifierBuilder != null //
-          ? _controlsController!.magnifierBuilder!(
-              context, DocumentKeys.magnifier, _controlsController!.magnifierFocalPoint, _animationController)
-          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, _controlsController!.magnifierFocalPoint),
     );
   }
 
-  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint) {
+  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint, bool visible) {
     if (CurrentPlatform.isWeb) {
       // Defer to the browser to display overlay controls on mobile.
       return const SizedBox();
@@ -1551,7 +1506,7 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     return IOSFollowingMagnifier.roundedRectangle(
       magnifierKey: magnifierKey,
       leaderLink: magnifierFocalPoint,
-      animationController: _animationController,
+      show: visible,
       offsetFromFocalPoint: const Offset(0, -230),
     );
   }

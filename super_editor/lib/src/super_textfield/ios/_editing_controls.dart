@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -109,10 +108,6 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
   bool _isDraggingExtent = false;
   Offset? _globalDragOffset;
   Offset? _localDragOffset;
-
-  late final AnimationController _animationController;
-  final ValueNotifier<bool> _showMagnifier = ValueNotifier<bool>(false);
-
   @override
   void initState() {
     super.initState();
@@ -120,14 +115,6 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
     WidgetsBinding.instance.addObserver(this);
 
     widget.editingController.textController.addListener(_rebuildOnNextFrame);
-
-    widget.editingController.shouldShowMagnifier.addListener(_onWantsToShowMagnifierChanged);
-
-    _animationController = AnimationController(
-      vsync: this,
-      duration: defaultIosMagnifierEnterAnimationDuration,
-      reverseDuration: defaultIosMagnifierExitAnimationDuration,
-    );
   }
 
   @override
@@ -138,18 +125,11 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
       oldWidget.editingController.textController.removeListener(_rebuildOnNextFrame);
       widget.editingController.textController.addListener(_rebuildOnNextFrame);
     }
-
-    if (widget.editingController.shouldShowMagnifier != oldWidget.editingController.shouldShowMagnifier) {
-      oldWidget.editingController.shouldShowMagnifier.removeListener(_onWantsToShowMagnifierChanged);
-      widget.editingController.shouldShowMagnifier.addListener(_onWantsToShowMagnifierChanged);
-    }
   }
 
   @override
   void dispose() {
     widget.editingController.textController.removeListener(_rebuildOnNextFrame);
-    widget.editingController.shouldShowMagnifier.removeListener(_onWantsToShowMagnifierChanged);
-    _animationController.dispose();
 
     WidgetsBinding.instance.removeObserver(this);
 
@@ -295,15 +275,6 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
 
   Offset _textPositionToTextOffset(TextPosition position) {
     return _textLayout.getOffsetAtPosition(position);
-  }
-
-  void _onWantsToShowMagnifierChanged() {
-    if (widget.editingController.isMagnifierVisible) {
-      _animationController.forward();
-      _showMagnifier.value = true;
-    } else {
-      _animationController.reverse();
-    }
   }
 
   @override
@@ -558,15 +529,11 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
     // that other area of the widget tree is responsible for
     // positioning the LayerLink target.
     return ValueListenableBuilder(
-      valueListenable: _showMagnifier,
+      valueListenable: widget.editingController.shouldShowMagnifier,
       builder: (context, showMagnifier, child) {
-        if (!showMagnifier) {
-          return const SizedBox();
-        }
-
         return IOSFollowingMagnifier.roundedRectangle(
           leaderLink: widget.editingController.magnifierFocalPoint,
-          animationController: _animationController,
+          show: showMagnifier,
           offsetFromFocalPoint: const Offset(0, -230),
         );
       },

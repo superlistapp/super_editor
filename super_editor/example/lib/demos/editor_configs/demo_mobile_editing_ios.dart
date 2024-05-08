@@ -133,14 +133,13 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> with Single
     );
   }
 
-  Widget _buildIosMagnifier(
-      BuildContext context, Key magnifierKey, LeaderLink focalPoint, AnimationController animationController) {
+  Widget _buildIosMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint, bool visible) {
     return Center(
       child: IOSFollowingMagnifier.roundedRectangle(
         magnifierKey: magnifierKey,
         leaderLink: focalPoint,
         offsetFromFocalPoint: const Offset(0, -230),
-        animationController: animationController,
+        show: visible,
       ),
     );
   }

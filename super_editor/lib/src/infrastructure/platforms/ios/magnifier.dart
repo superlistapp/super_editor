@@ -11,7 +11,7 @@ class IOSFollowingMagnifier extends StatefulWidget {
     Key? key,
     this.magnifierKey,
     required this.leaderLink,
-    required this.animationController,
+    this.show = true,
     this.offsetFromFocalPoint = Offset.zero,
   }) : magnifierBuilder = _roundedRectangleMagnifierBuilder;
 
@@ -19,7 +19,7 @@ class IOSFollowingMagnifier extends StatefulWidget {
     Key? key,
     this.magnifierKey,
     required this.leaderLink,
-    required this.animationController,
+    this.show = true,
     this.offsetFromFocalPoint = Offset.zero,
   }) : magnifierBuilder = _circleMagnifierBuilder;
 
@@ -27,7 +27,7 @@ class IOSFollowingMagnifier extends StatefulWidget {
     Key? key,
     this.magnifierKey,
     required this.leaderLink,
-    required this.animationController,
+    this.show = true,
     this.offsetFromFocalPoint = Offset.zero,
     required this.magnifierBuilder,
   }) : super(key: key);
@@ -36,14 +36,32 @@ class IOSFollowingMagnifier extends StatefulWidget {
   final LeaderLink leaderLink;
   final Offset offsetFromFocalPoint;
   final MagnifierBuilder magnifierBuilder;
-  final AnimationController animationController;
+  final bool show;
 
   @override
   State<IOSFollowingMagnifier> createState() => _IOSFollowingMagnifierState();
 }
 
-class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> {
-  late final Color handleColor;
+class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> with SingleTickerProviderStateMixin {
+  late Color handleColor;
+  late final AnimationController _animationController;
+
+  /// Wether or not the magnifier should be displayed.
+  ///
+  /// This is different from [SuperEditorIosControlsController.shouldShowMagnifier] because
+  /// [_showMagnifier] becomes false only when the exit animation finishes.
+  final ValueNotifier<bool> _showMagnifier = ValueNotifier(false);
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: defaultIosMagnifierEnterAnimationDuration,
+      reverseDuration: defaultIosMagnifierExitAnimationDuration,
+    );
+    _animationController.addStatusListener(_hideMagnifierOnAnimationEnd);
+  }
 
   @override
   void didChangeDependencies() {
@@ -52,47 +70,85 @@ class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: widget.animationController,
-      builder: (context, child) {
-        final percentage = widget.animationController.value;
+  void didUpdateWidget(IOSFollowingMagnifier oldWidget) {
+    super.didUpdateWidget(oldWidget);
 
-        return Follower.withOffset(
-          link: widget.leaderLink,
-          leaderAnchor: Alignment.center,
-          followerAnchor: Alignment.topLeft,
-          offset: Offset(
-            widget.offsetFromFocalPoint.dx,
-            // Animate the magnfier up on entrance and down on exit.
-            widget.offsetFromFocalPoint.dy * percentage,
-          ),
-          // Theoretically, we should be able to use a leaderAnchor and followerAnchor of "center"
-          // and avoid the following FractionalTranslation. However, when centering the follower,
-          // we don't get the expect focal point within the magnified area. It's off-center. I'm not
-          // sure why that happens, but using a followerAnchor of "topLeft" and then pulling back
-          // by 50% solve the problem.
-          child: FractionalTranslation(
-            translation: const Offset(-0.5, -0.5),
-            child: widget.magnifierBuilder(
-              context,
-              IosMagnifierViewModel(
-                // In theory, the offsetFromFocalPoint should either be `widget.offsetFromFocalPoint.dy` to match
-                // the actual offset, or it should be `widget.offsetFromFocalPoint.dy / magnificationLevel`. Neither
-                // of those align the focal point correctly. The following offset was found empirically to give the
-                // desired results.
-                offsetFromFocalPoint: Offset(
-                  widget.offsetFromFocalPoint.dx - 23,
-                  (widget.offsetFromFocalPoint.dy + 140) * percentage,
-                ),
-                animationPercentage: widget.animationController.value,
-                borderColor: handleColor,
-              ),
-              widget.magnifierKey,
+    if (widget.show != oldWidget.show) {
+      _onWantsToShowMagnifierChanged();
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.removeStatusListener(_hideMagnifierOnAnimationEnd);
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onWantsToShowMagnifierChanged() {
+    if (widget.show) {
+      _showMagnifier.value = true;
+      _animationController.forward();
+    } else {
+      // The desire to show the magnifier changed from visible to invisible. Run the exit
+      // animation and set the magnifier to invisible when the animation finishes.
+      _animationController.reverse();
+    }
+  }
+
+  /// Hides the magnifier if the exit animation has finished.
+  void _hideMagnifierOnAnimationEnd(AnimationStatus status) {
+    if (status == AnimationStatus.dismissed && !widget.show) {
+      _showMagnifier.value = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: _showMagnifier,
+      builder: (context, shouldShow, child) => shouldShow ? child! : const SizedBox(),
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          final percentage = _animationController.value;
+
+          return Follower.withOffset(
+            link: widget.leaderLink,
+            leaderAnchor: Alignment.center,
+            followerAnchor: Alignment.topLeft,
+            offset: Offset(
+              widget.offsetFromFocalPoint.dx,
+              // Animate the magnfier up on entrance and down on exit.
+              widget.offsetFromFocalPoint.dy * percentage,
             ),
-          ),
-        );
-      },
+            // Theoretically, we should be able to use a leaderAnchor and followerAnchor of "center"
+            // and avoid the following FractionalTranslation. However, when centering the follower,
+            // we don't get the expect focal point within the magnified area. It's off-center. I'm not
+            // sure why that happens, but using a followerAnchor of "topLeft" and then pulling back
+            // by 50% solve the problem.
+            child: FractionalTranslation(
+              translation: const Offset(-0.5, -0.5),
+              child: widget.magnifierBuilder(
+                context,
+                IosMagnifierViewModel(
+                  // In theory, the offsetFromFocalPoint should either be `widget.offsetFromFocalPoint.dy` to match
+                  // the actual offset, or it should be `widget.offsetFromFocalPoint.dy / magnificationLevel`. Neither
+                  // of those align the focal point correctly. The following offset was found empirically to give the
+                  // desired results.
+                  offsetFromFocalPoint: Offset(
+                    widget.offsetFromFocalPoint.dx - 23,
+                    (widget.offsetFromFocalPoint.dy + 140) * percentage,
+                  ),
+                  animationPercentage: _animationController.value,
+                  borderColor: handleColor,
+                ),
+                widget.magnifierKey,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
