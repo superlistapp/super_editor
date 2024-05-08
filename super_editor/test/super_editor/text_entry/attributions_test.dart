@@ -10,7 +10,7 @@ void main() {
 
         // Add link across "one two"
         text.addAttribution(
-          LinkAttribution(url: Uri.parse('https://flutter.dev')),
+          const LinkAttribution('https://flutter.dev'),
           const SpanRange(0, 6),
         );
 
@@ -18,7 +18,7 @@ void main() {
         // an exception
         expect(() {
           text.addAttribution(
-            LinkAttribution(url: Uri.parse('https://pub.dev')),
+            const LinkAttribution('https://pub.dev'),
             const SpanRange(4, 12),
           );
         }, throwsA(isA<IncompatibleOverlappingAttributionsException>()));
@@ -27,7 +27,7 @@ void main() {
       test('identical link attributions can overlap', () {
         final text = AttributedText('one two three');
 
-        final linkAttribution = LinkAttribution(url: Uri.parse('https://flutter.dev'));
+        const linkAttribution = LinkAttribution('https://flutter.dev');
 
         // Add link across "one two"
         text.addAttribution(
@@ -36,7 +36,7 @@ void main() {
         );
 
         text.addAttribution(
-          LinkAttribution(url: Uri.parse('https://flutter.dev')),
+          const LinkAttribution('https://flutter.dev'),
           const SpanRange(4, 12),
         );
 

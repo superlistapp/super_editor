@@ -2380,7 +2380,7 @@ class PasteEditorCommand implements EditCommand {
 
       if (link != null && link.hasScheme && link.hasAuthority) {
         // Valid url. Apply [LinkAttribution] to the url
-        final linkAttribution = LinkAttribution(url: link);
+        final linkAttribution = LinkAttribution.fromUri(link);
 
         final startOffset = wordBoundary.start;
         // -1 because TextPosition's offset indexes the character after the

@@ -218,13 +218,13 @@ MutableDocument _singleParagraphWithLinkDoc() {
           "https://google.com",
           AttributedSpans(
             attributions: [
-              SpanMarker(
-                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+              const SpanMarker(
+                attribution: LinkAttribution('https://google.com'),
                 offset: 0,
                 markerType: SpanMarkerType.start,
               ),
-              SpanMarker(
-                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+              const SpanMarker(
+                attribution: LinkAttribution('https://google.com'),
                 offset: 17,
                 markerType: SpanMarkerType.end,
               ),
