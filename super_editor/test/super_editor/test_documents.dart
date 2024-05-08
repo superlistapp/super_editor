@@ -57,14 +57,16 @@ MutableDocument singleParagraphWithLinkDoc() => MutableDocument(
             "This paragraph includes a link that the user can tap",
             AttributedSpans(
               attributions: [
-                SpanMarker(
-                    attribution: LinkAttribution(url: Uri.parse("https://fake.url")),
-                    offset: 26,
-                    markerType: SpanMarkerType.start),
-                SpanMarker(
-                    attribution: LinkAttribution(url: Uri.parse("https://fake.url")),
-                    offset: 30,
-                    markerType: SpanMarkerType.end),
+                const SpanMarker(
+                  attribution: LinkAttribution("https://fake.url"),
+                  offset: 26,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: LinkAttribution("https://fake.url"),
+                  offset: 30,
+                  markerType: SpanMarkerType.end,
+                ),
               ],
             ),
           ),

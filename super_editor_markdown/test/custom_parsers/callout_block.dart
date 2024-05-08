@@ -175,7 +175,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
       );
     } else if (element.tag == 'a') {
       styledText.addAttribution(
-        LinkAttribution(url: Uri.parse(element.attributes['href']!)),
+        LinkAttribution.fromUri(Uri.parse(element.attributes['href']!)),
         SpanRange(0, styledText.text.length - 1),
       );
     }
