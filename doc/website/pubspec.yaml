@@ -7,7 +7,10 @@ environment:
   sdk: ^3.0.0
 
 dependencies:
-  static_shock: ^0.0.5
+  static_shock:
+    git:
+      url: https://github.com/flutter-bounty-Hunters/static_shock
+      path: packages/static_shock
 
 dev_dependencies:
   lints: ^2.0.0
