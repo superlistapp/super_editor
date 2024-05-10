@@ -1,0 +1,27 @@
+# Configuration for the package that this website documents.
+package:
+  name: super_editor
+  title: Super Editor
+  description: A document editing toolkit for Flutter
+  is_on_pub: true
+  github:
+    url: https://github.com/superlistapp/super_editor
+    organization: superlistapp
+    name: super_editor
+  discord: https://discord.gg/8hna2VD32s
+  sponsorship: https://flutterbountyhunters.com
+
+# Configuration of the GitHub plugin for loading info about GitHub repositories.
+github:
+  contributors:
+    repositories:
+      - { organization: superlistapp, name: super_editor }
+
+navigation:
+  items:
+    - title: Super Editor
+      url: /super-editor-guides
+    - title: Super Reader
+      url: /super-reader-guides
+    - title: Super Text Field
+      url: /super-text-field-guides

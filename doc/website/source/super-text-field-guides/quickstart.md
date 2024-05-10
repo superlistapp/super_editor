@@ -1,5 +1,6 @@
 ---
 title: Super Text Field Quickstart
+contentRenderers: ["jinja", "markdown"]
 ---
 # Super Text Field Quickstart
 TODO
