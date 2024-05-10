@@ -1507,7 +1507,9 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
       magnifierKey: magnifierKey,
       leaderLink: magnifierFocalPoint,
       show: visible,
-      offsetFromFocalPoint: const Offset(0, -230),
+      // The bottom of the magnifier sits above the focal point.
+      // Leave a few pixels between the bottom of the magnifier and the focal point.
+      offsetFromFocalPoint: const Offset(0, -20),
     );
   }
 }
@@ -1853,3 +1855,4 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
 const defaultIosMagnifierEnterAnimationDuration = Duration(milliseconds: 180);
 const defaultIosMagnifierExitAnimationDuration = Duration(milliseconds: 150);
 const defaultIosMagnifierAnimationCurve = Curves.easeInOut;
+const defaultIosMagnifierSize = Size(133, 96);

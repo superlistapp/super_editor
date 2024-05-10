@@ -112,33 +112,33 @@ class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> with Sing
         animation: _animationController,
         builder: (context, child) {
           final percentage = _animationController.value;
+          final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
 
           return Follower.withOffset(
             link: widget.leaderLink,
+            // Center-align the magnifier with the focal point, so when the animation starts
+            // the magnifier is displayed in the same position as the focal point.
             leaderAnchor: Alignment.center,
-            followerAnchor: Alignment.topLeft,
+            followerAnchor: Alignment.center,
             offset: Offset(
-              widget.offsetFromFocalPoint.dx,
+              widget.offsetFromFocalPoint.dx * devicePixelRatio,
               // Animate the magnfier up on entrance and down on exit.
-              widget.offsetFromFocalPoint.dy * percentage,
+              widget.offsetFromFocalPoint.dy * devicePixelRatio * percentage,
             ),
-            // Theoretically, we should be able to use a leaderAnchor and followerAnchor of "center"
-            // and avoid the following FractionalTranslation. However, when centering the follower,
-            // we don't get the expect focal point within the magnified area. It's off-center. I'm not
-            // sure why that happens, but using a followerAnchor of "topLeft" and then pulling back
-            // by 50% solve the problem.
+            // Translate the magnifier so it's displayed above the focal point
+            // when the animation ends.
             child: FractionalTranslation(
-              translation: const Offset(-0.5, -0.5),
+              translation: Offset(0.0, -0.5 * percentage),
               child: widget.magnifierBuilder(
                 context,
                 IosMagnifierViewModel(
                   // In theory, the offsetFromFocalPoint should either be `widget.offsetFromFocalPoint.dy` to match
                   // the actual offset, or it should be `widget.offsetFromFocalPoint.dy / magnificationLevel`. Neither
                   // of those align the focal point correctly. The following offset was found empirically to give the
-                  // desired results.
+                  // desired results. These values seem to work even with different pixel densities.
                   offsetFromFocalPoint: Offset(
-                    widget.offsetFromFocalPoint.dx - 23,
-                    (widget.offsetFromFocalPoint.dy + 140) * percentage,
+                    -22 * percentage,
+                    (-defaultIosMagnifierSize.height + 14) * percentage,
                   ),
                   animationValue: _animationController.value,
                   animationDirection: _animationController.status,
@@ -189,8 +189,8 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
   Widget build(BuildContext context) {
     final percent = defaultIosMagnifierAnimationCurve.transform(animationValue);
 
-    final height = lerpDouble(30, 96, percent)!;
-    final width = lerpDouble(4, 133, percent)!;
+    final height = lerpDouble(30, defaultIosMagnifierSize.height, percent)!;
+    final width = lerpDouble(4, defaultIosMagnifierSize.width, percent)!;
     final size = Size(width, height);
 
     final tintOpacity = 1.0 - Curves.easeIn.transform(animationValue);
