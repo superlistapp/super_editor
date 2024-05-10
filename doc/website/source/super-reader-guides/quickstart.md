@@ -1,5 +1,6 @@
 ---
 title: Super Reader Quickstart
+contentRenderers: ["jinja", "markdown"]
 ---
 # Super Reader Quickstart
 Super Reader comes with sane defaults to help you get started with a reading experience, quickly. These defaults include support for images, list items, blockquotes, and horizontal rules, as well as selection gestures, and various keyboard shortcuts.
