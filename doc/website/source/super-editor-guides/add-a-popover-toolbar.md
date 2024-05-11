@@ -204,41 +204,73 @@ class MyAppState extends State<MyApp> {
 To show different toolbar depending on the content, check the type of the selected node and show/hide the appropriate toolbars.
 
 ```dart
-void _hideOrShowToolbar() {
+class MyAppState extends State<MyApp> {
   // ...
-  if (selection.base.nodeId != selection.extent.nodeId) {
-    // Since we want to show different toolbars depending on the content,
-    // we don't show the toolbar if more than one node is selected.
-    _popoverToolbarController.hide();
+  void _hideOrShowToolbar() {
+    // ...
+    if (selection.base.nodeId != selection.extent.nodeId) {
+      // Since we want to show different toolbars depending on the content,
+      // we don't show the toolbar if more than one node is selected.
+      _popoverToolbarController.hide();
+      _imageToolbarController.hide();
+      return;
+    }
+
+    // Grab the selected node to check its type.
+    final selectedNode = _document.getNodeById(selection.extent.nodeId);
+
+    if (selectedNode is ImageNode) {
+      // The selected node is an image. Show the image toolbar and hide
+      // the text toolbar.
+      _popoverToolbarController.hide();
+      _imageToolbarController.show();
+      return;
+    }
+
+    // The currently selected node isn't an image. Hide the image toolbar
+    // if it's visible.
     _imageToolbarController.hide();
-    return;
-  }
 
-  // Grab the selected node to check its type.
-  final selectedNode = _document.getNodeById(selection.extent.nodeId);
+    if (selectedNode is TextNode) {
+      // The selected node is a text node, e.g., a paragraph, a list item,
+      // a task, etc. Show the text toolbar and hide the image toolbar.
+      _imageToolbarController.show();
+      _popoverToolbarController.show();
+      return;
+    }
 
-  if (selectedNode is ImageNode) {
-    // The selected node is an image. Show the image toolbar and hide
-    // the text toolbar.
+    // The currently selected node isn't a text node. Hide the text toolbar
+    // if it's visible.
     _popoverToolbarController.hide();
-    _imageToolbarController.show();
-    return;
+  }
+}
+```
+
+# Sharing the editor focus with the toolbar
+
+In order to make it possible for the user to interact with focusable items in the toolbar, while keeping the editor focused (with non-primary focus), it is necessary to share focus between the editor and the popover toolbar.
+
+To do that, create a `FocusNode` for the popover, and setup focus sharing by using a `SuperEditorPopover` widget.
+
+```dart
+class MyAppState extends State<MyApp> {
+  // ...
+  final FocusNode _popoverFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _popoverFocusNode.dispose();
+    super.dispose();
   }
 
-  // The currently selected node isn't an image. Hide the image toolbar
-  // if it's visible.
-  _imageToolbarController.hide();
-
-  if (selectedNode is TextNode) {
-    // The selected node is a text node, e.g., a paragraph, a list item,
-    // a task, etc. Show the text toolbar and hide the image toolbar.
-    _imageToolbarController.show();
-    _popoverToolbarController.show();
-    return;
+  // ...
+  Widget _buildToolbarContent() {
+    return SuperEditorPopover(
+      popoverFocusNode: _popoverFocusNode,
+      editorFocusNode: _editorFocusNode,
+      // The toolbar content.
+      child: SizedBox(),
+    );
   }
-
-  // The currently selected node isn't a text node. Hide the text toolbar
-  // if it's visible.
-  _popoverToolbarController.hide();
 }
 ```
