@@ -1735,8 +1735,8 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     );
   }
 
-  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint, bool visible) {
-    if (!visible) {
+  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint, bool isVisible) {
+    if (!isVisible) {
       return const SizedBox();
     }
 

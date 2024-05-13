@@ -285,7 +285,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   Offset? _globalDragOffset;
 
   /// The [Offset] of the magnifier's focal point in the [DocumentLayout] coordinate space.
-  final _magnifierFocalPointInContentSpace = ValueNotifier<Offset?>(null);
+  final _magnifierFocalPointInDocumentSpace = ValueNotifier<Offset?>(null);
   Offset? _dragEndInInteractor;
   DragMode? _dragMode;
   // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
@@ -1086,7 +1086,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _updateMagnifierFocalPointOnAutoScrollFrame() {
-    if (_magnifierFocalPointInContentSpace.value != null) {
+    if (_magnifierFocalPointInDocumentSpace.value != null) {
       _placeFocalPointNearTouchOffset();
     }
   }
@@ -1257,7 +1257,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       _docLayout.getRectForPosition(docPositionToMagnify!)!.center,
     );
 
-    _magnifierFocalPointInContentSpace.value = centerOfContentAtOffset;
+    _magnifierFocalPointInDocumentSpace.value = centerOfContentAtOffset;
   }
 
   @override
@@ -1335,7 +1335,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   Widget _buildMagnifierFocalPoint() {
     return ValueListenableBuilder(
-      valueListenable: _magnifierFocalPointInContentSpace,
+      valueListenable: _magnifierFocalPointInDocumentSpace,
       builder: (context, magnifierFocalPoint, child) {
         if (magnifierFocalPoint == null) {
           return const SizedBox();
@@ -1497,7 +1497,8 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     );
   }
 
-  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint, bool visible) {
+  Widget _buildDefaultMagnifier(
+      BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint, bool isVisible) {
     if (CurrentPlatform.isWeb) {
       // Defer to the browser to display overlay controls on mobile.
       return const SizedBox();
@@ -1506,10 +1507,12 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     return IOSFollowingMagnifier.roundedRectangle(
       magnifierKey: magnifierKey,
       leaderLink: magnifierFocalPoint,
-      show: visible,
+      show: isVisible,
       // The bottom of the magnifier sits above the focal point.
-      // Leave a few pixels between the bottom of the magnifier and the focal point.
+      // Leave a few pixels between the bottom of the magnifier and the focal point. This
+      // value was chosen empirically.
       offsetFromFocalPoint: const Offset(0, -20),
+      handleColor: _controlsController!.handleColor,
     );
   }
 }

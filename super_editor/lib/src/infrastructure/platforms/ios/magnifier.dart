@@ -13,6 +13,7 @@ class IOSFollowingMagnifier extends StatefulWidget {
     required this.leaderLink,
     this.show = true,
     this.offsetFromFocalPoint = Offset.zero,
+    this.handleColor,
   }) : magnifierBuilder = _roundedRectangleMagnifierBuilder;
 
   const IOSFollowingMagnifier.circle({
@@ -21,6 +22,7 @@ class IOSFollowingMagnifier extends StatefulWidget {
     required this.leaderLink,
     this.show = true,
     this.offsetFromFocalPoint = Offset.zero,
+    this.handleColor,
   }) : magnifierBuilder = _circleMagnifierBuilder;
 
   const IOSFollowingMagnifier({
@@ -29,28 +31,29 @@ class IOSFollowingMagnifier extends StatefulWidget {
     required this.leaderLink,
     this.show = true,
     this.offsetFromFocalPoint = Offset.zero,
+    this.handleColor,
     required this.magnifierBuilder,
   }) : super(key: key);
 
   final Key? magnifierKey;
   final LeaderLink leaderLink;
-  final Offset offsetFromFocalPoint;
-  final MagnifierBuilder magnifierBuilder;
   final bool show;
+  final Offset offsetFromFocalPoint;
+  final Color? handleColor;
+  final MagnifierBuilder magnifierBuilder;
 
   @override
   State<IOSFollowingMagnifier> createState() => _IOSFollowingMagnifierState();
 }
 
 class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> with SingleTickerProviderStateMixin {
-  late Color handleColor;
   late final AnimationController _animationController;
 
   /// Wether or not the magnifier should be displayed.
   ///
-  /// This is different from [SuperEditorIosControlsController.shouldShowMagnifier] because
-  /// [_showMagnifier] becomes false only when the exit animation finishes.
-  final ValueNotifier<bool> _showMagnifier = ValueNotifier(false);
+  /// The magnifier can still be displayed event when [widget.show] is `false`
+  /// because the magnifier should be visible during the exit animation.
+  bool get _shouldShowMagnifier => widget.show || _animationController.status != AnimationStatus.dismissed;
 
   @override
   void initState() {
@@ -60,13 +63,6 @@ class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> with Sing
       duration: defaultIosMagnifierEnterAnimationDuration,
       reverseDuration: defaultIosMagnifierExitAnimationDuration,
     );
-    _animationController.addStatusListener(_hideMagnifierOnAnimationEnd);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    handleColor = SuperEditorIosControlsScope.maybeRootOf(context)?.handleColor ?? Theme.of(context).primaryColor;
   }
 
   @override
@@ -80,14 +76,12 @@ class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> with Sing
 
   @override
   void dispose() {
-    _animationController.removeStatusListener(_hideMagnifierOnAnimationEnd);
     _animationController.dispose();
     super.dispose();
   }
 
   void _onWantsToShowMagnifierChanged() {
     if (widget.show) {
-      _showMagnifier.value = true;
       _animationController.forward();
     } else {
       // The desire to show the magnifier changed from visible to invisible. Run the exit
@@ -96,60 +90,56 @@ class _IOSFollowingMagnifierState extends State<IOSFollowingMagnifier> with Sing
     }
   }
 
-  /// Hides the magnifier if the exit animation has finished.
-  void _hideMagnifierOnAnimationEnd(AnimationStatus status) {
-    if (status == AnimationStatus.dismissed && !widget.show) {
-      _showMagnifier.value = false;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: _showMagnifier,
-      builder: (context, shouldShow, child) => shouldShow ? child! : const SizedBox(),
-      child: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          final percentage = _animationController.value;
-          final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        if (!_shouldShowMagnifier) {
+          return const SizedBox();
+        }
 
-          return Follower.withOffset(
-            link: widget.leaderLink,
-            // Center-align the magnifier with the focal point, so when the animation starts
-            // the magnifier is displayed in the same position as the focal point.
-            leaderAnchor: Alignment.center,
-            followerAnchor: Alignment.center,
-            offset: Offset(
-              widget.offsetFromFocalPoint.dx * devicePixelRatio,
-              // Animate the magnfier up on entrance and down on exit.
-              widget.offsetFromFocalPoint.dy * devicePixelRatio * percentage,
-            ),
-            // Translate the magnifier so it's displayed above the focal point
-            // when the animation ends.
-            child: FractionalTranslation(
-              translation: Offset(0.0, -0.5 * percentage),
-              child: widget.magnifierBuilder(
-                context,
-                IosMagnifierViewModel(
-                  // In theory, the offsetFromFocalPoint should either be `widget.offsetFromFocalPoint.dy` to match
-                  // the actual offset, or it should be `widget.offsetFromFocalPoint.dy / magnificationLevel`. Neither
-                  // of those align the focal point correctly. The following offset was found empirically to give the
-                  // desired results. These values seem to work even with different pixel densities.
-                  offsetFromFocalPoint: Offset(
-                    -22 * percentage,
-                    (-defaultIosMagnifierSize.height + 14) * percentage,
-                  ),
-                  animationValue: _animationController.value,
-                  animationDirection: _animationController.status,
-                  borderColor: handleColor,
+        final percentage = _animationController.value;
+        final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+
+        return Follower.withOffset(
+          link: widget.leaderLink,
+          // Center-align the magnifier with the focal point, so when the animation starts
+          // the magnifier is displayed in the same position as the focal point.
+          leaderAnchor: Alignment.center,
+          followerAnchor: Alignment.center,
+          offset: Offset(
+            widget.offsetFromFocalPoint.dx * devicePixelRatio,
+            // Animate the magnfier up on entrance and down on exit.
+            widget.offsetFromFocalPoint.dy * devicePixelRatio * percentage,
+          ),
+          // Translate the magnifier so it's displayed above the focal point
+          // when the animation ends.
+          child: FractionalTranslation(
+            translation: Offset(0.0, -0.5 * percentage),
+            child: widget.magnifierBuilder(
+              context,
+              IosMagnifierViewModel(
+                // In theory, the offsetFromFocalPoint should either be `widget.offsetFromFocalPoint.dy` to match
+                // the actual offset, or it should be `widget.offsetFromFocalPoint.dy / magnificationLevel`. Neither
+                // of those align the focal point correctly. The following offset was found empirically to give the
+                // desired results. These values seem to work even with different pixel densities.
+                offsetFromFocalPoint: Offset(
+                  -22 * percentage,
+                  (-defaultIosMagnifierSize.height + 14) * percentage,
                 ),
-                widget.magnifierKey,
+                animationValue: _animationController.value,
+                animationDirection:
+                    const [AnimationStatus.forward, AnimationStatus.completed].contains(_animationController.status)
+                        ? AnimationDirection.forward
+                        : AnimationDirection.reverse,
+                borderColor: widget.handleColor ?? Theme.of(context).primaryColor,
               ),
+              widget.magnifierKey,
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -298,12 +288,14 @@ class IosMagnifierViewModel {
   IosMagnifierViewModel({
     required this.offsetFromFocalPoint,
     this.animationValue = 1.0,
-    this.animationDirection = AnimationStatus.forward,
+    this.animationDirection = AnimationDirection.forward,
     required this.borderColor,
   });
 
   final Offset offsetFromFocalPoint;
   final double animationValue;
-  final AnimationStatus animationDirection;
+  final AnimationDirection animationDirection;
   final Color borderColor;
 }
+
+enum AnimationDirection { forward, reverse }

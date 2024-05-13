@@ -136,7 +136,8 @@ typedef DocumentFloatingToolbarBuilder = Widget Function(
 ///   );
 /// }
 /// ```
-typedef DocumentMagnifierBuilder = Widget Function(BuildContext, Key magnifierKey, LeaderLink focalPoint, bool visible);
+typedef DocumentMagnifierBuilder = Widget Function(
+    BuildContext, Key magnifierKey, LeaderLink focalPoint, bool isVisible);
 
 /// Global flag that disables long-press selection for Android and iOS, as a hack for Superlist, because
 /// Superlist has a custom long-press behavior per-component.

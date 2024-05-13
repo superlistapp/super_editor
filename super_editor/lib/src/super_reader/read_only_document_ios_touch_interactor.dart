@@ -484,7 +484,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       return;
     }
 
-    _updateMagnifierFocalPoint();
+    _placeFocalPointNearTouchOffset();
     _controlsController!
       ..hideToolbar()
       ..showMagnifier();
@@ -764,7 +764,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
     _controlsController!.showMagnifier();
 
-    _updateMagnifierFocalPoint();
+    _placeFocalPointNearTouchOffset();
   }
 
   void _updateSelectionForNewDragHandleLocation() {
@@ -907,7 +907,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
 
   void _updateMagnifierFocalPointOnAutoScrollFrame() {
     if (_magnifierFocalPoint.value != null) {
-      _updateMagnifierFocalPoint();
+      _placeFocalPointNearTouchOffset();
     }
   }
 
@@ -923,7 +923,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   /// Updates the magnifier focal point in relation to the current drag position.
-  void _updateMagnifierFocalPoint() {
+  void _placeFocalPointNearTouchOffset() {
     late DocumentPosition? docPositionToMagnify;
 
     if (_globalTapDownOffset != null) {
@@ -1179,7 +1179,11 @@ class SuperReaderIosMagnifierOverlayManagerState extends State<SuperReaderIosMag
       magnifierKey: magnifierKey,
       show: visible,
       leaderLink: magnifierFocalPoint,
-      offsetFromFocalPoint: const Offset(0, -230),
+      // The bottom of the magnifier sits above the focal point.
+      // Leave a few pixels between the bottom of the magnifier and the focal point. This
+      // value was chosen empirically.
+      offsetFromFocalPoint: const Offset(0, -20),
+      handleColor: _controlsContext!.handleColor,
     );
   }
 }
