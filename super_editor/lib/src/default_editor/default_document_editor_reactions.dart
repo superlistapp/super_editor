@@ -857,40 +857,36 @@ class DashConversionReaction implements EditReaction {
       return;
     }
 
-    final selectionEvent = changeList.last;
-    if (selectionEvent is! SelectionChangeEvent) {
-      // This reaction requires that the two last events are an insertion event
-      // followed by a selection change event.
-      // The last event isn't a selection event, therefore this reaction
-      // shouldn't apply. Fizzle.
+    TextInsertionEvent? dashInsertionEvent;
+    for (final event in changeList) {
+      if (event is! DocumentEdit) {
+        continue;
+      }
+
+      final change = event.change;
+      if (change is! TextInsertionEvent) {
+        continue;
+      }
+      if (change.text.text != "-") {
+        continue;
+      }
+
+      dashInsertionEvent = change;
+      break;
+    }
+    if (dashInsertionEvent == null) {
+      // The user didn't type a dash.
       return;
     }
 
-    final documentEdit = changeList[changeList.length - 2];
-    if (documentEdit is! DocumentEdit || documentEdit.change is! TextInsertionEvent) {
-      // This reaction requires that the two last events are an insertion event
-      // followed by a selection change event.
-      // The second to last event isn't a text insertion event, therefore this reaction
-      // shouldn't apply. Fizzle.
+    if (dashInsertionEvent.offset == 0) {
+      // There's nothing upstream from this dash, therefore it can't
+      // be a 2nd dash.
       return;
     }
 
-    final insertionEvent = documentEdit.change as TextInsertionEvent;
-
-    if (insertionEvent.text.text != '-') {
-      // The text that was inserted wasn't a dash. The only character that triggers a
-      // conversion is a dash. Fizzle.
-      return;
-    }
-
-    if (insertionEvent.offset < 1) {
-      // The reaction needs at least two characters before the caret, but there's less than two. Fizzle.
-      return;
-    }
-
-    final insertionNode = document.getNodeById(insertionEvent.nodeId) as TextNode;
-
-    final upstreamCharacter = insertionNode.text.text[insertionEvent.offset - 1];
+    final insertionNode = document.getNodeById(dashInsertionEvent.nodeId) as TextNode;
+    final upstreamCharacter = insertionNode.text.text[dashInsertionEvent.offset - 1];
     if (upstreamCharacter != '-') {
       return;
     }
@@ -901,16 +897,16 @@ class DashConversionReaction implements EditReaction {
       DeleteContentRequest(
         documentRange: DocumentRange(
           start: DocumentPosition(
-              nodeId: insertionNode.id, nodePosition: TextNodePosition(offset: insertionEvent.offset - 1)),
+              nodeId: insertionNode.id, nodePosition: TextNodePosition(offset: dashInsertionEvent.offset - 1)),
           end: DocumentPosition(
-              nodeId: insertionNode.id, nodePosition: TextNodePosition(offset: insertionEvent.offset + 1)),
+              nodeId: insertionNode.id, nodePosition: TextNodePosition(offset: dashInsertionEvent.offset + 1)),
         ),
       ),
       InsertTextRequest(
         documentPosition: DocumentPosition(
           nodeId: insertionNode.id,
           nodePosition: TextNodePosition(
-            offset: insertionEvent.offset - 1,
+            offset: dashInsertionEvent.offset - 1,
           ),
         ),
         textToInsert: SpecialCharacters.emDash,
@@ -920,7 +916,7 @@ class DashConversionReaction implements EditReaction {
         DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: insertionNode.id,
-            nodePosition: TextNodePosition(offset: insertionEvent.offset),
+            nodePosition: TextNodePosition(offset: dashInsertionEvent.offset),
           ),
         ),
         SelectionChangeType.placeCaret,

@@ -292,6 +292,11 @@ class Editor implements RequestDispatcher {
     }
 
     print("${DateTime.now().microsecondsSinceEpoch} _reactToChanges()");
+    for (final change in _activeChangeList!) {
+      print(" - ${change.runtimeType}");
+    }
+    print("");
+
     _isReacting = true;
     for (final reaction in reactionPipeline) {
       // Note: we pass the active change list because reactions will cause more
