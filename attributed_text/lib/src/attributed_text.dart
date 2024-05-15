@@ -451,6 +451,14 @@ class AttributedText {
     return spans.collapseSpans(contentLength: text.length);
   }
 
+  /// Returns a copy of this [AttributedText].
+  AttributedText copy() {
+    return AttributedText(
+      text,
+      spans.copy(),
+    );
+  }
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||

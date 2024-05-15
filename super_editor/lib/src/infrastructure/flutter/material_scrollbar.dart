@@ -46,11 +46,6 @@ class ScrollbarWithCustomPhysics extends StatelessWidget {
     this.notificationPredicate,
     this.interactive,
     this.scrollbarOrientation,
-    @Deprecated(
-      'Use ScrollbarThemeData.trackVisibility to resolve based on the current state instead. '
-      'This feature was deprecated after v3.4.0-19.0.pre.',
-    )
-    this.showTrackOnHover,
   });
 
   /// {@macro flutter.widgets.Scrollbar.child}
@@ -79,23 +74,7 @@ class ScrollbarWithCustomPhysics extends StatelessWidget {
   /// If the track visibility is related to the scrollbar's material state,
   /// use the global [ScrollbarThemeData.trackVisibility] or override the
   /// sub-tree's theme data.
-  ///
-  /// Replaces deprecated [showTrackOnHover].
   final bool? trackVisibility;
-
-  /// Controls if the track will show on hover and remain, including during drag.
-  ///
-  /// If this property is null, then [ScrollbarThemeData.showTrackOnHover] of
-  /// [ThemeData.scrollbarTheme] is used. If that is also null, the default value
-  /// is false.
-  ///
-  /// This is deprecated, [trackVisibility] or [ScrollbarThemeData.trackVisibility]
-  /// should be used instead.
-  @Deprecated(
-    'Use ScrollbarThemeData.trackVisibility to resolve based on the current state instead. '
-    'This feature was deprecated after v3.4.0-19.0.pre.',
-  )
-  final bool? showTrackOnHover;
 
   /// The thickness of the scrollbar in the cross axis of the scrollable.
   ///
@@ -145,7 +124,6 @@ class ScrollbarWithCustomPhysics extends StatelessWidget {
       controller: controller,
       thumbVisibility: thumbVisibility,
       trackVisibility: trackVisibility,
-      showTrackOnHover: showTrackOnHover,
       thickness: thickness,
       radius: radius,
       notificationPredicate: notificationPredicate,
@@ -163,7 +141,6 @@ class _MaterialScrollbar extends RawScrollbarWithCustomPhysics {
     super.controller,
     super.thumbVisibility,
     super.trackVisibility,
-    this.showTrackOnHover,
     super.thickness,
     super.radius,
     ScrollNotificationPredicate? notificationPredicate,
@@ -175,8 +152,6 @@ class _MaterialScrollbar extends RawScrollbarWithCustomPhysics {
           pressDuration: Duration.zero,
           notificationPredicate: notificationPredicate ?? defaultScrollNotificationPredicate,
         );
-
-  final bool? showTrackOnHover;
 
   @override
   _MaterialScrollbarState createState() => _MaterialScrollbarState();
@@ -197,12 +172,7 @@ class _MaterialScrollbarState extends RawScrollbarWithCustomPhysicsState<_Materi
   @override
   bool get enableGestures => widget.interactive ?? _scrollbarTheme.interactive ?? !_useAndroidScrollbar;
 
-  bool get _showTrackOnHover => widget.showTrackOnHover ?? _scrollbarTheme.showTrackOnHover ?? false;
-
   MaterialStateProperty<bool> get _trackVisibility => MaterialStateProperty.resolveWith((Set<MaterialState> states) {
-        if (states.contains(MaterialState.hovered) && _showTrackOnHover) {
-          return true;
-        }
         return widget.trackVisibility ?? _scrollbarTheme.trackVisibility?.resolve(states) ?? false;
       });
 

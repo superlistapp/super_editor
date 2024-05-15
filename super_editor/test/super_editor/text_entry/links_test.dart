@@ -45,7 +45,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(0, text.length - 2),
           ),
@@ -88,7 +88,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -138,7 +138,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(12, text.length - 1),
           ),
@@ -189,7 +189,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -242,7 +242,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(12, text.length - 1),
           ),
@@ -293,7 +293,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -347,7 +347,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(12, text.length - 1),
           ),
@@ -397,7 +397,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(5, text.length - 1),
           ),
@@ -447,7 +447,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(12, text.length - 1),
           ),
@@ -500,7 +500,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(5, text.length - 1),
           ),
@@ -553,7 +553,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(12, text.length - 1),
           ),
@@ -606,7 +606,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(5, text.length - 1),
           ),
@@ -660,7 +660,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(12, text.length - 1),
           ),
@@ -726,7 +726,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(15, text.length - 1),
           ),
@@ -792,7 +792,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(12, text.length - 1),
           ),
@@ -861,7 +861,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(15, text.length - 1),
           ),
@@ -930,7 +930,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(12, text.length - 1),
           ),
@@ -999,7 +999,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(15, text.length - 1),
           ),
@@ -1068,7 +1068,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
             },
             range: SpanRange(12, text.length - 1),
           ),
@@ -1102,7 +1102,7 @@ void main() {
       expect(
         text.hasAttributionsThroughout(
           attributions: {
-            LinkAttribution(url: Uri.parse("https://www.google.com")),
+            LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
           },
           range: const SpanRange(0, 21),
         ),
@@ -1112,7 +1112,7 @@ void main() {
       expect(
         text.hasAttributionsThroughout(
           attributions: {
-            LinkAttribution(url: Uri.parse("https://flutter.dev")),
+            LinkAttribution.fromUri(Uri.parse("https://flutter.dev")),
           },
           range: const SpanRange(27, 45),
         ),
@@ -1155,7 +1155,7 @@ void main() {
       expect(
         text.hasAttributionsThroughout(
           attributions: {
-            LinkAttribution(url: Uri.parse("https://google.com")),
+            LinkAttribution.fromUri(Uri.parse("https://google.com")),
           },
           range: SpanRange(0, text.length - 2),
         ),
@@ -1187,7 +1187,7 @@ void main() {
       expect(
         text.hasAttributionsThroughout(
           attributions: {
-            LinkAttribution(url: Uri.parse("https://www.google.com")),
+            LinkAttribution.fromUri(Uri.parse("https://www.google.com")),
           },
           range: SpanRange(0, text.length - 2),
         ),
@@ -1359,7 +1359,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("www.google.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -1389,7 +1389,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.googoooole.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.googoooole.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -1447,7 +1447,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("www.google.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -1480,7 +1480,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://google.com")),
+              LinkAttribution.fromUri(Uri.parse("https://google.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -1565,7 +1565,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("www.google.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -1603,7 +1603,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.duckduckgo.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.duckduckgo.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -1661,7 +1661,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("www.google.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -1692,7 +1692,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.google.c")),
+              LinkAttribution.fromUri(Uri.parse("https://www.google.c")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -1745,7 +1745,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("www.google.com")),
+              LinkAttribution.fromUri(Uri.parse("www.google.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -1775,7 +1775,7 @@ void main() {
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.duckduckgo.com")),
+              LinkAttribution.fromUri(Uri.parse("https://www.duckduckgo.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),
@@ -1832,7 +1832,7 @@ void main() {
       expect(
         text.hasAttributionsThroughout(
           attributions: {
-            LinkAttribution(url: Uri.parse("www.google.com")),
+            LinkAttribution.fromUri(Uri.parse("www.google.com")),
           },
           range: const SpanRange(0, 12),
         ),
@@ -1841,7 +1841,7 @@ void main() {
       expect(
         text.hasAttributionsThroughout(
           attributions: {
-            LinkAttribution(url: Uri.parse("www.google.com")),
+            LinkAttribution.fromUri(Uri.parse("www.google.com")),
           },
           range: SpanRange(13, text.length - 1),
         ),

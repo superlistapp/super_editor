@@ -577,13 +577,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
   }
 
-  /// Beginning with Flutter 3.3.3, we are responsible for starting and
-  /// stopping scroll momentum. This method cancels any scroll momentum
-  /// in our scroll controller.
-  void _cancelScrollMomentum() {
-    widget.autoScroller.goIdle();
-  }
-
   void _updateDragSelection() {
     if (_dragEndGlobal == null) {
       // User isn't dragging. No need to update drag selection.
@@ -729,7 +722,6 @@ Updating drag selection:
   }
 
   void _onMouseMove(PointerHoverEvent event) {
-    _cancelScrollMomentum();
     _updateMouseCursor(event.position);
     _lastHoverOffset = event.position;
   }
