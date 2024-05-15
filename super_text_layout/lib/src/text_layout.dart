@@ -253,7 +253,8 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     // If no text is currently displayed, we can't use a character box
     // to measure, but we may be able to use related metrics.
     if (_textLength == 0) {
-      final estimatedLineHeight = _renderParagraph.getFullHeightForCaret(position);
+      final fontSize = _richText.style?.fontSize ?? 0.0;
+      final estimatedLineHeight = _renderParagraph.getFullHeightForCaret(position) ?? textScaler.scale(fontSize);
       return estimatedLineHeight * lineHeightMultiplier;
     }
 
@@ -323,7 +324,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
     final plainText = _richText.toPlainText();
     if (plainText.isEmpty) {
-      final lineHeightEstimate = _renderParagraph.getFullHeightForCaret(const TextPosition(offset: 0));
+      final lineHeightEstimate = _renderParagraph.getFullHeightForCaret(const TextPosition(offset: 0)) ?? 0.0;
       return TextBox.fromLTRBD(0, 0, 0, lineHeightEstimate, TextDirection.ltr);
     }
 
