@@ -1750,11 +1750,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
         child: AndroidMagnifyingGlass(
           key: magnifierKey,
           magnificationScale: 1.5,
-          // In theory, the offsetFromFocalPoint should either be `-150` to match the actual
-          // offset, or it should be `-150 / magnificationLevel`. Neither of those align the
-          // focal point correctly. The following offset was found empirically to give the
-          // desired results, no matter how high the magnification.
-          offsetFromFocalPoint: const Offset(0, -58),
+          offsetFromFocalPoint: Offset(0, -150 / MediaQuery.devicePixelRatioOf(context)),
         ),
       ),
     );

@@ -828,6 +828,77 @@ void main() {
         expect(spans[1].end, 10);
       });
     });
+
+    group("copy >", () {
+      test("copies an AttributedText without any attributions", () {
+        final attributedText = AttributedText(
+          'Sample Text',
+        );
+
+        expect(attributedText.copy(), AttributedText('Sample Text'));
+      });
+
+      test("copies an AttributedText with attributions", () {
+        final attributedText = AttributedText(
+          'abcdefghij',
+          AttributedSpans(
+            attributions: [
+              const SpanMarker(
+                attribution: ExpectedSpans.bold,
+                offset: 2,
+                markerType: SpanMarkerType.start,
+              ),
+              const SpanMarker(
+                attribution: ExpectedSpans.italics,
+                offset: 4,
+                markerType: SpanMarkerType.start,
+              ),
+              const SpanMarker(
+                attribution: ExpectedSpans.bold,
+                offset: 5,
+                markerType: SpanMarkerType.end,
+              ),
+              const SpanMarker(
+                attribution: ExpectedSpans.italics,
+                offset: 7,
+                markerType: SpanMarkerType.end,
+              ),
+            ],
+          ),
+        );
+
+        expect(
+          attributedText.copy(),
+          AttributedText(
+            'abcdefghij',
+            AttributedSpans(
+              attributions: [
+                const SpanMarker(
+                  attribution: ExpectedSpans.bold,
+                  offset: 2,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: ExpectedSpans.italics,
+                  offset: 4,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: ExpectedSpans.bold,
+                  offset: 5,
+                  markerType: SpanMarkerType.end,
+                ),
+                const SpanMarker(
+                  attribution: ExpectedSpans.italics,
+                  offset: 7,
+                  markerType: SpanMarkerType.end,
+                ),
+              ],
+            ),
+          ),
+        );
+      });
+    });
   });
 }
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:super_editor/src/infrastructure/focus.dart';
-import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
+import 'package:super_editor/src/infrastructure/actions.dart';
 
 /// A popover that shares focus with a `SuperEditor`.
 ///
@@ -51,11 +50,11 @@ class SuperEditorPopover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Actions(
-      actions: disabledMacIntents,
-      child: FocusWithCustomParent(
+    return IntentBlocker(
+      intents: appleBlockedIntents,
+      child: Focus(
         focusNode: popoverFocusNode,
-        parentFocusNode: editorFocusNode,
+        parentNode: editorFocusNode,
         onKeyEvent: onKeyEvent,
         child: child,
       ),
