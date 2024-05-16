@@ -588,6 +588,15 @@ class SuperEditorState extends State<SuperEditor> {
       widget.keyboardActions ??
       (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions);
 
+  void _openSoftareKeyboard() {
+    if (!_softwareKeyboardController.hasDelegate) {
+      // There is no IME connection. It isn't possible to request the keyboard.
+      return;
+    }
+
+    _softwareKeyboardController.open();
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildGestureControlsScope(
@@ -795,7 +804,7 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
-          softwareKeyboardController: _softwareKeyboardController,
+          openSoftwareKeyboard: _openSoftareKeyboard,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
@@ -808,6 +817,7 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
+          openSoftwareKeyboard: _openSoftareKeyboard,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,

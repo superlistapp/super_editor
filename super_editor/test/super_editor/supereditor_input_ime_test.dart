@@ -1315,7 +1315,7 @@ Paragraph two
       });
     });
 
-    testWidgetsOnAndroid('shows software keyboard when tapping at the selected position', (tester) async {
+    testWidgetsOnMobile('shows software keyboard when tapping at the selected position', (tester) async {
       await tester
           .createDocument() //
           .withSingleParagraph()
