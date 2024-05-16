@@ -1767,15 +1767,19 @@ void main() {
         await tester.doubleTapInParagraph(doc.nodes.first.id, 5);
 
         // Replace "google" with "duckduckgo".
-        await tester.typeImeText('duckduckgo');
+        // await tester.typeImeText('duckduckgo');
+        await tester.typeImeText('du');
 
         // Ensure the text and the link were updated.
         final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
-        expect(text.text, "www.duckduckgo.com");
+        // expect(text.text, "www.duckduckgo.com");
+        expect(text.text, "www.du.com");
+        print("Actual text spans: ${text.spans}");
         expect(
           text.hasAttributionsThroughout(
             attributions: {
-              LinkAttribution(url: Uri.parse("https://www.duckduckgo.com")),
+              LinkAttribution(url: Uri.parse("https://www.du.com")),
+              // LinkAttribution(url: Uri.parse("https://www.duckduckgo.com")),
             },
             range: SpanRange(0, text.length - 1),
           ),

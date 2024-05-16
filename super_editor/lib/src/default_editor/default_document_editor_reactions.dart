@@ -535,6 +535,7 @@ class LinkifyReaction implements EditReaction {
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> edits) {
+    print("(MAYBE) Running linkify reaction");
     final document = editContext.find<MutableDocument>(Editor.documentKey);
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     bool didInsertSpace = false;
@@ -609,7 +610,7 @@ class LinkifyReaction implements EditReaction {
 
     if (!didInsertSpace) {
       // We didn't linkify any text. Check if we need to update an URL.
-      _tryUpdateLinkAttribution(document, composer, edits);
+      _tryUpdateLinkAttribution(requestDispatcher, document, composer, edits);
     }
   }
 
@@ -680,7 +681,9 @@ class LinkifyReaction implements EditReaction {
   }
 
   /// Update or remove the link attributions if edits happen at the middle of a link.
-  void _tryUpdateLinkAttribution(Document document, MutableDocumentComposer composer, List<EditEvent> changeList) {
+  void _tryUpdateLinkAttribution(RequestDispatcher requestDispatcher, Document document,
+      MutableDocumentComposer composer, List<EditEvent> changeList) {
+    print("_tryUpdateLinkAttribution");
     if (!const [LinkUpdatePolicy.remove, LinkUpdatePolicy.update].contains(updatePolicy)) {
       // We are configured to NOT change the attributions. Fizzle.
       return;
@@ -700,26 +703,28 @@ class LinkifyReaction implements EditReaction {
         // event. The only situation where a URL would change with a single
         // event is a deletion event. Therefore, we don't need to change a URL.
         // Fizzle.
+        print("There's only one change event and its not a deletion. Fizzling.");
         return;
       }
 
       insertionOrDeletionEvent = editEvent.change as NodeChangeEvent;
     } else {
-      final selectionEvent = changeList.last;
-      if (selectionEvent is! SelectionChangeEvent) {
-        // The last event isn't a selection event. We expect a URL change
+      final lastSelectionEventIndex = changeList.lastIndexWhere((change) => change is SelectionChangeEvent);
+      if (lastSelectionEventIndex < 1) {
+        // There's no selection change event. We expect a URL change
         // to consist of an insertion or a deletion followed by a selection
         // change. This event list doesn't fit the pattern. Fizzle.
+        print("There's no selection change event. Fizzling");
         return;
       }
 
-      final edit = changeList[changeList.length - 2];
+      final edit = changeList[lastSelectionEventIndex - 1];
       if (edit is! DocumentEdit || //
           (edit.change is! TextInsertionEvent && edit.change is! TextDeletedEvent)) {
-        // The second to last event isn't an insertion or deletion. We
-        // expect a URL change to consist of an insertion or a deletion
-        // followed by a selection change. This event list doesn't fit
-        // the pattern. Fizzle.
+        // The event before the selection change isn't an insertion or deletion. We
+        // expect a URL change to consist of an insertion or a deletion followed by
+        // a selection change. This event list doesn't fit the pattern. Fizzle.
+        print("The selection change event isn't preceded by an insertion or deletion. Fizzling.");
         return;
       }
 
@@ -791,10 +796,10 @@ class LinkifyReaction implements EditReaction {
       attributionFilter: (attr) => attr is LinkAttribution,
       range: rangeToUpdate,
     );
-    for (final attributionSpan in attributionsToRemove) {
-      changedNodeText.removeAttribution(attributionSpan.attribution, attributionSpan.range);
-      composer.preferences.removeStyle(attributionSpan.attribution);
-    }
+    // for (final attributionSpan in attributionsToRemove) {
+    //   changedNodeText.removeAttribution(attributionSpan.attribution, attributionSpan.range);
+    //   composer.preferences.removeStyle(attributionSpan.attribution);
+    // }
 
     // A URL was changed and we have now removed the original link. Removing
     // the original link was a necessary step for both `LinkUpdatePolicy.remove`
@@ -803,12 +808,55 @@ class LinkifyReaction implements EditReaction {
     // If the policy is `LinkUpdatePolicy.update` then we need to add a new
     // link attribution that reflects the edited URL text. We do that below.
     if (updatePolicy == LinkUpdatePolicy.update) {
-      changedNodeText.addAttribution(
-        LinkAttribution(
-          url: _parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
+      // TODO: don't change text directly!!
+      // changedNodeText.addAttribution(
+      //   LinkAttribution(
+      //     url: _parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
+      //   ),
+      //   rangeToUpdate,
+      // );
+
+      final linkRange = DocumentRange(
+        start: DocumentPosition(
+          nodeId: changedNodeId,
+          nodePosition: TextNodePosition(offset: rangeToUpdate.start),
         ),
-        rangeToUpdate,
+        end: DocumentPosition(
+          nodeId: changedNodeId,
+          nodePosition: TextNodePosition(offset: rangeToUpdate.end + 1),
+        ),
       );
+
+      print("Before executing requests...");
+      print("Node spans:");
+      print("${(document.getNodeById(changedNodeId) as TextNode).text.spans}");
+
+      print("Requesting removal of attribution:");
+      print("${attributionsToRemove.first.attribution}");
+      requestDispatcher.execute([
+        // Switch out the old link attribution for the new one.
+        RemoveTextAttributionsRequest(
+          documentRange: linkRange,
+          attributions: {attributionsToRemove.first.attribution},
+        ),
+        AddTextAttributionsRequest(
+          documentRange: linkRange,
+          attributions: {
+            LinkAttribution(
+              url: _parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
+            )
+          },
+        ),
+        // When the caret is in the middle of a link then the composer will automatically
+        // apply that style to the next character. Remove the current link style
+        // from the composer's preferences, so that as the user types, he doesn't
+        // immediately add the link attribution we just deleted.
+        RemoveComposerPreferenceStylesRequest(attributionsToRemove.first.attribution),
+      ]);
+
+      print("After executing requests...");
+      print("Node spans:");
+      print("${(document.getNodeById(changedNodeId) as TextNode).text.spans}");
     }
   }
 
