@@ -28,6 +28,7 @@ class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {
   late ImeAttributedTextEditingController _textController;
 
   _TextFieldSizeMode _sizeMode = _TextFieldSizeMode.short;
+  late MobileTextFieldDemoConfig _demoConfig;
 
   bool _showDebugPaint = false;
 
@@ -47,6 +48,8 @@ class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {
         text: widget.initialText.copyText(0),
       ),
     );
+
+    _demoConfig = _createDemoConfig();
   }
 
   @override
@@ -110,7 +113,7 @@ class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {
                       child: TapRegion(
                         groupId: widget.textFieldTapRegionGroupId,
                         onTapOutside: (_) => widget.textFieldFocusNode.unfocus(),
-                        child: widget.createTextField(_createDemoConfig()),
+                        child: widget.createTextField(_demoConfig),
                       ),
                     ),
                   ),
@@ -162,6 +165,8 @@ class _MobileSuperTextFieldDemoState extends State<MobileSuperTextFieldDemo> {
                     } else if (newIndex == 3) {
                       _sizeMode = _TextFieldSizeMode.empty;
                     }
+
+                    _demoConfig = _createDemoConfig();
                   });
                 },
               ),
