@@ -13,7 +13,6 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
-import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -656,38 +655,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     widget.dragHandleAutoScroller.value!.ensureOffsetIsVisible(extentOffsetInViewport);
   }
 
-  void _onDocumentChange(DocumentChangeLog changeLog) {
-    final selectionAfterChange = widget.selection.value;
-    final areExpandedHandlesVisible = _controlsController!.shouldShowExpandedHandles.value == true;
-
-    // Checks whether a deletion ocurred and caused the selection to collapse.
-    //
-    // Even though we are checking against the new selection, if the user deleted text while the selection
-    // was expanded, the new selection will have the same offset. We use the selection after the document
-    // changes because the changelog doesn't contain selection change events.
-    //
-    // The reason of expanded handles being allowed to be visible even when the selection is collapsed is
-    // that dragging an expanded handle can cause the selection to collapse. The drag handle remains visible
-    // so the user can continue dragging, possibly causing the selection to expand again.
-    final deletionCausedSelectionToCollapse = areExpandedHandlesVisible &&
-        selectionAfterChange != null &&
-        selectionAfterChange.isCollapsed &&
-        changeLog.changes
-            .whereType<TextDeletedEvent>()
-            .where((deletion) =>
-                deletion.nodeId == selectionAfterChange.start.nodeId &&
-                deletion.offset == (selectionAfterChange.start.nodePosition as TextNodePosition).offset)
-            .isNotEmpty;
-
-    if (deletionCausedSelectionToCollapse) {
-      _controlsController!
-        ..hideCollapsedHandle()
-        ..hideExpandedHandles()
-        ..hideMagnifier()
-        ..hideToolbar()
-        ..blinkCaret();
-    }
-
+  void _onDocumentChange(_) {
     onNextFrame((_) {
       _ensureSelectionExtentIsVisible();
     });
@@ -1364,6 +1332,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
     // TODO: Replace Cupertino aligner with a generic aligner because this code runs on Android.
     _toolbarAligner = CupertinoPopoverToolbarAligner();
+    widget.document.addListener(_onDocumentChange);
   }
 
   @override
@@ -1377,6 +1346,11 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
         widget.scrollChangeSignal.addListener(_onDocumentScroll);
       }
     }
+
+    if (widget.document != oldWidget.document) {
+      oldWidget.document.removeListener(_onDocumentChange);
+      widget.document.addListener(_onDocumentChange);
+    }
   }
 
   @override
@@ -1385,6 +1359,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     // stop listening for document scroll changes.
     widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
     widget.scrollChangeSignal.removeListener(_onDocumentScroll);
+    widget.document.removeListener(_onDocumentChange);
 
     super.dispose();
   }
@@ -1394,6 +1369,23 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
 
   @visibleForTesting
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
+
+  void _onDocumentChange(_) {
+    if (widget.selection.value?.isCollapsed == true &&
+        _controlsController!.shouldShowExpandedHandles.value == true &&
+        _dragHandleType == null) {
+      // The selection is collapsed, but the expanded handles are visible and the user isn't dragging a handle.
+      // This can happen when the selection is expanded, and the user deletes the selected text. The only situation
+      // where the expanded handles should be visible when the selection is collapsed is when the selection
+      // collapses while the user is dragging an expanded handle, which isn't the case here. Hide the handles.
+      _controlsController!
+        ..hideCollapsedHandle()
+        ..hideExpandedHandles()
+        ..hideMagnifier()
+        ..hideToolbar()
+        ..blinkCaret();
+    }
+  }
 
   void _toggleToolbarOnCollapsedHandleTap() {
     _controlsController!.toggleToolbar();
