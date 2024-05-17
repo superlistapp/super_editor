@@ -286,7 +286,10 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     if (action == TextInputAction.newline) {
       textDeltasDocumentEditor.insertNewline();
 
-      // TODO: add comment.
+      // Keep track that we have performed a new line action on this frame to work around an iOS timing issue,
+      // where the iOS IME might report text deltas related to keyboard suggestions after we already processed
+      // the new line action.
+      //
       // See https://github.com/superlistapp/super_editor/issues/2007 for more information.
       _hasPerformedNewLineActionThisFrame = true;
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
