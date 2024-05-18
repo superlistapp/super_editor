@@ -554,7 +554,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   ///
   /// The extent widget is tracked via [_draggingHandleLink]
   Widget _buildExtentTrackerForMagnifier() {
-    if (!widget.textController.selection.isValid || !_isDraggingCaret) {
+    if (!widget.textController.selection.isValid || _dragOffset == null) {
       return const SizedBox();
     }
 
