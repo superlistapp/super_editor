@@ -23,17 +23,17 @@ class FeaturedEditor extends StatefulWidget {
 }
 
 class _FeaturedEditorState extends State<FeaturedEditor> {
+  final _viewportKey = GlobalKey();
   final _docLayoutKey = GlobalKey();
 
   late final MutableDocument _doc;
   late final Editor _docEditor;
   late final MutableDocumentComposer _composer;
   late final FocusNode _editorFocusNode;
-  late final ScrollController _scrollController;
 
-  OverlayEntry? _formatBarOverlayEntry;
+  final _textFormatBarOverlayController = OverlayPortalController();
 
-  final _selectionAnchor = ValueNotifier<Offset?>(null);
+  final SelectionLayerLinks _selectionLayerLinks = SelectionLayerLinks();
 
   @override
   void initState() {
@@ -56,7 +56,9 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
           nodePosition: (_doc.nodes.last as TextNode).endPosition,
         ),
       ),
-    )..addListener(_updateToolbarDisplay);
+    );
+
+    _composer.selectionNotifier.addListener(_updateToolbarDisplay);
 
     // Create the DocumentEditor, which is responsible for applying all
     // content changes to the Document.
@@ -64,17 +66,11 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
 
     // Create a FocusNode so that we can explicitly toggle editor focus.
     _editorFocusNode = FocusNode();
-
-    // Use our own ScrollController for the editor so that we can refresh
-    // our popup toolbar position as the user scrolls the editor.
-    _scrollController = ScrollController()..addListener(_updateToolbarDisplay);
   }
 
   @override
   void dispose() {
-    _formatBarOverlayEntry?.remove();
     _doc.dispose();
-    _scrollController.dispose();
     _editorFocusNode.dispose();
     _composer.dispose();
 
@@ -82,69 +78,14 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
   }
 
   void _showEditorToolbar() {
-    if (_formatBarOverlayEntry == null) {
-      _formatBarOverlayEntry ??= OverlayEntry(
-        builder: (context) {
-          return EditorToolbar(
-            doc: _doc,
-            anchor: _selectionAnchor,
-            editor: _docEditor,
-            composer: _composer,
-            closeToolbar: _hideEditorToolbar,
-          );
-        },
-      );
-
-      // Display the toolbar in the application overlay.
-      final overlay = Overlay.of(context);
-      overlay.insert(_formatBarOverlayEntry!);
-
-      // Schedule a callback after this frame to locate the selection
-      // bounds on the screen and display the toolbar near the selected
-      // text.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _updateToolbarOffset();
-      });
-    }
-  }
-
-  void _updateToolbarOffset() {
-    if (_formatBarOverlayEntry == null) {
-      return;
-    }
-
-    final docBoundingBox = (_docLayoutKey.currentState! as DocumentLayout).getRectForSelection(
-      _composer.selection!.base,
-      _composer.selection!.extent,
-    );
-    final parentBox = context.findRenderObject()! as RenderBox;
-    final docBox = _docLayoutKey.currentContext!.findRenderObject()! as RenderBox;
-    final parentInOverlayOffset = parentBox.localToGlobal(Offset.zero);
-    final overlayBoundingBox = Rect.fromPoints(
-      docBox.localToGlobal(docBoundingBox!.topLeft, ancestor: parentBox),
-      docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: parentBox),
-    ).translate(parentInOverlayOffset.dx, parentInOverlayOffset.dy);
-
-    final offset = overlayBoundingBox.topCenter;
-
-    _selectionAnchor.value = offset;
+    _textFormatBarOverlayController.show();
   }
 
   void _hideEditorToolbar() {
     // Null out the selection anchor so that when it re-appears,
     // the bar doesn't momentarily "flash" at its old anchor position.
-    _selectionAnchor.value = null;
 
-    if (_formatBarOverlayEntry != null) {
-      // Remove the toolbar overlay and null-out the entry.
-      // We null out the entry because we can't query whether
-      // or not the entry exists in the overlay, so in our
-      // case, null implies the entry is not in the overlay,
-      // and non-null implies the entry is in the overlay.
-      _formatBarOverlayEntry?.remove();
-      _formatBarOverlayEntry = null;
-    }
-
+    _textFormatBarOverlayController.hide();
     // Ensure that focus returns to the editor.
     //
     // I tried explicitly unfocus()'ing the URL textfield
@@ -181,32 +122,48 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
       return;
     }
 
-    final textNode = _doc.getNodeById(selection.extent.nodeId);
-    if (textNode is! TextNode) {
+    final selectedNode = _doc.getNodeById(selection.extent.nodeId);
+
+    if (selectedNode is TextNode) {
+      // Show the editor's toolbar for text styling.
+      _showEditorToolbar();
+      return;
+    } else {
       // The currently selected content is not a paragraph. We don't
       // want to show a toolbar in this case.
       _hideEditorToolbar();
-
-      return;
-    }
-
-    if (_formatBarOverlayEntry == null) {
-      // Show the editor's toolbar for text styling.
-      _showEditorToolbar();
-    } else {
-      _updateToolbarOffset();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SuperEditor(
-      editor: _docEditor,
+    return OverlayPortal(
+      controller: _textFormatBarOverlayController,
+      overlayChildBuilder: _buildFloatingToolbar,
+      child: KeyedSubtree(
+        key: _viewportKey,
+        child: SuperEditor(
+          editor: _docEditor,
+          document: _doc,
+          composer: _composer,
+          documentLayoutKey: _docLayoutKey,
+          focusNode: _editorFocusNode,
+          stylesheet: _getEditorStyleSheet(),
+          selectionLayerLinks: _selectionLayerLinks,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingToolbar(BuildContext context) {
+    return EditorToolbar(
+      editorViewportKey: _viewportKey,
+      editorFocusNode: _editorFocusNode,
       document: _doc,
+      anchor: _selectionLayerLinks.expandedSelectionBoundsLink,
+      editor: _docEditor,
       composer: _composer,
-      documentLayoutKey: _docLayoutKey,
-      focusNode: _editorFocusNode,
-      stylesheet: _getEditorStyleSheet(),
+      closeToolbar: _hideEditorToolbar,
     );
   }
 
