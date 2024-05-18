@@ -214,6 +214,26 @@ void main() {
       expect(SuperEditorInspector.isCaretVisible(), isTrue);
     });
 
+    testWidgetsOnAndroid("shows expanded handles when expanding the selection", (tester) async {
+      final context = await _pumpSingleParagraphApp(tester);
+
+      // Place the caret at the beginning of the paragraph.
+      await tester.placeCaretInParagraph("1", 0);
+      await tester.pump();
+
+      // Ensure the collapsed handle is visible and the expanded handles aren't visible.
+      expect(SuperEditorInspector.findMobileCaretDragHandle(), findsOneWidget);
+      expect(SuperEditorInspector.findMobileExpandedDragHandles(), findsNothing);
+
+      // Select all of the text.
+      context.findEditContext().commonOps.selectAll();
+      await tester.pump();
+
+      // Ensure the handles are visible and the collapsed handle isn't visible.
+      expect(SuperEditorInspector.findMobileExpandedDragHandles(), findsNWidgets(2));
+      expect(SuperEditorInspector.findMobileCaretDragHandle(), findsNothing);
+    });
+
     testWidgetsOnAndroid("hides expanded handles and toolbar when deleting an expanded selection", (tester) async {
       // Configure BlinkController to animate, otherwise it won't blink. We want to make sure
       // the caret blinks after deleting the content.
@@ -545,8 +565,8 @@ void main() {
   });
 }
 
-Future<void> _pumpSingleParagraphApp(WidgetTester tester) async {
-  await tester
+Future<TestDocumentContext> _pumpSingleParagraphApp(WidgetTester tester) async {
+  return await tester
       .createDocument()
       // Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor...
       .withSingleParagraph()

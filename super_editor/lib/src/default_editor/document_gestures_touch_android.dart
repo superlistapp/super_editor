@@ -1345,6 +1345,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
     // TODO: Replace Cupertino aligner with a generic aligner because this code runs on Android.
     _toolbarAligner = CupertinoPopoverToolbarAligner();
+    widget.selection.addListener(_onSelectionChange);
   }
 
   @override
@@ -1383,22 +1384,33 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
   void _onSelectionChange() {
+    if (widget.selection.value != null &&
+        widget.selection.value?.isCollapsed == false &&
+        _controlsController!.shouldShowCollapsedHandle.value == true) {
+      // The selection is expanded, but the collapsed handle is visible. This can happen when the
+      // where the collapsed handle should be visible when the selection is expanded. Hide the collapsed
+      // selection is collapsed and the user taps the "Select All" button. There isn't any situation
+      _controlsController!
+      // handle and show the expanded handles.
+        ..hideCollapsedHandle()
+        ..hideMagnifier();
+        ..showExpandedHandles()
+    }
     if (widget.selection.value?.isCollapsed == true &&
         _controlsController!.shouldShowExpandedHandles.value == true &&
         _dragHandleType == null) {
-      // The selection is collapsed, but the expanded handles are visible and the user isn't dragging a handle.
       // This can happen when the selection is expanded, and the user deletes the selected text. The only situation
-      // where the expanded handles should be visible when the selection is collapsed is when the selection
+      // The selection is collapsed, but the expanded handles are visible and the user isn't dragging a handle.
       // collapses while the user is dragging an expanded handle, which isn't the case here. Hide the handles.
+      // where the expanded handles should be visible when the selection is collapsed is when the selection
       _controlsController!
         ..hideCollapsedHandle()
         ..hideExpandedHandles()
-        ..hideMagnifier()
         ..hideToolbar()
         ..blinkCaret();
-    }
+        ..hideMagnifier()
   }
-
+    }
   void _toggleToolbarOnCollapsedHandleTap() {
     _controlsController!.toggleToolbar();
   }
