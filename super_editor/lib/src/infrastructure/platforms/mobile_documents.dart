@@ -108,6 +108,12 @@ typedef DocumentFloatingToolbarBuilder = Widget Function(
 /// Builds a full-screen magnifier display, with the magnifier following the given [focalPoint],
 /// and with the magnifier attached to the given [magnifierKey].
 ///
+/// The [visible] parameter is used to let the magnifier animate its appearance and disappearance.
+/// For example, [visible] can be `false` and the magnifier can still be present in the widget tree
+/// while an exit animation runs. Upon animation end, the widget bound to [magnifierKey] should be
+/// removed from the widget tree. If an animation isn't desired, a [SizedBox] can be returned when
+/// [visible] is `false`.
+///
 /// The [magnifierKey] is used to find the magnifier in the widget tree for various purposes,
 /// e.g., within tests to verify the presence or absence of a magnifier. If your builder chooses
 /// not to build a magnifier, e.g., returns a `SizedBox()` instead of a magnifier, then
@@ -130,7 +136,8 @@ typedef DocumentFloatingToolbarBuilder = Widget Function(
 ///   );
 /// }
 /// ```
-typedef DocumentMagnifierBuilder = Widget Function(BuildContext, Key magnifierKey, LeaderLink focalPoint);
+typedef DocumentMagnifierBuilder = Widget Function(
+    BuildContext, Key magnifierKey, LeaderLink focalPoint, bool isVisible);
 
 /// Global flag that disables long-press selection for Android and iOS, as a hack for Superlist, because
 /// Superlist has a custom long-press behavior per-component.

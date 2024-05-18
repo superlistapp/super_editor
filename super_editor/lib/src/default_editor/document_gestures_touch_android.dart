@@ -1718,23 +1718,28 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     return ValueListenableBuilder(
       valueListenable: _controlsController!.shouldShowMagnifier,
       builder: (context, shouldShow, child) {
-        return shouldShow ? child! : const SizedBox();
+        return _controlsController!.magnifierBuilder != null //
+            ? _controlsController!.magnifierBuilder!(
+                context,
+                DocumentKeys.magnifier,
+                _controlsController!.magnifierFocalPoint,
+                shouldShow,
+              )
+            : _buildDefaultMagnifier(
+                context,
+                DocumentKeys.magnifier,
+                _controlsController!.magnifierFocalPoint,
+                shouldShow,
+              );
       },
-      child: _controlsController!.magnifierBuilder != null //
-          ? _controlsController!.magnifierBuilder!(
-              context,
-              DocumentKeys.magnifier,
-              _controlsController!.magnifierFocalPoint,
-            )
-          : _buildDefaultMagnifier(
-              context,
-              DocumentKeys.magnifier,
-              _controlsController!.magnifierFocalPoint,
-            ),
     );
   }
 
-  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint) {
+  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint, bool isVisible) {
+    if (!isVisible) {
+      return const SizedBox();
+    }
+
     return Follower.withOffset(
       link: _controlsController!.magnifierFocalPoint,
       offset: const Offset(0, -150),

@@ -283,7 +283,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   Offset? _startDragPositionOffset;
   double? _dragStartScrollOffset;
   Offset? _globalDragOffset;
-  final _magnifierOffset = ValueNotifier<Offset?>(null);
+
+  /// The [Offset] of the magnifier's focal point in the [DocumentLayout] coordinate space.
+  final _magnifierFocalPointInDocumentSpace = ValueNotifier<Offset?>(null);
   Offset? _dragEndInInteractor;
   DragMode? _dragMode;
   // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
@@ -577,7 +579,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
-    _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalTapDownOffset!));
+    _placeFocalPointNearTouchOffset();
     _controlsController!
       ..hideToolbar()
       ..showMagnifier();
@@ -957,7 +959,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       dragEndInViewport: dragEndInViewport,
     );
 
-    _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(details.globalPosition));
+    _placeFocalPointNearTouchOffset();
   }
 
   void _updateSelectionForNewDragHandleLocation() {
@@ -1006,7 +1008,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onPanEnd(DragEndDetails details) {
-    _magnifierOffset.value = null;
     _controlsController!
       ..hideMagnifier()
       ..blinkCaret();
@@ -1034,8 +1035,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onPanCancel() {
-    _magnifierOffset.value = null;
-
     if (_scrollingDrag != null) {
       // The user was performing a drag gesture to scroll the document.
       // Cancel the drag gesture.
@@ -1087,9 +1086,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _updateMagnifierFocalPointOnAutoScrollFrame() {
-    if (_magnifierOffset.value != null) {
-      final interactorBox = context.findRenderObject() as RenderBox;
-      _magnifierOffset.value = _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalDragOffset!));
+    if (_magnifierFocalPointInDocumentSpace.value != null) {
+      _placeFocalPointNearTouchOffset();
     }
   }
 
@@ -1240,6 +1238,28 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     });
   }
 
+  /// Updates the magnifier focal point in relation to the current drag position.
+  void _placeFocalPointNearTouchOffset() {
+    late DocumentPosition? docPositionToMagnify;
+
+    if (_globalTapDownOffset != null) {
+      // A drag isn't happening. Magnify the position that the user tapped.
+      docPositionToMagnify =
+          _docLayout.getDocumentPositionNearestToOffset(_globalTapDownOffset! + Offset(0, scrollPosition.pixels));
+    } else {
+      final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
+      final dragScrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
+      docPositionToMagnify = _docLayout
+          .getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
+    }
+
+    final centerOfContentAtOffset = _interactorOffsetToDocumentOffset(
+      _docLayout.getRectForPosition(docPositionToMagnify!)!.center,
+    );
+
+    _magnifierFocalPointInDocumentSpace.value = centerOfContentAtOffset;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.scrollController.hasClients) {
@@ -1315,9 +1335,9 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   Widget _buildMagnifierFocalPoint() {
     return ValueListenableBuilder(
-      valueListenable: _magnifierOffset,
-      builder: (context, magnifierOffset, child) {
-        if (magnifierOffset == null) {
+      valueListenable: _magnifierFocalPointInDocumentSpace,
+      builder: (context, magnifierFocalPoint, child) {
+        if (magnifierFocalPoint == null) {
           return const SizedBox();
         }
 
@@ -1325,8 +1345,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         // are responsible for positioning the focal point for the
         // magnifier to follow. We do that here.
         return Positioned(
-          left: magnifierOffset.dx,
-          top: magnifierOffset.dy,
+          left: magnifierFocalPoint.dx,
+          top: magnifierFocalPoint.dy,
           child: Leader(
             link: _controlsController!.magnifierFocalPoint,
             child: const SizedBox(width: 1, height: 1),
@@ -1427,20 +1447,20 @@ class SuperEditorIosMagnifierOverlayManager extends StatefulWidget {
 }
 
 @visibleForTesting
-class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMagnifierOverlayManager> {
+class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMagnifierOverlayManager>
+    with SingleTickerProviderStateMixin {
   final OverlayPortalController _overlayPortalController = OverlayPortalController();
   SuperEditorIosControlsController? _controlsController;
+
+  @visibleForTesting
+  bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     _controlsController = SuperEditorIosControlsScope.rootOf(context);
     _overlayPortalController.show();
   }
-
-  @visibleForTesting
-  bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
   @override
   Widget build(BuildContext context) {
@@ -1460,20 +1480,25 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     return ValueListenableBuilder(
       valueListenable: _controlsController!.shouldShowMagnifier,
       builder: (context, shouldShowMagnifier, child) {
-        if (!shouldShowMagnifier) {
-          return const SizedBox();
-        }
-
-        return child!;
+        return _controlsController!.magnifierBuilder != null //
+            ? _controlsController!.magnifierBuilder!(
+                context,
+                DocumentKeys.magnifier,
+                _controlsController!.magnifierFocalPoint,
+                shouldShowMagnifier,
+              )
+            : _buildDefaultMagnifier(
+                context,
+                DocumentKeys.magnifier,
+                _controlsController!.magnifierFocalPoint,
+                shouldShowMagnifier,
+              );
       },
-      child: _controlsController!.magnifierBuilder != null //
-          ? _controlsController!.magnifierBuilder!(
-              context, DocumentKeys.magnifier, _controlsController!.magnifierFocalPoint)
-          : _buildDefaultMagnifier(context, DocumentKeys.magnifier, _controlsController!.magnifierFocalPoint),
     );
   }
 
-  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint) {
+  Widget _buildDefaultMagnifier(
+      BuildContext context, Key magnifierKey, LeaderLink magnifierFocalPoint, bool isVisible) {
     if (CurrentPlatform.isWeb) {
       // Defer to the browser to display overlay controls on mobile.
       return const SizedBox();
@@ -1482,7 +1507,12 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
     return IOSFollowingMagnifier.roundedRectangle(
       magnifierKey: magnifierKey,
       leaderLink: magnifierFocalPoint,
-      offsetFromFocalPoint: const Offset(0, -72),
+      show: isVisible,
+      // The bottom of the magnifier sits above the focal point.
+      // Leave a few pixels between the bottom of the magnifier and the focal point. This
+      // value was chosen empirically.
+      offsetFromFocalPoint: const Offset(0, -20),
+      handleColor: _controlsController!.handleColor,
     );
   }
 }
@@ -1824,3 +1854,8 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
     );
   }
 }
+
+const defaultIosMagnifierEnterAnimationDuration = Duration(milliseconds: 180);
+const defaultIosMagnifierExitAnimationDuration = Duration(milliseconds: 150);
+const defaultIosMagnifierAnimationCurve = Curves.easeInOut;
+const defaultIosMagnifierSize = Size(133, 96);
