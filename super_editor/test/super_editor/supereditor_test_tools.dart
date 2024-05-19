@@ -177,6 +177,13 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] to ignore the default layers and to use the given only
+  /// the given [documentLayers].
+  TestSuperEditorConfigurator withDocumentLayers(List<SuperEditorLayerBuilder> documentLayers) {
+    _config.documentLayers = documentLayers;
+    return this;
+  }
+
   /// Configures the [SuperEditor]'s [SoftwareKeyboardController].
   TestSuperEditorConfigurator withSoftwareKeyboardController(SoftwareKeyboardController controller) {
     _config.softwareKeyboardController = controller;
@@ -555,7 +562,7 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
         ...(widget.testConfiguration.componentBuilders ?? defaultComponentBuilders),
       ],
       scrollController: widget.testConfiguration.scrollController,
-      documentOverlayBuilders: _createOverlayBuilders(),
+      documentOverlayBuilders: widget.testConfiguration.documentLayers ?? _createOverlayBuilders(),
       plugins: widget.testConfiguration.plugins,
     );
   }
@@ -630,6 +637,8 @@ class SuperEditorTestConfiguration {
   DocumentFloatingToolbarBuilder? iOSToolbarBuilder;
 
   DocumentSelection? selection;
+
+  List<SuperEditorLayerBuilder>? documentLayers;
 
   final plugins = <SuperEditorPlugin>{};
 
