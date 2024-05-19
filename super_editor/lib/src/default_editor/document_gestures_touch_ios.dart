@@ -631,8 +631,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         selection != null &&
         !selection.isCollapsed &&
         widget.document.doesSelectionContainPosition(selection, docPosition)) {
-      // The user tapped on an expanded selection. Toggle the toolbar.
+      // The user tapped on an expanded selection. Toggle the toolbar and show
+      // the software keyboard.
       _controlsController!.toggleToolbar();
+      widget.openSoftwareKeyboard();
       return;
     }
 

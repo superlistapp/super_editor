@@ -1315,7 +1315,7 @@ Paragraph two
       });
     });
 
-    testWidgetsOnMobile('shows software keyboard when tapping at the selected position', (tester) async {
+    testWidgetsOnMobile('opens software keyboard when tapping on caret', (tester) async {
       await tester
           .createDocument() //
           .withSingleParagraph()
@@ -1345,6 +1345,41 @@ Paragraph two
 
       // Tap again on the same selected position.
       await tester.placeCaretInParagraph('1', 5);
+
+      // Ensure the keyboard was shown.
+      expect(wasKeyboardShown, isTrue);
+    });
+
+    testWidgetsOnIos('opens software keyboard when tapping on an expanded selection', (tester) async {
+      await tester
+          .createDocument() //
+          .withSingleParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Double tap to select "|Lorem| ipsum".
+      await tester.doubleTapInParagraph('1', 1);
+
+      // Hide the software keyboard using the system button.
+      tester.testTextInput.hide();
+
+      bool wasKeyboardShown = false;
+
+      // Intercept the messages sent to the platform to check if
+      // we showed the software keyboard.
+      tester
+          .interceptChannel(SystemChannels.textInput.name) //
+          .interceptMethod(
+        'TextInput.show',
+        (methodCall) {
+          wasKeyboardShown = true;
+
+          return null;
+        },
+      );
+
+      // Tap somewhere on the existing selection.
+      await tester.tapInParagraph('1', 3);
 
       // Ensure the keyboard was shown.
       expect(wasKeyboardShown, isTrue);
