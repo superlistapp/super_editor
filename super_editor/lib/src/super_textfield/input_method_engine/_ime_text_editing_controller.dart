@@ -394,7 +394,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   @override
   void performAction(TextInputAction action) {
-    handleTextInputAction(action);
+    _onPerformActionPressed?.call(action);
 
     // Keep track that we have performed a text input action on this frame so we can ignore auto-corrections
     // reported after we handled the text input action.
@@ -700,10 +700,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   @override
   void selectAll() {
     _realController.selectAll();
-  }
-
-  void handleTextInputAction(TextInputAction action) {
-    _onPerformActionPressed?.call(action);
   }
 }
 
