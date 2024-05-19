@@ -1323,6 +1323,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   void initState() {
     super.initState();
     _overlayController.show();
+    widget.selection.addListener(_onSelectionChange);
   }
 
   @override
@@ -1332,7 +1333,6 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
     // TODO: Replace Cupertino aligner with a generic aligner because this code runs on Android.
     _toolbarAligner = CupertinoPopoverToolbarAligner();
-    widget.document.addListener(_onDocumentChange);
   }
 
   @override
@@ -1347,9 +1347,9 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       }
     }
 
-    if (widget.document != oldWidget.document) {
-      oldWidget.document.removeListener(_onDocumentChange);
-      widget.document.addListener(_onDocumentChange);
+    if (widget.selection != oldWidget.selection) {
+      oldWidget.selection.removeListener(_onSelectionChange);
+      widget.selection.addListener(_onSelectionChange);
     }
   }
 
@@ -1359,7 +1359,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     // stop listening for document scroll changes.
     widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
     widget.scrollChangeSignal.removeListener(_onDocumentScroll);
-    widget.document.removeListener(_onDocumentChange);
+    widget.selection.removeListener(_onSelectionChange);
 
     super.dispose();
   }
@@ -1370,7 +1370,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   @visibleForTesting
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
-  void _onDocumentChange(_) {
+  void _onSelectionChange() {
     if (widget.selection.value?.isCollapsed == true &&
         _controlsController!.shouldShowExpandedHandles.value == true &&
         _dragHandleType == null) {
