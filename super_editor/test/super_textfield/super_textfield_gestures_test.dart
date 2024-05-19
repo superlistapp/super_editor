@@ -742,6 +742,68 @@ a scrollbar
         // Ensure we are connected again.
         expect(controller.isAttachedToIme, true);
       });
+
+      testWidgetsOnMobile("tap up does not shows the toolbar if the field does not have focus", (tester) async {
+        await _pumpTestApp(
+          tester,
+          controller: AttributedTextEditingController(text: AttributedText('')),
+        );
+
+        // Tap down and up so the field is focused.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Ensure the toolbar isn't visible.
+        expect(SuperTextFieldInspector.wantsMobileToolbarToBeVisible(), isFalse);
+      });
+
+      testWidgetsOnIos("tap up shows the toolbar if the field already has focus", (tester) async {
+        await _pumpTestApp(
+          tester,
+          controller: AttributedTextEditingController(text: AttributedText('')),
+        );
+
+        // Tap down and up so the field is focused.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Ensure the toolbar isn't visible.
+        expect(SuperTextFieldInspector.wantsMobileToolbarToBeVisible(), isFalse);
+
+        // Avoid a double tap.
+        await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
+
+        // Tap down and up again.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Ensure the toolbar is visible.
+        expect(SuperTextFieldInspector.wantsMobileToolbarToBeVisible(), isTrue);
+      });
+
+      testWidgetsOnAndroid("tap up does not shows the toolbar if the field already has focus", (tester) async {
+        await _pumpTestApp(
+          tester,
+          controller: AttributedTextEditingController(text: AttributedText('')),
+        );
+
+        // Tap down and up so the field is focused.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Ensure the toolbar isn't visible.
+        expect(SuperTextFieldInspector.wantsMobileToolbarToBeVisible(), isFalse);
+
+        // Avoid a double tap.
+        await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
+
+        // Tap down and up again.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Ensure the toolbar is visible.
+        expect(SuperTextFieldInspector.wantsMobileToolbarToBeVisible(), isFalse);
+      });
     });
 
     testWidgetsOnAllPlatforms("loses focus when user taps outside in a TapRegion", (tester) async {

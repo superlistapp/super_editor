@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -291,6 +292,45 @@ class SuperTextFieldInspector {
 
     throw Exception(
         "Couldn't find the caret rectangle because we couldn't find a SuperTextField. Finder: $superTextFieldFinder");
+  }
+
+  /// Returns `true` if the mobile text field is configured to display a toolbar.
+  ///
+  /// {@macro supertextfield_finder}
+  ///
+  /// Throws if a mobile text field isn't found.
+  static bool wantsMobileToolbarToBeVisible([Finder? superTextFieldFinder]) {
+    final finder = superTextFieldFinder ?? find.byType(SuperTextField);
+
+    final fieldFinder = findInnerPlatformTextField(finder);
+    final match = fieldFinder.evaluate().single.widget;
+
+    switch (match.runtimeType) {
+      case SuperAndroidTextField:
+        final touchInteractor = (find
+                .descendant(
+                  of: fieldFinder,
+                  matching: find.byType(AndroidEditingOverlayControls),
+                )
+                .evaluate()
+                .single as StatefulElement)
+            .widget as AndroidEditingOverlayControls;
+
+        return touchInteractor.editingController.isToolbarVisible;
+      case SuperIOSTextField:
+        final touchInteractor = (find
+                .descendant(
+                  of: fieldFinder,
+                  matching: find.byType(IOSTextFieldTouchInteractor),
+                )
+                .evaluate()
+                .single as StatefulElement)
+            .widget as IOSTextFieldTouchInteractor;
+
+        return touchInteractor.editingOverlayController.isToolbarVisible;
+      default:
+        throw Exception("Didn't find a mobile SuperTextField");
+    }
   }
 
   static Rect? _findCaretRectInViewportOnDesktop(Finder desktopTextField) {
