@@ -1335,6 +1335,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   void initState() {
     super.initState();
     _overlayController.show();
+    widget.selection.addListener(_onSelectionChange);
   }
 
   @override
@@ -1357,6 +1358,11 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
         widget.scrollChangeSignal.addListener(_onDocumentScroll);
       }
     }
+
+    if (widget.selection != oldWidget.selection) {
+      oldWidget.selection.removeListener(_onSelectionChange);
+      widget.selection.addListener(_onSelectionChange);
+    }
   }
 
   @override
@@ -1365,6 +1371,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     // stop listening for document scroll changes.
     widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
     widget.scrollChangeSignal.removeListener(_onDocumentScroll);
+    widget.selection.removeListener(_onSelectionChange);
 
     super.dispose();
   }
@@ -1374,6 +1381,23 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
 
   @visibleForTesting
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
+
+  void _onSelectionChange() {
+    if (widget.selection.value?.isCollapsed == true &&
+        _controlsController!.shouldShowExpandedHandles.value == true &&
+        _dragHandleType == null) {
+      // The selection is collapsed, but the expanded handles are visible and the user isn't dragging a handle.
+      // This can happen when the selection is expanded, and the user deletes the selected text. The only situation
+      // where the expanded handles should be visible when the selection is collapsed is when the selection
+      // collapses while the user is dragging an expanded handle, which isn't the case here. Hide the handles.
+      _controlsController!
+        ..hideCollapsedHandle()
+        ..hideExpandedHandles()
+        ..hideMagnifier()
+        ..hideToolbar()
+        ..blinkCaret();
+    }
+  }
 
   void _toggleToolbarOnCollapsedHandleTap() {
     _controlsController!.toggleToolbar();
