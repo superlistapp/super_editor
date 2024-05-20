@@ -1384,33 +1384,38 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
   void _onSelectionChange() {
-    if (widget.selection.value != null &&
-        widget.selection.value?.isCollapsed == false &&
-        _controlsController!.shouldShowCollapsedHandle.value == true) {
-      // The selection is expanded, but the collapsed handle is visible. This can happen when the
-      // where the collapsed handle should be visible when the selection is expanded. Hide the collapsed
-      // selection is collapsed and the user taps the "Select All" button. There isn't any situation
-      _controlsController!
-      // handle and show the expanded handles.
-        ..hideCollapsedHandle()
-        ..hideMagnifier();
-        ..showExpandedHandles()
+    final selection = widget.selection.value;
+    if (selection == null) {
+      return;
     }
-    if (widget.selection.value?.isCollapsed == true &&
+
+    if (selection.isCollapsed == true &&
         _controlsController!.shouldShowExpandedHandles.value == true &&
         _dragHandleType == null) {
-      // This can happen when the selection is expanded, and the user deletes the selected text. The only situation
       // The selection is collapsed, but the expanded handles are visible and the user isn't dragging a handle.
-      // collapses while the user is dragging an expanded handle, which isn't the case here. Hide the handles.
+      // This can happen when the selection is expanded, and the user deletes the selected text. The only situation
       // where the expanded handles should be visible when the selection is collapsed is when the selection
+      // collapses while the user is dragging an expanded handle, which isn't the case here. Hide the handles.
       _controlsController!
         ..hideCollapsedHandle()
         ..hideExpandedHandles()
+        ..hideMagnifier()
         ..hideToolbar()
         ..blinkCaret();
-        ..hideMagnifier()
-  }
     }
+
+    if (selection.isCollapsed == false && _controlsController!.shouldShowCollapsedHandle.value == true) {
+      // The selection is expanded, but the collapsed handle is visible. This can happen when the
+      // selection is collapsed and the user taps the "Select All" button. There isn't any situation
+      // where the collapsed handle should be visible when the selection is expanded. Hide the collapsed
+      // handle and show the expanded handles.
+      _controlsController!
+        ..hideCollapsedHandle()
+        ..showExpandedHandles()
+        ..hideMagnifier();
+    }
+  }
+
   void _toggleToolbarOnCollapsedHandleTap() {
     _controlsController!.toggleToolbar();
   }
