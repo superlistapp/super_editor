@@ -38,7 +38,10 @@ class IOSFollowingMagnifier extends StatefulWidget {
   final Key? magnifierKey;
   final LeaderLink leaderLink;
   final bool show;
+
+  /// The distance, in density independent pixels, from the focal point to the magnifier.
   final Offset offsetFromFocalPoint;
+
   final Color? handleColor;
   final MagnifierBuilder magnifierBuilder;
 
@@ -171,6 +174,7 @@ class IOSRoundedRectangleMagnifyingGlass extends StatelessWidget {
     required this.borderColor,
   });
 
+  /// The distance, in density independent pixels, from the focal point to the magnifier.
   final Offset offsetFromFocalPoint;
   final double animationValue;
   final Color borderColor;
@@ -240,6 +244,7 @@ class IOSCircleMagnifyingGlass extends StatelessWidget {
     this.offsetFromFocalPoint = Offset.zero,
   });
 
+  /// The distance, in density independent pixels, from the focal point to the magnifier.
   final Offset offsetFromFocalPoint;
 
   @override
@@ -292,7 +297,9 @@ class IosMagnifierViewModel {
     required this.borderColor,
   });
 
+  /// The distance, in density independent pixels, from the focal point to the magnifier.
   final Offset offsetFromFocalPoint;
+
   final double animationValue;
   final AnimationDirection animationDirection;
   final Color borderColor;
