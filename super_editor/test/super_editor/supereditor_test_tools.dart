@@ -177,8 +177,11 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
-  /// Configures the [SuperEditor] to ignore the default layers and to use the given only
-  /// the given [documentLayers].
+  /// Configures the [SuperEditor] to use the given [documentLayers].
+  ///
+  /// This can be used, for example, to customize the caret style for a specific platform.
+  ///
+  /// The default layers are ignored.
   TestSuperEditorConfigurator withDocumentLayers(List<SuperEditorLayerBuilder> documentLayers) {
     _config.documentLayers = documentLayers;
     return this;
