@@ -394,6 +394,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.getDocumentLayout,
     required this.selection,
+    required this.openSoftwareKeyboard,
     required this.scrollController,
     this.contentTapHandler,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
@@ -408,6 +409,9 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final DocumentLayout Function() getDocumentLayout;
   final ValueListenable<DocumentSelection?> selection;
+
+  /// A callback that should open the software keyboard when invoked.
+  final VoidCallback openSoftwareKeyboard;
 
   /// Optional handler that responds to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
@@ -792,6 +796,14 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     _showAndHideEditingControlsAfterTapSelection(didTapOnExistingSelection: didTapOnExistingSelection);
+
+    if (didTapOnExistingSelection) {
+      // The user tapped on the existing selection. Show the software keyboard.
+      //
+      // If the user didn't tap on an existing selection, the software keyboard will
+      // already be visible.
+      widget.openSoftwareKeyboard();
+    }
 
     widget.focusNode.requestFocus();
   }
