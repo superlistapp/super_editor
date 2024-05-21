@@ -131,24 +131,23 @@ class ListItemComponentBuilder implements ComponentBuilder {
       }
     }
 
-    if (node.type == ListItemType.unordered) {
-      return UnorderedListItemComponentViewModel(
-        nodeId: node.id,
-        indent: node.indent,
-        text: node.text,
-        textStyleBuilder: noStyleBuilder,
-        selectionColor: const Color(0x00000000),
-      );
-    }
-
-    return OrderedListItemComponentViewModel(
-      nodeId: node.id,
-      indent: node.indent,
-      ordinalValue: ordinalValue,
-      text: node.text,
-      textStyleBuilder: noStyleBuilder,
-      selectionColor: const Color(0x00000000),
-    );
+    return switch (node.type) {
+      ListItemType.unordered => UnorderedListItemComponentViewModel(
+          nodeId: node.id,
+          indent: node.indent,
+          text: node.text,
+          textStyleBuilder: noStyleBuilder,
+          selectionColor: const Color(0x00000000),
+        ),
+      ListItemType.ordered => OrderedListItemComponentViewModel(
+          nodeId: node.id,
+          indent: node.indent,
+          ordinalValue: ordinalValue,
+          text: node.text,
+          textStyleBuilder: noStyleBuilder,
+          selectionColor: const Color(0x00000000),
+        ),
+    };
   }
 
   @override
@@ -534,9 +533,7 @@ Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListIt
   final attributions = component.text.getAllAttributionsAt(0).toSet();
   final textStyle = component.styleBuilder(attributions);
 
-  final dotColor = component.dotStyle?.color ?? textStyle.color;
   final dotSize = component.dotStyle?.size ?? const Size(4, 4);
-  final dotShape = component.dotStyle?.shape ?? BoxShape.circle;
 
   return Align(
     alignment: Alignment.centerRight,
@@ -555,8 +552,8 @@ Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListIt
               height: dotSize.height,
               margin: const EdgeInsets.only(right: 10),
               decoration: BoxDecoration(
-                shape: dotShape,
-                color: dotColor,
+                shape: component.dotStyle?.shape ?? BoxShape.circle,
+                color: component.dotStyle?.color ?? textStyle.color,
               ),
             ),
           ),
@@ -688,8 +685,6 @@ Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListIt
   final attributions = component.text.getAllAttributionsAt(0).toSet();
   final textStyle = component.styleBuilder(attributions);
 
-  final numeral = _numeralForIndex(component.listIndex, component.numeralStyle);
-
   return OverflowBox(
     maxWidth: double.infinity,
     maxHeight: double.infinity,
@@ -698,7 +693,7 @@ Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListIt
       child: Padding(
         padding: const EdgeInsets.only(right: 5.0),
         child: Text(
-          '$numeral.',
+          '${_numeralForIndex(component.listIndex, component.numeralStyle)}.',
           textAlign: TextAlign.right,
           style: textStyle,
         ),
