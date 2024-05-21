@@ -1389,7 +1389,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       return;
     }
 
-    if (selection.isCollapsed == true &&
+    if (selection.isCollapsed &&
         _controlsController!.shouldShowExpandedHandles.value == true &&
         _dragHandleType == null) {
       // The selection is collapsed, but the expanded handles are visible and the user isn't dragging a handle.
@@ -1404,7 +1404,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
         ..blinkCaret();
     }
 
-    if (selection.isCollapsed == false && _controlsController!.shouldShowCollapsedHandle.value == true) {
+    if (!selection.isCollapsed && _controlsController!.shouldShowCollapsedHandle.value == true) {
       // The selection is expanded, but the collapsed handle is visible. This can happen when the
       // selection is collapsed and the user taps the "Select All" button. There isn't any situation
       // where the collapsed handle should be visible when the selection is expanded. Hide the collapsed
