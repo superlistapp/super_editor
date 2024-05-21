@@ -627,6 +627,36 @@ void main() {
       expect(enableDeltaModel, true);
       expect(keyboardAppearance, 'Brightness.dark');
     });
+
+    group('on iPhone 15 (iOS 17.5)', () {
+      testWidgetsOnIos('ignores keyboard autocorrections when pressing the action button', (tester) async {
+        await _pumpEmptySuperTextField(tester);
+
+        // Place the caret at the start of the text field.
+        await tester.placeCaretInSuperTextField(0);
+
+        // Type some text.
+        await tester.typeImeText('run tom');
+
+        // Press the "Done" button.
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+
+        // Simulate the IME sending a delta replacing "tom" with "Tom".
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaReplacement(
+            oldText: '. run tom',
+            replacementText: 'Tom',
+            replacedRange: TextRange(start: 6, end: 9),
+            selection: TextSelection.collapsed(offset: 9),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+        await tester.pump();
+
+        // Ensure the correction was ignored.
+        expect(SuperTextFieldInspector.findText().text, 'run tom');
+      });
+    });
   });
 
   testWidgetsOnAllPlatforms('updates IME configuration when it changes', (tester) async {
