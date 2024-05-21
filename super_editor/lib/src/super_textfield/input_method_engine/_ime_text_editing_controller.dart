@@ -393,6 +393,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   AutofillScope? get currentAutofillScope => null;
 
   @override
+  @mustCallSuper
   void performAction(TextInputAction action) {
     _onPerformActionPressed?.call(action);
 
