@@ -131,9 +131,18 @@ class ListItemComponentBuilder implements ComponentBuilder {
       }
     }
 
-    return ListItemComponentViewModel(
+    if (node.type == ListItemType.unordered) {
+      return UnorderedListItemComponentViewModel(
+        nodeId: node.id,
+        indent: node.indent,
+        text: node.text,
+        textStyleBuilder: noStyleBuilder,
+        selectionColor: const Color(0x00000000),
+      );
+    }
+
+    return OrderedListItemComponentViewModel(
       nodeId: node.id,
-      type: node.type,
       indent: node.indent,
       ordinalValue: ordinalValue,
       text: node.text,
@@ -145,26 +154,25 @@ class ListItemComponentBuilder implements ComponentBuilder {
   @override
   Widget? createComponent(
       SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
-    if (componentViewModel is! ListItemComponentViewModel) {
+    if (componentViewModel is! UnorderedListItemComponentViewModel &&
+        componentViewModel is! OrderedListItemComponentViewModel) {
       return null;
     }
 
-    if (componentViewModel.type == ListItemType.unordered) {
+    if (componentViewModel is UnorderedListItemComponentViewModel) {
       return UnorderedListItemComponent(
         componentKey: componentContext.componentKey,
         text: componentViewModel.text,
         styleBuilder: componentViewModel.textStyleBuilder,
         indent: componentViewModel.indent,
-        dotColor: componentViewModel.dotColor,
-        dotShape: componentViewModel.dotShape,
-        dotSize: componentViewModel.dotSize,
+        dotStyle: componentViewModel.dotStyle,
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
         composingRegion: componentViewModel.composingRegion,
         showComposingUnderline: componentViewModel.showComposingUnderline,
       );
-    } else if (componentViewModel.type == ListItemType.ordered) {
+    } else if (componentViewModel is OrderedListItemComponentViewModel) {
       return OrderedListItemComponent(
         componentKey: componentContext.componentKey,
         indent: componentViewModel.indent,
@@ -186,18 +194,12 @@ class ListItemComponentBuilder implements ComponentBuilder {
   }
 }
 
-class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
+abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   ListItemComponentViewModel({
     required String nodeId,
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
-    required this.type,
-    this.ordinalValue,
     required this.indent,
-    this.dotColor,
-    this.dotShape,
-    this.dotSize,
-    this.numeralStyle = OrderedListNumeralStyle.arabic,
     required this.text,
     required this.textStyleBuilder,
     this.textDirection = TextDirection.ltr,
@@ -209,13 +211,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
     this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
-  ListItemType type;
-  int? ordinalValue;
   int indent;
-  Color? dotColor;
-  BoxShape? dotShape;
-  Size? dotSize;
-  OrderedListNumeralStyle numeralStyle;
 
   @override
   AttributedText text;
@@ -237,26 +233,128 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
   bool showComposingUnderline;
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is ListItemComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          indent == other.indent &&
+          text == other.text &&
+          textDirection == other.textDirection &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          composingRegion == other.composingRegion &&
+          showComposingUnderline == other.showComposingUnderline;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      indent.hashCode ^
+      text.hashCode ^
+      textDirection.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      composingRegion.hashCode;
+}
+
+class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
+  UnorderedListItemComponentViewModel({
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
+    required super.indent,
+    required super.text,
+    required super.textStyleBuilder,
+    this.dotStyle = const ListItemDotStyle(),
+    super.textDirection = TextDirection.ltr,
+    super.textAlignment = TextAlign.left,
+    super.selection,
+    required super.selectionColor,
+    super.highlightWhenEmpty = false,
+    super.composingRegion,
+    super.showComposingUnderline = false,
+  });
+
+  ListItemDotStyle dotStyle = const ListItemDotStyle();
+
+  @override
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
-    dotColor = styles[Styles.dotColor];
-    dotShape = styles[Styles.dotShape];
-    dotSize = styles[Styles.dotSize];
+    dotStyle = ListItemDotStyle(
+      color: styles[Styles.dotColor],
+      shape: styles[Styles.dotShape] ?? BoxShape.circle,
+      size: styles[Styles.dotSize] ?? const Size(4, 4),
+    );
+  }
+
+  @override
+  UnorderedListItemComponentViewModel copy() {
+    return UnorderedListItemComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      indent: indent,
+      text: text,
+      textStyleBuilder: textStyleBuilder,
+      dotStyle: dotStyle,
+      textDirection: textDirection,
+      selection: selection,
+      selectionColor: selectionColor,
+      composingRegion: composingRegion,
+      showComposingUnderline: showComposingUnderline,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is UnorderedListItemComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          dotStyle == other.dotStyle;
+
+  @override
+  int get hashCode => super.hashCode ^ dotStyle.hashCode;
+}
+
+class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
+  OrderedListItemComponentViewModel({
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
+    required super.indent,
+    this.ordinalValue,
+    this.numeralStyle = OrderedListNumeralStyle.arabic,
+    required super.text,
+    required super.textStyleBuilder,
+    super.textDirection = TextDirection.ltr,
+    super.textAlignment = TextAlign.left,
+    super.selection,
+    required super.selectionColor,
+    super.highlightWhenEmpty = false,
+    super.composingRegion,
+    super.showComposingUnderline = false,
+  });
+
+  final int? ordinalValue;
+  OrderedListNumeralStyle numeralStyle;
+
+  @override
+  void applyStyles(Map<String, dynamic> styles) {
+    super.applyStyles(styles);
     numeralStyle = styles[Styles.listNumeralStyle] ?? OrderedListNumeralStyle.arabic;
   }
 
   @override
-  ListItemComponentViewModel copy() {
-    return ListItemComponentViewModel(
+  OrderedListItemComponentViewModel copy() {
+    return OrderedListItemComponentViewModel(
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
-      type: type,
-      ordinalValue: ordinalValue,
       indent: indent,
-      dotColor: dotColor,
-      dotShape: dotShape,
-      dotSize: dotSize,
+      ordinalValue: ordinalValue,
       numeralStyle: numeralStyle,
       text: text,
       textStyleBuilder: textStyleBuilder,
@@ -272,40 +370,37 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other &&
-          other is ListItemComponentViewModel &&
+          other is OrderedListItemComponentViewModel &&
           runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          type == other.type &&
           ordinalValue == other.ordinalValue &&
-          indent == other.indent &&
-          text == other.text &&
-          textDirection == other.textDirection &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline &&
-          dotColor == other.dotColor &&
-          dotShape == other.dotShape &&
-          dotSize == other.dotSize &&
           numeralStyle == other.numeralStyle;
 
   @override
-  int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      type.hashCode ^
-      ordinalValue.hashCode ^
-      indent.hashCode ^
-      text.hashCode ^
-      textDirection.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      composingRegion.hashCode ^
-      showComposingUnderline.hashCode ^
-      dotColor.hashCode ^
-      dotShape.hashCode ^
-      dotSize.hashCode ^
-      numeralStyle.hashCode;
+  int get hashCode => super.hashCode ^ ordinalValue.hashCode ^ numeralStyle.hashCode;
+}
+
+class ListItemDotStyle {
+  const ListItemDotStyle({
+    this.color,
+    this.shape = BoxShape.circle,
+    this.size = const Size(4, 4),
+  });
+
+  final Color? color;
+  final BoxShape shape;
+  final Size size;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ListItemDotStyle &&
+          runtimeType == other.runtimeType &&
+          color == other.color &&
+          shape == other.shape &&
+          size == other.size;
+
+  @override
+  int get hashCode => super.hashCode ^ color.hashCode ^ shape.hashCode ^ size.hashCode;
 }
 
 /// Displays a un-ordered list item in a document.
@@ -318,9 +413,7 @@ class UnorderedListItemComponent extends StatefulWidget {
     required this.text,
     required this.styleBuilder,
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
-    this.dotColor,
-    this.dotShape,
-    this.dotSize,
+    this.dotStyle,
     this.indent = 0,
     this.indentCalculator = _defaultIndentCalculator,
     this.textSelection,
@@ -337,9 +430,7 @@ class UnorderedListItemComponent extends StatefulWidget {
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final UnorderedListItemDotBuilder dotBuilder;
-  final Color? dotColor;
-  final BoxShape? dotShape;
-  final Size? dotSize;
+  final ListItemDotStyle? dotStyle;
   final int indent;
   final double Function(TextStyle, int indent) indentCalculator;
   final TextSelection? textSelection;
@@ -443,9 +534,9 @@ Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListIt
   final attributions = component.text.getAllAttributionsAt(0).toSet();
   final textStyle = component.styleBuilder(attributions);
 
-  final dotColor = component.dotColor ?? textStyle.color;
-  final dotSize = component.dotSize ?? const Size(4, 4);
-  final dotShape = component.dotShape ?? BoxShape.circle;
+  final dotColor = component.dotStyle?.color ?? textStyle.color;
+  final dotSize = component.dotStyle?.size ?? const Size(4, 4);
+  final dotShape = component.dotStyle?.shape ?? BoxShape.circle;
 
   return Align(
     alignment: Alignment.centerRight,
