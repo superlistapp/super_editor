@@ -101,11 +101,7 @@ void main() {
       await tester //
           .createDocument()
           .withSingleParagraph()
-          .withDocumentLayers(
-            _createDefaultLayersWithCustomIosHandlesLayer(
-              const SuperEditorIosHandlesDocumentLayerBuilder(caretWidth: 4.0),
-            ),
-          )
+          .withIosCaretStyle(width: 4.0)
           .pump();
 
       // Place caret at "Lorem ip|sum"
@@ -118,11 +114,7 @@ void main() {
       await tester //
           .createDocument()
           .withSingleParagraph()
-          .withDocumentLayers(
-            _createDefaultLayersWithCustomIosHandlesLayer(
-              const SuperEditorIosHandlesDocumentLayerBuilder(caretWidth: 4.0),
-            ),
-          )
+          .withIosCaretStyle(width: 4.0)
           .pump();
 
       // Double tap to select the word ipsum.
@@ -135,11 +127,7 @@ void main() {
       await tester //
           .createDocument()
           .withSingleParagraph()
-          .withDocumentLayers(
-            _createDefaultLayersWithCustomIosHandlesLayer(
-              const SuperEditorIosHandlesDocumentLayerBuilder(handleBallDiameter: 16.0),
-            ),
-          )
+          .withIosCaretStyle(handleBallDiameter: 16.0)
           .pump();
 
       // Double tap to select the word ipsum.
@@ -152,11 +140,7 @@ void main() {
       await tester //
           .createDocument()
           .withSingleParagraph()
-          .withDocumentLayers(
-            _createDefaultLayersWithCustomAndroidHandlesLayer(
-              const SuperEditorAndroidHandlesDocumentLayerBuilder(caretWidth: 4.0),
-            ),
-          )
+          .withAndroidCaretStyle(width: 4)
           .pump();
 
       // Place caret at "Lorem ip|sum"
@@ -207,28 +191,4 @@ Future<void> _pumpCaretTestApp(WidgetTester tester) async {
       ),
     ],
   ).pump();
-}
-
-/// Creates a list of [SuperEditorLayerBuilder] with the default layers, and the given [iosHandlesLayer] instead
-/// of the default iOS handles layer.
-List<SuperEditorLayerBuilder> _createDefaultLayersWithCustomIosHandlesLayer(
-    SuperEditorIosHandlesDocumentLayerBuilder iosHandlesLayer) {
-  return [
-    ...defaultSuperEditorDocumentOverlayBuilders.where(
-      (e) => e is! SuperEditorIosHandlesDocumentLayerBuilder,
-    ),
-    iosHandlesLayer,
-  ];
-}
-
-/// Creates a list of [SuperEditorLayerBuilder] with the default layers, and the given [androidHandlesLayer] instead
-/// of the default Android handles layer.
-List<SuperEditorLayerBuilder> _createDefaultLayersWithCustomAndroidHandlesLayer(
-    SuperEditorAndroidHandlesDocumentLayerBuilder androidHandlesLayer) {
-  return [
-    ...defaultSuperEditorDocumentOverlayBuilders.where(
-      (e) => e is! SuperEditorAndroidHandlesDocumentLayerBuilder,
-    ),
-    androidHandlesLayer,
-  ];
 }
