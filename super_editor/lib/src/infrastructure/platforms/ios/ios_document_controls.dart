@@ -504,6 +504,8 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
     required this.selection,
     required this.changeSelection,
     required this.handleColor,
+    this.caretWidth = 2,
+    this.handleBallDiameter = defaultIosHandleBallDiameter,
     required this.shouldCaretBlink,
     this.floatingCursorController,
     this.showDebugPaint = false,
@@ -519,6 +521,12 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 
   /// Color the iOS-style text selection drag handles.
   final Color handleColor;
+
+  final double caretWidth;
+
+  /// The diameter of the small circle that appears on the top and bottom of
+  /// expanded iOS text handles.
+  final double handleBallDiameter;
 
   /// Whether the caret should blink, whenever the caret is visible.
   final ValueListenable<bool> shouldCaretBlink;
@@ -538,10 +546,6 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 @visibleForTesting
 class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
-  /// The diameter of the small circle that appears on the top and bottom of
-  /// expanded iOS text handles.
-  static const ballDiameter = 8.0;
-
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -775,6 +779,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
             controller: _caretBlinkController,
             color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
             caretHeight: caret.height,
+            caretWidth: widget.caretWidth,
           );
         },
       ),
@@ -788,7 +793,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     return Positioned(
       key: _upstreamHandleKey,
       left: upstream.left,
-      top: upstream.top - ballDiameter,
+      top: upstream.top - widget.handleBallDiameter,
       child: FractionalTranslation(
         translation: const Offset(-0.5, 0),
         child: IOSSelectionHandle.upstream(
@@ -796,7 +801,8 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
           color: widget.handleColor,
           handleType: HandleType.upstream,
           caretHeight: upstream.height,
-          ballRadius: ballDiameter / 2,
+          caretWidth: widget.caretWidth,
+          ballRadius: widget.handleBallDiameter / 2,
         ),
       ),
     );
@@ -817,7 +823,8 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
           color: widget.handleColor,
           handleType: HandleType.downstream,
           caretHeight: downstream.height,
-          ballRadius: ballDiameter / 2,
+          caretWidth: widget.caretWidth,
+          ballRadius: widget.handleBallDiameter / 2,
         ),
       ),
     );

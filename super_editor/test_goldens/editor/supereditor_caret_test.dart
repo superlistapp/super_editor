@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
 
 import '../../test/super_editor/supereditor_test_tools.dart';
 import '../test_tools_goldens.dart';
@@ -95,6 +96,58 @@ void main() {
       // TODO: find out why this test fails on CI only.
       skip: true,
     );
+
+    testGoldensOniOS('allows customizing the caret width', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withIosCaretStyle(width: 4.0)
+          .pump();
+
+      // Place caret at "Lorem ip|sum"
+      await tester.placeCaretInParagraph('1', 8);
+
+      await screenMatchesGolden(tester, 'super-editor-ios-custom-caret-width');
+    });
+
+    testGoldensOniOS('allows customizing the expanded handle width', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withIosCaretStyle(width: 4.0)
+          .pump();
+
+      // Double tap to select the word ipsum.
+      await tester.doubleTapInParagraph('1', 8);
+
+      await screenMatchesGolden(tester, 'super-editor-ios-custom-handle-width');
+    });
+
+    testGoldensOniOS('allows customizing the expanded handle ball diameter', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withIosCaretStyle(handleBallDiameter: 16.0)
+          .pump();
+
+      // Double tap to select the word ipsum.
+      await tester.doubleTapInParagraph('1', 8);
+
+      await screenMatchesGolden(tester, 'super-editor-ios-custom-handle-ball-diameter');
+    });
+
+    testGoldensOnAndroid('allows customizing the caret width', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withAndroidCaretStyle(width: 4)
+          .pump();
+
+      // Place caret at "Lorem ip|sum"
+      await tester.placeCaretInParagraph('1', 8);
+
+      await screenMatchesGolden(tester, 'super-editor-android-custom-caret-width');
+    });
   });
 }
 
