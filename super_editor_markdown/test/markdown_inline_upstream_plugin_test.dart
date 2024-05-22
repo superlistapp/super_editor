@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor_markdown/src/markdown_inline_upstream_plugin.dart';
@@ -40,13 +42,51 @@ void main() {
         final (document, _) = await _pumpScaffold(tester);
 
         final nodeId = document.nodes.first.id;
-        await tester.placeCaretInParagraph(nodeId, 20);
-        await tester.typeImeText("~strikethrough~");
+        await tester.placeCaretInParagraph(nodeId, 0);
+        await tester.typeImeText("~strikethrough");
+
+        // Simulate an insertion containing a composing region.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaInsertion(
+            oldText: '. ~strikethrough',
+            textInserted: '~',
+            insertionOffset: 16,
+            selection: TextSelection.collapsed(offset: 16),
+            composing: TextRange.collapsed(16),
+          )
+        ], getter: imeClientGetter);
+        await tester.pump();
 
         expect(SuperEditorInspector.findTextInComponent(nodeId).text, "strikethrough");
         expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
           const SpanMarker(attribution: strikethroughAttribution, offset: 0, markerType: SpanMarkerType.start),
           const SpanMarker(attribution: strikethroughAttribution, offset: 12, markerType: SpanMarkerType.end),
+        ]);
+      });
+
+      testWidgets("code", (tester) async {
+        final (document, _) = await _pumpScaffold(tester);
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+        await tester.typeImeText("`code");
+
+        // Simulate an insertion containing a composing region.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaInsertion(
+            oldText: '. `code',
+            textInserted: '`',
+            insertionOffset: 7,
+            selection: TextSelection.collapsed(offset: 7),
+            composing: TextRange.collapsed(7),
+          )
+        ], getter: imeClientGetter);
+        await tester.pump();
+
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "code");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), [
+          const SpanMarker(attribution: codeAttribution, offset: 0, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: codeAttribution, offset: 3, markerType: SpanMarkerType.end),
         ]);
       });
 
