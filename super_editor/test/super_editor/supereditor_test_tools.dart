@@ -177,6 +177,26 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  TestSuperEditorConfigurator withIosCaretStyle({
+    double? width,
+    Color? color,
+    double? handleBallDiameter,
+  }) {
+    _config.iosCaretWidth = width;
+    _config.iosHandleColor = color;
+    _config.iosHandleBallDiameter = handleBallDiameter;
+    return this;
+  }
+
+  TestSuperEditorConfigurator withAndroidCaretStyle({
+    double? width,
+    Color? color,
+  }) {
+    _config.androidCaretWidth = width;
+    _config.androidCaretColor = color;
+    return this;
+  }
+
   /// Configures the [SuperEditor]'s [SoftwareKeyboardController].
   TestSuperEditorConfigurator withSoftwareKeyboardController(SoftwareKeyboardController controller) {
     _config.softwareKeyboardController = controller;
@@ -562,13 +582,18 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
 
   List<SuperEditorLayerBuilder> _createOverlayBuilders() {
     // We show the default overlays except in the cases where we want to hide the caret
-    // or use a custom `CaretStyle`. In those case, we don't include the defaults - we provide
+    // or use a custom caret style. In those case, we don't include the defaults - we provide
     // a configured caret overlay builder, instead.
     //
     // If you introduce further configuration to overlay builders, make sure that in the default
     // situation, we're using `defaultSuperEditorDocumentOverlayBuilders`, so that most tests
     // verify the defaults that most apps will use.
-    if (widget.testConfiguration.displayCaretWithExpandedSelection && widget.testConfiguration.caretStyle == null) {
+    if (widget.testConfiguration.displayCaretWithExpandedSelection &&
+        widget.testConfiguration.caretStyle == null &&
+        widget.testConfiguration.iosCaretWidth == null &&
+        widget.testConfiguration.iosHandleColor == null &&
+        widget.testConfiguration.iosHandleBallDiameter == null &&
+        widget.testConfiguration.androidCaretWidth == null) {
       return defaultSuperEditorDocumentOverlayBuilders;
     }
 
@@ -578,13 +603,20 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       // iOS floating toolbar.
       const SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
       // Displays caret and drag handles, specifically for iOS.
-      const SuperEditorIosHandlesDocumentLayerBuilder(),
+      SuperEditorIosHandlesDocumentLayerBuilder(
+        caretWidth: widget.testConfiguration.iosCaretWidth,
+        handleColor: widget.testConfiguration.iosHandleColor,
+        handleBallDiameter: widget.testConfiguration.iosHandleBallDiameter,
+      ),
 
       // Adds a Leader around the document selection at a focal point for the
       // Android floating toolbar.
       const SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
       // Displays caret and drag handles, specifically for Android.
-      const SuperEditorAndroidHandlesDocumentLayerBuilder(),
+      SuperEditorAndroidHandlesDocumentLayerBuilder(
+        caretWidth: widget.testConfiguration.androidCaretWidth ?? 2.0,
+        caretColor: widget.testConfiguration.androidCaretColor,
+      ),
 
       // Displays caret for typical desktop use-cases.
       DefaultCaretOverlayBuilder(
@@ -618,6 +650,14 @@ class SuperEditorTestConfiguration {
   SelectionStyles? selectionStyles;
   bool displayCaretWithExpandedSelection = true;
   CaretStyle? caretStyle;
+
+  double? iosCaretWidth;
+  Color? iosHandleColor;
+  double? iosHandleBallDiameter;
+
+  double? androidCaretWidth;
+  Color? androidCaretColor;
+
   SoftwareKeyboardController? softwareKeyboardController;
   SuperEditorImePolicies? imePolicies;
   SuperEditorImeConfiguration? imeConfiguration;

@@ -151,6 +151,7 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
     required this.documentLayout,
     required this.selection,
     required this.changeSelection,
+    this.caretWidth = 2,
     this.caretColor,
     this.showDebugPaint = false,
   });
@@ -162,6 +163,8 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   final ValueListenable<DocumentSelection?> selection;
 
   final void Function(DocumentSelection?, SelectionChangeType, String selectionReason) changeSelection;
+
+  final double caretWidth;
 
   /// Color used to render the Android-style caret (not handles), by default the color
   /// is retrieved from the root [SuperEditorAndroidControlsController].
@@ -387,7 +390,7 @@ class AndroidControlsDocumentLayerState
       left: caret.left,
       top: caret.top,
       height: caret.height,
-      width: 2,
+      width: widget.caretWidth,
       child: Leader(
         link: _controlsController!.collapsedHandleFocalPoint,
         child: ListenableBuilder(
