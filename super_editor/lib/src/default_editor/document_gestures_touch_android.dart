@@ -353,12 +353,15 @@ class SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder implements SuperEd
 class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerBuilder {
   const SuperEditorAndroidHandlesDocumentLayerBuilder({
     this.caretColor,
+    this.caretWidth = 2,
   });
 
   /// The (optional) color of the caret (not the drag handle), by default the color
   /// defers to the root [SuperEditorAndroidControlsScope], or the app theme if the
   /// controls controller has no preference for the color.
   final Color? caretColor;
+
+  final double caretWidth;
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
@@ -379,6 +382,7 @@ class SuperEditorAndroidHandlesDocumentLayerBuilder implements SuperEditorLayerB
           const ClearComposingRegionRequest(),
         ]);
       },
+      caretWidth: caretWidth,
       caretColor: caretColor,
     );
   }

@@ -1838,9 +1838,16 @@ class SuperEditorIosToolbarFocalPointDocumentLayerBuilder implements SuperEditor
 class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuilder {
   const SuperEditorIosHandlesDocumentLayerBuilder({
     this.handleColor,
+    this.caretWidth,
+    this.handleBallDiameter,
   });
 
   final Color? handleColor;
+  final double? caretWidth;
+
+  /// The diameter of the small circle that appears on the top and bottom of
+  /// expanded iOS text handles.
+  final double? handleBallDiameter;
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
@@ -1863,6 +1870,8 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
       handleColor: handleColor ??
           SuperEditorIosControlsScope.maybeRootOf(context)?.handleColor ??
           Theme.of(context).primaryColor,
+      caretWidth: caretWidth ?? 2,
+      handleBallDiameter: handleBallDiameter ?? defaultIosHandleBallDiameter,
       shouldCaretBlink: SuperEditorIosControlsScope.rootOf(context).shouldCaretBlink,
       floatingCursorController: SuperEditorIosControlsScope.rootOf(context).floatingCursorController,
     );
@@ -1873,3 +1882,7 @@ const defaultIosMagnifierEnterAnimationDuration = Duration(milliseconds: 180);
 const defaultIosMagnifierExitAnimationDuration = Duration(milliseconds: 150);
 const defaultIosMagnifierAnimationCurve = Curves.easeInOut;
 const defaultIosMagnifierSize = Size(133, 96);
+
+/// The diameter of the small circle that appears on the top and bottom of
+/// expanded iOS text handles.
+const defaultIosHandleBallDiameter = 8.0;
