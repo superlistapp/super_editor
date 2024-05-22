@@ -96,7 +96,7 @@ class AttributedSpans {
     final matchingAttributions = <Attribution>{};
     for (int i = start; i <= end; ++i) {
       for (final attribution in attributions) {
-        final otherAttributions = getAllAttributionsAt(start);
+        final otherAttributions = getAllAttributionsAt(i);
         for (final otherAttribution in otherAttributions) {
           if (otherAttribution.id == attribution.id) {
             matchingAttributions.add(otherAttribution);
@@ -515,6 +515,63 @@ class AttributedSpans {
     } else {
       addAttribution(newAttribution: attribution, start: start, end: end);
     }
+  }
+
+  /// Finds all attributions that appear between [start] and [end] (inclusive) with
+  /// the same id as the given [attribution].
+  ///
+  /// If [allowMerging] is `false`, attributions with the same id will always be reported
+  /// as conflicting, even if [Attribution.canMergeWith] returns `true`.
+  List<AttributionConflict> findConflictingAttributions({
+    required Attribution attribution,
+    required int start,
+    required int end,
+    bool allowMerging = true,
+  }) {
+    final conflicts = <AttributionConflict>[];
+
+    // Check if conflicting attributions overlap the new attribution.
+    final matchingAttributions = getMatchingAttributionsWithin(attributions: {attribution}, start: start, end: end);
+
+    if (matchingAttributions.isNotEmpty) {
+      for (final matchingAttribution in matchingAttributions) {
+        if (!attribution.canMergeWith(matchingAttribution) || !allowMerging) {
+          int? conflictStart;
+          int? conflictEnd;
+
+          for (int i = start; i <= end; ++i) {
+            if (hasAttributionAt(i, attribution: matchingAttribution)) {
+              conflictStart ??= i;
+              conflictEnd = i;
+            } else if (conflictStart != null) {
+              // We found the end of the conflict.
+              conflicts.add(AttributionConflict(
+                newAttribution: attribution,
+                existingAttribution: matchingAttribution,
+                conflictStart: conflictStart,
+                conflictEnd: conflictEnd!,
+              ));
+
+              // Reset so we can find the next conflict.
+              conflictStart = null;
+              conflictEnd = null;
+            }
+          }
+
+          if (conflictStart != null && conflictEnd != null) {
+            // We found a conflict that extends to the end of the range.
+            conflicts.add(AttributionConflict(
+              newAttribution: attribution,
+              existingAttribution: matchingAttribution,
+              conflictStart: conflictStart,
+              conflictEnd: conflictEnd,
+            ));
+          }
+        }
+      }
+    }
+
+    return conflicts;
   }
 
   /// Returns [true] if the given [attribution] exists from [start] to
@@ -1196,4 +1253,46 @@ class IncompatibleOverlappingAttributionsException implements Exception {
   String toString() {
     return 'Tried to insert attribution ($newAttribution) over a conflicting existing attribution ($existingAttribution). The overlap began at index $conflictStart';
   }
+}
+
+/// A conflict between the [newAttribution] and [existingAttribution] between [conflictStart] and [conflictEnd] (inclusive).
+///
+/// This means [newAttribution] and [existingAttribution] have the same id, but they can't be merged.
+class AttributionConflict {
+  AttributionConflict({
+    required this.newAttribution,
+    required this.existingAttribution,
+    required this.conflictStart,
+    required this.conflictEnd,
+  });
+
+  /// The new attribution that conflicts with the existing attribution.
+  final Attribution newAttribution;
+
+  /// The conflicting attribution.
+  final Attribution existingAttribution;
+
+  /// The first conflicting index.
+  final int conflictStart;
+
+  /// The last conflicting index (inclusive).
+  final int conflictEnd;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AttributionConflict &&
+          runtimeType == other.runtimeType &&
+          newAttribution == other.newAttribution &&
+          existingAttribution == other.existingAttribution &&
+          conflictStart == other.conflictStart &&
+          conflictEnd == other.conflictEnd;
+
+  @override
+  int get hashCode =>
+      newAttribution.hashCode ^ existingAttribution.hashCode ^ conflictStart.hashCode ^ conflictEnd.hashCode;
+
+  @override
+  String toString() =>
+      '[AttributionConflict] - newAttribution: $newAttribution existingAttribution: $existingAttribution, conflictStart: $conflictStart, conflictEnd: $conflictEnd';
 }

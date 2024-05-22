@@ -788,6 +788,121 @@ void main() {
         expect(span1 == span2, isFalse);
       });
     });
+
+    group('findConflictingAttributions', () {
+      test('finds attribution at the beginning', () {
+        final spans = _createAttributedSpansForAttribution(
+          attribution: _LinkAttribution(url: 'a'),
+          startOffset: 0,
+          endOffset: 5,
+        );
+
+        expect(
+          spans.findConflictingAttributions(
+            attribution: _LinkAttribution(url: 'b'),
+            start: 0,
+            end: 2,
+            allowMerging: true,
+          ),
+          [
+            AttributionConflict(
+              newAttribution: _LinkAttribution(url: 'b'),
+              existingAttribution: _LinkAttribution(url: 'a'),
+              conflictStart: 0,
+              conflictEnd: 2,
+            )
+          ],
+        );
+      });
+
+      test('finds attribution at the end', () {
+        final spans = _createAttributedSpansForAttribution(
+          attribution: _LinkAttribution(url: 'a'),
+          startOffset: 0,
+          endOffset: 5,
+        );
+
+        expect(
+          spans.findConflictingAttributions(
+            attribution: _LinkAttribution(url: 'b'),
+            start: 4,
+            end: 5,
+            allowMerging: true,
+          ),
+          [
+            AttributionConflict(
+              newAttribution: _LinkAttribution(url: 'b'),
+              existingAttribution: _LinkAttribution(url: 'a'),
+              conflictStart: 4,
+              conflictEnd: 5,
+            )
+          ],
+        );
+      });
+
+      test('finds attribution at the middle', () {
+        final spans = _createAttributedSpansForAttribution(
+          attribution: _LinkAttribution(url: 'a'),
+          startOffset: 0,
+          endOffset: 5,
+        );
+
+        expect(
+          spans.findConflictingAttributions(
+            attribution: _LinkAttribution(url: 'b'),
+            start: 2,
+            end: 3,
+            allowMerging: true,
+          ),
+          [
+            AttributionConflict(
+              newAttribution: _LinkAttribution(url: 'b'),
+              existingAttribution: _LinkAttribution(url: 'a'),
+              conflictStart: 2,
+              conflictEnd: 3,
+            )
+          ],
+        );
+      });
+
+      test('finds non-contiguous conflicts', () {
+        final spans = AttributedSpans(attributions: [
+          ..._createSpanMarkersForAttribution(
+            attribution: _LinkAttribution(url: 'a'),
+            startOffset: 0,
+            endOffset: 5,
+          ),
+          ..._createSpanMarkersForAttribution(
+            attribution: _LinkAttribution(url: 'c'),
+            startOffset: 10,
+            endOffset: 15,
+          ),
+        ]);
+
+        expect(
+          spans.findConflictingAttributions(
+            attribution: _LinkAttribution(url: 'b'),
+            start: 4,
+            end: 12,
+            allowMerging: true,
+          ),
+          [
+            AttributionConflict(
+              newAttribution: _LinkAttribution(url: 'b'),
+              existingAttribution: _LinkAttribution(url: 'a'),
+              conflictStart: 4,
+              conflictEnd: 5,
+            ),
+            AttributionConflict(
+              newAttribution: _LinkAttribution(url: 'b'),
+              existingAttribution: _LinkAttribution(url: 'c'),
+              conflictStart: 10,
+              conflictEnd: 12,
+            ),
+          ],
+        );
+      });
+    });
   });
 }
 
@@ -812,4 +927,48 @@ class _LinkAttribution implements Attribution {
 
   @override
   int get hashCode => url.hashCode;
+}
+
+/// Creates an [AttributedSpans] for the [attribution] starting at [startOffset]
+/// and ending at [endOffset].
+AttributedSpans _createAttributedSpansForAttribution({
+  required Attribution attribution,
+  required int startOffset,
+  required int endOffset,
+}) {
+  return AttributedSpans(
+    attributions: [
+      SpanMarker(
+        attribution: attribution,
+        offset: startOffset,
+        markerType: SpanMarkerType.start,
+      ),
+      SpanMarker(
+        attribution: attribution,
+        offset: endOffset,
+        markerType: SpanMarkerType.end,
+      ),
+    ],
+  );
+}
+
+/// Creates start and end markers for the [attribution], starting at [startOffset]
+/// and ending at [endOffset].
+List<SpanMarker> _createSpanMarkersForAttribution({
+  required Attribution attribution,
+  required int startOffset,
+  required int endOffset,
+}) {
+  return [
+    SpanMarker(
+      attribution: attribution,
+      offset: startOffset,
+      markerType: SpanMarkerType.start,
+    ),
+    SpanMarker(
+      attribution: attribution,
+      offset: endOffset,
+      markerType: SpanMarkerType.end,
+    ),
+  ];
 }
