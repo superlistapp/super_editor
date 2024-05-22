@@ -1345,6 +1345,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
     // TODO: Replace Cupertino aligner with a generic aligner because this code runs on Android.
     _toolbarAligner = CupertinoPopoverToolbarAligner();
+    widget.selection.addListener(_onSelectionChange);
   }
 
   @override
@@ -1383,7 +1384,12 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
 
   void _onSelectionChange() {
-    if (widget.selection.value?.isCollapsed == true &&
+    final selection = widget.selection.value;
+    if (selection == null) {
+      return;
+    }
+
+    if (selection.isCollapsed &&
         _controlsController!.shouldShowExpandedHandles.value == true &&
         _dragHandleType == null) {
       // The selection is collapsed, but the expanded handles are visible and the user isn't dragging a handle.
@@ -1396,6 +1402,17 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
         ..hideMagnifier()
         ..hideToolbar()
         ..blinkCaret();
+    }
+
+    if (!selection.isCollapsed && _controlsController!.shouldShowCollapsedHandle.value == true) {
+      // The selection is expanded, but the collapsed handle is visible. This can happen when the
+      // selection is collapsed and the user taps the "Select All" button. There isn't any situation
+      // where the collapsed handle should be visible when the selection is expanded. Hide the collapsed
+      // handle and show the expanded handles.
+      _controlsController!
+        ..hideCollapsedHandle()
+        ..showExpandedHandles()
+        ..hideMagnifier();
     }
   }
 
