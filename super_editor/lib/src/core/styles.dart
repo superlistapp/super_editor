@@ -341,4 +341,19 @@ class Styles {
 
   /// Applies a [AttributionStyleAdjuster] to a text node.
   static const String inlineTextStyler = 'inlineTextStyler';
+
+  /// Applies a [Color] to the dot of an unordered list item.
+  static const String dotColor = 'dotColor';
+
+  /// Applies a [BoxShape] to the dot of an unordered list item.
+  static const String dotShape = 'dotShape';
+
+  /// Applies a [Size] to the dot of an unordered list item.
+  ///
+  /// This is a [Size] instead of a radius because the dot can be rendered
+  /// as a rectangle.
+  static const String dotSize = 'dotSize';
+
+  /// Applies a [OrderedListNumeralStyle] to an ordered list item.
+  static const String listNumeralStyle = 'listNumeralStyle';
 }

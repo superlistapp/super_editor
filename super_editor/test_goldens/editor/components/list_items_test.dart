@@ -57,6 +57,69 @@ Future<void> main() async {
         await screenMatchesGolden(
             tester, 'super_editor_list_item_unordered_aligns_dot_with_text_with_font_sizes_and_line_multiplier');
       });
+
+      testGoldensOnMac('allows customizing the dot size', (tester) async {
+        await tester //
+            .createDocument()
+            .fromMarkdown('- Item 1')
+            .useStylesheet(
+              _createStylesheet().copyWith(addRulesAfter: [
+                StyleRule(
+                  const BlockSelector('listItem'),
+                  (doc, docNode) {
+                    return {
+                      Styles.dotSize: const Size(14, 14),
+                    };
+                  },
+                ),
+              ]),
+            )
+            .pump();
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_size');
+      });
+
+      testGoldensOnMac('allows customizing the dot shape', (tester) async {
+        await tester //
+            .createDocument()
+            .fromMarkdown('- Item 1')
+            .useStylesheet(
+              _createStylesheet().copyWith(addRulesAfter: [
+                StyleRule(
+                  const BlockSelector('listItem'),
+                  (doc, docNode) {
+                    return {
+                      Styles.dotShape: BoxShape.rectangle,
+                    };
+                  },
+                ),
+              ]),
+            )
+            .pump();
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_shape');
+      });
+
+      testGoldensOnMac('allows customizing the dot color', (tester) async {
+        await tester //
+            .createDocument()
+            .fromMarkdown('- Item 1')
+            .useStylesheet(
+              _createStylesheet().copyWith(addRulesAfter: [
+                StyleRule(
+                  const BlockSelector('listItem'),
+                  (doc, docNode) {
+                    return {
+                      Styles.dotColor: Colors.red,
+                    };
+                  },
+                ),
+              ]),
+            )
+            .pump();
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_color');
+      });
     });
 
     group('ordered', () {
@@ -106,8 +169,60 @@ Future<void> main() async {
         await screenMatchesGolden(
             tester, 'super_editor_list_item_ordered_aligns_dot_with_text_with_font_sizes_and_line_multiplier');
       });
+
+      testGoldensOnMac('allows customizing the numeral as lower roman', (tester) async {
+        await _pumpOrderedListItemStyleTestApp(tester, style: OrderedListNumeralStyle.lowerRoman);
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_lower_roman_numeral');
+      });
+
+      testGoldensOnMac('allows customizing the numeral as upper roman', (tester) async {
+        await _pumpOrderedListItemStyleTestApp(tester, style: OrderedListNumeralStyle.upperRoman);
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_upper_roman_numeral');
+      });
+
+      testGoldensOnMac('allows customizing the numeral as lower alpha', (tester) async {
+        await _pumpOrderedListItemStyleTestApp(tester, style: OrderedListNumeralStyle.lowerAlpha);
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_lower_alpha_numeral');
+      });
+
+      testGoldensOnMac('allows customizing the numeral as upper alpha', (tester) async {
+        await _pumpOrderedListItemStyleTestApp(tester, style: OrderedListNumeralStyle.upperAlpha);
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_upper_alpha_numeral');
+      });
     });
   });
+}
+
+Future<void> _pumpOrderedListItemStyleTestApp(
+  WidgetTester tester, {
+  required OrderedListNumeralStyle style,
+}) async {
+  await tester //
+      .createDocument()
+      .withCustomContent(MutableDocument(nodes: [
+        for (int i = 1; i <= 10; i++)
+          ListItemNode.ordered(
+            id: Editor.createNodeId(),
+            text: AttributedText('Item $i.'),
+          )
+      ]))
+      .useStylesheet(
+        _createStylesheet().copyWith(addRulesAfter: [
+          StyleRule(
+            const BlockSelector('listItem'),
+            (doc, docNode) {
+              return {
+                Styles.listNumeralStyle: style,
+              };
+            },
+          ),
+        ]),
+      )
+      .pump();
 }
 
 ListItemNode _createListItemNode({
