@@ -529,6 +529,14 @@ class TextDeltasDocumentEditor {
         ]);
       }
     } else if (extentNode is TaskNode) {
+      if (extentNode.text.text.isEmpty) {
+        // The task is empty. Convert it to a paragraph.
+        editor.execute([
+          ConvertTextNodeToParagraphRequest(nodeId: extentNode.id),
+        ]);
+        return;
+      }
+
       final splitOffset = (caretPosition.nodePosition as TextNodePosition).offset;
 
       editor.execute([
