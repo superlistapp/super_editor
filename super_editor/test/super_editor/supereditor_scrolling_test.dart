@@ -711,6 +711,133 @@ void main() {
       expect(scrollController.offset, scrollController.position.maxScrollExtent);
     });
 
+    group('scrolls when dragging at empty space', () {
+      testWidgetsOnMobile("with collapsed selection", (tester) async {
+        final scrollController = ScrollController();
+
+        // Pump an editor with horizontal padding, so we can drag from an offset where there is no text.
+        await tester //
+            .createDocument()
+            .withLongDoc()
+            .withEditorSize(Size(300, 300))
+            .withScrollController(scrollController)
+            .useStylesheet(
+              defaultStylesheet.copyWith(
+                documentPadding: EdgeInsets.symmetric(horizontal: 100),
+              ),
+            )
+            .pump();
+
+        // Place the caret at the beginning of the document.
+        await tester.placeCaretInParagraph('1', 0);
+
+        final scrollOffsetBeforeDrag = scrollController.offset;
+
+        // Drag from approximately the bottom of the editor until the top.
+        await tester.dragFrom(
+          tester.getBottomLeft(find.byType(SuperEditor)) + Offset(10, -10),
+          Offset(0, -300),
+        );
+        await tester.pump();
+
+        // Ensure the editor scrolled up and the selection didn't change.
+        expect(scrollController.offset, greaterThan(scrollOffsetBeforeDrag));
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          )),
+        );
+
+        // Let the long-press timer resolve.
+        await tester.pump(kLongPressTimeout);
+      });
+
+      testWidgetsOnMobile("with expanded selection", (tester) async {
+        final scrollController = ScrollController();
+
+        // Pump an editor with horizontal padding, so we can drag from an offset where there is no text.
+        await tester //
+            .createDocument()
+            .withLongDoc()
+            .withEditorSize(Size(300, 300))
+            .withScrollController(scrollController)
+            .useStylesheet(
+              defaultStylesheet.copyWith(
+                documentPadding: EdgeInsets.symmetric(horizontal: 100),
+              ),
+            )
+            .pump();
+
+        // Double tap the word "Lorem".
+        await tester.doubleTapInParagraph('1', 1);
+
+        final scrollOffsetBeforeDrag = scrollController.offset;
+
+        // Drag from approximately the bottom of the editor until the top.
+        await tester.dragFrom(
+          tester.getBottomLeft(find.byType(SuperEditor)) + Offset(10, -10),
+          Offset(0, -300),
+        );
+        await tester.pump();
+
+        // Ensure the editor scrolled up and the selection didn't change.
+        expect(scrollController.offset, greaterThan(scrollOffsetBeforeDrag));
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          selectionEquivalentTo(DocumentSelection(
+            base: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+            extent: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(offset: 5),
+            ),
+          )),
+        );
+
+        // Let the long-press timer resolve.
+        await tester.pump(kLongPressTimeout);
+      });
+
+      testWidgetsOnMobile("with no selection", (tester) async {
+        final scrollController = ScrollController();
+
+        // Pump an editor with horizontal padding, so we can drag from an offset where there is no text.
+        await tester //
+            .createDocument()
+            .withLongDoc()
+            .withEditorSize(Size(300, 300))
+            .withScrollController(scrollController)
+            .useStylesheet(
+              defaultStylesheet.copyWith(
+                documentPadding: EdgeInsets.symmetric(horizontal: 100),
+              ),
+            )
+            .pump();
+
+        final scrollOffsetBeforeDrag = scrollController.offset;
+
+        // Drag from approximately the bottom of the editor until the top.
+        await tester.dragFrom(
+          tester.getBottomLeft(find.byType(SuperEditor)) + Offset(10, -10),
+          Offset(0, -300),
+        );
+        await tester.pump();
+
+        // Ensure the editor scrolled up and the selection didn't change.
+        expect(scrollController.offset, greaterThan(scrollOffsetBeforeDrag));
+        expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+        // Let the long-press timer resolve.
+        await tester.pump(kLongPressTimeout);
+      });
+    });
+
     group("within an ancestor Scrollable", () {
       const screenSizeWithoutKeyboard = Size(390.0, 844.0);
       const screenSizeWithKeyboard = Size(390.0, 544.0);
