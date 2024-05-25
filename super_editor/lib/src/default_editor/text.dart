@@ -1618,13 +1618,6 @@ class ToggleTextAttributionsCommand implements EditCommand {
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
           node.text = AttributedText(node.text.text, newSpans);
-          // node.text = AttributedText(
-          //   node.text.text,
-          //   node.text.spans.copy(),
-          // )..addAttribution(
-          //     attribution,
-          //     range,
-          //   );
         }
 
         final wasAttributionAdded = node.text.hasAttributionAt(range.start, attribution: attribution);
