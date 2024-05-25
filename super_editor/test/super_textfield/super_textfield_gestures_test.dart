@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -742,6 +743,59 @@ a scrollbar
         // Ensure we are connected again.
         expect(controller.isAttachedToIme, true);
       });
+
+      testWidgetsOnMobile("tap up does not shows the toolbar if the field does not have focus", (tester) async {
+        await _pumpTestAppWithFakeToolbar(tester);
+
+        // Tap down and up so the field is focused.
+        await tester.tapAt(tester.getTopLeft(find.byKey(_textFieldKey)));
+        await tester.pumpAndSettle();
+
+        // Ensure the toolbar isn't visible.
+        expect(find.byKey(_popoverToolbarKey), findsNothing);
+      });
+
+      testWidgetsOnIos("tap up shows the toolbar if the field already has focus", (tester) async {
+        await _pumpTestAppWithFakeToolbar(tester);
+
+        // Tap down and up so the field is focused.
+        await tester.tapAt(tester.getTopLeft(find.byKey(_textFieldKey)));
+        await tester.pumpAndSettle();
+
+        // Ensure the toolbar isn't visible.
+        expect(find.byKey(_popoverToolbarKey), findsNothing);
+
+        // Avoid a double tap.
+        await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
+
+        // Tap down and up again.
+        await tester.tapAt(tester.getTopLeft(find.byKey(_textFieldKey)));
+        await tester.pumpAndSettle();
+
+        // Ensure the toolbar is visible.
+        expect(find.byKey(_popoverToolbarKey), findsOneWidget);
+      });
+
+      testWidgetsOnAndroid("tap up does not shows the toolbar if the field already has focus", (tester) async {
+        await _pumpTestAppWithFakeToolbar(tester);
+
+        // Tap down and up so the field is focused.
+        await tester.tapAt(tester.getTopLeft(find.byKey(_textFieldKey)));
+        await tester.pumpAndSettle();
+
+        // Ensure the toolbar isn't visible.
+        expect(find.byKey(_popoverToolbarKey), findsNothing);
+
+        // Avoid a double tap.
+        await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
+
+        // Tap down and up again.
+        await tester.tapAt(tester.getTopLeft(find.byKey(_textFieldKey)));
+        await tester.pumpAndSettle();
+
+        // Ensure the toolbar is visible.
+        expect(find.byKey(_popoverToolbarKey), findsNothing);
+      });
     });
 
     testWidgetsOnAllPlatforms("loses focus when user taps outside in a TapRegion", (tester) async {
@@ -854,6 +908,47 @@ Future<void> _pumpSingleLineTextField(
   );
 }
 
+/// Pump a test app with either a [SuperAndroidTextField] or a [SuperIOSTextField] with a fake toolbar.
+///
+/// The textfield is bound to [_textFieldKey] and the toolbar is bound to [_popoverToolbarKey].
+///
+/// This is used because we cannot configure the toolbar with [SuperTextField]'s public API.
+Future<void> _pumpTestAppWithFakeToolbar(
+  WidgetTester tester, {
+  ImeAttributedTextEditingController? controller,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 400,
+            child: DecoratedBox(
+              decoration: BoxDecoration(border: Border.all(color: Colors.red)),
+              child: defaultTargetPlatform == TargetPlatform.android
+                  ? SuperAndroidTextField(
+                      key: _textFieldKey,
+                      caretStyle: const CaretStyle(),
+                      textController: controller,
+                      selectionColor: Colors.blue,
+                      handlesColor: Colors.blue,
+                      popoverToolbarBuilder: (context, controller, config) => SizedBox(key: _popoverToolbarKey),
+                    )
+                  : SuperIOSTextField(
+                      key: _textFieldKey,
+                      caretStyle: const CaretStyle(),
+                      selectionColor: Colors.blue,
+                      handlesColor: Colors.blue,
+                      popoverToolbarBuilder: (context, controller) => SizedBox(key: _popoverToolbarKey),
+                    ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 // Custom gesture settings that ensure panSlop equal to touchSlop
 class _GestureSettings extends DeviceGestureSettings {
   const _GestureSettings({
@@ -864,3 +959,6 @@ class _GestureSettings extends DeviceGestureSettings {
   @override
   final double panSlop;
 }
+
+final _popoverToolbarKey = GlobalKey();
+final _textFieldKey = GlobalKey();
