@@ -201,6 +201,54 @@ void main() {
       );
     });
 
+    testWidgetsOnMobile('starts auto-scrolling when dragging near the top', (tester) async {
+      final scrollController = ScrollController();
+
+      // Pump an editor with an appbar above the editor so we make sure that
+      // auto-scroll starts when the user dragged near the top of the editor,
+      // not at the top of the screen.
+      await tester
+          .createDocument()
+          .withLongTextContent()
+          .withScrollController(scrollController)
+          .withEditorSize(Size(300, 300))
+          .autoFocus(true)
+          .withAppBar(100.0)
+          .pump();
+
+      // Scroll all the way to the bottom.
+      scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+
+      // Place the caret at approximately at the middle of the first visible line.
+      await tester.tapAt(tester.getTopLeft(find.byType(SuperEditor)) + Offset(150, 20));
+      await tester.pump(kDoubleTapTimeout);
+
+      final scrollOffsetBeforeDrag = scrollController.offset;
+
+      // Drag the handle a bit to the top.
+      final dragGesture = await tester.startGesture(tester.getCenter(
+        SuperEditorInspector.findMobileCaretDragHandle(),
+      ));
+      await dragGesture.moveBy(Offset(0, -20));
+      await tester.pump();
+
+      // Pump some frames to let the auto-scroll kick in.
+      for (int i = 0; i < 60; i += 1) {
+        await tester.pump();
+      }
+
+      // Release the gesture.
+      await dragGesture.up();
+      await tester.pump();
+
+      // Ensure the editor scrolled up.
+      expect(scrollController.offset, lessThan(scrollOffsetBeforeDrag));
+
+      // Let the long-press timer resolve.
+      await tester.pump(kLongPressTimeout);
+    });
+
     testWidgetsOnDesktop("auto-scrolls to caret position", (tester) async {
       const windowSize = Size(800, 600);
       tester.view.physicalSize = windowSize;

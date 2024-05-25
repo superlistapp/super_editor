@@ -1335,6 +1335,18 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   final _dragHandleSelectionGlobalFocalPoint = ValueNotifier<Offset?>(null);
   final _magnifierFocalPoint = ValueNotifier<Offset?>(null);
 
+  /// Returns the `RenderBox` for the scrolling viewport.
+  ///
+  /// If this widget has an ancestor `Scrollable`, then the returned
+  /// `RenderBox` belongs to that ancestor `Scrollable`.
+  ///
+  /// If this widget doesn't have an ancestor `Scrollable`, then this
+  /// widget includes a `ScrollView` and this `State`'s render object
+  /// is the viewport `RenderBox`.
+  RenderBox get viewportBox =>
+      (context.findAncestorScrollableWithVerticalScroll?.context.findRenderObject() ?? context.findRenderObject())
+          as RenderBox;
+
   @override
   void initState() {
     super.initState();
@@ -1546,11 +1558,12 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
       documentLayout.getDocumentOffsetFromAncestorOffset(_dragHandleSelectionGlobalFocalPoint.value!),
     )!;
 
+    final centerOfContentInContentSpace = documentLayout.getRectForPosition(nearestPosition)!.center;
+
     // Move the magnifier focal point to match the drag x-offset, but always remain focused on the vertical
     // center of the line.
-    final centerOfContentAtNearestPosition = documentLayout.getAncestorOffsetFromDocumentOffset(
-      documentLayout.getRectForPosition(nearestPosition)!.center,
-    );
+    final centerOfContentAtNearestPosition =
+        documentLayout.getAncestorOffsetFromDocumentOffset(centerOfContentInContentSpace);
     _magnifierFocalPoint.value = Offset(
       _magnifierFocalPoint.value!.dx + dragDx,
       centerOfContentAtNearestPosition.dy,
@@ -1580,8 +1593,15 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     // Update the auto-scroll focal point so that the viewport scrolls if we're
     // close to the boundary.
     widget.dragHandleAutoScroller.value?.updateAutoScrollHandleMonitoring(
-      dragEndInViewport: centerOfContentAtNearestPosition,
+      dragEndInViewport: _contentOffsetInViewport(centerOfContentInContentSpace),
     );
+  }
+
+  /// Converts the [offset] in content space to an offset in the viewport space.
+  Offset _contentOffsetInViewport(Offset offset) {
+    final documentLayout = widget.getDocumentLayout();
+    final globalOffset = documentLayout.getGlobalOffsetFromDocumentOffset(offset);
+    return viewportBox.globalToLocal(globalOffset);
   }
 
   @override
