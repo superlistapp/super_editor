@@ -1,4 +1,5 @@
 import 'package:example/demos/in_the_lab/in_the_lab_scaffold.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
@@ -39,7 +40,7 @@ class _SlackTagsFeatureDemoState extends State<SlackTagsFeatureDemo> {
     );
 
     _slackTagPlugin = SlackTagPlugin()
-      ..tagIndex.composingSlackTag.addListener(_updateUserTagList)
+      ..tagIndex.composingSlackTag.addListener(_onTagCompositionChange)
       ..tagIndex.addListener(_updateUserTagList);
 
     _editorFocusNode = FocusNode();
@@ -50,7 +51,7 @@ class _SlackTagsFeatureDemoState extends State<SlackTagsFeatureDemo> {
     _editorFocusNode.dispose();
 
     _slackTagPlugin.tagIndex
-      ..composingSlackTag.removeListener(_updateUserTagList)
+      ..composingSlackTag.removeListener(_onTagCompositionChange)
       ..removeListener(_updateUserTagList);
 
     _composer.dispose();
@@ -58,6 +59,14 @@ class _SlackTagsFeatureDemoState extends State<SlackTagsFeatureDemo> {
     _document.dispose();
 
     super.dispose();
+  }
+
+  void _onTagCompositionChange() {
+    print("_onTagCompositionChange() - value: ${_slackTagPlugin.tagIndex.composingSlackTag.value?.token}");
+
+    final paragraph = _document.nodes.first as ParagraphNode;
+    print("Attributions in paragraph:");
+    print("${paragraph.text.getAttributionSpansByFilter((a) => true)}");
   }
 
   void _updateUserTagList() {
@@ -89,19 +98,26 @@ class _SlackTagsFeatureDemoState extends State<SlackTagsFeatureDemo> {
           content: _buildEditor(),
           supplemental: _buildTagList(),
         ),
-        if (_slackTagPlugin.tagIndex.composingSlackTag.value != null)
-          Follower.withOffset(
-            link: _composingLink,
-            offset: Offset(0, 16),
-            leaderAnchor: Alignment.bottomCenter,
-            followerAnchor: Alignment.topCenter,
-            showWhenUnlinked: false,
-            child: UserSelectionPopover(
-              editor: _editor,
-              userTagPlugin: _slackTagPlugin,
-              editorFocusNode: _editorFocusNode,
-            ),
-          ),
+        ListenableBuilder(
+            listenable: _slackTagPlugin.tagIndex.composingSlackTag,
+            builder: (context, child) {
+              if (_slackTagPlugin.tagIndex.composingSlackTag.value == null) {
+                return const SizedBox();
+              }
+
+              return Follower.withOffset(
+                link: _composingLink,
+                offset: Offset(0, 16),
+                leaderAnchor: Alignment.bottomCenter,
+                followerAnchor: Alignment.topCenter,
+                showWhenUnlinked: false,
+                child: UserSelectionPopover(
+                  editor: _editor,
+                  userTagPlugin: _slackTagPlugin,
+                  editorFocusNode: _editorFocusNode,
+                ),
+              );
+            }),
       ],
     );
   }
@@ -117,13 +133,13 @@ class _SlackTagsFeatureDemoState extends State<SlackTagsFeatureDemo> {
           inlineTextStyler: (attributions, existingStyle) {
             TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
 
-            if (attributions.contains(stableTagComposingAttribution)) {
+            if (attributions.contains(slackTagComposingAttribution)) {
               style = style.copyWith(
                 color: Colors.blue,
               );
             }
 
-            if (attributions.whereType<CommittedStableTagAttribution>().isNotEmpty) {
+            if (attributions.whereType<CommittedSlackTagAttribution>().isNotEmpty) {
               style = style.copyWith(
                 color: Colors.orange,
               );
@@ -137,8 +153,9 @@ class _SlackTagsFeatureDemoState extends State<SlackTagsFeatureDemo> {
         ),
         documentOverlayBuilders: [
           AttributedTextBoundsOverlay(
-            selector: (a) => a == stableTagComposingAttribution,
+            selector: (a) => a == slackTagComposingAttribution,
             builder: (context, attribution) {
+              print("AttributedTextBoundsOverlay - attribution: $attribution");
               return Leader(
                 link: _composingLink,
                 child: const SizedBox(),
@@ -197,16 +214,20 @@ class UserSelectionPopover extends StatefulWidget {
 
 class _UserSelectionPopoverState extends State<UserSelectionPopover> {
   final _userCandidates = <String>[
-    "miguel",
-    "matt",
-    "john",
-    "sally",
-    "bob",
-    "jane",
-    "kelly",
+    "Miguel Rodriguez",
+    "Matt Carron",
+    "John Smith",
+    "Sally Smith",
+    "Bob Baker",
+    "Jane July",
+    "Kelly Baker",
+    "Alicia Daniel",
+    "Alexander D.",
+    "Franco Albany de Alice",
   ];
   final _matchingUsers = <String>[];
 
+  final _popoverFocusNode = FocusNode();
   bool _isLoadingMatches = false;
 
   @override
@@ -231,6 +252,8 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
   @override
   void dispose() {
     widget.userTagPlugin.tagIndex.composingSlackTag.removeListener(_onComposingTokenChange);
+
+    _popoverFocusNode.dispose();
 
     super.dispose();
   }
@@ -265,24 +288,60 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
     setState(() {
       _isLoadingMatches = false;
       _selectMatchingUsers(composingTag);
+      _popoverFocusNode.requestFocus();
     });
   }
 
   void _selectMatchingUsers(String composingTag) {
+    final splitOnWhitespace = RegExp(r'\s+');
+    final searchTokens = composingTag.split(splitOnWhitespace);
+    print("Search tokens: $searchTokens");
+
+    // Match user names by searching for prefix matches on each part of a
+    // user's name. Examples:
+    //
+    // Search "j s" can match "John Smith" and "Jane Smith".
+    //
+    // Search "fe d" can match "Franco Albany de Alice"
     _matchingUsers
       ..clear()
-      ..addAll(_userCandidates.where((user) => user.toLowerCase().contains(composingTag.toLowerCase())));
+      ..addAll(_userCandidates.where((user) {
+        final nameTokens = user.split(splitOnWhitespace);
+        int nameSearchTokenOffset = 0;
+        for (int i = 0; i < searchTokens.length; i += 1) {
+          if (i >= nameTokens.length) {
+            return false;
+          }
+
+          int matchOffset = nameSearchTokenOffset;
+          for (; matchOffset < nameTokens.length; matchOffset += 1) {
+            if (nameTokens[matchOffset].toLowerCase().startsWith(searchTokens[i].toLowerCase())) {
+              break;
+            }
+          }
+
+          if (matchOffset >= nameTokens.length) {
+            // We didn't find any downstream match for the search token in this user's
+            // name. Don't include it.
+            return false;
+          }
+
+          nameSearchTokenOffset = matchOffset + 1;
+        }
+
+        return true;
+      }));
   }
 
   void _onUserSelected(Object name) {
     widget.editor.execute([
-      FillInComposingStableTagRequest(name as String, userTagRule),
+      FillInComposingSlackTagRequest(name as String),
     ]);
   }
 
   void _cancelTag() {
     widget.editor.execute([
-      CancelComposingStableTagRequest(userTagRule),
+      CancelComposingSlackTagRequest(),
     ]);
   }
 
@@ -290,6 +349,7 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
   Widget build(BuildContext context) {
     return PopoverList(
       editorFocusNode: widget.editorFocusNode,
+      popoverFocusNode: _popoverFocusNode,
       leaderLink: _composingLink,
       listItems: _matchingUsers
           .map(

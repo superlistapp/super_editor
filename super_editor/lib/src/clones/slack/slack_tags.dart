@@ -38,7 +38,7 @@ class SlackTagPlugin extends SuperEditorPlugin {
       (request) =>
           request is FillInComposingSlackTagRequest ? FillInComposingSlackTagCommand(_trigger, request.tag) : null,
       (request) => request is CancelComposingSlackTagRequest //
-          ? const CancelComposingSlackTagCommand(_trigger)
+          ? const CancelComposingSlackTagCommand()
           : null,
     ];
 
@@ -94,7 +94,7 @@ class SlackTagPlugin extends SuperEditorPlugin {
     }
 
     editContext.editor.execute([
-      const CancelComposingSlackTagRequest(_trigger),
+      const CancelComposingSlackTagRequest(),
     ]);
 
     return ExecutionInstruction.haltExecution;
@@ -144,6 +144,10 @@ class FillInComposingSlackTagCommand implements EditCommand {
       return;
     }
 
+    // Remove the composing attribution from the text.
+    final removeComposingAttributionCommand = _removeSlackComposingTokenAttribution(document, tagIndex);
+
+    // Insert the final text and apply a stable tag attribution.
     final tag = tagIndex.composingSlackTag.value!;
     final textNode = document.getNodeById(tag.contentBounds.start.nodeId) as TextNode;
     final slackTagAttribution = CommittedSlackTagAttribution(_tag);
@@ -167,7 +171,7 @@ class FillInComposingSlackTagCommand implements EditCommand {
       DeleteContentCommand(
         documentRange: textNode.selectionBetween(
           startOfToken,
-          (tag.contentBounds.end.nodePosition as TextNodePosition).offset + 1, // +1 for exclusive delete
+          (tag.contentBounds.end.nodePosition as TextNodePosition).offset,
         ),
       ),
     );
@@ -197,6 +201,18 @@ class FillInComposingSlackTagCommand implements EditCommand {
         SelectionReason.contentChange,
       ),
     );
+
+    // Remove the composing region after we apply the stable attribution to avoid a
+    // reaction automatically re-applying the composing tag.
+    // FIXME: Use a transaction to bundle these changes so order doesn't matter.
+    if (removeComposingAttributionCommand != null) {
+      executor.executeCommand(removeComposingAttributionCommand);
+      print("Attributions immediately after removing composing attribution:");
+      print("${textNode.text.getAttributionSpansByFilter((a) => true)}");
+    }
+
+    // Reset the tag index so that we're no longer composing a tag.
+    tagIndex._composingSlackTag.value = null;
   }
 }
 
@@ -208,23 +224,11 @@ class FillInComposingSlackTagCommand implements EditCommand {
 ///
 /// This request doesn't change the user's selection.
 class CancelComposingSlackTagRequest implements EditRequest {
-  const CancelComposingSlackTagRequest(this.trigger);
-
-  final String trigger;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CancelComposingSlackTagRequest && runtimeType == other.runtimeType && trigger == other.trigger;
-
-  @override
-  int get hashCode => trigger.hashCode;
+  const CancelComposingSlackTagRequest();
 }
 
 class CancelComposingSlackTagCommand implements EditCommand {
-  const CancelComposingSlackTagCommand(this.trigger);
-
-  final String trigger;
+  const CancelComposingSlackTagCommand();
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -233,24 +237,63 @@ class CancelComposingSlackTagCommand implements EditCommand {
       return;
     }
 
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    // Remove the composing attribution from the text.
+    final removeComposingAttributionCommand = _removeSlackComposingTokenAttribution(document, tagIndex);
+
     // Reset the tag index.
     final tag = tagIndex.composingSlackTag.value!;
     tagIndex._composingSlackTag.value = null;
 
     // Mark the trigger as cancelled, so we don't immediately convert it back to a tag.
-    final document = context.find<MutableDocument>(Editor.documentKey);
     final nodeWithTag = document.getNodeById(tag.contentBounds.start.nodeId) as TextNode?;
     if (nodeWithTag == null) {
       // The node is gone. It may have been deleted. Nothing more for us to do.
       return;
     }
 
+    // TODO: move this into a command. Don't directly mutate the document.
     final triggerOffset = (tag.contentBounds.start.nodePosition as TextNodePosition).offset;
     nodeWithTag.text.addAttribution(
       slackTagCancelledAttribution,
       SpanRange(triggerOffset, triggerOffset),
     );
+
+    // Remove the composing region after we apply the cancelled attribution to avoid a
+    // reaction automatically re-applying the composing tag.
+    // FIXME: Use a transaction to bundle these changes so order doesn't matter.
+    if (removeComposingAttributionCommand != null) {
+      executor.executeCommand(removeComposingAttributionCommand);
+    }
   }
+}
+
+EditCommand? _removeSlackComposingTokenAttribution(Document document, SlackTagIndex tagIndex) {
+  print("REMOVING COMPOSING ATTRIBUTION");
+  // Remove any composing attribution for the previous state of the tag.
+  // It's possible that the previous composing region disappeared, e.g., due to a deletion.
+  final previousTag = tagIndex._composingSlackTag.value!;
+  final previousTagNode =
+      document.getNodeById(previousTag.contentBounds.start.nodeId); // We assume tags don't cross node boundaries.
+  if (previousTagNode == null || previousTagNode is! TextNode) {
+    print("Couldn't find composing attribution. Fizzling.");
+    return null;
+  }
+
+  return RemoveTextAttributionsCommand(
+    documentRange: DocumentRange(
+      start: DocumentPosition(
+        nodeId: previousTagNode.id,
+        nodePosition: const TextNodePosition(offset: 0),
+      ),
+      end: DocumentPosition(
+        nodeId: previousTagNode.id,
+        nodePosition: TextNodePosition(offset: previousTagNode.text.length),
+      ),
+    ),
+    attributions: {slackTagComposingAttribution},
+  );
 }
 
 extension SlackTagIndexEditable on EditContext {
@@ -301,7 +344,7 @@ class SlackTagReaction implements EditReaction {
 
     // Update the current tag composition.
     final selection = composer.selection;
-    _updateTagComposition(document, tagIndex, selection);
+    _updateTagComposition(requestDispatcher, document, tagIndex, selection);
 
     // _healCancelledTags(requestDispatcher, document, changeList);
 
@@ -320,21 +363,22 @@ class SlackTagReaction implements EditReaction {
     editorSlackTagsLog.info("------------------------------------------------------");
   }
 
-  void _updateTagComposition(Document document, SlackTagIndex tagIndex, DocumentSelection? selection) {
+  void _updateTagComposition(
+      RequestDispatcher requestDispatcher, Document document, SlackTagIndex tagIndex, DocumentSelection? selection) {
     // If, in tbe previous frame, we were composing a tag, check if we're still in range of
     // the tag. If not, cancel the composing process.
     if (tagIndex.isComposing) {
       if (selection == null || !selection.isCollapsed) {
-        _stopComposing(tagIndex);
+        _stopComposing(requestDispatcher, document, tagIndex);
       } else {
         final tag = _findUpstreamTagWithinRange(document, selection.extent);
-        if (tag == null) {
-          _stopComposing(tagIndex);
+
+        if (tagIndex.composingSlackTag.value != tag && tag != null) {
+          _updateComposing(requestDispatcher, document, tagIndex, tag);
         }
 
-        if (tagIndex.composingSlackTag.value != tag) {
-          tagIndex._composingSlackTag.value = tag;
-          onUpdateComposingTag?.call(tag);
+        if (tag == null) {
+          _stopComposing(requestDispatcher, document, tagIndex);
         }
       }
     }
@@ -343,12 +387,12 @@ class SlackTagReaction implements EditReaction {
     if (!tagIndex.isComposing && selection != null && selection.isCollapsed) {
       final tag = _findUpstreamTagWithinRange(document, selection.extent);
       if (tag != null) {
-        _startComposing(tagIndex, tag);
+        _startComposing(requestDispatcher, tagIndex, tag);
       }
     }
   }
 
-  void _startComposing(SlackTagIndex tagIndex, ComposingSlackTag tag) {
+  void _startComposing(RequestDispatcher requestDispatcher, SlackTagIndex tagIndex, ComposingSlackTag tag) {
     if (tagIndex.isComposing) {
       return;
     }
@@ -357,18 +401,73 @@ class SlackTagReaction implements EditReaction {
         .info("Starting new tag composition at offset ${tag.contentBounds.start}, initial token: '${tag.token}'");
     tagIndex._composingSlackTag.value = tag;
 
+    requestDispatcher.execute([
+      AddTextAttributionsRequest(
+        documentRange: tag.contentBounds,
+        attributions: {slackTagComposingAttribution},
+      ),
+    ]);
+
     onUpdateComposingTag?.call(tag);
   }
 
-  void _stopComposing(SlackTagIndex tagIndex) {
+  void _updateComposing(
+      RequestDispatcher requestDispatcher, Document document, SlackTagIndex tagIndex, ComposingSlackTag newTag) {
+    _removePreviousTagComposingAttribution(requestDispatcher, document, tagIndex);
+
+    // Update the tag index for the new tag.
+    tagIndex._composingSlackTag.value = newTag;
+    onUpdateComposingTag?.call(newTag);
+
+    // Add composing attribution for the updated tag bounds.
+    print("Updating composing attribution with bounds: ${newTag.contentBounds}");
+    requestDispatcher.execute([
+      AddTextAttributionsRequest(
+        documentRange: newTag.contentBounds,
+        attributions: {slackTagComposingAttribution},
+      ),
+    ]);
+  }
+
+  void _stopComposing(RequestDispatcher requestDispatcher, Document document, SlackTagIndex tagIndex) {
     if (!tagIndex.isComposing) {
       return;
     }
+
+    _removePreviousTagComposingAttribution(requestDispatcher, document, tagIndex);
 
     editorSlackTagsLog.info("Stopping tag composition");
     tagIndex._composingSlackTag.value = null;
 
     onUpdateComposingTag?.call(null);
+  }
+
+  void _removePreviousTagComposingAttribution(
+      RequestDispatcher requestDispatcher, Document document, SlackTagIndex tagIndex) {
+    // Remove any composing attribution for the previous state of the tag.
+    // It's possible that the previous composing region disappeared, e.g., due to a deletion.
+    final previousTag = tagIndex._composingSlackTag.value!;
+    final previousTagNode =
+        document.getNodeById(previousTag.contentBounds.start.nodeId); // We assume tags don't cross node boundaries.
+    if (previousTagNode == null || previousTagNode is! TextNode || previousTagNode.text.text.isEmpty) {
+      return;
+    }
+
+    requestDispatcher.execute([
+      RemoveTextAttributionsRequest(
+        documentRange: DocumentRange(
+          start: DocumentPosition(
+            nodeId: previousTagNode.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+          end: DocumentPosition(
+            nodeId: previousTagNode.id,
+            nodePosition: TextNodePosition(offset: previousTagNode.text.length),
+          ),
+        ),
+        attributions: {slackTagComposingAttribution},
+      ),
+    ]);
   }
 
   /// Searches for a trigger character upstream from the [caret] and, if one a trigger is
@@ -417,13 +516,19 @@ class SlackTagReaction implements EditReaction {
       return null;
     }
 
+    if (textNode.text.getAllAttributionsAt(triggerOffset).whereType<CommittedSlackTagAttribution>().isNotEmpty) {
+      // We found a trigger character but it belongs to a committed tag. Ignore it.
+      editorSlackTagsLog.fine("Found an upstream trigger, but it's already committed. Ignoring it.");
+      return null;
+    }
+
     if (textIterator.startsWith(trigger.characters)) {
       editorSlackTagsLog
           .fine("Found an upstream trigger at offset $triggerOffset, caret offset: ${caretTextPosition.offset}");
       return ComposingSlackTag(
         textNode.rangeBetween(
           triggerOffset,
-          caretTextPosition.offset - 1, // -1 because the reported range is inclusive, not exclusive
+          caretTextPosition.offset,
         ),
         triggerOffset != caretTextPosition.offset //
             ? textNode.text.text.substring(triggerOffset + 1, caretTextPosition.offset)
@@ -433,172 +538,6 @@ class SlackTagReaction implements EditReaction {
 
     editorSlackTagsLog.fine("Didn't find any upstream trigger.");
     return null;
-  }
-
-  /// Finds all new trigger characters and attributes them either as a composing tag, or
-  /// as an ignored character.
-  void _indexNewTriggers(RequestDispatcher requestDispatcher, MutableDocument document, List<EditEvent> changeList) {
-    final newTriggers = <int>{};
-    _forEachTextNodeChange(document, changeList, (change, node) {
-      // Find all the new triggers in this node.
-      final slackTagConstantAttributions = {
-        slackTagComposingAttribution,
-        slackTagUnboundAttribution,
-        slackTagCancelledAttribution,
-      };
-      int triggerIndex = node.text.text.indexOf(trigger);
-      while (triggerIndex >= 0) {
-        final triggerAttributions = node.text.getAllAttributionsAt(triggerIndex);
-        if (triggerAttributions.where((attribution) => slackTagConstantAttributions.contains(attribution)).isNotEmpty) {
-          // There's already some kind of slack tag attribution on this character.
-          // It's not new.
-          continue;
-        }
-        if (triggerAttributions.whereType<CommittedSlackTagAttribution>().isNotEmpty) {
-          // This trigger is already part of a committed tag. It's not new.
-          continue;
-        }
-
-        newTriggers.add(triggerIndex);
-
-        triggerIndex = node.text.text.indexOf(trigger, triggerIndex + 1);
-      }
-
-      // Attribute all new triggers as tags, unless their surrounding content indicates that
-      // they shouldn't become tags.
-    });
-  }
-
-  void _forEachTextNodeChange(MutableDocument document, List<EditEvent> changeList,
-      void Function(NodeChangeEvent event, TextNode node) onTextNodeChange) {
-    for (final event in changeList) {
-      if (event is! DocumentEdit) {
-        continue;
-      }
-
-      final change = event.change;
-      if (change is! NodeChangeEvent) {
-        continue;
-      }
-
-      final node = document.getNodeById(change.nodeId);
-      if (node is! TextNode) {
-        continue;
-      }
-
-      onTextNodeChange(change, node);
-    }
-  }
-
-  /// Finds all cancelled slack tags across all changed text nodes in [changeList] and corrects
-  /// any invalid attribution bounds that may have been introduced by edits.
-  void _healCancelledTags(RequestDispatcher requestDispatcher, MutableDocument document, List<EditEvent> changeList) {
-    final healChangeRequests = <EditRequest>[];
-
-    for (final event in changeList) {
-      if (event is! DocumentEdit) {
-        continue;
-      }
-
-      final change = event.change;
-      if (change is! NodeChangeEvent) {
-        continue;
-      }
-
-      final node = document.getNodeById(change.nodeId);
-      if (node is! TextNode) {
-        continue;
-      }
-
-      // The content in a TextNode changed. Check for the existence of any
-      // out-of-sync cancelled tags and fix them.
-      healChangeRequests.addAll(
-        _healCancelledTagsInTextNode(requestDispatcher, node),
-      );
-    }
-
-    // Run all the requests to heal the various cancelled tags.
-    requestDispatcher.execute(healChangeRequests);
-  }
-
-  List<EditRequest> _healCancelledTagsInTextNode(RequestDispatcher requestDispatcher, TextNode node) {
-    final cancelledTagRanges = node.text.getAttributionSpansInRange(
-      attributionFilter: (a) => a == slackTagCancelledAttribution,
-      range: SpanRange(0, node.text.length - 1),
-    );
-
-    final changeRequests = <EditRequest>[];
-
-    for (final range in cancelledTagRanges) {
-      final cancelledText = node.text.substring(range.start, range.end + 1); // +1 because substring is exclusive
-      if (cancelledText == trigger) {
-        // This is a legitimate cancellation attribution.
-        continue;
-      }
-
-      DocumentSelection? addedRange;
-      if (cancelledText.contains(trigger)) {
-        // This cancelled range includes more than just a trigger. Reduce it back
-        // down to the trigger.
-        final triggerIndex = cancelledText.indexOf(trigger);
-        addedRange = node.selectionBetween(triggerIndex, triggerIndex);
-      }
-
-      changeRequests.addAll([
-        RemoveTextAttributionsRequest(
-          documentRange: node.selectionBetween(range.start, range.end),
-          attributions: {slackTagCancelledAttribution},
-        ),
-        if (addedRange != null) //
-          AddTextAttributionsRequest(
-            documentRange: addedRange,
-            attributions: {slackTagCancelledAttribution},
-          ),
-      ]);
-    }
-
-    return changeRequests;
-  }
-
-  /// Finds a composing slack tag near the caret and adjusts the attribution bounds so that
-  /// the tag content remains attributed.
-  ///
-  /// Examples:
-  ///
-  ///  - |@joh|n      ->  |@john|
-  ///  - |@john and|  ->  |@john| and
-  ///
-  void _adjustTagAttributionsAroundAlteredTags(
-    EditContext editContext,
-    RequestDispatcher requestDispatcher,
-    List<EditEvent> changeList,
-  ) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-
-    final composingToken = _findComposingTagAtCaret(editContext);
-    if (composingToken != null) {
-      final tagRange = SpanRange(composingToken.indexedTag.startOffset, composingToken.indexedTag.endOffset);
-      final hasComposingThroughout =
-          composingToken.indexedTag.computeLeadingSpanForAttribution(document, slackTagComposingAttribution) ==
-              tagRange;
-
-      if (hasComposingThroughout) {
-        return;
-      }
-
-      // The token is only partially attributed. Expand the attribution around the token.
-      requestDispatcher.execute([
-        AddTextAttributionsRequest(
-          documentRange: DocumentSelection(
-            base: composingToken.indexedTag.start,
-            extent: composingToken.indexedTag.end,
-          ),
-          attributions: {slackTagComposingAttribution},
-        ),
-      ]);
-
-      return;
-    }
   }
 
   /// Removes composing or cancelled slack tag attributions from any tag that no longer
@@ -766,177 +705,6 @@ class SlackTagReaction implements EditReaction {
     ]);
   }
 
-  /// Find any text near the caret that fits the pattern of a user tag and convert it into a
-  /// composing tag.
-  void _createNewComposingTag(
-    EditContext editContext,
-    RequestDispatcher requestDispatcher,
-    List<EditEvent> changeList,
-  ) {
-    editorSlackTagsLog.fine("Looking for a tag around the caret.");
-    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
-    if (composer.selection == null || !composer.selection!.isCollapsed) {
-      // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
-      return;
-    }
-    final selectionPosition = composer.selection!.extent;
-    final caretPosition = selectionPosition.nodePosition;
-    if (caretPosition is! TextNodePosition) {
-      // Tagging only happens in the middle of text. The selected content isn't text. Return.
-      return;
-    }
-
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final selectedNode = document.getNodeById(selectionPosition.nodeId);
-    if (selectedNode is! TextNode) {
-      // Tagging only happens in the middle of text. The selected content isn't text. Return.
-      return;
-    }
-
-    final existingComposingTag = SlackTagFinder.findTagAroundPosition(
-      nodeId: selectedNode.id,
-      text: selectedNode.text,
-      trigger: trigger,
-      expansionPosition: caretPosition,
-      isTokenCandidate: (tokenAttributions) {
-        return tokenAttributions.contains(slackTagComposingAttribution);
-      },
-    );
-    if (existingComposingTag != null && caretPosition.offset > existingComposingTag.indexedTag.startOffset) {
-      onUpdateComposingTag?.call(
-        ComposingSlackTag(
-          selectedNode.rangeBetween(
-            existingComposingTag.indexedTag.startOffset + 1,
-            existingComposingTag.indexedTag.endOffset,
-          ),
-          existingComposingTag.indexedTag.tag.token,
-        ),
-      );
-      return;
-    }
-
-    final nonAttributedTagAroundCaret = SlackTagFinder.findTagAroundPosition(
-        nodeId: selectedNode.id,
-        text: selectedNode.text,
-        trigger: trigger,
-        expansionPosition: caretPosition,
-        isTokenCandidate: (tokenAttributions) {
-          return !tokenAttributions.contains(slackTagComposingAttribution) &&
-              !tokenAttributions.contains(slackTagCancelledAttribution) &&
-              !tokenAttributions.any((attribution) => attribution is CommittedSlackTagAttribution);
-        });
-
-    if (nonAttributedTagAroundCaret == null) {
-      // There's no tag around the caret.
-      editorSlackTagsLog.fine("There's no tag around the caret, fizzling");
-      onUpdateComposingTag?.call(null);
-      return;
-    }
-
-    // We found a non-attributed slack tag near the caret. Give it a composing
-    // attribution and report it as the composing tag.
-    editorImeLog.fine("Found a slack token around caret: ${nonAttributedTagAroundCaret.indexedTag.tag}");
-    onUpdateComposingTag?.call(
-      ComposingSlackTag(
-        selectedNode.rangeBetween(
-          // +1 to remove trigger symbol
-          nonAttributedTagAroundCaret.indexedTag.startOffset + 1,
-          nonAttributedTagAroundCaret.indexedTag.endOffset,
-        ),
-        nonAttributedTagAroundCaret.indexedTag.tag.token,
-      ),
-    );
-
-    requestDispatcher.execute([
-      AddTextAttributionsRequest(
-        documentRange: selectedNode.selectionBetween(
-          nonAttributedTagAroundCaret.indexedTag.startOffset,
-          nonAttributedTagAroundCaret.indexedTag.endOffset,
-        ),
-        attributions: {
-          slackTagComposingAttribution,
-        },
-      ),
-    ]);
-  }
-
-  /// Find any composing tag that's no longer being composed, and commit it.
-  void _commitCompletedComposingTag(
-    EditContext editContext,
-    RequestDispatcher requestDispatcher,
-    List<EditEvent> changeList,
-  ) {
-    editorSlackTagsLog.fine("Looking for completed tags to commit.");
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final composingTagNodeCandidates = <String>{};
-    for (final edit in changeList) {
-      if (edit is DocumentEdit && (edit.change is TextInsertionEvent || edit.change is TextDeletedEvent)) {
-        composingTagNodeCandidates.add((edit.change as NodeChangeEvent).nodeId);
-      } else if (edit is SelectionChangeEvent) {
-        final oldSelection = edit.oldSelection;
-        if (oldSelection == null) {
-          continue;
-        }
-
-        if (oldSelection.base.nodePosition is TextNodePosition) {
-          // The old selection might belong to a node that was removed. Make sure
-          // the old node exists. If it does, add the node ID as a candidate.
-          final nodeId = oldSelection.base.nodeId;
-          if (document.getNodeById(nodeId) != null) {
-            composingTagNodeCandidates.add(nodeId);
-          }
-        }
-        if (oldSelection.extent.nodePosition is TextNodePosition) {
-          // The old selection might belong to a node that was removed. Make sure
-          // the old node exists. If it does, add the node ID as a candidate.
-          final nodeId = oldSelection.extent.nodeId;
-          if (document.getNodeById(nodeId) != null) {
-            composingTagNodeCandidates.add(nodeId);
-          }
-        }
-      } else if (edit is DocumentEdit && edit.change is NodeRemovedEvent) {
-        // Make sure we don't try to track a node where text was edited, if that
-        // node was later removed.
-        final change = (edit).change as NodeRemovedEvent;
-        composingTagNodeCandidates.remove(change.nodeId);
-      }
-    }
-    if (composingTagNodeCandidates.isEmpty) {
-      return;
-    }
-
-    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
-    final selection = composer.selection;
-    for (final textNodeId in composingTagNodeCandidates) {
-      editorSlackTagsLog.fine("Checking node $textNodeId for composing tags to commit");
-      final textNode = document.getNodeById(textNodeId) as TextNode;
-      final allTags = SlackTagFinder.findAllTagsInTextNode(trigger, textNode);
-      final composingTags =
-          allTags.where((tag) => tag.computeLeadingSpanForAttribution(document, slackTagComposingAttribution).isValid);
-      editorSlackTagsLog.fine("Composing tags in node: $composingTags");
-
-      for (final composingTag in composingTags) {
-        if (selection == null || selection.extent.nodeId != textNodeId || selection.base.nodeId != textNodeId) {
-          editorSlackTagsLog
-              .info("Committing tag because selection is null, or selection moved to different node: '$composingTag'");
-          _commitTag(requestDispatcher, textNode, composingTag);
-          continue;
-        }
-
-        final extentPosition = selection.extent.nodePosition as TextNodePosition;
-        if (selection.isCollapsed &&
-            (extentPosition.offset <= composingTag.startOffset || extentPosition.offset > composingTag.endOffset)) {
-          editorSlackTagsLog
-              .info("Committing tag because the caret is out of range: '$composingTag', extent: $extentPosition");
-          _commitTag(requestDispatcher, textNode, composingTag);
-          continue;
-        }
-
-        editorSlackTagsLog.fine("Allowing tag '$composingTag' to continue composing without committing it.");
-      }
-    }
-  }
-
   void _commitTag(RequestDispatcher requestDispatcher, TextNode textNode, IndexedTag tag) {
     onUpdateComposingTag?.call(null);
 
@@ -998,68 +766,6 @@ class SlackTagReaction implements EditReaction {
       expansionPosition: caretPosition,
       isTokenCandidate: tagSelector,
     );
-  }
-
-  void _updateTagIndex(EditContext editContext, List<EditEvent> changeList) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final index = editContext.slackTagIndex;
-    for (final event in changeList) {
-      if (event is! DocumentEdit) {
-        continue;
-      }
-
-      final change = event.change;
-      if (change is! NodeDocumentChange) {
-        return;
-      }
-      if (document.getNodeById(change.nodeId) is! TextNode) {
-        return;
-      }
-
-      if (change is NodeRemovedEvent) {
-        index._clearCommittedTagsInNode(change.nodeId);
-        index._clearCancelledTagsInNode(change.nodeId);
-      } else if (change is NodeInsertedEvent) {
-        index._setCommittedTagsInNode(
-          change.nodeId,
-          _findAllTagsInNode(document, change.nodeId, (attribution) => attribution is CommittedSlackTagAttribution),
-        );
-        index._setCancelledTagsInNode(
-          change.nodeId,
-          _findAllTagsInNode(document, change.nodeId, (attribution) => attribution == slackTagCancelledAttribution),
-        );
-      } else if (change is NodeChangeEvent) {
-        index._setCommittedTagsInNode(
-          change.nodeId,
-          _findAllTagsInNode(document, change.nodeId, (attribution) => attribution is CommittedSlackTagAttribution),
-        );
-
-        index._clearCancelledTagsInNode(change.nodeId);
-        index._setCancelledTagsInNode(
-          change.nodeId,
-          _findAllTagsInNode(document, change.nodeId, (attribution) => attribution == slackTagCancelledAttribution),
-        );
-      }
-    }
-  }
-
-  Set<IndexedTag> _findAllTagsInNode(Document document, String nodeId, AttributionFilter attributionFilter) {
-    final textNode = document.getNodeById(nodeId) as TextNode;
-    final allTags = textNode.text
-        .getAttributionSpansInRange(
-          attributionFilter: attributionFilter,
-          range: SpanRange(0, textNode.text.length - 1),
-        )
-        .map(
-          (span) => IndexedTag(
-            Tag.fromRaw(textNode.text.substring(span.start, span.end + 1)),
-            textNode.id,
-            span.start,
-          ),
-        )
-        .toSet();
-
-    return allTags;
   }
 }
 

@@ -39,7 +39,50 @@ void main() {
             ),
             end: DocumentPosition(
               nodeId: "1",
-              nodePosition: TextNodePosition(offset: 4),
+              nodePosition: TextNodePosition(offset: 5),
+            ),
+          ),
+        );
+        expect(
+          composingTag.token,
+          "john",
+        );
+      });
+
+      testWidgetsOnAllPlatforms("can start immediately before a word", (tester) async {
+        final (_, tagIndex) = await _pumpTestEditor(
+          tester,
+          MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText("after"),
+              ),
+            ],
+          ),
+        );
+
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a slack tag.
+        await tester.typeImeText("@john");
+
+        // Ensure that the tag has a composing attribution.
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@johnafter");
+
+        final composingTag = tagIndex.composingSlackTag.value;
+        expect(composingTag, isNotNull);
+        expect(
+          composingTag!.contentBounds,
+          const DocumentRange(
+            start: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+            end: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 5),
             ),
           ),
         );
@@ -83,7 +126,7 @@ void main() {
             ),
             end: DocumentPosition(
               nodeId: "1",
-              nodePosition: TextNodePosition(offset: 11),
+              nodePosition: TextNodePosition(offset: 12),
             ),
           ),
         );
@@ -123,7 +166,7 @@ void main() {
             ),
             end: DocumentPosition(
               nodeId: "1",
-              nodePosition: TextNodePosition(offset: 17),
+              nodePosition: TextNodePosition(offset: 18),
             ),
           ),
         );
@@ -234,6 +277,51 @@ void main() {
 
         // Place the caret beyond the max allowable range.
         await tester.placeCaretInParagraph("1", 24);
+        expect(tagIndex.composingSlackTag.value, isNull);
+      });
+
+      testWidgetsOnAllPlatforms("can delete at start of paragraph", (tester) async {
+        final (_, tagIndex) = await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a slack tag.
+        await tester.typeImeText("@");
+
+        // Ensure that the tag has a composing attribution.
+        var text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@");
+
+        final composingTag = tagIndex.composingSlackTag.value;
+        expect(composingTag, isNotNull);
+        expect(
+          composingTag!.contentBounds,
+          const DocumentRange(
+            start: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+            end: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 1),
+            ),
+          ),
+        );
+        expect(
+          composingTag.token,
+          "",
+        );
+
+        // Backspace to delete the tag.
+        await tester.pressBackspace();
+
+        // Ensure the text was removed, and no attributions remain.
+        text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "");
+        expect(tagIndex.isComposing, isFalse);
         expect(tagIndex.composingSlackTag.value, isNull);
       });
 
@@ -414,6 +502,12 @@ void main() {
         expect(
           text.getAttributedRange({const CommittedSlackTagAttribution("John Smith")}, 6),
           const SpanRange(6, 16),
+        );
+
+        // Ensure that no other attributions exist (like the composing attribution).
+        expect(
+          text.getAttributionSpansByFilter((a) => a is! CommittedSlackTagAttribution),
+          isEmpty,
         );
       });
     });
@@ -971,7 +1065,84 @@ void main() {
     });
 
     group("cancelled >", () {
-      // TODO:
+      testWidgetsOnAllPlatforms("with only a trigger", (tester) async {
+        final (_, tagIndex) = await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a slack tag.
+        await tester.typeImeText("@");
+
+        // Ensure that we're composing a tag.
+        var text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@");
+        expect(tagIndex.isComposing, isTrue);
+        expect(tagIndex.composingSlackTag.value, isNotNull);
+
+        // Cancel the tag.
+        await tester.pressEscape();
+
+        // Ensure that we're no longer composing.
+        text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@");
+        expect(tagIndex.isComposing, isFalse);
+        expect(tagIndex.composingSlackTag.value, isNull);
+
+        // Type a character.
+        await tester.typeImeText("J");
+
+        // Ensure that we're still not composing.
+        text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@J");
+        expect(tagIndex.isComposing, isFalse);
+        expect(tagIndex.composingSlackTag.value, isNull);
+      });
+
+      testWidgetsOnAllPlatforms("with multiple words", (tester) async {
+        final (_, tagIndex) = await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a slack tag.
+        await tester.typeImeText("@jo sm");
+
+        // Ensure that we're composing a tag.
+        var text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@jo sm");
+        expect(tagIndex.isComposing, isTrue);
+        expect(tagIndex.composingSlackTag.value, isNotNull);
+
+        // Cancel the tag.
+        await tester.pressEscape();
+
+        // Ensure that we're no longer composing.
+        text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@jo sm");
+        expect(tagIndex.isComposing, isFalse);
+        expect(tagIndex.composingSlackTag.value, isNull);
+
+        // Type a character.
+        await tester.typeImeText("i");
+
+        // Ensure that we're still not composing.
+        text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@jo smi");
+        expect(tagIndex.isComposing, isFalse);
+        expect(tagIndex.composingSlackTag.value, isNull);
+
+        // Move the caret to a token closer to the trigger.
+        await tester.placeCaretInParagraph("1", 3);
+
+        // Ensure that we're still not composing.
+        expect(tagIndex.isComposing, isFalse);
+        expect(tagIndex.composingSlackTag.value, isNull);
+      });
     });
   });
 }

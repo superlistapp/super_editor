@@ -13,6 +13,7 @@ class PopoverList extends StatefulWidget {
   const PopoverList({
     super.key,
     required this.editorFocusNode,
+    this.popoverFocusNode,
     required this.leaderLink,
     required this.listItems,
     this.isLoading = false,
@@ -23,6 +24,10 @@ class PopoverList extends StatefulWidget {
   /// [FocusNode] attached to the editor, which is expected to be an ancestor
   /// of this widget.
   final FocusNode editorFocusNode;
+
+  /// [FocusNode] that's attached to the popover, which routes key presses to the
+  /// popover list.
+  final FocusNode? popoverFocusNode;
 
   /// Link to the widget that this popover follows.
   final LeaderLink leaderLink;
@@ -59,7 +64,7 @@ class _PopoverListState extends State<PopoverList> {
   void initState() {
     super.initState();
 
-    _focusNode = FocusNode();
+    _focusNode = widget.popoverFocusNode ?? FocusNode();
     _scrollController = ScrollController();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -73,17 +78,22 @@ class _PopoverListState extends State<PopoverList> {
   void didUpdateWidget(PopoverList oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (widget.popoverFocusNode != oldWidget.popoverFocusNode) {
+      _focusNode = widget.popoverFocusNode ?? FocusNode();
+    }
+
     if (widget.listItems.length != oldWidget.listItems.length) {
+      print("Popover list items: ${widget.listItems}");
       // Make sure that the user's selection index remains in bound, even when
       // the list items are switched out.
-      _selectedValueIndex = min(_selectedValueIndex, widget.listItems.length - 1);
+      _selectedValueIndex = min(0, widget.listItems.length - 1);
+      print("Selected value index: $_selectedValueIndex");
     }
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _focusNode.dispose();
 
     super.dispose();
   }
@@ -135,6 +145,7 @@ class _PopoverListState extends State<PopoverList> {
 
   @override
   Widget build(BuildContext context) {
+    print("Selected item index: $_selectedValueIndex");
     return SuperEditorPopover(
       popoverFocusNode: _focusNode,
       editorFocusNode: widget.editorFocusNode,
@@ -195,10 +206,12 @@ class _PopoverListState extends State<PopoverList> {
                       size: 14,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      widget.listItems[i].label,
-                      style: TextStyle(
-                        color: Colors.white,
+                    Expanded(
+                      child: Text(
+                        widget.listItems[i].label,
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
