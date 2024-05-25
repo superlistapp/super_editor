@@ -1792,6 +1792,11 @@ class CommonEditorOperations {
         ]);
       }
     } else if (extentNode is TaskNode) {
+      if (extentNode.text.text.isEmpty) {
+        // The task is empty. Convert it to a paragraph.
+        return convertToParagraph();
+      }
+
       final splitOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
       editor.execute([

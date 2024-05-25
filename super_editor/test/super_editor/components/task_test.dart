@@ -515,5 +515,106 @@ void main() {
       expect(document.nodes.first, isA<ParagraphNode>());
       expect((document.nodes.first as ParagraphNode).text.text, "This is a task");
     });
+
+    testWidgetsOnAllPlatforms("converts task to paragraph when the user presses ENTER on an empty task",
+        (tester) async {
+      await _pumpSingleEmptyTaskApp(tester);
+
+      // Place the caret at the beginning of the task.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Press enter to convert the task into a paragraph.
+      await tester.pressEnter();
+
+      final document = SuperEditorInspector.findDocument()!;
+
+      // Ensure the task was converted to a paragraph.
+      expect(document.nodes.length, 1);
+      expect(document.nodes.first, isA<ParagraphNode>());
+      expect((document.nodes.first as ParagraphNode).text.text, "");
+    });
+
+    testWidgetsOnAndroid("converts task to paragraph upon new line insertion on an empty task", (tester) async {
+      await _pumpSingleEmptyTaskApp(tester);
+
+      // Place the caret at the beginning of the task.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Press enter to convert the task into a paragraph.
+      // On Android, pressing ENTER generates a "\n" insertion.
+      await tester.typeImeText("\n");
+
+      final document = SuperEditorInspector.findDocument()!;
+
+      // Ensure the task was converted to a paragraph.
+      expect(document.nodes.length, 1);
+      expect(document.nodes.first, isA<ParagraphNode>());
+      expect((document.nodes.first as ParagraphNode).text.text, "");
+    });
+
+    testWidgetsOnIos("converts task to paragraph new line input action on an empty task", (tester) async {
+      await _pumpSingleEmptyTaskApp(tester);
+
+      // Place the caret at the beginning of the task.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Press enter to convert the task into a paragraph.
+      // On iOS, pressing ENTER generates a newline action.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+
+      final document = SuperEditorInspector.findDocument()!;
+
+      // Ensure the task was converted to a paragraph.
+      expect(document.nodes.length, 1);
+      expect(document.nodes.first, isA<ParagraphNode>());
+      expect((document.nodes.first as ParagraphNode).text.text, "");
+    });
+
+    testWidgetsOnWebDesktop("converts task to paragraph when the user presses ENTER on an empty task", (tester) async {
+      await _pumpSingleEmptyTaskApp(tester);
+
+      // Place the caret at the beginning of the task.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Press enter to convert the task into a paragraph.
+      // On Web, this generates both a newline input action and a key event.
+      await tester.pressEnter();
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pump();
+
+      final document = SuperEditorInspector.findDocument()!;
+
+      // Ensure the task was converted to a paragraph.
+      expect(document.nodes.length, 1);
+      expect(document.nodes.first, isA<ParagraphNode>());
+      expect((document.nodes.first as ParagraphNode).text.text, "");
+    });
   });
+}
+
+Future<void> _pumpSingleEmptyTaskApp(WidgetTester tester) async {
+  final document = MutableDocument(
+    nodes: [
+      TaskNode(id: "1", text: AttributedText(), isComplete: false),
+    ],
+  );
+
+  final composer = MutableDocumentComposer();
+  final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: SuperEditor(
+          editor: editor,
+          document: document,
+          composer: composer,
+          componentBuilders: [
+            TaskComponentBuilder(editor),
+            ...defaultComponentBuilders,
+          ],
+        ),
+      ),
+    ),
+  );
 }
