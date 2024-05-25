@@ -210,7 +210,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     final didCaretStayInSamePlace = _selectionBeforeTap != null &&
         _selectionBeforeTap?.hasSameBoundsAs(widget.textController.selection) == true &&
         _selectionBeforeTap!.isCollapsed;
-    if (didCaretStayInSamePlace || didTapOnExistingSelection) {
+    if ((didCaretStayInSamePlace || didTapOnExistingSelection) && widget.focusNode.hasFocus) {
       // The user either tapped directly on the caret, or on an expanded selection,
       // or the user tapped in empty space but didn't move the caret, for example
       // the user tapped in empty space after the text and the caret was already
