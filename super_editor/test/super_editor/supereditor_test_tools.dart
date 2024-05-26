@@ -262,6 +262,14 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] to display an [AppBar] with the given height above the [SuperEditor].
+  ///
+  /// If [withCustomWidgetTreeBuilder] is used, this setting is ignored.
+  TestSuperEditorConfigurator withAppBar(double height) {
+    _config.appBarHeight = height;
+    return this;
+  }
+
   /// Configures the [SuperEditor] to use the given [scrollController]
   TestSuperEditorConfigurator withScrollController(ScrollController? scrollController) {
     _config.scrollController = scrollController;
@@ -438,6 +446,17 @@ class TestSuperEditorConfigurator {
       // Flutter to pick the web shortcuts.
       shortcuts: defaultFlutterShortcuts,
       home: Scaffold(
+        appBar: _config.appBarHeight != null
+            ? PreferredSize(
+                preferredSize: ui.Size(double.infinity, _config.appBarHeight!),
+                child: SafeArea(
+                  child: SizedBox(
+                    height: _config.appBarHeight!,
+                    child: ColoredBox(color: Colors.yellow),
+                  ),
+                ),
+              )
+            : null,
         body: superEditor,
       ),
       debugShowCheckedModeBanner: false,
@@ -674,6 +693,7 @@ class SuperEditorTestConfiguration {
   final plugins = <SuperEditorPlugin>{};
 
   WidgetTreeBuilder? widgetTreeBuilder;
+  double? appBarHeight;
 }
 
 /// Must return a widget tree containing the given [superEditor]
