@@ -13,6 +13,7 @@ import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/in_the_lab/feature_action_tags.dart';
 import 'package:example/demos/in_the_lab/feature_pattern_tags.dart';
+import 'package:example/demos/in_the_lab/feature_slack_tags.dart';
 import 'package:example/demos/in_the_lab/feature_stable_tags.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
@@ -300,6 +301,13 @@ final _menu = <_MenuGroup>[
         title: 'User Tags',
         pageBuilder: (context) {
           return const UserTagsFeatureDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.account_circle,
+        title: 'Slack Tags',
+        pageBuilder: (context) {
+          return const SlackTagsFeatureDemo();
         },
       ),
       _MenuItem(
