@@ -1192,7 +1192,7 @@ class AddTextAttributionsRequest implements EditRequest {
 // TODO: the add/remove/toggle commands are almost identical except for what they
 //       do to ranges of text. Pull out the common range calculation behavior.
 /// Applies the given `attributions` to the given `documentSelection`.
-class AddTextAttributionsCommand implements EditCommand {
+class AddTextAttributionsCommand extends EditCommand {
   AddTextAttributionsCommand({
     required this.documentRange,
     required this.attributions,
@@ -1314,7 +1314,7 @@ class RemoveTextAttributionsRequest implements EditRequest {
 }
 
 /// Removes the given `attributions` from the given `documentSelection`.
-class RemoveTextAttributionsCommand implements EditCommand {
+class RemoveTextAttributionsCommand extends EditCommand {
   RemoveTextAttributionsCommand({
     required this.documentRange,
     required this.attributions,
@@ -1436,7 +1436,7 @@ class ToggleTextAttributionsRequest implements EditRequest {
 /// if none of the content in the selection contains any of the
 /// given `attributions`. Otherwise, all the given `attributions`
 /// are removed from the content within the `documentSelection`.
-class ToggleTextAttributionsCommand implements EditCommand {
+class ToggleTextAttributionsCommand extends EditCommand {
   ToggleTextAttributionsCommand({
     required this.documentRange,
     required this.attributions,
@@ -1621,7 +1621,7 @@ class ChangeSingleColumnLayoutComponentStylesRequest implements EditRequest {
   final SingleColumnLayoutComponentStyles styles;
 }
 
-class ChangeSingleColumnLayoutComponentStylesCommand implements EditCommand {
+class ChangeSingleColumnLayoutComponentStylesCommand extends EditCommand {
   ChangeSingleColumnLayoutComponentStylesCommand({
     required this.nodeId,
     required this.styles,
@@ -1660,7 +1660,7 @@ class InsertTextRequest implements EditRequest {
   final Set<Attribution> attributions;
 }
 
-class InsertTextCommand implements EditCommand {
+class InsertTextCommand extends EditCommand {
   InsertTextCommand({
     required this.documentPosition,
     required this.textToInsert,
@@ -1673,6 +1673,10 @@ class InsertTextCommand implements EditCommand {
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  String describe() =>
+      "Insert text - ${documentPosition.nodeId} @ ${(documentPosition.nodePosition as TextNodePosition).offset} - '$textToInsert'";
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1827,7 +1831,7 @@ class InsertAttributedTextRequest implements EditRequest {
   final AttributedText textToInsert;
 }
 
-class InsertAttributedTextCommand implements EditCommand {
+class InsertAttributedTextCommand extends EditCommand {
   InsertAttributedTextCommand({
     required this.documentPosition,
     required this.textToInsert,

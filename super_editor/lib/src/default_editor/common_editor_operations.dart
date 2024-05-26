@@ -2243,7 +2243,7 @@ class PasteEditorRequest implements EditRequest {
   final DocumentComposer composer;
 }
 
-class PasteEditorCommand implements EditCommand {
+class PasteEditorCommand extends EditCommand {
   PasteEditorCommand({
     required String content,
     required DocumentPosition pastePosition,
@@ -2416,7 +2416,7 @@ class DeleteUpstreamCharacterRequest implements EditRequest {
   const DeleteUpstreamCharacterRequest();
 }
 
-class DeleteUpstreamCharacterCommand implements EditCommand {
+class DeleteUpstreamCharacterCommand extends EditCommand {
   const DeleteUpstreamCharacterCommand();
 
   @override
@@ -2472,7 +2472,7 @@ class DeleteDownstreamCharacterRequest implements EditRequest {
   const DeleteDownstreamCharacterRequest();
 }
 
-class DeleteDownstreamCharacterCommand implements EditCommand {
+class DeleteDownstreamCharacterCommand extends EditCommand {
   const DeleteDownstreamCharacterCommand();
 
   @override

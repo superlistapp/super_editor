@@ -226,7 +226,7 @@ class ChangeParagraphAlignmentRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ alignment.hashCode;
 }
 
-class ChangeParagraphAlignmentCommand implements EditCommand {
+class ChangeParagraphAlignmentCommand extends EditCommand {
   const ChangeParagraphAlignmentCommand({
     required this.nodeId,
     required this.alignment,
@@ -292,7 +292,7 @@ class ChangeParagraphBlockTypeRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ blockType.hashCode;
 }
 
-class ChangeParagraphBlockTypeCommand implements EditCommand {
+class ChangeParagraphBlockTypeCommand extends EditCommand {
   const ChangeParagraphBlockTypeCommand({
     required this.nodeId,
     required this.blockType,
@@ -338,7 +338,7 @@ class CombineParagraphsRequest implements EditRequest {
 /// in reverse order, the command fizzles.
 ///
 /// If both nodes are not `ParagraphNode`s, the command fizzles.
-class CombineParagraphsCommand implements EditCommand {
+class CombineParagraphsCommand extends EditCommand {
   CombineParagraphsCommand({
     required this.firstNodeId,
     required this.secondNodeId,
@@ -444,7 +444,7 @@ final _defaultAttributionsToExtend = {
 /// given `splitPosition`, placing all text after `splitPosition` in a
 /// new `ParagraphNode` with the given `newNodeId`, inserted after the
 /// original node.
-class SplitParagraphCommand implements EditCommand {
+class SplitParagraphCommand extends EditCommand {
   SplitParagraphCommand({
     required this.nodeId,
     required this.splitPosition,
@@ -575,7 +575,7 @@ class SplitParagraphCommand implements EditCommand {
   }
 }
 
-class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
+class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
   DeleteUpstreamAtBeginningOfParagraphCommand(this.node);
 
   final DocumentNode node;
@@ -784,7 +784,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-class DeleteParagraphCommand implements EditCommand {
+class DeleteParagraphCommand extends EditCommand {
   DeleteParagraphCommand({
     required this.nodeId,
   });

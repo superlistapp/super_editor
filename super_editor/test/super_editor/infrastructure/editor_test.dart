@@ -690,7 +690,7 @@ class _ExpandingCommandRequest implements EditRequest {
   final int levelsOfGeneration;
 }
 
-class _ExpandingCommand implements EditCommand {
+class _ExpandingCommand extends EditCommand {
   const _ExpandingCommand(this.request);
 
   final _ExpandingCommandRequest request;

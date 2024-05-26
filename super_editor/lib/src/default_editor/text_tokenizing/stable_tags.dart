@@ -162,7 +162,7 @@ class FillInComposingStableTagRequest implements EditRequest {
   int get hashCode => tag.hashCode ^ tagRule.hashCode;
 }
 
-class FillInComposingUserTagCommand implements EditCommand {
+class FillInComposingUserTagCommand extends EditCommand {
   const FillInComposingUserTagCommand(
     this._tag,
     this._tagRule,
@@ -281,7 +281,7 @@ class CancelComposingStableTagRequest implements EditRequest {
   int get hashCode => tagRule.hashCode;
 }
 
-class CancelComposingStableTagCommand implements EditCommand {
+class CancelComposingStableTagCommand extends EditCommand {
   const CancelComposingStableTagCommand(this._tagRule);
 
   final TagRule _tagRule;

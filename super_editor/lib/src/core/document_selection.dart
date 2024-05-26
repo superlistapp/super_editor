@@ -299,7 +299,21 @@ class DocumentRange {
 
   @override
   String toString() {
-    return '[DocumentRange] - start: ($start), end: ($end)';
+    if (start.nodeId == end.nodeId) {
+      final startPosition = start.nodePosition;
+      final endPosition = end.nodePosition;
+      if (startPosition is TextNodePosition && endPosition is TextNodePosition) {
+        if (startPosition.offset == endPosition.offset) {
+          return "[Range] - ${start.nodeId}: ${endPosition.offset}";
+        }
+
+        return "[Range] - ${start.nodeId}: [${startPosition.offset}, ${endPosition.offset}]";
+      }
+
+      return "[Range] - ${start.nodeId}: [${start.nodePosition}, ${end.nodePosition}]";
+    }
+
+    return '[Range] - \n  start: ($start),\n  end: ($end)';
   }
 }
 

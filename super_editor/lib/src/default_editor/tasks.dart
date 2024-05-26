@@ -386,7 +386,7 @@ class ChangeTaskCompletionRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ isComplete.hashCode;
 }
 
-class ChangeTaskCompletionCommand implements EditCommand {
+class ChangeTaskCompletionCommand extends EditCommand {
   ChangeTaskCompletionCommand({required this.nodeId, required this.isComplete});
 
   final String nodeId;
@@ -433,7 +433,7 @@ class ConvertParagraphToTaskRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ isComplete.hashCode;
 }
 
-class ConvertParagraphToTaskCommand implements EditCommand {
+class ConvertParagraphToTaskCommand extends EditCommand {
   const ConvertParagraphToTaskCommand({
     required this.nodeId,
     this.isComplete = false,
@@ -467,7 +467,7 @@ class ConvertParagraphToTaskCommand implements EditCommand {
   }
 }
 
-class ConvertTaskToParagraphCommand implements EditCommand {
+class ConvertTaskToParagraphCommand extends EditCommand {
   const ConvertTaskToParagraphCommand({
     required this.nodeId,
     this.paragraphMetadata,
@@ -514,7 +514,7 @@ class SplitExistingTaskRequest implements EditRequest {
   final String? newNodeId;
 }
 
-class SplitExistingTaskCommand implements EditCommand {
+class SplitExistingTaskCommand extends EditCommand {
   const SplitExistingTaskCommand({
     required this.nodeId,
     required this.splitOffset,

@@ -28,7 +28,7 @@ class PasteStructuredContentEditorRequest implements EditRequest {
 
 /// Inserts given structured content, in the form of a `List` of [DocumentNode]s at a
 /// given paste position within the document.
-class PasteStructuredContentEditorCommand implements EditCommand {
+class PasteStructuredContentEditorCommand extends EditCommand {
   PasteStructuredContentEditorCommand({
     required List<DocumentNode> content,
     required DocumentPosition pastePosition,
@@ -273,6 +273,9 @@ class InsertNodeAtIndexCommand extends EditCommand {
 
   final int nodeIndex;
   final DocumentNode newNode;
+
+  @override
+  String describe() => "Insert node at index $nodeIndex: $newNode";
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -603,7 +606,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretRequest implements EditRequest {
   int get hashCode => nodeId.hashCode;
 }
 
-class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditCommand {
+class ReplaceNodeWithEmptyParagraphWithCaretCommand extends EditCommand {
   ReplaceNodeWithEmptyParagraphWithCaretCommand({
     required this.nodeId,
   });
@@ -659,7 +662,7 @@ class DeleteContentRequest implements EditRequest {
   final DocumentRange documentRange;
 }
 
-class DeleteContentCommand implements EditCommand {
+class DeleteContentCommand extends EditCommand {
   DeleteContentCommand({
     required this.documentRange,
   });
@@ -668,6 +671,9 @@ class DeleteContentCommand implements EditCommand {
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  String describe() => "Delete content within range: $documentRange";
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1039,7 +1045,7 @@ class DeleteNodeRequest implements EditRequest {
   final String nodeId;
 }
 
-class DeleteNodeCommand implements EditCommand {
+class DeleteNodeCommand extends EditCommand {
   DeleteNodeCommand({
     required this.nodeId,
   });

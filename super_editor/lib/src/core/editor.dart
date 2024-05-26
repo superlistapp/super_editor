@@ -324,18 +324,20 @@ class Editor implements RequestDispatcher {
     for (final transaction in _commandHistory) {
       print(" - transaction");
       for (final command in transaction.commands) {
-        print("   - ${command.runtimeType}");
+        print("   - ${command.runtimeType}: ${command.describe()}");
       }
     }
     print("---");
 
     // Move the latest command from the history to the future.
-    _commandFuture.add(_commandHistory.removeLast());
+    final transactionToUndo = _commandHistory.removeLast();
+    _commandFuture.add(transactionToUndo);
     print("The commands being undone are:");
-    for (final command in _commandHistory.last.commands) {
-      print("  - ${command.runtimeType}");
+    for (final command in transactionToUndo.commands) {
+      print("  - ${command.runtimeType}: ${command.describe()}");
     }
 
+    print("Resetting all editables to their last checkpoint...");
     for (final editable in context._resources.values) {
       // Don't let editables notify listeners during undo.
       editable.onTransactionStart();
@@ -345,6 +347,7 @@ class Editor implements RequestDispatcher {
     }
 
     // Replay all history except for the most recent command transaction.
+    print("Replaying all command history except for the most recent transaction...");
     final changeEvents = <EditEvent>[];
     for (final commandTransaction in _commandHistory) {
       print("Starting a command transaction.");
@@ -359,10 +362,13 @@ class Editor implements RequestDispatcher {
       print("Ending a command transaction.");
     }
 
+    print("Ending the transaction for all Editables...");
     for (final editable in context._resources.values) {
       // Let editables start notifying listeners again.
       editable.onTransactionEnd(changeEvents);
     }
+
+    print("DONE WITH UNDO");
   }
 
   void redo() {
@@ -479,11 +485,15 @@ abstract class RequestDispatcher {
 
 /// A command that alters something in a [Editor].
 abstract class EditCommand {
+  const EditCommand();
+
   /// Executes this command and logs all changes with the [executor].
   void execute(EditContext context, CommandExecutor executor);
 
   /// The desired "undo" behavior of this command.
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  String describe() => toString();
 }
 
 /// The way a command interacts with the history ledger, AKA "undo".

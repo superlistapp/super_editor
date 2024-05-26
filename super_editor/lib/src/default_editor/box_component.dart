@@ -310,7 +310,7 @@ class SelectableBox extends StatelessWidget {
   }
 }
 
-class DeleteUpstreamAtBeginningOfBlockNodeCommand implements EditCommand {
+class DeleteUpstreamAtBeginningOfBlockNodeCommand extends EditCommand {
   DeleteUpstreamAtBeginningOfBlockNodeCommand(this.node);
 
   final DocumentNode node;

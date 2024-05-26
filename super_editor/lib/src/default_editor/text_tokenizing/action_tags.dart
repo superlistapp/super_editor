@@ -112,7 +112,7 @@ class SubmitComposingActionTagRequest implements EditRequest {
   const SubmitComposingActionTagRequest();
 }
 
-class SubmitComposingActionTagCommand implements EditCommand {
+class SubmitComposingActionTagCommand extends EditCommand {
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
@@ -186,7 +186,7 @@ class CancelComposingActionTagRequest implements EditRequest {
   int get hashCode => tagRule.hashCode;
 }
 
-class CancelComposingActionTagCommand implements EditCommand {
+class CancelComposingActionTagCommand extends EditCommand {
   const CancelComposingActionTagCommand(this._tagRule);
 
   final TagRule _tagRule;

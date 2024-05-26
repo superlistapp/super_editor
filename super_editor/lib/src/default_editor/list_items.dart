@@ -525,7 +525,7 @@ class IndentListItemRequest implements EditRequest {
   final String nodeId;
 }
 
-class IndentListItemCommand implements EditCommand {
+class IndentListItemCommand extends EditCommand {
   IndentListItemCommand({
     required this.nodeId,
   });
@@ -563,7 +563,7 @@ class UnIndentListItemRequest implements EditRequest {
   final String nodeId;
 }
 
-class UnIndentListItemCommand implements EditCommand {
+class UnIndentListItemCommand extends EditCommand {
   UnIndentListItemCommand({
     required this.nodeId,
   });
@@ -608,7 +608,7 @@ class ConvertListItemToParagraphRequest implements EditRequest {
   final Map<String, dynamic>? paragraphMetadata;
 }
 
-class ConvertListItemToParagraphCommand implements EditCommand {
+class ConvertListItemToParagraphCommand extends EditCommand {
   ConvertListItemToParagraphCommand({
     required this.nodeId,
     this.paragraphMetadata,
@@ -655,7 +655,7 @@ class ConvertParagraphToListItemRequest implements EditRequest {
   final ListItemType type;
 }
 
-class ConvertParagraphToListItemCommand implements EditCommand {
+class ConvertParagraphToListItemCommand extends EditCommand {
   ConvertParagraphToListItemCommand({
     required this.nodeId,
     required this.type,
@@ -698,7 +698,7 @@ class ChangeListItemTypeRequest implements EditRequest {
   final ListItemType newType;
 }
 
-class ChangeListItemTypeCommand implements EditCommand {
+class ChangeListItemTypeCommand extends EditCommand {
   ChangeListItemTypeCommand({
     required this.nodeId,
     required this.newType,
@@ -742,7 +742,7 @@ class SplitListItemRequest implements EditRequest {
   final String newNodeId;
 }
 
-class SplitListItemCommand implements EditCommand {
+class SplitListItemCommand extends EditCommand {
   SplitListItemCommand({
     required this.nodeId,
     required this.splitPosition,

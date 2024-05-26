@@ -343,7 +343,7 @@ class ChangeSelectionRequest implements EditRequest {
 
 /// An [EditCommand] that changes the [DocumentSelection] in the [DocumentComposer]
 /// to the [newSelection].
-class ChangeSelectionCommand implements EditCommand {
+class ChangeSelectionCommand extends EditCommand {
   const ChangeSelectionCommand(
     this.newSelection,
     this.changeType,
@@ -363,6 +363,9 @@ class ChangeSelectionCommand implements EditCommand {
 
   @override
   HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  String describe() => "Change selection ($changeType): $newSelection";
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -502,7 +505,7 @@ class ChangeComposingRegionRequest implements EditRequest {
   int get hashCode => composingRegion.hashCode;
 }
 
-class ChangeComposingRegionCommand implements EditCommand {
+class ChangeComposingRegionCommand extends EditCommand {
   ChangeComposingRegionCommand(this.composingRegion);
 
   final DocumentRange? composingRegion;
@@ -548,7 +551,7 @@ class ChangeInteractionModeRequest implements EditRequest {
   int get hashCode => isInteractionModeDesired.hashCode;
 }
 
-class ChangeInteractionModeCommand implements EditCommand {
+class ChangeInteractionModeCommand extends EditCommand {
   ChangeInteractionModeCommand({
     required this.isInteractionModeDesired,
   });
@@ -570,7 +573,7 @@ class RemoveComposerPreferenceStylesRequest implements EditRequest {
   final Set<Attribution> stylesToRemove;
 }
 
-class RemoveComposerPreferenceStylesCommand implements EditCommand {
+class RemoveComposerPreferenceStylesCommand extends EditCommand {
   RemoveComposerPreferenceStylesCommand(this._stylesToRemove);
 
   final Set<Attribution> _stylesToRemove;
