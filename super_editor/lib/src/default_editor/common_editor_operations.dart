@@ -4,11 +4,13 @@ import 'dart:ui';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:linkify/linkify.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/default_document_editor_reactions.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
@@ -2381,11 +2383,18 @@ class PasteEditorCommand implements EditCommand {
 
     for (final wordBoundary in wordBoundaries) {
       final word = wordBoundary.textInside(pastedText);
-      final link = Uri.tryParse(word);
 
-      if (link != null && link.hasScheme && link.hasAuthority) {
-        // Valid url. Apply [LinkAttribution] to the url
-        final linkAttribution = LinkAttribution.fromUri(link);
+      final extractedLinks = linkify(
+        word,
+        options: const LinkifyOptions(
+          humanize: false,
+          looseUrl: true,
+        ),
+      );
+      final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+      if (linkCount == 1) {
+        // The word is a single URL. Linkify it.
+        final uri = parseLink(word);
 
         final startOffset = wordBoundary.start;
         // -1 because TextPosition's offset indexes the character after the
@@ -2394,7 +2403,7 @@ class PasteEditorCommand implements EditCommand {
 
         // Add link attribution.
         linkAttributionSpans.addAttribution(
-          newAttribution: linkAttribution,
+          newAttribution: LinkAttribution.fromUri(uri),
           start: startOffset,
           end: endOffset,
         );

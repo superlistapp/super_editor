@@ -634,7 +634,7 @@ class LinkifyReaction implements EditReaction {
     final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
     if (linkCount == 1) {
       // The word is a single URL. Linkify it.
-      final uri = _parseLink(word);
+      final uri = parseLink(word);
 
       text.addAttribution(
         LinkAttribution.fromUri(uri),
@@ -799,21 +799,24 @@ class LinkifyReaction implements EditReaction {
     if (updatePolicy == LinkUpdatePolicy.update) {
       changedNodeText.addAttribution(
         LinkAttribution.fromUri(
-          _parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
+          parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
         ),
         rangeToUpdate,
       );
     }
   }
+}
 
-  /// Parses the [text] as [Uri], prepending "https://" if it doesn't start
-  /// with "http://" or "https://".
-  Uri _parseLink(String text) {
-    final uri = text.startsWith("http://") || text.startsWith("https://") //
-        ? Uri.parse(text)
-        : Uri.parse("https://$text");
-    return uri;
-  }
+/// Parses the [text] as [Uri], prepending "https://" if it doesn't start
+/// with "http://" or "https://".
+// TODO: Make this private again. It was private, but we have some split linkification between the reaction
+//       and the paste behavior in common_editor_operations. Once we create a way for reactions to identify
+//       paste behaviors, move the paste linkification into the linkify reaction and make this private again.
+Uri parseLink(String text) {
+  final uri = text.startsWith("http://") || text.startsWith("https://") //
+      ? Uri.parse(text)
+      : Uri.parse("https://$text");
+  return uri;
 }
 
 /// Configuration for the action that should happen when a text containing
