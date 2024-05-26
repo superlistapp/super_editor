@@ -112,6 +112,9 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   /// Used to determine whether or not we need to send our editing value to the IME.
   TextEditingValue _osCurrentTextEditingValue = const TextEditingValue();
 
+  /// Whether or not a `TextInputAction` differente from `TextInputAction.newLine` was performed on the current frame.
+  bool _hasPerformedNonNewLineTextInputActionThisFrame = false;
+
   void attachToIme({
     bool autocorrect = true,
     bool enableSuggestions = true,
@@ -306,6 +309,16 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       return;
     }
 
+    if (_hasPerformedNonNewLineTextInputActionThisFrame &&
+        defaultTargetPlatform == TargetPlatform.iOS &&
+        deltas.every((e) => e is TextEditingDeltaReplacement)) {
+      // On iOS, pressing the action button can trigger the IME to try to apply auto-corrections
+      // after we have already processed the input action. Ignore replacement deltas on the same frame
+      // and forcefully update the IME with our current state.
+      _sendEditingValueToPlatform();
+      return;
+    }
+
     // Update our view from the OS editing value.
     for (final delta in deltas) {
       _osCurrentTextEditingValue = delta.apply(_osCurrentTextEditingValue);
@@ -380,8 +393,22 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   AutofillScope? get currentAutofillScope => null;
 
   @override
+  @mustCallSuper
   void performAction(TextInputAction action) {
     _onPerformActionPressed?.call(action);
+
+    // Keep track that we have performed a text input action on this frame so we can ignore auto-corrections
+    // reported after we handled the text input action.
+    //
+    // We don't ignore TextInputAction.newline because the insertion of the new line happens after the action
+    // is reported, and we need to handle the new line insertion to let users replace the selected content
+    // with a new line.
+    //
+    // See https://github.com/superlistapp/super_editor/issues/2004 for more information.
+    _hasPerformedNonNewLineTextInputActionThisFrame = action != TextInputAction.newline;
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _hasPerformedNonNewLineTextInputActionThisFrame = false;
+    });
   }
 
   @override

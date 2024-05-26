@@ -1791,6 +1791,11 @@ class CommonEditorOperations {
         ]);
       }
     } else if (extentNode is TaskNode) {
+      if (extentNode.text.text.isEmpty) {
+        // The task is empty. Convert it to a paragraph.
+        return convertToParagraph();
+      }
+
       final splitOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
       editor.execute([
@@ -2382,7 +2387,7 @@ class PasteEditorCommand extends EditCommand {
 
       if (link != null && link.hasScheme && link.hasAuthority) {
         // Valid url. Apply [LinkAttribution] to the url
-        final linkAttribution = LinkAttribution(url: link);
+        final linkAttribution = LinkAttribution.fromUri(link);
 
         final startOffset = wordBoundary.start;
         // -1 because TextPosition's offset indexes the character after the

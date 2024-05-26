@@ -27,7 +27,7 @@ class MagnifyingGlass extends StatelessWidget {
   }) : super(key: key);
 
   /// The offset from where the magnification is applied, to where this
-  /// magnifier is displayed.
+  /// magnifier is displayed, in density independent pixels.
   ///
   /// An [offsetFromFocalPoint] of `Offset.zero` would indicate that this
   /// [MagnifyingGlass] is displayed directly over the point of magnification.

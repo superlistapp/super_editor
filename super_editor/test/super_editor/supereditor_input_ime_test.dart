@@ -905,6 +905,59 @@ Paragraph two
       });
     });
 
+    group('on iPhone 15 (iOS 17.5)', () {
+      testWidgetsOnIos('ignores keyboard suggestions when pressing the newline button', (tester) async {
+        final testContext = await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place the caret at the start of the paragraph.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Type some text.
+        await tester.typeImeText('run tom');
+
+        // Press the new line button.
+        await tester.testTextInput.receiveAction(TextInputAction.newline);
+
+        // Simulate the IME sending a delta replacing "tom" with "Tom".
+        // At this point, we already added a new paragraph to the document,
+        // so these text ranges are invalid for us.
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaReplacement(
+            oldText: '. Run tom',
+            replacementText: 'Tom',
+            replacedRange: TextRange(start: 6, end: 9),
+            selection: TextSelection.collapsed(offset: 9),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+
+        await tester.ime.sendDeltas([
+          const TextEditingDeltaInsertion(
+            oldText: '. Run Tom',
+            textInserted: '\n',
+            insertionOffset: 9,
+            selection: TextSelection.collapsed(
+              offset: 10,
+              affinity: TextAffinity.downstream,
+            ),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ], getter: imeClientGetter);
+        await tester.pump();
+
+        final document = testContext.document;
+
+        // Ensure the replacement was ignored and a new empty node was added.
+        expect(document.nodes.length, 2);
+        expect((document.nodes[0] as TextNode).text.text, 'run tom');
+        expect((document.nodes[1] as TextNode).text.text, '');
+      });
+    });
+
     group('moves caret', () {
       testWidgetsOnDesktopAndWeb('to end of previous node when LEFT_ARROW is pressed at the beginning of a paragraph',
           (tester) async {
@@ -957,6 +1010,27 @@ Paragraph two
           ),
         );
       }, variant: inputSourceVariant);
+    });
+
+    testWidgetsOnWebDesktop('inside a CustomScrollView > inserts space instead of scrolling with SPACEBAR',
+        (tester) async {
+      final testContext = await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .insideCustomScrollView()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final nodeId = testContext.document.nodes.first.id;
+
+      // Place the caret at the beginning of the paragraph.
+      await tester.placeCaretInParagraph(nodeId, 0);
+
+      // Press space to insert a space character.
+      await _typeSpaceAdaptive(tester);
+
+      // Ensure the space character was inserted.
+      expect(SuperEditorInspector.findTextInComponent(nodeId).text, ' ');
     });
 
     testWidgetsOnWebDesktop('deletes a character with backspace', (tester) async {
@@ -1294,6 +1368,76 @@ Paragraph two
       });
     });
 
+    testWidgetsOnMobile('opens software keyboard when tapping on caret', (tester) async {
+      await tester
+          .createDocument() //
+          .withSingleParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Place the caret at "Lorem| ipsum".
+      await tester.placeCaretInParagraph('1', 5);
+
+      // Hide the software keyboard using the system button.
+      tester.testTextInput.hide();
+
+      bool wasKeyboardShown = false;
+
+      // Intercept the messages sent to the platform to check if
+      // we showed the software keyboard.
+      tester
+          .interceptChannel(SystemChannels.textInput.name) //
+          .interceptMethod(
+        'TextInput.show',
+        (methodCall) {
+          wasKeyboardShown = true;
+
+          return null;
+        },
+      );
+
+      // Tap again on the same selected position.
+      await tester.placeCaretInParagraph('1', 5);
+
+      // Ensure the keyboard was shown.
+      expect(wasKeyboardShown, isTrue);
+    });
+
+    testWidgetsOnIos('opens software keyboard when tapping on an expanded selection', (tester) async {
+      await tester
+          .createDocument() //
+          .withSingleParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Double tap to select "|Lorem| ipsum".
+      await tester.doubleTapInParagraph('1', 1);
+
+      // Hide the software keyboard using the system button.
+      tester.testTextInput.hide();
+
+      bool wasKeyboardShown = false;
+
+      // Intercept the messages sent to the platform to check if
+      // we showed the software keyboard.
+      tester
+          .interceptChannel(SystemChannels.textInput.name) //
+          .interceptMethod(
+        'TextInput.show',
+        (methodCall) {
+          wasKeyboardShown = true;
+
+          return null;
+        },
+      );
+
+      // Tap somewhere on the existing selection.
+      await tester.tapInParagraph('1', 3);
+
+      // Ensure the keyboard was shown.
+      expect(wasKeyboardShown, isTrue);
+    });
+
     testWidgetsOnAllPlatforms('clears composing region after losing focus', (tester) async {
       final focusNode = FocusNode();
 
@@ -1467,12 +1611,12 @@ MutableDocument _singleParagraphWithLinkDoc() {
           AttributedSpans(
             attributions: [
               SpanMarker(
-                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                attribution: LinkAttribution.fromUri(Uri.parse('https://google.com')),
                 offset: 0,
                 markerType: SpanMarkerType.start,
               ),
               SpanMarker(
-                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                attribution: LinkAttribution.fromUri(Uri.parse('https://google.com')),
                 offset: 17,
                 markerType: SpanMarkerType.end,
               ),
@@ -1493,4 +1637,21 @@ class _TestImeOverrides extends DeltaTextInputClientDecorator {
   void performAction(TextInputAction action) {
     performActionCallback(action);
   }
+}
+
+/// Simulates pressing the SPACE key.
+///
+/// First, this method simulates pressing the SPACE key on a physical keyboard. If that key event goes unhandled
+/// then this method generates an insertion delta of " ".
+///
+// TODO: extract this to the flutter_test_robots package.
+Future<void> _typeSpaceAdaptive(WidgetTester tester) async {
+  final handled = await tester.sendKeyEvent(LogicalKeyboardKey.space);
+
+  if (handled) {
+    await tester.pumpAndSettle();
+    return;
+  }
+
+  await tester.typeImeText(' ');
 }

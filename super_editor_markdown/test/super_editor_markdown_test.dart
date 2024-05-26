@@ -982,7 +982,7 @@ This is some code
         expect(styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
         expect(styledText.getAllAttributionsAt(13).containsAll([boldAttribution, italicsAttribution]), true);
         expect(styledText.getAllAttributionsAt(19).isEmpty, true);
-        expect(styledText.getAllAttributionsAt(40).single, LinkAttribution(url: Uri.https('example.org', '')));
+        expect(styledText.getAllAttributionsAt(40).single, LinkAttribution.fromUri(Uri.https('example.org', '')));
       });
 
       test('paragraph with special HTML symbols keeps the symbols by default', () {
@@ -1027,9 +1027,8 @@ This is some code
         expect(styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
         expect(styledText.getAllAttributionsAt(13).containsAll([boldAttribution, italicsAttribution]), true);
         expect(
-            styledText
-                .getAllAttributionsAt(20)
-                .containsAll([boldAttribution, italicsAttribution, LinkAttribution(url: Uri.https('example.org', ''))]),
+            styledText.getAllAttributionsAt(20).containsAll(
+                [boldAttribution, italicsAttribution, LinkAttribution.fromUri(Uri.https('example.org', ''))]),
             true);
         expect(styledText.getAllAttributionsAt(25).containsAll([boldAttribution, italicsAttribution]), true);
       });
@@ -1051,7 +1050,7 @@ This is some code
         expect(
             styledText
                 .getAllAttributionsAt(13)
-                .containsAll([boldAttribution, LinkAttribution(url: Uri.https('example.org', ''))]),
+                .containsAll([boldAttribution, LinkAttribution.fromUri(Uri.https('example.org', ''))]),
             true);
       });
 
@@ -1069,7 +1068,7 @@ This is some code
         expect(styledText.text, 'This **is a** link test');
 
         expect(styledText.getAllAttributionsAt(9).isEmpty, true);
-        expect(styledText.getAllAttributionsAt(12).single, LinkAttribution(url: Uri.https('example.org', '')));
+        expect(styledText.getAllAttributionsAt(12).single, LinkAttribution.fromUri(Uri.https('example.org', '')));
       });
 
       test('empty link', () {
@@ -1085,7 +1084,7 @@ This is some code
         final styledText = paragraph.text;
         expect(styledText.text, 'This is a link test');
 
-        expect(styledText.getAllAttributionsAt(12).single, LinkAttribution(url: Uri.parse('')));
+        expect(styledText.getAllAttributionsAt(12).single, LinkAttribution.fromUri(Uri.parse('')));
       });
 
       test('unordered list', () {

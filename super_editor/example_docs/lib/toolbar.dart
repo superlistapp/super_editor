@@ -263,7 +263,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
 
     final trimmedRange = _trimTextRangeWhitespace(text, selectionRange);
 
-    final linkAttribution = LinkAttribution(url: Uri.parse(url));
+    final linkAttribution = LinkAttribution.fromUri(Uri.parse(url));
 
     widget.editor.execute([
       AddTextAttributionsRequest(
@@ -1156,35 +1156,28 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         child: Row(
           children: [
             Expanded(
-              child: Focus(
+              child: SuperTextField(
                 focusNode: _urlFocusNode,
-
-                // We use a SuperTextField instead of a TextField because TextField
-                // automatically re-parents its FocusNode, which causes #609. Flutter
-                // #106923 tracks the TextField issue.
-                child: SuperTextField(
-                  focusNode: _urlFocusNode,
-                  textController: _urlController,
-                  minLines: 1,
-                  maxLines: 1,
-                  inputSource: TextInputSource.ime,
-                  hintBehavior: HintBehavior.displayHintUntilTextEntered,
-                  hintBuilder: (context) {
-                    return const Text(
-                      "enter a url...",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 16,
-                      ),
-                    );
-                  },
-                  textStyleBuilder: (_) {
-                    return const TextStyle(
-                      color: Colors.black,
+                textController: _urlController,
+                minLines: 1,
+                maxLines: 1,
+                inputSource: TextInputSource.ime,
+                hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                hintBuilder: (context) {
+                  return const Text(
+                    "enter a url...",
+                    style: TextStyle(
+                      color: Colors.grey,
                       fontSize: 16,
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
+                textStyleBuilder: (_) {
+                  return const TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                  );
+                },
               ),
             ),
             IconButton(

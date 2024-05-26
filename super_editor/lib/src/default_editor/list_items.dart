@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -123,53 +124,72 @@ class ListItemComponentBuilder implements ComponentBuilder {
 
     int? ordinalValue;
     if (node.type == ListItemType.ordered) {
+      // Counts the number of ordered list items above the current node with the same indentation level. Ordered
+      // list items with the same indentation level might be separated by ordered or unordered list items with
+      // different indentation levels.
       ordinalValue = 1;
       DocumentNode? nodeAbove = document.getNodeBefore(node);
       while (nodeAbove != null && nodeAbove is ListItemNode && nodeAbove.indent >= node.indent) {
         if (nodeAbove.indent == node.indent) {
+          if (nodeAbove.type != ListItemType.ordered) {
+            // We found an unordered list item with the same indentation level as the ordered list item.
+            // Other ordered list items aboce this one do not belong to the same list.
+            break;
+          }
           ordinalValue = ordinalValue! + 1;
         }
         nodeAbove = document.getNodeBefore(nodeAbove);
       }
     }
 
-    return ListItemComponentViewModel(
-      nodeId: node.id,
-      type: node.type,
-      indent: node.indent,
-      ordinalValue: ordinalValue,
-      text: node.text,
-      textStyleBuilder: noStyleBuilder,
-      selectionColor: const Color(0x00000000),
-    );
+    return switch (node.type) {
+      ListItemType.unordered => UnorderedListItemComponentViewModel(
+          nodeId: node.id,
+          indent: node.indent,
+          text: node.text,
+          textStyleBuilder: noStyleBuilder,
+          selectionColor: const Color(0x00000000),
+        ),
+      ListItemType.ordered => OrderedListItemComponentViewModel(
+          nodeId: node.id,
+          indent: node.indent,
+          ordinalValue: ordinalValue,
+          text: node.text,
+          textStyleBuilder: noStyleBuilder,
+          selectionColor: const Color(0x00000000),
+        ),
+    };
   }
 
   @override
   Widget? createComponent(
       SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
-    if (componentViewModel is! ListItemComponentViewModel) {
+    if (componentViewModel is! UnorderedListItemComponentViewModel &&
+        componentViewModel is! OrderedListItemComponentViewModel) {
       return null;
     }
 
-    if (componentViewModel.type == ListItemType.unordered) {
+    if (componentViewModel is UnorderedListItemComponentViewModel) {
       return UnorderedListItemComponent(
         componentKey: componentContext.componentKey,
         text: componentViewModel.text,
         styleBuilder: componentViewModel.textStyleBuilder,
         indent: componentViewModel.indent,
+        dotStyle: componentViewModel.dotStyle,
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
         composingRegion: componentViewModel.composingRegion,
         showComposingUnderline: componentViewModel.showComposingUnderline,
       );
-    } else if (componentViewModel.type == ListItemType.ordered) {
+    } else if (componentViewModel is OrderedListItemComponentViewModel) {
       return OrderedListItemComponent(
         componentKey: componentContext.componentKey,
         indent: componentViewModel.indent,
         listIndex: componentViewModel.ordinalValue!,
         text: componentViewModel.text,
         styleBuilder: componentViewModel.textStyleBuilder,
+        numeralStyle: componentViewModel.numeralStyle,
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
@@ -184,13 +204,11 @@ class ListItemComponentBuilder implements ComponentBuilder {
   }
 }
 
-class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
+abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   ListItemComponentViewModel({
     required String nodeId,
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
-    required this.type,
-    this.ordinalValue,
     required this.indent,
     required this.text,
     required this.textStyleBuilder,
@@ -203,8 +221,6 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
     this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
-  ListItemType type;
-  int? ordinalValue;
   int indent;
 
   @override
@@ -227,14 +243,129 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
   bool showComposingUnderline;
 
   @override
-  ListItemComponentViewModel copy() {
-    return ListItemComponentViewModel(
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is ListItemComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          indent == other.indent &&
+          text == other.text &&
+          textDirection == other.textDirection &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          composingRegion == other.composingRegion &&
+          showComposingUnderline == other.showComposingUnderline;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      indent.hashCode ^
+      text.hashCode ^
+      textDirection.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      composingRegion.hashCode;
+}
+
+class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
+  UnorderedListItemComponentViewModel({
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
+    required super.indent,
+    required super.text,
+    required super.textStyleBuilder,
+    this.dotStyle = const ListItemDotStyle(),
+    super.textDirection = TextDirection.ltr,
+    super.textAlignment = TextAlign.left,
+    super.selection,
+    required super.selectionColor,
+    super.highlightWhenEmpty = false,
+    super.composingRegion,
+    super.showComposingUnderline = false,
+  });
+
+  ListItemDotStyle dotStyle = const ListItemDotStyle();
+
+  @override
+  void applyStyles(Map<String, dynamic> styles) {
+    super.applyStyles(styles);
+    dotStyle = ListItemDotStyle(
+      color: styles[Styles.dotColor],
+      shape: styles[Styles.dotShape] ?? BoxShape.circle,
+      size: styles[Styles.dotSize] ?? const Size(4, 4),
+    );
+  }
+
+  @override
+  UnorderedListItemComponentViewModel copy() {
+    return UnorderedListItemComponentViewModel(
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
-      type: type,
-      ordinalValue: ordinalValue,
       indent: indent,
+      text: text,
+      textStyleBuilder: textStyleBuilder,
+      dotStyle: dotStyle,
+      textDirection: textDirection,
+      selection: selection,
+      selectionColor: selectionColor,
+      composingRegion: composingRegion,
+      showComposingUnderline: showComposingUnderline,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is UnorderedListItemComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          dotStyle == other.dotStyle;
+
+  @override
+  int get hashCode => super.hashCode ^ dotStyle.hashCode;
+}
+
+class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
+  OrderedListItemComponentViewModel({
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
+    required super.indent,
+    this.ordinalValue,
+    this.numeralStyle = OrderedListNumeralStyle.arabic,
+    required super.text,
+    required super.textStyleBuilder,
+    super.textDirection = TextDirection.ltr,
+    super.textAlignment = TextAlign.left,
+    super.selection,
+    required super.selectionColor,
+    super.highlightWhenEmpty = false,
+    super.composingRegion,
+    super.showComposingUnderline = false,
+  });
+
+  final int? ordinalValue;
+  OrderedListNumeralStyle numeralStyle;
+
+  @override
+  void applyStyles(Map<String, dynamic> styles) {
+    super.applyStyles(styles);
+    numeralStyle = styles[Styles.listNumeralStyle] ?? OrderedListNumeralStyle.arabic;
+  }
+
+  @override
+  OrderedListItemComponentViewModel copy() {
+    return OrderedListItemComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      indent: indent,
+      ordinalValue: ordinalValue,
+      numeralStyle: numeralStyle,
       text: text,
       textStyleBuilder: textStyleBuilder,
       textDirection: textDirection,
@@ -249,32 +380,37 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other &&
-          other is ListItemComponentViewModel &&
+          other is OrderedListItemComponentViewModel &&
           runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          type == other.type &&
           ordinalValue == other.ordinalValue &&
-          indent == other.indent &&
-          text == other.text &&
-          textDirection == other.textDirection &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline;
+          numeralStyle == other.numeralStyle;
 
   @override
-  int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      type.hashCode ^
-      ordinalValue.hashCode ^
-      indent.hashCode ^
-      text.hashCode ^
-      textDirection.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      composingRegion.hashCode ^
-      showComposingUnderline.hashCode;
+  int get hashCode => super.hashCode ^ ordinalValue.hashCode ^ numeralStyle.hashCode;
+}
+
+class ListItemDotStyle {
+  const ListItemDotStyle({
+    this.color,
+    this.shape = BoxShape.circle,
+    this.size = const Size(4, 4),
+  });
+
+  final Color? color;
+  final BoxShape shape;
+  final Size size;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ListItemDotStyle &&
+          runtimeType == other.runtimeType &&
+          color == other.color &&
+          shape == other.shape &&
+          size == other.size;
+
+  @override
+  int get hashCode => super.hashCode ^ color.hashCode ^ shape.hashCode ^ size.hashCode;
 }
 
 /// Displays a un-ordered list item in a document.
@@ -287,6 +423,7 @@ class UnorderedListItemComponent extends StatefulWidget {
     required this.text,
     required this.styleBuilder,
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
+    this.dotStyle,
     this.indent = 0,
     this.indentCalculator = _defaultIndentCalculator,
     this.textSelection,
@@ -303,6 +440,7 @@ class UnorderedListItemComponent extends StatefulWidget {
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final UnorderedListItemDotBuilder dotBuilder;
+  final ListItemDotStyle? dotStyle;
   final int indent;
   final double Function(TextStyle, int indent) indentCalculator;
   final TextSelection? textSelection;
@@ -333,11 +471,15 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = widget.styleBuilder({});
+    // Usually, the font size is obtained via the stylesheet. But the attributions might
+    // also contain a FontSizeAttribution, which overrides the stylesheet. Use the attributions
+    // of the first character to determine the text style.
+    final attributions = widget.text.getAllAttributionsAt(0).toSet();
+    final textStyle = widget.styleBuilder(attributions);
+
     final indentSpace = widget.indentCalculator(textStyle, widget.indent);
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.25));
-    const manualVerticalAdjustment = 3.0;
 
     return ProxyTextDocumentComponent(
       key: widget.componentKey,
@@ -347,7 +489,6 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
         children: [
           Container(
             width: indentSpace,
-            margin: const EdgeInsets.only(top: manualVerticalAdjustment),
             decoration: BoxDecoration(
               border: widget.showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
             ),
@@ -376,19 +517,61 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
   }
 }
 
+/// The styling of an ordered list numberal.
+enum OrderedListNumeralStyle {
+  /// Arabic numeral style (e.g. 1, 2, 3, ...).
+  arabic,
+
+  /// Lowercase alphabetic numeral style (e.g. a, b, c, ...).
+  lowerAlpha,
+
+  /// Uppercase alphabetic numeral style (e.g. A, B, C, ...).
+  upperAlpha,
+
+  /// Lowercase Roman numeral style (e.g. i, ii, iii, ...).
+  lowerRoman,
+
+  /// Uppercase Roman numeral style (e.g. I, II, III, ...).
+  upperRoman,
+}
+
 typedef UnorderedListItemDotBuilder = Widget Function(BuildContext, UnorderedListItemComponent);
 
 Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListItemComponent component) {
+  // Usually, the font size is obtained via the stylesheet. But the attributions might
+  // also contain a FontSizeAttribution, which overrides the stylesheet. Use the attributions
+  // of the first character to determine the text style.
+  final attributions = component.text.getAllAttributionsAt(0).toSet();
+  final textStyle = component.styleBuilder(attributions);
+
+  final dotSize = component.dotStyle?.size ?? const Size(4, 4);
+
   return Align(
     alignment: Alignment.centerRight,
-    child: Container(
-      width: 4,
-      height: 4,
-      margin: const EdgeInsets.only(right: 10),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: component.styleBuilder({}).color,
+    child: Text.rich(
+      TextSpan(
+        // Place a zero-width joiner before the bullet point to make it properly aligned. Without this,
+        // the bullet point is not vertically centered with the text, even when setting the textStyle
+        // on the whole rich text or WidgetSpan.
+        text: '\u200C',
+        style: textStyle,
+        children: [
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Container(
+              width: dotSize.width,
+              height: dotSize.height,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                shape: component.dotStyle?.shape ?? BoxShape.circle,
+                color: component.dotStyle?.color ?? textStyle.color,
+              ),
+            ),
+          ),
+        ],
       ),
+      // Don't scale the dot.
+      textScaler: const TextScaler.linear(1.0),
     ),
   );
 }
@@ -404,6 +587,7 @@ class OrderedListItemComponent extends StatefulWidget {
     required this.text,
     required this.styleBuilder,
     this.numeralBuilder = _defaultOrderedListItemNumeralBuilder,
+    this.numeralStyle = OrderedListNumeralStyle.arabic,
     this.indent = 0,
     this.indentCalculator = _defaultIndentCalculator,
     this.textSelection,
@@ -421,6 +605,7 @@ class OrderedListItemComponent extends StatefulWidget {
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final OrderedListItemNumeralBuilder numeralBuilder;
+  final OrderedListNumeralStyle numeralStyle;
   final int indent;
   final double Function(TextStyle, int indent) indentCalculator;
   final TextSelection? textSelection;
@@ -451,7 +636,12 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = widget.styleBuilder({});
+    // Usually, the font size is obtained via the stylesheet. But the attributions might
+    // also contain a FontSizeAttribution, which overrides the stylesheet. Use the attributions
+    // of the first character to determine the text style.
+    final attributions = widget.text.getAllAttributionsAt(0).toSet();
+    final textStyle = widget.styleBuilder(attributions);
+
     final indentSpace = widget.indentCalculator(textStyle, widget.indent);
     final textScaler = MediaQuery.textScalerOf(context);
     final lineHeight = textScaler.scale(textStyle.fontSize! * (textStyle.height ?? 1.0));
@@ -500,6 +690,12 @@ double _defaultIndentCalculator(TextStyle textStyle, int indent) {
 }
 
 Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListItemComponent component) {
+  // Usually, the font size is obtained via the stylesheet. But the attributions might
+  // also contain a FontSizeAttribution, which overrides the stylesheet. Use the attributions
+  // of the first character to determine the text style.
+  final attributions = component.text.getAllAttributionsAt(0).toSet();
+  final textStyle = component.styleBuilder(attributions);
+
   return OverflowBox(
     maxWidth: double.infinity,
     maxHeight: double.infinity,
@@ -508,13 +704,130 @@ Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListIt
       child: Padding(
         padding: const EdgeInsets.only(right: 5.0),
         child: Text(
-          '${component.listIndex}.',
+          '${_numeralForIndex(component.listIndex, component.numeralStyle)}.',
           textAlign: TextAlign.right,
-          style: component.styleBuilder({}).copyWith(),
+          style: textStyle,
         ),
       ),
     ),
   );
+}
+
+/// Returns the text to be displayed for the given [numeral] and [numeralStyle].
+String _numeralForIndex(int numeral, OrderedListNumeralStyle numeralStyle) {
+  return switch (numeralStyle) {
+    OrderedListNumeralStyle.arabic => '$numeral',
+    OrderedListNumeralStyle.upperRoman => _intToRoman(numeral) ?? '$numeral',
+    OrderedListNumeralStyle.lowerRoman => _intToRoman(numeral)?.toLowerCase() ?? '$numeral',
+    OrderedListNumeralStyle.upperAlpha => _intToAlpha(numeral),
+    OrderedListNumeralStyle.lowerAlpha => _intToAlpha(numeral).toLowerCase(),
+  };
+}
+
+/// Converts a number to its Roman numeral representation.
+///
+/// Returns `null` if the number is greater than 3999, as we don't support the
+/// vinculum notation. See more at https://en.wikipedia.org/wiki/Roman_numerals#cite_ref-Ifrah2000_52-1.
+String? _intToRoman(int number) {
+  if (number <= 0) {
+    throw ArgumentError('Roman numerals are only defined for positive integers');
+  }
+
+  if (number > 3999) {
+    // Starting from 4000, the Roman numeral representation uses a bar over the numeral to represent
+    // a multiplication by 1000. We don't support this notation.
+    return null;
+  }
+
+  const values = [1000, 500, 100, 50, 10, 5, 1];
+  const symbols = ["M", "D", "C", "L", "X", "V", "I"];
+
+  int remainingValueToConvert = number;
+
+  final result = StringBuffer();
+
+  for (int i = 0; i < values.length; i++) {
+    final currentSymbol = symbols[i];
+    final currentSymbolValue = values[i];
+
+    final count = remainingValueToConvert ~/ currentSymbolValue;
+
+    if (count > 0 && count < 4) {
+      // The number is bigger than the current symbol's value. Add the appropriate
+      // number of digits, respecting the maximum of three consecutive symbols.
+      // For example, for 300 we would add "CCC", but for 400 we won't add "CCCC".
+      result.write(currentSymbol * count);
+
+      remainingValueToConvert %= currentSymbolValue;
+    }
+
+    if (remainingValueToConvert <= 0) {
+      // The conversion is complete.
+      break;
+    }
+
+    // We still have some value to convert. Check if we can use subtractive notation.
+    if (i % 2 == 0 && i + 2 < values.length) {
+      // Numbers in even positions (0, 2, 4) can be subtracted with other numbers
+      // two positions to the right of them:
+      //
+      //  - 1000 (M) can be subtracted with 100 (C).
+      //  - 100 (C) can be subtracted with 10 (X).
+      //  - 10 (X) can be subtracted with 1 (I).
+      //
+      // Check if we can do this subtraction.
+      final subtractiveValue = currentSymbolValue - values[i + 2];
+      if (remainingValueToConvert >= subtractiveValue) {
+        result.write(symbols[i + 2] + currentSymbol);
+        remainingValueToConvert -= subtractiveValue;
+      }
+    } else if (i % 2 != 0 && i + 1 < values.length) {
+      // Numbers in odd positions (1, 3, 5) can be subtracted with the number
+      // immediately after it to the right:
+      //
+      // - 500 (D) can be subtracted with 100 (C).
+      // - 50 (L) can be subtracted with 10 (X).
+      // - 5 (V) can be subtracted with 1 (I).
+      //
+      // Check if we can do this subtraction.
+      final subtractiveValue = currentSymbolValue - values[i + 1];
+      if (remainingValueToConvert >= subtractiveValue) {
+        result.write(symbols[i + 1] + currentSymbol);
+        remainingValueToConvert -= subtractiveValue;
+      }
+    }
+  }
+
+  return result.toString();
+}
+
+/// Converts a number to a string composed of A-Z characters.
+///
+/// For example:
+/// - 1 -> A
+/// - 2 -> B
+/// - ...
+/// - 26 -> Z
+/// - 27 -> AA
+/// - 28 -> AB
+String _intToAlpha(int num) {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const base = characters.length;
+
+  String result = '';
+
+  while (num > 0) {
+    // Convert to 0-based index.
+    num -= 1;
+
+    // Find the next character to be added.
+    result = characters[num % base] + result;
+
+    // Move to the next digit.
+    num = num ~/ base;
+  }
+
+  return result;
 }
 
 class IndentListItemRequest implements EditRequest {

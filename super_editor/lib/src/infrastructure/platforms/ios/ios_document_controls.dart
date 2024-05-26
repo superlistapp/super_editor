@@ -504,6 +504,8 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
     required this.selection,
     required this.changeSelection,
     required this.handleColor,
+    this.caretWidth = 2,
+    this.handleBallDiameter = defaultIosHandleBallDiameter,
     required this.shouldCaretBlink,
     this.floatingCursorController,
     this.showDebugPaint = false,
@@ -519,6 +521,12 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 
   /// Color the iOS-style text selection drag handles.
   final Color handleColor;
+
+  final double caretWidth;
+
+  /// The diameter of the small circle that appears on the top and bottom of
+  /// expanded iOS text handles.
+  final double handleBallDiameter;
 
   /// Whether the caret should blink, whenever the caret is visible.
   final ValueListenable<bool> shouldCaretBlink;
@@ -538,10 +546,6 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 @visibleForTesting
 class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesDocumentLayer, DocumentSelectionLayout>
     with SingleTickerProviderStateMixin {
-  /// The diameter of the small circle that appears on the top and bottom of
-  /// expanded iOS text handles.
-  static const ballDiameter = 8.0;
-
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -675,8 +679,26 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     }
 
     if (selection.isCollapsed) {
+      Rect caretRect = documentLayout.getEdgeForPosition(selection.extent)!;
+
+      // Default caret width used by IOSCollapsedHandle.
+      const caretWidth = 2;
+
+      final layerBox = context.findRenderObject() as RenderBox?;
+      if (layerBox != null && layerBox.hasSize && caretRect.left + caretWidth >= layerBox.size.width) {
+        // Ajust the caret position to make it entirely visible because it's currently placed
+        // partially or entirely outside of the layers' bounds. This can happen for downstream selections
+        // of block components that take all the available width.
+        caretRect = Rect.fromLTWH(
+          layerBox.size.width - caretWidth,
+          caretRect.top,
+          caretRect.width,
+          caretRect.height,
+        );
+      }
+
       return DocumentSelectionLayout(
-        caret: documentLayout.getRectForPosition(selection.extent)!,
+        caret: caretRect,
       );
     } else {
       return DocumentSelectionLayout(
@@ -757,6 +779,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
             controller: _caretBlinkController,
             color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
             caretHeight: caret.height,
+            caretWidth: widget.caretWidth,
           );
         },
       ),
@@ -770,7 +793,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     return Positioned(
       key: _upstreamHandleKey,
       left: upstream.left,
-      top: upstream.top - ballDiameter,
+      top: upstream.top - widget.handleBallDiameter,
       child: FractionalTranslation(
         translation: const Offset(-0.5, 0),
         child: IOSSelectionHandle.upstream(
@@ -778,7 +801,8 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
           color: widget.handleColor,
           handleType: HandleType.upstream,
           caretHeight: upstream.height,
-          ballRadius: ballDiameter / 2,
+          caretWidth: widget.caretWidth,
+          ballRadius: widget.handleBallDiameter / 2,
         ),
       ),
     );
@@ -799,7 +823,8 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
           color: widget.handleColor,
           handleType: HandleType.downstream,
           caretHeight: downstream.height,
-          ballRadius: ballDiameter / 2,
+          caretWidth: widget.caretWidth,
+          ballRadius: widget.handleBallDiameter / 2,
         ),
       ),
     );

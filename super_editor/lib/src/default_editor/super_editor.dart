@@ -380,6 +380,8 @@ class SuperEditorState extends State<SuperEditor> {
   @visibleForTesting
   SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
 
+  late SoftwareKeyboardController _softwareKeyboardController;
+
   @override
   void initState() {
     super.initState();
@@ -394,6 +396,8 @@ class SuperEditorState extends State<SuperEditor> {
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
     _selectionLinks = widget.selectionLayerLinks ?? SelectionLayerLinks();
+
+    _softwareKeyboardController = widget.softwareKeyboardController ?? SoftwareKeyboardController();
 
     widget.editor.context.put(
       Editor.layoutKey,
@@ -448,6 +452,10 @@ class SuperEditorState extends State<SuperEditor> {
 
     if (widget.scrollController != oldWidget.scrollController) {
       _scrollController = widget.scrollController ?? ScrollController();
+    }
+
+    if (widget.softwareKeyboardController != oldWidget.softwareKeyboardController) {
+      _softwareKeyboardController = widget.softwareKeyboardController ?? SoftwareKeyboardController();
     }
 
     _recomputeIfLayoutShouldShowCaret();
@@ -581,6 +589,15 @@ class SuperEditorState extends State<SuperEditor> {
       widget.keyboardActions ??
       (inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions);
 
+  void _openSoftareKeyboard() {
+    if (!_softwareKeyboardController.hasDelegate) {
+      // There is no IME connection. It isn't possible to request the keyboard.
+      return;
+    }
+
+    _softwareKeyboardController.open();
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildGestureControlsScope(
@@ -696,7 +713,7 @@ class SuperEditorState extends State<SuperEditor> {
           editContext: editContext,
           clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
           clearSelectionWhenImeConnectionCloses: widget.selectionPolicies.clearSelectionWhenImeConnectionCloses,
-          softwareKeyboardController: widget.softwareKeyboardController,
+          softwareKeyboardController: _softwareKeyboardController,
           imePolicies: widget.imePolicies,
           imeConfiguration: widget.imeConfiguration ??
               SuperEditorImeConfiguration(
@@ -788,6 +805,7 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
+          openSoftwareKeyboard: _openSoftareKeyboard,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
@@ -800,6 +818,7 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
+          openSoftwareKeyboard: _openSoftareKeyboard,
           contentTapHandler: _contentTapDelegate,
           scrollController: _scrollController,
           dragHandleAutoScroller: _dragHandleAutoScroller,
@@ -1569,7 +1588,7 @@ class SuperEditorLaunchLinkTapHandler extends ContentTapDelegate {
     final tappedAttributions = textNode.text.getAllAttributionsAt(nodePosition.offset);
     for (final tappedAttribution in tappedAttributions) {
       if (tappedAttribution is LinkAttribution) {
-        return tappedAttribution.url;
+        return tappedAttribution.uri;
       }
     }
 

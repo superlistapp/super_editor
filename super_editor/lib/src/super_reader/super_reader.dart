@@ -703,7 +703,7 @@ class SuperReaderLaunchLinkTapHandler extends ContentTapDelegate {
     final tappedAttributions = textNode.text.getAllAttributionsAt(nodePosition.offset);
     for (final tappedAttribution in tappedAttributions) {
       if (tappedAttribution is LinkAttribution) {
-        return tappedAttribution.url;
+        return tappedAttribution.uri;
       }
     }
 

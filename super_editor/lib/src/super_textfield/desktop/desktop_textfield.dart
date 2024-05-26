@@ -4,17 +4,16 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/actions.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/material_scrollbar.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_input_configuration.dart';
-import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
@@ -460,8 +459,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required bool isMultiline,
     required Widget child,
   }) {
-    return Actions(
-      actions: defaultTargetPlatform == TargetPlatform.macOS ? disabledMacIntents : {},
+    return IntentBlocker(
+      intents: CurrentPlatform.isApple ? appleBlockedIntents : nonAppleBlockedIntents,
       child: SuperTextFieldKeyboardInteractor(
         focusNode: _focusNode,
         textFieldContext: _textFieldContext,
@@ -1125,7 +1124,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
 
   @override
   Widget build(BuildContext context) {
-    return NonReparentingFocus(
+    return Focus(
       focusNode: widget.focusNode,
       onKeyEvent: _onKeyPressed,
       child: widget.child,

@@ -151,6 +151,7 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
     required this.documentLayout,
     required this.selection,
     required this.changeSelection,
+    this.caretWidth = 2,
     this.caretColor,
     this.showDebugPaint = false,
   });
@@ -162,6 +163,8 @@ class AndroidHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   final ValueListenable<DocumentSelection?> selection;
 
   final void Function(DocumentSelection?, SelectionChangeType, String selectionReason) changeSelection;
+
+  final double caretWidth;
 
   /// Color used to render the Android-style caret (not handles), by default the color
   /// is retrieved from the root [SuperEditorAndroidControlsController].
@@ -313,8 +316,26 @@ class AndroidControlsDocumentLayerState
     }
 
     if (selection.isCollapsed && !_controlsController!.shouldShowExpandedHandles.value) {
+      Rect caretRect = documentLayout.getEdgeForPosition(selection.extent)!;
+
+      // Default caret width used by the Android caret.
+      const caretWidth = 2;
+
+      final layerBox = context.findRenderObject() as RenderBox?;
+      if (layerBox != null && layerBox.hasSize && caretRect.left + caretWidth >= layerBox.size.width) {
+        // Ajust the caret position to make it entirely visible because it's currently placed
+        // partially or entirely outside of the layers' bounds. This can happen for downstream selections
+        // of block components that take all the available width.
+        caretRect = Rect.fromLTWH(
+          layerBox.size.width - caretWidth,
+          caretRect.top,
+          caretRect.width,
+          caretRect.height,
+        );
+      }
+
       return DocumentSelectionLayout(
-        caret: documentLayout.getRectForPosition(selection.extent)!,
+        caret: caretRect,
       );
     } else {
       return DocumentSelectionLayout(
@@ -369,7 +390,7 @@ class AndroidControlsDocumentLayerState
       left: caret.left,
       top: caret.top,
       height: caret.height,
-      width: 2,
+      width: widget.caretWidth,
       child: Leader(
         link: _controlsController!.collapsedHandleFocalPoint,
         child: ListenableBuilder(

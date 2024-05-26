@@ -92,7 +92,9 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
   bool get isCaretPresent => widget.position != null && widget.position!.offset >= 0;
 
   @visibleForTesting
-  Offset? get caretOffset => isCaretPresent ? widget.textLayout.getOffsetForCaret(widget.position!) : null;
+  Offset? get caretOffset => isCaretPresent
+      ? widget.textLayout.getOffsetForCaret(widget.position!).translate(-widget.style.width / 2, 0.0)
+      : null;
 
   @visibleForTesting
   double? get caretHeight => isCaretPresent

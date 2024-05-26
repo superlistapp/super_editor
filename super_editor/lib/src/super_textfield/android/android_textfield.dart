@@ -4,7 +4,6 @@ import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_input_configuration.dart';
-import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
@@ -383,36 +382,44 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
   void _updateSelectionAndImeConnectionOnFocusChange() {
-    if (_focusNode.hasFocus) {
-      if (!_textEditingController.isAttachedToIme) {
-        _log.info('Attaching TextInputClient to TextInput');
+    // The focus change callback might be invoked in the build phase, usually when used inside
+    // an OverlayPortal. If that's the case, defer the setState call until the end of the frame.
+    WidgetsBinding.instance.runAsSoonAsPossible(() {
+      if (!mounted) {
+        return;
+      }
+
+      if (_focusNode.hasFocus) {
+        if (!_textEditingController.isAttachedToIme) {
+          _log.info('Attaching TextInputClient to TextInput');
+          setState(() {
+            if (!_textEditingController.selection.isValid) {
+              _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.length);
+            }
+
+            if (widget.imeConfiguration != null) {
+              _textEditingController.attachToImeWithConfig(widget.imeConfiguration!);
+            } else {
+              _textEditingController.attachToIme(
+                textInputAction: widget.textInputAction ?? TextInputAction.done,
+                textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
+              );
+            }
+
+            _autoScrollToKeepTextFieldVisible();
+            _showEditingControlsOverlay();
+          });
+        }
+      } else {
+        _log.info('Lost focus. Detaching TextInputClient from TextInput.');
         setState(() {
-          if (!_textEditingController.selection.isValid) {
-            _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.length);
-          }
-
-          if (widget.imeConfiguration != null) {
-            _textEditingController.attachToImeWithConfig(widget.imeConfiguration!);
-          } else {
-            _textEditingController.attachToIme(
-              textInputAction: widget.textInputAction ?? TextInputAction.done,
-              textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
-            );
-          }
-
-          _autoScrollToKeepTextFieldVisible();
-          _showEditingControlsOverlay();
+          _textEditingController.detachFromIme();
+          _textEditingController.selection = const TextSelection.collapsed(offset: -1);
+          _textEditingController.composingRegion = TextRange.empty;
+          _removeEditingOverlayControls();
         });
       }
-    } else {
-      _log.info('Lost focus. Detaching TextInputClient from TextInput.');
-      setState(() {
-        _textEditingController.detachFromIme();
-        _textEditingController.selection = const TextSelection.collapsed(offset: -1);
-        _textEditingController.composingRegion = TextRange.empty;
-        _removeEditingOverlayControls();
-      });
-    }
+    });
   }
 
   void _onTextOrSelectionChange() {
@@ -540,7 +547,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   Widget _buildTextField() {
     return TapRegion(
       groupId: widget.tapRegionGroupId,
-      child: NonReparentingFocus(
+      child: Focus(
         key: _textFieldKey,
         focusNode: _focusNode,
         onKeyEvent: _onKeyEventPressed,

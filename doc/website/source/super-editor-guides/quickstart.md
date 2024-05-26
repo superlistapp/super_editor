@@ -1,5 +1,6 @@
 ---
 title: Super Editor Quickstart
+contentRenderers: ["jinja", "markdown"]
 ---
 # Super Editor Quickstart
 Super Editor comes with sane defaults to help you get started with an editor experience, quickly. These defaults include support for images, list items, blockquotes, and horizontal rules, as well as selection gestures, and various keyboard shortcuts.

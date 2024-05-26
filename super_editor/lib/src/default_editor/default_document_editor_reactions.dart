@@ -653,7 +653,7 @@ class LinkifyReaction extends EditReaction {
       final uri = _parseLink(word);
 
       text.addAttribution(
-        LinkAttribution(url: uri),
+        LinkAttribution.fromUri(uri),
         SpanRange(wordStartOffset, endOffset - 1),
       );
     }
@@ -832,8 +832,8 @@ class LinkifyReaction extends EditReaction {
         AddTextAttributionsRequest(
           documentRange: linkRange,
           attributions: {
-            LinkAttribution(
-              url: _parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
+            LinkAttribution.fromUri(
+              _parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
             )
           },
         ),
