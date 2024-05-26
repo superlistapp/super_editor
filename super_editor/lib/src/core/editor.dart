@@ -298,13 +298,31 @@ class Editor implements RequestDispatcher {
     print("");
 
     _isReacting = true;
+
+    // First, let reactions modify the content of the active transaction.
     for (final reaction in reactionPipeline) {
       // Note: we pass the active change list because reactions will cause more
       // changes to be added to that list.
       print(
-          "${DateTime.now().microsecondsSinceEpoch} Running reaction ${reaction.runtimeType}. Active change list: $_activeChangeList");
+          "${DateTime.now().microsecondsSinceEpoch} Running modify content reaction ${reaction.runtimeType}. Active change list: $_activeChangeList");
+      reaction.modifyContent(context, this, _activeChangeList!);
+    }
+
+    // Second, start a new transaction and let reactions add separate changes.
+    // ignore: prefer_const_constructors
+    _transaction = CommandTransaction([]);
+    for (final reaction in reactionPipeline) {
+      // Note: we pass the active change list because reactions will cause more
+      // changes to be added to that list.
+      print(
+          "${DateTime.now().microsecondsSinceEpoch} Running react reaction ${reaction.runtimeType}. Active change list: $_activeChangeList");
       reaction.react(context, this, _activeChangeList!);
     }
+
+    if (_transaction!.commands.isNotEmpty) {
+      _commandHistory.add(_transaction!);
+    }
+
     print("${DateTime.now().microsecondsSinceEpoch} DONE _reactToChanges()");
 
     // FIXME: try removing this notify listeners
@@ -662,26 +680,56 @@ class DocumentEdit implements EditEvent {
   int get hashCode => change.hashCode;
 }
 
-/// An object that's notified with a change list from one or more
-/// commands that were just executed.
+/// An object that's notified with a change list from one or more commands that were just
+/// executed.
 ///
-/// An [EditReaction] can use the given [executor] to spawn additional
-/// [EditCommand]s that should run in response to the [changeList].
+/// An [EditReaction] can use the given [reactionExecutor] to spawn additional [EditCommand]s
+/// that should run in response to the [changeList].
 abstract class EditReaction {
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList);
+  const EditReaction();
+
+  /// Executes additional [modifications] within the current editor transaction.
+  ///
+  /// If undo is run, the recent changes AND the [modifications] will be undone, together.
+  /// This is useful, for example, for a reaction such as spell-check, whose reaction is
+  /// tied directly to the content and shouldn't stand on its own.
+  ///
+  /// To execute actions that are undone on their own, use [react].
+  void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {}
+
+  /// Executes additional [actions] in a new standalone transaction.
+  ///
+  /// If undo is run, these changes will be undone, but the changes leading up to this
+  /// call to [react] will not be undone by that undo call.
+  ///
+  /// To execute additional actions that are undone at the same time as the preceding
+  /// changes, use [modifyContent].
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {}
 }
 
 /// An [EditReaction] that delegates its reaction to a given callback function.
-class FunctionalEditReaction implements EditReaction {
-  FunctionalEditReaction(this._react);
+class FunctionalEditReaction extends EditReaction {
+  FunctionalEditReaction({
+    Reaction? modifyContent,
+    Reaction? react,
+  })  : _modifyContent = modifyContent,
+        _react = react,
+        assert(modifyContent != null || react != null);
 
-  final void Function(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList)
-      _react;
+  final Reaction? _modifyContent;
+  final Reaction? _react;
+
+  @override
+  void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) =>
+      _modifyContent?.call(editorContext, requestDispatcher, changeList);
 
   @override
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) =>
-      _react(editorContext, requestDispatcher, changeList);
+      _react?.call(editorContext, requestDispatcher, changeList);
 }
+
+typedef Reaction = void Function(
+    EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList);
 
 /// An object that's notified with a change list from one or more
 /// commands that were just executed within a [Editor].

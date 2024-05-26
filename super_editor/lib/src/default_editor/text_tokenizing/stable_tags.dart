@@ -369,7 +369,7 @@ extension StableTagIndexEditable on EditContext {
 
 /// An [EditReaction] that creates, updates, and removes composing stable tags, and commits those
 /// composing tags, causing them to become uneditable.
-class TagUserReaction implements EditReaction {
+class TagUserReaction extends EditReaction {
   const TagUserReaction({
     required TagRule tagRule,
     this.onUpdateComposingStableTag,
@@ -1110,7 +1110,7 @@ class ComposingStableTag {
 }
 
 /// An [EditReaction] that prevents partial selection of a stable user tag.
-class AdjustSelectionAroundTagReaction implements EditReaction {
+class AdjustSelectionAroundTagReaction extends EditReaction {
   const AdjustSelectionAroundTagReaction(this._tagRule);
 
   final TagRule _tagRule;

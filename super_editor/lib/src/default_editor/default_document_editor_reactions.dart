@@ -253,7 +253,7 @@ class BlockquoteConversionReaction extends ParagraphPrefixConversionReaction {
 /// the node's text is kept.
 ///
 /// Applied only to all [TextNode]s.
-class HorizontalRuleConversionReaction implements EditReaction {
+class HorizontalRuleConversionReaction extends EditReaction {
   // Matches "---" or "—-" (an em-dash followed by a regular dash) at the beginning of a line,
   // followed by a space.
   static final _hrPattern = RegExp(r'^(---|—-)\s');
@@ -330,7 +330,7 @@ class HorizontalRuleConversionReaction implements EditReaction {
 
 /// Base class for [EditReaction]s that want to take action when the user types text at
 /// the beginning of a paragraph, which matches a given [RegExp].
-abstract class ParagraphPrefixConversionReaction implements EditReaction {
+abstract class ParagraphPrefixConversionReaction extends EditReaction {
   const ParagraphPrefixConversionReaction({
     bool requireSpaceInsertion = true,
   }) : _requireSpaceInsertion = requireSpaceInsertion;
@@ -391,7 +391,7 @@ abstract class ParagraphPrefixConversionReaction implements EditReaction {
 
 /// When the user creates a new node, and the previous node is just a URL
 /// to an image, the replaces the previous node with the referenced image.
-class ImageUrlConversionReaction implements EditReaction {
+class ImageUrlConversionReaction extends EditReaction {
   const ImageUrlConversionReaction();
 
   @override
@@ -534,7 +534,7 @@ class ImageUrlConversionReaction implements EditReaction {
 /// A plain text URL only has a link applied to it when the user enters a space " "
 /// after a token that looks like a URL. If the user doesn't enter a trailing space,
 /// or the preceding token doesn't look like a URL, then the link attribution isn't aplied.
-class LinkifyReaction implements EditReaction {
+class LinkifyReaction extends EditReaction {
   const LinkifyReaction({
     this.updatePolicy = LinkUpdatePolicy.preserve,
   });
@@ -883,7 +883,7 @@ enum LinkUpdatePolicy {
 /// dash are removed and an em-dash (—) is inserted.
 ///
 /// This reaction applies to all [TextNode]s in the document.
-class DashConversionReaction implements EditReaction {
+class DashConversionReaction extends EditReaction {
   const DashConversionReaction();
 
   @override

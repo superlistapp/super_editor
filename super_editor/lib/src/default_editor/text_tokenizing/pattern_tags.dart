@@ -199,7 +199,7 @@ class PatternTagIndex with ChangeNotifier implements Editable {
 ///     #.
 ///     ##
 ///
-class PatternTagReaction implements EditReaction {
+class PatternTagReaction extends EditReaction {
   PatternTagReaction({
     TagRule tagRule = hashTagRule,
   }) : _tagRule = tagRule;

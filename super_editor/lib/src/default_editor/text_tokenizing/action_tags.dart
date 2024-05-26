@@ -264,7 +264,7 @@ class CancelComposingActionTagCommand extends EditCommand {
   }
 }
 
-class ActionTagComposingReaction implements EditReaction {
+class ActionTagComposingReaction extends EditReaction {
   ActionTagComposingReaction({
     required TagRule tagRule,
     required OnUpdateComposingActionTag onUpdateComposingActionTag,

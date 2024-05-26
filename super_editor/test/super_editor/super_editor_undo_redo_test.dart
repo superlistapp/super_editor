@@ -152,8 +152,7 @@ void main() {
       await widgetTester.pump();
 
       expect(editContext.document.nodes.first, isA<ParagraphNode>());
-      // TODO: Change this expectation to include a trailing space " ". Undoing the conversion shouldn't remove teh space
-      expect(SuperEditorInspector.findTextInComponent(editContext.document.nodes.first.id).text, "—-");
+      expect(SuperEditorInspector.findTextInComponent(editContext.document.nodes.first.id).text, "—- ");
     });
   });
 }
