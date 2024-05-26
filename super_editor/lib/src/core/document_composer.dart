@@ -563,3 +563,24 @@ class ChangeInteractionModeCommand implements EditCommand {
     context.find<MutableDocumentComposer>(Editor.composerKey).setIsInteractionMode(isInteractionModeDesired);
   }
 }
+
+class RemoveComposerPreferenceStylesRequest implements EditRequest {
+  const RemoveComposerPreferenceStylesRequest(this.stylesToRemove);
+
+  final Set<Attribution> stylesToRemove;
+}
+
+class RemoveComposerPreferenceStylesCommand implements EditCommand {
+  RemoveComposerPreferenceStylesCommand(this._stylesToRemove);
+
+  final Set<Attribution> _stylesToRemove;
+
+  @override
+  final historyBehavior = HistoryBehavior.undoable;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+    composer.preferences.removeStyles(_stylesToRemove);
+  }
+}

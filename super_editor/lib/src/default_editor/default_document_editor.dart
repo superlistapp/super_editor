@@ -52,6 +52,9 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
   (request) => request is ChangeInteractionModeRequest //
       ? ChangeInteractionModeCommand(isInteractionModeDesired: request.isInteractionModeDesired)
       : null,
+  (request) => request is RemoveComposerPreferenceStylesRequest //
+      ? RemoveComposerPreferenceStylesCommand(request.stylesToRemove)
+      : null,
   (request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,
