@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:characters/characters.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
@@ -70,6 +71,7 @@ class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
     ParagraphNode paragraph,
     String match,
   ) {
+    print("FOUND PREFIX MATCH!");
     final prefixLength = match.length - 1; // -1 for the space on the end
     late Attribution headerAttribution = _getHeaderAttributionForLevel(prefixLength);
 
@@ -346,20 +348,27 @@ abstract class ParagraphPrefixConversionReaction implements EditReaction {
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    print("Running paragraph prefix matcher for pattern: ${pattern.pattern}");
     final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final didTypeSpaceAtEnd = EditInspector.didTypeSpaceAtEndOfNode(document, changeList);
-    if (_requireSpaceInsertion && !didTypeSpaceAtEnd) {
+    final typedText = EditInspector.findLastTextUserTyped(document, changeList);
+    if (typedText == null) {
+      print("User didn't type any text. Fizzling.");
+      return;
+    }
+    if (_requireSpaceInsertion && !typedText.text.text.endsWith(" ")) {
+      print("User didn't end with a space. Fizzling.");
       return;
     }
 
-    final edit = changeList[changeList.length - 2] as DocumentEdit;
-    final textInsertionEvent = edit.change as TextInsertionEvent;
-    final paragraph = document.getNodeById(textInsertionEvent.nodeId);
+    final paragraph = document.getNodeById(typedText.nodeId);
     if (paragraph is! ParagraphNode) {
+      print("Not a ParagraphNode. Fizzling.");
       return;
     }
+
     final match = pattern.firstMatch(paragraph.text.text)?.group(0);
     if (match == null) {
+      print("Didn't find a match for the pattern. Fizzling.");
       return;
     }
 
@@ -1016,58 +1025,62 @@ class EditInspector {
     return true;
   }
 
-  /// Returns `true` if the given [edits] end with the user typing a space at the end of
-  /// a [TextNode], e.g., typing a " " at the end of a paragraph.
-  static bool didTypeSpaceAtEndOfNode(Document document, List<EditEvent> edits) {
-    if (edits.length < 2) {
-      // This reaction requires at least an insertion event and a selection change event.
-      // There are less than two events in the the change list, therefore this reaction
-      // shouldn't apply. Fizzle.
-      return false;
+  /// Finds and returns the last text the user typed within the given [edit]s, or `null` if
+  /// no text was typed.
+  static UserTypedText? findLastTextUserTyped(Document document, List<EditEvent> edits) {
+    final lastSpaceInsertion = edits.whereType<DocumentEdit>().lastWhereOrNull(
+        (edit) => edit.change is TextInsertionEvent && (edit.change as TextInsertionEvent).text.text.endsWith(" "));
+    if (lastSpaceInsertion == null) {
+      // The user didn't insert any text segment that ended with a space.
+      return null;
     }
 
-    // If the user typed a space, then the last event should be a selection change.
-    final selectionEvent = edits[edits.length - 1];
-    if (selectionEvent is! SelectionChangeEvent) {
-      return false;
+    final spaceInsertionChangeIndex = edits.indexWhere((edit) => edit == lastSpaceInsertion);
+    final selectionAfterInsertionIndex =
+        edits.indexWhere((edit) => edit is SelectionChangeEvent, spaceInsertionChangeIndex);
+    if (selectionAfterInsertionIndex < 0) {
+      // The text insertion wasn't followed by a selection change. It's not clear what this
+      // means, but we can't say with confidence that the user typed the space. Perhaps the
+      // space was injected by some other means.
+      return null;
     }
 
-    // If the user typed a space, then the second to last event should be a text
-    // insertion event with a space " ".
-    final edit = edits[edits.length - 2];
-    if (edit is! DocumentEdit) {
-      return false;
+    final newSelection = (edits[selectionAfterInsertionIndex] as SelectionChangeEvent).newSelection;
+    if (newSelection == null) {
+      // There's no selection, which indicates something other than the user typing.
+      return null;
     }
-    final textInsertionEvent = edit.change;
-    if (textInsertionEvent is! TextInsertionEvent) {
-      return false;
-    }
-    if (textInsertionEvent.text.text != " ") {
-      return false;
+    if (!newSelection.isCollapsed) {
+      // The selection is expanded, which indicates something other than the user typing.
+      return null;
     }
 
-    if (selectionEvent.oldSelection == null || selectionEvent.newSelection == null) {
-      return false;
-    }
-    if (selectionEvent.newSelection!.extent.nodeId != textInsertionEvent.nodeId) {
-      return false;
-    }
-
-    final editedNode = document.getNodeById(textInsertionEvent.nodeId)!;
-    if (editedNode is! TextNode) {
-      return false;
+    final textInsertionEvent = lastSpaceInsertion.change as TextInsertionEvent;
+    if (textInsertionEvent.nodeId != newSelection.extent.nodeId) {
+      // The selection is in a different node than where tex was inserted. This indicates
+      // something other than a user typing.
+      return null;
     }
 
-    final caretPosition = selectionEvent.newSelection!.extent.nodePosition as TextNodePosition;
-    final editedText = editedNode.text.text;
-    if (caretPosition.offset != editedText.length) {
-      return false;
+    final newCaretOffset = (newSelection.extent.nodePosition as TextNodePosition).offset;
+    if (textInsertionEvent.offset + textInsertionEvent.text.length != newCaretOffset) {
+      return null;
     }
 
-    // The inserted text was a space, and the caret now sits at the end of
-    // the edited text. We assume this means that the user just typed a space.
-    return true;
+    return UserTypedText(
+      textInsertionEvent.nodeId,
+      textInsertionEvent.offset,
+      textInsertionEvent.text,
+    );
   }
 
   EditInspector._();
+}
+
+class UserTypedText {
+  const UserTypedText(this.nodeId, this.offset, this.text);
+
+  final String nodeId;
+  final int offset;
+  final AttributedText text;
 }
