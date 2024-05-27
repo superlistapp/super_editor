@@ -492,11 +492,6 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     return viewportBox.globalToLocal(globalOffset);
   }
 
-  Offset _viewportOffsetToDocumentOffset(Offset viewportOffset) {
-    final globalOffset = viewportBox.localToGlobal(viewportOffset);
-    return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
-  }
-
   RenderBox get interactorBox => context.findRenderObject() as RenderBox;
 
   /// Converts the given [interactorOffset] from the [DocumentInteractor]'s coordinate
