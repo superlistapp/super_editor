@@ -14,6 +14,7 @@ import 'default_document_editor_reactions.dart';
 Editor createDefaultDocumentEditor({
   required MutableDocument document,
   required MutableDocumentComposer composer,
+  HistoryGroupingPolicy historyGroupingPolicy = mergeRapidTextInputPolicy,
 }) {
   final editor = Editor(
     editables: {
@@ -21,6 +22,7 @@ Editor createDefaultDocumentEditor({
       Editor.composerKey: composer,
     },
     requestHandlers: List.from(defaultRequestHandlers),
+    historyGroupingPolicy: historyGroupingPolicy,
     reactionPipeline: List.from(defaultEditorReactions),
   );
 

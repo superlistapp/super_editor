@@ -1,8 +1,10 @@
 import 'dart:math';
 
 import 'package:attributed_text/attributed_text.dart';
+import 'package:clock/clock.dart';
 import 'package:collection/collection.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
 
@@ -53,6 +55,7 @@ class Editor implements RequestDispatcher {
   Editor({
     required Map<String, Editable> editables,
     List<EditRequestHandler>? requestHandlers,
+    this.historyGroupingPolicy = neverMergePolicy,
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
   })  : requestHandlers = requestHandlers ?? [],
@@ -72,6 +75,8 @@ class Editor implements RequestDispatcher {
 
   /// Service Locator that provides all resources that are relevant for document editing.
   late final EditContext context;
+
+  final HistoryGroupingPolicy historyGroupingPolicy;
 
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
@@ -150,8 +155,7 @@ class Editor implements RequestDispatcher {
     print("STARTING TRANSACTION");
     _isInTransaction = true;
     _activeChangeList = <EditEvent>[];
-    // ignore: prefer_const_constructors
-    _transaction = CommandTransaction([]);
+    _transaction = CommandTransaction([], clock.now());
 
     _onTransactionStart();
     print("TRANSACTION WAS STARTED");
@@ -166,7 +170,18 @@ class Editor implements RequestDispatcher {
     }
 
     if (_transaction!.commands.isNotEmpty) {
-      _commandHistory.add(_transaction!);
+      if (_commandHistory.isNotEmpty &&
+          historyGroupingPolicy.shouldMergeLatestTransaction(_transaction!, _commandHistory.last)) {
+        // Merge this transaction with the transaction just before it. This is used, for example,
+        // to group repeated text input into a single undoable transaction.
+        _commandHistory.last
+          ..commands.addAll(_transaction!.commands)
+          ..changes.addAll(_transaction!.changes)
+          ..lastChangeTime = clock.now();
+      } else {
+        // Add this transaction onto the history stack.
+        _commandHistory.add(_transaction!);
+      }
     }
 
     // Now that an atomic set of changes have completed, let the reactions followup
@@ -221,8 +236,12 @@ class Editor implements RequestDispatcher {
 
       if (command.historyBehavior == HistoryBehavior.undoable) {
         undoableCommands.add(command);
+        _transaction!.changes.addAll(List.from(commandChanges));
       }
     }
+
+    // Log the time at the end of the actions in this transaction.
+    _transaction!.lastChangeTime = clock.now();
 
     if (undoableCommands.isNotEmpty) {
       _transaction!.commands.addAll(undoableCommands);
@@ -299,7 +318,7 @@ class Editor implements RequestDispatcher {
 
     // Second, start a new transaction and let reactions add separate changes.
     // ignore: prefer_const_constructors
-    _transaction = CommandTransaction([]);
+    _transaction = CommandTransaction([], clock.now());
     for (final reaction in reactionPipeline) {
       // Note: we pass the active change list because reactions will cause more
       // changes to be added to that list.
@@ -413,10 +432,134 @@ class Editor implements RequestDispatcher {
   }
 }
 
+abstract interface class HistoryGroupingPolicy {
+  bool shouldMergeLatestTransaction(CommandTransaction newTransaction, CommandTransaction previousTransaction);
+}
+
+/// A [HistoryGroupingPolicy] that defers to a list of other individual policies.
+///
+/// For most applications, an [Editor]'s transaction grouping policy should probably be
+/// a [HistoryGroupingPolicyList] because most applications will want a number of different
+/// heuristics that decide when to merge transactions.
+///
+/// You can change the way the list of policies make a decision by way of the [choice]
+/// property. You can either merge transactions when *any* of the policies want to merge
+/// ([HistoryGroupingPolicyListChoice.anyPass]), or you can merge transactions when *all*
+/// of the policies want to merge ([HistoryGroupingPolicyListChoice.allPass]).
+class HistoryGroupingPolicyList implements HistoryGroupingPolicy {
+  const HistoryGroupingPolicyList(
+    this.policies, [
+    this.choice = HistoryGroupingPolicyListChoice.anyPass,
+  ]);
+
+  final List<HistoryGroupingPolicy> policies;
+  final HistoryGroupingPolicyListChoice choice;
+
+  @override
+  bool shouldMergeLatestTransaction(CommandTransaction newTransaction, CommandTransaction previousTransaction) {
+    for (final policy in policies) {
+      switch (choice) {
+        case HistoryGroupingPolicyListChoice.anyPass:
+          if (policy.shouldMergeLatestTransaction(newTransaction, previousTransaction)) {
+            return true;
+          }
+        case HistoryGroupingPolicyListChoice.allPass:
+          if (!policy.shouldMergeLatestTransaction(newTransaction, previousTransaction)) {
+            return false;
+          }
+      }
+    }
+
+    switch (choice) {
+      case HistoryGroupingPolicyListChoice.anyPass:
+        // None of the policies wanted to merge. Don't merge transactions.
+        return false;
+      case HistoryGroupingPolicyListChoice.allPass:
+        // All of the policies wanted to merge. Merge the transactions.
+        return true;
+    }
+  }
+}
+
+enum HistoryGroupingPolicyListChoice {
+  /// Transactions will be combined if a single policy in the list wants to
+  /// combine them.
+  anyPass,
+
+  /// Transactions will be combined only if every policy in the list wants to
+  /// combine them.
+  allPass;
+}
+
+const neverMergePolicy = _NeverMergePolicy();
+
+class _NeverMergePolicy implements HistoryGroupingPolicy {
+  const _NeverMergePolicy();
+
+  @override
+  bool shouldMergeLatestTransaction(CommandTransaction newTransaction, CommandTransaction previousTransaction) => false;
+}
+
+/// A sane default configuration of a [MergeRapidTextInputPolicy].
+///
+/// To customize the merge time, create a [MergeRapidTextInputPolicy] with the desired merge time.
+const mergeRapidTextInputPolicy = MergeRapidTextInputPolicy();
+
+class MergeRapidTextInputPolicy implements HistoryGroupingPolicy {
+  const MergeRapidTextInputPolicy([this._maxMergeTime = const Duration(milliseconds: 100)]);
+
+  final Duration _maxMergeTime;
+
+  @override
+  bool shouldMergeLatestTransaction(CommandTransaction newTransaction, CommandTransaction previousTransaction) {
+    final newContentEvents = newTransaction.changes
+        .where((change) => change is! SelectionChangeEvent && change is! ComposingRegionChangeEvent)
+        .toList();
+    if (newContentEvents.isEmpty) {
+      return false;
+    }
+    final newTextInsertionEvents =
+        newContentEvents.where((change) => change is DocumentEdit && change.change is TextInsertionEvent).toList();
+    if (newTextInsertionEvents.length != newContentEvents.length) {
+      // There were 1+ new content changes that weren't text input. Don't merge transactions.
+      return false;
+    }
+
+    // At this point we know that all new content changes were text input.
+
+    // Check that the previous transaction was also all text input.
+    final previousContentEvents = previousTransaction.changes
+        .where((change) => change is! SelectionChangeEvent && change is! ComposingRegionChangeEvent)
+        .toList();
+    if (previousContentEvents.isEmpty) {
+      return false;
+    }
+    final previousTextInsertionEvents =
+        previousContentEvents.where((change) => change is DocumentEdit && change.change is TextInsertionEvent).toList();
+    if (previousTextInsertionEvents.length != previousContentEvents.length) {
+      // There were 1+ new content changes that weren't text input. Don't merge transactions.
+      return false;
+    }
+
+    if (newTransaction.firstChangeTime.difference(previousTransaction.lastChangeTime!) > _maxMergeTime) {
+      // The text insertions were far enough apart in time that we don't want to merge them.
+      return false;
+    }
+
+    // The new and previous transactions were entirely text input. They happend quickly.
+    // Merge them together.
+    return true;
+  }
+}
+
 class CommandTransaction {
-  const CommandTransaction(this.commands);
+  CommandTransaction(this.commands, this.firstChangeTime) : changes = <EditEvent>[];
 
   final List<EditCommand> commands;
+  final List<EditEvent> changes;
+
+  DateTime firstChangeTime;
+  DateTime? lastChangeTime;
 }
 
 /// An implementation of [CommandExecutor], designed for [Editor].
@@ -475,6 +618,17 @@ abstract mixin class Editable {
   /// [Editable] should notify interested parties of changes.
   void onTransactionEnd(List<EditEvent> edits) {}
 
+  // /// Creates and returns a snapshot of this [Editable]'s current state, or `null` if
+  // /// this [Editable] is in its initial state.
+  // ///
+  // /// The returned snapshot must be a deep copy of any relevant information. It must not
+  // /// hold any references to data outside the snapshot.
+  // Object? createSnapshot();
+  //
+  // /// Updates the state of this [Editable] to match the given [snapshot].
+  // void restoreSnapshot(Object snapshot);
+
+  /// Resets this [Editable] to its initial state.
   void reset() {}
 }
 
