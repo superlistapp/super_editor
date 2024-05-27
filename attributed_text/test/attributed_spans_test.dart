@@ -601,8 +601,124 @@ void main() {
             newAttribution: _LinkAttribution(url: 'https://pub.dev'),
             start: 4,
             end: 12,
+            splitConflictingAttributions: false,
           );
         }, throwsA(isA<IncompatibleOverlappingAttributionsException>()));
+      });
+
+      test('splits incompatible attributions at the beginning', () {
+        final spans = AttributedSpans(
+          attributions: _createSpanMarkersForAttribution(
+            attribution: _LinkAttribution(url: 'https://flutter.dev'),
+            startOffset: 0,
+            endOffset: 6,
+          ),
+        );
+
+        // Add an overlapping link at the beginning.
+        spans.addAttribution(
+          newAttribution: _LinkAttribution(url: 'https://pub.dev'),
+          start: 0,
+          end: 4,
+        );
+
+        expect(
+          spans,
+          AttributedSpans(
+            attributions: [
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://pub.dev'),
+                startOffset: 0,
+                endOffset: 4,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://flutter.dev'),
+                startOffset: 5,
+                endOffset: 6,
+              ),
+            ],
+          ),
+        );
+      });
+
+      test('splits incompatible attributions at the middle', () {
+        final spans = AttributedSpans(attributions: [
+          ..._createSpanMarkersForAttribution(
+            attribution: _LinkAttribution(url: 'https://flutter.dev'),
+            startOffset: 0,
+            endOffset: 6,
+          ),
+          ..._createSpanMarkersForAttribution(
+            attribution: _LinkAttribution(url: 'https://pub.dev'),
+            startOffset: 10,
+            endOffset: 16,
+          ),
+        ]);
+
+        // Add an overlapping at the middle.
+        spans.addAttribution(
+          newAttribution: _LinkAttribution(url: 'https://google.com'),
+          start: 4,
+          end: 12,
+        );
+
+        expect(
+          spans,
+          AttributedSpans(
+            attributions: [
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://flutter.dev'),
+                startOffset: 0,
+                endOffset: 3,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://google.com'),
+                startOffset: 4,
+                endOffset: 12,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://pub.dev'),
+                startOffset: 13,
+                endOffset: 16,
+              ),
+            ],
+          ),
+        );
+      });
+
+      test('splits incompatible attributions at the end', () {
+        final spans = AttributedSpans(
+          attributions: _createSpanMarkersForAttribution(
+            attribution: _LinkAttribution(url: 'https://flutter.dev'),
+            startOffset: 0,
+            endOffset: 6,
+          ),
+        );
+
+        // Add an overlapping link at the end.
+        spans.addAttribution(
+          newAttribution: _LinkAttribution(url: 'https://pub.dev'),
+          start: 4,
+          end: 12,
+        );
+
+        expect(
+          spans,
+          AttributedSpans(
+            attributions: [
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://flutter.dev'),
+                startOffset: 0,
+                endOffset: 3,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://pub.dev'),
+                startOffset: 4,
+                endOffset: 12,
+              ),
+            ],
+          ),
+        );
       });
 
       test('compatible attributions are merged', () {

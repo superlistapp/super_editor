@@ -285,13 +285,20 @@ class AttributedSpans {
   /// `true`.
   ///
   /// It [newAttribution] overlaps a conflicting span, or if [newAttribution]
-  /// overlaps a merge-able span but [autoMerge] is `false`, a
-  /// [IncompatibleOverlappingAttributionsException] is thrown.
+  /// overlaps a merge-able span but [autoMerge] is `false`, one of the following
+  /// outcomes happen:
+  ///
+  /// - If [splitConflictingAttributions] is `true`, the conflicting span is removed from
+  /// the overlapping region, and the new attribution is added in its place.
+  ///
+  /// - If [splitConflictingAttributions] is `false`, an [IncompatibleOverlappingAttributionsException]
+  /// is thrown.
   void addAttribution({
     required Attribution newAttribution,
     required int start,
     required int end,
     bool autoMerge = true,
+    bool splitConflictingAttributions = true,
   }) {
     if (start < 0 || start > end) {
       _log.warning("Tried to add an attribution ($newAttribution) at an invalid start/end: $start -> $end");
@@ -301,27 +308,41 @@ class AttributedSpans {
     _log.info("Adding attribution ($newAttribution) from $start to $end");
     _log.finer("Has ${_markers.length} markers before addition");
 
-    // Ensure that no conflicting attribution overlaps the new attribution.
-    // If a conflict exists, throw an exception.
-    final matchingAttributions = getMatchingAttributionsWithin(attributions: {newAttribution}, start: start, end: end);
-    if (matchingAttributions.isNotEmpty) {
-      for (final matchingAttribution in matchingAttributions) {
-        if (!newAttribution.canMergeWith(matchingAttribution) || !autoMerge) {
-          late int conflictStart;
-          for (int i = start; i <= end; ++i) {
-            if (hasAttributionAt(i, attribution: matchingAttribution)) {
-              conflictStart = i;
-              break;
-            }
-          }
+    final conflicts = findConflictingAttributions(
+      attribution: newAttribution,
+      start: start,
+      end: end,
+    );
 
-          throw IncompatibleOverlappingAttributionsException(
-            existingAttribution: matchingAttribution,
-            newAttribution: newAttribution,
-            conflictStart: conflictStart,
-          );
-        }
-      }
+    if (conflicts.isNotEmpty && !splitConflictingAttributions) {
+      throw IncompatibleOverlappingAttributionsException(
+        existingAttribution: conflicts.first.existingAttribution,
+        newAttribution: newAttribution,
+        conflictStart: conflicts.first.conflictStart,
+      );
+    }
+
+    // Removes any conflicting attributions. For example, consider the following text,
+    // with a blue color attribution that spans the entire text:
+    //
+    //    blue green blue
+    //   |xxxxxxxxxxxxxxx|
+    //
+    // We can't apply a green color attribution to the word "green", because it's already
+    // attributed with blue. So, we need to remove the blue attribution from the word "green",
+    // which results in the following text:
+    //
+    //    blue green blue
+    //   |xxxxx-----xxxxx|
+    //
+    // After that, we can apply the desired attribution, because there isn't a conflicting attribution
+    // in this range anymore.
+    for (final conflict in conflicts) {
+      removeAttribution(
+        attributionToRemove: conflict.existingAttribution,
+        start: conflict.conflictStart,
+        end: conflict.conflictEnd,
+      );
     }
 
     if (!autoMerge) {

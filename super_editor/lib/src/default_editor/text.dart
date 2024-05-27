@@ -1265,47 +1265,18 @@ class AddTextAttributionsCommand implements EditCommand {
         final range = entry.value.toSpanRange();
         editorDocLog.info(' - adding attribution: $attribution. Range: $range');
 
-        final newSpans = node.text.spans.copy();
-
-        // Finds and removes any conflicting attributions. For example, consider the following text,
-        // with a blue color attribution that spans the entire text:
-        //
-        //    blue green blue
-        //   |xxxxxxxxxxxxxxx|
-        //
-        // We can't apply a green color attribution to the word "green", because it's already
-        // attributed with blue. So, we need to remove the blue attribution from the word "green",
-        // which results in the following text:
-        //
-        //    blue green blue
-        //   |xxxxx-----xxxxx|
-        //
-        // After that, we can apply the desired attribution, because there isn't a conflicting attribution
-        // in this range anymore.
-        final conflicts = node.text.spans.findConflictingAttributions(
-          attribution: attribution,
-          start: range.start,
-          end: range.end,
-          allowMerging: autoMerge,
-        );
-        for (final conflict in conflicts) {
-          newSpans.removeAttribution(
-            attributionToRemove: conflict.existingAttribution,
-            start: conflict.conflictStart,
-            end: conflict.conflictEnd,
-          );
-        }
-
-        newSpans.addAttribution(
-          newAttribution: attribution,
-          start: range.start,
-          end: range.end,
-          autoMerge: autoMerge,
-        );
-
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
-        node.text = AttributedText(node.text.text, newSpans);
+        node.text = AttributedText(
+          node.text.text,
+          node.text.spans.copy()
+            ..addAttribution(
+              newAttribution: attribution,
+              start: range.start,
+              end: range.end,
+              autoMerge: autoMerge,
+            ),
+        );
 
         executor.logChanges([
           DocumentEdit(
@@ -1577,47 +1548,18 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
           editorDocLog.info(' - Adding attribution: $attribution. Range: $range');
 
-          final newSpans = node.text.spans.copy();
-
-          // Finds and removes any conflicting attributions. For example, consider the following text,
-          // with a blue color attribution that spans the entire text:
-          //
-          //    blue green blue
-          //   |xxxxxxxxxxxxxxx|
-          //
-          // We can't apply a green color attribution to the word "green", because it's already
-          // attributed with blue. So, we need to remove the blue attribution from the word "green",
-          // which results in the following text:
-          //
-          //    blue green blue
-          //   |xxxxx-----xxxxx|
-          //
-          // After that, we can apply the desired attribution, because there isn't a conflicting attribution
-          // in this range anymore.
-          final conflicts = node.text.spans.findConflictingAttributions(
-            attribution: attribution,
-            start: range.start,
-            end: range.end,
-            allowMerging: true,
-          );
-          for (final conflict in conflicts) {
-            newSpans.removeAttribution(
-              attributionToRemove: conflict.existingAttribution,
-              start: conflict.conflictStart,
-              end: conflict.conflictEnd,
-            );
-          }
-
-          newSpans.addAttribution(
-            newAttribution: attribution,
-            start: range.start,
-            end: range.end,
-            autoMerge: true,
-          );
-
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
-          node.text = AttributedText(node.text.text, newSpans);
+          node.text = AttributedText(
+            node.text.text,
+            node.text.spans.copy()
+              ..addAttribution(
+                newAttribution: attribution,
+                start: range.start,
+                end: range.end,
+                autoMerge: true,
+              ),
+          );
         }
 
         final wasAttributionAdded = node.text.hasAttributionAt(range.start, attribution: attribution);
