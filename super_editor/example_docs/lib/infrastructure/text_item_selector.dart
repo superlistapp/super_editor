@@ -82,7 +82,7 @@ class TextItemSelector extends StatefulWidget {
 
 class _TextItemSelectorState extends State<TextItemSelector> {
   final PopoverController _popoverController = PopoverController();
-  final MaterialStatesController _buttonStatesController = MaterialStatesController();
+  final WidgetStatesController _buttonStatesController = WidgetStatesController();
   final FocusNode _focusNode = FocusNode();
 
   @override
@@ -108,7 +108,7 @@ class _TextItemSelectorState extends State<TextItemSelector> {
   }
 
   void _onPopoverVisibilityChange() {
-    _buttonStatesController.update(MaterialState.pressed, _popoverController.shouldShow);
+    _buttonStatesController.update(WidgetState.pressed, _popoverController.shouldShow);
   }
 
   @override
@@ -126,7 +126,7 @@ class _TextItemSelectorState extends State<TextItemSelector> {
   }
 
   Widget _buildButton(BuildContext context) {
-    final size = MaterialStateProperty.all(widget.buttonSize ?? const Size(97, 30));
+    final size = WidgetStateProperty.all(widget.buttonSize ?? const Size(97, 30));
     return Stack(
       alignment: Alignment.centerLeft,
       children: [
