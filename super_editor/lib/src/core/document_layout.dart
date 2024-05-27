@@ -1,9 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/editor.dart';
-import 'package:super_editor/src/infrastructure/composable_text.dart';
 
-import 'document_selection.dart';
 import 'document.dart';
+import 'document_selection.dart';
 
 /// Obtains a [DocumentLayout].
 ///

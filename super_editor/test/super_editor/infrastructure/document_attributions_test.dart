@@ -107,8 +107,8 @@ void main() {
                 'Text with attributions',
                 AttributedSpans(
                   attributions: [
-                    SpanMarker(attribution: FontSizeAttribution(14), offset: 5, markerType: SpanMarkerType.start),
-                    SpanMarker(attribution: FontSizeAttribution(14), offset: 7, markerType: SpanMarkerType.end),
+                    const SpanMarker(attribution: FontSizeAttribution(14), offset: 5, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: FontSizeAttribution(14), offset: 7, markerType: SpanMarkerType.end),
                   ],
                 ),
               ),
@@ -141,8 +141,8 @@ void main() {
                 'Text with attributions',
                 AttributedSpans(
                   attributions: [
-                    SpanMarker(attribution: FontSizeAttribution(14), offset: 5, markerType: SpanMarkerType.start),
-                    SpanMarker(attribution: FontSizeAttribution(14), offset: 7, markerType: SpanMarkerType.end),
+                    const SpanMarker(attribution: FontSizeAttribution(14), offset: 5, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: FontSizeAttribution(14), offset: 7, markerType: SpanMarkerType.end),
                   ],
                 ),
               ),
@@ -175,8 +175,8 @@ void main() {
                 'Text with attributions',
                 AttributedSpans(
                   attributions: [
-                    SpanMarker(attribution: FontSizeAttribution(14), offset: 5, markerType: SpanMarkerType.start),
-                    SpanMarker(attribution: FontSizeAttribution(14), offset: 8, markerType: SpanMarkerType.end),
+                    const SpanMarker(attribution: FontSizeAttribution(14), offset: 5, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: FontSizeAttribution(14), offset: 8, markerType: SpanMarkerType.end),
                   ],
                 ),
               ),
@@ -196,7 +196,7 @@ void main() {
           ),
         );
 
-        expect(document.getAttributionsByType<FontSizeAttribution>(selection), {FontSizeAttribution(14)});
+        expect(document.getAttributionsByType<FontSizeAttribution>(selection), {const FontSizeAttribution(14)});
       });
     });
   });

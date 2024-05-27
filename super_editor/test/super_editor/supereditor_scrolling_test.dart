@@ -211,7 +211,7 @@ void main() {
           .createDocument()
           .withLongTextContent()
           .withScrollController(scrollController)
-          .withEditorSize(Size(300, 300))
+          .withEditorSize(const Size(300, 300))
           .autoFocus(true)
           .withAppBar(100.0)
           .pump();
@@ -221,7 +221,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Place the caret at approximately at the middle of the first visible line.
-      await tester.tapAt(tester.getTopLeft(find.byType(SuperEditor)) + Offset(150, 20));
+      await tester.tapAt(tester.getTopLeft(find.byType(SuperEditor)) + const Offset(150, 20));
       await tester.pump(kDoubleTapTimeout);
 
       final scrollOffsetBeforeDrag = scrollController.offset;
@@ -230,7 +230,7 @@ void main() {
       final dragGesture = await tester.startGesture(tester.getCenter(
         SuperEditorInspector.findMobileCaretDragHandle(),
       ));
-      await dragGesture.moveBy(Offset(0, -20));
+      await dragGesture.moveBy(const Offset(0, -20));
       await tester.pump();
 
       // Pump some frames to let the auto-scroll kick in.
@@ -767,11 +767,11 @@ void main() {
         await tester //
             .createDocument()
             .withLongDoc()
-            .withEditorSize(Size(300, 300))
+            .withEditorSize(const Size(300, 300))
             .withScrollController(scrollController)
             .useStylesheet(
               defaultStylesheet.copyWith(
-                documentPadding: EdgeInsets.symmetric(horizontal: 100),
+                documentPadding: const EdgeInsets.symmetric(horizontal: 100),
               ),
             )
             .pump();
@@ -783,8 +783,8 @@ void main() {
 
         // Drag from approximately the bottom of the editor until the top.
         await tester.dragFrom(
-          tester.getBottomLeft(find.byType(SuperEditor)) + Offset(10, -10),
-          Offset(0, -300),
+          tester.getBottomLeft(find.byType(SuperEditor)) + const Offset(10, -10),
+          const Offset(0, -300),
         );
         await tester.pump();
 
@@ -792,7 +792,7 @@ void main() {
         expect(scrollController.offset, greaterThan(scrollOffsetBeforeDrag));
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          selectionEquivalentTo(DocumentSelection.collapsed(
+          selectionEquivalentTo(const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: '1',
               nodePosition: TextNodePosition(offset: 0),
@@ -811,11 +811,11 @@ void main() {
         await tester //
             .createDocument()
             .withLongDoc()
-            .withEditorSize(Size(300, 300))
+            .withEditorSize(const Size(300, 300))
             .withScrollController(scrollController)
             .useStylesheet(
               defaultStylesheet.copyWith(
-                documentPadding: EdgeInsets.symmetric(horizontal: 100),
+                documentPadding: const EdgeInsets.symmetric(horizontal: 100),
               ),
             )
             .pump();
@@ -827,8 +827,8 @@ void main() {
 
         // Drag from approximately the bottom of the editor until the top.
         await tester.dragFrom(
-          tester.getBottomLeft(find.byType(SuperEditor)) + Offset(10, -10),
-          Offset(0, -300),
+          tester.getBottomLeft(find.byType(SuperEditor)) + const Offset(10, -10),
+          const Offset(0, -300),
         );
         await tester.pump();
 
@@ -836,7 +836,7 @@ void main() {
         expect(scrollController.offset, greaterThan(scrollOffsetBeforeDrag));
         expect(
           SuperEditorInspector.findDocumentSelection(),
-          selectionEquivalentTo(DocumentSelection(
+          selectionEquivalentTo(const DocumentSelection(
             base: DocumentPosition(
               nodeId: '1',
               nodePosition: TextNodePosition(offset: 0),
@@ -859,11 +859,11 @@ void main() {
         await tester //
             .createDocument()
             .withLongDoc()
-            .withEditorSize(Size(300, 300))
+            .withEditorSize(const Size(300, 300))
             .withScrollController(scrollController)
             .useStylesheet(
               defaultStylesheet.copyWith(
-                documentPadding: EdgeInsets.symmetric(horizontal: 100),
+                documentPadding: const EdgeInsets.symmetric(horizontal: 100),
               ),
             )
             .pump();
@@ -872,8 +872,8 @@ void main() {
 
         // Drag from approximately the bottom of the editor until the top.
         await tester.dragFrom(
-          tester.getBottomLeft(find.byType(SuperEditor)) + Offset(10, -10),
-          Offset(0, -300),
+          tester.getBottomLeft(find.byType(SuperEditor)) + const Offset(10, -10),
+          const Offset(0, -300),
         );
         await tester.pump();
 
