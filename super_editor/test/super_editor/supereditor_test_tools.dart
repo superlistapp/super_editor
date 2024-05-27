@@ -452,7 +452,7 @@ class TestSuperEditorConfigurator {
                 child: SafeArea(
                   child: SizedBox(
                     height: _config.appBarHeight!,
-                    child: ColoredBox(color: Colors.yellow),
+                    child: const ColoredBox(color: Colors.yellow),
                   ),
                 ),
               )

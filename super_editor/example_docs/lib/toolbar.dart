@@ -802,15 +802,15 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         ),
         label: const Text('Menus'),
         style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all(Colors.white),
-          overlayColor: MaterialStateProperty.all(Colors.transparent),
-          foregroundColor: MaterialStateProperty.all(Colors.black),
-          fixedSize: MaterialStateProperty.all(const Size(100, 30)),
-          minimumSize: MaterialStateProperty.all(const Size(100, 30)),
-          textStyle: MaterialStateProperty.all(
+          backgroundColor: WidgetStateProperty.all(Colors.white),
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+          foregroundColor: WidgetStateProperty.all(Colors.black),
+          fixedSize: WidgetStateProperty.all(const Size(100, 30)),
+          minimumSize: WidgetStateProperty.all(const Size(100, 30)),
+          textStyle: WidgetStateProperty.all(
             const TextStyle(fontWeight: FontWeight.w200),
           ),
-          mouseCursor: MaterialStateProperty.all(SystemMouseCursors.text),
+          mouseCursor: WidgetStateProperty.all(SystemMouseCursors.text),
         ),
       ),
     );
@@ -1435,19 +1435,19 @@ class ToolbarImageButton extends StatefulWidget {
 }
 
 class _ToolbarImageButtonState extends State<ToolbarImageButton> {
-  final MaterialStatesController _statesController = MaterialStatesController();
+  final WidgetStatesController _statesController = WidgetStatesController();
 
   @override
   void initState() {
     super.initState();
-    _statesController.update(MaterialState.selected, widget.selected);
+    _statesController.update(WidgetState.selected, widget.selected);
   }
 
   @override
   void didUpdateWidget(covariant ToolbarImageButton oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selected != widget.selected) {
-      _statesController.update(MaterialState.selected, widget.selected);
+      _statesController.update(WidgetState.selected, widget.selected);
     }
   }
 
@@ -1467,9 +1467,9 @@ class _ToolbarImageButtonState extends State<ToolbarImageButton> {
         onPressed: widget.onPressed,
         statesController: _statesController,
         style: defaultToolbarButtonStyle.copyWith(
-          fixedSize: MaterialStateProperty.all(size),
-          minimumSize: MaterialStateProperty.all(size),
-          maximumSize: MaterialStateProperty.all(size),
+          fixedSize: WidgetStateProperty.all(size),
+          minimumSize: WidgetStateProperty.all(size),
+          maximumSize: WidgetStateProperty.all(size),
         ),
         child: widget.child,
       ),

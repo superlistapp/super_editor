@@ -5,8 +5,8 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
-import 'package:super_editor/super_editor.dart';
 
 /// A strategy for selecting text during a long-press drag gesture, similar to
 /// how the Android OS selects text during a long-press drag.
