@@ -1772,7 +1772,6 @@ void main() {
         // Ensure the text and the link were updated.
         final text = SuperEditorInspector.findTextInComponent(doc.nodes.first.id);
         expect(text.text, "www.duckduckgo.com");
-        print("Actual text spans: ${text.spans}");
         expect(
           text.hasAttributionsThroughout(
             attributions: {

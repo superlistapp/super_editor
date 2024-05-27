@@ -463,17 +463,14 @@ void main() {
         await tester.typeImeText("#abcdefghij ");
 
         // Delete part of the end.
-        print("-------- DELETING AT END ---------");
         await tester.placeCaretInParagraph("1", 11);
         await tester.pressBackspace();
 
         // Delete part of the middle.
-        print("-------- DELETING IN MIDDLE ---------");
         await tester.placeCaretInParagraph("1", 6);
         await tester.pressBackspace();
 
         // Delete part of the beginning.
-        print("-------- DELETING AT BEGINNING ---------");
         await tester.placeCaretInParagraph("1", 2);
         await tester.pressBackspace();
 

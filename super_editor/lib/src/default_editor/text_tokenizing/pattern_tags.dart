@@ -360,8 +360,6 @@ class PatternTagReaction extends EditReaction {
     editorPatternTagsLog.fine(
         "Found a pattern tag around caret: '${tagAroundCaret.indexedTag.tag}' - surrounding it with an attribution: ${tagAroundCaret.indexedTag.startOffset} -> ${tagAroundCaret.indexedTag.endOffset}");
 
-    print(
-        "FOUND A TAG: ${selectedNode.text.substring(tagAroundCaret.indexedTag.startOffset, tagAroundCaret.indexedTag.endOffset)}");
     requestDispatcher.execute([
       // Remove the old pattern tag attribution(s).
       RemoveTextAttributionsRequest(

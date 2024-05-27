@@ -193,12 +193,12 @@ class Editor implements RequestDispatcher {
   void execute(List<EditRequest> requests) {
     if (requests.isEmpty) {
       // No changes were requested. Don't waste time starting and ending transactions, etc.
-      print("No requests were given");
+      print("WARNING: Tried to execute requests without providing any requests!");
       print(StackTrace.current);
       return;
     }
 
-    print("Request execution:");
+    print("Executing requests:");
     for (final request in requests) {
       print(" - ${request.runtimeType}");
     }
@@ -270,7 +270,6 @@ class Editor implements RequestDispatcher {
   }
 
   void _onTransactionStart() {
-    print("_onTransactionStart()");
     for (final editable in context._resources.values) {
       editable.onTransactionStart();
     }
@@ -278,11 +277,9 @@ class Editor implements RequestDispatcher {
 
   void _onTransactionEnd() {
     for (final editable in context._resources.values) {
-      print("_onTransactionEnd() - ending transaction on editable: $editable");
       editable.onTransactionEnd(_activeChangeList!);
     }
 
-    print("Null'ing out the active change list after ending the transaction");
     _activeChangeList = null;
   }
 
@@ -291,20 +288,12 @@ class Editor implements RequestDispatcher {
       return;
     }
 
-    print("${DateTime.now().microsecondsSinceEpoch} _reactToChanges()");
-    for (final change in _activeChangeList!) {
-      print(" - ${change.runtimeType}");
-    }
-    print("");
-
     _isReacting = true;
 
     // First, let reactions modify the content of the active transaction.
     for (final reaction in reactionPipeline) {
       // Note: we pass the active change list because reactions will cause more
       // changes to be added to that list.
-      print(
-          "${DateTime.now().microsecondsSinceEpoch} Running modify content reaction ${reaction.runtimeType}. Active change list: $_activeChangeList");
       reaction.modifyContent(context, this, _activeChangeList!);
     }
 
@@ -314,16 +303,12 @@ class Editor implements RequestDispatcher {
     for (final reaction in reactionPipeline) {
       // Note: we pass the active change list because reactions will cause more
       // changes to be added to that list.
-      print(
-          "${DateTime.now().microsecondsSinceEpoch} Running react reaction ${reaction.runtimeType}. Active change list: $_activeChangeList");
       reaction.react(context, this, _activeChangeList!);
     }
 
     if (_transaction!.commands.isNotEmpty) {
       _commandHistory.add(_transaction!);
     }
-
-    print("${DateTime.now().microsecondsSinceEpoch} DONE _reactToChanges()");
 
     // FIXME: try removing this notify listeners
     // Notify all listeners that care about changes, but won't spawn additional requests.
@@ -333,7 +318,7 @@ class Editor implements RequestDispatcher {
   }
 
   void undo() {
-    print("Running undo()");
+    print("RUNNING UNDO");
     if (_commandHistory.isEmpty) {
       return;
     }
@@ -368,7 +353,6 @@ class Editor implements RequestDispatcher {
     print("Replaying all command history except for the most recent transaction...");
     final changeEvents = <EditEvent>[];
     for (final commandTransaction in _commandHistory) {
-      print("Starting a command transaction.");
       for (final command in commandTransaction.commands) {
         print("Executing command: ${command.runtimeType}");
         // We re-run the commands without tracking changes and without running reactions
@@ -377,10 +361,8 @@ class Editor implements RequestDispatcher {
         final commandChanges = _executeCommand(command);
         changeEvents.addAll(commandChanges);
       }
-      print("Ending a command transaction.");
     }
 
-    print("Ending the transaction for all Editables...");
     for (final editable in context._resources.values) {
       // Let editables start notifying listeners again.
       editable.onTransactionEnd(changeEvents);
@@ -390,7 +372,7 @@ class Editor implements RequestDispatcher {
   }
 
   void redo() {
-    print("Running redo()");
+    print("RUNNING REDO");
     if (_commandFuture.isEmpty) {
       return;
     }
@@ -412,7 +394,8 @@ class Editor implements RequestDispatcher {
       edits.addAll(commandEdits);
     }
     _commandHistory.add(commandTransaction);
-    print("Done with redo()");
+
+    print("DONE WITH REDO");
 
     for (final editable in context._resources.values) {
       // Let editables start notifying listeners again.

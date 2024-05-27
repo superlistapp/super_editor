@@ -71,7 +71,6 @@ class HeaderConversionReaction extends ParagraphPrefixConversionReaction {
     ParagraphNode paragraph,
     String match,
   ) {
-    print("FOUND PREFIX MATCH!");
     final prefixLength = match.length - 1; // -1 for the space on the end
     late Attribution headerAttribution = _getHeaderAttributionForLevel(prefixLength);
 
@@ -262,12 +261,10 @@ class HorizontalRuleConversionReaction extends EditReaction {
 
   @override
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    print("HR Reaction");
     if (changeList.length < 2) {
       // This reaction requires at least an insertion event and a selection change event.
       // There are less than two events in the the change list, therefore this reaction
       // shouldn't apply. Fizzle.
-      print("Less than 2 changes in change list - fizzling.");
       return;
     }
 
@@ -275,7 +272,6 @@ class HorizontalRuleConversionReaction extends EditReaction {
 
     final didTypeSpace = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpace) {
-      print("User didn't type a space - fizzling");
       return;
     }
 
@@ -292,11 +288,9 @@ class HorizontalRuleConversionReaction extends EditReaction {
     final paragraph = document.getNodeById(textInsertionEvent.nodeId) as TextNode;
     final match = _hrPattern.firstMatch(paragraph.text.text)?.group(0);
     if (match == null) {
-      print("No HR pattern match. Fizzling.");
       return;
     }
 
-    print("User inserted HR pattern. Replacing text with HR.");
     // The user typed a horizontal rule pattern at the beginning of a paragraph.
     // - Remove the dashes and the space.
     // - Insert a horizontal rule before the paragraph.
@@ -348,27 +342,22 @@ abstract class ParagraphPrefixConversionReaction extends EditReaction {
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    print("Running paragraph prefix matcher for pattern: ${pattern.pattern}");
     final document = editContext.find<MutableDocument>(Editor.documentKey);
     final typedText = EditInspector.findLastTextUserTyped(document, changeList);
     if (typedText == null) {
-      print("User didn't type any text. Fizzling.");
       return;
     }
     if (_requireSpaceInsertion && !typedText.text.text.endsWith(" ")) {
-      print("User didn't end with a space. Fizzling.");
       return;
     }
 
     final paragraph = document.getNodeById(typedText.nodeId);
     if (paragraph is! ParagraphNode) {
-      print("Not a ParagraphNode. Fizzling.");
       return;
     }
 
     final match = pattern.firstMatch(paragraph.text.text)?.group(0);
     if (match == null) {
-      print("Didn't find a match for the pattern. Fizzling.");
       return;
     }
 
@@ -544,7 +533,6 @@ class LinkifyReaction extends EditReaction {
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> edits) {
-    print("(MAYBE) Running linkify reaction");
     final document = editContext.find<MutableDocument>(Editor.documentKey);
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     bool didInsertSpace = false;
@@ -982,9 +970,7 @@ class EditInspector {
     // insertion event with a space " ".
     DocumentEdit? lastDocumentEditEvent;
     SelectionChangeEvent? lastSelectionChangeEvent;
-    print("Inspecting ${edits.length} edits");
     for (int i = edits.length - 1; i >= 0; i -= 1) {
-      print("Index: $i");
       if (edits[i] is DocumentEdit) {
         lastDocumentEditEvent = edits[i] as DocumentEdit;
       } else if (lastSelectionChangeEvent == null && edits[i] is SelectionChangeEvent) {
@@ -996,11 +982,9 @@ class EditInspector {
       }
     }
     if (lastDocumentEditEvent == null) {
-      print("There was no document edit. Fizzling.");
       return false;
     }
     if (lastSelectionChangeEvent == null) {
-      print("There was no selection change after inserting space. Fizzling.");
       return false;
     }
 

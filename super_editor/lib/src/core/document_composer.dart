@@ -118,8 +118,6 @@ class MutableDocumentComposer extends DocumentComposer implements Editable {
       _didChangeSelectionDuringTransaction = true;
     }
 
-    print("Changing selection in composer to:");
-    print("$newSelection");
     _latestSelectionChange = DocumentSelectionChange(
       selection: newSelection,
       reason: reason,
@@ -162,8 +160,6 @@ class MutableDocumentComposer extends DocumentComposer implements Editable {
     _isInInteractionMode.resumeNotifications();
 
     if (_didReset) {
-      print("Force notifying composer listeners. Current selection is:");
-      print("${_selectionNotifier.value}");
       // Our state was reset (possibly for to undo an operation). Anything may have changed.
       // Force notify all listeners.
       _didReset = false;
@@ -372,8 +368,6 @@ class ChangeSelectionCommand extends EditCommand {
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final initialSelection = composer.selection;
 
-    print("ChangeSelectionCommand - Changing selection to:");
-    print("$newSelection");
     composer.setSelectionWithReason(newSelection, reason);
 
     executor.logChanges([

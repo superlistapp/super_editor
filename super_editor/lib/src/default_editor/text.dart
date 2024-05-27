@@ -1704,8 +1704,6 @@ class InsertTextCommand extends EditCommand {
       return;
     }
 
-    print("Inserting text: '$textToInsert'");
-
     final textPosition = documentPosition.nodePosition as TextPosition;
     final textOffset = textPosition.offset;
     textNode.text = textNode.text.insertString(
@@ -1713,7 +1711,6 @@ class InsertTextCommand extends EditCommand {
       startOffset: textOffset,
       applyAttributions: attributions,
     );
-    print("Updated node text: '${textNode.text}'");
 
     executor.logChanges([
       DocumentEdit(
