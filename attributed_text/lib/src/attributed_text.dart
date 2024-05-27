@@ -179,7 +179,13 @@ class AttributedText {
     SpanRange range, {
     bool autoMerge = true,
   }) {
-    spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end, autoMerge: autoMerge);
+    spans.addAttribution(
+      newAttribution: attribution,
+      start: range.start,
+      end: range.end,
+      autoMerge: autoMerge,
+      splitConflictingAttributions: false,
+    );
     _notifyListeners();
   }
 

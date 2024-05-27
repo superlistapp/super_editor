@@ -312,6 +312,7 @@ class AttributedSpans {
       attribution: newAttribution,
       start: start,
       end: end,
+      allowMerging: autoMerge,
     );
 
     if (conflicts.isNotEmpty && !splitConflictingAttributions) {
