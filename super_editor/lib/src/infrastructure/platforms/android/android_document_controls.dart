@@ -309,7 +309,13 @@ class AndroidControlsDocumentLayerState
   }
 
   @override
-  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+  DocumentSelectionLayout? computeLayoutData(Element? contentElement, RenderObject? contentLayout) {
+    if (contentElement == null || contentElement is! StatefulElement || contentElement.state is! DocumentLayout) {
+      return null;
+    }
+
+    final documentLayout = contentElement.state as DocumentLayout;
+
     final selection = widget.selection.value;
     if (selection == null) {
       return null;
@@ -321,13 +327,15 @@ class AndroidControlsDocumentLayerState
       // Default caret width used by the Android caret.
       const caretWidth = 2;
 
-      final layerBox = context.findRenderObject() as RenderBox?;
-      if (layerBox != null && layerBox.hasSize && caretRect.left + caretWidth >= layerBox.size.width) {
+      // Use the content's RenderBox instead of the layer's RenderBox, because at this point, the layer
+      // hasn't been laid out yet.
+      final contentBox = contentElement.findRenderObject() as RenderBox?;
+      if (contentBox != null && contentBox.hasSize && caretRect.left + caretWidth >= contentBox.size.width) {
         // Ajust the caret position to make it entirely visible because it's currently placed
         // partially or entirely outside of the layers' bounds. This can happen for downstream selections
         // of block components that take all the available width.
         caretRect = Rect.fromLTWH(
-          layerBox.size.width - caretWidth,
+          contentBox.size.width - caretWidth,
           caretRect.top,
           caretRect.width,
           caretRect.height,
@@ -351,6 +359,12 @@ class AndroidControlsDocumentLayerState
         ),
       );
     }
+  }
+
+  @override
+  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+    // We don't ever call this method because we are using computeLayoutData directly.
+    return null;
   }
 
   @override
