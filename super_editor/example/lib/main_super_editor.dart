@@ -1,5 +1,4 @@
 import 'package:example/demos/example_editor/_example_document.dart';
-import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -31,7 +30,7 @@ void main() {
   runApp(
     MaterialApp(
       home: Scaffold(
-        body: ExampleEditor(),
+        body: _Demo(),
       ),
       supportedLocales: const [
         Locale('en', ''),
@@ -48,8 +47,68 @@ void main() {
   );
 }
 
+class _Demo extends StatefulWidget {
+  const _Demo();
+
+  @override
+  State<_Demo> createState() => _DemoState();
+}
+
+class _DemoState extends State<_Demo> {
+  late MutableDocument _document;
+  late MutableDocumentComposer _composer;
+  late Editor _docEditor;
+
+  @override
+  void initState() {
+    super.initState();
+    _document = createInitialDocument();
+    _composer = MutableDocumentComposer();
+    _docEditor = createDefaultDocumentEditor(document: _document, composer: _composer);
+  }
+
+  @override
+  void dispose() {
+    _composer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StandardEditor(
+            document: _document,
+            composer: _composer,
+            editor: _docEditor,
+          ),
+        ),
+        _buildToolbar(),
+      ],
+    );
+  }
+
+  Widget _buildToolbar() {
+    return Container(
+      width: 24,
+      height: double.infinity,
+      color: const Color(0xFF2F2F2F),
+      child: Column(),
+    );
+  }
+}
+
 class _StandardEditor extends StatefulWidget {
-  const _StandardEditor();
+  const _StandardEditor({
+    required this.document,
+    required this.composer,
+    required this.editor,
+  });
+
+  final MutableDocument document;
+  final MutableDocumentComposer composer;
+  final Editor editor;
 
   @override
   State<_StandardEditor> createState() => _StandardEditorState();
@@ -58,10 +117,6 @@ class _StandardEditor extends StatefulWidget {
 class _StandardEditorState extends State<_StandardEditor> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
-  late MutableDocument _doc;
-  late MutableDocumentComposer _composer;
-  late Editor _docEditor;
-
   late FocusNode _editorFocusNode;
 
   late ScrollController _scrollController;
@@ -69,9 +124,6 @@ class _StandardEditorState extends State<_StandardEditor> {
   @override
   void initState() {
     super.initState();
-    _doc = createInitialDocument();
-    _composer = MutableDocumentComposer();
-    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
     _editorFocusNode = FocusNode();
     _scrollController = ScrollController();
   }
@@ -80,19 +132,27 @@ class _StandardEditorState extends State<_StandardEditor> {
   void dispose() {
     _scrollController.dispose();
     _editorFocusNode.dispose();
-    _composer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return SuperEditor(
-      editor: _docEditor,
-      document: _doc,
-      composer: _composer,
+      editor: widget.editor,
+      document: widget.document,
+      composer: widget.composer,
       focusNode: _editorFocusNode,
       scrollController: _scrollController,
       documentLayoutKey: _docLayoutKey,
+      stylesheet: defaultStylesheet.copyWith(
+        addRulesAfter: [
+          taskStyles,
+        ],
+      ),
+      componentBuilders: [
+        TaskComponentBuilder(widget.editor),
+        ...defaultComponentBuilders,
+      ],
     );
   }
 }
