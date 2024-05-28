@@ -136,6 +136,25 @@ void main() {
         );
       });
 
+      testWidgetsOnAllPlatforms("does not start with a space", (tester) async {
+        final (_, tagIndex) = await _pumpTestEditor(
+          tester,
+          singleParagraphEmptyDoc(),
+        );
+
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Compose a slack tag.
+        await tester.typeImeText("@ ");
+
+        // Ensure we entered a trigger and a space.
+        final text = SuperEditorInspector.findTextInComponent("1");
+        expect(text.text, "@ ");
+
+        final composingTag = tagIndex.composingSlackTag.value;
+        expect(composingTag, isNull);
+      });
+
       testWidgetsOnAllPlatforms("continues after a space", (tester) async {
         final (_, tagIndex) = await _pumpTestEditor(
           tester,

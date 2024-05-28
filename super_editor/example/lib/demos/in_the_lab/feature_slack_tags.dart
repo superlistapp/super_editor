@@ -274,7 +274,7 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
       _isLoadingMatches = true;
     });
 
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 150));
 
     if (!mounted) {
       return;
@@ -347,6 +347,10 @@ class _UserSelectionPopoverState extends State<UserSelectionPopover> {
 
   @override
   Widget build(BuildContext context) {
+    if (_matchingUsers.isEmpty) {
+      return const SizedBox();
+    }
+
     return PopoverList(
       editorFocusNode: widget.editorFocusNode,
       popoverFocusNode: _popoverFocusNode,

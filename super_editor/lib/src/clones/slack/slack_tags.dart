@@ -525,14 +525,22 @@ class SlackTagReaction implements EditReaction {
     if (textIterator.startsWith(trigger.characters)) {
       editorSlackTagsLog
           .fine("Found an upstream trigger at offset $triggerOffset, caret offset: ${caretTextPosition.offset}");
+
+      final tagToken = triggerOffset != caretTextPosition.offset //
+          ? textNode.text.text.substring(triggerOffset + 1, caretTextPosition.offset)
+          : "";
+      if (tagToken.startsWith(" ")) {
+        // As a matter of policy, we don't activate tag composition if the first character
+        // after the trigger is a space.
+        return null;
+      }
+
       return ComposingSlackTag(
         textNode.rangeBetween(
           triggerOffset,
           caretTextPosition.offset,
         ),
-        triggerOffset != caretTextPosition.offset //
-            ? textNode.text.text.substring(triggerOffset + 1, caretTextPosition.offset)
-            : "",
+        tagToken,
       );
     }
 
