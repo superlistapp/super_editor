@@ -376,6 +376,106 @@ void main() {
         expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers.toList(), isEmpty);
       });
     });
+
+    group("does not parse syntax with empty content >", () {
+      testWidgets("bold", (tester) async {
+        final (document, _) = await _pumpScaffold(tester);
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Type the trigger characters, without any content between them.
+        await tester.typeImeText("****");
+
+        // Ensure we didn't try to parse the trigger characters.
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "****");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers, isEmpty);
+      });
+
+      testWidgets("italics > single trigger > star", (tester) async {
+        final (document, _) = await _pumpScaffold(tester);
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Type the trigger characters, without any content between them.
+        await tester.typeImeText("**");
+
+        // Ensure we didn't try to parse the trigger characters.
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "**");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers, isEmpty);
+      });
+
+      testWidgets("italics > tripple trigger > star", (tester) async {
+        final (document, _) = await _pumpScaffold(tester);
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Type the trigger characters, without any content between them.
+        await tester.typeImeText("******");
+
+        // Ensure we didn't try to parse the trigger characters.
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "******");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers, isEmpty);
+      });
+
+      testWidgets("italics > single trigger > underscore", (tester) async {
+        final (document, _) = await _pumpScaffold(tester);
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Type the trigger characters, without any content between them.
+        await tester.typeImeText("__");
+
+        // Ensure we didn't try to parse the trigger characters.
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "__");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers, isEmpty);
+      });
+
+      testWidgets("italics > tripple trigger > underscore", (tester) async {
+        final (document, _) = await _pumpScaffold(tester);
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Type the trigger characters, without any content between them.
+        await tester.typeImeText("______");
+
+        // Ensure we didn't try to parse the trigger characters.
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "______");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers, isEmpty);
+      });
+
+      testWidgets("strikethrough", (tester) async {
+        final (document, _) = await _pumpScaffold(tester);
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Type the trigger characters, without any content between them.
+        await tester.typeImeText("~~");
+
+        // Ensure we didn't try to parse the trigger characters.
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "~~");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers, isEmpty);
+      });
+
+      testWidgets("code", (tester) async {
+        final (document, _) = await _pumpScaffold(tester);
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Type the trigger characters, without any content between them.
+        await tester.typeImeText("``");
+
+        // Ensure we didn't try to parse the trigger characters.
+        expect(SuperEditorInspector.findTextInComponent(nodeId).text, "``");
+        expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers, isEmpty);
+      });
+    });
   });
 }
 
