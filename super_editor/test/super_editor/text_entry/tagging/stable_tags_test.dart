@@ -1080,7 +1080,7 @@ void main() {
         // Place the caret at the beginning of the paragraph.
         await tester.placeCaretInParagraph("1", 0);
 
-        // Type an emoji as first charactet 💙
+        // Type an emoji as first character 💙
         await tester.typeImeText("💙");
 
         expect(
