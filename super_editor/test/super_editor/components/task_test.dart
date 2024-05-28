@@ -589,6 +589,33 @@ void main() {
       expect(document.nodes.first, isA<ParagraphNode>());
       expect((document.nodes.first as ParagraphNode).text.text, "");
     });
+
+    testWidgetsOnAllPlatforms("allows using tasks without explicit configuration", (tester) async {
+      final document = MutableDocument(
+        nodes: [
+          TaskNode(id: "1", text: AttributedText(), isComplete: false),
+        ],
+      );
+
+      final composer = MutableDocumentComposer();
+      final editor = createDefaultDocumentEditor(document: document, composer: composer);
+
+      // Pump an editor without an explicit configuration for tasks.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuperEditor(
+              editor: editor,
+              document: document,
+              composer: composer,
+            ),
+          ),
+        ),
+      );
+
+      // Ensure the default task component is rendered.
+      expect(find.byType(TaskComponent), findsOneWidget);
+    });
   });
 }
 

@@ -9,7 +9,10 @@ class UnknownComponentBuilder implements ComponentBuilder {
 
   @override
   SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
-    return null;
+    return _UnkownViewModel(
+      nodeId: node.id,
+      padding: EdgeInsets.zero,
+    );
   }
 
   @override
@@ -21,6 +24,25 @@ class UnknownComponentBuilder implements ComponentBuilder {
       width: double.infinity,
       height: 100,
       child: const Placeholder(),
+    );
+  }
+}
+
+/// A [SingleColumnLayoutComponentViewModel] that represents an unknown content.
+///
+/// This is used so the editor doesn't crash when it encounters a node that it
+/// doesn't know how to render.
+class _UnkownViewModel extends SingleColumnLayoutComponentViewModel {
+  _UnkownViewModel({
+    required super.nodeId,
+    required super.padding,
+  });
+
+  @override
+  SingleColumnLayoutComponentViewModel copy() {
+    return _UnkownViewModel(
+      nodeId: nodeId,
+      padding: padding,
     );
   }
 }
