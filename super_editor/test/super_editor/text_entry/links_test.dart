@@ -1170,7 +1170,7 @@ void main() {
       // Place the caret at the beginning of the empty document.
       await tester.placeCaretInParagraph("1", 0);
 
-      // Type text with two URLs
+      // Type text with two URLs.
       await tester.typeImeText("https://www.google.com and https://flutter.dev ");
 
       // Ensure both URLs are linkified with the correct URLs.
@@ -1204,7 +1204,7 @@ void main() {
       // Place the caret at the beginning of the empty document.
       await tester.placeCaretInParagraph("1", 0);
 
-      // Paste text with a URL
+      // Paste text with a URL.
       tester.simulateClipboard();
       await tester.setSimulatedClipboardContent("Hello https://www.google.com world");
       // TODO: create and use something like tester.pressPasteAdaptive()
@@ -1214,7 +1214,7 @@ void main() {
         await tester.pressCtlV();
       }
 
-      // Ensure the URL is linkified
+      // Ensure the URL is linkified.
       final text = SuperEditorInspector.findTextInComponent("1");
       expect(text.text, "Hello https://www.google.com world");
       expect(
@@ -1276,7 +1276,7 @@ void main() {
       // Place the caret at the beginning of the empty document.
       await tester.placeCaretInParagraph("1", 0);
 
-      // Paste text with a URL
+      // Paste text with a URL.
       tester.simulateClipboard();
       await tester.setSimulatedClipboardContent("Hello google.com world");
       // TODO: create and use something like tester.pressPasteAdaptive()
@@ -1286,7 +1286,7 @@ void main() {
         await tester.pressCtlV();
       }
 
-      // Ensure the URL is linkified
+      // Ensure the URL is linkified.
       final text = SuperEditorInspector.findTextInComponent("1");
       expect(text.text, "Hello google.com world");
       expect(
@@ -1317,7 +1317,7 @@ void main() {
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText('Go to ');
 
-        // Ensure that the link is unchanged
+        // Ensure that the link is unchanged.
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown("Go to [www.google.com](www.google.com)"),
@@ -1340,7 +1340,7 @@ void main() {
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText('Go to ');
 
-        // Ensure that the link is unchanged
+        // Ensure that the link is unchanged.
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown("Go to [www.google.com](www.google.com)"),
@@ -1363,7 +1363,7 @@ void main() {
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText('Go to ');
 
-        // Ensure that the link is unchanged
+        // Ensure that the link is unchanged.
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown("Go to [www.google.com](www.google.com)"),
@@ -1387,7 +1387,7 @@ void main() {
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText(' to learn anything');
 
-        // Ensure that the link is unchanged
+        // Ensure that the link is unchanged.
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown("[www.google.com](www.google.com) to learn anything"),
@@ -1410,7 +1410,7 @@ void main() {
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText(' to learn anything');
 
-        // Ensure that the link is unchanged
+        // Ensure that the link is unchanged.
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown("[www.google.com](www.google.com) to learn anything"),
@@ -1433,7 +1433,7 @@ void main() {
         // Type some text by simulating hardware keyboard key presses.
         await tester.typeKeyboardText(' to learn anything');
 
-        // Ensure that the link is unchanged
+        // Ensure that the link is unchanged.
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown("[www.google.com](www.google.com) to learn anything"),
@@ -1483,7 +1483,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "www.goog|le.com"
+        // Place the caret at "www.goog|le.com".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 8);
 
         // Add characters.
@@ -1513,7 +1513,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "www.goog|le.com"
+        // Place the caret at "www.goog|le.com".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 8);
 
         // Add characters.
@@ -1536,7 +1536,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "|www.google.com"
+        // Place the caret at "|www.google.com".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
 
         // Delete downstream characters.
@@ -1571,7 +1571,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "|www.google.com"
+        // Place the caret at "|www.google.com".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
 
         // Delete downstream characters.
@@ -1629,7 +1629,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "|www.google.com"
+        // Place the caret at "|www.google.com".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
 
         // Delete downstream characters.
@@ -1655,7 +1655,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "www.google.com|"
+        // Place the caret at "www.google.com|".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 10);
 
         // Delete upstream characters.
@@ -1689,7 +1689,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "www.google|.com"
+        // Place the caret at "www.google|.com".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 10);
 
         // Remove characters.
@@ -1727,7 +1727,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "www.google|.com"
+        // Place the caret at "www.google|.com".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 10);
 
         // Remove a single character.
@@ -1750,7 +1750,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "www.google.com|"
+        // Place the caret at "www.google.com|".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
 
         // Delete upstream characters.
@@ -1785,7 +1785,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "www.google.com|"
+        // Place the caret at "www.google.com|".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
 
         // Delete upstream characters.
@@ -1816,7 +1816,7 @@ void main() {
 
         final doc = SuperEditorInspector.findDocument()!;
 
-        // Place the caret at "www.google.com|"
+        // Place the caret at "www.google.com|".
         await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
 
         // Delete an upstream characters.
@@ -1921,7 +1921,7 @@ void main() {
 
       final doc = SuperEditorInspector.findDocument()!;
 
-      // Place the caret at "www.google.com|"
+      // Place the caret at "www.google.com|".
       await tester.placeCaretInParagraph(doc.nodes.first.id, 14);
 
       // Delete a character at the end of the link.
