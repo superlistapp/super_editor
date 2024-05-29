@@ -195,7 +195,8 @@ Future<void> main() async {
 
         await expectLater(
           find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance('super-editor-caret-rotation-portrait-landscape-before-android', 52),
+          matchesGoldenFileWithPixelAllowance(
+              'goldens/super-editor-caret-rotation-portrait-landscape-before-android', 52),
         );
 
         // Make the window wider, pushing the caret text position up a line.
@@ -204,7 +205,8 @@ Future<void> main() async {
 
         await expectLater(
           find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance('super-editor-caret-rotation-portrait-landscape-after-android', 52),
+          matchesGoldenFileWithPixelAllowance(
+              'goldens/super-editor-caret-rotation-portrait-landscape-after-android', 52),
         );
       });
 
@@ -247,7 +249,8 @@ Future<void> main() async {
 
         await expectLater(
           find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance('super-editor-caret-rotation-landscape-portrait-before-android', 52),
+          matchesGoldenFileWithPixelAllowance(
+              'goldens/super-editor-caret-rotation-landscape-portrait-before-android', 52),
         );
 
         // Make the window thiner, pushing the caret text position down a line.
@@ -256,7 +259,8 @@ Future<void> main() async {
 
         await expectLater(
           find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance('super-editor-caret-rotation-landscape-portrait-after-android', 52),
+          matchesGoldenFileWithPixelAllowance(
+              'goldens/super-editor-caret-rotation-landscape-portrait-after-android', 52),
         );
       });
     });
