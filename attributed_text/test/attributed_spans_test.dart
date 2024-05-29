@@ -601,12 +601,12 @@ void main() {
             newAttribution: _LinkAttribution(url: 'https://pub.dev'),
             start: 4,
             end: 12,
-            splitConflictingAttributions: false,
+            overwriteConflictingSpans: false,
           );
         }, throwsA(isA<IncompatibleOverlappingAttributionsException>()));
       });
 
-      test('splits incompatible attributions at the beginning', () {
+      test('overwrites incompatible attributions at the beginning', () {
         final spans = AttributedSpans(
           attributions: _createSpanMarkersForAttribution(
             attribution: _LinkAttribution(url: 'https://flutter.dev'),
@@ -686,7 +686,7 @@ void main() {
         );
       });
 
-      test('splits incompatible attributions at the end', () {
+      test('overwrites incompatible attributions at the end', () {
         final spans = AttributedSpans(
           attributions: _createSpanMarkersForAttribution(
             attribution: _LinkAttribution(url: 'https://flutter.dev'),
@@ -716,6 +716,58 @@ void main() {
                 startOffset: 4,
                 endOffset: 12,
               ),
+            ],
+          ),
+        );
+      });
+
+      test('overwrites multiple incompatible attributions at the midle', () {
+        final spans = AttributedSpans(
+          attributions: [
+            ..._createSpanMarkersForAttribution(
+              attribution: _LinkAttribution(url: 'https://flutter.dev'),
+              startOffset: 0,
+              endOffset: 5,
+            ),
+            ..._createSpanMarkersForAttribution(
+              attribution: _LinkAttribution(url: 'https://pub.dev'),
+              startOffset: 10,
+              endOffset: 15,
+            ),
+            ..._createSpanMarkersForAttribution(
+              attribution: _LinkAttribution(url: 'https://google.com'),
+              startOffset: 20,
+              endOffset: 25,
+            ),
+          ],
+        );
+
+        // Add a link overlapping with all existing spans.
+        spans.addAttribution(
+          newAttribution: _LinkAttribution(url: 'https://youtube.com'),
+          start: 4,
+          end: 22,
+        );
+
+        expect(
+          spans,
+          AttributedSpans(
+            attributions: [
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://flutter.dev'),
+                startOffset: 0,
+                endOffset: 3,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://youtube.com'),
+                startOffset: 4,
+                endOffset: 22,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://google.com'),
+                startOffset: 23,
+                endOffset: 25,
+              )
             ],
           ),
         );
@@ -902,121 +954,6 @@ void main() {
         final span2 = AttributedSpans(attributions: [italicStart, italicEnd]);
 
         expect(span1 == span2, isFalse);
-      });
-    });
-
-    group('findConflictingAttributions', () {
-      test('finds attribution at the beginning', () {
-        final spans = _createAttributedSpansForAttribution(
-          attribution: _LinkAttribution(url: 'a'),
-          startOffset: 0,
-          endOffset: 5,
-        );
-
-        expect(
-          spans.findConflictingAttributions(
-            attribution: _LinkAttribution(url: 'b'),
-            start: 0,
-            end: 2,
-            allowMerging: true,
-          ),
-          [
-            AttributionConflict(
-              newAttribution: _LinkAttribution(url: 'b'),
-              existingAttribution: _LinkAttribution(url: 'a'),
-              conflictStart: 0,
-              conflictEnd: 2,
-            )
-          ],
-        );
-      });
-
-      test('finds attribution at the end', () {
-        final spans = _createAttributedSpansForAttribution(
-          attribution: _LinkAttribution(url: 'a'),
-          startOffset: 0,
-          endOffset: 5,
-        );
-
-        expect(
-          spans.findConflictingAttributions(
-            attribution: _LinkAttribution(url: 'b'),
-            start: 4,
-            end: 5,
-            allowMerging: true,
-          ),
-          [
-            AttributionConflict(
-              newAttribution: _LinkAttribution(url: 'b'),
-              existingAttribution: _LinkAttribution(url: 'a'),
-              conflictStart: 4,
-              conflictEnd: 5,
-            )
-          ],
-        );
-      });
-
-      test('finds attribution at the middle', () {
-        final spans = _createAttributedSpansForAttribution(
-          attribution: _LinkAttribution(url: 'a'),
-          startOffset: 0,
-          endOffset: 5,
-        );
-
-        expect(
-          spans.findConflictingAttributions(
-            attribution: _LinkAttribution(url: 'b'),
-            start: 2,
-            end: 3,
-            allowMerging: true,
-          ),
-          [
-            AttributionConflict(
-              newAttribution: _LinkAttribution(url: 'b'),
-              existingAttribution: _LinkAttribution(url: 'a'),
-              conflictStart: 2,
-              conflictEnd: 3,
-            )
-          ],
-        );
-      });
-
-      test('finds non-contiguous conflicts', () {
-        final spans = AttributedSpans(attributions: [
-          ..._createSpanMarkersForAttribution(
-            attribution: _LinkAttribution(url: 'a'),
-            startOffset: 0,
-            endOffset: 5,
-          ),
-          ..._createSpanMarkersForAttribution(
-            attribution: _LinkAttribution(url: 'c'),
-            startOffset: 10,
-            endOffset: 15,
-          ),
-        ]);
-
-        expect(
-          spans.findConflictingAttributions(
-            attribution: _LinkAttribution(url: 'b'),
-            start: 4,
-            end: 12,
-            allowMerging: true,
-          ),
-          [
-            AttributionConflict(
-              newAttribution: _LinkAttribution(url: 'b'),
-              existingAttribution: _LinkAttribution(url: 'a'),
-              conflictStart: 4,
-              conflictEnd: 5,
-            ),
-            AttributionConflict(
-              newAttribution: _LinkAttribution(url: 'b'),
-              existingAttribution: _LinkAttribution(url: 'c'),
-              conflictStart: 10,
-              conflictEnd: 12,
-            ),
-          ],
-        );
       });
     });
   });

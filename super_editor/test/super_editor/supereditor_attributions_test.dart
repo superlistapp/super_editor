@@ -1276,7 +1276,7 @@ void main() {
       });
     });
 
-    testWidgetsOnArbitraryDesktop('splits spans with different colors', (tester) async {
+    testWidgetsOnArbitraryDesktop('overwrites spans with different colors', (tester) async {
       // Pump an editor with a single paragraph with blue color across the entire paragraph.
       final testContext = await tester //
           .createDocument()
@@ -1317,7 +1317,7 @@ void main() {
       ]);
       await tester.pump();
 
-      // Ensure the spans were split.
+      // Ensure the spans were overwritten.
       expect(
         SuperEditorInspector.findTextInComponent('1').spans,
         AttributedSpans(
@@ -1342,7 +1342,7 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop('splits spans with different background colors', (tester) async {
+    testWidgetsOnArbitraryDesktop('overwrites spans with different background colors', (tester) async {
       // Pump an editor with a single paragraph with blue background color across the entire paragraph.
       final testContext = await tester //
           .createDocument()
@@ -1383,7 +1383,7 @@ void main() {
       ]);
       await tester.pump();
 
-      // Ensure the spans were split.
+      // Ensure the spans were overwritten.
       expect(
         SuperEditorInspector.findTextInComponent('1').spans,
         AttributedSpans(
@@ -1408,7 +1408,7 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop('splits spans with different font sizes', (tester) async {
+    testWidgetsOnArbitraryDesktop('overwrites spans with different font sizes', (tester) async {
       // Pump an editor with a single paragraph with 16px font size across the entire paragraph.
       final testContext = await tester //
           .createDocument()
@@ -1449,7 +1449,7 @@ void main() {
       ]);
       await tester.pump();
 
-      // Ensure the spans were split.
+      // Ensure the spans were overwritten.
       expect(
         SuperEditorInspector.findTextInComponent('1').spans,
         AttributedSpans(

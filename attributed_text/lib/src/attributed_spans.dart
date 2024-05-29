@@ -280,25 +280,48 @@ class AttributedSpans {
 
   /// Applies the [newAttribution] from [start] to [end], inclusive.
   ///
-  /// When [autoMerge] is `true`, the new attribution is merged with any
-  /// preceding or following attribution whose [Attribution.canMergeWith] returns
-  /// `true`.
+  /// If [start] is less than `0`, nothing happens.
   ///
-  /// It [newAttribution] overlaps a conflicting span, or if [newAttribution]
-  /// overlaps a merge-able span but [autoMerge] is `false`, one of the following
-  /// outcomes happen:
+  /// [AttributedSpans] doesn't have any knowledge about content length, so [end] can
+  /// take any value that's desired. However, users of [AttributedSpans] should take
+  /// care to avoid values for [end] that exceed the content length.
   ///
-  /// - If [splitConflictingAttributions] is `true`, the conflicting span is removed from
-  /// the overlapping region, and the new attribution is added in its place.
+  /// The effect of adding an attribution is straight forward when the text doesn't
+  /// contain any other attributions with the same ID. However, there are various
+  /// situations where [newAttribution] can't necessarily co-exist with other
+  /// attribution spans that already exist in the text.
   ///
-  /// - If [splitConflictingAttributions] is `false`, an [IncompatibleOverlappingAttributionsException]
-  /// is thrown.
+  /// Attribution overlaps can take one of two forms: mergeable or conflicting.
+  ///
+  /// ## Mergeable Attribution Spans
+  /// An example of a mergeable overlap is where two bold spans overlap each
+  /// other. All bold attributions are interchangeable, so when two bold spans
+  /// overlap, those spans can be merged together into a single span.
+  ///
+  /// However, mergeable overlapping spans are not automatically merged. Instead,
+  /// this decision is left to the user of this class. If you want [AttributedSpans] to
+  /// merge overlapping mergeable spans, pass `true` for [ignoreMergeableOverlaps]. Otherwise,
+  /// if [ignoreMergeableOverlaps] is `false`, an exception is thrown when two mergeable spans
+  /// overlap each other.
+  ///
+  ///
+  /// ## Conflicting Attribution Spans
+  /// An example of a conflicting overlap is where a black text color overlaps a red
+  /// text color. Text is either black, OR red, but never both. Therefore, the black
+  /// attribution cannot co-exist with the red attribution. Something must be done
+  /// to resolve this.
+  ///
+  /// There are two possible ways to handle conflicting overlaps. The new attribution
+  /// can overwrite the existing attribution where they overlap. Or, an exception can be
+  /// thrown. To overwrite the existing attribution with the new attribution, pass `true`
+  /// for [overwriteConflictingSpans]. Otherwise, if [overwriteConflictingSpans]
+  /// is `false`, an exception is thrown.
   void addAttribution({
     required Attribution newAttribution,
     required int start,
     required int end,
-    bool autoMerge = true,
-    bool splitConflictingAttributions = true,
+    bool ignoreMergeableOverlaps = true,
+    bool overwriteConflictingSpans = true,
   }) {
     if (start < 0 || start > end) {
       _log.warning("Tried to add an attribution ($newAttribution) at an invalid start/end: $start -> $end");
@@ -308,19 +331,64 @@ class AttributedSpans {
     _log.info("Adding attribution ($newAttribution) from $start to $end");
     _log.finer("Has ${_markers.length} markers before addition");
 
-    final conflicts = findConflictingAttributions(
-      attribution: newAttribution,
-      start: start,
-      end: end,
-      allowMerging: autoMerge,
-    );
+    final conflicts = <AttributionConflict>[];
 
-    if (conflicts.isNotEmpty && !splitConflictingAttributions) {
-      throw IncompatibleOverlappingAttributionsException(
-        existingAttribution: conflicts.first.existingAttribution,
-        newAttribution: newAttribution,
-        conflictStart: conflicts.first.conflictStart,
-      );
+    // Check if conflicting attributions overlap the new attribution.
+    final matchingAttributions = getMatchingAttributionsWithin(attributions: {newAttribution}, start: start, end: end);
+    if (matchingAttributions.isNotEmpty) {
+      for (final matchingAttribution in matchingAttributions) {
+        bool areAttributionsMergeable = newAttribution.canMergeWith(matchingAttribution);
+        if (!areAttributionsMergeable || !ignoreMergeableOverlaps) {
+          int? conflictStart;
+          int? conflictEnd;
+
+          for (int i = start; i <= end; ++i) {
+            if (hasAttributionAt(i, attribution: matchingAttribution)) {
+              conflictStart ??= i;
+              conflictEnd = i;
+
+              if (areAttributionsMergeable) {
+                // Both attributions are mergeable, but the caller doesn't want to merge them.
+                throw IncompatibleOverlappingAttributionsException(
+                  existingAttribution: matchingAttribution,
+                  newAttribution: newAttribution,
+                  conflictStart: conflictStart,
+                );
+              }
+            } else if (conflictStart != null) {
+              // We found the end of the conflict.
+              conflicts.add(AttributionConflict(
+                newAttribution: newAttribution,
+                existingAttribution: matchingAttribution,
+                conflictStart: conflictStart,
+                conflictEnd: conflictEnd!,
+              ));
+
+              // Reset so we can find the next conflict.
+              conflictStart = null;
+              conflictEnd = null;
+            }
+          }
+
+          if (conflictStart != null && conflictEnd != null) {
+            // We found a conflict that extends to the end of the range.
+            conflicts.add(AttributionConflict(
+              newAttribution: newAttribution,
+              existingAttribution: matchingAttribution,
+              conflictStart: conflictStart,
+              conflictEnd: conflictEnd,
+            ));
+          }
+        }
+      }
+
+      if (conflicts.isNotEmpty && !overwriteConflictingSpans) {
+        throw IncompatibleOverlappingAttributionsException(
+          existingAttribution: conflicts.first.existingAttribution,
+          newAttribution: newAttribution,
+          conflictStart: conflicts.first.conflictStart,
+        );
+      }
     }
 
     // Removes any conflicting attributions. For example, consider the following text,
@@ -346,9 +414,8 @@ class AttributedSpans {
       );
     }
 
-    if (!autoMerge) {
-      // There are not conflicting attributions in the desired range, and we don't
-      // want to merge this new attribution with any other nearby attribution.
+    if (!ignoreMergeableOverlaps) {
+      // We don't want to merge this new attribution with any other nearby attribution.
       // Therefore, we can blindly create the new attribution range without any
       // further adjustments, and then be done.
       _insertMarker(SpanMarker(
@@ -537,63 +604,6 @@ class AttributedSpans {
     } else {
       addAttribution(newAttribution: attribution, start: start, end: end);
     }
-  }
-
-  /// Finds all attributions that appear between [start] and [end] (inclusive) with
-  /// the same id as the given [attribution].
-  ///
-  /// If [allowMerging] is `false`, attributions with the same id will always be reported
-  /// as conflicting, even if [Attribution.canMergeWith] returns `true`.
-  List<AttributionConflict> findConflictingAttributions({
-    required Attribution attribution,
-    required int start,
-    required int end,
-    bool allowMerging = true,
-  }) {
-    final conflicts = <AttributionConflict>[];
-
-    // Check if conflicting attributions overlap the new attribution.
-    final matchingAttributions = getMatchingAttributionsWithin(attributions: {attribution}, start: start, end: end);
-
-    if (matchingAttributions.isNotEmpty) {
-      for (final matchingAttribution in matchingAttributions) {
-        if (!attribution.canMergeWith(matchingAttribution) || !allowMerging) {
-          int? conflictStart;
-          int? conflictEnd;
-
-          for (int i = start; i <= end; ++i) {
-            if (hasAttributionAt(i, attribution: matchingAttribution)) {
-              conflictStart ??= i;
-              conflictEnd = i;
-            } else if (conflictStart != null) {
-              // We found the end of the conflict.
-              conflicts.add(AttributionConflict(
-                newAttribution: attribution,
-                existingAttribution: matchingAttribution,
-                conflictStart: conflictStart,
-                conflictEnd: conflictEnd!,
-              ));
-
-              // Reset so we can find the next conflict.
-              conflictStart = null;
-              conflictEnd = null;
-            }
-          }
-
-          if (conflictStart != null && conflictEnd != null) {
-            // We found a conflict that extends to the end of the range.
-            conflicts.add(AttributionConflict(
-              newAttribution: attribution,
-              existingAttribution: matchingAttribution,
-              conflictStart: conflictStart,
-              conflictEnd: conflictEnd,
-            ));
-          }
-        }
-      }
-    }
-
-    return conflicts;
   }
 
   /// Returns [true] if the given [attribution] exists from [start] to
