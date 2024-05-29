@@ -59,6 +59,7 @@ dev_dependencies:
   golden_runner:
     path: ../golden_runner
   flutter_test_runners: ^0.0.4
+  golden_bricks: ^1.0.0
 
 flutter:
   # no Flutter configuration
