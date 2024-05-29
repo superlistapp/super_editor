@@ -1274,7 +1274,7 @@ class AddTextAttributionsCommand implements EditCommand {
               newAttribution: attribution,
               start: range.start,
               end: range.end,
-              autoMerge: autoMerge,
+              ignoreMergeableOverlaps: autoMerge,
             ),
         );
 
@@ -1557,7 +1557,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
                 newAttribution: attribution,
                 start: range.start,
                 end: range.end,
-                autoMerge: true,
+                ignoreMergeableOverlaps: true,
               ),
           );
         }
