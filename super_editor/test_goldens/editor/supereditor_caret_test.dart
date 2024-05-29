@@ -193,19 +193,13 @@ Future<void> main() async {
         // on the first line.
         await tester.placeCaretInParagraph(context.document.nodes.first.id, 54);
 
-        await expectLater(
-          find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance('super-editor-caret-rotation-portrait-landscape-before-android', 52),
-        );
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-portrait-landscape-before-android');
 
         // Make the window wider, pushing the caret text position up a line.
         tester.view.physicalSize = screenSizeLandscape;
         await tester.pumpAndSettle();
 
-        await expectLater(
-          find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance('super-editor-caret-rotation-portrait-landscape-after-android', 52),
-        );
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-portrait-landscape-after-android');
       });
 
       testGoldensOniOS('from landscape to portrait', (tester) async {
@@ -245,19 +239,13 @@ Future<void> main() async {
         // on the first line.
         await tester.placeCaretInParagraph(context.document.nodes.first.id, 54);
 
-        await expectLater(
-          find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance('super-editor-caret-rotation-landscape-portrait-before-android', 52),
-        );
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-landscape-portrait-before-android');
 
         // Make the window thiner, pushing the caret text position down a line.
         tester.view.physicalSize = screenSizePortrait;
         await tester.pumpAndSettle();
 
-        await expectLater(
-          find.byType(MaterialApp).first,
-          matchesGoldenFileWithPixelAllowance('super-editor-caret-rotation-landscape-portrait-after-android', 52),
-        );
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-landscape-portrait-after-android');
       });
     });
   });
