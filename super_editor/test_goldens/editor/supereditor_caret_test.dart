@@ -303,7 +303,7 @@ Future<TestDocumentContext> _pumpPhoneRotationTestApp(WidgetTester tester) async
             BlockSelector.all,
             (doc, docNode) => {
               Styles.textStyle: TextStyle(
-                fontFamily: goldenBricks, //'Roboto',
+                fontFamily: goldenBricks,
               )
             },
           )
