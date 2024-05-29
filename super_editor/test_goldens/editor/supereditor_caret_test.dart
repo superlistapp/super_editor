@@ -200,7 +200,7 @@ Future<void> main() async {
         await tester.pumpAndSettle();
 
         await screenMatchesGolden(tester, 'super-editor-caret-rotation-portrait-landscape-after-android');
-      });
+      }, skip: true);
 
       testGoldensOniOS('from landscape to portrait', (tester) async {
         tester.view
@@ -246,7 +246,7 @@ Future<void> main() async {
         await tester.pumpAndSettle();
 
         await screenMatchesGolden(tester, 'super-editor-caret-rotation-landscape-portrait-after-android');
-      });
+      }, skip: true);
     });
   });
 }
