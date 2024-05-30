@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
 

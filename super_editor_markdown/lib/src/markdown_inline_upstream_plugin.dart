@@ -485,10 +485,17 @@ class StyleUpstreamMarkdownToken implements UpstreamMarkdownToken {
         }
 
         if (_openingSyntax == _closingSyntax) {
-          // We just found an opening syntax that matches our closing syntax.
-          // Therefore, we have found a complete Markdown run.
-          _isComplete = true;
-          _phase = _done;
+          if (_allParsedText.length == _openingSyntax.length * 2) {
+            // We just found an opening syntax that matches our closing syntax,
+            // but there is no text between the opening and closing syntax.
+            // Therefore, this is an invalid Markdown style.
+            _isValid = false;
+          } else {
+            // We just found an opening syntax that matches our closing syntax.
+            // Therefore, we have found a complete Markdown run.
+            _isComplete = true;
+            _phase = _done;
+          }
         }
       case _done:
         // More characters were added after already finding a complete Markdown
