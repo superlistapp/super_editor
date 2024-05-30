@@ -710,6 +710,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
   }
 
+  void _onTapCancel() {
+    _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = null;
+  }
+
   // Runs when a tap down has lasted long enough to signify a long-press.
   void _onLongPressDown() {
     _longPressStrategy = AndroidDocumentLongPressSelectionStrategy(
@@ -1251,6 +1256,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           (TapSequenceGestureRecognizer recognizer) {
             recognizer
               ..onTapDown = _onTapDown
+              ..onTapCancel = _onTapCancel
               ..onTapUp = _onTapUp
               ..onDoubleTapDown = _onDoubleTapDown
               ..onTripleTapDown = _onTripleTapDown

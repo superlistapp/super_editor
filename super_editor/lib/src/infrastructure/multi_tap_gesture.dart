@@ -198,7 +198,10 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
     _trackers.remove(tracker.pointer);
     tracker.entry.resolve(GestureDisposition.rejected);
     _freezeTracker(tracker);
-    if (_firstTap != null || _secondTap != null) {
+
+    // Check if we need to cancel even when both _firstTap and _secondTap are null,
+    // because if a tap down already happened, we need to call onCancel.
+    if (_firstTap != null || _secondTap != null || _firstTapDownDetails != null) {
       if (tracker == _firstTap || tracker == _secondTap) {
         _reset();
       } else {
@@ -275,6 +278,8 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
       GestureBinding.instance.gestureArena.release(tracker.pointer);
     }
     _clearTrackers();
+
+    _firstTapDownDetails = null;
   }
 
   void _registerFirstTap(PointerEvent event, _TapTracker tracker) {
@@ -372,7 +377,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
   }
 
   void _checkCancel() {
-    if (_firstTap == null && onTapCancel != null) {
+    if ((_firstTap == null || _firstTapDownDetails != null) && onTapCancel != null) {
       invokeCallback<void>('onTapCancel', onTapCancel!);
     }
     if (_firstTap != null && _secondTap == null && onDoubleTapCancel != null) {

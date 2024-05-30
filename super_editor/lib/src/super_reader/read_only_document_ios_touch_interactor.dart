@@ -455,6 +455,11 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
   }
 
+  void _onTapCancel() {
+    _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = null;
+  }
+
   // Runs when a tap down has lasted long enough to signify a long-press.
   void _onLongPressDown() {
     final interactorOffset = interactorBox.globalToLocal(_globalTapDownOffset!);
@@ -970,6 +975,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
           (TapSequenceGestureRecognizer recognizer) {
             recognizer
               ..onTapDown = _onTapDown
+              ..onTapCancel = _onTapCancel
               ..onTapUp = _onTapUp
               ..onDoubleTapUp = _onDoubleTapUp
               ..onTripleTapUp = _onTripleTapUp
