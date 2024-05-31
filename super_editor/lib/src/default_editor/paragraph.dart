@@ -938,6 +938,36 @@ ExecutionInstruction doNothingWithBackspaceOnWeb({
   return ExecutionInstruction.continueExecution;
 }
 
+ExecutionInstruction doNothingWithCtrlOrCmdAndZOnWeb({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.keyZ) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (!CurrentPlatform.isApple && !HardwareKeyboard.instance.isControlPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (CurrentPlatform.isWeb) {
+    // On web, pressing Cmd + Z on Mac or Ctrl + Z on Windows and Linux
+    // triggers the UNDO action of the HTML text input, which doesn't work for us.
+    // Prevent the browser from handling the shortcut.
+    return ExecutionInstruction.haltExecution;
+  }
+
+  return ExecutionInstruction.continueExecution;
+}
+
 ExecutionInstruction doNothingWithDeleteOnWeb({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
