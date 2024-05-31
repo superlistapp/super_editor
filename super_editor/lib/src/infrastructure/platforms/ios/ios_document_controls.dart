@@ -690,8 +690,18 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       // Default caret width used by IOSCollapsedHandle.
       const caretWidth = 2;
 
-      // Use the content's RenderBox instead of the layer's RenderBox, because at this point, the layer
-      // hasn't been laid out yet.
+      // Use the content's RenderBox instead of the layer's RenderBox to get the layer's width.
+      //
+      // ContentLayers works in four steps:
+      //
+      // 1. The content is built.
+      // 2. The content is laid out.
+      // 3. The layers are built.
+      // 4. The layers are laid out.
+      //
+      // The computeLayoutData method is called during the layer's build, which means that the
+      // layer's RenderBox is outdated, because it wasn't laid out yet for the current frame.
+      // Use the content's RenderBox, which was already laid out for the current frame.
       final contentBox = contentElement.findRenderObject() as RenderBox?;
       if (contentBox != null && contentBox.hasSize && caretRect.left + caretWidth >= contentBox.size.width) {
         // Ajust the caret position to make it entirely visible because it's currently placed

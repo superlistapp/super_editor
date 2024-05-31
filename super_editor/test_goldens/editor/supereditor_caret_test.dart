@@ -163,7 +163,7 @@ Future<void> main() async {
           ..physicalSize = screenSizePortrait;
         addTearDown(() => tester.platformDispatcher.clearAllTestValues());
 
-        final context = await _pumpPhoneRotationTestApp(tester);
+        final context = await _pumpTestAppWithGoldenBricksFont(tester);
 
         // Place caret at "adipiscing elit|.". In portrait mode, this character
         // is displayed on the second line. In landscape mode, it's displayed
@@ -186,7 +186,7 @@ Future<void> main() async {
           ..physicalSize = screenSizePortrait;
         addTearDown(() => tester.platformDispatcher.clearAllTestValues());
 
-        final context = await _pumpPhoneRotationTestApp(tester);
+        final context = await _pumpTestAppWithGoldenBricksFont(tester);
 
         // Place caret at "adipiscing elit|.". In portrait mode, this character
         // is displayed on the second line. In landscape mode, it's displayed
@@ -209,7 +209,7 @@ Future<void> main() async {
           ..physicalSize = screenSizeLandscape;
         addTearDown(() => tester.platformDispatcher.clearAllTestValues());
 
-        final context = await _pumpPhoneRotationTestApp(tester);
+        final context = await _pumpTestAppWithGoldenBricksFont(tester);
 
         // Place caret at "adipiscing elit|.". In portrait mode, this character
         // is displayed on the second line. In landscape mode, it's displayed
@@ -232,7 +232,7 @@ Future<void> main() async {
           ..physicalSize = screenSizeLandscape;
         addTearDown(() => tester.platformDispatcher.clearAllTestValues());
 
-        final context = await _pumpPhoneRotationTestApp(tester);
+        final context = await _pumpTestAppWithGoldenBricksFont(tester);
 
         // Place caret at "adipiscing elit|.". In portrait mode, this character
         // is displayed on the second line. In landscape mode, it's displayed
@@ -293,7 +293,9 @@ Future<void> _pumpCaretTestApp(WidgetTester tester) async {
   ).pump();
 }
 
-Future<TestDocumentContext> _pumpPhoneRotationTestApp(WidgetTester tester) async {
+/// Pumps a widget tree with a [SuperEditor] styled with the Golden Bricks font
+/// for all kinds of nodes.
+Future<TestDocumentContext> _pumpTestAppWithGoldenBricksFont(WidgetTester tester) async {
   return await tester //
       .createDocument()
       .fromMarkdown('Lorem ipsum dolor sit amet, consectetur adipiscing elit.')
