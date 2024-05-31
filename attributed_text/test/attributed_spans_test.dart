@@ -606,7 +606,14 @@ void main() {
         }, throwsA(isA<IncompatibleOverlappingAttributionsException>()));
       });
 
-      test('overwrites incompatible attributions at the beginning', () {
+      test('overwrites incompatible attributions at the beginning of the span', () {
+        // Starting value:
+        // |aaaaaaa|
+        //
+        // Ending value:
+        // |-----aa|
+        // |bbbbb--|
+
         final spans = AttributedSpans(
           attributions: _createSpanMarkersForAttribution(
             attribution: _LinkAttribution(url: 'https://flutter.dev'),
@@ -641,7 +648,16 @@ void main() {
         );
       });
 
-      test('splits incompatible attributions at the middle', () {
+      test('splits incompatible attributions at the middle of the text', () {
+        // Starting value:
+        // |aaaaaaa----------|
+        // |----------bbbbbbb|
+        //
+        // Ending value:
+        // |aaaa-------------|
+        // |-------------bbbb|
+        // |----ccccccccc----|
+
         final spans = AttributedSpans(attributions: [
           ..._createSpanMarkersForAttribution(
             attribution: _LinkAttribution(url: 'https://flutter.dev'),
@@ -686,7 +702,14 @@ void main() {
         );
       });
 
-      test('overwrites incompatible attributions at the end', () {
+      test('overwrites incompatible attributions at the end of the span', () {
+        // Starting value:
+        // |aaaaaaa------|
+        //
+        // Ending value:
+        // |aaaa---------|
+        // |----bbbbbbbbb|
+
         final spans = AttributedSpans(
           attributions: _createSpanMarkersForAttribution(
             attribution: _LinkAttribution(url: 'https://flutter.dev'),
@@ -721,7 +744,17 @@ void main() {
         );
       });
 
-      test('overwrites multiple incompatible attributions at the midle', () {
+      test('overwrites multiple incompatible attributions at the midle of the text', () {
+        // Starting value:
+        // |aaaaaa--------------------|
+        // |----------bbbbbb----------|
+        // |--------------------cccccc|
+        //
+        // Ending value:
+        // |aaaa----------------------|
+        // |-----------------------ccc|
+        // |----ddddddddddddddddddd---|
+
         final spans = AttributedSpans(
           attributions: [
             ..._createSpanMarkersForAttribution(
@@ -980,29 +1013,6 @@ class _LinkAttribution implements Attribution {
 
   @override
   int get hashCode => url.hashCode;
-}
-
-/// Creates an [AttributedSpans] for the [attribution] starting at [startOffset]
-/// and ending at [endOffset].
-AttributedSpans _createAttributedSpansForAttribution({
-  required Attribution attribution,
-  required int startOffset,
-  required int endOffset,
-}) {
-  return AttributedSpans(
-    attributions: [
-      SpanMarker(
-        attribution: attribution,
-        offset: startOffset,
-        markerType: SpanMarkerType.start,
-      ),
-      SpanMarker(
-        attribution: attribution,
-        offset: endOffset,
-        markerType: SpanMarkerType.end,
-      ),
-    ],
-  );
 }
 
 /// Creates start and end markers for the [attribution], starting at [startOffset]

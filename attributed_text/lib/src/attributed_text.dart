@@ -183,7 +183,7 @@ class AttributedText {
       newAttribution: attribution,
       start: range.start,
       end: range.end,
-      ignoreMergeableOverlaps: autoMerge,
+      autoMerge: autoMerge,
       overwriteConflictingSpans: false,
     );
     _notifyListeners();

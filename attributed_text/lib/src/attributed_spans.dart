@@ -300,8 +300,8 @@ class AttributedSpans {
   ///
   /// However, mergeable overlapping spans are not automatically merged. Instead,
   /// this decision is left to the user of this class. If you want [AttributedSpans] to
-  /// merge overlapping mergeable spans, pass `true` for [ignoreMergeableOverlaps]. Otherwise,
-  /// if [ignoreMergeableOverlaps] is `false`, an exception is thrown when two mergeable spans
+  /// merge overlapping mergeable spans, pass `true` for [autoMerge]. Otherwise,
+  /// if [autoMerge] is `false`, an exception is thrown when two mergeable spans
   /// overlap each other.
   ///
   ///
@@ -320,7 +320,7 @@ class AttributedSpans {
     required Attribution newAttribution,
     required int start,
     required int end,
-    bool ignoreMergeableOverlaps = true,
+    bool autoMerge = true,
     bool overwriteConflictingSpans = true,
   }) {
     if (start < 0 || start > end) {
@@ -331,14 +331,14 @@ class AttributedSpans {
     _log.info("Adding attribution ($newAttribution) from $start to $end");
     _log.finer("Has ${_markers.length} markers before addition");
 
-    final conflicts = <AttributionConflict>[];
+    final conflicts = <_AttributionConflict>[];
 
     // Check if conflicting attributions overlap the new attribution.
     final matchingAttributions = getMatchingAttributionsWithin(attributions: {newAttribution}, start: start, end: end);
     if (matchingAttributions.isNotEmpty) {
       for (final matchingAttribution in matchingAttributions) {
         bool areAttributionsMergeable = newAttribution.canMergeWith(matchingAttribution);
-        if (!areAttributionsMergeable || !ignoreMergeableOverlaps) {
+        if (!areAttributionsMergeable || !autoMerge) {
           int? conflictStart;
           int? conflictEnd;
 
@@ -357,7 +357,7 @@ class AttributedSpans {
               }
             } else if (conflictStart != null) {
               // We found the end of the conflict.
-              conflicts.add(AttributionConflict(
+              conflicts.add(_AttributionConflict(
                 newAttribution: newAttribution,
                 existingAttribution: matchingAttribution,
                 conflictStart: conflictStart,
@@ -372,7 +372,7 @@ class AttributedSpans {
 
           if (conflictStart != null && conflictEnd != null) {
             // We found a conflict that extends to the end of the range.
-            conflicts.add(AttributionConflict(
+            conflicts.add(_AttributionConflict(
               newAttribution: newAttribution,
               existingAttribution: matchingAttribution,
               conflictStart: conflictStart,
@@ -383,6 +383,9 @@ class AttributedSpans {
       }
 
       if (conflicts.isNotEmpty && !overwriteConflictingSpans) {
+        // We found conflicting attributions and we are configured not to overwrite them.
+        // For example, the user tried to apply a blue color attribution to a range of text
+        // that already has another color attribution.
         throw IncompatibleOverlappingAttributionsException(
           existingAttribution: conflicts.first.existingAttribution,
           newAttribution: newAttribution,
@@ -394,15 +397,15 @@ class AttributedSpans {
     // Removes any conflicting attributions. For example, consider the following text,
     // with a blue color attribution that spans the entire text:
     //
-    //    blue green blue
-    //   |xxxxxxxxxxxxxxx|
+    //    one two three
+    //   |bbbbbbbbbbbbb|
     //
-    // We can't apply a green color attribution to the word "green", because it's already
-    // attributed with blue. So, we need to remove the blue attribution from the word "green",
+    // We can't apply a green color attribution to the word "two", because it's already
+    // attributed with blue. So, we need to remove the blue attribution from the word "two",
     // which results in the following text:
     //
-    //    blue green blue
-    //   |xxxxx-----xxxxx|
+    //    one two three
+    //   |bbbb---bbbbbb|
     //
     // After that, we can apply the desired attribution, because there isn't a conflicting attribution
     // in this range anymore.
@@ -414,7 +417,7 @@ class AttributedSpans {
       );
     }
 
-    if (!ignoreMergeableOverlaps) {
+    if (!autoMerge) {
       // We don't want to merge this new attribution with any other nearby attribution.
       // Therefore, we can blindly create the new attribution range without any
       // further adjustments, and then be done.
@@ -1290,8 +1293,8 @@ class IncompatibleOverlappingAttributionsException implements Exception {
 /// A conflict between the [newAttribution] and [existingAttribution] between [conflictStart] and [conflictEnd] (inclusive).
 ///
 /// This means [newAttribution] and [existingAttribution] have the same id, but they can't be merged.
-class AttributionConflict {
-  AttributionConflict({
+class _AttributionConflict {
+  _AttributionConflict({
     required this.newAttribution,
     required this.existingAttribution,
     required this.conflictStart,
@@ -1313,7 +1316,7 @@ class AttributionConflict {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is AttributionConflict &&
+      other is _AttributionConflict &&
           runtimeType == other.runtimeType &&
           newAttribution == other.newAttribution &&
           existingAttribution == other.existingAttribution &&
