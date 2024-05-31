@@ -199,8 +199,14 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
     tracker.entry.resolve(GestureDisposition.rejected);
     _freezeTracker(tracker);
 
-    // Check if we need to cancel even when both _firstTap and _secondTap are null,
-    // because if a tap down already happened, we need to call onCancel.
+    // Both _firstTap and _secondTap are only set when a pointer up event is received,
+    // but we also need to handle cases when we already fired the onTapDown event, and
+    // we were defeated on the gesture arena before the onTapUp event. For example, if
+    // an app has both a TapSequenceGestureRecognizer and a HorizontalDragGestureRecognizer,
+    // when the user taps down and then drag horizontally, the onTapDown event is fired, and after that
+    // the HorizontalDragGestureRecognizer declares itself as the winner. In this case, we need to
+    // fire the onTapCancel event. Check if _firstTapDownDetails is not null to confirm if the tap
+    // down already happened.
     if (_firstTap != null || _secondTap != null || _firstTapDownDetails != null) {
       if (tracker == _firstTap || tracker == _secondTap) {
         _reset();
@@ -377,6 +383,9 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
   }
 
   void _checkCancel() {
+    // The _firstTap is only set after a pointer up event is received. Check if
+    // _firstTapDownDetails is not null, which signals we fired the onTapDown event and
+    // we were defeated on the arena before a pointer up event was received.
     if ((_firstTap == null || _firstTapDownDetails != null) && onTapCancel != null) {
       invokeCallback<void>('onTapCancel', onTapCancel!);
     }
