@@ -4,7 +4,7 @@ import 'package:super_editor/src/default_editor/layout_single_column/layout_sing
 
 /// Allows a [SingleColumnLayoutComponentViewModel] to be aware of the selection within its node.
 ///
-/// This mixin enables non-text components defined by the app, to render their selection.
+/// This mixin enables non-text components, to render their selection.
 ///
 /// During the styling pipeline, any [SingleColumnLayoutComponentViewModel] that mixes in
 /// [SelectionAwareViewModelMixin] will have its [selection] and [selectionColor] properties set.
