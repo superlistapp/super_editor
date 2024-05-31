@@ -90,11 +90,107 @@ class _DemoState extends State<_Demo> {
   }
 
   Widget _buildToolbar() {
-    return Container(
-      width: 24,
-      height: double.infinity,
-      color: const Color(0xFF2F2F2F),
-      child: Column(),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _EditorHistoryPanel(editor: _docEditor),
+        Container(
+          width: 24,
+          height: double.infinity,
+          color: const Color(0xFF2F2F2F),
+          child: Column(),
+        ),
+      ],
+    );
+  }
+}
+
+class _EditorHistoryPanel extends StatefulWidget {
+  const _EditorHistoryPanel({
+    required this.editor,
+  });
+
+  final Editor editor;
+
+  @override
+  State<_EditorHistoryPanel> createState() => _EditorHistoryPanelState();
+}
+
+class _EditorHistoryPanelState extends State<_EditorHistoryPanel> {
+  final _scrollController = ScrollController();
+  late EditListener _editListener;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _editListener = FunctionalEditListener(_onEditorChange);
+    widget.editor.addListener(_editListener);
+  }
+
+  @override
+  void didUpdateWidget(_EditorHistoryPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.editor != oldWidget.editor) {
+      oldWidget.editor.removeListener(_editListener);
+      widget.editor.addListener(_editListener);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    widget.editor.removeListener(_editListener);
+    super.dispose();
+  }
+
+  void _onEditorChange(changes) {
+    setState(() {
+      // Build the latest list of changes.
+    });
+
+    // Always scroll to bottom of transaction list.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.position.jumpTo(_scrollController.position.maxScrollExtent);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: ThemeData(
+        brightness: Brightness.dark,
+      ),
+      child: Container(
+        width: 300,
+        height: double.infinity,
+        color: const Color(0xFF333333),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0),
+            child: Column(
+              children: [
+                for (final history in widget.editor.history)
+                  ListTile(
+                    title: Text("${history.changes.length} changes"),
+                    titleTextStyle: TextStyle(
+                      fontSize: 16,
+                    ),
+                    subtitle: Text("${history.changes.map((event) => event.describe()).join("\n")}"),
+                    subtitleTextStyle: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 10,
+                      height: 1.4,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

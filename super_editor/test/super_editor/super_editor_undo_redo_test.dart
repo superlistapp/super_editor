@@ -313,67 +313,121 @@ This is paragraph 3''');
     });
 
     group("transaction grouping >", () {
-      testWidgetsOnMac("merges rapidly inserted text", (widgetTester) async {
-        await widgetTester //
-            .createDocument()
-            .withSingleEmptyParagraph()
-            .withHistoryGroupingPolicy(MergeRapidTextInputPolicy())
-            .pump();
+      group("text merging >", () {
+        testWidgetsOnMac("merges rapidly inserted text", (widgetTester) async {
+          await widgetTester //
+              .createDocument()
+              .withSingleEmptyParagraph()
+              .withHistoryGroupingPolicy(MergeRapidTextInputPolicy())
+              .pump();
 
-        await widgetTester.placeCaretInParagraph("1", 0);
+          await widgetTester.placeCaretInParagraph("1", 0);
 
-        // Type characters quickly.
-        await widgetTester.typeImeText("Hello");
+          // Type characters quickly.
+          await widgetTester.typeImeText("Hello");
 
-        // Ensure our typed text exists.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "Hello");
+          // Ensure our typed text exists.
+          expect(SuperEditorInspector.findTextInComponent("1").text, "Hello");
 
-        // Undo the typing.
-        print("------------ UNDO -------------");
-        await widgetTester.pressCmdZ(widgetTester);
-        await widgetTester.pump();
+          // Undo the typing.
+          print("------------ UNDO -------------");
+          await widgetTester.pressCmdZ(widgetTester);
+          await widgetTester.pump();
 
-        // Ensure that the whole word was undone.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "");
+          // Ensure that the whole word was undone.
+          expect(SuperEditorInspector.findTextInComponent("1").text, "");
+        });
+
+        testWidgetsOnMac("separates text typed later", (widgetTester) async {
+          await widgetTester //
+              .createDocument()
+              .withSingleEmptyParagraph()
+              .withHistoryGroupingPolicy(const MergeRapidTextInputPolicy())
+              .pump();
+
+          await widgetTester.placeCaretInParagraph("1", 0);
+
+          await withClock(Clock(() => DateTime(2024, 05, 26, 12, 0, 0, 0)), () async {
+            // Type characters quickly.
+            await widgetTester.typeImeText("Hel");
+          });
+          await withClock(Clock(() => DateTime(2024, 05, 26, 12, 0, 0, 150)), () async {
+            // Type characters quickly.
+            await widgetTester.typeImeText("lo ");
+          });
+
+          // Wait a bit.
+          await widgetTester.pump(const Duration(seconds: 3));
+
+          await withClock(Clock(() => DateTime(2024, 05, 26, 12, 0, 3, 0)), () async {
+            // Type characters quickly.
+            await widgetTester.typeImeText("World!");
+          });
+
+          // Ensure our typed text exists.
+          expect(SuperEditorInspector.findTextInComponent("1").text, "Hello World!");
+
+          // Undo the typing.
+          print("------------ UNDO -------------");
+          await widgetTester.pressCmdZ(widgetTester);
+          await widgetTester.pump();
+
+          // Ensure that the text typed later was removed, but the text typed earlier
+          // remains.
+          expect(SuperEditorInspector.findTextInComponent("1").text, "Hello ");
+        });
       });
 
-      testWidgetsOnMac("separates text typed later", (widgetTester) async {
-        await widgetTester //
-            .createDocument()
-            .withSingleEmptyParagraph()
-            .withHistoryGroupingPolicy(const MergeRapidTextInputPolicy())
-            .pump();
+      group("selection and composing >", () {
+        testWidgetsOnMac("merges transactions with only selection and composing changes", (widgetTester) async {
+          final testContext = await widgetTester //
+              .createDocument()
+              .withLongDoc()
+              .withHistoryGroupingPolicy(defaultMergePolicy)
+              .pump();
 
-        await widgetTester.placeCaretInParagraph("1", 0);
+          await widgetTester.placeCaretInParagraph("1", 0);
 
-        await withClock(Clock(() => DateTime(2024, 05, 26, 12, 0, 0, 0)), () async {
-          // Type characters quickly.
-          await widgetTester.typeImeText("Hel");
+          // Ensure we start with one history transaction for placing the caret.
+          final editor = testContext.editor;
+          expect(editor.history.length, 1);
+
+          // Move the selection around a few times.
+          await widgetTester.placeCaretInParagraph("2", 5);
+
+          await widgetTester.placeCaretInParagraph("3", 3);
+
+          await widgetTester.placeCaretInParagraph("4", 0);
+
+          // Ensure that all selection changes were merged into the initial transaction.
+          expect(editor.history.length, 1);
         });
-        await withClock(Clock(() => DateTime(2024, 05, 26, 12, 0, 0, 150)), () async {
-          // Type characters quickly.
-          await widgetTester.typeImeText("lo ");
+
+        testWidgetsOnMac("does not merge transactions when non-selection changes are present", (widgetTester) async {
+          final testContext = await widgetTester //
+              .createDocument()
+              .withLongDoc()
+              .withHistoryGroupingPolicy(defaultMergePolicy)
+              .pump();
+
+          await widgetTester.placeCaretInParagraph("1", 0);
+
+          // Ensure we start with one history transaction for placing the caret.
+          final editor = testContext.editor;
+          expect(editor.history.length, 1);
+
+          // Type a few characters.
+          await widgetTester.typeImeText("Hello ");
+
+          // Move caret to start of paragraph.
+          await widgetTester.placeCaretInParagraph("1", 0);
+
+          // Type a few more characters
+          await widgetTester.typeImeText("World ");
+
+          // Ensure we have 4 transactions: selection, typing, selection, typing.
+          expect(editor.history.length, 4);
         });
-
-        // Wait a bit.
-        await widgetTester.pump(const Duration(seconds: 3));
-
-        await withClock(Clock(() => DateTime(2024, 05, 26, 12, 0, 3, 0)), () async {
-          // Type characters quickly.
-          await widgetTester.typeImeText("World!");
-        });
-
-        // Ensure our typed text exists.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "Hello World!");
-
-        // Undo the typing.
-        print("------------ UNDO -------------");
-        await widgetTester.pressCmdZ(widgetTester);
-        await widgetTester.pump();
-
-        // Ensure that the text typed later was removed, but the text typed earlier
-        // remains.
-        expect(SuperEditorInspector.findTextInComponent("1").text, "Hello ");
       });
     });
   });

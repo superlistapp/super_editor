@@ -14,7 +14,7 @@ import 'default_document_editor_reactions.dart';
 Editor createDefaultDocumentEditor({
   required MutableDocument document,
   required MutableDocumentComposer composer,
-  HistoryGroupingPolicy historyGroupingPolicy = mergeRapidTextInputPolicy,
+  HistoryGroupingPolicy historyGroupingPolicy = defaultMergePolicy,
 }) {
   final editor = Editor(
     editables: {

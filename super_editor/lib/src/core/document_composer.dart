@@ -382,7 +382,7 @@ class ChangeSelectionCommand extends EditCommand {
 }
 
 /// A [EditEvent] that represents a change to the user's selection within a document.
-class SelectionChangeEvent implements EditEvent {
+class SelectionChangeEvent extends EditEvent {
   const SelectionChangeEvent({
     required this.oldSelection,
     required this.newSelection,
@@ -397,11 +397,14 @@ class SelectionChangeEvent implements EditEvent {
   final String reason;
 
   @override
+  String describe() => "Selection - ${changeType.name}, $reason";
+
+  @override
   String toString() => "[SelectionChangeEvent] - New selection: $newSelection, change type: $changeType";
 }
 
 /// A [EditEvent] that represents a change to the user's composing region within a document.
-class ComposingRegionChangeEvent implements EditEvent {
+class ComposingRegionChangeEvent extends EditEvent {
   const ComposingRegionChangeEvent({
     required this.oldComposingRegion,
     required this.newComposingRegion,
@@ -409,6 +412,9 @@ class ComposingRegionChangeEvent implements EditEvent {
 
   final DocumentRange? oldComposingRegion;
   final DocumentRange? newComposingRegion;
+
+  @override
+  String describe() => "Composing - ${newComposingRegion ?? "empty"}";
 
   @override
   String toString() => "[ComposingRegionChangeEvent] - New composing region: $newComposingRegion";

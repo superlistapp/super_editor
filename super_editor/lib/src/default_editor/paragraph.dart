@@ -720,7 +720,7 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
   }
 }
 
-class Intention implements EditEvent {
+class Intention extends EditEvent {
   Intention.start() : _isStart = true;
 
   Intention.end() : _isStart = false;

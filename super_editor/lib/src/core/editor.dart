@@ -76,13 +76,15 @@ class Editor implements RequestDispatcher {
   /// Service Locator that provides all resources that are relevant for document editing.
   late final EditContext context;
 
+  /// Policies that determine when a new transaction of changes should be combined with the
+  /// previous transaction, impacting what is undone by undo.
   final HistoryGroupingPolicy historyGroupingPolicy;
 
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
 
-  final _commandHistory = <CommandTransaction>[];
-  final _commandFuture = <CommandTransaction>[];
+  final history = <CommandTransaction>[];
+  final future = <CommandTransaction>[];
 
   /// A pipeline of objects that receive change-lists from command execution
   /// and get the first opportunity to spawn additional commands before the
@@ -170,17 +172,31 @@ class Editor implements RequestDispatcher {
     }
 
     if (_transaction!.commands.isNotEmpty) {
-      if (_commandHistory.isNotEmpty &&
-          historyGroupingPolicy.shouldMergeLatestTransaction(_transaction!, _commandHistory.last)) {
-        // Merge this transaction with the transaction just before it. This is used, for example,
-        // to group repeated text input into a single undoable transaction.
-        _commandHistory.last
-          ..commands.addAll(_transaction!.commands)
-          ..changes.addAll(_transaction!.changes)
-          ..lastChangeTime = clock.now();
-      } else {
+      if (history.isEmpty) {
         // Add this transaction onto the history stack.
-        _commandHistory.add(_transaction!);
+        history.add(_transaction!);
+      } else {
+        final mergeChoice = historyGroupingPolicy.shouldMergeLatestTransaction(_transaction!, history.last);
+        switch (mergeChoice) {
+          case TransactionMerge.noOpinion:
+          case TransactionMerge.doNotMerge:
+            // Don't alter the transaction history, just add the new transaction to the history.
+            history.add(_transaction!);
+          case TransactionMerge.mergeOnTop:
+            // Merge this transaction with the transaction just before it. This is used, for example,
+            // to group repeated text input into a single undoable transaction.
+            history.last
+              ..commands.addAll(_transaction!.commands)
+              ..changes.addAll(_transaction!.changes)
+              ..lastChangeTime = clock.now();
+          case TransactionMerge.replacePrevious:
+            // Replaces the most recent transaction with the new transaction. This is used, for example,
+            // to throw away unnecessary history about selection and composing region changes, for which
+            // only the most recent value is relevant.
+            history
+              ..removeLast()
+              ..add(_transaction!);
+        }
       }
     }
 
@@ -326,24 +342,24 @@ class Editor implements RequestDispatcher {
     }
 
     if (_transaction!.commands.isNotEmpty) {
-      _commandHistory.add(_transaction!);
+      history.add(_transaction!);
     }
 
     // FIXME: try removing this notify listeners
     // Notify all listeners that care about changes, but won't spawn additional requests.
-    _notifyListeners();
+    _notifyListeners(List<EditEvent>.from(_activeChangeList!, growable: false));
 
     _isReacting = false;
   }
 
   void undo() {
     print("RUNNING UNDO");
-    if (_commandHistory.isEmpty) {
+    if (history.isEmpty) {
       return;
     }
 
     print("History before undo:");
-    for (final transaction in _commandHistory) {
+    for (final transaction in history) {
       print(" - transaction");
       for (final command in transaction.commands) {
         print("   - ${command.runtimeType}: ${command.describe()}");
@@ -352,8 +368,8 @@ class Editor implements RequestDispatcher {
     print("---");
 
     // Move the latest command from the history to the future.
-    final transactionToUndo = _commandHistory.removeLast();
-    _commandFuture.add(transactionToUndo);
+    final transactionToUndo = history.removeLast();
+    future.add(transactionToUndo);
     print("The commands being undone are:");
     for (final command in transactionToUndo.commands) {
       print("  - ${command.runtimeType}: ${command.describe()}");
@@ -371,7 +387,7 @@ class Editor implements RequestDispatcher {
     // Replay all history except for the most recent command transaction.
     print("Replaying all command history except for the most recent transaction...");
     final changeEvents = <EditEvent>[];
-    for (final commandTransaction in _commandHistory) {
+    for (final commandTransaction in history) {
       for (final command in commandTransaction.commands) {
         print("Executing command: ${command.runtimeType}");
         // We re-run the commands without tracking changes and without running reactions
@@ -387,17 +403,18 @@ class Editor implements RequestDispatcher {
       editable.onTransactionEnd(changeEvents);
     }
 
+    _notifyListeners([]);
     print("DONE WITH UNDO");
   }
 
   void redo() {
     print("RUNNING REDO");
-    if (_commandFuture.isEmpty) {
+    if (future.isEmpty) {
       return;
     }
 
     print("Future transaction:");
-    for (final command in _commandFuture.last.commands) {
+    for (final command in future.last.commands) {
       print(" - ${command.runtimeType}");
     }
 
@@ -406,13 +423,13 @@ class Editor implements RequestDispatcher {
       editable.onTransactionStart();
     }
 
-    final commandTransaction = _commandFuture.removeLast();
+    final commandTransaction = future.removeLast();
     final edits = <EditEvent>[];
     for (final command in commandTransaction.commands) {
       final commandEdits = _executeCommand(command);
       edits.addAll(commandEdits);
     }
-    _commandHistory.add(commandTransaction);
+    history.add(commandTransaction);
 
     print("DONE WITH REDO");
 
@@ -422,8 +439,7 @@ class Editor implements RequestDispatcher {
     }
   }
 
-  void _notifyListeners() {
-    final changeList = List<EditEvent>.from(_activeChangeList!, growable: false);
+  void _notifyListeners(List<EditEvent> changeList) {
     for (final listener in _changeListeners) {
       // Note: we pass a given copy of the change list, because listeners should
       // never cause additional editor changes.
@@ -432,8 +448,56 @@ class Editor implements RequestDispatcher {
   }
 }
 
+/// The merge policies that are used in the standard [Editor] construction.
+const defaultMergePolicy = HistoryGroupingPolicyList(
+  [
+    mergeRepeatSelectionChangesPolicy,
+    mergeRapidTextInputPolicy,
+  ],
+);
+
 abstract interface class HistoryGroupingPolicy {
-  bool shouldMergeLatestTransaction(CommandTransaction newTransaction, CommandTransaction previousTransaction);
+  TransactionMerge shouldMergeLatestTransaction(
+    CommandTransaction newTransaction,
+    CommandTransaction previousTransaction,
+  );
+}
+
+enum TransactionMerge {
+  noOpinion,
+  doNotMerge,
+  mergeOnTop,
+  replacePrevious;
+
+  static TransactionMerge chooseMoreConservative(TransactionMerge a, TransactionMerge b) {
+    if (a == b) {
+      // They're the same. It doesn't matter.
+      return a;
+    }
+
+    switch (a) {
+      case TransactionMerge.noOpinion:
+        // No opinion has no particular conservative vs liberal metric. Return the other one.
+        return b;
+      case TransactionMerge.doNotMerge:
+        // Explicitly not merging is the most conservative. Return this one.
+        return a;
+      case TransactionMerge.mergeOnTop:
+        if (b == TransactionMerge.doNotMerge) {
+          // doNotMerge is the only more conservative choice than merging on top.
+          return b;
+        }
+
+        return a;
+      case TransactionMerge.replacePrevious:
+        if (b == TransactionMerge.noOpinion) {
+          return a;
+        }
+
+        // replacePrevious is the lease conservative option. The other one always wins.
+        return b;
+    }
+  }
 }
 
 /// A [HistoryGroupingPolicy] that defers to a list of other individual policies.
@@ -447,48 +511,29 @@ abstract interface class HistoryGroupingPolicy {
 /// ([HistoryGroupingPolicyListChoice.anyPass]), or you can merge transactions when *all*
 /// of the policies want to merge ([HistoryGroupingPolicyListChoice.allPass]).
 class HistoryGroupingPolicyList implements HistoryGroupingPolicy {
-  const HistoryGroupingPolicyList(
-    this.policies, [
-    this.choice = HistoryGroupingPolicyListChoice.anyPass,
-  ]);
+  const HistoryGroupingPolicyList(this.policies);
 
   final List<HistoryGroupingPolicy> policies;
-  final HistoryGroupingPolicyListChoice choice;
 
   @override
-  bool shouldMergeLatestTransaction(CommandTransaction newTransaction, CommandTransaction previousTransaction) {
+  TransactionMerge shouldMergeLatestTransaction(
+    CommandTransaction newTransaction,
+    CommandTransaction previousTransaction,
+  ) {
+    TransactionMerge mostConservativeChoice = TransactionMerge.noOpinion;
+
     for (final policy in policies) {
-      switch (choice) {
-        case HistoryGroupingPolicyListChoice.anyPass:
-          if (policy.shouldMergeLatestTransaction(newTransaction, previousTransaction)) {
-            return true;
-          }
-        case HistoryGroupingPolicyListChoice.allPass:
-          if (!policy.shouldMergeLatestTransaction(newTransaction, previousTransaction)) {
-            return false;
-          }
+      final newMergeChoice = policy.shouldMergeLatestTransaction(newTransaction, previousTransaction);
+      if (newMergeChoice == TransactionMerge.doNotMerge) {
+        // A policy has explicitly requested not to merge. Don't merge.
+        return TransactionMerge.doNotMerge;
       }
+
+      mostConservativeChoice = TransactionMerge.chooseMoreConservative(mostConservativeChoice, newMergeChoice);
     }
 
-    switch (choice) {
-      case HistoryGroupingPolicyListChoice.anyPass:
-        // None of the policies wanted to merge. Don't merge transactions.
-        return false;
-      case HistoryGroupingPolicyListChoice.allPass:
-        // All of the policies wanted to merge. Merge the transactions.
-        return true;
-    }
+    return mostConservativeChoice;
   }
-}
-
-enum HistoryGroupingPolicyListChoice {
-  /// Transactions will be combined if a single policy in the list wants to
-  /// combine them.
-  anyPass,
-
-  /// Transactions will be combined only if every policy in the list wants to
-  /// combine them.
-  allPass;
 }
 
 const neverMergePolicy = _NeverMergePolicy();
@@ -497,7 +542,42 @@ class _NeverMergePolicy implements HistoryGroupingPolicy {
   const _NeverMergePolicy();
 
   @override
-  bool shouldMergeLatestTransaction(CommandTransaction newTransaction, CommandTransaction previousTransaction) => false;
+  TransactionMerge shouldMergeLatestTransaction(
+          CommandTransaction newTransaction, CommandTransaction previousTransaction) =>
+      TransactionMerge.doNotMerge;
+}
+
+const mergeRepeatSelectionChangesPolicy = MergeRepeatSelectionChangesPolicy();
+
+class MergeRepeatSelectionChangesPolicy implements HistoryGroupingPolicy {
+  const MergeRepeatSelectionChangesPolicy();
+
+  @override
+  TransactionMerge shouldMergeLatestTransaction(
+      CommandTransaction newTransaction, CommandTransaction previousTransaction) {
+    final isNewTransactionAllSelectionAndComposing = newTransaction.changes
+        .where((change) => change is! SelectionChangeEvent && change is! ComposingRegionChangeEvent)
+        .isEmpty;
+
+    if (!isNewTransactionAllSelectionAndComposing) {
+      // The new transaction contains meaningful changes. Don't merge anything.
+      return TransactionMerge.noOpinion;
+    }
+
+    final isPreviousTransactionAllSelectionAndComposing = previousTransaction.changes
+        .where((change) => change is! SelectionChangeEvent && change is! ComposingRegionChangeEvent)
+        .isEmpty;
+
+    if (!isPreviousTransactionAllSelectionAndComposing) {
+      // The previous transaction contains meaningful changes. Add the new selection/composing
+      // changes on top so that they're undone with the previous content change.
+      return TransactionMerge.noOpinion;
+    }
+
+    // The previous and new transactions are all selection and composing changes. We don't
+    // care about this history. Replaces the previous transaction with the new transaction.
+    return TransactionMerge.replacePrevious;
+  }
 }
 
 /// A sane default configuration of a [MergeRapidTextInputPolicy].
@@ -511,18 +591,19 @@ class MergeRapidTextInputPolicy implements HistoryGroupingPolicy {
   final Duration _maxMergeTime;
 
   @override
-  bool shouldMergeLatestTransaction(CommandTransaction newTransaction, CommandTransaction previousTransaction) {
+  TransactionMerge shouldMergeLatestTransaction(
+      CommandTransaction newTransaction, CommandTransaction previousTransaction) {
     final newContentEvents = newTransaction.changes
         .where((change) => change is! SelectionChangeEvent && change is! ComposingRegionChangeEvent)
         .toList();
     if (newContentEvents.isEmpty) {
-      return false;
+      return TransactionMerge.noOpinion;
     }
     final newTextInsertionEvents =
         newContentEvents.where((change) => change is DocumentEdit && change.change is TextInsertionEvent).toList();
     if (newTextInsertionEvents.length != newContentEvents.length) {
       // There were 1+ new content changes that weren't text input. Don't merge transactions.
-      return false;
+      return TransactionMerge.noOpinion;
     }
 
     // At this point we know that all new content changes were text input.
@@ -532,23 +613,23 @@ class MergeRapidTextInputPolicy implements HistoryGroupingPolicy {
         .where((change) => change is! SelectionChangeEvent && change is! ComposingRegionChangeEvent)
         .toList();
     if (previousContentEvents.isEmpty) {
-      return false;
+      return TransactionMerge.noOpinion;
     }
     final previousTextInsertionEvents =
         previousContentEvents.where((change) => change is DocumentEdit && change.change is TextInsertionEvent).toList();
     if (previousTextInsertionEvents.length != previousContentEvents.length) {
       // There were 1+ new content changes that weren't text input. Don't merge transactions.
-      return false;
+      return TransactionMerge.noOpinion;
     }
 
     if (newTransaction.firstChangeTime.difference(previousTransaction.lastChangeTime!) > _maxMergeTime) {
       // The text insertions were far enough apart in time that we don't want to merge them.
-      return false;
+      return TransactionMerge.noOpinion;
     }
 
-    // The new and previous transactions were entirely text input. They happend quickly.
+    // The new and previous transactions were entirely text input. They happened quickly.
     // Merge them together.
-    return true;
+    return TransactionMerge.mergeOnTop;
   }
 }
 
@@ -558,7 +639,7 @@ class CommandTransaction {
   final List<EditCommand> commands;
   final List<EditEvent> changes;
 
-  DateTime firstChangeTime;
+  final DateTime firstChangeTime;
   DateTime? lastChangeTime;
 }
 
@@ -795,16 +876,22 @@ abstract class EditRequest {
 
 /// A change that took place within a [Editor].
 abstract class EditEvent {
-  // Marker interface for all editor change events.
+  const EditEvent();
+
+  /// Describes this change in a human-readable way.
+  String describe() => toString();
 }
 
 /// An [EditEvent] that altered a [Document].
 ///
 /// The specific [Document] change is available in [change].
-class DocumentEdit implements EditEvent {
+class DocumentEdit extends EditEvent {
   DocumentEdit(this.change);
 
   final DocumentChange change;
+
+  @override
+  String describe() => change.describe();
 
   @override
   String toString() => "DocumentEdit -> $change";

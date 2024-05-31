@@ -1605,6 +1605,10 @@ class AttributionChangeEvent extends NodeChangeEvent {
   final Set<Attribution> attributions;
 
   @override
+  String describe() =>
+      "${change == AttributionChange.added ? "Added" : "Removed"} attributions ($nodeId) - ${range.start} -> ${range.end}: $attributions";
+
+  @override
   String toString() => "AttributionChangeEvent ('$nodeId' - ${range.start} -> ${range.end} ($change): '$attributions')";
 
   @override
@@ -1752,6 +1756,9 @@ class TextInsertionEvent extends NodeChangeEvent {
   final AttributedText text;
 
   @override
+  String describe() => "Inserted text ($nodeId) @ $offset: '${text.text}'";
+
+  @override
   String toString() => "TextInsertionEvent ('$nodeId' - $offset -> '${text.text}')";
 
   @override
@@ -1776,6 +1783,9 @@ class TextDeletedEvent extends NodeChangeEvent {
 
   final int offset;
   final AttributedText deletedText;
+
+  @override
+  String describe() => "Deleted text ($nodeId) @ $offset: ${deletedText.text}";
 
   @override
   String toString() => "TextDeletedEvent ('$nodeId' - $offset -> '${deletedText.text}')";
