@@ -601,8 +601,209 @@ void main() {
             newAttribution: _LinkAttribution(url: 'https://pub.dev'),
             start: 4,
             end: 12,
+            overwriteConflictingSpans: false,
           );
         }, throwsA(isA<IncompatibleOverlappingAttributionsException>()));
+      });
+
+      test('overwrites incompatible attributions at the beginning of the span', () {
+        // Starting value:
+        // |aaaaaaa|
+        //
+        // Ending value:
+        // |-----aa|
+        // |bbbbb--|
+
+        final spans = AttributedSpans(
+          attributions: _createSpanMarkersForAttribution(
+            attribution: _LinkAttribution(url: 'https://flutter.dev'),
+            startOffset: 0,
+            endOffset: 6,
+          ),
+        );
+
+        // Add an overlapping link at the beginning.
+        spans.addAttribution(
+          newAttribution: _LinkAttribution(url: 'https://pub.dev'),
+          start: 0,
+          end: 4,
+        );
+
+        expect(
+          spans,
+          AttributedSpans(
+            attributions: [
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://pub.dev'),
+                startOffset: 0,
+                endOffset: 4,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://flutter.dev'),
+                startOffset: 5,
+                endOffset: 6,
+              ),
+            ],
+          ),
+        );
+      });
+
+      test('splits incompatible attributions at the middle of the text', () {
+        // Starting value:
+        // |aaaaaaa----------|
+        // |----------bbbbbbb|
+        //
+        // Ending value:
+        // |aaaa-------------|
+        // |-------------bbbb|
+        // |----ccccccccc----|
+
+        final spans = AttributedSpans(attributions: [
+          ..._createSpanMarkersForAttribution(
+            attribution: _LinkAttribution(url: 'https://flutter.dev'),
+            startOffset: 0,
+            endOffset: 6,
+          ),
+          ..._createSpanMarkersForAttribution(
+            attribution: _LinkAttribution(url: 'https://pub.dev'),
+            startOffset: 10,
+            endOffset: 16,
+          ),
+        ]);
+
+        // Add an overlapping at the middle.
+        spans.addAttribution(
+          newAttribution: _LinkAttribution(url: 'https://google.com'),
+          start: 4,
+          end: 12,
+        );
+
+        expect(
+          spans,
+          AttributedSpans(
+            attributions: [
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://flutter.dev'),
+                startOffset: 0,
+                endOffset: 3,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://google.com'),
+                startOffset: 4,
+                endOffset: 12,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://pub.dev'),
+                startOffset: 13,
+                endOffset: 16,
+              ),
+            ],
+          ),
+        );
+      });
+
+      test('overwrites incompatible attributions at the end of the span', () {
+        // Starting value:
+        // |aaaaaaa------|
+        //
+        // Ending value:
+        // |aaaa---------|
+        // |----bbbbbbbbb|
+
+        final spans = AttributedSpans(
+          attributions: _createSpanMarkersForAttribution(
+            attribution: _LinkAttribution(url: 'https://flutter.dev'),
+            startOffset: 0,
+            endOffset: 6,
+          ),
+        );
+
+        // Add an overlapping link at the end.
+        spans.addAttribution(
+          newAttribution: _LinkAttribution(url: 'https://pub.dev'),
+          start: 4,
+          end: 12,
+        );
+
+        expect(
+          spans,
+          AttributedSpans(
+            attributions: [
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://flutter.dev'),
+                startOffset: 0,
+                endOffset: 3,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://pub.dev'),
+                startOffset: 4,
+                endOffset: 12,
+              ),
+            ],
+          ),
+        );
+      });
+
+      test('overwrites multiple incompatible attributions at the midle of the text', () {
+        // Starting value:
+        // |aaaaaa--------------------|
+        // |----------bbbbbb----------|
+        // |--------------------cccccc|
+        //
+        // Ending value:
+        // |aaaa----------------------|
+        // |-----------------------ccc|
+        // |----ddddddddddddddddddd---|
+
+        final spans = AttributedSpans(
+          attributions: [
+            ..._createSpanMarkersForAttribution(
+              attribution: _LinkAttribution(url: 'https://flutter.dev'),
+              startOffset: 0,
+              endOffset: 5,
+            ),
+            ..._createSpanMarkersForAttribution(
+              attribution: _LinkAttribution(url: 'https://pub.dev'),
+              startOffset: 10,
+              endOffset: 15,
+            ),
+            ..._createSpanMarkersForAttribution(
+              attribution: _LinkAttribution(url: 'https://google.com'),
+              startOffset: 20,
+              endOffset: 25,
+            ),
+          ],
+        );
+
+        // Add a link overlapping with all existing spans.
+        spans.addAttribution(
+          newAttribution: _LinkAttribution(url: 'https://youtube.com'),
+          start: 4,
+          end: 22,
+        );
+
+        expect(
+          spans,
+          AttributedSpans(
+            attributions: [
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://flutter.dev'),
+                startOffset: 0,
+                endOffset: 3,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://youtube.com'),
+                startOffset: 4,
+                endOffset: 22,
+              ),
+              ..._createSpanMarkersForAttribution(
+                attribution: _LinkAttribution(url: 'https://google.com'),
+                startOffset: 23,
+                endOffset: 25,
+              )
+            ],
+          ),
+        );
       });
 
       test('compatible attributions are merged', () {
@@ -812,4 +1013,25 @@ class _LinkAttribution implements Attribution {
 
   @override
   int get hashCode => url.hashCode;
+}
+
+/// Creates start and end markers for the [attribution], starting at [startOffset]
+/// and ending at [endOffset].
+List<SpanMarker> _createSpanMarkersForAttribution({
+  required Attribution attribution,
+  required int startOffset,
+  required int endOffset,
+}) {
+  return [
+    SpanMarker(
+      attribution: attribution,
+      offset: startOffset,
+      markerType: SpanMarkerType.start,
+    ),
+    SpanMarker(
+      attribution: attribution,
+      offset: endOffset,
+      markerType: SpanMarkerType.end,
+    ),
+  ];
 }

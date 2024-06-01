@@ -1276,108 +1276,201 @@ void main() {
       });
     });
 
-    testWidgetsOnArbitraryDesktop('does not merge different colors', (tester) async {
-      final context = await tester //
+    testWidgetsOnArbitraryDesktop('overwrites spans with different colors', (tester) async {
+      // Pump an editor with a single paragraph with blue color across the entire paragraph.
+      final testContext = await tester //
           .createDocument()
-          .withSingleParagraph()
+          .withCustomContent(
+            MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: '1',
+                  text: AttributedText(
+                    'blue orange pink',
+                    _createAttributedSpansForAttribution(
+                      attribution: const ColorAttribution(Colors.blue),
+                      startOffset: 0,
+                      endOffset: 15,
+                    ),
+                  ),
+                )
+              ],
+            ),
+          )
           .pump();
 
-      final editor = context.editor;
-
-      // Apply a yellow color to the word "Lorem".
-      editor.execute([
+      // Apply orange color to the word "orange".
+      testContext.editor.execute([
         AddTextAttributionsRequest(
-          documentRange: const DocumentRange(
-            start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
-            end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 5)),
-          ),
-          attributions: {const ColorAttribution(Colors.yellow)},
+          documentRange: _creatSingleNodeTextRange('1', 5, 11),
+          attributions: {const ColorAttribution(Colors.orange)},
         ),
       ]);
+      await tester.pump();
 
-      // Try to apply a red color to the range "L|ore|m". This should fail
-      // because we can't apply two different colors to the same range.
+      // Apply pink color to the word "pink" by toggling the attribution.
+      testContext.editor.execute([
+        ToggleTextAttributionsRequest(
+          documentRange: _creatSingleNodeTextRange('1', 11, 16),
+          attributions: {const ColorAttribution(Colors.pink)},
+        ),
+      ]);
+      await tester.pump();
+
+      // Ensure the spans were overwritten.
       expect(
-        () => editor.execute([
-          AddTextAttributionsRequest(
-            documentRange: const DocumentRange(
-              start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 1)),
-              end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 3)),
+        SuperEditorInspector.findTextInComponent('1').spans,
+        AttributedSpans(
+          attributions: [
+            ..._createSpanMarkersForAttribution(
+              attribution: const ColorAttribution(Colors.blue),
+              startOffset: 0,
+              endOffset: 4,
             ),
-            attributions: {const ColorAttribution(Colors.red)},
-          ),
-        ]),
-        throwsException,
+            ..._createSpanMarkersForAttribution(
+              attribution: const ColorAttribution(Colors.orange),
+              startOffset: 5,
+              endOffset: 10,
+            ),
+            ..._createSpanMarkersForAttribution(
+              attribution: const ColorAttribution(Colors.pink),
+              startOffset: 11,
+              endOffset: 15,
+            ),
+          ],
+        ),
       );
     });
 
-    testWidgetsOnArbitraryDesktop('does not merge different background colors', (tester) async {
-      final context = await tester //
+    testWidgetsOnArbitraryDesktop('overwrites spans with different background colors', (tester) async {
+      // Pump an editor with a single paragraph with blue background color across the entire paragraph.
+      final testContext = await tester //
           .createDocument()
-          .withSingleParagraph()
+          .withCustomContent(
+            MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: '1',
+                  text: AttributedText(
+                    'blue orange pink',
+                    _createAttributedSpansForAttribution(
+                      attribution: const BackgroundColorAttribution(Colors.blue),
+                      startOffset: 0,
+                      endOffset: 15,
+                    ),
+                  ),
+                )
+              ],
+            ),
+          )
           .pump();
 
-      final editor = context.editor;
-
-      // Apply a yellow background to the word "Lorem".
-      editor.execute([
+      // Apply orange color to the word "orange".
+      testContext.editor.execute([
         AddTextAttributionsRequest(
-          documentRange: const DocumentRange(
-            start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
-            end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 5)),
-          ),
-          attributions: {const BackgroundColorAttribution(Colors.yellow)},
+          documentRange: _creatSingleNodeTextRange('1', 5, 11),
+          attributions: {const BackgroundColorAttribution(Colors.orange)},
         ),
       ]);
+      await tester.pump();
 
-      // Try to apply a red background to the range "L|ore|m". This should fail
-      // because we can't apply two different background colors to the same range.
+      // Apply pink color to the word "pink" by toggling the attribution.
+      testContext.editor.execute([
+        ToggleTextAttributionsRequest(
+          documentRange: _creatSingleNodeTextRange('1', 11, 16),
+          attributions: {const BackgroundColorAttribution(Colors.pink)},
+        ),
+      ]);
+      await tester.pump();
+
+      // Ensure the spans were overwritten.
       expect(
-        () => editor.execute([
-          AddTextAttributionsRequest(
-            documentRange: const DocumentRange(
-              start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 1)),
-              end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 3)),
+        SuperEditorInspector.findTextInComponent('1').spans,
+        AttributedSpans(
+          attributions: [
+            ..._createSpanMarkersForAttribution(
+              attribution: const BackgroundColorAttribution(Colors.blue),
+              startOffset: 0,
+              endOffset: 4,
             ),
-            attributions: {const BackgroundColorAttribution(Colors.red)},
-          ),
-        ]),
-        throwsException,
+            ..._createSpanMarkersForAttribution(
+              attribution: const BackgroundColorAttribution(Colors.orange),
+              startOffset: 5,
+              endOffset: 10,
+            ),
+            ..._createSpanMarkersForAttribution(
+              attribution: const BackgroundColorAttribution(Colors.pink),
+              startOffset: 11,
+              endOffset: 15,
+            ),
+          ],
+        ),
       );
     });
 
-    testWidgetsOnArbitraryDesktop('does not merge different font sizes', (tester) async {
-      final context = await tester //
+    testWidgetsOnArbitraryDesktop('overwrites spans with different font sizes', (tester) async {
+      // Pump an editor with a single paragraph with 16px font size across the entire paragraph.
+      final testContext = await tester //
           .createDocument()
-          .withSingleParagraph()
+          .withCustomContent(
+            MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: '1',
+                  text: AttributedText(
+                    '16px 18px 14px',
+                    _createAttributedSpansForAttribution(
+                      attribution: const FontSizeAttribution(16),
+                      startOffset: 0,
+                      endOffset: 13,
+                    ),
+                  ),
+                )
+              ],
+            ),
+          )
           .pump();
 
-      final editor = context.editor;
-
-      // Apply a font size of 14 to the word "Lorem".
-      editor.execute([
+      // Apply 18px font size to the text "18px".
+      testContext.editor.execute([
         AddTextAttributionsRequest(
-          documentRange: const DocumentRange(
-            start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
-            end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 5)),
-          ),
+          documentRange: _creatSingleNodeTextRange('1', 5, 9),
+          attributions: {const FontSizeAttribution(18)},
+        ),
+      ]);
+      await tester.pump();
+
+      // Apply 14px color to the text "14px" by toggling the attribution.
+      testContext.editor.execute([
+        ToggleTextAttributionsRequest(
+          documentRange: _creatSingleNodeTextRange('1', 9, 14),
           attributions: {const FontSizeAttribution(14)},
         ),
       ]);
+      await tester.pump();
 
-      // Try to apply a font size of 16 to the range "L|ore|m". This should fail
-      // because we can't apply two different font sizes to the same range.
+      // Ensure the spans were overwritten.
       expect(
-        () => editor.execute([
-          AddTextAttributionsRequest(
-            documentRange: const DocumentRange(
-              start: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 1)),
-              end: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 3)),
+        SuperEditorInspector.findTextInComponent('1').spans,
+        AttributedSpans(
+          attributions: [
+            ..._createSpanMarkersForAttribution(
+              attribution: const FontSizeAttribution(16),
+              startOffset: 0,
+              endOffset: 4,
             ),
-            attributions: {const FontSizeAttribution(16)},
-          ),
-        ]),
-        throwsException,
+            ..._createSpanMarkersForAttribution(
+              attribution: const FontSizeAttribution(18),
+              startOffset: 5,
+              endOffset: 8,
+            ),
+            ..._createSpanMarkersForAttribution(
+              attribution: const FontSizeAttribution(14),
+              startOffset: 9,
+              endOffset: 13,
+            ),
+          ],
+        ),
       );
     });
   });
@@ -1515,7 +1608,7 @@ extension _ToggleAttributions on Editor {
 /// Creates an [AttributedSpans] for the [attribution] starting at [startOffset]
 /// and ending at [endOffset].
 AttributedSpans _createAttributedSpansForAttribution({
-  required NamedAttribution attribution,
+  required Attribution attribution,
   required int startOffset,
   required int endOffset,
 }) {
@@ -1532,5 +1625,41 @@ AttributedSpans _createAttributedSpansForAttribution({
         markerType: SpanMarkerType.end,
       ),
     ],
+  );
+}
+
+/// Creates start and end markers for the [attribution], starting at [startOffset]
+/// and ending at [endOffset].
+List<SpanMarker> _createSpanMarkersForAttribution({
+  required Attribution attribution,
+  required int startOffset,
+  required int endOffset,
+}) {
+  return [
+    SpanMarker(
+      attribution: attribution,
+      offset: startOffset,
+      markerType: SpanMarkerType.start,
+    ),
+    SpanMarker(
+      attribution: attribution,
+      offset: endOffset,
+      markerType: SpanMarkerType.end,
+    ),
+  ];
+}
+
+/// Creates a [DocumentRange] that starts at node [nodeId] at [start] and
+/// ends at [nodeId] at [end].
+DocumentRange _creatSingleNodeTextRange(String nodeId, int start, int end) {
+  return DocumentRange(
+    start: DocumentPosition(
+      nodeId: nodeId,
+      nodePosition: TextNodePosition(offset: start),
+    ),
+    end: DocumentPosition(
+      nodeId: nodeId,
+      nodePosition: TextNodePosition(offset: end),
+    ),
   );
 }
