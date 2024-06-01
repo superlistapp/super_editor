@@ -113,22 +113,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
 
     int? ordinalValue;
     if (node.type == ListItemType.ordered) {
-      // Counts the number of ordered list items above the current node with the same indentation level. Ordered
-      // list items with the same indentation level might be separated by ordered or unordered list items with
-      // different indentation levels.
-      ordinalValue = 1;
-      DocumentNode? nodeAbove = document.getNodeBefore(node);
-      while (nodeAbove != null && nodeAbove is ListItemNode && nodeAbove.indent >= node.indent) {
-        if (nodeAbove.indent == node.indent) {
-          if (nodeAbove.type != ListItemType.ordered) {
-            // We found an unordered list item with the same indentation level as the ordered list item.
-            // Other ordered list items aboce this one do not belong to the same list.
-            break;
-          }
-          ordinalValue = ordinalValue! + 1;
-        }
-        nodeAbove = document.getNodeBefore(nodeAbove);
-      }
+      ordinalValue = computeListItemOrdinalValue(node, document);
     }
 
     return switch (node.type) {
@@ -1197,4 +1182,32 @@ ExecutionInstruction splitListItemWhenEnterPressed({
 
   final didSplitListItem = editContext.commonOps.insertBlockLevelNewline();
   return didSplitListItem ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+/// Computes the ordinal value of an ordered list item.
+///
+/// Walks backwards counting the number of ordered list items above the [listItem] with the same indentation level.
+///
+/// The ordinal value starts at 1.
+int computeListItemOrdinalValue(ListItemNode listItem, Document document) {
+  if (listItem.type != ListItemType.ordered) {
+    // Unordered list items do not have an ordinal value.
+    return 0;
+  }
+
+  int ordinalValue = 1;
+  DocumentNode? nodeAbove = document.getNodeBefore(listItem);
+  while (nodeAbove != null && nodeAbove is ListItemNode && nodeAbove.indent >= listItem.indent) {
+    if (nodeAbove.indent == listItem.indent) {
+      if (nodeAbove.type != ListItemType.ordered) {
+        // We found an unordered list item with the same indentation level as the ordered list item.
+        // Other ordered list items above this one do not belong to the same list.
+        break;
+      }
+      ordinalValue = ordinalValue + 1;
+    }
+    nodeAbove = document.getNodeBefore(nodeAbove);
+  }
+
+  return ordinalValue;
 }

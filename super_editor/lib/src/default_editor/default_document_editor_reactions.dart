@@ -160,7 +160,11 @@ class UnorderedListItemConversionReaction extends ParagraphPrefixConversionReact
 /// Converts a [ParagraphNode] to an [OrderedListItemNode] when the
 /// user types " 1. " (or similar) at the start of the paragraph.
 class OrderedListItemConversionReaction extends ParagraphPrefixConversionReaction {
-  static final _orderedListPattern = RegExp(r'^\s*1[.)]\s+$');
+  /// Matches strings like ` 1. `, ` 2. `, ` 1) `, ` 2) `, etc.
+  static final _orderedListPattern = RegExp(r'^\s*\d+[.)]\s+$');
+
+  /// Matches one or more numbers.
+  static final _numberRegex = RegExp(r'\d+');
 
   const OrderedListItemConversionReaction();
 
@@ -175,6 +179,32 @@ class OrderedListItemConversionReaction extends ParagraphPrefixConversionReactio
     ParagraphNode paragraph,
     String match,
   ) {
+    // Extract the number from the match.
+    final numberMatch = _numberRegex.firstMatch(match)!;
+    final numberTyped = int.parse(match.substring(numberMatch.start, numberMatch.end));
+
+    if (numberTyped > 1) {
+      // Check if the user typed a number that continues the sequence of an upstream
+      // ordered list item. For example, the list has the items 1, 2, 3 and 4,
+      // and the user types " 5. ".
+
+      final document = editContext.find<MutableDocument>(Editor.documentKey);
+
+      final upstreamNode = document.getNodeBefore(paragraph);
+      if (upstreamNode == null || upstreamNode is! ListItemNode || upstreamNode.type != ListItemType.ordered) {
+        // There isn't an ordered list item immediately before this paragraph. Fizzle.
+        return;
+      }
+
+      // The node immediately before this paragraph is an ordered list item. Compute its ordinal value,
+      // so we can check if the user typed the next number in the sequence.
+      int upstreamListItemOrdinalValue = computeListItemOrdinalValue(upstreamNode, document);
+      if (numberTyped != upstreamListItemOrdinalValue + 1) {
+        // The user typed a number that doesn't continue the sequence of the upstream ordered list item.
+        return;
+      }
+    }
+
     // The user started a paragraph with an ordered list item pattern.
     // Convert the paragraph to an unordered list item.
     requestDispatcher.execute([
