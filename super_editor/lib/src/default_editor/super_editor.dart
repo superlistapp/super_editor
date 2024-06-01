@@ -1243,6 +1243,7 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   cmdBToToggleBold,
   cmdIToToggleItalics,
   doNothingWithBackspaceOnWeb,
+  doNothingWithCtrlOrCmdAndZOnWeb,
   backspaceToConvertTaskToParagraph,
   backspaceToUnIndentListItem,
   backspaceToClearParagraphBlockType,
