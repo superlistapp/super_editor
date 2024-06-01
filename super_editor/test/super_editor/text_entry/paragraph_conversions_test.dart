@@ -123,6 +123,81 @@ void main() {
         expect(listItemNode.text.text.isEmpty, isTrue);
       }, variant: _orderedListVariant);
 
+      testWidgetsOnAllPlatforms('with a number that continues the sequence', (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('''
+1. First item
+2. Second item
+3. Third item
+
+
+''')
+            .withInputSource(TextInputSource.ime)
+            .autoFocus(true)
+            .pump();
+
+        final document = context.document;
+        await tester.placeCaretInParagraph(document.nodes[3].id, 0);
+
+        // Type a list pattern with the number 4.
+        await tester.typeImeText(_orderedListNumberVariant.currentValue!.replaceAll('n', '4'));
+
+        // Ensure the paragraph was converted.
+        final listItemNode = context.findEditContext().document.nodes[3];
+        expect(listItemNode, isA<ListItemNode>());
+        expect((listItemNode as ListItemNode).type, ListItemType.ordered);
+        expect(listItemNode.text.text.isEmpty, isTrue);
+      }, variant: _orderedListNumberVariant);
+
+      testWidgetsOnAllPlatforms('does not convert with a number that does not continues the sequence', (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown('''
+1. First item
+2. Second item
+3. Third item
+
+
+''')
+            .withInputSource(TextInputSource.ime)
+            .autoFocus(true)
+            .pump();
+
+        final document = context.document;
+        await tester.placeCaretInParagraph(document.nodes[3].id, 0);
+
+        // Type a list pattern with the number 5.
+        final orderedListItemPattern = _orderedListNumberVariant.currentValue!.replaceAll('n', '5');
+        await tester.typeImeText(orderedListItemPattern);
+
+        // Ensure the paragraph was not converted and the typed text was kept.
+        final editingNode = context.findEditContext().document.nodes[3];
+        expect(editingNode, isA<ParagraphNode>());
+        expect((editingNode as ParagraphNode).text.text, orderedListItemPattern);
+      }, variant: _orderedListNumberVariant);
+
+      testWidgetsOnAllPlatforms('does not start a list with a number bigger than one', (tester) async {
+        final context = await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .withInputSource(TextInputSource.ime)
+            .autoFocus(true)
+            .pump();
+
+        final document = context.document;
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Type a list pattern with the number 2.
+        final orderedListItemPattern = _orderedListNumberVariant.currentValue!.replaceAll('n', '2');
+        await tester.typeImeText(orderedListItemPattern);
+
+        // Ensure the paragraph was not converted and the typed text was kept.
+        final editingNode = document.nodes.first;
+        expect(editingNode, isA<ParagraphNode>());
+        expect((editingNode as ParagraphNode).text.text, orderedListItemPattern);
+      }, variant: _orderedListNumberVariant);
+
       testWidgetsOnAllPlatforms('does not convert "1 "', (tester) async {
         final context = await tester //
             .createDocument()
@@ -387,6 +462,13 @@ final _orderedListVariant = ValueVariant({
   " 1. ",
   "1) ",
   " 1) ",
+});
+
+final _orderedListNumberVariant = ValueVariant({
+  "n. ",
+  " n. ",
+  "n) ",
+  " n) ",
 });
 
 /// Holds sequence of character that shouldn't produce a horizontal rule
