@@ -199,22 +199,38 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
     tracker.entry.resolve(GestureDisposition.rejected);
     _freezeTracker(tracker);
 
-    // Both _firstTap and _secondTap are only set when a pointer up event is received,
-    // but we also need to handle cases when we already fired the onTapDown event, and
-    // we were defeated on the gesture arena before the onTapUp event. For example, if
-    // an app has both a TapSequenceGestureRecognizer and a HorizontalDragGestureRecognizer,
-    // when the user taps down and then drag horizontally, the onTapDown event is fired, and after that
-    // the HorizontalDragGestureRecognizer declares itself as the winner. In this case, we need to
-    // fire the onTapCancel event. Check if _firstTapDownDetails is not null to confirm if the tap
-    // down already happened.
-    if (_firstTap != null || _secondTap != null || _firstTapDownDetails != null) {
-      if (tracker == _firstTap || tracker == _secondTap) {
+    if (_firstTap == null && _firstTapDownDetails != null) {
+      // The user tapped down and then another recognizer won the arena. For example, in an app with both a
+      // TapSequenceGestureRecognizer and a HorizontalDragGestureRecognizer, when the user taps down and
+      // then drags horizontally, the onTapDown event is fired, and after that the HorizontalDragGestureRecognizer
+      // declares itself as the winner. Invoke onTapCancel to cancel the gesture.
+      _checkCancel();
+      if (_trackers.isEmpty) {
         _reset();
-      } else {
-        _checkCancel();
-        if (_trackers.isEmpty) {
-          _reset();
-        }
+      }
+      return;
+    }
+
+    if (tracker == _secondTap) {
+      // A double tap was registered and we were defeated on the gesture arena after that. Reset
+      // to clean up the tap trackers.
+      _reset();
+      return;
+    }
+
+    if (tracker == _firstTap) {
+      // A tap up was registered and we were defeated on the gesture arena after that. Reset
+      // to clean up the tap trackers.
+      _reset();
+      return;
+    }
+
+    if (_firstTap != null || _secondTap != null) {
+      // We have a single or double tap registered, but the tracker isn't related to any of them.
+      // It's not clear what this situation means.
+      _checkCancel();
+      if (_trackers.isEmpty) {
+        _reset();
       }
     }
   }
