@@ -76,14 +76,14 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
 
 class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
   HorizontalRuleComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
     DocumentNodeSelection? selection,
     Color selectionColor = Colors.transparent,
     this.caret,
     required this.caretColor,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+  }) {
     super.selection = selection;
     super.selectionColor = selectionColor;
   }

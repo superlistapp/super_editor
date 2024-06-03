@@ -131,14 +131,14 @@ class ImageComponentBuilder implements ComponentBuilder {
 
 class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
   ImageComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
     required this.imageUrl,
     this.expectedSize,
     DocumentNodeSelection? selection,
     Color selectionColor = Colors.transparent,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+  }) {
     this.selection = selection;
     this.selectionColor = selectionColor;
   }
