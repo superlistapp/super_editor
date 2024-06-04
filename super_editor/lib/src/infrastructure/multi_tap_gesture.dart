@@ -399,10 +399,12 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
   }
 
   void _checkCancel() {
-    // The _firstTap is only set after a pointer up event is received. Check if
-    // _firstTapDownDetails is not null, which signals we fired the onTapDown event and
-    // we were defeated on the arena before a pointer up event was received.
-    if ((_firstTap == null || _firstTapDownDetails != null) && onTapCancel != null) {
+    // Cancel our tap tracking if we lost in the arena after an initial tap down.
+    //
+    // This tracker looks for tap downs and tap releases. It's possible that we're in the
+    // arena for a tap down, but we lose the arena before the user releases his finger.
+    // That's what this condition identifies, and then cancels our tracker.
+    if ((_firstTapDownDetails != null || _firstTap == null) && onTapCancel != null) {
       invokeCallback<void>('onTapCancel', onTapCancel!);
     }
     if (_firstTap != null && _secondTap == null && onDoubleTapCancel != null) {
