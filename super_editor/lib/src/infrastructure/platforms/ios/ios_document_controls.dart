@@ -440,7 +440,8 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
   }
 
   @override
-  Rect? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+  Rect? computeLayoutDataWithDocumentLayout(
+      BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
     final documentSelection = widget.selection.value;
     if (documentSelection == null) {
       return null;
@@ -671,14 +672,9 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     }
   }
 
-  @override
-  DocumentSelectionLayout? computeLayoutData(Element? contentElement, RenderObject? contentLayout) {
-    if (contentElement == null || contentElement is! StatefulElement || contentElement.state is! DocumentLayout) {
-      return null;
-    }
-
-    final documentLayout = contentElement.state as DocumentLayout;
-
+  @protected
+  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(
+      BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
     final selection = widget.selection.value;
     if (selection == null) {
       return null;
@@ -702,7 +698,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       // The computeLayoutData method is called during the layer's build, which means that the
       // layer's RenderBox is outdated, because it wasn't laid out yet for the current frame.
       // Use the content's RenderBox, which was already laid out for the current frame.
-      final contentBox = contentElement.findRenderObject() as RenderBox?;
+      final contentBox = documentContext.findRenderObject() as RenderBox?;
       if (contentBox != null && contentBox.hasSize && caretRect.left + caretWidth >= contentBox.size.width) {
         // Ajust the caret position to make it entirely visible because it's currently placed
         // partially or entirely outside of the layers' bounds. This can happen for downstream selections
@@ -732,12 +728,6 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
         ),
       );
     }
-  }
-
-  @protected
-  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
-    // We don't ever call this method because we are using computeLayoutData directly.
-    return null;
   }
 
   @override
