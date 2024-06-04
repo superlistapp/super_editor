@@ -4,9 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/styles.dart';
-import 'package:super_editor/src/default_editor/horizontal_rule.dart';
-import 'package:super_editor/src/default_editor/image.dart';
-import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:super_editor/src/default_editor/layout_single_column/selection_aware_viewmodel.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
@@ -154,18 +152,9 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
           ..highlightWhenEmpty = highlightWhenEmpty;
       }
     }
-    if (viewModel is ImageComponentViewModel) {
-      final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
-
+    if (viewModel is SelectionAwareViewModelMixin) {
       viewModel
-        ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor;
-    }
-    if (viewModel is HorizontalRuleComponentViewModel) {
-      final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
-
-      viewModel
-        ..selection = selection
+        ..selection = nodeSelection
         ..selectionColor = _selectionStyles.selectionColor;
     }
 
