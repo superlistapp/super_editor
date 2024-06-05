@@ -8,9 +8,7 @@ import 'package:super_editor/super_editor_test.dart';
 import '../../test/super_editor/supereditor_test_tools.dart';
 import '../test_tools_goldens.dart';
 
-Future<void> main() async {
-  await loadAppFonts();
-
+void main() {
   group('SuperEditor > caret rendering >', () {
     testGoldensOnMac('shows caret at right side of an image', (tester) async {
       await _pumpCaretTestApp(tester);
