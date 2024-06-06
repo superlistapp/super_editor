@@ -155,7 +155,12 @@ class TextSelectionPainter extends CustomPainter {
 
     for (final box in selectionBoxes) {
       final rawRect = box.toRect();
-      final rect = Rect.fromLTWH(rawRect.left, rawRect.top - 2, rawRect.width, rawRect.height + 4);
+      final rect = Rect.fromLTWH(
+        rawRect.left,
+        rawRect.top - selectionHighlightBoxTopPixelsDecrement,
+        rawRect.width,
+        rawRect.height + selectionHighlightBoxBottomPixelsIncrement,
+      );
 
       canvas.drawRect(
         // Note: If the rect has no width then we've selected an empty line. Give
@@ -173,3 +178,17 @@ class TextSelectionPainter extends CustomPainter {
         selectionColor != oldDelegate.selectionColor;
   }
 }
+
+/// The number of pixels to decrement from the top of selection box to display
+/// the selection highlight.
+///
+/// The final selection highlight top is the top of the box returned by
+/// `TextLayout.getBoxesForSelection` minus [selectionHighlightBoxTopPixelsDecrement] pixels.
+const selectionHighlightBoxTopPixelsDecrement = 2.0;
+
+/// The number of pixels to increment from the bottom of selection box to display
+/// the selection highlight.
+///
+/// The final selection highlight top bottom the bottom of the box returned by
+/// `TextLayout.getBoxesForSelection` plus [selectionHighlightBoxBottomPixelsIncrement] pixels.
+const selectionHighlightBoxBottomPixelsIncrement = 4.0;
