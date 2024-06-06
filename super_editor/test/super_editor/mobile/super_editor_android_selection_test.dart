@@ -95,7 +95,7 @@ void main() {
           // Now that we've started dragging, ensure the magnifier is visible and the
           // toolbar is hidden.
           expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
-          expect(find.byType(AndroidMagnifyingGlass), findsOneWidget);
+          expect(find.byType(AndroidMagnifyingGlass), findsOne);
 
           // Release the gesture so the test system doesn't complain.
           await gesture.up();
@@ -531,7 +531,7 @@ void _expectOnlyToolbar() {
 void _expectOnlyMagnifier() {
   expect(find.byType(AndroidSelectionHandle).hitTestable(), findsNothing);
   expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
-  expect(find.byType(AndroidMagnifyingGlass), findsOneWidget);
+  expect(find.byType(AndroidMagnifyingGlass), findsOne);
 }
 
 void _expectHandlesAndToolbar() {

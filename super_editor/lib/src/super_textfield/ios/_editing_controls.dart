@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
@@ -85,7 +86,8 @@ class IOSEditingControls extends StatefulWidget {
   State createState() => _IOSEditingControlsState();
 }
 
-class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBindingObserver {
+class _IOSEditingControlsState extends State<IOSEditingControls>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -106,7 +108,6 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   bool _isDraggingExtent = false;
   Offset? _globalDragOffset;
   Offset? _localDragOffset;
-
   @override
   void initState() {
     super.initState();
@@ -295,10 +296,8 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
               ..._buildDraggableOverlayHandles(),
               // Build the editing toolbar
               _buildToolbar(),
-              // Build the focal point for the magnifier
-              if (_isDraggingBase || _isDraggingExtent) _buildMagnifierFocalPoint(),
               // Build the magnifier
-              if (widget.editingController.isMagnifierVisible) _buildMagnifier(),
+              _buildMagnifier(),
             ],
           );
         });
@@ -520,20 +519,6 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     );
   }
 
-  Widget _buildMagnifierFocalPoint() {
-    // When the user is dragging a handle in this overlay, we
-    // are responsible for positioning the focal point for the
-    // magnifier to follow. We do that here.
-    return Positioned(
-      left: _localDragOffset!.dx,
-      top: _localDragOffset!.dy,
-      child: Leader(
-        link: widget.editingController.magnifierFocalPoint,
-        child: const SizedBox(width: 1, height: 1),
-      ),
-    );
-  }
-
   Widget _buildMagnifier() {
     // Display a magnifier that tracks a focal point.
     //
@@ -543,11 +528,18 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     // When some other interaction wants to show the magnifier, then
     // that other area of the widget tree is responsible for
     // positioning the LayerLink target.
-    return Center(
-      child: IOSFollowingMagnifier.roundedRectangle(
-        leaderLink: widget.editingController.magnifierFocalPoint,
-        offsetFromFocalPoint: const Offset(0, -72),
-      ),
+    return ValueListenableBuilder(
+      valueListenable: widget.editingController.shouldShowMagnifier,
+      builder: (context, showMagnifier, child) {
+        return IOSFollowingMagnifier.roundedRectangle(
+          leaderLink: widget.editingController.magnifierFocalPoint,
+          show: showMagnifier,
+          // The bottom of the magnifier sits above the focal point.
+          // Leave a few pixels between the bottom of the magnifier and the focal point. This
+          // value was chosen empirically.
+          offsetFromFocalPoint: const Offset(0, -20),
+        );
+      },
     );
   }
 
@@ -621,6 +613,8 @@ class IOSEditingOverlayController with ChangeNotifier {
   final LeaderLink _magnifierFocalPoint;
 
   bool get isMagnifierVisible => overlayController.shouldDisplayMagnifier;
+  final ValueNotifier<bool> _shouldShowMagnifier = ValueNotifier<bool>(false);
+  ValueListenable<bool> get shouldShowMagnifier => _shouldShowMagnifier;
 
   void showMagnifier(Offset globalOffset) {
     overlayController.showMagnifier();
@@ -644,6 +638,7 @@ class IOSEditingOverlayController with ChangeNotifier {
   }
 
   void _overlayControllerChanged() {
+    _shouldShowMagnifier.value = overlayController.shouldDisplayMagnifier;
     notifyListeners();
   }
 }

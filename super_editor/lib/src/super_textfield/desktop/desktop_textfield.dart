@@ -2399,7 +2399,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required SuperTextFieldContext textFieldContext,
     required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2423,7 +2423,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required SuperTextFieldContext textFieldContext,
     required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2447,7 +2447,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required SuperTextFieldContext textFieldContext,
     required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2456,12 +2456,10 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     if (CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) {
-      // !HardwareKeyboard.instance.isMetaPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
     if (!CurrentPlatform.isApple && !HardwareKeyboard.instance.isControlPressed) {
-      // !HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2481,7 +2479,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required SuperTextFieldContext textFieldContext,
     required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2490,12 +2488,10 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     if (CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) {
-      // !HardwareKeyboard.instance.isMetaPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
     if (!CurrentPlatform.isApple && !HardwareKeyboard.instance.isControlPressed) {
-      // !HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2515,7 +2511,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required SuperTextFieldContext textFieldContext,
     required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -2543,7 +2539,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required SuperTextFieldContext textFieldContext,
     required KeyEvent keyEvent,
   }) {
-    if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    if (keyEvent is! KeyDownEvent) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 

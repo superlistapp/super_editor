@@ -51,6 +51,9 @@ export 'src/default_editor/text_tokenizing/tags.dart';
 export 'src/default_editor/text_tokenizing/stable_tags.dart';
 export 'src/default_editor/unknown_component.dart';
 
+// Clones
+export 'src/clones/slack/slack_tags.dart';
+
 // Document operations used by SuperEditor and/or SuperReader,
 // also made available for public use.
 export 'src/document_operations/selection_operations.dart';

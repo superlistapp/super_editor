@@ -3,7 +3,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
-
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 
 enum ExecutionInstruction {
@@ -35,7 +34,7 @@ enum ExecutionInstruction {
 
 extension PrimaryShortcutKey on KeyEvent {
   bool get isPrimaryShortcutKeyPressed =>
-      (CurrentPlatform.isApple && HardwareKeyboard.instance.isMetaPressed) ||
+      (CurrentPlatform.isApple && HardwareKeyboard.instance.isMetaPressed) || //
       (!CurrentPlatform.isApple && HardwareKeyboard.instance.isControlPressed);
 }
 

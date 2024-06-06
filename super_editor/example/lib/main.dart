@@ -13,6 +13,7 @@ import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/in_the_lab/feature_action_tags.dart';
 import 'package:example/demos/in_the_lab/feature_pattern_tags.dart';
+import 'package:example/demos/in_the_lab/feature_slack_tags.dart';
 import 'package:example/demos/in_the_lab/feature_stable_tags.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
@@ -26,6 +27,7 @@ import 'package:example/demos/super_reader/demo_super_reader.dart';
 import 'package:example/demos/supertextfield/demo_textfield.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
 import 'package:example/logging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -56,6 +58,8 @@ Future<void> main() async {
     // contentLayersLog,
     // appLog,
   });
+
+  // debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
 
   runApp(SuperEditorDemoApp());
 }
@@ -300,6 +304,13 @@ final _menu = <_MenuGroup>[
         title: 'User Tags',
         pageBuilder: (context) {
           return const UserTagsFeatureDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.account_circle,
+        title: 'Slack Tags',
+        pageBuilder: (context) {
+          return const SlackTagsFeatureDemo();
         },
       ),
       _MenuItem(

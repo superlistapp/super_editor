@@ -486,7 +486,7 @@ class RawScrollbarWithCustomPhysicsState<T extends RawScrollbarWithCustomPhysics
     }
     WidgetsBinding.instance.addPostFrameCallback((Duration duration) {
       assert(_debugCheckHasValidScrollPosition());
-    });
+    }, debugLabel: 'RawScrollbar.checkScrollPosition');
     return true;
   }
 

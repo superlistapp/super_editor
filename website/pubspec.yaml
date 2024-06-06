@@ -2,13 +2,15 @@ name: website
 description: The marketing website for SuperEditor.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
+  follow_the_leader: ^0.0.4+7
+  overlord: ^0.0.3+5
   super_editor:
     path: ../super_editor
   super_text_layout: ^0.1.0

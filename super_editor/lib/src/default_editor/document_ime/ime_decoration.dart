@@ -67,7 +67,7 @@ abstract class TextInputConnectionDecorator implements TextInputConnection {
 /// Subclass [DeltaTextInputClientDecorator] to override specific
 /// [DeltaTextInputClient] messages. To add behavior, instead of replacing it,
 /// call the `super` method within an override.
-class DeltaTextInputClientDecorator with DeltaTextInputClient, TextInputClient {
+class DeltaTextInputClientDecorator with TextInputClient, DeltaTextInputClient {
   DeltaTextInputClientDecorator([this._client]);
 
   set client(DeltaTextInputClient? client) => _client = client;
@@ -78,6 +78,11 @@ class DeltaTextInputClientDecorator with DeltaTextInputClient, TextInputClient {
 
   @override
   TextEditingValue? get currentTextEditingValue => _client?.currentTextEditingValue;
+
+  @override
+  void didChangeInputControl(TextInputControl? oldControl, TextInputControl? newControl) {
+    _client?.didChangeInputControl(oldControl, newControl);
+  }
 
   @override
   void insertTextPlaceholder(Size size) {

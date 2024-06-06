@@ -35,9 +35,4 @@ extension Finders on CommonFinders {
 class FindsNothing extends Finder {
   @override
   String get description => "Finder that matches nothing so that a Finder may be returned in defunct situations";
-
-  @override
-  Iterable<Element> apply(Iterable<Element> candidates) {
-    return List.empty();
-  }
 }
