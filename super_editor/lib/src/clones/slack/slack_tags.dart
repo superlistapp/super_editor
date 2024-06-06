@@ -35,8 +35,8 @@ class SlackTagPlugin extends SuperEditorPlugin {
 
   SlackTagPlugin() : tagIndex = SlackTagIndex() {
     _requestHandlers = <EditRequestHandler>[
-      (request) =>
-          request is FillInComposingSlackTagRequest ? FillInComposingSlackTagCommand(_trigger, request.tag) : null,
+      // (request) =>
+      //     request is FillInComposingSlackTagRequest ? FillInComposingSlackTagCommand(_trigger, request.tag) : null,
       (request) => request is CancelComposingSlackTagRequest //
           ? const CancelComposingSlackTagCommand()
           : null,
@@ -45,7 +45,7 @@ class SlackTagPlugin extends SuperEditorPlugin {
     _reactions = [
       SlackTagReaction(
         trigger: _trigger,
-        onUpdateComposingTag: tagIndex._onComposingTagFound,
+        onUpdateComposingTag: tagIndex.setTag,
       ),
       const AdjustSelectionAroundSlackTagReaction(_trigger),
     ];
@@ -145,7 +145,7 @@ class FillInComposingSlackTagCommand implements EditCommand {
     }
 
     // Remove the composing attribution from the text.
-    final removeComposingAttributionCommand = _removeSlackComposingTokenAttribution(document, tagIndex);
+    final removeComposingAttributionCommand = removeSlackComposingTokenAttribution(document, tagIndex);
 
     // Insert the final text and apply a stable tag attribution.
     final tag = tagIndex.composingSlackTag.value!;
@@ -240,7 +240,7 @@ class CancelComposingSlackTagCommand implements EditCommand {
     final document = context.find<MutableDocument>(Editor.documentKey);
 
     // Remove the composing attribution from the text.
-    final removeComposingAttributionCommand = _removeSlackComposingTokenAttribution(document, tagIndex);
+    final removeComposingAttributionCommand = removeSlackComposingTokenAttribution(document, tagIndex);
 
     // Reset the tag index.
     final tag = tagIndex.composingSlackTag.value!;
@@ -269,7 +269,7 @@ class CancelComposingSlackTagCommand implements EditCommand {
   }
 }
 
-EditCommand? _removeSlackComposingTokenAttribution(Document document, SlackTagIndex tagIndex) {
+EditCommand? removeSlackComposingTokenAttribution(Document document, SlackTagIndex tagIndex) {
   print("REMOVING COMPOSING ATTRIBUTION");
   // Remove any composing attribution for the previous state of the tag.
   // It's possible that the previous composing region disappeared, e.g., due to a deletion.
@@ -788,7 +788,7 @@ class SlackTagIndex with ChangeNotifier implements Editable {
   ValueListenable<ComposingSlackTag?> get composingSlackTag => _composingSlackTag;
   final _composingSlackTag = ValueNotifier<ComposingSlackTag?>(null);
 
-  void _onComposingTagFound(ComposingSlackTag? tag) {
+  void setTag(ComposingSlackTag? tag) {
     _composingSlackTag.value = tag;
   }
 
@@ -1097,10 +1097,10 @@ class AdjustSelectionAroundSlackTagReaction implements EditReaction {
       case SelectionChangeType.placeCaret:
       case SelectionChangeType.pushCaret:
       case SelectionChangeType.collapseSelection:
-        throw AssertionError(
-            "An expanded selection reported a SelectionChangeType for a collapsed selection: ${selectionChangeEvent.changeType}\n${selectionChangeEvent.newSelection}");
+      // throw AssertionError(
+      //     "An expanded selection reported a SelectionChangeType for a collapsed selection: ${selectionChangeEvent.changeType}\n${selectionChangeEvent.newSelection}");
       case SelectionChangeType.clearSelection:
-        throw AssertionError("Expected a collapsed selection but there was no selection.");
+      // throw AssertionError("Expected a collapsed selection but there was no selection.");
     }
   }
 
