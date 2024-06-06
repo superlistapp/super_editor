@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -273,10 +274,6 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
     return (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
   }
 
-  Offset _textPositionToTextOffset(TextPosition position) {
-    return _textLayout.getOffsetAtPosition(position);
-  }
-
   @override
   Widget build(BuildContext context) {
     final textFieldRenderObject = context.findRenderObject();
@@ -426,19 +423,22 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
         ? TextAffinity.downstream
         : TextAffinity.upstream;
 
+    final selectionBoxes = _textLayout.getBoxesForSelection(widget.editingController.textController.selection);
+    final upstreamSelectionBox = selectionBoxes.first;
+    final downstreamSelectionBox = selectionBoxes.last;
+
     final upstreamTextPosition = selectionDirection == TextAffinity.downstream
         ? widget.editingController.textController.selection.base
         : widget.editingController.textController.selection.extent;
-    final upstreamHandleOffsetInText = _textPositionToTextOffset(upstreamTextPosition);
-    final upstreamLineHeight =
-        _textLayout.getCharacterBox(upstreamTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
+
+    final upstreamHandleOffsetInText = Offset(upstreamSelectionBox.left, upstreamSelectionBox.top);
+    final upstreamLineHeight = upstreamSelectionBox.bottom - upstreamSelectionBox.top;
 
     final downstreamTextPosition = selectionDirection == TextAffinity.downstream
         ? widget.editingController.textController.selection.extent
         : widget.editingController.textController.selection.base;
-    final downstreamHandleOffsetInText = _textPositionToTextOffset(downstreamTextPosition);
-    final downstreamLineHeight =
-        _textLayout.getCharacterBox(downstreamTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
+    final downstreamHandleOffsetInText = Offset(downstreamSelectionBox.right, downstreamSelectionBox.top);
+    final downstreamLineHeight = downstreamSelectionBox.bottom - downstreamSelectionBox.top;
 
     if (upstreamLineHeight == 0 || downstreamLineHeight == 0) {
       _log.finer('Not building expanded handles because the text layout reported a zero line-height');
@@ -484,12 +484,23 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
     required Color debugColor,
     required void Function(DragStartDetails) onPanStart,
   }) {
+    final ballRadius = defaultIosHandleBallDiameter / 2;
+
     return CompositedTransformFollower(
       key: handleKey,
       link: widget.textContentLayerLink,
       offset: followerOffset,
       child: Transform.translate(
-        offset: const Offset(-12, -5),
+        offset: Offset(
+          -12,
+          isUpstreamHandle
+              // For the upstream handle, the ball is displayed above the text, partially
+              // overlapping the selected area. Decrease the ball diameter so the ball is positioned
+              // above the selected area, and add half of the radius to make the ball overlap with
+              // the selected area.
+              ? -selectionHighlightBoxTopPixelsDecrement - defaultIosHandleBallDiameter + (ballRadius / 2)
+              : -selectionHighlightBoxTopPixelsDecrement,
+        ),
         child: TapRegion(
           groupId: widget.tapRegionGroupId,
           child: GestureDetector(
@@ -504,10 +515,12 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
               child: showHandle
                   ? isUpstreamHandle
                       ? IOSSelectionHandle.upstream(
+                          ballRadius: ballRadius,
                           color: widget.handleColor,
                           caretHeight: lineHeight,
                         )
                       : IOSSelectionHandle.downstream(
+                          ballRadius: ballRadius,
                           color: widget.handleColor,
                           caretHeight: lineHeight,
                         )

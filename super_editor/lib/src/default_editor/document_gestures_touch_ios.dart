@@ -1953,4 +1953,4 @@ const defaultIosMagnifierSize = Size(133, 96);
 
 /// The diameter of the small circle that appears on the top and bottom of
 /// expanded iOS text handles.
-const defaultIosHandleBallDiameter = 8.0;
+const defaultIosHandleBallDiameter = 16.0;
