@@ -47,9 +47,10 @@ abstract class DocumentLayoutLayerState<WidgetType extends ContentLayerStatefulW
       return null;
     }
 
-    return computeLayoutDataWithDocumentLayout(context, contentElement.state as DocumentLayout);
+    return computeLayoutDataWithDocumentLayout(context, contentElement, contentElement.state as DocumentLayout);
   }
 
   @protected
-  LayoutDataType? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout);
+  LayoutDataType? computeLayoutDataWithDocumentLayout(
+      BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout);
 }

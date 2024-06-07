@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_bricks/golden_bricks.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
@@ -148,6 +149,103 @@ void main() {
 
       await screenMatchesGolden(tester, 'super-editor-android-custom-caret-width');
     });
+
+    group('phone rotation updates caret position', () {
+      const screenSizePortrait = Size(400.0, 800.0);
+      const screenSizeLandscape = Size(800.0, 400);
+
+      testGoldensOniOS('from portrait to landscape', (tester) async {
+        tester.view
+          ..devicePixelRatio = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
+          ..physicalSize = screenSizePortrait;
+        addTearDown(() => tester.platformDispatcher.clearAllTestValues());
+
+        final context = await _pumpTestAppWithGoldenBricksFont(tester);
+
+        // Place caret at "adipiscing elit|.". In portrait mode, this character
+        // is displayed on the second line. In landscape mode, it's displayed
+        // on the first line.
+        await tester.placeCaretInParagraph(context.document.nodes.first.id, 54);
+
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-portrait-landscape-before-ios');
+
+        // Make the window wider, pushing the caret text position up a line.
+        tester.view.physicalSize = screenSizeLandscape;
+        await tester.pumpAndSettle();
+
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-portrait-landscape-after-ios');
+      });
+
+      testGoldensOnAndroid('from portrait to landscape', (tester) async {
+        tester.view
+          ..devicePixelRatio = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
+          ..physicalSize = screenSizePortrait;
+        addTearDown(() => tester.platformDispatcher.clearAllTestValues());
+
+        final context = await _pumpTestAppWithGoldenBricksFont(tester);
+
+        // Place caret at "adipiscing elit|.". In portrait mode, this character
+        // is displayed on the second line. In landscape mode, it's displayed
+        // on the first line.
+        await tester.placeCaretInParagraph(context.document.nodes.first.id, 54);
+
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-portrait-landscape-before-android');
+
+        // Make the window wider, pushing the caret text position up a line.
+        tester.view.physicalSize = screenSizeLandscape;
+        await tester.pumpAndSettle();
+
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-portrait-landscape-after-android');
+      }, skip: true);
+
+      testGoldensOniOS('from landscape to portrait', (tester) async {
+        tester.view
+          ..devicePixelRatio = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
+          ..physicalSize = screenSizeLandscape;
+        addTearDown(() => tester.platformDispatcher.clearAllTestValues());
+
+        final context = await _pumpTestAppWithGoldenBricksFont(tester);
+
+        // Place caret at "adipiscing elit|.". In portrait mode, this character
+        // is displayed on the second line. In landscape mode, it's displayed
+        // on the first line.
+        await tester.placeCaretInParagraph(context.document.nodes.first.id, 54);
+
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-landscape-portrait-before-ios');
+
+        // Make the window thiner, pushing the caret text position down a line.
+        tester.view.physicalSize = screenSizePortrait;
+        await tester.pumpAndSettle();
+
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-landscape-portrait-after-ios');
+      });
+
+      testGoldensOnAndroid('from landscape to portrait', (tester) async {
+        tester.view
+          ..devicePixelRatio = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
+          ..physicalSize = screenSizeLandscape;
+        addTearDown(() => tester.platformDispatcher.clearAllTestValues());
+
+        final context = await _pumpTestAppWithGoldenBricksFont(tester);
+
+        // Place caret at "adipiscing elit|.". In portrait mode, this character
+        // is displayed on the second line. In landscape mode, it's displayed
+        // on the first line.
+        await tester.placeCaretInParagraph(context.document.nodes.first.id, 54);
+
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-landscape-portrait-before-android');
+
+        // Make the window thiner, pushing the caret text position down a line.
+        tester.view.physicalSize = screenSizePortrait;
+        await tester.pumpAndSettle();
+
+        await screenMatchesGolden(tester, 'super-editor-caret-rotation-landscape-portrait-after-android');
+      }, skip: true);
+    });
   });
 }
 
@@ -191,4 +289,25 @@ Future<void> _pumpCaretTestApp(WidgetTester tester) async {
       ),
     ],
   ).pump();
+}
+
+/// Pumps a widget tree with a [SuperEditor] styled with the Golden Bricks font
+/// for all kinds of nodes.
+Future<TestDocumentContext> _pumpTestAppWithGoldenBricksFont(WidgetTester tester) async {
+  return await tester //
+      .createDocument()
+      .fromMarkdown('Lorem ipsum dolor sit amet, consectetur adipiscing elit.')
+      .useStylesheet(
+        defaultStylesheet.copyWith(addRulesAfter: [
+          StyleRule(
+            BlockSelector.all,
+            (doc, docNode) => {
+              Styles.textStyle: TextStyle(
+                fontFamily: goldenBricks,
+              )
+            },
+          )
+        ]),
+      )
+      .pump();
 }
