@@ -86,7 +86,8 @@ class _AndroidToolbarFocalPointDocumentLayerState
   }
 
   @override
-  Rect? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+  Rect? computeLayoutDataWithDocumentLayout(
+      BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
     final documentSelection = widget.selection.value;
     if (documentSelection == null) {
       return null;
@@ -309,7 +310,8 @@ class AndroidControlsDocumentLayerState
   }
 
   @override
-  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(
+      BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
     final selection = widget.selection.value;
     if (selection == null) {
       return null;
@@ -321,13 +323,25 @@ class AndroidControlsDocumentLayerState
       // Default caret width used by the Android caret.
       const caretWidth = 2;
 
-      final layerBox = context.findRenderObject() as RenderBox?;
-      if (layerBox != null && layerBox.hasSize && caretRect.left + caretWidth >= layerBox.size.width) {
+      // Use the content's RenderBox instead of the layer's RenderBox to get the layer's width.
+      //
+      // ContentLayers works in four steps:
+      //
+      // 1. The content is built.
+      // 2. The content is laid out.
+      // 3. The layers are built.
+      // 4. The layers are laid out.
+      //
+      // The computeLayoutData method is called during the layer's build, which means that the
+      // layer's RenderBox is outdated, because it wasn't laid out yet for the current frame.
+      // Use the content's RenderBox, which was already laid out for the current frame.
+      final contentBox = documentContext.findRenderObject() as RenderBox?;
+      if (contentBox != null && contentBox.hasSize && caretRect.left + caretWidth >= contentBox.size.width) {
         // Ajust the caret position to make it entirely visible because it's currently placed
         // partially or entirely outside of the layers' bounds. This can happen for downstream selections
         // of block components that take all the available width.
         caretRect = Rect.fromLTWH(
-          layerBox.size.width - caretWidth,
+          contentBox.size.width - caretWidth,
           caretRect.top,
           caretRect.width,
           caretRect.height,
