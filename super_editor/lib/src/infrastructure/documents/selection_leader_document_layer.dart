@@ -82,7 +82,8 @@ class _SelectionLeadersDocumentLayerState
 
   /// Updates the caret rect, immediately, without scheduling a rebuild.
   @override
-  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(
+      BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
     final documentSelection = widget.selection.value;
     if (documentSelection == null) {
       return null;

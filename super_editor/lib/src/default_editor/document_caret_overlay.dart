@@ -150,7 +150,8 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
   }
 
   @override
-  Rect? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+  Rect? computeLayoutDataWithDocumentLayout(
+      BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
     final documentSelection = widget.composer.selection;
     if (documentSelection == null) {
       return null;
