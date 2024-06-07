@@ -1,0 +1,85 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "super editor demo app",
+            "cwd": "super_editor/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "super editor demo app (profile mode)",
+            "cwd": "super_editor/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "super editor demo app (release mode)",
+            "cwd": "super_editor/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "google docs clone app",
+            "cwd": "super_editor/example_docs",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "google docs clone app (profile mode)",
+            "cwd": "super_editor/example_docs",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "google docs clone app (release mode)",
+            "cwd": "super_editor/example_docs",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "perf demo",
+            "cwd": "super_editor/example_perf",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "perf demo (profile mode)",
+            "cwd": "super_editor/example_perf",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "perf demo (release mode)",
+            "cwd": "super_editor/example_perf",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "super_text_layout demo",
+            "cwd": "super_text_layout/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "super_text_layout demo (profile mode)",
+            "cwd": "super_text_layout/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "super_text_layout demo (release mode)",
+            "cwd": "super_text_layout/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}
