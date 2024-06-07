@@ -586,6 +586,11 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     widget.focusNode.requestFocus();
   }
 
+  void _onTapCancel() {
+    _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = null;
+  }
+
   void _onTapUp(TapUpDetails details) {
     // Stop waiting for a long-press to start.
     _globalTapDownOffset = null;
@@ -1295,6 +1300,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           (TapSequenceGestureRecognizer recognizer) {
             recognizer
               ..onTapDown = _onTapDown
+              ..onTapCancel = _onTapCancel
               ..onTapUp = _onTapUp
               ..onDoubleTapUp = _onDoubleTapUp
               ..onTripleTapUp = _onTripleTapUp
