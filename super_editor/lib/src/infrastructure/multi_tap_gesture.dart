@@ -204,7 +204,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
       // TapSequenceGestureRecognizer and a HorizontalDragGestureRecognizer, when the user taps down and
       // then drags horizontally, the onTapDown event is fired, and after that the HorizontalDragGestureRecognizer
       // declares itself as the winner. Invoke onTapCancel to cancel the gesture.
-      _checkCancel();
+      _notifyListenersOfCancellation();
       if (_trackers.isEmpty) {
         _reset();
       }
@@ -228,7 +228,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
     if (_firstTap != null || _secondTap != null) {
       // We have a single or double tap registered, but the tracker isn't related to any of them.
       // It's not clear what this situation means.
-      _checkCancel();
+      _notifyListenersOfCancellation();
       if (_trackers.isEmpty) {
         _reset();
       }
@@ -279,7 +279,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
     _stopTapTimer();
     if (_secondTap != null) {
       if (_trackers.isNotEmpty) {
-        _checkCancel();
+        _notifyListenersOfCancellation();
       }
       // Note, order is important below in order for the resolve -> reject logic
       // to work properly.
@@ -290,7 +290,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
     }
     if (_firstTap != null) {
       if (_trackers.isNotEmpty) {
-        _checkCancel();
+        _notifyListenersOfCancellation();
       }
       // Note, order is important below in order for the resolve -> reject logic
       // to work properly.
@@ -398,20 +398,26 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
     }
   }
 
-  void _checkCancel() {
-    // Cancel our tap tracking if we lost in the arena after an initial tap down.
-    //
-    // This tracker looks for tap downs and tap releases. It's possible that we're in the
-    // arena for a tap down, but we lose the arena before the user releases his finger.
-    // That's what this condition identifies, and then cancels our tracker.
-    if ((_firstTapDownDetails != null || _firstTap == null) && onTapCancel != null) {
-      invokeCallback<void>('onTapCancel', onTapCancel!);
+  void _notifyListenersOfCancellation() {
+    if (_secondTap != null) {
+      if (onTripleTapCancel != null) {
+        invokeCallback<void>('onTripleTapCancel', onTripleTapCancel!);
+      }
+      return;
     }
-    if (_firstTap != null && _secondTap == null && onDoubleTapCancel != null) {
-      invokeCallback<void>('onDoubleTapCancel', onDoubleTapCancel!);
+
+    if (_firstTap != null) {
+      if (onDoubleTapCancel != null) {
+        invokeCallback<void>('onDoubleTapCancel', onDoubleTapCancel!);
+      }
+      return;
     }
-    if (_secondTap != null && onTripleTapCancel != null) {
-      invokeCallback<void>('onTripleTapCancel', onTripleTapCancel!);
+
+    if (_firstTapDownDetails != null) {
+      if (onTapCancel != null) {
+        invokeCallback<void>('onTapCancel', onTapCancel!);
+      }
+      return;
     }
   }
 
