@@ -33,13 +33,14 @@ class SlackTagPlugin extends SuperEditorPlugin {
 
   static const _trigger = "@";
 
-  SlackTagPlugin() : tagIndex = SlackTagIndex() {
+  SlackTagPlugin({List<EditRequestHandler> customRequestHandlers = const []}) : tagIndex = SlackTagIndex() {
     _requestHandlers = <EditRequestHandler>[
-      // (request) =>
-      //     request is FillInComposingSlackTagRequest ? FillInComposingSlackTagCommand(_trigger, request.tag) : null,
+      (request) =>
+          request is FillInComposingSlackTagRequest ? FillInComposingSlackTagCommand(_trigger, request.tag) : null,
       (request) => request is CancelComposingSlackTagRequest //
           ? const CancelComposingSlackTagCommand()
           : null,
+      ...customRequestHandlers,
     ];
 
     _reactions = [
