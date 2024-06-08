@@ -31,12 +31,13 @@ class SlackTagPlugin extends SuperEditorPlugin {
   /// The key used to access the [SlackTagIndex] in an attached [Editor].
   static const slackTagIndexKey = "slackTagIndex";
 
-  static const _trigger = "@";
-
-  SlackTagPlugin({List<EditRequestHandler> customRequestHandlers = const []}) : tagIndex = SlackTagIndex() {
+  SlackTagPlugin({
+    List<EditRequestHandler> customRequestHandlers = const [],
+    this.trigger = "@",
+  }) : tagIndex = SlackTagIndex() {
     _requestHandlers = <EditRequestHandler>[
       (request) =>
-          request is FillInComposingSlackTagRequest ? FillInComposingSlackTagCommand(_trigger, request.tag) : null,
+          request is FillInComposingSlackTagRequest ? FillInComposingSlackTagCommand(trigger, request.tag) : null,
       (request) => request is CancelComposingSlackTagRequest //
           ? const CancelComposingSlackTagCommand()
           : null,
@@ -45,12 +46,15 @@ class SlackTagPlugin extends SuperEditorPlugin {
 
     _reactions = [
       SlackTagReaction(
-        trigger: _trigger,
+        trigger: trigger,
         onUpdateComposingTag: tagIndex.setTag,
       ),
-      const AdjustSelectionAroundSlackTagReaction(_trigger),
+      AdjustSelectionAroundSlackTagReaction(trigger),
     ];
   }
+
+  /// The character that triggers a tag. Default is "@".
+  final String trigger;
 
   /// Index of all slack tags in the document, which changes as the user adds and removes tags.
   final SlackTagIndex tagIndex;
@@ -129,11 +133,11 @@ class FillInComposingSlackTagRequest implements EditRequest {
 
 class FillInComposingSlackTagCommand implements EditCommand {
   const FillInComposingSlackTagCommand(
-    this._trigger,
+    this.trigger,
     this._tag,
   );
 
-  final String _trigger;
+  final String trigger;
   final String _tag;
 
   @override
@@ -182,7 +186,7 @@ class FillInComposingSlackTagCommand implements EditCommand {
       InsertAttributedTextCommand(
         documentPosition: textNode.positionAt(startOfToken),
         textToInsert: AttributedText(
-          "$_trigger$_tag ",
+          "$trigger$_tag ",
           AttributedSpans(
             attributions: [
               SpanMarker(attribution: slackTagAttribution, offset: 0, markerType: SpanMarkerType.start),
