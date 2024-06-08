@@ -132,6 +132,7 @@ void main() {
       // Ensure the toolbar isn't visible.
       expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
     });
+
     testWidgetsOnAndroid("shows toolbar when selection is expanded", (tester) async {
       await _pumpSingleParagraphApp(tester);
 
