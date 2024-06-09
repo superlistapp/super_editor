@@ -5,6 +5,7 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
+import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 import '../supereditor_test_tools.dart';
 
@@ -2033,6 +2034,24 @@ void main() {
         ),
         isEmpty,
       );
+    });
+
+    testWidgetsOnAllPlatforms('plays nice with Markdown link when Markdown parsing is disabled', (tester) async {
+      // Based on bug #2074 - https://github.com/superlistapp/super_editor/issues/2074
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      await tester.placeCaretInParagraph("1", 0);
+
+      await tester.typeImeText("[google](www.google.com) ");
+
+      // Ensure that the Markdown was parsed and replaced with a link.
+      final text = SuperEditorInspector.findTextInComponent("1");
+      expect(text.text, "[google](www.google.com) ");
+      expect(text.getAttributionSpansByFilter((a) => true), isEmpty);
     });
 
     // TODO: once it's easier to configure task components (#1295), add a test that checks link attributions when inserting a new task

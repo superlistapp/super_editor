@@ -476,6 +476,26 @@ void main() {
         expect(SuperEditorInspector.findTextInComponent(nodeId).spans.markers, isEmpty);
       });
     });
+
+    testWidgets("parses Markdown link syntax and plays nice with built-in linkification reaction", (tester) async {
+      final (document, _) = await _pumpScaffold(tester);
+
+      final nodeId = document.nodes.first.id;
+      await tester.placeCaretInParagraph(nodeId, 0);
+
+      await tester.typeImeText("[google](www.google.com) ");
+
+      // Ensure that the Markdown was parsed and replaced with a link.
+      final text = SuperEditorInspector.findTextInComponent(nodeId);
+      expect(text.text, "google ");
+      expect(text.getAttributionSpansByFilter((a) => true), {
+        const AttributionSpan(
+          attribution: LinkAttribution("www.google.com"),
+          start: 0,
+          end: 5,
+        ),
+      });
+    });
   });
 }
 
