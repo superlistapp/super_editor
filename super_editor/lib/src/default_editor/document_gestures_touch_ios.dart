@@ -643,6 +643,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     if (docPosition != null) {
       final didTapOnExistingSelection = selection != null &&
           selection.isCollapsed &&
+          selection.extent.nodeId == docPosition.nodeId &&
           selection.extent.nodePosition.isEquivalentTo(docPosition.nodePosition);
 
       if (didTapOnExistingSelection) {
