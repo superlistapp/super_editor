@@ -4,27 +4,43 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 class AndroidSelectionHandle extends StatelessWidget {
+  static const defaultTouchRegionExpansion = EdgeInsets.all(16);
+
   const AndroidSelectionHandle({
     Key? key,
     required this.handleType,
     required this.color,
     this.radius = 10,
+    this.touchRegionExpansion = defaultTouchRegionExpansion,
+    this.showDebugTouchRegion = false,
   }) : super(key: key);
 
   final HandleType handleType;
   final Color color;
   final double radius;
+  final EdgeInsets touchRegionExpansion;
+  final bool showDebugTouchRegion;
 
   @override
   Widget build(BuildContext context) {
+    late final Widget handle;
     switch (handleType) {
       case HandleType.collapsed:
-        return _buildCollapsed();
+        handle = _buildCollapsed();
       case HandleType.upstream:
-        return _buildUpstream();
+        handle = _buildUpstream();
       case HandleType.downstream:
-        return _buildDownstream();
+        handle = _buildDownstream();
     }
+
+    return Container(
+      padding: touchRegionExpansion,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: showDebugTouchRegion ? Colors.red.withOpacity(0.5) : Colors.transparent,
+      ),
+      child: handle,
+    );
   }
 
   Widget _buildCollapsed() {
