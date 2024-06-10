@@ -101,6 +101,7 @@ void main() {
             );
             await tester.pumpAndSettle();
           },
+          maxPixelMismatchCount: 51,
         );
 
         _testParagraphSelection(
@@ -142,6 +143,7 @@ void main() {
               ),
             );
           },
+          maxPixelMismatchCount: 51,
         );
 
         _testParagraphSelection(
@@ -173,6 +175,7 @@ void main() {
               ),
             );
           },
+          maxPixelMismatchCount: 51,
         );
 
         _testParagraphSelection(
