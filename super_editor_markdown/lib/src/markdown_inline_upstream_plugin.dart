@@ -310,6 +310,12 @@ class _UpstreamInlineMarkdownParser {
       return null;
     }
 
+    final characterAtCaret = attributedText.text[caretOffset - 1]; // -1 because caret sits after character
+    if (characterAtCaret != " ") {
+      // Don't linkify unless the user just inserted a space after the token.
+      return null;
+    }
+
     final endOfTokenOffset = caretOffset - 2;
     if (attributedText.text[endOfTokenOffset] != ")") {
       // All links end with a ")", therefore we know the upstream token

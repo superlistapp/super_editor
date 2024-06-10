@@ -477,23 +477,56 @@ void main() {
       });
     });
 
-    testWidgets("parses Markdown link syntax and plays nice with built-in linkification reaction", (tester) async {
-      final (document, _) = await _pumpScaffold(tester);
+    group("parses Markdown link >", () {
+      testWidgets("but only when a space follows the syntax", (tester) async {
+        final (document, _) = await _pumpScaffold(tester);
 
-      final nodeId = document.nodes.first.id;
-      await tester.placeCaretInParagraph(nodeId, 0);
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
 
-      await tester.typeImeText("[google](www.google.com) ");
+        // Enter a link syntax, but no characters after it.
+        await tester.typeImeText("[google](www.google.com)");
 
-      // Ensure that the Markdown was parsed and replaced with a link.
-      final text = SuperEditorInspector.findTextInComponent(nodeId);
-      expect(text.text, "google ");
-      expect(text.getAttributionSpansByFilter((a) => true), {
-        const AttributionSpan(
-          attribution: LinkAttribution("www.google.com"),
-          start: 0,
-          end: 5,
-        ),
+        // Ensure the syntax wasn't linkified.
+        var text = SuperEditorInspector.findTextInComponent(nodeId);
+        expect(text.text, "[google](www.google.com)");
+        expect(text.getAttributionSpansByFilter((a) => true), isEmpty);
+
+        // Enter a non-space character.
+        await tester.typeImeText("a");
+
+        // Ensure we still haven't linkified
+        text = SuperEditorInspector.findTextInComponent(nodeId);
+        expect(text.text, "[google](www.google.com)a");
+        expect(text.getAttributionSpansByFilter((a) => true), isEmpty);
+
+        // Enter a space after the non-space character.
+        await tester.typeImeText(" ");
+
+        // Ensure we still haven't linkified
+        text = SuperEditorInspector.findTextInComponent(nodeId);
+        expect(text.text, "[google](www.google.com)a ");
+        expect(text.getAttributionSpansByFilter((a) => true), isEmpty);
+      });
+
+      testWidgets("parses Markdown link syntax and plays nice with built-in linkification reaction", (tester) async {
+        final (document, _) = await _pumpScaffold(tester);
+
+        final nodeId = document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        await tester.typeImeText("[google](www.google.com) ");
+
+        // Ensure that the Markdown was parsed and replaced with a link.
+        final text = SuperEditorInspector.findTextInComponent(nodeId);
+        expect(text.text, "google ");
+        expect(text.getAttributionSpansByFilter((a) => true), {
+          const AttributionSpan(
+            attribution: LinkAttribution("www.google.com"),
+            start: 0,
+            end: 5,
+          ),
+        });
       });
     });
   });
