@@ -340,7 +340,7 @@ class _UpstreamInlineMarkdownParser {
 
         return _InlineMarkdownRun(
           AttributedText(
-            linkName,
+            "$linkName ", // Explicitly add the trailing space so the caret stays after the space.
             AttributedSpans(attributions: [
               SpanMarker(
                 attribution: linkAttribution,
@@ -355,7 +355,7 @@ class _UpstreamInlineMarkdownParser {
             ]),
           ),
           match.start,
-          match.end,
+          match.end + 1, // +1 to include the space after the link so the caret stays in same place.
         );
       }
     }

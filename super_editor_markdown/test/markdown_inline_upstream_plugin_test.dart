@@ -527,6 +527,15 @@ void main() {
             end: 5,
           ),
         });
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: nodeId,
+              nodePosition: const TextNodePosition(offset: 7),
+            ),
+          ),
+        );
       });
     });
   });
