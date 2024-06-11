@@ -1,3 +1,14 @@
+## [0.2.7] - June 10, 2024
+This is a hotfix that adjusts `v0.2.6` to compile against newer dependencies. Please migrate
+to the latest prelease in the `v0.3.0-dev.X` series as soon as possible.
+
+Updated dependencies:
+ * Dart ^3.0.0
+ * Flutter ^1.17
+ * attributed_text ^0.3.1
+ * super_text_layout ^0.1.10
+ * flutter_test_robots ^0.0.24
+
 ## [0.2.6] - May 28, 2023
  * FEATURE: `SuperReader` now launches URLs when tapping a link (#1151)
  * FIX: `SuperEditor` now correctly handles "\n" newlines reported by Android IME deltas (#1086)
