@@ -51,7 +51,7 @@ export 'styles.dart';
 ///  - [SuperIOSTextField], which uses IME text input with iOS-style handles
 class SuperTextField extends StatefulWidget {
   const SuperTextField({
-    Key? key,
+    super.key,
     this.focusNode,
     this.configuration,
     this.textController,
@@ -69,7 +69,7 @@ class SuperTextField extends StatefulWidget {
     this.keyboardHandlers,
     this.padding,
     this.textInputAction,
-  }) : super(key: key);
+  });
 
   final FocusNode? focusNode;
 

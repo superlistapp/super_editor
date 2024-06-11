@@ -26,7 +26,7 @@ final _log = androidTextFieldLog;
 
 class SuperAndroidTextField extends StatefulWidget {
   const SuperAndroidTextField({
-    Key? key,
+    super.key,
     this.focusNode,
     this.textController,
     this.textAlign = TextAlign.left,
@@ -43,7 +43,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
-  }) : super(key: key);
+  });
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
@@ -393,9 +393,9 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   ///
   /// Some third party keyboards report backspace as a key press
   /// rather than a deletion delta, so we need to handle them manually
-  KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
+  KeyEventResult _onKeyPressed(FocusNode focusNode, KeyEvent keyEvent) {
     _log.finer('_onKeyPressed - keyEvent: ${keyEvent.character}');
-    if (keyEvent is! RawKeyDownEvent) {
+    if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
       _log.finer('_onKeyPressed - not a "down" event. Ignoring.');
       return KeyEventResult.ignored;
     }
@@ -470,7 +470,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     return NonReparentingFocus(
       key: _textFieldKey,
       focusNode: _focusNode,
-      onKey: _onKeyPressed,
+      onKeyEvent: _onKeyPressed,
       child: CompositedTransformTarget(
         link: _textFieldLayerLink,
         child: AndroidTextFieldTouchInteractor(
@@ -532,7 +532,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         key: _textContentKey,
         richText: textSpan,
         textAlign: widget.textAlign,
-        textScaleFactor: MediaQuery.textScaleFactorOf(context),
+        textScaler: MediaQuery.textScalerOf(context),
         userSelection: UserSelection(
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,

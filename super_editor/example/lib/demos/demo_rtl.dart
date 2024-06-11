@@ -44,7 +44,7 @@ MutableDocument _createInitialDocument() {
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'Example Document',
+          'Example Document',
         ),
         metadata: {
           'blockType': header1Attribution,
@@ -53,14 +53,13 @@ MutableDocument _createInitialDocument() {
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text:
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
         ),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'مثال',
+          'مثال',
         ),
         metadata: {
           'blockType': header1Attribution,
@@ -70,25 +69,24 @@ MutableDocument _createInitialDocument() {
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-            text:
-                'لكن لا بد أن أوضح لك أن كل هذه الأفكار المغلوطة حول استنكار  النشوة وتمجيد الألم نشأت بالفعل، وسأعرض لك التفاصيل لتكتشف حقيقة وأساس تلك السعادة البشرية، فلا أحد يرفض أو يكره أو يتجنب الشعور بالسعادة، ولكن بفضل هؤلاء الأشخاص الذين لا يدركون بأن السعادة لا بد أن نستشعرها بصورة أكثر عقلانية ومنطقية فيعرضهم هذا لمواجهة الظروف الأليمة، وأكرر بأنه لا يوجد من يرغب في الحب ونيل المنال ويتلذذ بالآلام، الألم هو الألم ولكن نتيجة لظروف ما قد تكمن السعاده فيما نتحمله من كد وأسي.'),
+            'لكن لا بد أن أوضح لك أن كل هذه الأفكار المغلوطة حول استنكار  النشوة وتمجيد الألم نشأت بالفعل، وسأعرض لك التفاصيل لتكتشف حقيقة وأساس تلك السعادة البشرية، فلا أحد يرفض أو يكره أو يتجنب الشعور بالسعادة، ولكن بفضل هؤلاء الأشخاص الذين لا يدركون بأن السعادة لا بد أن نستشعرها بصورة أكثر عقلانية ومنطقية فيعرضهم هذا لمواجهة الظروف الأليمة، وأكرر بأنه لا يوجد من يرغب في الحب ونيل المنال ويتلذذ بالآلام، الألم هو الألم ولكن نتيجة لظروف ما قد تكمن السعاده فيما نتحمله من كد وأسي.'),
       ),
       ListItemNode.unordered(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'فقرة رقم ١ في القائمة.',
+          'فقرة رقم ١ في القائمة.',
         ),
       ),
       ListItemNode.unordered(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'فقرة رقم ٢ في القائمة.',
+          'فقرة رقم ٢ في القائمة.',
         ),
       ),
       ListItemNode.unordered(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'فقرة رقم ٣ في القائمة.',
+          'فقرة رقم ٣ في القائمة.',
         ),
       ),
     ],

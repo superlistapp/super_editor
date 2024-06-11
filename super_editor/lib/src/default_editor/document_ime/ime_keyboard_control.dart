@@ -12,13 +12,13 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 /// to establish that connection, if it doesn't exist already.
 class SoftwareKeyboardOpener extends StatefulWidget {
   const SoftwareKeyboardOpener({
-    Key? key,
+    super.key,
     required this.controller,
     required this.imeConnection,
     required this.createImeClient,
     required this.createImeConfiguration,
     required this.child,
-  }) : super(key: key);
+  });
 
   final SoftwareKeyboardController? controller;
 

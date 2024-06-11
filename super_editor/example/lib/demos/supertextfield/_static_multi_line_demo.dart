@@ -13,7 +13,7 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
     text: AttributedText(
         // text:
         //     'Super Editor is an open source text editor for Flutter projects.\n\nThis is paragraph 2\n\nThis is paragraph 3',
-        // spans: AttributedSpans(
+        //  AttributedSpans(
         //   attributions: [
         //     SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
         //     SpanMarker(attribution: 'bold', offset: 11, markerType: SpanMarkerType.end),
@@ -55,11 +55,11 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
       ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText();
     _demoRobot
-      ..typeText(AttributedText(text: 'Hello World!'))
+      ..typeText(AttributedText('Hello World!'))
       ..pause(const Duration(milliseconds: 500))
-      ..typeText(AttributedText(text: '\n\nThis is a robot typing'))
+      ..typeText(AttributedText('\n\nThis is a robot typing'))
       ..pause(const Duration(milliseconds: 500))
-      ..typeText(AttributedText(text: '\nsome text into a SuperTextField.'))
+      ..typeText(AttributedText('\nsome text into a SuperTextField.'))
       ..start();
   }
 

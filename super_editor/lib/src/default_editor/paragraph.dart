@@ -16,14 +16,10 @@ import 'text_tools.dart';
 
 class ParagraphNode extends TextNode {
   ParagraphNode({
-    required String id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
-  }) : super(
-          id: id,
-          text: text,
-          metadata: metadata,
-        ) {
+    required super.id,
+    required super.text,
+    super.metadata,
+  }) {
     if (getMetadataValue("blockType") == null) {
       putMetadataValue("blockType", const NamedAttribution("paragraph"));
     }
@@ -106,9 +102,9 @@ class ParagraphComponentBuilder implements ComponentBuilder {
 
 class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   ParagraphComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
     this.blockType,
     required this.text,
     required this.textStyleBuilder,
@@ -117,7 +113,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  });
 
   Attribution? blockType;
   AttributedText text;
@@ -300,9 +296,9 @@ class SplitParagraphCommand implements EditorCommand {
 
 ExecutionInstruction anyCharacterToInsertInParagraph({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -312,7 +308,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
 
   // Do nothing if CMD or CTRL are pressed because this signifies an attempted
   // shortcut.
-  if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
+  if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -377,7 +373,7 @@ class DeleteParagraphsCommand implements EditorCommand {
 /// header 1, header 2, blockquote.
 ExecutionInstruction backspaceToClearParagraphBlockType({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
@@ -407,9 +403,9 @@ ExecutionInstruction backspaceToClearParagraphBlockType({
 
 ExecutionInstruction enterToInsertBlockNewline({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -424,7 +420,7 @@ ExecutionInstruction enterToInsertBlockNewline({
 
 ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;

@@ -48,7 +48,7 @@ MutableDocument deserializeMarkdownToDocument(
     // For the user to be able to interact with the editor, at least one
     // node is required, so we add an empty paragraph.
     documentNodes.add(
-      ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: '')),
+      ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText('')),
     );
   }
 
@@ -243,7 +243,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: element.textContent,
+          element.textContent,
         ),
         metadata: {
           'blockType': codeAttribution,
@@ -358,7 +358,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
   @override
   void visitText(md.Text text) {
     final attributedText = _textStack.removeLast();
-    _textStack.add(attributedText.copyAndAppend(AttributedText(text: text.text)));
+    _textStack.add(attributedText.copyAndAppend(AttributedText(text.text)));
   }
 
   @override
@@ -371,40 +371,40 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
       styledText.addAttribution(
         boldAttribution,
         SpanRange(
-          start: 0,
-          end: styledText.text.length - 1,
+          0,
+          styledText.text.length - 1,
         ),
       );
     } else if (element.tag == 'em') {
       styledText.addAttribution(
         italicsAttribution,
         SpanRange(
-          start: 0,
-          end: styledText.text.length - 1,
+          0,
+          styledText.text.length - 1,
         ),
       );
     } else if (element.tag == "del") {
       styledText.addAttribution(
         strikethroughAttribution,
         SpanRange(
-          start: 0,
-          end: styledText.text.length - 1,
+          0,
+          styledText.text.length - 1,
         ),
       );
     } else if (element.tag == "u") {
       styledText.addAttribution(
         underlineAttribution,
         SpanRange(
-          start: 0,
-          end: styledText.text.length - 1,
+          0,
+          styledText.text.length - 1,
         ),
       );
     } else if (element.tag == 'a') {
       styledText.addAttribution(
         LinkAttribution(url: Uri.parse(element.attributes['href']!)),
         SpanRange(
-          start: 0,
-          end: styledText.text.length - 1,
+          0,
+          styledText.text.length - 1,
         ),
       );
     }

@@ -11,9 +11,9 @@ void main() {
       final markdown = serializeDocumentToMarkdown(
         MutableDocument(
           nodes: [
-            ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: "Paragraph 1")),
+            ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText("Paragraph 1")),
             UpsellNode(DocumentEditor.createNodeId()),
-            ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: "Paragraph 2")),
+            ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText("Paragraph 2")),
           ],
         ),
         customNodeSerializers: [UpsellSerializer()],
@@ -33,12 +33,12 @@ Paragraph 2''',
       final markdown = serializeDocumentToMarkdown(
         MutableDocument(
           nodes: [
-            ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: "Paragraph 1")),
+            ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText("Paragraph 1")),
             ParagraphNode(
               id: DocumentEditor.createNodeId(),
               text: AttributedText(
-                text: "This is a callout!",
-                spans: AttributedSpans(
+                "This is a callout!",
+                AttributedSpans(
                   attributions: [
                     SpanMarker(attribution: boldAttribution, offset: 10, markerType: SpanMarkerType.start),
                     SpanMarker(attribution: boldAttribution, offset: 17, markerType: SpanMarkerType.end),
@@ -47,7 +47,7 @@ Paragraph 2''',
               ),
               metadata: {"blockType": const NamedAttribution("callout")},
             ),
-            ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: "Paragraph 2")),
+            ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText("Paragraph 2")),
           ],
         ),
         customNodeSerializers: [CalloutSerializer()],

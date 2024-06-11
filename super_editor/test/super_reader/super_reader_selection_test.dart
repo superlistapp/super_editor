@@ -518,9 +518,8 @@ class _UnselectableHrComponentBuilder implements ComponentBuilder {
 
 class _UnselectableHorizontalRuleComponent extends StatelessWidget {
   const _UnselectableHorizontalRuleComponent({
-    Key? key,
     required this.componentKey,
-  }) : super(key: key);
+  });
 
   final GlobalKey componentKey;
 

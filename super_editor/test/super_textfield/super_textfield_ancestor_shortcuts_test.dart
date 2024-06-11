@@ -82,7 +82,7 @@ Future<void> _pumpShortcutsAndSuperTextField(
               width: 300,
               child: SuperTextField(
                 textController: AttributedTextEditingController(
-                  text: AttributedText(text: ""),
+                  text: AttributedText(""),
                 ),
                 keyboardHandlers: keyboardActions,
               ),

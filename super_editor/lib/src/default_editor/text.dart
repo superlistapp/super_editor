@@ -175,7 +175,7 @@ extension DocumentSelectionWithText on Document {
         endOffset = max(textNode.text.text.length - 1, 0);
       }
 
-      final selectionRange = SpanRange(start: startOffset, end: endOffset);
+      final selectionRange = SpanRange(startOffset, endOffset);
 
       if (textNode.text.hasAttributionsWithin(
         attributions: attributions,
@@ -226,24 +226,18 @@ class TextNodeSelection extends TextSelection implements NodeSelection {
 
   const TextNodeSelection.collapsed({
     required int offset,
-    TextAffinity affinity = TextAffinity.downstream,
+    super.affinity,
   }) : super(
           baseOffset: offset,
           extentOffset: offset,
-          affinity: affinity,
         );
 
   const TextNodeSelection({
-    required int baseOffset,
-    required int extentOffset,
-    TextAffinity affinity = TextAffinity.downstream,
-    bool isDirectional = false,
-  }) : super(
-          baseOffset: baseOffset,
-          extentOffset: extentOffset,
-          affinity: affinity,
-          isDirectional: isDirectional,
-        );
+    required super.baseOffset,
+    required super.extentOffset,
+    super.affinity,
+    super.isDirectional,
+  });
 
   @override
   TextNodePosition get base => TextNodePosition(offset: baseOffset, affinity: affinity);
@@ -258,9 +252,9 @@ class TextNodePosition extends TextPosition implements NodePosition {
       : super(offset: position.offset, affinity: position.affinity);
 
   const TextNodePosition({
-    required int offset,
-    TextAffinity affinity = TextAffinity.downstream,
-  }) : super(offset: offset, affinity: affinity);
+    required super.offset,
+    super.affinity,
+  });
 
   TextNodePosition copyWith({
     int? offset,
@@ -329,7 +323,7 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
 /// Internally uses a [TextComponent] to display the content text.
 class TextWithHintComponent extends StatefulWidget {
   const TextWithHintComponent({
-    Key? key,
+    super.key,
     required this.text,
     this.hintText,
     this.hintStyleBuilder,
@@ -341,7 +335,7 @@ class TextWithHintComponent extends StatefulWidget {
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  });
 
   final AttributedText text;
   final AttributedText? hintText;
@@ -413,18 +407,18 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
 /// This is the standard component for text display.
 class TextComponent extends StatefulWidget {
   const TextComponent({
-    Key? key,
+    super.key,
     required this.text,
     this.textAlign,
     this.textDirection,
-    this.textScaleFactor,
+    this.textScaler,
     required this.textStyleBuilder,
     this.metadata = const {},
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  });
 
   final AttributedText text;
   final TextAlign? textAlign;
@@ -442,7 +436,7 @@ class TextComponent extends StatefulWidget {
   /// the specified font size.
   ///
   /// Defaults to the value obtained from `MediaQuery.textScaleFactorOf`.
-  final double? textScaleFactor;
+  final TextScaler? textScaler;
 
   @override
   TextComponentState createState() => TextComponentState();
@@ -790,7 +784,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
         richText: widget.text.computeTextSpan(_textStyleWithBlockType),
         textAlign: widget.textAlign ?? TextAlign.left,
         textDirection: widget.textDirection ?? TextDirection.ltr,
-        textScaleFactor: widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
+        textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
         userSelection: UserSelection(
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,
@@ -899,8 +893,8 @@ class AddTextAttributionsCommand implements EditorCommand {
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
         node.text = AttributedText(
-          text: node.text.text,
-          spans: node.text.spans.copy()
+          node.text.text,
+          node.text.spans.copy()
             ..addAttribution(
               newAttribution: attribution,
               start: range.start,
@@ -995,8 +989,8 @@ class RemoveTextAttributionsCommand implements EditorCommand {
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
         node.text = AttributedText(
-          text: node.text.text,
-          spans: node.text.spans.copy()
+          node.text.text,
+          node.text.spans.copy()
             ..removeAttribution(
               attributionToRemove: attribution,
               start: range.start,
@@ -1080,7 +1074,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
         endOffset = max(textNode.text.text.length - 1, 0);
       }
 
-      final selectionRange = SpanRange(start: startOffset, end: endOffset);
+      final selectionRange = SpanRange(startOffset, endOffset);
 
       alreadyHasAttributions = alreadyHasAttributions ||
           textNode.text.hasAttributionsWithin(
@@ -1101,8 +1095,8 @@ class ToggleTextAttributionsCommand implements EditorCommand {
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
         node.text = AttributedText(
-          text: node.text.text,
-          spans: node.text.spans.copy()
+          node.text.text,
+          node.text.spans.copy()
             ..toggleAttribution(
               attribution: attribution,
               start: range.start,
@@ -1173,15 +1167,15 @@ class InsertAttributedTextCommand implements EditorCommand {
 
 ExecutionInstruction anyCharacterToInsertInTextContent({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
   // Do nothing if CMD or CTRL are pressed because this signifies an attempted
   // shortcut.
-  if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
+  if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -1224,7 +1218,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
 
 ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
@@ -1252,9 +1246,9 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
 
 ExecutionInstruction deleteToRemoveDownstreamContent({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -1269,16 +1263,16 @@ ExecutionInstruction deleteToRemoveDownstreamContent({
 
 ExecutionInstruction shiftEnterToInsertNewlineInBlock({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!keyEvent.isShiftPressed) {
+  if (!HardwareKeyboard.instance.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 

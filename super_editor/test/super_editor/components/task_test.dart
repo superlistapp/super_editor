@@ -15,7 +15,7 @@ void main() {
       final editor = DocumentEditor(
           document: MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       ));
       await tester.pumpWidget(
@@ -56,7 +56,7 @@ void main() {
       final editor = DocumentEditor(
           document: MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       ));
       await tester.pumpWidget(
@@ -96,7 +96,7 @@ void main() {
       final editor = DocumentEditor(
           document: MutableDocument(
         nodes: [
-          ParagraphNode(id: "1", text: AttributedText(text: "This will be a task")),
+          ParagraphNode(id: "1", text: AttributedText("This will be a task")),
         ],
       ));
       await tester.pumpWidget(
@@ -126,7 +126,7 @@ void main() {
       final editor = DocumentEditor(
           document: MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       ));
       final task = editor.document.getNodeAt(0) as TaskNode;
@@ -171,7 +171,7 @@ void main() {
       final editor = DocumentEditor(
           document: MutableDocument(
         nodes: [
-          TaskNode(id: "1", text: AttributedText(text: "This is a task"), isComplete: false),
+          TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       ));
       await tester.pumpWidget(

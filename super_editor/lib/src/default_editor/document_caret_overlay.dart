@@ -7,11 +7,11 @@ import 'package:super_text_layout/super_text_layout.dart';
 /// Document overlay that paints a caret with the given [caretStyle].
 class CaretDocumentOverlay extends StatefulWidget {
   const CaretDocumentOverlay({
-    Key? key,
+    super.key,
     required this.composer,
     required this.documentLayoutResolver,
     required this.caretStyle,
-  }) : super(key: key);
+  });
 
   /// The editor's [DocumentComposer], which reports the current selection.
   final DocumentComposer composer;

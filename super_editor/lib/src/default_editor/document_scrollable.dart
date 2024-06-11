@@ -23,13 +23,13 @@ import '../infrastructure/document_gestures.dart';
 /// scroll.
 class DocumentScrollable extends StatefulWidget {
   const DocumentScrollable({
-    Key? key,
+    super.key,
     required this.autoScroller,
     this.scrollingMinimapId,
     this.showDebugPaint = false,
     this.scrollController,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// Controller that adjusts the scroll offset of this [DocumentScrollable].
   final AutoScrollController autoScroller;

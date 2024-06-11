@@ -1754,7 +1754,7 @@ class CommonEditorOperations {
             existingNode: extentNode,
             newNode: ParagraphNode(
               id: newNodeId,
-              text: AttributedText(text: ''),
+              text: AttributedText(''),
             ),
           );
         }));
@@ -1767,7 +1767,7 @@ class CommonEditorOperations {
             existingNode: extentNode,
             newNode: ParagraphNode(
               id: newNodeId,
-              text: AttributedText(text: ''),
+              text: AttributedText(''),
             ),
           );
         }));
@@ -2392,8 +2392,8 @@ class _PasteEditorCommand implements EditorCommand {
     for (final line in lines) {
       attributedLines.add(
         AttributedText(
-          text: line,
-          spans: _findUrlSpansInText(pastedText: lines.first),
+          line,
+          _findUrlSpansInText(pastedText: lines.first),
         ),
       );
     }

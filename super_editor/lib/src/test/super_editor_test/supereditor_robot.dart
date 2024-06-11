@@ -88,6 +88,7 @@ extension SuperEditorRobot on WidgetTester {
     final componentState = documentLayout.getComponentByNodeId(nodeId) as State;
     late final GlobalKey textComponentKey;
     if (componentState is ProxyDocumentComponent) {
+      // ignore: invalid_use_of_protected_member
       textComponentKey = componentState.childDocumentComponentKey;
     } else {
       textComponentKey = componentState.widget.key as GlobalKey;
@@ -286,7 +287,7 @@ extension SuperEditorRobot on WidgetTester {
   }
 
   Future<void> _updateFloatingCursor({required String action, required Offset offset}) async {
-    await TestDefaultBinaryMessengerBinding.instance!.defaultBinaryMessenger.handlePlatformMessage(
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
       SystemChannels.textInput.name,
       SystemChannels.textInput.codec.encodeMethodCall(
         MethodCall(

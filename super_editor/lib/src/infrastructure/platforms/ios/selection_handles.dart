@@ -23,22 +23,22 @@ import 'package:super_text_layout/super_text_layout.dart';
 ///     related to text interaction
 class IOSSelectionHandle extends StatelessWidget {
   const IOSSelectionHandle.upstream({
-    Key? key,
+    super.key,
     required this.color,
     required this.caretHeight,
     this.caretWidth = 2,
     this.ballRadius = 4,
     this.handleType = HandleType.upstream,
-  }) : super(key: key);
+  });
 
   const IOSSelectionHandle.downstream({
-    Key? key,
+    super.key,
     required this.color,
     required this.caretHeight,
     this.caretWidth = 2,
     this.ballRadius = 4,
     this.handleType = HandleType.downstream,
-  }) : super(key: key);
+  });
 
   /// The color of the caret and ball in the handle.
   final Color color;
@@ -110,12 +110,12 @@ class IOSSelectionHandle extends StatelessWidget {
 /// An iOS-style caret/collapsed selection handle.
 class IOSCollapsedHandle extends StatelessWidget {
   const IOSCollapsedHandle({
-    Key? key,
+    super.key,
     this.controller,
     required this.color,
     required this.caretHeight,
     this.caretWidth = 2,
-  }) : super(key: key);
+  });
 
   /// The controller for the handle/caret's blinking behavior.
   final BlinkController? controller;

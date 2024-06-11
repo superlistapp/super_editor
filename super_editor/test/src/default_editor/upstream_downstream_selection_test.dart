@@ -556,7 +556,7 @@ void main() {
       testWidgets("deletes empty paragraph in node above when backspace pressed from upstream edge", (tester) async {
         final document = MutableDocument(
           nodes: [
-            ParagraphNode(id: "1", text: AttributedText(text: "")),
+            ParagraphNode(id: "1", text: AttributedText( "")),
             HorizontalRuleNode(id: "2"),
           ],
         );

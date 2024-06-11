@@ -19,12 +19,12 @@ import '../attributions.dart';
 /// mobile device.
 class KeyboardEditingToolbar extends StatelessWidget {
   const KeyboardEditingToolbar({
-    Key? key,
+    super.key,
     required this.document,
     required this.composer,
     required this.commonOps,
     this.brightness,
-  }) : super(key: key);
+  });
 
   final Document document;
   final DocumentComposer composer;
@@ -126,7 +126,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
   void _convertToHr() {
     final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
 
-    selectedNode.text = AttributedText(text: '--- ');
+    selectedNode.text = AttributedText('--- ');
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: selectedNode.id,

@@ -37,7 +37,7 @@ final _log = textFieldLog;
 /// flavor of a text field.
 class SuperDesktopTextField extends StatefulWidget {
   const SuperDesktopTextField({
-    Key? key,
+    super.key,
     this.focusNode,
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
@@ -59,11 +59,10 @@ class SuperDesktopTextField extends StatefulWidget {
     this.onRightClick,
     this.inputSource = TextInputSource.keyboard,
     List<TextFieldKeyboardHandler>? keyboardHandlers,
-  })  : keyboardHandlers = keyboardHandlers ??
+  }) : keyboardHandlers = keyboardHandlers ??
             (inputSource == TextInputSource.keyboard
                 ? defaultTextFieldKeyboardHandlers
-                : defaultTextFieldImeKeyboardHandlers),
-        super(key: key);
+                : defaultTextFieldImeKeyboardHandlers);
 
   final FocusNode? focusNode;
 
@@ -210,7 +209,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   FocusNode get focusNode => _focusNode;
 
-  double get _textScaleFactor => MediaQuery.textScaleFactorOf(context);
+  TextScaler get _textScaler => MediaQuery.textScalerOf(context);
 
   void requestFocus() {
     _focusNode.requestFocus();
@@ -297,7 +296,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       return lineHeight;
     }
     final defaultStyle = widget.textStyleBuilder({});
-    return _estimatedLineHeight.calculate(defaultStyle, _textScaleFactor);
+    return _estimatedLineHeight.calculate(defaultStyle, _textScaler);
   }
 
   @override
@@ -394,7 +393,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
         key: _textKey,
         richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
         textAlign: widget.textAlign,
-        textScaleFactor: _textScaleFactor,
+        textScaler: _textScaler,
         userSelection: UserSelection(
           highlightStyle: widget.selectionHighlightStyle,
           caretStyle: widget.caretStyle,
@@ -423,7 +422,7 @@ typedef DecorationBuilder = Widget Function(BuildContext, Widget child);
 /// be tied to [textScrollKey].
 class SuperTextFieldGestureInteractor extends StatefulWidget {
   const SuperTextFieldGestureInteractor({
-    Key? key,
+    super.key,
     required this.focusNode,
     required this.textController,
     required this.textKey,
@@ -431,7 +430,7 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
     required this.isMultiline,
     this.onRightClick,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// [FocusNode] for this text field.
   final FocusNode focusNode;
@@ -484,9 +483,9 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     final tapTextPosition = _getPositionNearestToTextOffset(textOffset);
     _log.finer("Tap text position: $tapTextPosition");
 
-    final expandSelection = RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
-        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
-        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift);
+    final expandSelection = HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shiftLeft) ||
+        HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shiftRight) ||
+        HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shift);
 
     setState(() {
       widget.textController.selection = expandSelection
@@ -836,13 +835,13 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 /// of a line.
 class SuperTextFieldKeyboardInteractor extends StatefulWidget {
   const SuperTextFieldKeyboardInteractor({
-    Key? key,
+    super.key,
     required this.focusNode,
     required this.textController,
     required this.textKey,
     required this.keyboardActions,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// [FocusNode] for this text field.
   final FocusNode focusNode;
@@ -884,9 +883,9 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
 }
 
 class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboardInteractor> {
-  KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
+  KeyEventResult _onKeyPressed(FocusNode focusNode, KeyEvent keyEvent) {
     _log.fine('_onKeyPressed - keyEvent: ${keyEvent.logicalKey}, character: ${keyEvent.character}');
-    if (keyEvent is! RawKeyDownEvent) {
+    if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
       _log.finer('_onKeyPressed - not a "down" event. Ignoring.');
       return KeyEventResult.ignored;
     }
@@ -910,7 +909,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
   Widget build(BuildContext context) {
     return NonReparentingFocus(
       focusNode: widget.focusNode,
-      onKey: _onKeyPressed,
+      onKeyEvent: _onKeyPressed,
       child: widget.child,
     );
   }
@@ -929,12 +928,12 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
 /// When [focusNode] loses focus, the [textController]'s selection is cleared.
 class SuperTextFieldImeInteractor extends StatefulWidget {
   const SuperTextFieldImeInteractor({
-    Key? key,
+    super.key,
     required this.focusNode,
     required this.textController,
     required this.isMultiline,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// [FocusNode] for this text field.
   final FocusNode focusNode;
@@ -1028,7 +1027,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
 /// with a corresponding [SuperSelectableText] widget that is tied to [textKey].
 class SuperTextFieldScrollview extends StatefulWidget {
   const SuperTextFieldScrollview({
-    Key? key,
+    super.key,
     required this.textKey,
     required this.textController,
     required this.scrollController,
@@ -1038,7 +1037,7 @@ class SuperTextFieldScrollview extends StatefulWidget {
     required this.isMultiline,
     this.textAlign = TextAlign.left,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// [TextController] for the text/selection within this text field.
   final AttributedTextEditingController textController;
@@ -1377,7 +1376,7 @@ enum TextFieldKeyboardHandlerResult {
 typedef TextFieldKeyboardHandler = TextFieldKeyboardHandlerResult Function({
   required AttributedTextEditingController controller,
   required ProseTextLayout textLayout,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 });
 
 /// A [TextFieldKeyboardHandler] that reports [TextFieldKeyboardHandlerResult.blocked]
@@ -1386,10 +1385,10 @@ TextFieldKeyboardHandler ignoreTextFieldKeyCombos(List<ShortcutActivator> keys) 
   return ({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     for (final key in keys) {
-      if (key.accepts(keyEvent, RawKeyboard.instance)) {
+      if (key.accepts(keyEvent, HardwareKeyboard.instance)) {
         return TextFieldKeyboardHandlerResult.blocked;
       }
     }
@@ -1470,7 +1469,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult copyTextWhenCmdCIsPressed({
     required AttributedTextEditingController controller,
     ProseTextLayout? textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -1492,7 +1491,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult pasteTextWhenCmdVIsPressed({
     required AttributedTextEditingController controller,
     ProseTextLayout? textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -1518,7 +1517,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult selectAllTextFieldWhenCmdAIsPressed({
     required AttributedTextEditingController controller,
     ProseTextLayout? textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -1537,10 +1536,10 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult moveCaretToStartOrEnd({
     required AttributedTextEditingController controller,
     ProseTextLayout? textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     bool moveLeft = false;
-    if (!keyEvent.isControlPressed) {
+    if (!HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (defaultTargetPlatform != TargetPlatform.macOS) {
@@ -1574,7 +1573,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult moveUpDownLeftAndRightWithArrowKeys({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     const arrowKeys = [
       LogicalKeyboardKey.arrowLeft,
@@ -1592,12 +1591,12 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.handled;
     }
 
-    if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+    if (defaultTargetPlatform == TargetPlatform.windows && HardwareKeyboard.instance.isAltPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
     if (defaultTargetPlatform == TargetPlatform.linux &&
-        keyEvent.isAltPressed &&
+        HardwareKeyboard.instance.isAltPressed &&
         (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
@@ -1607,17 +1606,17 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
       MovementModifier? movementModifier;
       if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-          keyEvent.isControlPressed) {
+          HardwareKeyboard.instance.isControlPressed) {
         movementModifier = MovementModifier.word;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
         movementModifier = MovementModifier.line;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
         movementModifier = MovementModifier.word;
       }
 
       controller.moveCaretHorizontally(
         textLayout: textLayout,
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveLeft: true,
         movementModifier: movementModifier,
       );
@@ -1626,17 +1625,17 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
       MovementModifier? movementModifier;
       if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-          keyEvent.isControlPressed) {
+          HardwareKeyboard.instance.isControlPressed) {
         movementModifier = MovementModifier.word;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
         movementModifier = MovementModifier.line;
-      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
         movementModifier = MovementModifier.word;
       }
 
       controller.moveCaretHorizontally(
         textLayout: textLayout,
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveLeft: false,
         movementModifier: movementModifier,
       );
@@ -1644,14 +1643,14 @@ class DefaultSuperTextFieldKeyboardHandlers {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling up arrow key');
       controller.moveCaretVertically(
         textLayout: textLayout,
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveUp: true,
       );
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling down arrow key');
       controller.moveCaretVertically(
         textLayout: textLayout,
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveUp: false,
       );
     }
@@ -1662,7 +1661,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult moveToLineStartWithHome({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -1671,7 +1670,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
       controller.moveCaretHorizontally(
         textLayout: textLayout,
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveLeft: true,
         movementModifier: MovementModifier.line,
       );
@@ -1684,7 +1683,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult moveToLineEndWithEnd({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -1693,7 +1692,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
       controller.moveCaretHorizontally(
         textLayout: textLayout,
-        expandSelection: keyEvent.isShiftPressed,
+        expandSelection: HardwareKeyboard.instance.isShiftPressed,
         moveLeft: false,
         movementModifier: MovementModifier.line,
       );
@@ -1709,9 +1708,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult insertCharacterWhenKeyIsPressed({
     required AttributedTextEditingController controller,
     ProseTextLayout? textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
-    if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
+    if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -1744,7 +1743,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -1774,7 +1773,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult deleteTextWhenBackspaceOrDeleteIsPressed({
     required AttributedTextEditingController controller,
     ProseTextLayout? textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     final isBackspace = keyEvent.logicalKey == LogicalKeyboardKey.backspace;
     final isDelete = keyEvent.logicalKey == LogicalKeyboardKey.delete;
@@ -1798,13 +1797,13 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult deleteWordWhenAltBackSpaceIsPressedOnMac({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform != TargetPlatform.macOS) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !keyEvent.isAltPressed) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !HardwareKeyboard.instance.isAltPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (controller.selection.extentOffset < 0) {
@@ -1820,13 +1819,13 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult deleteWordWhenCtlBackSpaceIsPressedOnWindowsAndLinux({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !keyEvent.isControlPressed) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !HardwareKeyboard.instance.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (controller.selection.extentOffset < 0) {
@@ -1857,7 +1856,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult insertNewlineWhenEnterIsPressed({
     required AttributedTextEditingController controller,
     ProseTextLayout? textLayout,
-    required RawKeyEvent keyEvent,
+    required KeyEvent keyEvent,
   }) {
     if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
       return TextFieldKeyboardHandlerResult.notHandled;
@@ -1883,25 +1882,25 @@ class _EstimatedLineHeight {
   TextStyle? _lastComputedStyle;
 
   /// Text scale factor used to compute [_lastLineHeight].
-  double? _lastTextScaleFactor;
+  TextScaler? _lastTextScaler;
 
   /// Computes the estimated line height for the given [style].
   ///
   /// The height is computed by laying out a [Paragraph] with an arbitrary
   /// character and inspecting it's height.
   ///
-  /// The result is cached for the last [style] and [textScaleFactor] used, so it's not computed
+  /// The result is cached for the last [style] and [textScaler] used, so it's not computed
   /// at each call.
-  double calculate(TextStyle style, double textScaleFactor) {
+  double calculate(TextStyle style, TextScaler textScaler) {
     if (_lastComputedStyle == style &&
         _lastLineHeight != null &&
-        _lastTextScaleFactor == textScaleFactor &&
-        _lastTextScaleFactor != null) {
+        _lastTextScaler == textScaler &&
+        _lastTextScaler != null) {
       return _lastLineHeight!;
     }
 
     final builder = ui.ParagraphBuilder(style.getParagraphStyle())
-      ..pushStyle(style.getTextStyle(textScaleFactor: textScaleFactor))
+      ..pushStyle(style.getTextStyle(textScaler: textScaler))
       ..addText('A');
 
     final paragraph = builder.build();
@@ -1909,7 +1908,7 @@ class _EstimatedLineHeight {
 
     _lastLineHeight = paragraph.height;
     _lastComputedStyle = style;
-    _lastTextScaleFactor = textScaleFactor;
+    _lastTextScaler = textScaler;
     return _lastLineHeight!;
   }
 }

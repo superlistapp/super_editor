@@ -50,7 +50,7 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
     _textFieldController
       ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText(
-        text: 'turtle 🐢 bomb 💣 skull ☠',
+        'turtle 🐢 bomb 💣 skull ☠',
       );
 
     if (widget.direction == TextAffinity.upstream) {

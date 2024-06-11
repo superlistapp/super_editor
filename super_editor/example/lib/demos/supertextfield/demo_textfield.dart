@@ -20,7 +20,7 @@ import 'package:super_editor/super_editor.dart';
 /// Demo of a variety of [SuperTextField]
 class TextFieldDemo extends StatefulWidget {
   @override
-  _TextFieldDemoState createState() => _TextFieldDemoState();
+  State<TextFieldDemo> createState() => _TextFieldDemoState();
 }
 
 class _TextFieldDemoState extends State<TextFieldDemo> {

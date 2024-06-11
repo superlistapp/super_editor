@@ -27,7 +27,7 @@ import '../infrastructure/super_textfield/metrics.dart';
 /// selection, or double/triple tap to select content.
 class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   const ReadOnlyAndroidDocumentTouchInteractor({
-    Key? key,
+    super.key,
     required this.focusNode,
     required this.document,
     required this.documentKey,
@@ -42,7 +42,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
     this.showDebugPaint = false,
     this.overlayController,
     required this.child,
-  }) : super(key: key);
+  });
 
   final FocusNode focusNode;
 

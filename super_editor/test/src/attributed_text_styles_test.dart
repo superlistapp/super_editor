@@ -7,7 +7,7 @@ void main() {
   group('Attributed Text', () {
     test('no styles', () {
       final text = AttributedText(
-        text: 'abcdefghij',
+        'abcdefghij',
       );
       final textSpan = text.computeTextSpan(_styleBuilder);
 
@@ -17,8 +17,8 @@ void main() {
 
     test('full-span style', () {
       final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
+        'abcdefghij',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
@@ -34,8 +34,8 @@ void main() {
 
     test('single character style', () {
       final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
+        'abcdefghij',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 1, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 1, markerType: SpanMarkerType.end),
@@ -55,8 +55,8 @@ void main() {
 
     test('single character style - reverse order', () {
       final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
+        'abcdefghij',
+        AttributedSpans(
           attributions: [
             // Notice that the markers are provided in reverse order:
             // end then start. Order shouldn't matter within a single
@@ -78,8 +78,8 @@ void main() {
     });
 
     test('add single character style', () {
-      final text = AttributedText(text: 'abcdefghij');
-      text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 1, end: 1));
+      final text = AttributedText('abcdefghij');
+      text.addAttribution(ExpectedSpans.bold, const SpanRange(1, 1));
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
@@ -93,8 +93,8 @@ void main() {
 
     test('partial style', () {
       final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
+        'abcdefghij',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end),
@@ -113,8 +113,8 @@ void main() {
 
     test('add styled character to existing styled text', () {
       final initialText = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
+        'abcdefghij',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
@@ -123,8 +123,8 @@ void main() {
       );
 
       final newText = initialText.copyAndAppend(AttributedText(
-        text: 'k',
-        spans: AttributedSpans(
+        'k',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.end),
@@ -148,8 +148,8 @@ void main() {
 
     test('non-mingled varying styles', () {
       final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
+        'abcdefghij',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.end),
@@ -172,8 +172,8 @@ void main() {
 
     test('intermingled varying styles', () {
       final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
+        'abcdefghij',
+        AttributedSpans(
           attributions: [
             const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
             const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),

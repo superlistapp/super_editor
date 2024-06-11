@@ -33,7 +33,7 @@ final _log = iosTextFieldLog;
 /// Selection changes are made via the given [textController].
 class IOSTextFieldTouchInteractor extends StatefulWidget {
   const IOSTextFieldTouchInteractor({
-    Key? key,
+    super.key,
     required this.focusNode,
     required this.textFieldLayerLink,
     required this.textController,
@@ -44,7 +44,7 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
     required this.handleColor,
     this.showDebugPaint = false,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// [FocusNode] for the text field that contains this [IOSTextFieldInteractor].
   ///

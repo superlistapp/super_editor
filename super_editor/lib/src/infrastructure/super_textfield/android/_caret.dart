@@ -10,7 +10,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 /// then paints a blinking caret at that location.
 class AndroidTextFieldCaret extends StatefulWidget {
   const AndroidTextFieldCaret({
-    Key? key,
+    super.key,
     required this.textLayout,
     required this.isTextEmpty,
     required this.emptyTextCaretHeight,
@@ -18,7 +18,7 @@ class AndroidTextFieldCaret extends StatefulWidget {
     required this.caretColor,
     this.caretWidth = 2.0,
     this.caretBorderRadius = BorderRadius.zero,
-  }) : super(key: key);
+  });
 
   /// The laid-out text upon which the caret is painted.
   final TextLayout textLayout;

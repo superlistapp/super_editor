@@ -75,14 +75,14 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
 
 class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewModel {
   HorizontalRuleComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
     this.selection,
     required this.selectionColor,
     this.caret,
     required this.caretColor,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  });
 
   UpstreamDownstreamNodeSelection? selection;
   Color selectionColor;
@@ -127,7 +127,7 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
 /// Displays a horizontal rule in a document.
 class HorizontalRuleComponent extends StatelessWidget {
   const HorizontalRuleComponent({
-    Key? key,
+    super.key,
     required this.componentKey,
     this.color = Colors.grey,
     this.thickness = 1,
@@ -135,7 +135,7 @@ class HorizontalRuleComponent extends StatelessWidget {
     this.selection,
     required this.caretColor,
     this.showCaret = false,
-  }) : super(key: key);
+  });
 
   final GlobalKey componentKey;
   final Color color;

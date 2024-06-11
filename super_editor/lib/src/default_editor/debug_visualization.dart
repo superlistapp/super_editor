@@ -13,8 +13,8 @@ class SuperEditorDebugVisuals extends InheritedWidget {
 
   const SuperEditorDebugVisuals({
     this.config = const SuperEditorDebugVisualsConfig(),
-    required Widget child,
-  }) : super(child: child);
+    required super.child,
+  });
 
   final SuperEditorDebugVisualsConfig config;
 
@@ -47,10 +47,10 @@ class SuperEditorDebugVisualsConfig {
 
 class SuperEditorFocusDebugVisuals extends StatelessWidget {
   const SuperEditorFocusDebugVisuals({
-    Key? key,
+    super.key,
     required this.focusNode,
     required this.child,
-  }) : super(key: key);
+  });
 
   final FocusNode focusNode;
 
@@ -89,10 +89,10 @@ class SuperEditorFocusDebugVisuals extends StatelessWidget {
 
 class SuperEditorImeDebugVisuals extends StatelessWidget {
   const SuperEditorImeDebugVisuals({
-    Key? key,
+    super.key,
     required this.imeConnection,
     required this.child,
-  }) : super(key: key);
+  });
 
   final ValueListenable<TextInputConnection?> imeConnection;
 

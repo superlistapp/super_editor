@@ -82,7 +82,7 @@ Future<void> _pumpShortcutsAndSuperEditor(
               editor: DocumentEditor(
                 document: MutableDocument(
                   nodes: [
-                    ParagraphNode(id: "1", text: AttributedText(text: "")),
+                    ParagraphNode(id: "1", text: AttributedText( "")),
                   ],
                 ),
               ),

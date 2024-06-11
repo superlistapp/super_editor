@@ -14,9 +14,9 @@ import 'package:super_text_layout/super_text_layout.dart';
 /// height as the text it corresponds with.
 class IOSFloatingCursor extends StatelessWidget {
   const IOSFloatingCursor({
-    Key? key,
+    super.key,
     required this.controller,
-  }) : super(key: key);
+  });
 
   final FloatingCursorController controller;
 

@@ -82,9 +82,9 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
 
 class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   BlockquoteComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
     required this.text,
     required this.textStyleBuilder,
     this.textDirection = TextDirection.ltr,
@@ -94,7 +94,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  });
 
   AttributedText text;
 
@@ -172,7 +172,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
 /// Displays a blockquote in a document.
 class BlockquoteComponent extends StatelessWidget {
   const BlockquoteComponent({
-    Key? key,
+    super.key,
     required this.textKey,
     required this.text,
     required this.styleBuilder,
@@ -182,7 +182,7 @@ class BlockquoteComponent extends StatelessWidget {
     required this.borderRadius,
     this.showDebugPaint = false,
     this.highlightWhenEmpty = false,
-  }) : super(key: key);
+  });
 
   final GlobalKey textKey;
   final AttributedText text;
@@ -238,13 +238,13 @@ class ConvertBlockquoteToParagraphCommand implements EditorCommand {
 
 ExecutionInstruction insertNewlineInBlockquote({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!keyEvent.isShiftPressed) {
+  if (!HardwareKeyboard.instance.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -270,7 +270,7 @@ ExecutionInstruction insertNewlineInBlockquote({
 
 ExecutionInstruction splitBlockquoteWhenEnterPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;

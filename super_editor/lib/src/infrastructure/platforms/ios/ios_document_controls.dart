@@ -15,7 +15,7 @@ import 'magnifier.dart';
 
 class IosDocumentTouchEditingControls extends StatefulWidget {
   const IosDocumentTouchEditingControls({
-    Key? key,
+    super.key,
     required this.editingController,
     required this.floatingCursorController,
     required this.documentLayout,
@@ -32,7 +32,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.disableGestureHandling = false,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  });
 
   final IosDocumentGestureEditingController editingController;
 
@@ -517,13 +517,9 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 class IosDocumentGestureEditingController extends GestureEditingController {
   IosDocumentGestureEditingController({
     required LayerLink documentLayoutLink,
-    required LayerLink magnifierFocalPointLink,
-    required MagnifierAndToolbarController overlayController,
-  })  : _documentLayoutLink = documentLayoutLink,
-        super(
-          magnifierFocalPointLink: magnifierFocalPointLink,
-          overlayController: overlayController,
-        );
+    required super.magnifierFocalPointLink,
+    required super.overlayController,
+  })  : _documentLayoutLink = documentLayoutLink;
 
   /// Layer link that's aligned to the top-left corner of the document layout.
   ///

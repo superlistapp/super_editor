@@ -26,12 +26,12 @@ import '_presenter.dart';
 /// cast that `State` object to a [DocumentLayout].
 class SingleColumnDocumentLayout extends StatefulWidget {
   const SingleColumnDocumentLayout({
-    Key? key,
+    super.key,
     required this.presenter,
     required this.componentBuilders,
     this.onBuildScheduled,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  });
 
   /// Presenter that provides a view model for a complete single-column
   /// document layout.
@@ -807,11 +807,10 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
 class _PresenterComponentBuilder extends StatefulWidget {
   const _PresenterComponentBuilder({
-    Key? key,
     required this.presenter,
     required this.watchNode,
     required this.builder,
-  }) : super(key: key);
+  });
 
   final SingleColumnLayoutPresenter presenter;
   final String watchNode;
@@ -883,13 +882,12 @@ class _PresenterComponentBuilderState extends State<_PresenterComponentBuilder> 
 /// given [presenter] reports that the
 class _Component extends StatelessWidget {
   const _Component({
-    Key? key,
     required this.componentBuilders,
     required this.componentViewModel,
     required this.componentKey,
     // ignore: unused_element
     this.showDebugPaint = false,
-  }) : super(key: key);
+  });
 
   /// Builders for every type of component that this layout displays.
   ///

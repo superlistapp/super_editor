@@ -9,13 +9,9 @@ import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart'
 class AndroidDocumentGestureEditingController extends GestureEditingController {
   AndroidDocumentGestureEditingController({
     required LayerLink documentLayoutLink,
-    required LayerLink magnifierFocalPointLink,
-    required MagnifierAndToolbarController overlayController,
-  })  : _documentLayoutLink = documentLayoutLink,
-        super(
-          magnifierFocalPointLink: magnifierFocalPointLink,
-          overlayController: overlayController,
-        );
+    required super.magnifierFocalPointLink,
+    required super.overlayController,
+  })  : _documentLayoutLink = documentLayoutLink;
 
   @override
   void dispose() {

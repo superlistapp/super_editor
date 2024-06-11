@@ -21,22 +21,22 @@ class _AttributedTextDemoState extends State<AttributedTextDemo> {
   }
 
   void _computeStyledText() {
-    AttributedText _text = AttributedText(
-      text: 'This is some text styled with AttributedText',
+    AttributedText text = AttributedText(
+      'This is some text styled with AttributedText',
     );
 
     for (final range in _boldRanges) {
-      _text.addAttribution(boldAttribution, range);
+      text.addAttribution(boldAttribution, range);
     }
     for (final range in _italicsRanges) {
-      _text.addAttribution(italicsAttribution, range);
+      text.addAttribution(italicsAttribution, range);
     }
     for (final range in _strikethroughRanges) {
-      _text.addAttribution(strikethroughAttribution, range);
+      text.addAttribution(strikethroughAttribution, range);
     }
 
     setState(() {
-      _richText = _text.computeTextSpan((Set<Attribution> attributions) {
+      _richText = text.computeTextSpan((Set<Attribution> attributions) {
         TextStyle newStyle = const TextStyle(
           color: Colors.black,
           fontSize: 30,
@@ -239,12 +239,12 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
           rangeStart = i;
         }
       } else if (rangeStart >= 0) {
-        ranges.add(SpanRange(start: rangeStart, end: i - 1));
+        ranges.add(SpanRange(rangeStart, i - 1));
         rangeStart = -1;
       }
     }
     if (rangeStart >= 0) {
-      ranges.add(SpanRange(start: rangeStart, end: widget.cellCount - 1));
+      ranges.add(SpanRange(rangeStart, widget.cellCount - 1));
     }
 
     widget.onRangesChange!(ranges);

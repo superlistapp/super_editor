@@ -8,7 +8,7 @@ void main() {
         nodes: [
           ParagraphNode(
             id: "1",
-            text: AttributedText(text: "This is a paragraph of text."),
+            text: AttributedText( "This is a paragraph of text."),
           ),
         ],
       );
@@ -41,7 +41,7 @@ void main() {
         nodes: [
           ParagraphNode(
             id: "1",
-            text: AttributedText(text: "This is a paragraph of text."),
+            text: AttributedText( "This is a paragraph of text."),
           ),
         ],
       );
@@ -90,7 +90,7 @@ void main() {
         // Insert a new node at the beginning.
         final thirdNode = ParagraphNode(
           id: "3",
-          text: AttributedText(text: "This is the third paragraph."),
+          text: AttributedText( "This is the third paragraph."),
         );
         document.insertNodeAt(0, thirdNode);
 
@@ -108,7 +108,7 @@ void main() {
         // Insert a new node between firstNode and secondNode.
         final thirdNode = ParagraphNode(
           id: "3",
-          text: AttributedText(text: "This is the third paragraph."),
+          text: AttributedText( "This is the third paragraph."),
         );
         document.insertNodeAt(1, thirdNode);
 
@@ -126,7 +126,7 @@ void main() {
         // Insert a new node at the end.
         final thirdNode = ParagraphNode(
           id: "3",
-          text: AttributedText(text: "This is the third paragraph."),
+          text: AttributedText( "This is the third paragraph."),
         );
         document.insertNodeAt(2, thirdNode);
 
@@ -144,7 +144,7 @@ void main() {
         // Insert a new node at the beginning.
         final thirdNode = ParagraphNode(
           id: "3",
-          text: AttributedText(text: "This is the third paragraph."),
+          text: AttributedText( "This is the third paragraph."),
         );
         document.insertNodeBefore(
           existingNode: firstNode,
@@ -165,7 +165,7 @@ void main() {
         // Insert a new node between the two nodes.
         final thirdNode = ParagraphNode(
           id: "3",
-          text: AttributedText(text: "This is the third paragraph."),
+          text: AttributedText( "This is the third paragraph."),
         );
         document.insertNodeBefore(
           existingNode: secondNode,
@@ -186,7 +186,7 @@ void main() {
         // Insert a new node between the two nodes.
         final thirdNode = ParagraphNode(
           id: "3",
-          text: AttributedText(text: "This is the third paragraph."),
+          text: AttributedText( "This is the third paragraph."),
         );
         document.insertNodeAfter(
           existingNode: firstNode,
@@ -207,7 +207,7 @@ void main() {
         // Insert a new node at the end.
         final thirdNode = ParagraphNode(
           id: "3",
-          text: AttributedText(text: "This is the third paragraph."),
+          text: AttributedText( "This is the third paragraph."),
         );
         document.insertNodeAfter(
           existingNode: secondNode,
@@ -338,7 +338,7 @@ void main() {
 
         final fourthNode = ParagraphNode(
           id: "4",
-          text: AttributedText(text: "This is the third paragraph."),
+          text: AttributedText( "This is the third paragraph."),
         );
 
         document.replaceNode(
@@ -361,7 +361,7 @@ void main() {
 
         final fourthNode = ParagraphNode(
           id: "4",
-          text: AttributedText(text: "This is the third paragraph."),
+          text: AttributedText( "This is the third paragraph."),
         );
 
         document.replaceNode(
@@ -384,7 +384,7 @@ void main() {
 
         final fourthNode = ParagraphNode(
           id: "4",
-          text: AttributedText(text: "This is the third paragraph."),
+          text: AttributedText( "This is the third paragraph."),
         );
 
         document.replaceNode(
@@ -407,11 +407,11 @@ MutableDocument _createTwoParagraphDoc() {
     nodes: [
       ParagraphNode(
         id: "1",
-        text: AttributedText(text: "This is the first paragraph."),
+        text: AttributedText( "This is the first paragraph."),
       ),
       ParagraphNode(
         id: "2",
-        text: AttributedText(text: "This is the second paragraph."),
+        text: AttributedText( "This is the second paragraph."),
       ),
     ],
   );
@@ -422,15 +422,15 @@ MutableDocument _createThreeParagraphDoc() {
     nodes: [
       ParagraphNode(
         id: "1",
-        text: AttributedText(text: "This is the first paragraph."),
+        text: AttributedText( "This is the first paragraph."),
       ),
       ParagraphNode(
         id: "2",
-        text: AttributedText(text: "This is the second paragraph."),
+        text: AttributedText( "This is the second paragraph."),
       ),
       ParagraphNode(
         id: "3",
-        text: AttributedText(text: "This is the third paragraph."),
+        text: AttributedText( "This is the third paragraph."),
       ),
     ],
   );

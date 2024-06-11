@@ -28,7 +28,7 @@ import 'selection_upstream_downstream.dart';
 /// drag to scroll, and handles to control selection.
 class AndroidDocumentTouchInteractor extends StatefulWidget {
   const AndroidDocumentTouchInteractor({
-    Key? key,
+    super.key,
     required this.focusNode,
     required this.document,
     required this.documentKey,
@@ -43,7 +43,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     this.showDebugPaint = false,
     this.overlayController,
     required this.child,
-  }) : super(key: key);
+  });
 
   final FocusNode focusNode;
 
@@ -1055,7 +1055,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
 class AndroidDocumentTouchEditingControls extends StatefulWidget {
   const AndroidDocumentTouchEditingControls({
-    Key? key,
+    super.key,
     required this.editingController,
     required this.documentKey,
     required this.documentLayout,
@@ -1066,7 +1066,7 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  });
 
   final AndroidDocumentGestureEditingController editingController;
 

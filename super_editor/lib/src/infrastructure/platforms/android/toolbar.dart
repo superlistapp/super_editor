@@ -3,12 +3,12 @@ import 'package:super_editor/src/infrastructure/platforms/android/colors.dart';
 
 class AndroidTextEditingFloatingToolbar extends StatelessWidget {
   const AndroidTextEditingFloatingToolbar({
-    Key? key,
+    super.key,
     this.onCutPressed,
     this.onCopyPressed,
     this.onPastePressed,
     this.onSelectAllPressed,
-  }) : super(key: key);
+  });
 
   final VoidCallback? onCutPressed;
   final VoidCallback? onCopyPressed;

@@ -12,7 +12,7 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
   if (keyEvent.isPrimaryShortcutKeyPressed && !editContext.composer.isInInteractionMode.value) {
     editorKeyLog.fine("Activating editor interaction mode");
@@ -27,9 +27,9 @@ ExecutionInstruction toggleInteractionModeWhenCmdOrCtrlPressed({
 
 ExecutionInstruction doNothingWhenThereIsNoSelection({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -42,9 +42,9 @@ ExecutionInstruction doNothingWhenThereIsNoSelection({
 
 ExecutionInstruction pasteWhenCmdVIsPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -62,9 +62,9 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
 
 ExecutionInstruction selectAllWhenCmdAIsPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -78,9 +78,9 @@ ExecutionInstruction selectAllWhenCmdAIsPressed({
 
 ExecutionInstruction copyWhenCmdCIsPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -102,9 +102,9 @@ ExecutionInstruction copyWhenCmdCIsPressed({
 
 ExecutionInstruction cutWhenCmdXIsPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -126,9 +126,9 @@ ExecutionInstruction cutWhenCmdXIsPressed({
 
 ExecutionInstruction cmdBToToggleBold({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -147,9 +147,9 @@ ExecutionInstruction cmdBToToggleBold({
 
 ExecutionInstruction cmdIToToggleItalics({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -168,9 +168,9 @@ ExecutionInstruction cmdIToToggleItalics({
 
 ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -180,7 +180,7 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
 
   // Do nothing if CMD or CTRL are pressed because this signifies an attempted
   // shortcut.
-  if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
+  if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -194,7 +194,7 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   // needs to alter the selection, not delete content. We have to explicitly
   // look for this because when shift is pressed along with an arrow key,
   // Flutter reports a non-null character.
-  if (keyEvent.isShiftPressed) {
+  if (HardwareKeyboard.instance.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -225,9 +225,9 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
 
 ExecutionInstruction backspaceToRemoveUpstreamContent({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -235,7 +235,7 @@ ExecutionInstruction backspaceToRemoveUpstreamContent({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (keyEvent.isMetaPressed || keyEvent.isAltPressed) {
+  if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isAltPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -246,9 +246,9 @@ ExecutionInstruction backspaceToRemoveUpstreamContent({
 
 ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -296,9 +296,9 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
 
 ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -312,12 +312,12 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+  if (defaultTargetPlatform == TargetPlatform.windows && HardwareKeyboard.instance.isAltPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (defaultTargetPlatform == TargetPlatform.linux &&
-      keyEvent.isAltPressed &&
+      HardwareKeyboard.instance.isAltPressed &&
       (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
     return ExecutionInstruction.continueExecution;
   }
@@ -326,31 +326,31 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft || keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
     MovementModifier? movementModifier;
     if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-        keyEvent.isControlPressed) {
+        HardwareKeyboard.instance.isControlPressed) {
       movementModifier = MovementModifier.word;
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+    } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isMetaPressed) {
       movementModifier = MovementModifier.line;
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+    } else if (defaultTargetPlatform == TargetPlatform.macOS && HardwareKeyboard.instance.isAltPressed) {
       movementModifier = MovementModifier.word;
     }
 
     if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
       // Move the caret left/upstream.
       didMove = editContext.commonOps.moveCaretUpstream(
-        expand: keyEvent.isShiftPressed,
+        expand: HardwareKeyboard.instance.isShiftPressed,
         movementModifier: movementModifier,
       );
     } else {
       // Move the caret right/downstream.
       didMove = editContext.commonOps.moveCaretDownstream(
-        expand: keyEvent.isShiftPressed,
+        expand: HardwareKeyboard.instance.isShiftPressed,
         movementModifier: movementModifier,
       );
     }
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
-    didMove = editContext.commonOps.moveCaretUp(expand: keyEvent.isShiftPressed);
+    didMove = editContext.commonOps.moveCaretUp(expand: HardwareKeyboard.instance.isShiftPressed);
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
-    didMove = editContext.commonOps.moveCaretDown(expand: keyEvent.isShiftPressed);
+    didMove = editContext.commonOps.moveCaretDown(expand: HardwareKeyboard.instance.isShiftPressed);
   }
 
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
@@ -358,9 +358,9 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
 
 ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -368,21 +368,21 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!keyEvent.isControlPressed) {
+  if (!HardwareKeyboard.instance.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
   bool didMove = false;
 
   if (keyEvent.logicalKey == LogicalKeyboardKey.keyA) {
     didMove = editContext.commonOps.moveCaretUpstream(
-      expand: keyEvent.isShiftPressed,
+      expand: HardwareKeyboard.instance.isShiftPressed,
       movementModifier: MovementModifier.line,
     );
   }
 
   if (keyEvent.logicalKey == LogicalKeyboardKey.keyE) {
     didMove = editContext.commonOps.moveCaretDownstream(
-      expand: keyEvent.isShiftPressed,
+      expand: HardwareKeyboard.instance.isShiftPressed,
       movementModifier: MovementModifier.line,
     );
   }
@@ -392,9 +392,9 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
 
 ExecutionInstruction moveToLineStartWithHome({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -405,7 +405,7 @@ ExecutionInstruction moveToLineStartWithHome({
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
     didMove = editContext.commonOps.moveCaretUpstream(
-      expand: keyEvent.isShiftPressed,
+      expand: HardwareKeyboard.instance.isShiftPressed,
       movementModifier: MovementModifier.line,
     );
   }
@@ -415,9 +415,9 @@ ExecutionInstruction moveToLineStartWithHome({
 
 ExecutionInstruction moveToLineEndWithEnd({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -428,7 +428,7 @@ ExecutionInstruction moveToLineEndWithEnd({
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
     didMove = editContext.commonOps.moveCaretDownstream(
-      expand: keyEvent.isShiftPressed,
+      expand: HardwareKeyboard.instance.isShiftPressed,
       movementModifier: MovementModifier.line,
     );
   }
@@ -438,9 +438,9 @@ ExecutionInstruction moveToLineEndWithEnd({
 
 ExecutionInstruction deleteLineWithCmdBksp({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -468,13 +468,13 @@ ExecutionInstruction deleteLineWithCmdBksp({
 
 ExecutionInstruction deleteWordWithAltBksp({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!keyEvent.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+  if (!HardwareKeyboard.instance.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -501,9 +501,9 @@ ExecutionInstruction deleteWordWithAltBksp({
 /// Do nothing if selection is already collapsed.
 ExecutionInstruction collapseSelectionWhenEscIsPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 

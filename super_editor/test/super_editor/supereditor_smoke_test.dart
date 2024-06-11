@@ -66,18 +66,18 @@ void main() {
 
 final _expectedDocument = MutableDocument(
   nodes: [
-    ParagraphNode(id: "1", text: AttributedText(text: "This is the first paragraph of the document.")),
+    ParagraphNode(id: "1", text: AttributedText("This is the first paragraph of the document.")),
     ParagraphNode(
-        id: "2", text: AttributedText(text: "This is a blockquote."), metadata: {'blockType': blockquoteAttribution}),
-    ParagraphNode(id: "3", text: AttributedText(text: "This is an ordered list.")),
-    ListItemNode.ordered(id: "4", text: AttributedText(text: "item 1")),
-    ListItemNode.ordered(id: "5", text: AttributedText(text: "item 2")),
-    ListItemNode.ordered(id: "6", text: AttributedText(text: "item 3")),
-    ParagraphNode(id: "7", text: AttributedText(text: "This is an unordered list.")),
-    ListItemNode.unordered(id: "8", text: AttributedText(text: "item 1")),
-    ListItemNode.unordered(id: "9", text: AttributedText(text: "item 2")),
-    ListItemNode.unordered(id: "10", text: AttributedText(text: "item 3")),
+        id: "2", text: AttributedText("This is a blockquote."), metadata: {'blockType': blockquoteAttribution}),
+    ParagraphNode(id: "3", text: AttributedText("This is an ordered list.")),
+    ListItemNode.ordered(id: "4", text: AttributedText("item 1")),
+    ListItemNode.ordered(id: "5", text: AttributedText("item 2")),
+    ListItemNode.ordered(id: "6", text: AttributedText("item 3")),
+    ParagraphNode(id: "7", text: AttributedText("This is an unordered list.")),
+    ListItemNode.unordered(id: "8", text: AttributedText("item 1")),
+    ListItemNode.unordered(id: "9", text: AttributedText("item 2")),
+    ListItemNode.unordered(id: "10", text: AttributedText("item 3")),
     HorizontalRuleNode(id: "11"),
-    ParagraphNode(id: "12", text: AttributedText(text: "")),
+    ParagraphNode(id: "12", text: AttributedText("")),
   ],
 );

@@ -39,7 +39,7 @@ import '../infrastructure/document_gestures_interaction_overrides.dart';
 /// [DocumentMouseInteractor] auto-scrolls the editor to make the selection region visible.
 class DocumentMouseInteractor extends StatefulWidget {
   const DocumentMouseInteractor({
-    Key? key,
+    super.key,
     this.focusNode,
     required this.document,
     required this.getDocumentLayout,
@@ -49,7 +49,7 @@ class DocumentMouseInteractor extends StatefulWidget {
     required this.autoScroller,
     this.showDebugPaint = false,
     required this.child,
-  }) : super(key: key);
+  });
 
   final FocusNode? focusNode;
 
@@ -154,9 +154,9 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   bool get _isShiftPressed =>
-      (RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
-          RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
-          RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift)) &&
+      (HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shiftLeft) ||
+          HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shiftRight) ||
+          HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shift)) &&
       // TODO: this condition doesn't belong here. Move it to where it applies
       _currentSelection != null;
 
@@ -823,8 +823,8 @@ Updating drag selection:
 class DragRectanglePainter extends CustomPainter {
   DragRectanglePainter({
     this.selectionRect,
-    Listenable? repaint,
-  }) : super(repaint: repaint);
+    super.repaint,
+  });
 
   final Rect? selectionRect;
   final Paint _selectionPaint = Paint()

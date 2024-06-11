@@ -18,12 +18,11 @@ import 'package:super_editor/super_editor.dart';
 /// A task can either be complete, or incomplete.
 class TaskNode extends TextNode {
   TaskNode({
-    required String id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
+    required super.id,
+    required super.text,
+    super.metadata,
     required bool isComplete,
-  })  : _isComplete = isComplete,
-        super(id: id, text: text, metadata: metadata) {
+  })  : _isComplete = isComplete {
     // Set a block type so that TaskNode's can be styled by
     // StyleRule's.
     putMetadataValue("blockType", const NamedAttribution("task"));
@@ -123,9 +122,9 @@ class TaskComponentBuilder implements ComponentBuilder {
 /// and caret appearance.
 class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   TaskComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    required EdgeInsetsGeometry padding,
+    required super.nodeId,
+    super.maxWidth,
+    required super.padding,
     required this.isComplete,
     required this.setComplete,
     required this.text,
@@ -135,7 +134,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  });
 
   bool isComplete;
   void Function(bool) setComplete;
@@ -209,10 +208,10 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
 /// [viewModel].
 class TaskComponent extends StatefulWidget {
   const TaskComponent({
-    Key? key,
+    super.key,
     required this.viewModel,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  });
 
   final TaskComponentViewModel viewModel;
   final bool showDebugPaint;
@@ -272,9 +271,9 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
 
 ExecutionInstruction enterToInsertNewTask({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 

@@ -30,7 +30,7 @@ final _log = iosTextFieldLog;
 
 class SuperIOSTextField extends StatefulWidget {
   const SuperIOSTextField({
-    Key? key,
+    super.key,
     this.focusNode,
     this.textController,
     this.textStyleBuilder = defaultTextFieldStyleBuilder,
@@ -47,7 +47,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
-  }) : super(key: key);
+  });
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
@@ -534,7 +534,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   Widget _buildSelectableText() {
     final textSpan = _textEditingController.text.text.isNotEmpty
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
-        : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
+        : AttributedText("").computeTextSpan(widget.textStyleBuilder);
 
     CaretStyle caretStyle = widget.caretStyle;
 
@@ -548,7 +548,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         key: _textContentKey,
         richText: textSpan,
         textAlign: widget.textAlign,
-        textScaleFactor: MediaQuery.textScaleFactorOf(context),
+        textScaler: MediaQuery.textScalerOf(context),
         userSelection: UserSelection(
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,

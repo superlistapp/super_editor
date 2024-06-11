@@ -88,7 +88,7 @@ class SuperEditor extends StatefulWidget {
   /// Creates a `Super Editor` with common (but configurable) defaults for
   /// visual components, text styles, and user interaction.
   SuperEditor({
-    Key? key,
+    super.key,
     this.focusNode,
     required this.editor,
     this.composer,
@@ -121,8 +121,7 @@ class SuperEditor extends StatefulWidget {
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
         componentBuilders = componentBuilders != null
             ? [...componentBuilders, const UnknownComponentBuilder()]
-            : [...defaultComponentBuilders, const UnknownComponentBuilder()],
-        super(key: key);
+            : [...defaultComponentBuilders, const UnknownComponentBuilder()];
 
   /// [FocusNode] for the entire `SuperEditor`.
   final FocusNode? focusNode;

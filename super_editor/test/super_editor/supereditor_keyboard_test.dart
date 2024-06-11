@@ -849,10 +849,9 @@ DocumentSelection _selectionInParagraph(
 /// Super Editor experience goes out of existence, such as navigation.
 class _CloseKeyboardOnDispose extends StatefulWidget {
   const _CloseKeyboardOnDispose({
-    Key? key,
     required this.keyboardController,
     required this.child,
-  }) : super(key: key);
+  });
 
   final SoftwareKeyboardController keyboardController;
   final Widget child;

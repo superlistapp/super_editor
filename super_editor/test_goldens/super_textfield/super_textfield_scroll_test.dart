@@ -7,7 +7,7 @@ void main() {
   group('SuperTextField', () {
     testGoldens("multi-line accounts for padding when jumping scroll position down", (tester) async {
       final controller = AttributedTextEditingController(
-        text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
+        text: AttributedText("First line\nSecond Line\nThird Line\nFourth Line"),
       );
 
       const description =
@@ -67,7 +67,7 @@ void main() {
 
     testGoldens("multi-line accounts for padding when jumping scroll position up", (tester) async {
       final controller = AttributedTextEditingController(
-        text: AttributedText(text: "First line\nSecond Line\nThird Line\nFourth Line"),
+        text: AttributedText("First line\nSecond Line\nThird Line\nFourth Line"),
       );
 
       const description =

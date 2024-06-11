@@ -511,7 +511,7 @@ class TextDeltasDocumentEditor {
             existingNode: extentNode,
             newNode: ParagraphNode(
               id: newNodeId,
-              text: AttributedText(text: ''),
+              text: AttributedText(''),
             ),
           );
         }));
@@ -524,7 +524,7 @@ class TextDeltasDocumentEditor {
             existingNode: extentNode,
             newNode: ParagraphNode(
               id: newNodeId,
-              text: AttributedText(text: ''),
+              text: AttributedText(''),
             ),
           );
         }));

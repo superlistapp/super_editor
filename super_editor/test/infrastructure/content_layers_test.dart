@@ -326,11 +326,11 @@ Future<void> _pumpScaffold(
   WidgetTester tester, {
   required Widget child,
 }) async {
-  addTearDown(() => tester.binding.window.clearAllTestValues());
+  addTearDown(() => tester.platformDispatcher.clearAllTestValues());
 
-  tester.binding.window
-    ..physicalSizeTestValue = _windowSize
-    ..devicePixelRatioTestValue = 1.0;
+  tester.view
+    ..physicalSize = _windowSize
+    ..devicePixelRatio = 1.0;
 
   await tester.pumpWidget(
     MaterialApp(
@@ -369,9 +369,8 @@ void _expectLayerConstraintsThatMatchContent(BoxConstraints constraints) {
 /// rebuilds, and that descendant isn't the top-level widget in a subtree.
 class _NoRebuildWidget extends StatefulWidget {
   const _NoRebuildWidget({
-    Key? key,
     required this.child,
-  }) : super(key: key);
+  });
 
   final Widget child;
 
@@ -389,12 +388,11 @@ class _NoRebuildWidgetState extends State<_NoRebuildWidget> {
 /// Widget that can be told to rebuild from the outside, and also tracks its build count.
 class _RebuildableWidget extends StatefulWidget {
   const _RebuildableWidget({
-    Key? key,
     required this.rebuildSignal,
     this.buildTracker,
     this.onBuildScheduled,
     required this.child,
-  }) : super(key: key);
+  });
 
   final Listenable rebuildSignal;
   final ValueNotifier<int>? buildTracker;

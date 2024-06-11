@@ -135,7 +135,7 @@ Future<void> _pumpTestApp(
               maxLines: lineCount,
               lineHeight: 24,
               textController: AttributedTextEditingController(
-                text: AttributedText(text: text),
+                text: AttributedText(text),
               ),
             ),
           ],
@@ -155,11 +155,11 @@ void _testWidgetsOnMobileWithKeyboard(
   Future<void> Function(WidgetTester tester, _KeyboardToggle keyboardToggle) test,
 ) {
   testWidgetsOnMobile(description, (tester) async {
-    tester.binding.window
-      ..physicalSizeTestValue = screenSizeWithoutKeyboard
+    tester.view
+      ..physicalSize = screenSizeWithoutKeyboard
       ..platformDispatcher.textScaleFactorTestValue = 1.0
-      ..devicePixelRatioTestValue = 1.0;
-    addTearDown(() => tester.binding.window.clearAllTestValues());
+      ..devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.reset());
 
     final keyboardToggle = _KeyboardToggle(
       tester: tester,
@@ -196,7 +196,7 @@ class _KeyboardToggle {
       resizedWidth += widthShrinkPerFrame;
       resizedHeight += heightShrinkPerFrame;
       final currentScreenSize = (sizeWithoutKeyboard - Offset(resizedWidth, resizedHeight)) as Size;
-      tester.binding.window.physicalSizeTestValue = currentScreenSize;
+      tester.view.physicalSize = currentScreenSize;
       await tester.pumpAndSettle();
     }
   }

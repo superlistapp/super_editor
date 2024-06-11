@@ -9,7 +9,7 @@ void main() {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
             id: '1',
-            text: AttributedText(text: 'My Header'),
+            text: AttributedText('My Header'),
           ),
         ]);
 
@@ -37,8 +37,8 @@ void main() {
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'My Header',
-              spans: AttributedSpans(
+              'My Header',
+              AttributedSpans(
                 attributions: [
                   const SpanMarker(attribution: boldAttribution, offset: 3, markerType: SpanMarkerType.start),
                   const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
@@ -56,7 +56,7 @@ void main() {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
             id: '1',
-            text: AttributedText(text: 'This is a blockquote'),
+            text: AttributedText('This is a blockquote'),
             metadata: {'blockType': blockquoteAttribution},
           ),
         ]);
@@ -69,8 +69,8 @@ void main() {
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a blockquote',
-              spans: AttributedSpans(
+              'This is a blockquote',
+              AttributedSpans(
                 attributions: [
                   const SpanMarker(attribution: boldAttribution, offset: 10, markerType: SpanMarkerType.start),
                   const SpanMarker(attribution: boldAttribution, offset: 19, markerType: SpanMarkerType.end),
@@ -88,7 +88,7 @@ void main() {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
             id: '1',
-            text: AttributedText(text: 'This is some code'),
+            text: AttributedText('This is some code'),
             metadata: {'blockType': codeAttribution},
           ),
         ]);
@@ -106,7 +106,7 @@ This is some code
         final doc = MutableDocument(nodes: [
           ParagraphNode(
             id: '1',
-            text: AttributedText(text: 'This is a paragraph.'),
+            text: AttributedText('This is a paragraph.'),
           ),
         ]);
 
@@ -118,8 +118,8 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a paragraph.',
-              spans: AttributedSpans(
+              'This is a paragraph.',
+              AttributedSpans(
                 attributions: [
                   const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
                   const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
@@ -137,8 +137,8 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a paragraph.',
-              spans: AttributedSpans(
+              'This is a paragraph.',
+              AttributedSpans(
                 attributions: [
                   const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
                   const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
@@ -158,8 +158,8 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a paragraph.',
-              spans: AttributedSpans(
+              'This is a paragraph.',
+              AttributedSpans(
                 attributions: [
                   const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
                   const SpanMarker(attribution: boldAttribution, offset: 6, markerType: SpanMarkerType.end),
@@ -179,8 +179,8 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a paragraph.',
-              spans: AttributedSpans(
+              'This is a paragraph.',
+              AttributedSpans(
                 attributions: [
                   const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
                   const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
@@ -200,8 +200,8 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a paragraph.',
-              spans: AttributedSpans(
+              'This is a paragraph.',
+              AttributedSpans(
                 attributions: [
                   const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
                   const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
@@ -221,8 +221,8 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a paragraph.',
-              spans: AttributedSpans(
+              'This is a paragraph.',
+              AttributedSpans(
                 attributions: [
                   SpanMarker(
                       attribution: LinkAttribution(url: Uri.https('example.org', '')),
@@ -246,8 +246,8 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a paragraph.',
-              spans: AttributedSpans(
+              'This is a paragraph.',
+              AttributedSpans(
                 attributions: [
                   SpanMarker(
                       attribution: LinkAttribution(url: Uri.https('example.org', '')),
@@ -273,8 +273,8 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a paragraph.',
-              spans: AttributedSpans(
+              'This is a paragraph.',
+              AttributedSpans(
                 attributions: [
                   SpanMarker(
                       attribution: LinkAttribution(url: Uri.https('example.org', '')),
@@ -300,8 +300,8 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a paragraph.',
-              spans: AttributedSpans(
+              'This is a paragraph.',
+              AttributedSpans(
                 attributions: [
                   SpanMarker(attribution: underlineAttribution, offset: 10, markerType: SpanMarkerType.start),
                   SpanMarker(attribution: underlineAttribution, offset: 18, markerType: SpanMarkerType.end),
@@ -319,8 +319,8 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'This is a paragraph.',
-              spans: AttributedSpans(
+              'This is a paragraph.',
+              AttributedSpans(
                 attributions: [
                   SpanMarker(attribution: strikethroughAttribution, offset: 10, markerType: SpanMarkerType.start),
                   SpanMarker(attribution: strikethroughAttribution, offset: 18, markerType: SpanMarkerType.end),
@@ -338,13 +338,25 @@ This is some code
           ParagraphNode(
             id: '1',
             text: AttributedText(
-              text: 'First LinkSecond Link',
-              spans: AttributedSpans(
+              'First LinkSecond Link',
+              AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 0, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 9, markerType: SpanMarkerType.end),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 10, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 20, markerType: SpanMarkerType.end),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 0,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 9,
+                      markerType: SpanMarkerType.end),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('github.com', '')),
+                      offset: 10,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('github.com', '')),
+                      offset: 20,
+                      markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -358,7 +370,7 @@ This is some code
         final doc = MutableDocument(nodes: [
           ParagraphNode(
             id: '1',
-            text: AttributedText(text: 'Paragraph1'),
+            text: AttributedText('Paragraph1'),
             metadata: {
               'textAlign': 'left',
             },
@@ -377,7 +389,7 @@ This is some code
         final doc = MutableDocument(nodes: [
           ParagraphNode(
             id: '1',
-            text: AttributedText(text: 'Paragraph1'),
+            text: AttributedText('Paragraph1'),
             metadata: {
               'textAlign': 'center',
             },
@@ -391,7 +403,7 @@ This is some code
         final doc = MutableDocument(nodes: [
           ParagraphNode(
             id: '1',
-            text: AttributedText(text: 'Paragraph1'),
+            text: AttributedText('Paragraph1'),
             metadata: {
               'textAlign': 'right',
             },
@@ -405,7 +417,7 @@ This is some code
         final doc = MutableDocument(nodes: [
           ParagraphNode(
             id: '1',
-            text: AttributedText(text: 'Paragraph1'),
+            text: AttributedText('Paragraph1'),
             metadata: {
               'textAlign': 'center',
             },
@@ -418,9 +430,9 @@ This is some code
       test('empty paragraph', () {
         final serialized = serializeDocumentToMarkdown(
           MutableDocument(nodes: [
-            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1')),
-            ParagraphNode(id: '2', text: AttributedText(text: '')),
-            ParagraphNode(id: '3', text: AttributedText(text: 'Paragraph3')),
+            ParagraphNode(id: '1', text: AttributedText('Paragraph1')),
+            ParagraphNode(id: '2', text: AttributedText('')),
+            ParagraphNode(id: '3', text: AttributedText('Paragraph3')),
           ]),
         );
 
@@ -434,9 +446,9 @@ Paragraph3""");
       test('separates multiple paragraphs with blank lines', () {
         final serialized = serializeDocumentToMarkdown(
           MutableDocument(nodes: [
-            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1')),
-            ParagraphNode(id: '2', text: AttributedText(text: 'Paragraph2')),
-            ParagraphNode(id: '3', text: AttributedText(text: 'Paragraph3')),
+            ParagraphNode(id: '1', text: AttributedText('Paragraph1')),
+            ParagraphNode(id: '2', text: AttributedText('Paragraph2')),
+            ParagraphNode(id: '3', text: AttributedText('Paragraph3')),
           ]),
         );
 
@@ -450,7 +462,7 @@ Paragraph3""");
       test('separates paragraph from other blocks with blank lines', () {
         final serialized = serializeDocumentToMarkdown(
           MutableDocument(nodes: [
-            ParagraphNode(id: '1', text: AttributedText(text: 'First Paragraph')),
+            ParagraphNode(id: '1', text: AttributedText('First Paragraph')),
             HorizontalRuleNode(id: '2'),
           ]),
         );
@@ -461,8 +473,8 @@ Paragraph3""");
       test('preserves linebreaks at the end of a paragraph', () {
         final serialized = serializeDocumentToMarkdown(
           MutableDocument(nodes: [
-            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1\n\n')),
-            ParagraphNode(id: '2', text: AttributedText(text: 'Paragraph2')),
+            ParagraphNode(id: '1', text: AttributedText('Paragraph1\n\n')),
+            ParagraphNode(id: '2', text: AttributedText('Paragraph2')),
           ]),
         );
 
@@ -472,7 +484,7 @@ Paragraph3""");
       test('preserves linebreaks within a paragraph', () {
         final serialized = serializeDocumentToMarkdown(
           MutableDocument(nodes: [
-            ParagraphNode(id: '1', text: AttributedText(text: 'Line1\n\nLine2')),
+            ParagraphNode(id: '1', text: AttributedText('Line1\n\nLine2')),
           ]),
         );
 
@@ -482,8 +494,8 @@ Paragraph3""");
       test('preserves linebreaks at the beginning of a paragraph', () {
         final serialized = serializeDocumentToMarkdown(
           MutableDocument(nodes: [
-            ParagraphNode(id: '1', text: AttributedText(text: '\n\nParagraph1')),
-            ParagraphNode(id: '2', text: AttributedText(text: 'Paragraph2')),
+            ParagraphNode(id: '1', text: AttributedText('\n\nParagraph1')),
+            ParagraphNode(id: '2', text: AttributedText('Paragraph2')),
           ]),
         );
 
@@ -517,29 +529,29 @@ Paragraph3""");
           ListItemNode(
             id: '1',
             itemType: ListItemType.unordered,
-            text: AttributedText(text: 'Unordered 1'),
+            text: AttributedText('Unordered 1'),
           ),
           ListItemNode(
             id: '2',
             itemType: ListItemType.unordered,
-            text: AttributedText(text: 'Unordered 2'),
+            text: AttributedText('Unordered 2'),
           ),
           ListItemNode(
             id: '3',
             itemType: ListItemType.unordered,
             indent: 1,
-            text: AttributedText(text: 'Unordered 2.1'),
+            text: AttributedText('Unordered 2.1'),
           ),
           ListItemNode(
             id: '4',
             itemType: ListItemType.unordered,
             indent: 1,
-            text: AttributedText(text: 'Unordered 2.2'),
+            text: AttributedText('Unordered 2.2'),
           ),
           ListItemNode(
             id: '5',
             itemType: ListItemType.unordered,
-            text: AttributedText(text: 'Unordered 3'),
+            text: AttributedText('Unordered 3'),
           ),
         ]);
 
@@ -560,8 +572,8 @@ Paragraph3""");
             id: '1',
             itemType: ListItemType.unordered,
             text: AttributedText(
-              text: 'Unordered 1',
-              spans: AttributedSpans(
+              'Unordered 1',
+              AttributedSpans(
                 attributions: [
                   const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
                   const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
@@ -579,29 +591,29 @@ Paragraph3""");
           ListItemNode(
             id: '1',
             itemType: ListItemType.ordered,
-            text: AttributedText(text: 'Ordered 1'),
+            text: AttributedText('Ordered 1'),
           ),
           ListItemNode(
             id: '2',
             itemType: ListItemType.ordered,
-            text: AttributedText(text: 'Ordered 2'),
+            text: AttributedText('Ordered 2'),
           ),
           ListItemNode(
             id: '3',
             itemType: ListItemType.ordered,
             indent: 1,
-            text: AttributedText(text: 'Ordered 2.1'),
+            text: AttributedText('Ordered 2.1'),
           ),
           ListItemNode(
             id: '4',
             itemType: ListItemType.ordered,
             indent: 1,
-            text: AttributedText(text: 'Ordered 2.2'),
+            text: AttributedText('Ordered 2.2'),
           ),
           ListItemNode(
             id: '5',
             itemType: ListItemType.ordered,
-            text: AttributedText(text: 'Ordered 3'),
+            text: AttributedText('Ordered 3'),
           ),
         ]);
 
@@ -622,8 +634,8 @@ Paragraph3""");
             id: '1',
             itemType: ListItemType.ordered,
             text: AttributedText(
-              text: 'Ordered 1',
-              spans: AttributedSpans(
+              'Ordered 1',
+              AttributedSpans(
                 attributions: [
                   const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
                   const SpanMarker(attribution: boldAttribution, offset: 6, markerType: SpanMarkerType.end),
@@ -644,54 +656,54 @@ Paragraph3""");
           ),
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
-            text: AttributedText(text: 'Example Doc'),
+            text: AttributedText('Example Doc'),
             metadata: {'blockType': header1Attribution},
           ),
           HorizontalRuleNode(id: DocumentEditor.createNodeId()),
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
-            text: AttributedText(text: 'Unordered list:'),
+            text: AttributedText('Unordered list:'),
           ),
           ListItemNode(
             id: DocumentEditor.createNodeId(),
             itemType: ListItemType.unordered,
-            text: AttributedText(text: 'Unordered 1'),
+            text: AttributedText('Unordered 1'),
           ),
           ListItemNode(
             id: DocumentEditor.createNodeId(),
             itemType: ListItemType.unordered,
-            text: AttributedText(text: 'Unordered 2'),
+            text: AttributedText('Unordered 2'),
           ),
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
-            text: AttributedText(text: 'Ordered list:'),
+            text: AttributedText('Ordered list:'),
           ),
           ListItemNode(
             id: DocumentEditor.createNodeId(),
             itemType: ListItemType.ordered,
-            text: AttributedText(text: 'Ordered 1'),
+            text: AttributedText('Ordered 1'),
           ),
           ListItemNode(
             id: DocumentEditor.createNodeId(),
             itemType: ListItemType.ordered,
-            text: AttributedText(text: 'Ordered 2'),
+            text: AttributedText('Ordered 2'),
           ),
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
-            text: AttributedText(text: 'A blockquote:'),
+            text: AttributedText('A blockquote:'),
           ),
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
-            text: AttributedText(text: 'This is a blockquote.'),
+            text: AttributedText('This is a blockquote.'),
             metadata: {'blockType': blockquoteAttribution},
           ),
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
-            text: AttributedText(text: 'Some code:'),
+            text: AttributedText('Some code:'),
           ),
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
-            text: AttributedText(text: '{\n  // This is some code.\n}'),
+            text: AttributedText('{\n  // This is some code.\n}'),
             metadata: {'blockType': codeAttribution},
           ),
         ]);
@@ -707,7 +719,7 @@ Paragraph3""");
       test("doesn't add empty lines at the end of the document", () {
         final serialized = serializeDocumentToMarkdown(
           MutableDocument(nodes: [
-            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1')),
+            ParagraphNode(id: '1', text: AttributedText('Paragraph1')),
           ]),
         );
 
@@ -1102,8 +1114,7 @@ Paragraph4""";
       });
 
       test('paragraph beginning with multiple blank lines', () {
-        final doc =
-            deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
+        final doc = deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
 
         expect(doc.nodes.length, 2);
 
@@ -1113,7 +1124,7 @@ Paragraph4""";
         expect(doc.nodes.last, isA<ParagraphNode>());
         expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
       });
-    
+
       test('document ending with an empty paragraph', () {
         final doc = deserializeMarkdownToDocument("""
 First Paragraph.

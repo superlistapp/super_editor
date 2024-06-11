@@ -3,13 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
-import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
+import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import '../../touch_controls.dart';
 import '../metrics.dart';
 
 final _log = iosTextFieldLog;
@@ -25,7 +24,7 @@ final _log = iosTextFieldLog;
 /// iOS-style toolbar, magnifier, and expanded selection handles.
 class IOSEditingControls extends StatefulWidget {
   const IOSEditingControls({
-    Key? key,
+    super.key,
     required this.editingController,
     required this.textScrollController,
     required this.textFieldKey,
@@ -35,7 +34,7 @@ class IOSEditingControls extends StatefulWidget {
     required this.handleColor,
     required this.popoverToolbarBuilder,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  });
 
   /// Controller that determines whether the toolbar,
   /// magnifier, and/or selection handles are visible in

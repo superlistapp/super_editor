@@ -58,7 +58,7 @@ class ContentLayers extends RenderObjectWidget {
 ///
 /// Must have a [renderObject] of type [RenderContentLayers].
 class ContentLayersElement extends RenderObjectElement {
-  ContentLayersElement(RenderObjectWidget widget) : super(widget);
+  ContentLayersElement(super.widget);
 
   List<Element> _underlays = <Element>[];
   Element? _content;
@@ -532,14 +532,14 @@ bool _isContentLayersSlot(Object slot) => slot == _contentSlot || slot is _Under
 const _contentSlot = "content";
 
 class _UnderlaySlot extends _IndexedSlot {
-  const _UnderlaySlot(int index) : super(index);
+  const _UnderlaySlot(super.index);
 
   @override
   String toString() => "[$_UnderlaySlot] - underlay index: $index";
 }
 
 class _OverlaySlot extends _IndexedSlot {
-  const _OverlaySlot(int index) : super(index);
+  const _OverlaySlot(super.index);
 
   @override
   String toString() => "[$_OverlaySlot] - overlay index: $index";

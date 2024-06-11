@@ -17,11 +17,11 @@ class IOSFollowingMagnifier extends StatelessWidget {
   }) : magnifierBuilder = _circleMagnifierBuilder;
 
   const IOSFollowingMagnifier({
-    Key? key,
+    super.key,
     required this.layerLink,
     this.offsetFromFocalPoint = Offset.zero,
     required this.magnifierBuilder,
-  }) : super(key: key);
+  });
 
   final LayerLink layerLink;
   final Offset offsetFromFocalPoint;

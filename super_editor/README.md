@@ -79,14 +79,14 @@ final myDoc = MutableDocument(
   nodes: [
     ParagraphNode(
       id: DocumentEditor.createNodeId(),
-      text: AttributedText(text: 'This is a header'),
+      text: AttributedText( 'This is a header'),
       metadata: {
         'blockType': header1Attribution,
       },
     ),
     ParagraphNode(
       id: DocumentEditor.createNodeId(),
-      text: AttributedText(text:'This is the first paragraph'),
+      text: AttributedText('This is the first paragraph'),
     ),
   ],
 );

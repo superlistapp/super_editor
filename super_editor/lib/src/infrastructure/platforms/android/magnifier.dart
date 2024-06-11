@@ -5,10 +5,10 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/o
 /// An Android magnifying glass that follows a [LayerLink].
 class AndroidFollowingMagnifier extends StatelessWidget {
   const AndroidFollowingMagnifier({
-    Key? key,
+    super.key,
     required this.layerLink,
     this.offsetFromFocalPoint = Offset.zero,
-  }) : super(key: key);
+  });
 
   final LayerLink layerLink;
   final Offset offsetFromFocalPoint;

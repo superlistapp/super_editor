@@ -35,7 +35,7 @@ import 'reader_context.dart';
 
 class SuperReader extends StatefulWidget {
   SuperReader({
-    Key? key,
+    super.key,
     this.focusNode,
     required this.document,
     this.documentLayoutKey,
@@ -62,8 +62,7 @@ class SuperReader extends StatefulWidget {
         keyboardActions = keyboardActions ?? readOnlyDefaultKeyboardActions,
         componentBuilders = componentBuilders != null
             ? [...componentBuilders, const UnknownComponentBuilder()]
-            : [...readOnlyDefaultComponentBuilders, const UnknownComponentBuilder()],
-        super(key: key);
+            : [...readOnlyDefaultComponentBuilders, const UnknownComponentBuilder()];
 
   final FocusNode? focusNode;
 

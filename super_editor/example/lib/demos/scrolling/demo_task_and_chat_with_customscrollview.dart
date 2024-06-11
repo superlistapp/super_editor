@@ -40,8 +40,7 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
           ParagraphNode(
             id: '1234',
             text: AttributedText(
-                text:
-                    'Notice that when this document is short enough, the messages are pushed to the bottom of the viewport.\n\nTry adding more content to see things scroll.'),
+                'Notice that when this document is short enough, the messages are pushed to the bottom of the viewport.\n\nTry adding more content to see things scroll.'),
           )
         ],
       ),
@@ -108,13 +107,13 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
   }
 
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 48, vertical: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Task and chat scrolling',
             style: TextStyle(
               color: Color(0xFF444444),
@@ -122,9 +121,9 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
-            children: const [
+            children: [
               Icon(
                 Icons.star,
                 color: Color(0xFFDDDDDD),
@@ -144,7 +143,7 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
         ],
       ),
     );

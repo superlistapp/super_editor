@@ -22,10 +22,10 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
   ///
   /// {@macro flutter.gestures.GestureRecognizer.kind}
   TapSequenceGestureRecognizer({
-    Object? debugOwner,
-    Set<PointerDeviceKind>? supportedDevices,
+    super.debugOwner,
+    super.supportedDevices,
     this.reportPrecedingGestures = true,
-  }) : super(debugOwner: debugOwner, supportedDevices: supportedDevices);
+  });
 
   /// If `true`, reports the gestures that lead up to the final
   /// gesture, e.g., reports a single-tap before reporting a double-tap.

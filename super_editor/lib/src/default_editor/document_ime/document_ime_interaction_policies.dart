@@ -8,7 +8,7 @@ import 'package:super_editor/src/infrastructure/flutter_scheduler.dart';
 /// and losing primary focus.
 class ImeFocusPolicy extends StatefulWidget {
   const ImeFocusPolicy({
-    Key? key,
+    super.key,
     this.focusNode,
     required this.imeConnection,
     required this.imeClientFactory,
@@ -16,7 +16,7 @@ class ImeFocusPolicy extends StatefulWidget {
     this.openImeOnPrimaryFocusGain = true,
     this.closeImeOnPrimaryFocusLost = true,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// The document editor's [FocusNode], which is watched for changes based
   /// on this widget's [closeImeOnPrimaryFocusLost] policy.
@@ -119,7 +119,7 @@ class _ImeFocusPolicyState extends State<ImeFocusPolicy> {
 /// This widget can automatically remove the document selection when the editor loses focus.
 class DocumentSelectionOpenAndCloseImePolicy extends StatefulWidget {
   const DocumentSelectionOpenAndCloseImePolicy({
-    Key? key,
+    super.key,
     required this.focusNode,
     this.isEnabled = true,
     required this.selection,
@@ -131,7 +131,7 @@ class DocumentSelectionOpenAndCloseImePolicy extends StatefulWidget {
     this.clearSelectionWhenEditorLosesFocus = true,
     this.clearSelectionWhenImeConnectionCloses = true,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// The document editor's [FocusNode].
   ///

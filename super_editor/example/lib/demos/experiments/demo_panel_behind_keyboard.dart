@@ -35,67 +35,67 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
       document: MutableDocument(nodes: [
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: "Example Doc"),
+          text: AttributedText("Example Doc"),
           metadata: {"blockType": header1Attribution},
         ),
         HorizontalRuleNode(id: DocumentEditor.createNodeId()),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: "Unordered list:"),
+          text: AttributedText("Unordered list:"),
         ),
         ListItemNode(
           id: DocumentEditor.createNodeId(),
           itemType: ListItemType.unordered,
-          text: AttributedText(text: "Unordered 1"),
+          text: AttributedText("Unordered 1"),
         ),
         ListItemNode(
           id: DocumentEditor.createNodeId(),
           itemType: ListItemType.unordered,
-          text: AttributedText(text: "Unordered 2"),
+          text: AttributedText("Unordered 2"),
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: "Ordered list:"),
+          text: AttributedText("Ordered list:"),
         ),
         ListItemNode(
           id: DocumentEditor.createNodeId(),
           itemType: ListItemType.unordered,
-          text: AttributedText(text: "Ordered 1"),
+          text: AttributedText("Ordered 1"),
         ),
         ListItemNode(
           id: DocumentEditor.createNodeId(),
           itemType: ListItemType.unordered,
-          text: AttributedText(text: "Ordered 2"),
+          text: AttributedText("Ordered 2"),
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'A blockquote:'),
+          text: AttributedText('A blockquote:'),
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'This is a blockquote.'),
+          text: AttributedText('This is a blockquote.'),
           metadata: {"blockType": blockquoteAttribution},
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'Some code:'),
+          text: AttributedText('Some code:'),
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: '{\n  // This is come code.\n}'),
+          text: AttributedText('{\n  // This is come code.\n}'),
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: "Header"),
+          text: AttributedText("Header"),
           metadata: {"blockType": header2Attribution},
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'More stuff 1'),
+          text: AttributedText('More stuff 1'),
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'More stuff 2'),
+          text: AttributedText('More stuff 2'),
         ),
       ]),
     );
@@ -173,10 +173,10 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
                 editor: _editor,
                 composer: _composer,
                 softwareKeyboardController: _keyboardController,
-                selectionPolicies: SuperEditorSelectionPolicies(
+                selectionPolicies: const SuperEditorSelectionPolicies(
                   clearSelectionWhenEditorLosesFocus: false,
                 ),
-                imePolicies: SuperEditorImePolicies(
+                imePolicies: const SuperEditorImePolicies(
                   openKeyboardOnSelectionChange: false,
                 ),
               ),
@@ -289,9 +289,9 @@ class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
               const SizedBox(width: 24),
               GestureDetector(
                 onTap: _closeKeyboardAndPanel,
-                child: Icon(Icons.close),
+                child: const Icon(Icons.close),
               ),
-              Spacer(),
+              const Spacer(),
               GestureDetector(
                 onTap: widget.keyboardState.value == _InputState.open ? widget.onCloseKeyboard : widget.onOpenKeyboard,
                 child: Icon(widget.keyboardState.value == _InputState.open ? Icons.keyboard_hide : Icons.keyboard),

@@ -27,7 +27,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: '--><--'),
+              text: AttributedText('--><--'),
             ),
           );
           await tester.placeCaretInSuperTextField(3);
@@ -42,7 +42,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: '-->'),
+              text: AttributedText('-->'),
             ),
           );
           await tester.placeCaretInSuperTextField(3);
@@ -57,7 +57,7 @@ void main() {
           // TODO: We create the controller outside the pump so that we can explicitly set its selection
           //  because we don't support gesture selection on mobile, yet.
           final controller = AttributedTextEditingController(
-            text: AttributedText(text: '-->REPLACE<--'),
+            text: AttributedText('-->REPLACE<--'),
           );
           await _pumpSuperTextField(
             tester,
@@ -119,7 +119,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(8);
@@ -134,7 +134,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -149,7 +149,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(17);
@@ -164,7 +164,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(8);
@@ -179,7 +179,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -194,7 +194,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: 'this is some text'),
+              text: AttributedText('this is some text'),
             ),
           );
           await tester.placeCaretInSuperTextField(17);
@@ -211,7 +211,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: ""),
+              text: AttributedText(""),
             ),
           );
           await tester.placeCaretInSuperTextField(0);
@@ -226,7 +226,7 @@ void main() {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "this is some text"),
+              text: AttributedText("this is some text"),
             ),
           );
           await tester.placeCaretInSuperTextField(2);
@@ -241,7 +241,7 @@ void main() {
           // TODO: We create the controller outside the pump so that we can explicitly set its selection
           //  because we don't support gesture selection on mobile, yet.
           final controller = AttributedTextEditingController(
-            text: AttributedText(text: _multilineLayoutText),
+            text: AttributedText(_multilineLayoutText),
           );
           await _pumpSuperTextField(
             tester,
@@ -310,7 +310,7 @@ void main() {
     testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a collapsed selection (on Android)',
         (tester) async {
       final controller = AttributedTextEditingController(
-        text: AttributedText(text: 'This is a text'),
+        text: AttributedText('This is a text'),
       );
       await _pumpScaffoldForBuggyKeyboards(tester, controller: controller);
 
@@ -333,7 +333,7 @@ void main() {
     testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a expanded selection (on Android)',
         (tester) async {
       final controller = AttributedTextEditingController(
-        text: AttributedText(text: 'This is a text'),
+        text: AttributedText('This is a text'),
       );
       await _pumpScaffoldForBuggyKeyboards(tester, controller: controller);
 
@@ -368,7 +368,7 @@ const _multilineLayoutText = 'this text is long enough to be multiline in the av
 Future<void> _pumpEmptySuperTextField(WidgetTester tester) async {
   await _pumpSuperTextField(
     tester,
-    AttributedTextEditingController(text: AttributedText(text: '')),
+    AttributedTextEditingController(text: AttributedText('')),
   );
 }
 

@@ -253,7 +253,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
     if (_latestPlatformTextEditingValue != currentTextEditingValue) {
       _sendTextChangesToPlatform = false;
-      text = AttributedText(text: value.text);
+      text = AttributedText(value.text);
       selection = value.selection;
       composingRegion = value.composing;
       _sendTextChangesToPlatform = true;
@@ -299,7 +299,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
           // and then push/expand the current selection as needed around the new content.
           insert(
             newText: AttributedText(
-              text: delta.textInserted,
+              delta.textInserted,
             ),
             insertIndex: delta.insertionOffset,
             newSelection: delta.selection,
@@ -317,7 +317,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       } else if (delta is TextEditingDeltaReplacement) {
         _log.fine('Processing replacement: $delta');
         replace(
-          newText: AttributedText(text: delta.replacementText),
+          newText: AttributedText(delta.replacementText),
           from: delta.replacedRange.start,
           to: delta.replacedRange.end,
           newSelection: delta.selection,

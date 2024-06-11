@@ -3,7 +3,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 class BlinkingCaret extends StatefulWidget {
   const BlinkingCaret({
-    Key? key,
+    super.key,
     this.controller,
     this.caretOffset,
     this.caretHeight,
@@ -12,7 +12,7 @@ class BlinkingCaret extends StatefulWidget {
     this.borderRadius = BorderRadius.zero,
     this.isTextEmpty = false,
     this.showCaret = true,
-  }) : super(key: key);
+  });
 
   final BlinkController? controller;
   final double? caretHeight;

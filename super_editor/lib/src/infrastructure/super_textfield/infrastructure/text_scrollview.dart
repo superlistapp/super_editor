@@ -25,7 +25,7 @@ final _log = scrollingTextFieldLog;
 /// returned from this [TextScrollView].
 class TextScrollView extends StatefulWidget {
   const TextScrollView({
-    Key? key,
+    super.key,
     required this.textScrollController,
     required this.textKey,
     required this.textEditingController,
@@ -37,7 +37,7 @@ class TextScrollView extends StatefulWidget {
     this.textAlign = TextAlign.left,
     this.padding,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// Controller that sets the scroll offset and orchestrates
   /// auto-scrolling behavior.

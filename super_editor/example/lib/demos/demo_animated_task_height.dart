@@ -30,15 +30,14 @@ class _AnimatedTaskHeightDemoState extends State<AnimatedTaskHeightDemo> {
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
           text: AttributedText(
-            text:
-                "Below are several tasks. These tasks will animate the appearance of a subtitle depending on whether they have selection. Try and find out:",
+            "Below are several tasks. These tasks will animate the appearance of a subtitle depending on whether they have selection. Try and find out:",
           ),
         ),
         ...List.generate(
           10,
           (index) => TaskNode(
             id: DocumentEditor.createNodeId(),
-            text: AttributedText(text: "Task ${index + 1}"),
+            text: AttributedText("Task ${index + 1}"),
             isComplete: false,
           ),
         ),
@@ -95,11 +94,10 @@ class _AnimatedTaskComponent extends StatefulWidget {
   const _AnimatedTaskComponent({
     Key? key,
     required this.viewModel,
-    this.showDebugPaint = false,
   }) : super(key: key);
 
   final TaskComponentViewModel viewModel;
-  final bool showDebugPaint;
+  final bool showDebugPaint = false;
 
   @override
   State<_AnimatedTaskComponent> createState() => _AnimatedTaskComponentState();
@@ -162,12 +160,12 @@ class _AnimatedTaskComponentState extends State<_AnimatedTaskComponent>
               key: _animatedSizeKey,
               duration: const Duration(milliseconds: 100),
               child: widget.viewModel.selection != null
-                  ? SizedBox(
+                  ? const SizedBox(
                       height: 20,
                       child: Row(
                         children: [
                           Icon(Icons.label_important_outline, size: 16),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Icon(Icons.timelapse_sharp, size: 16),
                         ],
                       ),

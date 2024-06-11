@@ -151,8 +151,8 @@ void testWidgetsOnMac(
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
 
-    tester.binding.window
-      ..devicePixelRatioTestValue = 1.0
+     tester.view
+      .. devicePixelRatio = 1.0
       ..platformDispatcher.textScaleFactorTestValue = 1.0;
 
     try {
@@ -198,8 +198,8 @@ void testWidgetsOnWindows(
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
 
-    tester.binding.window
-      ..devicePixelRatioTestValue = 1.0
+     tester.view
+      .. devicePixelRatio = 1.0
       ..platformDispatcher.textScaleFactorTestValue = 1.0;
 
     try {
@@ -245,8 +245,8 @@ void testWidgetsOnLinux(
   testWidgets(description, (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
 
-    tester.binding.window
-      ..devicePixelRatioTestValue = 1.0
+     tester.view
+      .. devicePixelRatio = 1.0
       ..platformDispatcher.textScaleFactorTestValue = 1.0;
 
     try {

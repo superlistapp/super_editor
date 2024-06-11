@@ -18,7 +18,7 @@ void main() {
     editorImeLog,
   });
 
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     home: PanelBehindKeyboardDemo(),
   ));
 }

@@ -16,46 +16,34 @@ final _log = Logger(scope: 'list_items.dart');
 
 class ListItemNode extends TextNode {
   ListItemNode.ordered({
-    required String id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
+    required super.id,
+    required super.text,
+    super.metadata,
     int indent = 0,
   })  : type = ListItemType.ordered,
-        _indent = indent,
-        super(
-          id: id,
-          text: text,
-          metadata: metadata,
-        ) {
+        _indent = indent {
     putMetadataValue("blockType", const NamedAttribution("listItem"));
   }
 
   ListItemNode.unordered({
-    required String id,
-    required AttributedText text,
-    Map<String, dynamic>? metadata,
+    required super.id,
+    required super.text,
+    super.metadata,
     int indent = 0,
   })  : type = ListItemType.unordered,
-        _indent = indent,
-        super(
-          id: id,
-          text: text,
-          metadata: metadata,
-        ) {
+        _indent = indent {
     putMetadataValue("blockType", const NamedAttribution("listItem"));
   }
 
   ListItemNode({
-    required String id,
+    required super.id,
     required ListItemType itemType,
-    required AttributedText text,
+    required super.text,
     Map<String, dynamic>? metadata,
     int indent = 0,
   })  : type = itemType,
         _indent = indent,
         super(
-          id: id,
-          text: text,
           metadata: metadata ?? {},
         ) {
     if (!hasMetadataValue("blockType")) {
@@ -170,9 +158,9 @@ class ListItemComponentBuilder implements ComponentBuilder {
 
 class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   ListItemComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
     required this.type,
     this.ordinalValue,
     required this.indent,
@@ -183,7 +171,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  });
 
   ListItemType type;
   int? ordinalValue;
@@ -253,7 +241,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
 class UnorderedListItemComponent extends StatelessWidget {
   const UnorderedListItemComponent({
-    Key? key,
+    super.key,
     required this.textKey,
     required this.text,
     required this.styleBuilder,
@@ -266,7 +254,7 @@ class UnorderedListItemComponent extends StatelessWidget {
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  });
 
   final GlobalKey textKey;
   final AttributedText text;
@@ -285,8 +273,8 @@ class UnorderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
     final indentSpace = indentCalculator(textStyle, indent);
-    final textScaleFactor = MediaQuery.textScaleFactorOf(context);
-    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.25) * textScaleFactor;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.25) * textScaler.scale(textStyle.fontSize!);
     const manualVerticalAdjustment = 3.0;
 
     return Row(
@@ -309,7 +297,7 @@ class UnorderedListItemComponent extends StatelessWidget {
             text: text,
             textStyleBuilder: styleBuilder,
             textSelection: textSelection,
-            textScaleFactor: textScaleFactor,
+            textScaler: textScaler,
             selectionColor: selectionColor,
             highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
@@ -342,7 +330,7 @@ Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListIt
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
 class OrderedListItemComponent extends StatelessWidget {
   const OrderedListItemComponent({
-    Key? key,
+    super.key,
     required this.textKey,
     required this.listIndex,
     required this.text,
@@ -356,7 +344,7 @@ class OrderedListItemComponent extends StatelessWidget {
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  });
 
   final GlobalKey textKey;
   final int listIndex;
@@ -376,8 +364,8 @@ class OrderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
     final indentSpace = indentCalculator(textStyle, indent);
-    final textScaleFactor = MediaQuery.textScaleFactorOf(context);
-    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.0) * textScaleFactor;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.0) * textScaler.scale(textStyle.fontSize!);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,7 +387,7 @@ class OrderedListItemComponent extends StatelessWidget {
             text: text,
             textStyleBuilder: styleBuilder,
             textSelection: textSelection,
-            textScaleFactor: textScaleFactor,
+            textScaler: textScaler,
             selectionColor: selectionColor,
             highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
@@ -602,16 +590,16 @@ class SplitListItemCommand implements EditorCommand {
 
 ExecutionInstruction tabToIndentListItem({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
     return ExecutionInstruction.continueExecution;
   }
-  if (keyEvent.isShiftPressed) {
+  if (HardwareKeyboard.instance.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -622,16 +610,16 @@ ExecutionInstruction tabToIndentListItem({
 
 ExecutionInstruction shiftTabToUnIndentListItem({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!keyEvent.isShiftPressed) {
+  if (!HardwareKeyboard.instance.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -642,9 +630,9 @@ ExecutionInstruction shiftTabToUnIndentListItem({
 
 ExecutionInstruction backspaceToUnIndentListItem({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -674,9 +662,9 @@ ExecutionInstruction backspaceToUnIndentListItem({
 
 ExecutionInstruction splitListItemWhenEnterPressed({
   required EditContext editContext,
-  required RawKeyEvent keyEvent,
+  required KeyEvent keyEvent,
 }) {
-  if (keyEvent is! RawKeyDownEvent) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
     return ExecutionInstruction.continueExecution;
   }
 

@@ -33,14 +33,14 @@ import 'reader_context.dart';
 /// selection, or double/triple tap to select content.
 class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
   const ReadOnlyDocumentMouseInteractor({
-    Key? key,
+    super.key,
     this.focusNode,
     required this.readerContext,
     this.contentTapHandler,
     required this.autoScroller,
     this.showDebugPaint = false,
     required this.child,
-  }) : super(key: key);
+  });
 
   final FocusNode? focusNode;
 
@@ -139,9 +139,9 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
   }
 
-  bool get _isShiftPressed => (RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
-      RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
-      RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift));
+  bool get _isShiftPressed => (HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shiftLeft) ||
+      HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shiftRight) ||
+      HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shift));
 
   void _onSelectionChange() {
     if (mounted) {

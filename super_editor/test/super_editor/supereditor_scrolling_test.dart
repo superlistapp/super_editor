@@ -84,7 +84,7 @@ void main() {
 
     testWidgetsOnDesktop("auto-scrolls down", (tester) async {
       const windowSize = Size(800, 600);
-      tester.binding.window.physicalSizeTestValue = windowSize;
+      tester.view.physicalSize = windowSize;
 
       await tester //
           .createDocument() //
@@ -129,7 +129,7 @@ void main() {
 
     testWidgetsOnDesktop("auto-scrolls up", (tester) async {
       const windowSize = Size(800, 600);
-      tester.binding.window.physicalSizeTestValue = windowSize;
+      tester.view.physicalSize = windowSize;
 
       final docContext = await tester //
           .createDocument() //
@@ -189,7 +189,7 @@ void main() {
 
     testWidgetsOnDesktop("auto-scrolls to caret position", (tester) async {
       const windowSize = Size(800, 600);
-      tester.binding.window.physicalSizeTestValue = windowSize;
+      tester.view.physicalSize = windowSize;
 
       final docContext = await tester //
           .createDocument() //
@@ -264,11 +264,11 @@ void main() {
               nodes: [
                 ParagraphNode(
                   id: "1",
-                  text: AttributedText(text: "First Paragraph"),
+                  text: AttributedText("First Paragraph"),
                 ),
                 ParagraphNode(
                   id: "2",
-                  text: AttributedText(text: "Second Paragraph"),
+                  text: AttributedText("Second Paragraph"),
                 ),
                 ImageNode(
                   id: "img-node",

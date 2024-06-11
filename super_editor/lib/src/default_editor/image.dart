@@ -102,13 +102,13 @@ class ImageComponentBuilder implements ComponentBuilder {
 
 class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
   ImageComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
     required this.imageUrl,
     this.selection,
     required this.selectionColor,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  });
 
   String imageUrl;
   UpstreamDownstreamNodeSelection? selection;
@@ -145,13 +145,13 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
 /// Displays an image in a document.
 class ImageComponent extends StatelessWidget {
   const ImageComponent({
-    Key? key,
+    super.key,
     required this.componentKey,
     required this.imageUrl,
     this.selectionColor = Colors.blue,
     this.selection,
     this.imageBuilder,
-  }) : super(key: key);
+  });
 
   final GlobalKey componentKey;
   final String imageUrl;

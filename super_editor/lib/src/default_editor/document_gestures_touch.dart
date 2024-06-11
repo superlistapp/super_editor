@@ -1,8 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:super_editor/src/infrastructure/document_gestures.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/_scrolling.dart';
 
 /// Platform independent tools for touch gesture interaction with a
 /// document, such as dragging to scroll a document, and dragging
@@ -23,12 +20,12 @@ import 'package:super_editor/src/infrastructure/_scrolling.dart';
 /// surrounds the document.
 class ScrollableDocument extends StatelessWidget {
   const ScrollableDocument({
-    Key? key,
+    super.key,
     this.scrollController,
     this.disableDragScrolling = false,
     required this.documentLayerLink,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// `ScrollController` that's attached to the `Scrollable` in this
   /// widget, if a `Scrollable` is added.

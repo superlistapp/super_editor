@@ -37,7 +37,7 @@ final _log = androidTextFieldLog;
 /// Selection changes are made via the given [textController].
 class AndroidTextFieldTouchInteractor extends StatefulWidget {
   const AndroidTextFieldTouchInteractor({
-    Key? key,
+    super.key,
     required this.focusNode,
     required this.textFieldLayerLink,
     required this.textController,
@@ -48,7 +48,7 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
     required this.handleColor,
     this.showDebugPaint = false,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// [FocusNode] for the text field that contains this [AndroidTextFieldInteractor].
   ///

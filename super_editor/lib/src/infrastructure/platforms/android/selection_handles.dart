@@ -5,11 +5,11 @@ import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 class AndroidSelectionHandle extends StatelessWidget {
   const AndroidSelectionHandle({
-    Key? key,
+    super.key,
     required this.handleType,
     required this.color,
     this.radius = 10,
-  }) : super(key: key);
+  });
 
   final HandleType handleType;
   final Color color;

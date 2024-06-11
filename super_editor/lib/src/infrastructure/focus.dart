@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -12,21 +13,21 @@ import 'package:flutter/widgets.dart';
 /// that appears while editing a document. The toolbar and the document are on
 /// different branches of the widget tree, but they need to share focus. That shared
 /// focus is impossible when the [Focus] widget forces re-parenting. The
-/// [NonReparentingFocus] widget provides an [onKey] property without re-parenting the
+/// [NonReparentingFocus] widget provides an [onKeyEvent] property without re-parenting the
 /// given [focusNode].
 class NonReparentingFocus extends StatefulWidget {
   const NonReparentingFocus({
-    Key? key,
+    super.key,
     required this.focusNode,
-    this.onKey,
+    this.onKeyEvent,
     required this.child,
-  }) : super(key: key);
+  });
 
-  /// The [FocusNode] that sends key events to [onKey].
+  /// The [FocusNode] that sends key events to [onKeyEvent].
   final FocusNode focusNode;
 
   /// The callback invoked whenever [focusNode] receives key events.
-  final FocusOnKeyCallback? onKey;
+  final FocusOnKeyEventCallback? onKeyEvent;
 
   /// The child of this widget.
   final Widget child;
@@ -41,7 +42,7 @@ class _NonReparentingFocusState extends State<NonReparentingFocus> {
   @override
   void initState() {
     super.initState();
-    _keyboardFocusAttachment = widget.focusNode.attach(context, onKey: _onKey);
+    _keyboardFocusAttachment = widget.focusNode.attach(context, onKeyEvent: _onKeyEvent);
   }
 
   @override
@@ -56,7 +57,7 @@ class _NonReparentingFocusState extends State<NonReparentingFocus> {
 
     if (widget.focusNode != oldWidget.focusNode) {
       _keyboardFocusAttachment.detach();
-      _keyboardFocusAttachment = widget.focusNode.attach(context, onKey: widget.onKey);
+      _keyboardFocusAttachment = widget.focusNode.attach(context, onKeyEvent: widget.onKeyEvent);
       _reparentIfMissingParent();
     }
   }
@@ -73,8 +74,8 @@ class _NonReparentingFocusState extends State<NonReparentingFocus> {
     }
   }
 
-  KeyEventResult _onKey(FocusNode focusNode, RawKeyEvent event) {
-    return widget.onKey?.call(focusNode, event) ?? KeyEventResult.ignored;
+  KeyEventResult _onKeyEvent(FocusNode focusNode, KeyEvent event) {
+    return widget.onKeyEvent?.call(focusNode, event) ?? KeyEventResult.ignored;
   }
 
   @override
@@ -104,7 +105,7 @@ class _NonReparentingFocusState extends State<NonReparentingFocus> {
 /// [FocusWithCustomParent] superfluous, and we can remove it.
 class FocusWithCustomParent extends StatefulWidget {
   const FocusWithCustomParent({
-    Key? key,
+    super.key,
     this.focusNode,
     this.parentFocusNode,
     this.autofocus = false,
@@ -124,8 +125,7 @@ class FocusWithCustomParent extends StatefulWidget {
         _skipTraversal = skipTraversal,
         _descendantsAreFocusable = descendantsAreFocusable,
         _descendantsAreTraversable = descendantsAreTraversable,
-        _debugLabel = debugLabel,
-        super(key: key);
+        _debugLabel = debugLabel;
 
   // Indicates whether the widget's focusNode attributes should have priority
   // when then widget is updated.
@@ -633,8 +633,7 @@ class _FocusWithCustomParentState extends State<FocusWithCustomParent> {
 // The InheritedWidget marker for Focus and FocusScope.
 class _FocusMarker extends InheritedNotifier<FocusNode> {
   const _FocusMarker({
-    Key? key,
     required FocusNode node,
-    required Widget child,
-  }) : super(key: key, notifier: node, child: child);
+    required super.child,
+  }) : super(notifier: node);
 }

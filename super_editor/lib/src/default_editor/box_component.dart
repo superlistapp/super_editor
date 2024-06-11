@@ -73,10 +73,10 @@ abstract class BlockNode extends DocumentNode {
 /// horizontal rule.
 class BoxComponent extends StatefulWidget {
   const BoxComponent({
-    Key? key,
+    super.key,
     this.isVisuallySelectable = true,
     required this.child,
-  }) : super(key: key);
+  });
 
   final bool isVisuallySelectable;
   final Widget child;
@@ -264,11 +264,11 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
 
 class SelectableBox extends StatelessWidget {
   const SelectableBox({
-    Key? key,
+    super.key,
     this.selection,
     required this.selectionColor,
     required this.child,
-  }) : super(key: key);
+  });
 
   final UpstreamDownstreamNodeSelection? selection;
   final Color selectionColor;

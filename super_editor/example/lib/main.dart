@@ -304,7 +304,7 @@ final _menu = <_MenuGroup>[
         icon: Icons.text_snippet,
         title: 'SuperReader',
         pageBuilder: (context) {
-          return SuperReaderDemo();
+          return const SuperReaderDemo();
         },
       ),
       _MenuItem(
@@ -510,12 +510,12 @@ class _DrawerButton extends StatelessWidget {
       width: double.infinity,
       child: ElevatedButton(
         style: ButtonStyle(
-            backgroundColor: MaterialStateColor.resolveWith((states) {
+            backgroundColor: WidgetStateColor.resolveWith((states) {
               if (isSelected) {
                 return const Color(0xFFBBBBBB);
               }
 
-              if (states.contains(MaterialState.hovered)) {
+              if (states.contains(WidgetState.hovered)) {
                 return Colors.grey.withOpacity(0.1);
               }
 
@@ -523,9 +523,9 @@ class _DrawerButton extends StatelessWidget {
             }),
             // splashFactory: NoSplash.splashFactory,
             foregroundColor:
-                MaterialStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
-            elevation: MaterialStateProperty.resolveWith((states) => 0),
-            padding: MaterialStateProperty.resolveWith((states) => const EdgeInsets.all(16))),
+                WidgetStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
+            elevation: WidgetStateProperty.resolveWith((states) => 0),
+            padding: WidgetStateProperty.resolveWith((states) => const EdgeInsets.all(16))),
         onPressed: isSelected ? null : onPressed,
         child: Row(
           children: [

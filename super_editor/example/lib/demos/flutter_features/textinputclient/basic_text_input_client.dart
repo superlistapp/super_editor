@@ -4,10 +4,10 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 /// Demo that displays a very limited text field, constructed from
 /// the ground up, and using [TextInput] for user interaction instead
-/// of a [RawKeyboardListener] or similar.
+/// of a [RawKeyListener] or similar.
 class BasicTextInputClientDemo extends StatefulWidget {
   @override
-  _BasicTextInputClientDemoState createState() => _BasicTextInputClientDemoState();
+  State<BasicTextInputClientDemo> createState() => _BasicTextInputClientDemoState();
 }
 
 class _BasicTextInputClientDemoState extends State<BasicTextInputClientDemo> {

@@ -723,9 +723,9 @@ void _testParagraphSelection(
   final docKey = GlobalKey();
 
   testGoldens(description, (tester) async {
-    tester.binding.window
-      ..physicalSizeTestValue = const Size(800, 200)
-      ..devicePixelRatioTestValue = 1.0;
+    tester.view
+      ..physicalSize = const Size(800, 200)
+      ..devicePixelRatio = 1.0;
     tester.binding.platformDispatcher.textScaleFactorTestValue = 1.0;
 
     final dragLine = ValueNotifier<_Line?>(null);
@@ -759,7 +759,7 @@ void _testParagraphSelection(
     // Compare the golden
     await screenMatchesGolden(tester, goldenName);
 
-    tester.binding.window.clearPhysicalSizeTestValue();
+    tester.platformDispatcher.clearAllTestValues();
   });
 }
 
@@ -801,8 +801,7 @@ MutableDocument _createSingleParagraphDoc() {
       ParagraphNode(
         id: "1",
         text: AttributedText(
-          text:
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
         ),
       ),
     ],
@@ -811,10 +810,9 @@ MutableDocument _createSingleParagraphDoc() {
 
 class _DragLinePaint extends StatelessWidget {
   const _DragLinePaint({
-    Key? key,
     required this.line,
     required this.child,
-  }) : super(key: key);
+  });
 
   final ValueNotifier<_Line?> line;
   final Widget child;

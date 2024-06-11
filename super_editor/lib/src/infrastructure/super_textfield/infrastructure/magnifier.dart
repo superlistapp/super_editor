@@ -19,12 +19,12 @@ import 'package:flutter/material.dart';
 /// magnifier mis-aligning the content that is magnifies.
 class MagnifyingGlass extends StatelessWidget {
   const MagnifyingGlass({
-    Key? key,
+    super.key,
     this.offsetFromFocalPoint = Offset.zero,
     required this.shape,
     required this.size,
     required this.magnificationScale,
-  }) : super(key: key);
+  });
 
   /// The offset from where the magnification is applied, to where this
   /// magnifier is displayed.

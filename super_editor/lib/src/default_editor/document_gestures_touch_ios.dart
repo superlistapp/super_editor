@@ -23,7 +23,7 @@ import 'selection_upstream_downstream.dart';
 /// drag to scroll, and handles to control selection.
 class IOSDocumentTouchInteractor extends StatefulWidget {
   const IOSDocumentTouchInteractor({
-    Key? key,
+    super.key,
     required this.focusNode,
     required this.document,
     required this.documentKey,
@@ -39,7 +39,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     this.showDebugPaint = false,
     this.overlayController,
     required this.child,
-  }) : super(key: key);
+  });
 
   final FocusNode focusNode;
 

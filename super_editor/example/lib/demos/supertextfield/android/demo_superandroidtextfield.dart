@@ -26,7 +26,6 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
   Widget build(BuildContext context) {
     return MobileSuperTextFieldDemo(
       initialText: AttributedText(
-          text:
               'This is a custom textfield implementation called SuperAndroidTextField. It is super long so that we can mess with scrolling. This drags it out even further so that we can get multiline scrolling, too. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin tempor sapien est, in eleifend purus rhoncus fringilla. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nulla varius libero lorem, eget tincidunt ante porta accumsan. Morbi quis ante at nunc molestie ullamcorper.'),
       createTextField: _buildTextField,
     );
@@ -41,12 +40,12 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
       textStyleBuilder: config.styleBuilder,
       hintBehavior: HintBehavior.displayHintUntilTextEntered,
       hintBuilder: StyledHintBuilder(
-          hintText: AttributedText(text: "Enter text"),
+          hintText: AttributedText( "Enter text"),
           hintTextStyleBuilder: (attributions) {
             return config.styleBuilder(attributions).copyWith(color: Colors.grey);
           }).build,
       selectionColor: Colors.blue.withOpacity(0.4),
-      caretStyle: CaretStyle(color: Colors.green),
+      caretStyle: const CaretStyle(color: Colors.green),
       handlesColor: Colors.lightGreen,
       minLines: config.minLines,
       maxLines: config.maxLines,

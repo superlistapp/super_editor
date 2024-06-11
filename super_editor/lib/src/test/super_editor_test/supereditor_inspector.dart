@@ -226,6 +226,7 @@ class SuperEditorInspector {
     final componentState = documentLayout.getComponentByNodeId(nodeId) as State;
     late final GlobalKey textComponentKey;
     if (componentState is ProxyDocumentComponent) {
+      // ignore: invalid_use_of_protected_member
       textComponentKey = componentState.childDocumentComponentKey;
     } else {
       textComponentKey = componentState.widget.key as GlobalKey;

@@ -45,7 +45,7 @@ class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
 Document _createDocument1() {
   return MutableDocument(
     nodes: [
-      ParagraphNode(id: "1", text: AttributedText(text: "")),
+      ParagraphNode(id: "1", text: AttributedText("")),
     ],
   );
 }

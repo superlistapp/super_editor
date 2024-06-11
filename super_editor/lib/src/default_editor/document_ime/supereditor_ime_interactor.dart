@@ -23,7 +23,7 @@ import 'ime_keyboard_control.dart';
 //       proxyInputClient.addClient(myFocusedClient).
 class SuperEditorImeInteractor extends StatefulWidget {
   const SuperEditorImeInteractor({
-    Key? key,
+    super.key,
     this.focusNode,
     this.autofocus = false,
     required this.editContext,
@@ -35,7 +35,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
     this.hardwareKeyboardActions = const [],
     this.floatingCursorController,
     required this.child,
-  }) : super(key: key);
+  });
 
   final FocusNode? focusNode;
 

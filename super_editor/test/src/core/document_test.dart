@@ -10,16 +10,16 @@ void main() {
             TextNode(
               id: '1',
               text: AttributedText(
-                text: 'a',
-                spans: AttributedSpans(),
+                'a',
+                AttributedSpans(),
               ),
             ),
             equals(
               TextNode(
                 id: '1',
                 text: AttributedText(
-                  text: 'a',
-                  spans: AttributedSpans(),
+                  'a',
+                  AttributedSpans(),
                 ),
               ),
             ),
@@ -31,15 +31,15 @@ void main() {
             TextNode(
                   id: '1',
                   text: AttributedText(
-                    text: 'a',
-                    spans: AttributedSpans(),
+                    'a',
+                    AttributedSpans(),
                   ),
                 ) ==
                 TextNode(
                   id: '1',
                   text: AttributedText(
-                    text: 'b',
-                    spans: AttributedSpans(),
+                    'b',
+                    AttributedSpans(),
                   ),
                 ),
             isFalse,
@@ -51,16 +51,16 @@ void main() {
             ParagraphNode(
               id: '1',
               text: AttributedText(
-                text: 'a',
-                spans: AttributedSpans(),
+                'a',
+                AttributedSpans(),
               ),
             ),
             equals(
               ParagraphNode(
                 id: '1',
                 text: AttributedText(
-                  text: 'a',
-                  spans: AttributedSpans(),
+                  'a',
+                  AttributedSpans(),
                 ),
               ),
             ),
@@ -72,15 +72,15 @@ void main() {
             ParagraphNode(
                   id: '1',
                   text: AttributedText(
-                    text: 'a',
-                    spans: AttributedSpans(),
+                    'a',
+                    AttributedSpans(),
                   ),
                 ) ==
                 ParagraphNode(
                   id: '1',
                   text: AttributedText(
-                    text: 'b',
-                    spans: AttributedSpans(),
+                    'b',
+                    AttributedSpans(),
                   ),
                 ),
             isFalse,
@@ -89,30 +89,30 @@ void main() {
 
         test("equivalent ListItemNodes are equal", () {
           expect(
-            ListItemNode(id: '1', itemType: ListItemType.ordered, text: AttributedText(text: 'abcdefghij')),
+            ListItemNode(id: '1', itemType: ListItemType.ordered, text: AttributedText('abcdefghij')),
             equals(
-              ListItemNode(id: '1', itemType: ListItemType.ordered, text: AttributedText(text: 'abcdefghij')),
+              ListItemNode(id: '1', itemType: ListItemType.ordered, text: AttributedText('abcdefghij')),
             ),
           );
 
           expect(
-            ListItemNode(id: '1', itemType: ListItemType.unordered, text: AttributedText(text: 'abcdefghij')),
+            ListItemNode(id: '1', itemType: ListItemType.unordered, text: AttributedText('abcdefghij')),
             equals(
-              ListItemNode(id: '1', itemType: ListItemType.unordered, text: AttributedText(text: 'abcdefghij')),
+              ListItemNode(id: '1', itemType: ListItemType.unordered, text: AttributedText('abcdefghij')),
             ),
           );
         });
 
         test("different ListItemNodes are not equal", () {
           expect(
-            ListItemNode(id: '1', itemType: ListItemType.ordered, text: AttributedText(text: 'abcdefghij')) ==
-                ListItemNode(id: '2', itemType: ListItemType.unordered, text: AttributedText(text: 'abcdefghij')),
+            ListItemNode(id: '1', itemType: ListItemType.ordered, text: AttributedText('abcdefghij')) ==
+                ListItemNode(id: '2', itemType: ListItemType.unordered, text: AttributedText('abcdefghij')),
             isFalse,
           );
 
           expect(
-            ListItemNode(id: '1', itemType: ListItemType.unordered, text: AttributedText(text: 'abcdefghij')) ==
-                ListItemNode(id: '2', itemType: ListItemType.ordered, text: AttributedText(text: 'abcdefghij')),
+            ListItemNode(id: '1', itemType: ListItemType.unordered, text: AttributedText('abcdefghij')) ==
+                ListItemNode(id: '2', itemType: ListItemType.ordered, text: AttributedText('abcdefghij')),
             isFalse,
           );
         });
