@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -126,6 +127,10 @@ void main() {
       // Ensure the toolbar isn't visible.
       expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
 
+      // Wait for the collapsed handle to disappear so that it doesn't cover the
+      // line below.
+      await tester.pump(const Duration(seconds: 5));
+
       // Place the caret at the beginning of the second paragraph, at the same offset.
       await tester.placeCaretInParagraph("2", 0);
 
@@ -215,11 +220,13 @@ void main() {
       expect(SuperEditorInspector.findAllMobileDragHandles(), findsExactly(2));
       expect(
         tester.getTopLeft(SuperEditorInspector.findMobileDownstreamDragHandle()),
-        offsetMoreOrLessEquals(documentLayout.getGlobalOffsetFromDocumentOffset(selectedPositionRect.bottomRight)),
+        offsetMoreOrLessEquals(documentLayout.getGlobalOffsetFromDocumentOffset(selectedPositionRect.bottomRight) -
+            Offset(AndroidSelectionHandle.defaultTouchRegionExpansion.left, 0)),
       );
       expect(
         tester.getTopRight(SuperEditorInspector.findMobileUpstreamDragHandle()),
-        offsetMoreOrLessEquals(documentLayout.getGlobalOffsetFromDocumentOffset(selectedPositionRect.bottomRight)),
+        offsetMoreOrLessEquals(documentLayout.getGlobalOffsetFromDocumentOffset(selectedPositionRect.bottomRight) +
+            Offset(AndroidSelectionHandle.defaultTouchRegionExpansion.right, 0)),
       );
 
       // Release the drag handle.

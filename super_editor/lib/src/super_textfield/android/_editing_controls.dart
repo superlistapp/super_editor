@@ -716,22 +716,26 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     required void Function(DragStartDetails) onPanStart,
   }) {
     late Offset fractionalTranslation;
+    late final Offset expandedTouchAreaAdjustment;
     switch (handleType) {
       case HandleType.collapsed:
         fractionalTranslation = const Offset(-0.5, 0.0);
+        expandedTouchAreaAdjustment = Offset(0, -AndroidSelectionHandle.defaultTouchRegionExpansion.top);
         break;
       case HandleType.upstream:
         fractionalTranslation = const Offset(-1.0, 0.0);
+        expandedTouchAreaAdjustment = -AndroidSelectionHandle.defaultTouchRegionExpansion.topRight;
         break;
       case HandleType.downstream:
         fractionalTranslation = Offset.zero;
+        expandedTouchAreaAdjustment = -AndroidSelectionHandle.defaultTouchRegionExpansion.topLeft;
         break;
     }
 
     return CompositedTransformFollower(
       key: handleKey,
       link: widget.textContentLayerLink,
-      offset: followerOffset,
+      offset: followerOffset + expandedTouchAreaAdjustment,
       child: FractionalTranslation(
         translation: fractionalTranslation,
         child: GestureDetector(

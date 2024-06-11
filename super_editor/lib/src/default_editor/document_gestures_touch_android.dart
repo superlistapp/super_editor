@@ -1656,6 +1656,9 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
           link: _controlsController!.collapsedHandleFocalPoint,
           leaderAnchor: Alignment.bottomCenter,
           followerAnchor: Alignment.topCenter,
+          // Use the offset to account for the invisible expanded touch region around the handle.
+          offset: -Offset(0, AndroidSelectionHandle.defaultTouchRegionExpansion.top) *
+              MediaQuery.devicePixelRatioOf(context),
           child: AnimatedOpacity(
             // When the controller doesn't want the handle to be visible, hide it.
             opacity: shouldShow ? 1.0 : 0.0,
@@ -1703,6 +1706,9 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
             link: _controlsController!.upstreamHandleFocalPoint,
             leaderAnchor: Alignment.bottomLeft,
             followerAnchor: Alignment.topRight,
+            // Use the offset to account for the invisible expanded touch region around the handle.
+            offset:
+                -AndroidSelectionHandle.defaultTouchRegionExpansion.topRight * MediaQuery.devicePixelRatioOf(context),
             child: GestureDetector(
               onTapDown: (_) {
                 // Register tap down to win gesture arena ASAP.
@@ -1732,6 +1738,9 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
             link: _controlsController!.downstreamHandleFocalPoint,
             leaderAnchor: Alignment.bottomRight,
             followerAnchor: Alignment.topLeft,
+            // Use the offset to account for the invisible expanded touch region around the handle.
+            offset:
+                -AndroidSelectionHandle.defaultTouchRegionExpansion.topLeft * MediaQuery.devicePixelRatioOf(context),
             child: GestureDetector(
               onTapDown: (_) {
                 // Register tap down to win gesture arena ASAP.
