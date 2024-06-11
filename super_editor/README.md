@@ -5,10 +5,30 @@
 
 <p align="center"><b>Super Editor works with any backend. Plug yours in and go!</b></p><br>
 
+<br>
+<hr>
+<br>
+
+<p align="left" style="background: gray;">
+  <b>A Note on Releases (June, 2024):</b><br>
+We've been busy at work on core editor improvements like undo/redo, a stable editor pipeline, and useful editor reactions. These APIs have evolved a lot, so we haven't cut a standard release in a long time. We're still evolving those APIs right now.
+  <br><br>
+  Rest assured, Super Editor and the other projects in this repo are under regular development. We're still here and working hard.
+  <br><br>
+  We're now starting to publish developer releases of Super Editor so that the community can see what we've been working on.
+  <br><br>
+  As a reminder, your project doesn't need to use Pub to use Super Editor. You can depend directly on this GitHub repository. See the repositories top-level README for more details.
+</p>
+
+<br>
+<hr>
+<br>
+
 <img src="https://raw.githubusercontent.com/superlistapp/super_editor/main/super_editor/doc/marketing/readme-header.png" width="100%" alt="Super Editor">
 <br> 
 
 `super_editor` was initiated by [Superlist](https://superlist.com) and is being implemented and maintained by the [Flutter Bounty Hunters](https://flutterbountyhunters.com), Superlist, and the contributors.
+
 
 ## Supported Platforms
 
@@ -60,49 +80,68 @@ class _MyAppState extends State<MyApp> {
         // ordered and unordered lists, images, and horizontal rules. 
         // Paragraphs know how to display bold, italics, and strikethrough.
         // Key combinations are provided for bold (cmd+b) and italics (cmd+i).
-        return SuperEditor.standard(
-            editor: _myDocumentEditor,
+        return SuperEditor(
+            document: _document,
+            composer: _composer,
+            editor: _editor,
         );
     }
 }
 ```
 
-A `SuperEditor` widget requires an `Editor`, which is a pure-Dart class that's responsible for 
-applying changes to a `Document`. An `Editor`, in turn, requires a reference to the `Document` that 
-it will alter. Specifically, a `Editor` requires a `MutableDocument`.
+A `SuperEditor` widget requires a `Document`, which holds the rich text content, a `DocumentComposer`, which holds
+the user's selection and the currently activated styles, and an `Editor`, which applies changes to the
+`Document` and the `Composer`, such as inserting text when the user types.
 
 ```dart
-// A MutableDocument is an in-memory Document. Create the starting
-// content that you want your editor to display.
-//
-// Your MutableDocument does not need to contain any content/nodes.
-// In that case, your editor will initially display nothing.
-final myDoc = MutableDocument(
-  nodes: [
-    ParagraphNode(
-      id: DocumentEditor.createNodeId(),
-      text: AttributedText(text: 'This is a header'),
-      metadata: {
-        'blockType': header1Attribution,
-      },
-    ),
-    ParagraphNode(
-      id: DocumentEditor.createNodeId(),
-      text: AttributedText(text:'This is the first paragraph'),
-    ),
-  ],
-);
+class _MyAppState extends State<MyApp> {
+    late final MutableDocument _document;
+    late final MutableComposer _composer;
+    late final Editor _editor;
 
-// A DocumentComposer holds the user's selection. Your editor will likely want
-// to observe, and possibly change the user's selection. Therefore, you should
-// hold onto your own DocumentComposer and pass it to your Editor.
-final myComposer = MutableDocumentComposer();
+    @override
+    void initState() {
+      super.initState();
 
-// With a MutableDocument, create an Editor, which knows how to apply changes 
-// to the MutableDocument.
-final editor = createDefaultDocumentEditor(document: myDoc, composer: myComposer);
+      // A MutableDocument is an in-memory Document. Create the starting
+      // content that you want your editor to display.
+      //
+      // To start with an empty document, create a MutableDocument with a
+      // single ParagraphNode that holds an empty string.
+      _document = MutableDocument(
+        nodes: [
+          ParagraphNode(
+            id: DocumentEditor.createNodeId(),
+            text: AttributedText('This is a header'),
+            metadata: {
+              'blockType': header1Attribution,
+            },
+          ),
+          ParagraphNode(
+            id: DocumentEditor.createNodeId(),
+            text: AttributedText('This is the first paragraph'),
+          ),
+        ],
+      );
 
-// Next: pass the editor to your SuperEditor widget.
+      // A DocumentComposer holds the user's selection. Your editor will likely want
+      // to observe, and possibly change the user's selection. Therefore, you should
+      // hold onto your own DocumentComposer and pass it to your Editor.
+      _composer = MutableDocumentComposer();
+      
+      // With a MutableDocument, create an Editor, which knows how to apply changes 
+      // to the MutableDocument.
+      _editor = createDefaultDocumentEditor(document: _document, composer: _composer);
+    }
+
+    void build(context) {
+        return SuperEditor(
+            document: _document,
+            composer: _composer,
+            editor: _editor,
+        );
+    }
+}
 ```
 
 The `SuperEditor` widget can be customized.
@@ -132,9 +171,9 @@ class _MyAppState extends State<MyApp> {
                 ],
             ),
             componentBuilders: [
-              ...defaultComponentBuilders,
               // Add any of your own custom builders for document
               // components, e.g., paragraphs, images, list items.
+              ...defaultComponentBuilders,
             ],
         );
     }
@@ -143,5 +182,3 @@ class _MyAppState extends State<MyApp> {
 
 If your app requires deeper customization than `SuperEditor` provides, you can construct your own 
 version of the `SuperEditor` widget by using lower level tools within the `super_editor` package.
-
-See the wiki for more information about how to customize an editor experience.
