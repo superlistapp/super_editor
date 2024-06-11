@@ -112,7 +112,10 @@ class SubmitComposingActionTagRequest implements EditRequest {
   const SubmitComposingActionTagRequest();
 }
 
-class SubmitComposingActionTagCommand implements EditCommand {
+class SubmitComposingActionTagCommand extends EditCommand {
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
   @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
@@ -183,10 +186,13 @@ class CancelComposingActionTagRequest implements EditRequest {
   int get hashCode => tagRule.hashCode;
 }
 
-class CancelComposingActionTagCommand implements EditCommand {
+class CancelComposingActionTagCommand extends EditCommand {
   const CancelComposingActionTagCommand(this._tagRule);
 
   final TagRule _tagRule;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -258,7 +264,7 @@ class CancelComposingActionTagCommand implements EditCommand {
   }
 }
 
-class ActionTagComposingReaction implements EditReaction {
+class ActionTagComposingReaction extends EditReaction {
   ActionTagComposingReaction({
     required TagRule tagRule,
     required OnUpdateComposingActionTag onUpdateComposingActionTag,

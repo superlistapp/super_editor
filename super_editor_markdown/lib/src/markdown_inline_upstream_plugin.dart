@@ -65,7 +65,7 @@ const defaultUpstreamInlineMarkdownParsers = [
 /// This reaction only identifies spans of Markdown styles within individual [TextNode]s, which
 /// immediately precedes the caret. For example, "Hello **bold**|" will apply the bold style,
 /// but "Hello **bold** wo|" won't apply bold.
-class MarkdownInlineUpstreamSyntaxReaction implements EditReaction {
+class MarkdownInlineUpstreamSyntaxReaction extends EditReaction {
   const MarkdownInlineUpstreamSyntaxReaction(this._parsers);
 
   final List<UpstreamMarkdownInlineSyntax> _parsers;

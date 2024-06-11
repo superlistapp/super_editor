@@ -37,7 +37,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 /// Conversely, if the caret moves due to the user typing a character, or
 /// if the selection is expanded, then this reaction doesn't activate any
 /// styles.
-class UpdateComposerTextStylesReaction implements EditReaction {
+class UpdateComposerTextStylesReaction extends EditReaction {
   UpdateComposerTextStylesReaction({
     Set<Attribution>? stylesToExtend,
   }) : _stylesToExtend = stylesToExtend ?? defaultExtendableStyles;

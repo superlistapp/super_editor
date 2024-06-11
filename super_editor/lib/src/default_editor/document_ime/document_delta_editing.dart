@@ -71,6 +71,10 @@ class TextDeltasDocumentEditor {
       composing: _serializedDoc.documentToImeRange(_serializedDoc.composingRegion),
     );
 
+    // Start an editor transaction so that all changes made during this delta
+    // application is considered a single undo-able change.
+    editor.startTransaction();
+
     for (final delta in textEditingDeltas) {
       editorImeLog.info("---------------------------------------------------");
 
@@ -101,12 +105,17 @@ class TextDeltasDocumentEditor {
 
     DocumentRange? docComposingRegion = _calculateNewComposingRegion(textEditingDeltas);
 
-    editor.execute([
-      ChangeComposingRegionRequest(
-        docComposingRegion,
-      ),
-    ]);
+    if (docComposingRegion != composingRegion.value) {
+      editor.execute([
+        ChangeComposingRegionRequest(
+          docComposingRegion,
+        ),
+      ]);
+    }
     editorImeLog.fine("Document composing region: ${composingRegion.value}");
+
+    // End the editor transaction for all deltas in this call.
+    editor.endTransaction();
 
     _nextImeValue = null;
   }
@@ -273,17 +282,17 @@ class TextDeltasDocumentEditor {
     editorImeLog
         .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
     final selectionBeforeInsertion = selection.value;
-    editor.execute([
-      ChangeSelectionRequest(
-        insertionSelection,
-        SelectionChangeType.placeCaret,
-        SelectionReason.userInteraction,
-      ),
-    ]);
+    // editor.execute([
+    //   ChangeSelectionRequest(
+    //     insertionSelection,
+    //     SelectionChangeType.placeCaret,
+    //     SelectionReason.userInteraction,
+    //   ),
+    // ]);
 
     editorImeLog.fine("Inserting the text at the Document Composer's selection");
     final didInsert = _insertPlainText(
-      insertionSelection.extent,
+      insertionSelection,
       textInserted,
     );
     editorImeLog.fine("Insertion successful? $didInsert");
@@ -301,9 +310,10 @@ class TextDeltasDocumentEditor {
   }
 
   bool _insertPlainText(
-    DocumentPosition insertionPosition,
+    DocumentSelection insertionSelection,
     String text,
   ) {
+    DocumentPosition insertionPosition = insertionSelection.extent;
     editorOpsLog.fine('Attempting to insert "$text" at position: $insertionPosition');
 
     DocumentNode? insertionNode = document.getNodeById(insertionPosition.nodeId);
@@ -331,6 +341,11 @@ class TextDeltasDocumentEditor {
     editorOpsLog.fine("Executing text insertion command.");
     editorOpsLog.finer("Text before insertion: '${insertionNode.text.text}'");
     editor.execute([
+      ChangeSelectionRequest(
+        insertionSelection,
+        SelectionChangeType.placeCaret,
+        SelectionReason.userInteraction,
+      ),
       InsertTextRequest(
         documentPosition: insertionPosition,
         textToInsert: text,

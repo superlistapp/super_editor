@@ -83,6 +83,17 @@ class ImageNode extends BlockNode with ChangeNotifier {
   }
 
   @override
+  ImageNode copy() {
+    return ImageNode(
+      id: id,
+      imageUrl: imageUrl,
+      expectedBitmapSize: expectedBitmapSize,
+      altText: altText,
+      metadata: Map.from(metadata),
+    );
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ImageNode &&

@@ -23,6 +23,11 @@ class UpsellNode extends BlockNode with ChangeNotifier {
   String? copyContent(NodeSelection selection) {
     return null;
   }
+
+  @override
+  DocumentNode copy() {
+    return UpsellNode(id);
+  }
 }
 
 /// Markdown block-parser for upsell messages.

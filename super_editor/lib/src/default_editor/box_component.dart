@@ -310,10 +310,13 @@ class SelectableBox extends StatelessWidget {
   }
 }
 
-class DeleteUpstreamAtBeginningOfBlockNodeCommand implements EditCommand {
+class DeleteUpstreamAtBeginningOfBlockNodeCommand extends EditCommand {
   DeleteUpstreamAtBeginningOfBlockNodeCommand(this.node);
 
   final DocumentNode node;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

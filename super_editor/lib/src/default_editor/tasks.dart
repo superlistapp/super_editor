@@ -47,6 +47,16 @@ class TaskNode extends TextNode {
   }
 
   @override
+  TaskNode copy() {
+    return TaskNode(
+      id: id,
+      text: text.copyText(0),
+      metadata: Map.from(metadata),
+      isComplete: isComplete,
+    );
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other && other is TaskNode && runtimeType == other.runtimeType && isComplete == other.isComplete;
@@ -384,11 +394,14 @@ class ChangeTaskCompletionRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ isComplete.hashCode;
 }
 
-class ChangeTaskCompletionCommand implements EditCommand {
+class ChangeTaskCompletionCommand extends EditCommand {
   ChangeTaskCompletionCommand({required this.nodeId, required this.isComplete});
 
   final String nodeId;
   final bool isComplete;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -428,7 +441,7 @@ class ConvertParagraphToTaskRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ isComplete.hashCode;
 }
 
-class ConvertParagraphToTaskCommand implements EditCommand {
+class ConvertParagraphToTaskCommand extends EditCommand {
   const ConvertParagraphToTaskCommand({
     required this.nodeId,
     this.isComplete = false,
@@ -436,6 +449,9 @@ class ConvertParagraphToTaskCommand implements EditCommand {
 
   final String nodeId;
   final bool isComplete;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -459,7 +475,7 @@ class ConvertParagraphToTaskCommand implements EditCommand {
   }
 }
 
-class ConvertTaskToParagraphCommand implements EditCommand {
+class ConvertTaskToParagraphCommand extends EditCommand {
   const ConvertTaskToParagraphCommand({
     required this.nodeId,
     this.paragraphMetadata,
@@ -467,6 +483,9 @@ class ConvertTaskToParagraphCommand implements EditCommand {
 
   final String nodeId;
   final Map<String, dynamic>? paragraphMetadata;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -503,7 +522,7 @@ class SplitExistingTaskRequest implements EditRequest {
   final String? newNodeId;
 }
 
-class SplitExistingTaskCommand implements EditCommand {
+class SplitExistingTaskCommand extends EditCommand {
   const SplitExistingTaskCommand({
     required this.nodeId,
     required this.splitOffset,
@@ -513,6 +532,9 @@ class SplitExistingTaskCommand implements EditCommand {
   final String nodeId;
   final int splitOffset;
   final String? newNodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext editContext, CommandExecutor executor) {

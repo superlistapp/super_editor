@@ -161,9 +161,11 @@ void main() {
           },
           requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
-            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
-              reactionCount += 1;
-            }),
+            FunctionalEditReaction(
+              react: (editorContext, requestDispatcher, changeList) {
+                reactionCount += 1;
+              },
+            ),
           ],
         );
 
@@ -201,7 +203,7 @@ void main() {
           },
           requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
-            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+            FunctionalEditReaction(react: (editorContext, requestDispatcher, changeList) {
               TextInsertionEvent? insertEEvent;
               for (final edit in changeList) {
                 if (edit is! DocumentEdit) {
@@ -290,7 +292,7 @@ void main() {
           requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
             // Reaction 1 causes a change
-            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+            FunctionalEditReaction(react: (editorContext, requestDispatcher, changeList) {
               TextInsertionEvent? insertHEvent;
               for (final edit in changeList) {
                 if (edit is! DocumentEdit) {
@@ -321,7 +323,7 @@ void main() {
               ]);
             }),
             // Reaction 2 verifies that it sees the change event from reaction 1.
-            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+            FunctionalEditReaction(react: (editorContext, requestDispatcher, changeList) {
               TextInsertionEvent? insertEEvent;
               for (final edit in changeList) {
                 if (edit is! DocumentEdit) {
@@ -375,7 +377,7 @@ void main() {
           },
           requestHandlers: List.from(defaultRequestHandlers),
           reactionPipeline: [
-            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+            FunctionalEditReaction(react: (editorContext, requestDispatcher, changeList) {
               reactionRunCount += 1;
 
               // We expect this reaction to run after we execute a command, but we don't
@@ -607,7 +609,7 @@ void main() {
         final editorPieces = _createStandardEditor(
           initialDocument: longTextDoc(),
           additionalReactions: [
-            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+            FunctionalEditReaction(react: (editorContext, requestDispatcher, changeList) {
               expect(changeList.length, 1);
 
               final event = changeList.first as DocumentEdit;
@@ -690,10 +692,13 @@ class _ExpandingCommandRequest implements EditRequest {
   final int levelsOfGeneration;
 }
 
-class _ExpandingCommand implements EditCommand {
+class _ExpandingCommand extends EditCommand {
   const _ExpandingCommand(this.request);
 
   final _ExpandingCommandRequest request;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
