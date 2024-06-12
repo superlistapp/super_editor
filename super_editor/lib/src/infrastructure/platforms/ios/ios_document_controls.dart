@@ -136,17 +136,7 @@ class IosDocumentGestureEditingController extends GestureEditingController {
     required super.selectionLinks,
     required super.magnifierFocalPointLink,
     required super.overlayController,
-  }) : _documentLayoutLink = documentLayoutLink;
-
-  /// Layer link that's aligned to the top-left corner of the document layout.
-  ///
-  /// Some of the offsets reported by this controller are based on the
-  /// document layout coordinate space. Therefore, to honor those offsets on
-  /// the screen, this `LayerLink` should be used to align the controls with
-  /// the document layout before applying the offset that sits within the
-  /// document layout.
-  LayerLink get documentLayoutLink => _documentLayoutLink;
-  final LayerLink _documentLayoutLink;
+  });
 
   /// Whether or not a caret should be displayed.
   bool get hasCaret => caretTop != null;
