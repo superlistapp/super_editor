@@ -111,7 +111,11 @@ class GoldenTestCommand extends Command {
         ...cmdArguments,
       ],
       description: 'Golden tests',
+      throwOnError: false,
     );
+
+    // After running the tests, we don't need the image anymore. Remove it.
+    await _removeDockerImage();
 
     // Mapping the failure directories causes them to be created automatically, even without any failing test.
     // Remove all the empty failure directories.
@@ -268,7 +272,11 @@ class UpdateGoldensCommand extends Command {
         ...cmdArguments,
       ],
       description: 'Update goldens',
+      throwOnError: false,
     );
+
+    // After running the tests, we don't need the image anymore. Remove it.
+    await _removeDockerImage();
   }
 }
 
@@ -295,6 +303,20 @@ Future<void> _buildDockerImage() async {
   );
 }
 
+/// Removes the image built by the golden tester.
+Future<void> _removeDockerImage() async {
+  await _runProcess(
+    executable: 'docker',
+    arguments: [
+      'image', 'rm', //
+      '-f',
+      'supereditor_golden_tester',
+    ],
+    description: 'Removing image',
+    throwOnError: false,
+  );
+}
+
 /// Runs [executable] with the given [arguments].
 ///
 /// [executable] could be an absolute path or it could be resolved from the PATH.
@@ -305,12 +327,15 @@ Future<void> _buildDockerImage() async {
 ///
 /// The child process stdout and stderr are written to the current process stdout.
 ///
-/// Throws and exception using [description] in the message if the process exists with a non-zero exit code.
-Future<void> _runProcess({
+/// If [throwOnError] is `true`, throws an exception if the process exits with a non-zero exit code.
+///
+/// If [throwOnError] is `false`, the function returns the exit code.
+Future<int> _runProcess({
   required String executable,
   required List<String> arguments,
   required String description,
   String? workingDirectory,
+  bool throwOnError = true,
 }) async {
   final process = await Process.start(
     executable,
@@ -323,7 +348,9 @@ Future<void> _runProcess({
 
   final exitCode = await process.exitCode;
 
-  if (exitCode != 0) {
+  if (exitCode != 0 && throwOnError) {
     throw Exception('$description failed');
   }
+
+  return exitCode;
 }
