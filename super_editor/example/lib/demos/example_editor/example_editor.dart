@@ -149,13 +149,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
     // text.
     // TODO: switch this to use a Leader and Follower
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
-          .getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
-      final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
-      final overlayBoundingBox = Rect.fromPoints(
-        docBox.localToGlobal(docBoundingBox.topLeft),
-        docBox.localToGlobal(docBoundingBox.bottomRight),
-      );
+      final layout = _docLayoutKey.currentState as DocumentLayout;
+      final docBoundingBox = layout.getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
+      final globalOffset = layout.getGlobalOffsetFromDocumentOffset(Offset.zero);
+      final overlayBoundingBox = docBoundingBox.shift(globalOffset);
 
       _textSelectionAnchor.value = overlayBoundingBox.topCenter;
     });

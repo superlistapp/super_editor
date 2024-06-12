@@ -5,7 +5,8 @@ import 'package:super_editor/src/default_editor/layout_single_column/_layout.dar
 import 'package:super_editor/src/default_editor/layout_single_column/_presenter.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_scroller.dart';
-import 'package:super_editor/src/infrastructure/viewport_size_reporting.dart';
+import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
+import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
 
 /// A scaffold that combines pieces to create a scrolling single-column document, with
 /// gestures placed beneath the document.
@@ -17,12 +18,15 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
     super.key,
     required this.documentLayoutLink,
     required this.documentLayoutKey,
+    required this.viewportDecorationBuilder,
     required this.gestureBuilder,
+    this.textInputBuilder,
     this.scrollController,
     required this.autoScrollController,
     required this.scroller,
     required this.presenter,
     required this.componentBuilders,
+    required this.shrinkWrap,
     this.underlays = const [],
     this.overlays = const [],
     this.debugPaint = const DebugPaintConfig(),
@@ -37,6 +41,13 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
   /// Builder that creates a gesture interaction widget, which is displayed
   /// beneath the document, at the same size as the viewport.
   final WidgetBuilder gestureBuilder;
+
+  /// Builds the text input widget, if applicable. The text input system is placed
+  /// above the gesture system and beneath viewport decoration.
+  final Widget Function(BuildContext context, {required Widget child})? textInputBuilder;
+
+  /// Builds platform specific viewport decoration (such as toolbar overlay manager or magnifier overlay manager).
+  final Widget Function(BuildContext context, {required Widget child}) viewportDecorationBuilder;
 
   /// Controls scrolling when this [DocumentScaffold] adds its own `Scrollable`, but
   /// doesn't provide scrolling control when this [DocumentScaffold] uses an ancestor
@@ -71,6 +82,10 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
   /// Paints some extra visual ornamentation to help with debugging.
   final DebugPaintConfig debugPaint;
 
+  /// Whether the document should shrink-wrap its content.
+  /// Only used when the document is not inside a scrollable.
+  final bool shrinkWrap;
+
   @override
   State<DocumentScaffold> createState() => _DocumentScaffoldState();
 }
@@ -78,9 +93,16 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
 class _DocumentScaffoldState extends State<DocumentScaffold> {
   @override
   Widget build(BuildContext context) {
+    var child = _buildGestureSystem(
+      child: _buildDocumentLayout(),
+    );
+    if (widget.textInputBuilder != null) {
+      child = widget.textInputBuilder!(context, child: child);
+    }
     return _buildDocumentScrollable(
-      child: _buildGestureSystem(
-        child: _buildDocumentLayout(),
+      child: widget.viewportDecorationBuilder(
+        context,
+        child: child,
       ),
     );
   }
@@ -91,20 +113,16 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
   Widget _buildDocumentScrollable({
     required Widget child,
   }) {
-    return ViewportBoundsReporter(
-      viewportOuterConstraints: _contentConstraints,
-      child: DocumentScrollable(
-        autoScroller: widget.autoScrollController,
-        scrollController: widget.scrollController,
-        scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
-        scroller: widget.scroller,
-        showDebugPaint: widget.debugPaint.scrolling,
-        child: child,
-      ),
+    return DocumentScrollable(
+      autoScroller: widget.autoScrollController,
+      scrollController: widget.scrollController,
+      scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
+      scroller: widget.scroller,
+      shrinkWrap: widget.shrinkWrap,
+      showDebugPaint: widget.debugPaint.scrolling,
+      child: child,
     );
   }
-
-  final _contentConstraints = ValueNotifier<BoxConstraints>(const BoxConstraints());
 
   /// Builds the widget tree that handles user gesture interaction
   /// with the document, e.g., mouse input on desktop, or touch input
@@ -112,45 +130,37 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
   Widget _buildGestureSystem({
     required Widget child,
   }) {
-    return ViewportBoundsReplicator(
-      viewportOuterConstraints: _contentConstraints,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // A layer that sits beneath the document and handles gestures.
-          // It's beneath the document so that components that include
-          // interactive UI, like a Checkbox, can intercept their own
-          // touch events.
-          //
-          // This layer is placed outside of `ContentLayers` because this
-          // layer needs to be wider than the document, to fill all available
-          // space.
-          Positioned.fill(
-            child: widget.gestureBuilder(context),
-          ),
-          child,
-        ],
-      ),
+    final ancestorScrollable = context.findAncestorScrollableWithVerticalScroll;
+    return SliverHybridStack(
+      // Ensure that gesture object fill entire viewport when not being
+      // in user specified scrollable.
+      fillViewport: ancestorScrollable == null,
+      children: [
+        // A layer that sits beneath the document and handles gestures.
+        // It's beneath the document so that components that include
+        // interactive UI, like a Checkbox, can intercept their own
+        // touch events.
+        //
+        // This layer is placed outside of `ContentLayers` because this
+        // layer needs to be wider than the document, to fill all available
+        // space.
+        widget.gestureBuilder(context),
+        child,
+      ],
     );
   }
 
   Widget _buildDocumentLayout() {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: CompositedTransformTarget(
-        link: widget.documentLayoutLink,
-        child: ContentLayers(
-          content: (onBuildScheduled) => SingleColumnDocumentLayout(
-            key: widget.documentLayoutKey,
-            presenter: widget.presenter,
-            componentBuilders: widget.componentBuilders,
-            onBuildScheduled: onBuildScheduled,
-            showDebugPaint: widget.debugPaint.layout,
-          ),
-          underlays: widget.underlays,
-          overlays: widget.overlays,
-        ),
+    return ContentLayers(
+      content: (onBuildScheduled) => SingleColumnDocumentLayout(
+        key: widget.documentLayoutKey,
+        presenter: widget.presenter,
+        componentBuilders: widget.componentBuilders,
+        onBuildScheduled: onBuildScheduled,
+        showDebugPaint: widget.debugPaint.layout,
       ),
+      underlays: widget.underlays,
+      overlays: widget.overlays,
     );
   }
 }

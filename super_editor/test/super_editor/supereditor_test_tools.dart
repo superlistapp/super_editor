@@ -501,9 +501,7 @@ class TestSuperEditorConfigurator {
     return CustomScrollView(
       controller: _config.scrollController,
       slivers: [
-        SliverToBoxAdapter(
-          child: child,
-        ),
+        child,
       ],
     );
   }

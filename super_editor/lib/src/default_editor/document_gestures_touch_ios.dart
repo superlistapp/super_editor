@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -28,6 +29,7 @@ import 'package:super_editor/src/infrastructure/platforms/ios/selection_heuristi
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
+import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import '../infrastructure/document_gestures.dart';
@@ -520,9 +522,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
-  RenderBox get viewportBox =>
-      (context.findAncestorScrollableWithVerticalScroll?.context.findRenderObject() ?? context.findRenderObject())
-          as RenderBox;
+  RenderBox get viewportBox => context.findViewportBox();
 
   Offset _documentOffsetToViewportOffset(Offset documentOffset) {
     final globalOffset = _docLayout.getGlobalOffsetFromDocumentOffset(documentOffset);
@@ -1460,7 +1460,7 @@ class SuperEditorIosToolbarOverlayManager extends StatefulWidget {
     super.key,
     this.tapRegionGroupId,
     this.defaultToolbarBuilder,
-    this.child,
+    required this.child,
   });
 
   /// {@macro super_editor_tap_region_group_id}
@@ -1468,7 +1468,7 @@ class SuperEditorIosToolbarOverlayManager extends StatefulWidget {
 
   final DocumentFloatingToolbarBuilder? defaultToolbarBuilder;
 
-  final Widget? child;
+  final Widget child;
 
   @override
   State<SuperEditorIosToolbarOverlayManager> createState() => SuperEditorIosToolbarOverlayManagerState();
@@ -1492,10 +1492,15 @@ class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolb
 
   @override
   Widget build(BuildContext context) {
-    return OverlayPortal(
-      controller: _overlayPortalController,
-      overlayChildBuilder: _buildToolbar,
-      child: widget.child ?? const SizedBox(),
+    return SliverHybridStack(
+      children: [
+        widget.child,
+        OverlayPortal(
+          controller: _overlayPortalController,
+          overlayChildBuilder: _buildToolbar,
+          child: const SizedBox(),
+        ),
+      ],
     );
   }
 
@@ -1519,10 +1524,10 @@ class SuperEditorIosToolbarOverlayManagerState extends State<SuperEditorIosToolb
 class SuperEditorIosMagnifierOverlayManager extends StatefulWidget {
   const SuperEditorIosMagnifierOverlayManager({
     super.key,
-    this.child,
+    required this.child,
   });
 
-  final Widget? child;
+  final Widget child;
 
   @override
   State<SuperEditorIosMagnifierOverlayManager> createState() => SuperEditorIosMagnifierOverlayManagerState();
@@ -1546,10 +1551,15 @@ class SuperEditorIosMagnifierOverlayManagerState extends State<SuperEditorIosMag
 
   @override
   Widget build(BuildContext context) {
-    return OverlayPortal(
-      controller: _overlayPortalController,
-      overlayChildBuilder: _buildMagnifier,
-      child: widget.child ?? const SizedBox(),
+    return SliverHybridStack(
+      children: [
+        widget.child,
+        OverlayPortal(
+          controller: _overlayPortalController,
+          overlayChildBuilder: _buildMagnifier,
+          child: const SizedBox(),
+        ),
+      ],
     );
   }
 
@@ -1691,7 +1701,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
   ///
   /// This widget expects to wrap the viewport, so this widget's box is the same
   /// place and size as the actual viewport.
-  RenderBox get viewportBox => context.findRenderObject() as RenderBox;
+  RenderBox get viewportBox => context.findViewportBox();
 
   Offset _documentOffsetToViewportOffset(Offset documentOffset) {
     final globalOffset = _docLayout.getGlobalOffsetFromDocumentOffset(documentOffset);
@@ -1745,7 +1755,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
     final cursorViewportFocalPointUnbounded = _initialFloatingCursorOffsetInViewport! + offset;
     editorIosFloatingCursorLog.finer(" - unbounded cursor focal point: $cursorViewportFocalPointUnbounded");
 
-    final viewportHeight = (context.findRenderObject() as RenderBox).size.height;
+    final viewportHeight = viewportBox.size.height;
     _floatingCursorFocalPointInViewport =
         Offset(cursorViewportFocalPointUnbounded.dx, cursorViewportFocalPointUnbounded.dy.clamp(0, viewportHeight));
     editorIosFloatingCursorLog.finer(" - bounded cursor focal point: $_floatingCursorFocalPointInViewport");
@@ -1843,10 +1853,14 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return SliverHybridStack(
       children: [
         widget.child,
-        _buildFloatingCursor(),
+        Stack(
+          children: [
+            _buildFloatingCursor(),
+          ],
+        )
       ],
     );
   }

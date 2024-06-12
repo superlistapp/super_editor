@@ -700,9 +700,7 @@ Widget _buildScaffold({
     child: MaterialApp(
       home: Scaffold(
         body: Center(
-          child: IntrinsicHeight(
-            child: child,
-          ),
+          child: child,
         ),
       ),
       debugShowCheckedModeBanner: false,

@@ -325,9 +325,7 @@ class TestDocumentConfigurator {
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
-        SliverToBoxAdapter(
-          child: child,
-        ),
+        child,
       ],
     );
   }
