@@ -106,50 +106,49 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
   }
 
   Widget _buildEditor() {
-    return IntrinsicHeight(
-      child: SuperEditor(
-        editor: _editor,
-        document: _document,
-        composer: _composer,
-        focusNode: _editorFocusNode,
-        componentBuilders: [
-          TaskComponentBuilder(_editor),
-          ...defaultComponentBuilders,
-        ],
-        stylesheet: defaultStylesheet.copyWith(
-          inlineTextStyler: (attributions, existingStyle) {
-            TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
+    return SuperEditor(
+      editor: _editor,
+      document: _document,
+      composer: _composer,
+      focusNode: _editorFocusNode,
+      shrinkWrap: true,
+      componentBuilders: [
+        TaskComponentBuilder(_editor),
+        ...defaultComponentBuilders,
+      ],
+      stylesheet: defaultStylesheet.copyWith(
+        inlineTextStyler: (attributions, existingStyle) {
+          TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
 
-            if (attributions.contains(actionTagComposingAttribution)) {
-              style = style.copyWith(
-                color: Colors.blue,
-              );
-            }
+          if (attributions.contains(actionTagComposingAttribution)) {
+            style = style.copyWith(
+              color: Colors.blue,
+            );
+          }
 
-            return style;
-          },
-          addRulesAfter: [
-            ...darkModeStyles,
-          ],
-        ),
-        documentOverlayBuilders: [
-          AttributedTextBoundsOverlay(
-            selector: (a) => a == actionTagComposingAttribution,
-            builder: (BuildContext context, Attribution attribution) {
-              return Leader(
-                link: _composingLink,
-                child: const SizedBox(),
-              );
-            },
-          ),
-          DefaultCaretOverlayBuilder(
-            caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
-          ),
-        ],
-        plugins: {
-          _actionTagPlugin,
+          return style;
         },
+        addRulesAfter: [
+          ...darkModeStyles,
+        ],
       ),
+      documentOverlayBuilders: [
+        AttributedTextBoundsOverlay(
+          selector: (a) => a == actionTagComposingAttribution,
+          builder: (BuildContext context, Attribution attribution) {
+            return Leader(
+              link: _composingLink,
+              child: const SizedBox(),
+            );
+          },
+        ),
+        DefaultCaretOverlayBuilder(
+          caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
+        ),
+      ],
+      plugins: {
+        _actionTagPlugin,
+      },
     );
   }
 

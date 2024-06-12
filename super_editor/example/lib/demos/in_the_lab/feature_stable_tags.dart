@@ -107,52 +107,51 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
   }
 
   Widget _buildEditor() {
-    return IntrinsicHeight(
-      child: SuperEditor(
-        editor: _editor,
-        document: _document,
-        composer: _composer,
-        focusNode: _editorFocusNode,
-        stylesheet: defaultStylesheet.copyWith(
-          inlineTextStyler: (attributions, existingStyle) {
-            TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
+    return SuperEditor(
+      editor: _editor,
+      document: _document,
+      composer: _composer,
+      focusNode: _editorFocusNode,
+      shrinkWrap: true,
+      stylesheet: defaultStylesheet.copyWith(
+        inlineTextStyler: (attributions, existingStyle) {
+          TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
 
-            if (attributions.contains(stableTagComposingAttribution)) {
-              style = style.copyWith(
-                color: Colors.blue,
-              );
-            }
+          if (attributions.contains(stableTagComposingAttribution)) {
+            style = style.copyWith(
+              color: Colors.blue,
+            );
+          }
 
-            if (attributions.whereType<CommittedStableTagAttribution>().isNotEmpty) {
-              style = style.copyWith(
-                color: Colors.orange,
-              );
-            }
+          if (attributions.whereType<CommittedStableTagAttribution>().isNotEmpty) {
+            style = style.copyWith(
+              color: Colors.orange,
+            );
+          }
 
-            return style;
-          },
-          addRulesAfter: [
-            ...darkModeStyles,
-          ],
-        ),
-        documentOverlayBuilders: [
-          AttributedTextBoundsOverlay(
-            selector: (a) => a == stableTagComposingAttribution,
-            builder: (context, attribution) {
-              return Leader(
-                link: _composingLink,
-                child: const SizedBox(),
-              );
-            },
-          ),
-          DefaultCaretOverlayBuilder(
-            caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
-          ),
-        ],
-        plugins: {
-          _userTagPlugin,
+          return style;
         },
+        addRulesAfter: [
+          ...darkModeStyles,
+        ],
       ),
+      documentOverlayBuilders: [
+        AttributedTextBoundsOverlay(
+          selector: (a) => a == stableTagComposingAttribution,
+          builder: (context, attribution) {
+            return Leader(
+              link: _composingLink,
+              child: const SizedBox(),
+            );
+          },
+        ),
+        DefaultCaretOverlayBuilder(
+          caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
+        ),
+      ],
+      plugins: {
+        _userTagPlugin,
+      },
     );
   }
 

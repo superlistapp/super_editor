@@ -64,6 +64,7 @@ void main() {
 
       // Jump to the end of the document
       scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      await tester.pump();
 
       final dragGesture = await tester.startDocumentDragFromPosition(
         from: DocumentPosition(
@@ -1071,7 +1072,7 @@ void main() {
 
         // Drag an arbitrary amount of pixels from the top of the editor.
         final dragGesture = await tester.dragByFrameCount(
-          startLocation: tester.getRect(find.byType(SuperEditor)).topCenter + const Offset(0, 5),
+          startLocation: tester.getRect(find.byType(CustomScrollView)).topCenter + const Offset(0, 5),
           totalDragOffset: const Offset(0, 400.0),
         );
 
@@ -1504,17 +1505,15 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              SliverToBoxAdapter(
-                child: SuperEditor(
-                  editor: _docEditor,
-                  document: _doc,
-                  composer: _composer,
-                  stylesheet: defaultStylesheet.copyWith(
-                    documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
-                  ),
-                  gestureMode: widget.gestureMode,
-                  inputSource: TextInputSource.ime,
+              SuperEditor(
+                editor: _docEditor,
+                document: _doc,
+                composer: _composer,
+                stylesheet: defaultStylesheet.copyWith(
+                  documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
                 ),
+                gestureMode: widget.gestureMode,
+                inputSource: TextInputSource.ime,
               ),
               SliverList(
                 delegate: SliverChildBuilderDelegate(

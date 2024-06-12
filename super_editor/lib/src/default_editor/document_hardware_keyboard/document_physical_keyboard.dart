@@ -103,6 +103,9 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
       focusNode: _focusNode,
       onKeyEvent: widget.keyboardActions.isEmpty ? null : _onKeyPressed,
       autofocus: widget.autofocus,
+      // Semantics node would create a RenderBox, which does not work within
+      // a sliver.
+      includeSemantics: false,
       child: widget.child,
     );
   }

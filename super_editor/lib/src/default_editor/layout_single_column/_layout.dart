@@ -73,6 +73,10 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
   late SingleColumnLayoutPresenterChangeListener _presenterListener;
 
+  // The key for the renderBox that contains the actual document layout.
+  final GlobalKey _boxKey = GlobalKey();
+  BuildContext get boxContext => _boxKey.currentContext!;
+
   @override
   void initState() {
     super.initState();
@@ -140,7 +144,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   DocumentPosition? getDocumentPositionNearestToOffset(Offset rawDocumentOffset) {
     // Constrain the incoming offset to sit within the width
     // of this document layout.
-    final docBox = context.findRenderObject() as RenderBox;
+    final docBox = boxContext.findRenderObject() as RenderBox;
     final documentOffset = Offset(
       // Notice the +1/-1. Experimentally, I determined that if we confine
       // to the exact width, that x-value is considered outside the
@@ -235,7 +239,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final componentEdge = component.getEdgeForPosition(position.nodePosition);
 
     final componentBox = component.context.findRenderObject() as RenderBox;
-    final docOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
+    final docOffset = componentBox.localToGlobal(Offset.zero, ancestor: boxContext.findRenderObject());
 
     return componentEdge.translate(docOffset.dx, docOffset.dy);
   }
@@ -251,7 +255,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final componentRect = component.getRectForPosition(position.nodePosition);
 
     final componentBox = component.context.findRenderObject() as RenderBox;
-    final docOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
+    final docOffset = componentBox.localToGlobal(Offset.zero, ancestor: boxContext.findRenderObject());
 
     return componentRect.translate(docOffset.dx, docOffset.dy);
   }
@@ -270,7 +274,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final componentBoundingBoxes = <Rect>[];
 
     // Collect bounding boxes for all selected components.
-    final documentLayoutBox = context.findRenderObject() as RenderBox;
+    final documentLayoutBox = boxContext.findRenderObject() as RenderBox;
     if (base.nodeId == extent.nodeId) {
       // Selection within a single node.
       topComponent = extentComponent;
@@ -486,7 +490,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   /// Returns `null` if there is no overlap.
   Rect? _getLocalOverlapWithComponent(Rect region, DocumentComponent component) {
     final componentBox = component.context.findRenderObject() as RenderBox;
-    final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
+    final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: boxContext.findRenderObject());
     final componentBounds = contentOffset & componentBox.size;
     editorLayoutLog.finest("Component bounds: $componentBounds, versus region of interest: $region");
 
@@ -603,7 +607,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 
   bool _isOffsetInComponent(RenderBox componentBox, Offset documentOffset) {
-    final containerBox = context.findRenderObject() as RenderBox;
+    final containerBox = boxContext.findRenderObject() as RenderBox;
     final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: containerBox);
     final contentRect = contentOffset & componentBox.size;
 
@@ -613,7 +617,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   /// Returns the vertical distance between the given [documentOffset] and the
   /// bounds of the given [componentBox].
   double _getDistanceToComponent(RenderBox componentBox, Offset documentOffset) {
-    final documentLayoutBox = context.findRenderObject() as RenderBox;
+    final documentLayoutBox = boxContext.findRenderObject() as RenderBox;
     final componentOffset = componentBox.localToGlobal(Offset.zero, ancestor: documentLayoutBox);
     final componentRect = componentOffset & componentBox.size;
 
@@ -630,7 +634,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 
   Offset _componentOffset(RenderBox componentBox, Offset documentOffset) {
-    final containerBox = context.findRenderObject() as RenderBox;
+    final containerBox = boxContext.findRenderObject() as RenderBox;
     final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: containerBox);
     final contentRect = contentOffset & componentBox.size;
 
@@ -658,17 +662,17 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
   @override
   Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, [RenderObject? ancestor]) {
-    return (context.findRenderObject() as RenderBox).globalToLocal(ancestorOffset, ancestor: ancestor);
+    return (boxContext.findRenderObject() as RenderBox).globalToLocal(ancestorOffset, ancestor: ancestor);
   }
 
   @override
   Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, [RenderObject? ancestor]) {
-    return (context.findRenderObject() as RenderBox).localToGlobal(documentOffset, ancestor: ancestor);
+    return (boxContext.findRenderObject() as RenderBox).localToGlobal(documentOffset, ancestor: ancestor);
   }
 
   @override
   Offset getGlobalOffsetFromDocumentOffset(Offset documentOffset) {
-    return (context.findRenderObject() as RenderBox).localToGlobal(documentOffset);
+    return (boxContext.findRenderObject() as RenderBox).localToGlobal(documentOffset);
   }
 
   @override
@@ -706,12 +710,15 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   @override
   Widget build(BuildContext context) {
     editorLayoutLog.fine("Building document layout");
-    final result = Padding(
-      padding: widget.presenter.viewModel.padding,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: _buildDocComponents(),
+    final result = SliverToBoxAdapter(
+      child: Padding(
+        key: _boxKey,
+        padding: widget.presenter.viewModel.padding,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: _buildDocComponents(),
+        ),
       ),
     );
 
@@ -849,7 +856,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final component = componentKey.currentState as DocumentComponent;
 
     final componentBox = component.context.findRenderObject() as RenderBox;
-    final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
+    final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: boxContext.findRenderObject());
     return contentOffset & componentBox.size;
   }
 }

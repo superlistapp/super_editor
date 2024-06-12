@@ -69,6 +69,7 @@ class SuperReader extends StatefulWidget {
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.debugPaint = const DebugPaintConfig(),
+    this.shrinkWrap = false,
   })  : stylesheet = stylesheet ?? readOnlyDefaultStylesheet,
         selectionStyles = selectionStyle ?? readOnlyDefaultSelectionStyle,
         keyboardActions = keyboardActions ?? readOnlyDefaultKeyboardActions,
@@ -203,6 +204,10 @@ class SuperReader extends StatefulWidget {
   /// Paints some extra visual ornamentation to help with
   /// debugging.
   final DebugPaintConfig debugPaint;
+
+  /// Whether the scroll view used by the reader should shrink-wrap its contents.
+  /// Only used when reader is not inside an scrollable.
+  final bool shrinkWrap;
 
   @override
   State<SuperReader> createState() => SuperReaderState();
@@ -390,35 +395,34 @@ class SuperReaderState extends State<SuperReader> {
           readerContext: _readerContext,
           keyboardActions: widget.keyboardActions,
           autofocus: widget.autofocus,
-          child: _buildPlatformSpecificViewportDecorations(
-            controlsScopeContext,
-            child: DocumentScaffold(
-              documentLayoutLink: _documentLayoutLink,
-              documentLayoutKey: _docLayoutKey,
-              gestureBuilder: _buildGestureInteractor,
-              scrollController: _scrollController,
-              autoScrollController: _autoScrollController,
-              scroller: _scroller,
-              presenter: _docLayoutPresenter!,
-              componentBuilders: widget.componentBuilders,
-              underlays: [
-                // Add any underlays that were provided by the client.
-                for (final underlayBuilder in widget.documentUnderlayBuilders) //
-                  (context) => underlayBuilder.build(context, _readerContext),
-              ],
-              overlays: [
-                // Layer that positions and sizes leader widgets at the bounds
-                // of the users selection so that carets, handles, toolbars, and
-                // other things can follow the selection.
-                (context) => _SelectionLeadersDocumentLayerBuilder(
-                      links: _selectionLinks,
-                    ).build(context, _readerContext),
-                // Add any overlays that were provided by the client.
-                for (final overlayBuilder in widget.documentOverlayBuilders) //
-                  (context) => overlayBuilder.build(context, _readerContext),
-              ],
-              debugPaint: widget.debugPaint,
-            ),
+          child: DocumentScaffold(
+            viewportDecorationBuilder: _buildPlatformSpecificViewportDecorations,
+            documentLayoutLink: _documentLayoutLink,
+            documentLayoutKey: _docLayoutKey,
+            gestureBuilder: _buildGestureInteractor,
+            scrollController: _scrollController,
+            autoScrollController: _autoScrollController,
+            scroller: _scroller,
+            presenter: _docLayoutPresenter!,
+            componentBuilders: widget.componentBuilders,
+            shrinkWrap: widget.shrinkWrap,
+            underlays: [
+              // Add any underlays that were provided by the client.
+              for (final underlayBuilder in widget.documentUnderlayBuilders) //
+                (context) => underlayBuilder.build(context, _readerContext),
+            ],
+            overlays: [
+              // Layer that positions and sizes leader widgets at the bounds
+              // of the users selection so that carets, handles, toolbars, and
+              // other things can follow the selection.
+              (context) => _SelectionLeadersDocumentLayerBuilder(
+                    links: _selectionLinks,
+                  ).build(context, _readerContext),
+              // Add any overlays that were provided by the client.
+              for (final overlayBuilder in widget.documentOverlayBuilders) //
+                (context) => overlayBuilder.build(context, _readerContext),
+            ],
+            debugPaint: widget.debugPaint,
           ),
         );
       }),

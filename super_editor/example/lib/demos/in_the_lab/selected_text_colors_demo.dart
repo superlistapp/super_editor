@@ -60,9 +60,7 @@ class _SelectedTextColorsDemoState extends State<SelectedTextColorsDemo> {
   Widget build(BuildContext context) {
     return InTheLabScaffold(
       content: Center(
-        child: IntrinsicHeight(
-          child: _buildEditor(),
-        ),
+        child: _buildEditor(),
       ),
       supplemental: _buildControlPanel(),
       overlay: _buildOverlay(),
@@ -74,6 +72,7 @@ class _SelectedTextColorsDemoState extends State<SelectedTextColorsDemo> {
       editor: _editor,
       document: _document,
       composer: _composer,
+      shrinkWrap: true,
       stylesheet: defaultStylesheet.copyWith(
         selectedTextColorStrategy: _selectedTextColorStrategy,
         addRulesAfter: [
