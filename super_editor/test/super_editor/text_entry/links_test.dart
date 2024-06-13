@@ -2035,6 +2035,56 @@ void main() {
       );
     });
 
+    testWidgetsOnAllPlatforms('plays nice with Markdown link when Markdown parsing is disabled', (tester) async {
+      // Based on bug #2074 - https://github.com/superlistapp/super_editor/issues/2074
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      await tester.placeCaretInParagraph("1", 0);
+
+      await tester.typeImeText("[google](www.google.com) ");
+
+      // Ensure that the Markdown was ignored and nothing was linkified.
+      final text = SuperEditorInspector.findTextInComponent("1");
+      expect(text.text, "[google](www.google.com) ");
+      expect(text.getAttributionSpansByFilter((a) => true), isEmpty);
+    });
+
+    testWidgetsOnMac('plays nice with Markdown link when pasting a Markdown link', (tester) async {
+      // Based on bug #2074 - https://github.com/superlistapp/super_editor/issues/2074
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Simulate copying a Markdown link to the clipboard.
+      tester.simulateClipboard();
+      await tester.setSimulatedClipboardContent("Hello [google](www.google.com) ");
+
+      // Simulate pasting the Markdown link into the document.
+      await tester.pressCmdV();
+
+      // Ensure that the Markdown was ignored and nothing was linkified.
+      final text = SuperEditorInspector.findTextInComponent("1");
+      expect(text.text, "Hello [google](www.google.com) ");
+      expect(text.getAttributionSpansByFilter((a) => true), isEmpty);
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "1",
+            nodePosition: TextNodePosition(offset: 31),
+          ),
+        ),
+      );
+    });
+
     // TODO: once it's easier to configure task components (#1295), add a test that checks link attributions when inserting a new task
   });
 }
