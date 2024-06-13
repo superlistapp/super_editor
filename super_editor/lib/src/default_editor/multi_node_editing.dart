@@ -75,6 +75,19 @@ class PasteStructuredContentEditorCommand implements EditCommand {
           textToInsert: (pastedNode as TextNode).text,
         ),
       );
+      executor.executeCommand(
+        ChangeSelectionCommand(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: pastePosition.nodeId,
+              nodePosition: TextNodePosition(
+                  offset: (pastePosition.nodePosition as TextNodePosition).offset + pastedNode.text.length),
+            ),
+          ),
+          SelectionChangeType.insertContent,
+          SelectionReason.userInteraction,
+        ),
+      );
 
       return;
     }
