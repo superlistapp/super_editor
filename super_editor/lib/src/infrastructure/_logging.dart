@@ -21,6 +21,7 @@ class LogNames {
   static const editorUserTags = 'editor.tokens.tags.users';
   static const editorHashTags = 'editor.tokens.tags.hash';
   static const editorActionTags = 'editor.tokens.tags.action';
+  static const editorSlackTags = 'editor.tokens.tags.slack';
 
   static const reader = 'reader';
   static const readerScrolling = 'reader.scrolling';
@@ -65,6 +66,7 @@ final editorTagsLog = logging.Logger(LogNames.editorTags);
 final editorStableTagsLog = logging.Logger(LogNames.editorUserTags);
 final editorPatternTagsLog = logging.Logger(LogNames.editorHashTags);
 final editorActionTagsLog = logging.Logger(LogNames.editorActionTags);
+final editorSlackTagsLog = logging.Logger(LogNames.editorSlackTags);
 
 final readerLog = logging.Logger(LogNames.reader);
 final readerScrollingLog = logging.Logger(LogNames.readerScrolling);

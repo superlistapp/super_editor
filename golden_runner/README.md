@@ -39,3 +39,15 @@ flutter pub run ../golden_runner/tool/goldens update --plain-name "something"
 # update a single golden in a directory
 flutter pub run ../golden_runner/tool/goldens update --plain-name "something" test_goldens/my_dir
 ```
+
+## A Hanging Command
+Sometimes the golden runner hangs at "building image". It's not clear why this happens, or what
+exactly can be done about it. However, to see the Docker image build with log output, you can
+run the image build directly.
+
+Run the following command from your project directory:
+
+    docker build -f [path_to]/golden_tester.Dockerfile -t supereditor_golden_tester .
+
+One theory about this hanging command problem is that the process to download the Flutter engine
+is taking a very long time.

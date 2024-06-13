@@ -46,11 +46,6 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
   );
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(

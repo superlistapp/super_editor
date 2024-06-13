@@ -345,13 +345,13 @@ void _expectNoControlsAreVisible() {
 }
 
 void _expectHandlesAndMagnifier() {
-  expect(find.byType(IOSSelectionHandle), findsNWidgets(2));
-  expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsOneWidget);
+  expect(find.byType(IOSSelectionHandle), findsExactly(2));
+  expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsOne);
   expect(find.byType(IOSTextEditingFloatingToolbar), findsNothing);
 }
 
 void _expectHandlesAndToolbar() {
-  expect(find.byType(IOSSelectionHandle), findsNWidgets(2));
-  expect(find.byType(IOSTextEditingFloatingToolbar), findsOneWidget);
+  expect(find.byType(IOSSelectionHandle), findsExactly(2));
+  expect(find.byType(IOSTextEditingFloatingToolbar), findsOne);
   expect(find.byType(IOSRoundedRectangleMagnifyingGlass), findsNothing);
 }

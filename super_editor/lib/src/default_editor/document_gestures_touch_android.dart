@@ -394,6 +394,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.getDocumentLayout,
     required this.selection,
+    required this.openSoftwareKeyboard,
     required this.scrollController,
     this.contentTapHandler,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
@@ -408,6 +409,9 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final DocumentLayout Function() getDocumentLayout;
   final ValueListenable<DocumentSelection?> selection;
+
+  /// A callback that should open the software keyboard when invoked.
+  final VoidCallback openSoftwareKeyboard;
 
   /// Optional handler that responds to taps on content, e.g., opening
   /// a link when the user taps on text with a link attribution.
@@ -789,6 +793,16 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
     } else {
       _clearSelection();
+    }
+
+    _showAndHideEditingControlsAfterTapSelection(didTapOnExistingSelection: didTapOnExistingSelection);
+
+    if (didTapOnExistingSelection) {
+      // The user tapped on the existing selection. Show the software keyboard.
+      //
+      // If the user didn't tap on an existing selection, the software keyboard will
+      // already be visible.
+      widget.openSoftwareKeyboard();
     }
 
     _showAndHideEditingControlsAfterTapSelection(didTapOnExistingSelection: didTapOnExistingSelection);
@@ -1192,6 +1206,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _selectPosition(DocumentPosition position) {
     editorGesturesLog.fine("Setting document selection to $position");
+
     widget.editor.execute([
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
@@ -1323,6 +1338,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   void initState() {
     super.initState();
     _overlayController.show();
+    widget.selection.addListener(_onSelectionChange);
   }
 
   @override
@@ -1345,6 +1361,11 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
         widget.scrollChangeSignal.addListener(_onDocumentScroll);
       }
     }
+
+    if (widget.selection != oldWidget.selection) {
+      oldWidget.selection.removeListener(_onSelectionChange);
+      widget.selection.addListener(_onSelectionChange);
+    }
   }
 
   @override
@@ -1353,6 +1374,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     // stop listening for document scroll changes.
     widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
     widget.scrollChangeSignal.removeListener(_onDocumentScroll);
+    widget.selection.removeListener(_onSelectionChange);
 
     super.dispose();
   }
@@ -1362,6 +1384,23 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
 
   @visibleForTesting
   bool get wantsToDisplayMagnifier => _controlsController!.shouldShowMagnifier.value;
+
+  void _onSelectionChange() {
+    if (widget.selection.value?.isCollapsed == true &&
+        _controlsController!.shouldShowExpandedHandles.value == true &&
+        _dragHandleType == null) {
+      // The selection is collapsed, but the expanded handles are visible and the user isn't dragging a handle.
+      // This can happen when the selection is expanded, and the user deletes the selected text. The only situation
+      // where the expanded handles should be visible when the selection is collapsed is when the selection
+      // collapses while the user is dragging an expanded handle, which isn't the case here. Hide the handles.
+      _controlsController!
+        ..hideCollapsedHandle()
+        ..hideExpandedHandles()
+        ..hideMagnifier()
+        ..hideToolbar()
+        ..blinkCaret();
+    }
+  }
 
   void _toggleToolbarOnCollapsedHandleTap() {
     _controlsController!.toggleToolbar();
@@ -1718,23 +1757,28 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     return ValueListenableBuilder(
       valueListenable: _controlsController!.shouldShowMagnifier,
       builder: (context, shouldShow, child) {
-        return shouldShow ? child! : const SizedBox();
+        return _controlsController!.magnifierBuilder != null //
+            ? _controlsController!.magnifierBuilder!(
+                context,
+                DocumentKeys.magnifier,
+                _controlsController!.magnifierFocalPoint,
+                shouldShow,
+              )
+            : _buildDefaultMagnifier(
+                context,
+                DocumentKeys.magnifier,
+                _controlsController!.magnifierFocalPoint,
+                shouldShow,
+              );
       },
-      child: _controlsController!.magnifierBuilder != null //
-          ? _controlsController!.magnifierBuilder!(
-              context,
-              DocumentKeys.magnifier,
-              _controlsController!.magnifierFocalPoint,
-            )
-          : _buildDefaultMagnifier(
-              context,
-              DocumentKeys.magnifier,
-              _controlsController!.magnifierFocalPoint,
-            ),
     );
   }
 
-  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint) {
+  Widget _buildDefaultMagnifier(BuildContext context, Key magnifierKey, LeaderLink focalPoint, bool isVisible) {
+    if (!isVisible) {
+      return const SizedBox();
+    }
+
     return Follower.withOffset(
       link: _controlsController!.magnifierFocalPoint,
       offset: const Offset(0, -150),

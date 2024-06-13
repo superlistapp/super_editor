@@ -1094,9 +1094,6 @@ class ComposingStableTag {
 
   @override
   int get hashCode => contentBounds.hashCode ^ token.hashCode;
-
-  @override
-  String toString() => 'ComposingStableTag{contentBounds: $contentBounds, token: $token}';
 }
 
 /// An [EditReaction] that prevents partial selection of a stable user tag.

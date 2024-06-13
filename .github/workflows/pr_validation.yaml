@@ -14,7 +14,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
           architecture: x64
 
       # Download all the packages that the app uses
@@ -38,7 +38,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -61,7 +61,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -93,6 +93,13 @@ jobs:
       # Run all golden tests
       - run: flutter test test_goldens
 
+      # Archive golden failures
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: golden-failures
+          path: "**/failures/**/*.png"
+
   test_super_editor_markdown:
     runs-on: ubuntu-latest
     defaults:
@@ -105,7 +112,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -127,7 +134,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -151,7 +158,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
           architecture: x64
 
       # Download all the packages that the app uses
@@ -159,6 +166,13 @@ jobs:
 
       # Run all golden tests
       - run: flutter test test_goldens
+
+      # Archive golden failures
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: golden-failures
+          path: "**/failures/**/*.png"
 
   test_attributed_text:
     runs-on: ubuntu-latest

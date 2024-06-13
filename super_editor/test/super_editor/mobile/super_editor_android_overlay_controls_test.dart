@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../test_runners.dart';
 import '../../test_tools.dart';
@@ -210,6 +212,50 @@ void main() {
       expect(SuperEditorInspector.findAllMobileDragHandles(), findsOneWidget);
       expect(SuperEditorInspector.findMobileCaretDragHandle(), findsOneWidget);
       expect(SuperEditorInspector.isCaretVisible(), isTrue);
+    });
+
+    testWidgetsOnAndroid("hides expanded handles and toolbar when deleting an expanded selection", (tester) async {
+      // Configure BlinkController to animate, otherwise it won't blink. We want to make sure
+      // the caret blinks after deleting the content.
+      BlinkController.indeterminateAnimationsEnabled = true;
+      addTearDown(() => BlinkController.indeterminateAnimationsEnabled = false);
+
+      await _pumpSingleParagraphApp(tester);
+
+      // Double tap to select "Lorem".
+      await tester.doubleTapInParagraph("1", 1);
+      await tester.pump();
+
+      // Ensure the toolbar and the drag handles are visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isTrue);
+      expect(SuperEditorInspector.findMobileExpandedDragHandles(), findsNWidgets(2));
+
+      // Press backspace to delete the word "Lorem" while the expanded handles are visible.
+      await tester.ime.backspace(getter: imeClientGetter);
+
+      // Ensure the toolbar and the drag handles were hidden.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
+      expect(SuperEditorInspector.findMobileExpandedDragHandles(), findsNothing);
+
+      // Ensure caret is blinking.
+
+      expect(SuperEditorInspector.isCaretVisible(), true);
+
+      // Duration to switch between visible and invisible.
+      final flashPeriod = SuperEditorInspector.caretFlashPeriod();
+
+      // Trigger a frame with an ellapsed time equal to the flashPeriod,
+      // so the caret should change from visible to invisible.
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is invisible after the flash period.
+      expect(SuperEditorInspector.isCaretVisible(), false);
+
+      // Trigger another frame to make caret visible again.
+      await tester.pump(flashPeriod);
+
+      // Ensure caret is visible.
+      expect(SuperEditorInspector.isCaretVisible(), true);
     });
 
     group('shows magnifier above the caret when dragging the collapsed handle', () {

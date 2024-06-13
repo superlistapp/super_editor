@@ -1,0 +1,58 @@
+$primary      : #151B1F;
+$primaryLight : #1B2227;
+$primaryLighter : #203035;
+
+$accent       : #FF4444;
+$accentLight  : #FF6666;
+
+$staticShockColor : #FFFF00;
+
+@font-face {
+  font-family: marketFresh;
+  src: url(/fonts/market-fresh/Market-Fresh.ttf);
+}
+
+@font-face {
+  font-family: marketFresh;
+  font-weight: bold;
+  src: url(/fonts/market-fresh/Market-Fresh-Bold.ttf);
+}
+
+html, body {
+  color: WHITE;
+}
+
+.accent-text {
+  color: $accent;
+}
+
+p + h2 {
+  margin-top: 48px;
+}
+
+p {
+  font-family: Verdana, sans-serif;
+  font-size: 1.2em;
+}
+
+code {
+  color: #C0C0C0;
+}
+
+// pre {
+//   margin-top: 2em;
+//   margin-bottom: 2em;
+//
+//   padding: 5em 3em;
+//
+//   background: rgb(207,36,36);
+//   background: linear-gradient(331deg, rgba(207,36,36,1) 0%, rgba(255,182,143,1) 100%);
+// }
+
+pre > code {
+  margin: 8px 0;
+}
+
+.static-shock {
+  color: $staticShockColor;
+}
