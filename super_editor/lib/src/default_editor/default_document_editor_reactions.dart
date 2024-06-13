@@ -561,6 +561,8 @@ class LinkifyReaction implements EditReaction {
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> edits) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
+    final selection = composer.selection;
+
     bool didInsertSpace = false;
 
     TextInsertionEvent? linkifyCandidate;
@@ -579,22 +581,25 @@ class LinkifyReaction implements EditReaction {
           continue;
         }
 
-        if (edit.newSelection == null) {
+        if (selection == null) {
           // The editor doesn't have a selection. Don't linkify.
           linkifyCandidate = null;
           continue;
-        } else if (!edit.newSelection!.isCollapsed) {
+        }
+
+        if (!selection.isCollapsed) {
           // The selection is expanded. Don't linkify.
           linkifyCandidate = null;
           continue;
         }
 
-        final caretPosition = edit.newSelection!.extent;
+        final caretPosition = selection.extent;
         if (caretPosition.nodeId != linkifyCandidate.nodeId) {
           // The selection moved to some other node. Don't linkify.
           linkifyCandidate = null;
           continue;
         }
+
         // +1 for the inserted space
         if ((caretPosition.nodePosition as TextNodePosition).offset != linkifyCandidate.offset + 1) {
           // The caret isn't sitting directly after the space. Whatever
@@ -662,14 +667,23 @@ class LinkifyReaction implements EditReaction {
       ),
     );
     final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-    if (linkCount == 1) {
-      // The word is a single URL. Linkify it.
+    if (linkCount != 1) {
+      // There's either zero links, or more than one link. Either way we fizzle.
+      return;
+    }
+
+    // The word is a single URL. Linkify it.
+    try {
+      // Try to parse the word as a link.
       final uri = parseLink(word);
 
       text.addAttribution(
         LinkAttribution.fromUri(uri),
         SpanRange(wordStartOffset, endOffset - 1),
       );
+    } catch (exception) {
+      // Something went wrong parsing the link. Fizzle.
+      return;
     }
   }
 
