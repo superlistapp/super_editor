@@ -672,7 +672,8 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     }
   }
 
-  /// Compute the `Rect` to display a drag handle for an expanded selection.
+  /// Computes a zero width `Rect` that represents the x and y offsets and the height
+  /// of the handle in content space.
   ///
   /// The `Rect` returned by [DocumentLayout.getRectForPosition] doesn't match the
   /// top and bottom of the selection hightlight box. This method computes an
@@ -696,7 +697,9 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 
     if (extentNodePosition == null) {
       // We couldn't expand the selection neither to the left of the right. Fallback
-      // to rect for the position, which matches the caret top and bottom.
+      // to rect for the position, which relies on Flutter's computation for the
+      // caret offset and height. Flutter's computation produces different offset
+      // a height from what is returned by the selection highlight box.
       return widget.documentLayout.getRectForPosition(position)!;
     }
 

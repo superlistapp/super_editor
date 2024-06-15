@@ -274,6 +274,10 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
     return (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
   }
 
+  Offset _textPositionToTextOffset(TextPosition position) {
+    return _textLayout.getOffsetAtPosition(position);
+  }
+
   @override
   Widget build(BuildContext context) {
     final textFieldRenderObject = context.findRenderObject();
@@ -423,22 +427,41 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
         ? TextAffinity.downstream
         : TextAffinity.upstream;
 
-    final selectionBoxes = _textLayout.getBoxesForSelection(widget.editingController.textController.selection);
-    final upstreamSelectionBox = selectionBoxes.first;
-    final downstreamSelectionBox = selectionBoxes.last;
-
     final upstreamTextPosition = selectionDirection == TextAffinity.downstream
         ? widget.editingController.textController.selection.base
         : widget.editingController.textController.selection.extent;
 
-    final upstreamHandleOffsetInText = Offset(upstreamSelectionBox.left, upstreamSelectionBox.top);
-    final upstreamLineHeight = upstreamSelectionBox.bottom - upstreamSelectionBox.top;
-
     final downstreamTextPosition = selectionDirection == TextAffinity.downstream
         ? widget.editingController.textController.selection.extent
         : widget.editingController.textController.selection.base;
-    final downstreamHandleOffsetInText = Offset(downstreamSelectionBox.right, downstreamSelectionBox.top);
-    final downstreamLineHeight = downstreamSelectionBox.bottom - downstreamSelectionBox.top;
+
+    late final Offset upstreamHandleOffsetInText;
+    late final double upstreamLineHeight;
+
+    late final Offset downstreamHandleOffsetInText;
+    late final double downstreamLineHeight;
+
+    final selectionBoxes = _textLayout.getBoxesForSelection(widget.editingController.textController.selection);
+    if (selectionBoxes.isEmpty) {
+      // It's not documented if getBoxesForSelection is guaranteed to return a non-empty list. Therefore,
+      // fallback to using character box to get the handle's offset and height.
+      upstreamHandleOffsetInText = _textPositionToTextOffset(upstreamTextPosition);
+      upstreamLineHeight =
+          _textLayout.getCharacterBox(upstreamTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
+
+      downstreamHandleOffsetInText = _textPositionToTextOffset(downstreamTextPosition);
+      downstreamLineHeight =
+          _textLayout.getCharacterBox(downstreamTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
+    } else {
+      final upstreamSelectionBox = selectionBoxes.first;
+      final downstreamSelectionBox = selectionBoxes.last;
+
+      upstreamHandleOffsetInText = Offset(upstreamSelectionBox.left, upstreamSelectionBox.top);
+      upstreamLineHeight = upstreamSelectionBox.bottom - upstreamSelectionBox.top;
+
+      downstreamHandleOffsetInText = Offset(downstreamSelectionBox.right, downstreamSelectionBox.top);
+      downstreamLineHeight = downstreamSelectionBox.bottom - downstreamSelectionBox.top;
+    }
 
     if (upstreamLineHeight == 0 || downstreamLineHeight == 0) {
       _log.finer('Not building expanded handles because the text layout reported a zero line-height');
@@ -495,9 +518,9 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
           -12,
           isUpstreamHandle
               // For the upstream handle, the ball is displayed above the text, partially
-              // overlapping the selected area. Decrease the ball diameter so the ball is positioned
-              // above the selected area, and add half of the radius to make the ball overlap with
-              // the selected area.
+              // overlapping the selected area. Decrease the ball diameter from the handle offset
+              // so the ball is positioned above the selected area, and add half of the radius to
+              // make the ball overlap with the selected area.
               ? -selectionHighlightBoxTopPixelsDecrement - defaultIosHandleBallDiameter + (ballRadius / 2)
               : -selectionHighlightBoxTopPixelsDecrement,
         ),
