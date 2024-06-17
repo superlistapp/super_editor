@@ -109,6 +109,12 @@ abstract class DocumentLayout {
   DocumentPosition? findLastSelectablePosition();
 }
 
+abstract class ScrollableDocumentLayout extends DocumentLayout {
+  void ensureVisible(DocumentPosition position);
+  void animateToBeginningOfDocument({required Duration duration, required Curve curve});
+  void animateToEndOfDocument({required Duration duration, required Curve curve});
+}
+
 /// Contract for all widgets that operate as document components
 /// within a [DocumentLayout].
 ///

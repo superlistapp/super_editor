@@ -99,16 +99,16 @@ class _SelectionLeadersDocumentLayerState
 
     if (documentSelection.isCollapsed) {
       return DocumentSelectionLayout(
-        caret: documentLayout.getRectForPosition(documentSelection.extent)!,
+        caret: documentLayout.getRectForPosition(documentSelection.extent),
       );
     } else {
       return DocumentSelectionLayout(
         upstream: documentLayout.getRectForPosition(
           widget.document.selectUpstreamPosition(documentSelection.base, documentSelection.extent),
-        )!,
+        ),
         downstream: documentLayout.getRectForPosition(
           widget.document.selectDownstreamPosition(documentSelection.base, documentSelection.extent),
-        )!,
+        ),
         expandedSelectionBounds: documentLayout.getRectForSelection(
           documentSelection.base,
           documentSelection.extent,
