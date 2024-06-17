@@ -302,7 +302,7 @@ Future<TestDocumentContext> _pumpTestAppWithGoldenBricksFont(WidgetTester tester
           StyleRule(
             BlockSelector.all,
             (doc, docNode) => {
-              Styles.textStyle: TextStyle(
+              Styles.textStyle: const TextStyle(
                 fontFamily: goldenBricks,
               )
             },

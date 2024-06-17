@@ -50,11 +50,11 @@ void main() {
       );
 
       // Move a little bit to start the swipe to pop gesture.
-      await gesture.moveBy(Offset(20, 0));
+      await gesture.moveBy(const Offset(20, 0));
       await tester.pump();
 
       // Move to the right side of the screen to trigger the route pop.
-      await gesture.moveBy(Offset(200, 0));
+      await gesture.moveBy(const Offset(200, 0));
       await tester.pump();
 
       // Let the long press timer resolve.
@@ -103,6 +103,6 @@ class _AutoPushRouteState extends State<_AutoPushRoute> {
 
   @override
   Widget build(BuildContext context) {
-    return Placeholder();
+    return const Placeholder();
   }
 }
