@@ -423,9 +423,9 @@ void main() {
       await tester.pump(kTapMinTime);
 
       // Trigger a horizontal drag.
-      await gesture.moveBy(Offset(20, 0));
+      await gesture.moveBy(const Offset(20, 0));
       await tester.pump();
-      await gesture.moveBy(Offset(20, 0));
+      await gesture.moveBy(const Offset(20, 0));
       await tester.pump();
 
       // Release the gesture.
