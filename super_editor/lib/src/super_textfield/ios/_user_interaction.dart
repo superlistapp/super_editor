@@ -5,7 +5,9 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/flutter/text_selection.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/selection_heuristics.dart';
 import 'package:super_editor/src/super_textfield/super_textfield.dart';
+import 'package:super_editor/src/test/test_globals.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '_editing_controls.dart';
@@ -196,16 +198,18 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       widget.focusNode.requestFocus();
     }
 
-    final exactTapTextPosition = _getTextPositionAtOffset(details.localPosition);
-    final didTapOnExistingSelection = exactTapTextPosition != null &&
+    final exactTapTextPosition = _getTextPositionNearestToOffset(details.localPosition);
+    final adjustedTapTextPosition =
+        exactTapTextPosition != null ? _moveTapPositionToWordBoundary(exactTapTextPosition) : null;
+    final didTapOnExistingSelection = adjustedTapTextPosition != null &&
         _selectionBeforeTap != null &&
         (_selectionBeforeTap!.isCollapsed
-            ? exactTapTextPosition.offset == _selectionBeforeTap!.extent.offset
-            : exactTapTextPosition.offset >= _selectionBeforeTap!.start &&
-                exactTapTextPosition.offset <= _selectionBeforeTap!.end);
+            ? adjustedTapTextPosition.offset == _selectionBeforeTap!.extent.offset
+            : adjustedTapTextPosition.offset >= _selectionBeforeTap!.start &&
+                adjustedTapTextPosition.offset <= _selectionBeforeTap!.end);
 
     // Select the text that's nearest to where the user tapped.
-    _selectAtOffset(details.localPosition);
+    _selectPosition(adjustedTapTextPosition);
 
     final didCaretStayInSamePlace = _selectionBeforeTap != null &&
         _selectionBeforeTap?.hasSameBoundsAs(widget.textController.selection) == true &&
@@ -227,18 +231,38 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     _selectionBeforeTap = null;
   }
 
-  /// Places the caret in the field's text based on the given [localOffset],
-  /// and displays the drag handle.
-  void _selectAtOffset(Offset localOffset) {
-    final tapTextPosition = _getTextPositionNearestToOffset(localOffset);
-    if (tapTextPosition == null || tapTextPosition.offset < 0) {
+  TextPosition _moveTapPositionToWordBoundary(TextPosition textPosition) {
+    if (Testing.isInTest) {
+      // Don't adjust the tap location in tests because we want tests to be
+      // able to precisely position the caret at a given offset.
+      // TODO: Make this decision configurable, similar to SuperEditor, so that
+      //       we can add tests for this behavior.
+      return textPosition;
+    }
+
+    if (textPosition.offset < 0) {
+      return textPosition;
+    }
+
+    final text = widget.textController.text.text;
+    final tapOffset = textPosition.offset;
+    if (tapOffset == text.length) {
+      return textPosition;
+    }
+    final adjustedSelectionOffset = IosHeuristics.adjustTapOffset(text, tapOffset);
+
+    return TextPosition(offset: adjustedSelectionOffset);
+  }
+
+  void _selectPosition(TextPosition? textPosition) {
+    if (textPosition == null || textPosition.offset < 0) {
       // This situation indicates the user tapped in empty space
       widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.length);
       return;
     }
 
     // Update the text selection to a collapsed selection where the user tapped.
-    widget.textController.selection = TextSelection.collapsed(offset: tapTextPosition.offset);
+    widget.textController.selection = TextSelection.collapsed(offset: textPosition.offset);
     widget.textController.composingRegion = TextRange.empty;
   }
 

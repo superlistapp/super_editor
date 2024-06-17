@@ -102,11 +102,10 @@ void main() {
           ..physicalSize = screenSizeBigger;
 
         final docKey = GlobalKey();
-        await tester.pumpWidget(
-          _createTestApp(
-            gestureMode: DocumentGestureMode.mouse,
-            docKey: docKey,
-          ),
+        await _pumpScaffold(
+          tester,
+          gestureMode: DocumentGestureMode.mouse,
+          docKey: docKey,
         );
         await tester.pumpAndSettle();
 
@@ -134,11 +133,10 @@ void main() {
           ..physicalSize = screenSizeSmaller;
 
         final docKey = GlobalKey();
-        await tester.pumpWidget(
-          _createTestApp(
-            gestureMode: DocumentGestureMode.mouse,
-            docKey: docKey,
-          ),
+        await _pumpScaffold(
+          tester,
+          gestureMode: DocumentGestureMode.mouse,
+          docKey: docKey,
         );
         await tester.pumpAndSettle();
 
@@ -172,11 +170,10 @@ void main() {
             ..physicalSize = screenSizePortrait;
 
           final docKey = GlobalKey();
-          await tester.pumpWidget(
-            _createTestApp(
-              gestureMode: DocumentGestureMode.android,
-              docKey: docKey,
-            ),
+          await _pumpScaffold(
+            tester,
+            gestureMode: DocumentGestureMode.android,
+            docKey: docKey,
           );
           await tester.pumpAndSettle();
 
@@ -206,11 +203,10 @@ void main() {
             ..physicalSize = screenSizeLandscape;
 
           final docKey = GlobalKey();
-          await tester.pumpWidget(
-            _createTestApp(
-              gestureMode: DocumentGestureMode.android,
-              docKey: docKey,
-            ),
+          await _pumpScaffold(
+            tester,
+            gestureMode: DocumentGestureMode.android,
+            docKey: docKey,
           );
           await tester.pumpAndSettle();
 
@@ -245,11 +241,10 @@ void main() {
             ..physicalSize = screenSizePortrait;
 
           final docKey = GlobalKey();
-          await tester.pumpWidget(
-            _createTestApp(
-              gestureMode: DocumentGestureMode.iOS,
-              docKey: docKey,
-            ),
+          await _pumpScaffold(
+            tester,
+            gestureMode: DocumentGestureMode.iOS,
+            docKey: docKey,
           );
           await tester.pumpAndSettle();
 
@@ -282,11 +277,10 @@ void main() {
             ..physicalSize = screenSizeLandscape;
 
           final docKey = GlobalKey();
-          await tester.pumpWidget(
-            _createTestApp(
-              gestureMode: DocumentGestureMode.iOS,
-              docKey: docKey,
-            ),
+          await _pumpScaffold(
+            tester,
+            gestureMode: DocumentGestureMode.iOS,
+            docKey: docKey,
           );
           await tester.pumpAndSettle();
 
@@ -378,22 +372,17 @@ void main() {
   });
 }
 
-Widget _createTestApp({required DocumentGestureMode gestureMode, required GlobalKey docKey}) {
-  final doc = _createTestDocument();
-  final composer = MutableDocumentComposer();
-  final editor = createDefaultDocumentEditor(document: doc, composer: composer);
-
-  return MaterialApp(
-    home: Scaffold(
-      body: SuperEditor(
-        documentLayoutKey: docKey,
-        editor: editor,
-        document: doc,
-        composer: composer,
-        gestureMode: gestureMode,
-      ),
-    ),
-  );
+Future<TestDocumentContext> _pumpScaffold(
+  WidgetTester tester, {
+  required DocumentGestureMode gestureMode,
+  required GlobalKey docKey,
+}) async {
+  return await tester
+      .createDocument()
+      .withCustomContent(_createTestDocument())
+      .withGestureMode(gestureMode)
+      .withLayoutKey(docKey)
+      .pump();
 }
 
 /// Given a [textPosition], compute the expected (x,y) for the caret within the document layout.
