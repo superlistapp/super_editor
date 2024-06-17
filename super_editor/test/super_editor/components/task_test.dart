@@ -637,12 +637,44 @@ void main() {
         expect(SuperEditorInspector.findTaskIndent("2"), 1);
       });
 
-      testWidgetsOnDesktop("does not apply to child tasks", (tester) async {
+      testWidgetsOnDesktop("Backspace at start of text un-indents task", (tester) async {
         final document = MutableDocument(
           nodes: [
-            TaskNode(id: "1", text: AttributedText("parent"), isComplete: false),
-            TaskNode(id: "2", text: AttributedText("child one"), isComplete: false),
-            TaskNode(id: "3", text: AttributedText("child two"), isComplete: false),
+            TaskNode(id: "1", text: AttributedText("one"), isComplete: false),
+            TaskNode(id: "2", text: AttributedText("two"), isComplete: false, indent: 1),
+          ],
+        );
+        await _pumpSingleEmptyTaskApp(tester, document: document);
+
+        // Ensure the second task is indented.
+        expect(SuperEditorInspector.findTaskIndent("2"), 1);
+
+        // Place the caret at the end of the indented task.
+        await tester.placeCaretInParagraph("2", 3);
+
+        // Press Backspace to delete one character.
+        await tester.pressBackspace();
+
+        // Ensure that the Backspace deleted a character, instead of un-indenting.
+        expect(SuperEditorInspector.findTaskIndent("2"), 1);
+        expect(SuperEditorInspector.findTextInComponent("2").text, "tw");
+
+        // Place caret at start of task.
+        await tester.placeCaretInParagraph("2", 0);
+
+        // Press Backspace to un-indent the task.
+        await tester.pressBackspace();
+
+        // Ensure the task was un-indented..
+        expect(SuperEditorInspector.findTaskIndent("2"), 0);
+      });
+
+      testWidgetsOnDesktop("does not apply to following tasks at same level", (tester) async {
+        final document = MutableDocument(
+          nodes: [
+            TaskNode(id: "1", text: AttributedText("one"), isComplete: false),
+            TaskNode(id: "2", text: AttributedText("two"), isComplete: false),
+            TaskNode(id: "3", text: AttributedText("three"), isComplete: false),
           ],
         );
         await _pumpSingleEmptyTaskApp(tester, document: document);
@@ -684,6 +716,29 @@ void main() {
 
         // Ensure the 4th task is indented to level 3.
         expect(SuperEditorInspector.findTaskIndent("4"), 3);
+      });
+
+      testWidgetsOnDesktop("does not indent more than one space past the parent", (tester) async {
+        final document = MutableDocument(
+          nodes: [
+            TaskNode(id: "1", text: AttributedText("one"), isComplete: false),
+            TaskNode(id: "2", text: AttributedText("two"), isComplete: false, indent: 1),
+            TaskNode(id: "3", text: AttributedText("three"), isComplete: false, indent: 2),
+          ],
+        );
+        await _pumpSingleEmptyTaskApp(tester, document: document);
+
+        // Place the caret in the child task.
+        await tester.placeCaretInParagraph("2", 0);
+
+        // Ensure the task is initially indented at level 1.
+        expect(SuperEditorInspector.findTaskIndent("2"), 1);
+
+        // Press Tab to attempt to further indent.
+        await tester.pressTab();
+
+        // Ensure the indent didn't change because it was already at max indent.
+        expect(SuperEditorInspector.findTaskIndent("2"), 1);
       });
 
       testWidgetsOnDesktop("unindenting parent pulls children back", (tester) async {

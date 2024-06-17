@@ -523,6 +523,10 @@ ExecutionInstruction backspaceToUnIndentTask({
   if (node is! TaskNode) {
     return ExecutionInstruction.continueExecution;
   }
+  if ((editContext.composer.selection!.extent.nodePosition as TextPosition).offset > 0) {
+    // Backspace should only un-indent if the caret is at the start of the text.
+    return ExecutionInstruction.continueExecution;
+  }
 
   if (node.indent == 0) {
     // Can't un-indent any further.
