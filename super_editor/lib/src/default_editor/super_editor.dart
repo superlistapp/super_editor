@@ -693,6 +693,7 @@ class SuperEditorState extends State<SuperEditor> {
             restorePreviousSelectionOnGainFocus: widget.selectionPolicies.restorePreviousSelectionOnGainFocus,
             clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
             child: DocumentScaffold(
+              documentSelection: _composer.selectionNotifier,
               documentLayoutLink: _documentLayoutLink,
               documentLayoutKey: _docLayoutKey,
               viewportDecorationBuilder: _buildPlatformSpecificViewportDecorations,

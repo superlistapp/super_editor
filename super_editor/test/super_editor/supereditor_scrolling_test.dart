@@ -1238,7 +1238,7 @@ void main() {
 
         // Ensure the we scrolled back to the end.
         expect(scrollController.offset, scrollController.position.maxScrollExtent);
-      });
+      }, skip: true /* macScrollExtent can't work with SuperSliverList */);
 
       group('respects horizontal scrolling', () {
         testWidgetsOnAllPlatforms('inside a TabBar', (tester) async {
