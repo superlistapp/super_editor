@@ -236,9 +236,17 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     onNextFrame((_) {
       editorGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
 
-      final globalExtentRect = _getSelectionExtentAsGlobalRect();
-      if (globalExtentRect != null) {
-        widget.autoScroller.ensureGlobalRectIsVisible(globalExtentRect);
+      final layout = _docLayout;
+      if (layout is ScrollableDocumentLayout) {
+        final selection = _currentSelection;
+        if (selection != null) {
+          layout.ensureVisible(selection.extent);
+        }
+      } else {
+        final globalExtentRect = _getSelectionExtentAsGlobalRect();
+        if (globalExtentRect != null) {
+          widget.autoScroller.ensureGlobalRectIsVisible(globalExtentRect);
+        }
       }
     });
   }

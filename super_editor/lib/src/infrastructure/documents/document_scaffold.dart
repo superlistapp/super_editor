@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/_layout.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/_presenter.dart';
@@ -27,6 +29,7 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
     required this.presenter,
     required this.componentBuilders,
     required this.shrinkWrap,
+    this.documentSelection,
     this.underlays = const [],
     this.overlays = const [],
     this.debugPaint = const DebugPaintConfig(),
@@ -86,6 +89,8 @@ class DocumentScaffold<ContextType> extends StatefulWidget {
   /// Only used when the document is not inside a scrollable.
   final bool shrinkWrap;
 
+  final ValueListenable<DocumentSelection?>? documentSelection;
+
   @override
   State<DocumentScaffold> createState() => _DocumentScaffoldState();
 }
@@ -141,6 +146,7 @@ class _DocumentScaffoldState extends State<DocumentScaffold> {
         componentBuilders: widget.componentBuilders,
         onBuildScheduled: onBuildScheduled,
         showDebugPaint: widget.debugPaint.layout,
+        documentSelection: widget.documentSelection,
       ),
       underlays: widget.underlays,
       overlays: widget.overlays,

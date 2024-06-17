@@ -741,19 +741,33 @@ void deleteForward(SuperEditorContext context) {
 }
 
 void scrollToBeginningOfDocument(SuperEditorContext context) {
-  context.scroller.animateTo(
-    context.scroller.minScrollExtent,
-    duration: const Duration(milliseconds: 150),
-    curve: Curves.decelerate,
-  );
+  if (context.documentLayout is ScrollableDocumentLayout) {
+    (context.documentLayout as ScrollableDocumentLayout).animateToBeginningOfDocument(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+  } else {
+    context.scroller.animateTo(
+      context.scroller.minScrollExtent,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+  }
 }
 
 void scrollToEndOfDocument(SuperEditorContext context) {
-  context.scroller.animateTo(
-    context.scroller.maxScrollExtent,
-    duration: const Duration(milliseconds: 150),
-    curve: Curves.decelerate,
-  );
+  if (context.documentLayout is ScrollableDocumentLayout) {
+    (context.documentLayout as ScrollableDocumentLayout).animateToEndOfDocument(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+  } else {
+    context.scroller.animateTo(
+      context.scroller.maxScrollExtent,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.decelerate,
+    );
+  }
 }
 
 void scrollPageUp(SuperEditorContext context) {

@@ -150,7 +150,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
     // TODO: switch this to use a Leader and Follower
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final layout = _docLayoutKey.currentState as DocumentLayout;
-      final docBoundingBox = layout.getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
+      final docBoundingBox = layout.getRectForSelection(_composer.selection!.base, _composer.selection!.extent);
+      if (docBoundingBox == null) {
+        return;
+      }
       final globalOffset = layout.getGlobalOffsetFromDocumentOffset(Offset.zero);
       final overlayBoundingBox = docBoundingBox.shift(globalOffset);
 
