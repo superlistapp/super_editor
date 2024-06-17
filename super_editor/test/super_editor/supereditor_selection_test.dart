@@ -58,14 +58,10 @@ void main() {
                       'Lorem ipsum dolor',
                       AttributedSpans(
                         attributions: [
-                          SpanMarker(
-                              attribution: const ColorAttribution(Colors.green),
-                              offset: 0,
-                              markerType: SpanMarkerType.start),
-                          SpanMarker(
-                              attribution: const ColorAttribution(Colors.green),
-                              offset: 16,
-                              markerType: SpanMarkerType.end),
+                          const SpanMarker(
+                              attribution: ColorAttribution(Colors.green), offset: 0, markerType: SpanMarkerType.start),
+                          const SpanMarker(
+                              attribution: ColorAttribution(Colors.green), offset: 16, markerType: SpanMarkerType.end),
                         ],
                       ),
                     ),
