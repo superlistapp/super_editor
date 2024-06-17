@@ -16,6 +16,7 @@ export 'src/core/styles.dart';
 
 // Super Editor
 export 'src/default_editor/attributions.dart';
+export 'src/default_editor/blocks/indentation.dart';
 export 'src/default_editor/blockquote.dart';
 export 'src/default_editor/box_component.dart';
 export 'src/default_editor/common_editor_operations.dart';

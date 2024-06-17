@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// This file includes everything needed to add the concept of a task
@@ -147,6 +148,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     double? maxWidth,
     required EdgeInsetsGeometry padding,
     this.indent = 0,
+    this.indentCalculator = defaultTaskIndentCalculator,
     required this.isComplete,
     required this.setComplete,
     required this.text,
@@ -161,6 +163,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   int indent;
+  TextBlockIndentCalculator indentCalculator;
+
   bool isComplete;
   void Function(bool) setComplete;
 
@@ -190,6 +194,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       maxWidth: maxWidth,
       padding: padding,
       indent: indent,
+      indentCalculator: indentCalculator,
       isComplete: isComplete,
       setComplete: setComplete,
       text: text,
@@ -210,6 +215,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           other is TaskComponentViewModel &&
           runtimeType == other.runtimeType &&
           indent == other.indent &&
+          indentCalculator == other.indentCalculator &&
           isComplete == other.isComplete &&
           text == other.text &&
           textDirection == other.textDirection &&
@@ -224,6 +230,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   int get hashCode =>
       super.hashCode ^
       indent.hashCode ^
+      indentCalculator.hashCode ^
       isComplete.hashCode ^
       text.hashCode ^
       textDirection.hashCode ^
@@ -233,6 +240,11 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       highlightWhenEmpty.hashCode ^
       composingRegion.hashCode ^
       showComposingUnderline.hashCode;
+}
+
+/// The standard [TextBlockIndentCalculator] used by tasks in `SuperEditor`.
+double defaultTaskIndentCalculator(TextStyle textStyle, int indent) {
+  return (textStyle.fontSize! * 0.60) * 4 * indent;
 }
 
 /// A document component that displays a complete-able task.
@@ -284,9 +296,11 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // TODO: create a space calculator like list items
         SizedBox(
-          width: 24.0 * widget.viewModel.indent,
+          width: widget.viewModel.indentCalculator(
+            widget.viewModel.textStyleBuilder({}),
+            widget.viewModel.indent,
+          ),
         ),
         Padding(
           padding: const EdgeInsets.only(left: 16, right: 4),
