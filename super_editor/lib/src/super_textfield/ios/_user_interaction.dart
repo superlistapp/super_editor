@@ -198,10 +198,9 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       widget.focusNode.requestFocus();
     }
 
-    final exactTapTextPosition = _getTextPositionAtOffset(details.localPosition);
-    // final adjustedTapTextPosition =
-    //     exactTapTextPosition != null ? _moveTapPositionToWordBoundary(exactTapTextPosition) : null;
-    final adjustedTapTextPosition = exactTapTextPosition;
+    final exactTapTextPosition = _getTextPositionNearestToOffset(details.localPosition);
+    final adjustedTapTextPosition =
+        exactTapTextPosition != null ? _moveTapPositionToWordBoundary(exactTapTextPosition) : null;
     final didTapOnExistingSelection = adjustedTapTextPosition != null &&
         _selectionBeforeTap != null &&
         (_selectionBeforeTap!.isCollapsed
