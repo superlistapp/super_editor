@@ -16,11 +16,11 @@ void main() {
           // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
           await _pumpAppWithLongText(tester);
 
-          // Tap near the end of a word "consectet|ur"
+          // Tap near the end of a word "consectet|ur".
           await tester.tapInParagraph("1", 37);
           await tester.pumpAndSettle();
 
-          // Ensure that the caret is at the end of the world "consectetur|"
+          // Ensure that the caret is at the end of the world "consectetur|".
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -31,11 +31,11 @@ void main() {
             ),
           );
 
-          // Tap near the middle of a word "adipi|scing"
+          // Tap near the middle of a word "adipi|scing".
           await tester.tapInParagraph("1", 45);
           await tester.pumpAndSettle();
 
-          // Ensure that the caret is at the end of the world "adipiscing|"
+          // Ensure that the caret is at the end of the world "adipiscing|".
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -46,11 +46,11 @@ void main() {
             ),
           );
 
-          // Tap near the beginning of a word "co|nsectetur"
+          // Tap near the beginning of a word "co|nsectetur".
           await tester.tapInParagraph("1", 30);
           await tester.pumpAndSettle();
 
-          // Ensure that the caret is at the end of the word "consectetur|"
+          // Ensure that the caret is at the end of the word "consectetur|".
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -67,11 +67,11 @@ void main() {
           // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
           await _pumpAppWithLongText(tester);
 
-          // Tap just before first character of word " |consectetur"
+          // Tap just before first character of word " |consectetur".
           await tester.tapInParagraph("1", 28);
           await tester.pumpAndSettle();
 
-          // Ensure that the caret is at the start of the world "|consectetur"
+          // Ensure that the caret is at the start of the world "|consectetur".
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -82,11 +82,11 @@ void main() {
             ),
           );
 
-          // Tap just after the start of the word " a|dipiscing"
+          // Tap just after the start of the word " a|dipiscing".
           await tester.tapInParagraph("1", 41);
           await tester.pumpAndSettle();
 
-          // Ensure that the caret is at the start of the word " |adipiscing"
+          // Ensure that the caret is at the start of the word " |adipiscing".
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -106,7 +106,7 @@ void main() {
           // Ensure that no overlay controls are visible.
           _expectNoControlsAreVisible();
 
-          // Long press on the middle of "conse|ctetur"
+          // Long press on the middle of "conse|ctetur".
           await tester.longPressInParagraph("1", 33);
           await tester.pumpAndSettle();
 
@@ -124,7 +124,7 @@ void main() {
 
           await _pumpAppWithLongText(tester);
 
-          // Long press down on the middle of "conse|ctetur"
+          // Long press down on the middle of "conse|ctetur".
           final gesture = await tester.longPressDownInParagraph("1", 33);
           await tester.pump();
 
