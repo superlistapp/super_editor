@@ -235,6 +235,16 @@ class SuperEditorInspector {
     return listItem.listIndex;
   }
 
+  /// Finds the task with the given [nodeId] and returns its indent level.
+  ///
+  /// Indent levels start at zero and increment by `1` for each level.
+  ///
+  /// {@macro supereditor_finder}
+  static int findTaskIndent(String nodeId, [Finder? superEditorFinder]) {
+    final component = SuperEditorInspector.findWidgetForComponent(nodeId) as TaskComponent;
+    return component.viewModel.indent;
+  }
+
   /// Calculates the delta between the center of the character at [textOffset1] and and the
   /// center of the character at [textOffset2] within the node with the given [nodeId].
   ///

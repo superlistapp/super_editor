@@ -22,7 +22,9 @@ class TaskNode extends TextNode {
     required AttributedText text,
     Map<String, dynamic>? metadata,
     required bool isComplete,
+    int indent = 0,
   })  : _isComplete = isComplete,
+        _indent = indent,
         super(id: id, text: text, metadata: metadata) {
     // Set a block type so that TaskNode's can be styled by
     // StyleRule's.
@@ -41,6 +43,20 @@ class TaskNode extends TextNode {
     notifyListeners();
   }
 
+  /// The indent level of this task - `0` is no indent.
+  ///
+  /// A task can only be indented one level beyond its parent task.
+  int get indent => _indent;
+  int _indent;
+  set indent(int newValue) {
+    if (newValue == _indent) {
+      return;
+    }
+
+    _indent = newValue;
+    notifyListeners();
+  }
+
   @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is TaskNode && isComplete == other.isComplete && text == other.text;
@@ -49,10 +65,14 @@ class TaskNode extends TextNode {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      super == other && other is TaskNode && runtimeType == other.runtimeType && isComplete == other.isComplete;
+      super == other &&
+          other is TaskNode &&
+          runtimeType == other.runtimeType &&
+          isComplete == other.isComplete &&
+          indent == other.indent;
 
   @override
-  int get hashCode => super.hashCode ^ isComplete.hashCode;
+  int get hashCode => super.hashCode ^ isComplete.hashCode ^ indent.hashCode;
 }
 
 /// Styles all task components to apply top padding
@@ -85,6 +105,7 @@ class TaskComponentBuilder implements ComponentBuilder {
     return TaskComponentViewModel(
       nodeId: node.id,
       padding: EdgeInsets.zero,
+      indent: node.indent,
       isComplete: node.isComplete,
       setComplete: (bool isComplete) {
         _editor.execute([
@@ -125,6 +146,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     required String nodeId,
     double? maxWidth,
     required EdgeInsetsGeometry padding,
+    this.indent = 0,
     required this.isComplete,
     required this.setComplete,
     required this.text,
@@ -138,6 +160,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
+  int indent;
   bool isComplete;
   void Function(bool) setComplete;
 
@@ -166,6 +189,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
+      indent: indent,
       isComplete: isComplete,
       setComplete: setComplete,
       text: text,
@@ -185,6 +209,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       super == other &&
           other is TaskComponentViewModel &&
           runtimeType == other.runtimeType &&
+          indent == other.indent &&
           isComplete == other.isComplete &&
           text == other.text &&
           textDirection == other.textDirection &&
@@ -198,6 +223,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   @override
   int get hashCode =>
       super.hashCode ^
+      indent.hashCode ^
       isComplete.hashCode ^
       text.hashCode ^
       textDirection.hashCode ^
@@ -258,6 +284,10 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // TODO: create a space calculator like list items
+        SizedBox(
+          width: 24.0 * widget.viewModel.indent,
+        ),
         Padding(
           padding: const EdgeInsets.only(left: 16, right: 4),
           child: Checkbox(
@@ -361,6 +391,146 @@ ExecutionInstruction backspaceToConvertTaskToParagraph({
 
   editContext.editor.execute([
     DeleteUpstreamAtBeginningOfNodeRequest(node),
+  ]);
+
+  return ExecutionInstruction.haltExecution;
+}
+
+ExecutionInstruction tabToIndentTask({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (HardwareKeyboard.instance.isShiftPressed) {
+    // Don't indent if Shift is pressed - that's for un-indenting.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final selection = editContext.composer.selection;
+  if (selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (selection.base.nodeId != selection.extent.nodeId) {
+    // Selection spans nodes, so even if this selection includes a task,
+    // it includes other stuff, too. So we can't treat this as a task indentation.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! TaskNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final nodeIndex = editContext.document.getNodeIndexById(node.id);
+  if (nodeIndex == 0) {
+    // No task above us, so we can't indent.
+    return ExecutionInstruction.continueExecution;
+  }
+  final taskAbove = editContext.document.getNodeAt(nodeIndex - 1);
+  if (taskAbove is! TaskNode) {
+    // The node above isn't a task. We can't indent.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final maxIndent = taskAbove.indent + 1;
+  if (node.indent >= maxIndent) {
+    // Can't indent any further.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.editor.execute([
+    IndentTaskRequest(node.id),
+  ]);
+
+  return ExecutionInstruction.haltExecution;
+}
+
+ExecutionInstruction shiftTabToUnIndentTask({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!HardwareKeyboard.instance.isShiftPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final selection = editContext.composer.selection;
+  if (selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (selection.base.nodeId != selection.extent.nodeId) {
+    // Selection spans nodes, so even if this selection includes a task,
+    // it includes other stuff, too. So we can't treat this as a task indentation.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! TaskNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (node.indent == 0) {
+    // Can't un-indent any further.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.editor.execute([
+    UnIndentTaskRequest(node.id),
+  ]);
+
+  return ExecutionInstruction.haltExecution;
+}
+
+ExecutionInstruction backspaceToUnIndentTask({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final selection = editContext.composer.selection;
+  if (selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (selection.base.nodeId != selection.extent.nodeId) {
+    // Selection spans nodes, so even if this selection includes a task,
+    // it includes other stuff, too. So we can't treat this as a task indentation.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! TaskNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (node.indent == 0) {
+    // Can't un-indent any further.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.editor.execute([
+    UnIndentTaskRequest(node.id),
   ]);
 
   return ExecutionInstruction.haltExecution;
@@ -588,4 +758,211 @@ class SplitTaskIntention extends Intention {
   SplitTaskIntention.start() : super.start();
 
   SplitTaskIntention.end() : super.end();
+}
+
+class IndentTaskRequest implements EditRequest {
+  const IndentTaskRequest(this.nodeId);
+
+  final String nodeId;
+}
+
+class IndentTaskCommand implements EditCommand {
+  const IndentTaskCommand(this.nodeId);
+
+  final String nodeId;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    final task = document.getNodeById(nodeId);
+    if (task is! TaskNode) {
+      // The specified node isn't a task. Nothing for us to indent.
+      return;
+    }
+
+    final taskIndex = document.getNodeIndexById(task.id);
+    if (taskIndex == 0) {
+      // There's no task above this task, therefore it can't be indented.
+      return;
+    }
+    final taskAbove = document.getNodeAt(taskIndex - 1);
+    if (taskAbove is! TaskNode) {
+      // There's no task above this task, therefore it can't be indented.
+      return;
+    }
+
+    final maxIndent = taskAbove.indent + 1;
+    if (task.indent >= maxIndent) {
+      // This task is already at max indentation.
+      return;
+    }
+
+    // Increase the task indentation.
+    task.indent += 1;
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(task.id),
+      ),
+    ]);
+  }
+}
+
+class UnIndentTaskRequest implements EditRequest {
+  const UnIndentTaskRequest(this.nodeId);
+
+  final String nodeId;
+}
+
+class UnIndentTaskCommand implements EditCommand {
+  const UnIndentTaskCommand(this.nodeId);
+
+  final String nodeId;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    final task = document.getNodeById(nodeId);
+    if (task is! TaskNode) {
+      // The specified node isn't a task. Nothing for us to indent.
+      return;
+    }
+
+    if (task.indent == 0) {
+      // This task is already at minimum indent. Nothing to do.
+      return;
+    }
+
+    final subTasks = <TaskNode>[];
+    int index = document.getNodeIndexById(task.id) + 1;
+    while (index < document.nodes.length) {
+      final subTask = document.getNodeAt(index);
+      if (subTask is! TaskNode) {
+        break;
+      }
+      if (subTask.indent <= task.indent) {
+        break;
+      }
+
+      subTasks.add(subTask);
+      index += 1;
+    }
+
+    final changeLog = <DocumentEdit>[];
+
+    // Decrease the task indentation of the desired task.
+    task.indent -= 1;
+    changeLog.add(
+      DocumentEdit(
+        NodeChangeEvent(task.id),
+      ),
+    );
+
+    // Decrease the indentation of the sub-tasks.
+    for (final subTask in subTasks) {
+      subTask.indent -= 1;
+      changeLog.add(
+        DocumentEdit(
+          NodeChangeEvent(subTask.id),
+        ),
+      );
+    }
+
+    // Log all changes.
+    executor.logChanges(changeLog);
+  }
+}
+
+/// Sets the indent of the task with ID [nodeId] to the given [indent].
+///
+/// This request doesn't verify any rules about allowed indentation
+/// levels. It blindly applies the indent. Therefore, this request should
+/// only be issued from places that have already validated the result.
+class SetTaskIndentRequest implements EditRequest {
+  const SetTaskIndentRequest(this.nodeId, this.indent);
+
+  final String nodeId;
+  final int indent;
+}
+
+class SetTaskIndentCommand implements EditCommand {
+  const SetTaskIndentCommand(this.nodeId, this.indent);
+
+  final String nodeId;
+  final int indent;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    final task = document.getNodeById(nodeId);
+    if (task is! TaskNode) {
+      // The specified node isn't a task. Nothing for us to indent.
+      return;
+    }
+
+    task.indent = indent;
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(task.id),
+      ),
+    ]);
+  }
+}
+
+class UpdateSubTaskIndentAfterTaskDeletionReaction implements EditReaction {
+  @override
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    final didDeleteTask = changeList
+        .whereType<DocumentEdit>()
+        .where((edit) => edit.change is NodeRemovedEvent && (edit.change as NodeRemovedEvent).removedNode is TaskNode)
+        .isNotEmpty;
+    if (!didDeleteTask) {
+      // No tasks were deleted, so there are no task indentations to fix.
+      return;
+    }
+
+    // At least one task was deleted. We're not sure where in the document the
+    // tasks were before being deleted. Therefore, we check and fix every task
+    // indentation in the document.
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
+    final changeIndentationRequests = <EditRequest>[];
+    int maxIndentation = 0;
+    for (int i = 0; i < document.nodes.length; i += 1) {
+      final node = document.getNodeAt(i);
+      if (node is! TaskNode) {
+        // This node isn't a task. The first task in a list of tasks
+        // can't have an indent, so reset the max indent back to zero.
+        maxIndentation = 0;
+        continue;
+      }
+
+      if (node.indent > maxIndentation) {
+        // This task has an indent that's too deep. Fix it by
+        // settings its indent to the max allowed.
+        changeIndentationRequests.add(
+          SetTaskIndentRequest(node.id, maxIndentation),
+        );
+
+        // A task that follows this one is allowed (up to) the previous
+        // max + 1.
+        maxIndentation += 1;
+        continue;
+      }
+
+      // This is a task with a legitimate indent. Update the
+      // max indent tracker based on this task's level.
+      maxIndentation = node.indent + 1;
+    }
+
+    if (changeIndentationRequests.isEmpty) {
+      // No changes needed.
+      return;
+    }
+
+    // Adjust all tasks with illegal indentations.
+    requestDispatcher.execute(changeIndentationRequests);
+  }
 }
