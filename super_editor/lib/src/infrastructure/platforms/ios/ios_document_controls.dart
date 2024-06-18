@@ -673,7 +673,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   }
 
   /// Computes a zero width `Rect` that represents the x and y offsets and the height
-  /// of the handle in content space.
+  /// of the upstream or downstream handle in content space.
   ///
   /// The `Rect` returned by [DocumentLayout.getRectForPosition] doesn't match the
   /// top and bottom of the selection hightlight box. This method computes an
