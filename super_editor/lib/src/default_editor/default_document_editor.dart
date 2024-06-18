@@ -164,6 +164,15 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           isComplete: request.isComplete,
         )
       : null,
+  (request) => request is IndentTaskRequest //
+      ? IndentTaskCommand(request.nodeId)
+      : null,
+  (request) => request is UnIndentTaskRequest //
+      ? UnIndentTaskCommand(request.nodeId)
+      : null,
+  (request) => request is SetTaskIndentRequest //
+      ? SetTaskIndentCommand(request.nodeId, request.indent)
+      : null,
   (request) => request is SplitExistingTaskRequest
       ? SplitExistingTaskCommand(
           nodeId: request.existingNodeId,
@@ -234,4 +243,6 @@ final defaultEditorReactions = List.unmodifiable([
   const ImageUrlConversionReaction(),
   const DashConversionReaction(),
   //---- End Content Conversions ---
+
+  UpdateSubTaskIndentAfterTaskDeletionReaction(),
 ]);
