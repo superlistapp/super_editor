@@ -166,9 +166,9 @@ class TextSelectionPainter extends CustomPainter {
       final rawRect = box.toRect();
       final rect = Rect.fromLTWH(
         rawRect.left,
-        rawRect.top - selectionHighlightBoxTopPixelsDecrement,
+        rawRect.top - selectionHighlightBoxVerticalExpansion,
         rawRect.width,
-        rawRect.height + selectionHighlightBoxBottomPixelsIncrement,
+        rawRect.height + (selectionHighlightBoxVerticalExpansion * 2),
       );
       final rrect = RRect.fromRectAndCorners(rect,
           topLeft: borderRadius.topLeft,
@@ -195,16 +195,13 @@ class TextSelectionPainter extends CustomPainter {
   }
 }
 
-/// The number of pixels to decrement from the top of selection box to display
-/// the selection highlight.
+/// How bigger the selection highlight box is than the natural selection box
+/// of the text in dip.
 ///
-/// The final selection highlight top is the top of the box returned by
-/// `TextLayout.getBoxesForSelection` minus [selectionHighlightBoxTopPixelsDecrement] pixels.
-const selectionHighlightBoxTopPixelsDecrement = 2.0;
-
-/// The number of pixels to increment from the bottom of selection box to display
-/// the selection highlight.
+/// [TextSelectionPainter] paints the selection highlight box by using the result
+/// of [TextLayout.getBoxesForSelection] and expanding both the top and bottom of
+/// each box by this amount.
 ///
-/// The final selection highlight top bottom the bottom of the box returned by
-/// `TextLayout.getBoxesForSelection` plus [selectionHighlightBoxBottomPixelsIncrement] pixels.
-const selectionHighlightBoxBottomPixelsIncrement = 4.0;
+/// This can be used to align other widgets, like the drag handles, with the
+/// selection highlight box.
+const selectionHighlightBoxVerticalExpansion = 2.0;
