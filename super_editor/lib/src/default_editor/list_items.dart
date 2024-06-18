@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
@@ -399,7 +400,7 @@ class UnorderedListItemComponent extends StatefulWidget {
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
     this.dotStyle,
     this.indent = 0,
-    this.indentCalculator = _defaultIndentCalculator,
+    this.indentCalculator = defaultListItemIndentCalculator,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
@@ -563,7 +564,7 @@ class OrderedListItemComponent extends StatefulWidget {
     this.numeralBuilder = _defaultOrderedListItemNumeralBuilder,
     this.numeralStyle = OrderedListNumeralStyle.arabic,
     this.indent = 0,
-    this.indentCalculator = _defaultIndentCalculator,
+    this.indentCalculator = defaultListItemIndentCalculator,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
@@ -581,7 +582,7 @@ class OrderedListItemComponent extends StatefulWidget {
   final OrderedListItemNumeralBuilder numeralBuilder;
   final OrderedListNumeralStyle numeralStyle;
   final int indent;
-  final double Function(TextStyle, int indent) indentCalculator;
+  final TextBlockIndentCalculator indentCalculator;
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool showCaret;
@@ -659,7 +660,8 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
 
 typedef OrderedListItemNumeralBuilder = Widget Function(BuildContext, OrderedListItemComponent);
 
-double _defaultIndentCalculator(TextStyle textStyle, int indent) {
+/// The standard [TextBlockIndentCalculator] used by list items in `SuperEditor`.
+double defaultListItemIndentCalculator(TextStyle textStyle, int indent) {
   return (textStyle.fontSize! * 0.60) * 4 * (indent + 1);
 }
 
