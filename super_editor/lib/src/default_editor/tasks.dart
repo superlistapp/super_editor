@@ -215,7 +215,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           other is TaskComponentViewModel &&
           runtimeType == other.runtimeType &&
           indent == other.indent &&
-          indentCalculator == other.indentCalculator &&
           isComplete == other.isComplete &&
           text == other.text &&
           textDirection == other.textDirection &&
@@ -230,7 +229,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   int get hashCode =>
       super.hashCode ^
       indent.hashCode ^
-      indentCalculator.hashCode ^
       isComplete.hashCode ^
       text.hashCode ^
       textDirection.hashCode ^
