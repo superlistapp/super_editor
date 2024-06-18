@@ -516,12 +516,13 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
       child: Transform.translate(
         offset: Offset(
           -12,
-          isUpstreamHandle
-              // For the upstream handle, the ball is displayed above the text, partially
-              // overlapping the selected area. Move the ball up so it's positioned above the selected area,
-              // and add half of the radius to make the ball overlap with the selected area.
-              ? -selectionHighlightBoxTopPixelsDecrement - defaultIosHandleBallDiameter + (ballRadius / 2)
-              : -selectionHighlightBoxTopPixelsDecrement,
+          -selectionHighlightBoxVerticalExpansion +
+              (isUpstreamHandle
+                  // For the upstream handle, the ball is displayed above the text, partially
+                  // overlapping the selected area. Move the ball up so it's positioned above the selected area,
+                  // and add half of the radius to make the ball overlap with the selected area.
+                  ? -defaultIosHandleBallDiameter + (ballRadius / 2)
+                  : 0),
         ),
         child: TapRegion(
           groupId: widget.tapRegionGroupId,

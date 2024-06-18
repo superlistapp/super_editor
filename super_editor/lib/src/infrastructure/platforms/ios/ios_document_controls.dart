@@ -857,14 +857,14 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       left: upstream.left,
       // Move the handle up so the ball is above the selected area and add half
       // of the radius to make the ball overlap the selected area.
-      top: upstream.top - selectionHighlightBoxTopPixelsDecrement - widget.handleBallDiameter + (ballRadius / 2),
+      top: upstream.top - selectionHighlightBoxVerticalExpansion - widget.handleBallDiameter + (ballRadius / 2),
       child: FractionalTranslation(
         translation: const Offset(-0.5, 0),
         child: IOSSelectionHandle.upstream(
           key: DocumentKeys.upstreamHandle,
           color: widget.handleColor,
           handleType: HandleType.upstream,
-          caretHeight: upstream.height + selectionHighlightBoxBottomPixelsIncrement - (ballRadius / 2),
+          caretHeight: upstream.height + (selectionHighlightBoxVerticalExpansion * 2) - (ballRadius / 2),
           caretWidth: widget.caretWidth,
           ballRadius: ballRadius,
         ),
@@ -880,14 +880,14 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     return Positioned(
       key: _downstreamHandleKey,
       left: downstream.left,
-      top: downstream.top - selectionHighlightBoxTopPixelsDecrement,
+      top: downstream.top - selectionHighlightBoxVerticalExpansion,
       child: FractionalTranslation(
         translation: const Offset(-0.5, 0),
         child: IOSSelectionHandle.downstream(
           key: DocumentKeys.downstreamHandle,
           color: widget.handleColor,
           handleType: HandleType.downstream,
-          caretHeight: downstream.height + selectionHighlightBoxBottomPixelsIncrement - (ballRadius / 2),
+          caretHeight: downstream.height + (selectionHighlightBoxVerticalExpansion * 2) - (ballRadius / 2),
           caretWidth: widget.caretWidth,
           ballRadius: ballRadius,
         ),
