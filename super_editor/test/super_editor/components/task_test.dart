@@ -19,24 +19,7 @@ void main() {
           TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
         ],
       );
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: document,
-              composer: composer,
-              componentBuilders: [
-                TaskComponentBuilder(editor),
-                ...defaultComponentBuilders,
-              ],
-            ),
-          ),
-        ),
-      );
+      await _pumpScaffold(tester, document: document);
 
       // Ensure the task isn't checked.
       expect((document.nodes.first as TaskNode).isComplete, false);
@@ -63,24 +46,7 @@ void main() {
           ParagraphNode(id: "1", text: AttributedText("This will be a task")),
         ],
       );
-      final composer = MutableDocumentComposer();
-      final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: editor,
-              document: document,
-              composer: composer,
-              componentBuilders: [
-                TaskComponentBuilder(editor),
-                ...defaultComponentBuilders,
-              ],
-            ),
-          ),
-        ),
-      );
+      final editor = await _pumpScaffold(tester, document: document);
 
       // Convert the paragraph to a task.
       editor.execute([const ConvertParagraphToTaskRequest(nodeId: "1")]);
@@ -98,24 +64,8 @@ void main() {
             TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
           ],
         );
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
         final task = document.getNodeAt(0) as TaskNode;
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                componentBuilders: [
-                  TaskComponentBuilder(editor),
-                  ...defaultComponentBuilders,
-                ],
-              ),
-            ),
-          ),
-        );
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret at the end of the task.
         await tester.placeCaretInParagraph("1", task.text.length);
@@ -146,25 +96,8 @@ void main() {
             TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
           ],
         );
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
         final task = document.getNodeAt(0) as TaskNode;
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                inputSource: TextInputSource.ime,
-                componentBuilders: [
-                  TaskComponentBuilder(editor),
-                  ...defaultComponentBuilders,
-                ],
-              ),
-            ),
-          ),
-        );
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret at the end of the task.
         await tester.placeCaretInParagraph("1", task.text.length);
@@ -198,24 +131,8 @@ void main() {
             TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
           ],
         );
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
         final task = document.getNodeAt(0) as TaskNode;
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                componentBuilders: [
-                  TaskComponentBuilder(editor),
-                  ...defaultComponentBuilders,
-                ],
-              ),
-            ),
-          ),
-        );
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret at the end of the task.
         await tester.placeCaretInParagraph("1", task.text.length);
@@ -246,24 +163,8 @@ void main() {
             TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
           ],
         );
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
         final task = document.getNodeAt(0) as TaskNode;
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                componentBuilders: [
-                  TaskComponentBuilder(editor),
-                  ...defaultComponentBuilders,
-                ],
-              ),
-            ),
-          ),
-        );
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret at the end of the task.
         await tester.placeCaretInParagraph("1", task.text.length);
@@ -296,22 +197,7 @@ void main() {
             TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
           ],
         );
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                componentBuilders: [
-                  TaskComponentBuilder(editor),
-                ],
-              ),
-            ),
-          ),
-        );
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret at "This is |a task"
         await tester.placeCaretInParagraph("1", 8);
@@ -342,22 +228,7 @@ void main() {
             TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
           ],
         );
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                componentBuilders: [
-                  TaskComponentBuilder(editor),
-                ],
-              ),
-            ),
-          ),
-        );
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret at "This is |a task"
         await tester.placeCaretInParagraph("1", 8);
@@ -388,22 +259,7 @@ void main() {
             TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
           ],
         );
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                componentBuilders: [
-                  TaskComponentBuilder(editor),
-                ],
-              ),
-            ),
-          ),
-        );
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret at "This is |a task"
         await tester.placeCaretInParagraph("1", 8);
@@ -436,25 +292,7 @@ void main() {
             TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
           ],
         );
-
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                componentBuilders: [
-                  TaskComponentBuilder(editor),
-                  ...defaultComponentBuilders,
-                ],
-              ),
-            ),
-          ),
-        );
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret at the beginning of the task.
         await tester.placeCaretInParagraph("1", 0);
@@ -475,25 +313,7 @@ void main() {
             TaskNode(id: "1", text: AttributedText("This is a task"), isComplete: false),
           ],
         );
-
-        final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                document: document,
-                composer: composer,
-                componentBuilders: [
-                  TaskComponentBuilder(editor),
-                  ...defaultComponentBuilders,
-                ],
-              ),
-            ),
-          ),
-        );
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret at the beginning of the task.
         await tester.placeCaretInParagraph("1", 0);
@@ -520,7 +340,7 @@ void main() {
       });
 
       testWidgetsOnAllPlatforms("task to paragraph when the user presses ENTER on an empty task", (tester) async {
-        await _pumpSingleEmptyTaskApp(tester);
+        await _pumpScaffold(tester);
 
         // Place the caret at the beginning of the task.
         await tester.placeCaretInParagraph("1", 0);
@@ -537,7 +357,7 @@ void main() {
       });
 
       testWidgetsOnAndroid("task to paragraph upon new line insertion on an empty task", (tester) async {
-        await _pumpSingleEmptyTaskApp(tester);
+        await _pumpScaffold(tester);
 
         // Place the caret at the beginning of the task.
         await tester.placeCaretInParagraph("1", 0);
@@ -555,7 +375,7 @@ void main() {
       });
 
       testWidgetsOnIos("task to paragraph new line input action on an empty task", (tester) async {
-        await _pumpSingleEmptyTaskApp(tester);
+        await _pumpScaffold(tester);
 
         // Place the caret at the beginning of the task.
         await tester.placeCaretInParagraph("1", 0);
@@ -573,7 +393,7 @@ void main() {
       });
 
       testWidgetsOnWebDesktop("task to paragraph when the user presses ENTER on an empty task", (tester) async {
-        await _pumpSingleEmptyTaskApp(tester);
+        await _pumpScaffold(tester);
 
         // Place the caret at the beginning of the task.
         await tester.placeCaretInParagraph("1", 0);
@@ -591,6 +411,42 @@ void main() {
         expect(document.nodes.first, isA<ParagraphNode>());
         expect((document.nodes.first as ParagraphNode).text.text, "");
       });
+
+      testWidgets("paragraph to task for incomplete task", (tester) async {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(id: "1", text: AttributedText("This is a task")),
+          ],
+        );
+        final editor = await _pumpScaffold(tester, document: document);
+
+        // Convert the paragraph to a task.
+        editor.execute([
+          const ConvertParagraphToTaskRequest(nodeId: "1"),
+        ]);
+
+        // Ensure the paragraph is a task, and it's not checked.
+        expect(document.nodes.first, isA<TaskNode>());
+        expect((document.nodes.first as TaskNode).isComplete, isFalse);
+      });
+
+      testWidgets("paragraph to task for incomplete task", (tester) async {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(id: "1", text: AttributedText("This is a task")),
+          ],
+        );
+        final editor = await _pumpScaffold(tester, document: document);
+
+        // Convert the paragraph to a task.
+        editor.execute([
+          const ConvertParagraphToTaskRequest(nodeId: "1", isComplete: true),
+        ]);
+
+        // Ensure the paragraph is a task, and it IS checked.
+        expect(document.nodes.first, isA<TaskNode>());
+        expect((document.nodes.first as TaskNode).isComplete, isTrue);
+      });
     });
 
     group("indentation >", () {
@@ -600,7 +456,7 @@ void main() {
             TaskNode(id: "1", text: AttributedText("can't indent"), isComplete: false),
           ],
         );
-        await _pumpSingleEmptyTaskApp(tester, document: document);
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret in the task.
         await tester.placeCaretInParagraph("1", 0);
@@ -622,7 +478,7 @@ void main() {
             TaskNode(id: "2", text: AttributedText("can indent"), isComplete: false),
           ],
         );
-        await _pumpSingleEmptyTaskApp(tester, document: document);
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret in the child task.
         await tester.placeCaretInParagraph("2", 0);
@@ -644,7 +500,7 @@ void main() {
             TaskNode(id: "2", text: AttributedText("two"), isComplete: false, indent: 1),
           ],
         );
-        await _pumpSingleEmptyTaskApp(tester, document: document);
+        await _pumpScaffold(tester, document: document);
 
         // Ensure the second task is indented.
         expect(SuperEditorInspector.findTaskIndent("2"), 1);
@@ -677,7 +533,7 @@ void main() {
             TaskNode(id: "3", text: AttributedText("three"), isComplete: false),
           ],
         );
-        await _pumpSingleEmptyTaskApp(tester, document: document);
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret in the child task.
         await tester.placeCaretInParagraph("2", 0);
@@ -704,7 +560,7 @@ void main() {
             TaskNode(id: "4", text: AttributedText("four"), isComplete: false),
           ],
         );
-        await _pumpSingleEmptyTaskApp(tester, document: document);
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret in the child task.
         await tester.placeCaretInParagraph("4", 0);
@@ -726,7 +582,7 @@ void main() {
             TaskNode(id: "3", text: AttributedText("three"), isComplete: false, indent: 2),
           ],
         );
-        await _pumpSingleEmptyTaskApp(tester, document: document);
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret in the child task.
         await tester.placeCaretInParagraph("2", 0);
@@ -751,7 +607,7 @@ void main() {
             TaskNode(id: "5", text: AttributedText("five"), isComplete: false, indent: 3),
           ],
         );
-        await _pumpSingleEmptyTaskApp(tester, document: document);
+        await _pumpScaffold(tester, document: document);
 
         // Place the caret in the second task.
         await tester.placeCaretInParagraph("2", 0);
@@ -786,7 +642,7 @@ void main() {
             TaskNode(id: "6", text: AttributedText("six"), isComplete: false, indent: 0),
           ],
         );
-        final editor = await _pumpSingleEmptyTaskApp(tester, document: document);
+        final editor = await _pumpScaffold(tester, document: document);
 
         // Delete the 2nd task.
         editor.execute([
@@ -806,7 +662,7 @@ void main() {
   });
 }
 
-Future<Editor> _pumpSingleEmptyTaskApp(WidgetTester tester, {MutableDocument? document}) async {
+Future<Editor> _pumpScaffold(WidgetTester tester, {MutableDocument? document}) async {
   document ??= MutableDocument(
     nodes: [
       TaskNode(id: "1", text: AttributedText(), isComplete: false),

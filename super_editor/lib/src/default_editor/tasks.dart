@@ -636,7 +636,7 @@ class ConvertParagraphToTaskCommand implements EditCommand {
     final taskNode = TaskNode(
       id: existingNode.id,
       text: existingNode.text,
-      isComplete: false,
+      isComplete: isComplete,
     );
 
     executor.executeCommand(
