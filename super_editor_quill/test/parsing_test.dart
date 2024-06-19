@@ -277,6 +277,60 @@ void main() {
         expect((node as TextNode).text.text, "This is a code block");
         expect(node.metadata["blockType"], codeAttribution);
       });
+
+      test("gracefully handles unknown inline text format", () {
+        final document = parseQuillDeltaOps([
+          {"insert": "Paragraph "},
+          {
+            // A non-existent inline format.
+            "attributes": {"unknown": true},
+            "insert": "one"
+          },
+          {"insert": "\nParagraph two\n"},
+        ]);
+
+        expect(document.nodes.length, 3);
+
+        expect(document.nodes[0], isA<ParagraphNode>());
+        expect((document.nodes[0] as ParagraphNode).text.text, "Paragraph one");
+        expect(
+          (document.nodes[0] as ParagraphNode).text.getAttributionSpansByFilter((a) => true),
+          const <AttributionSpan>{},
+        );
+
+        expect(document.nodes[1], isA<ParagraphNode>());
+        expect((document.nodes[1] as ParagraphNode).text.text, "Paragraph two");
+
+        expect(document.nodes[2], isA<ParagraphNode>());
+        expect((document.nodes[2] as ParagraphNode).text.text, "");
+      });
+
+      test("gracefully handles unknown text block format", () {
+        final document = parseQuillDeltaOps([
+          {"insert": "Paragraph one"},
+          {
+            "attributes": {"unknown-name": "unknown-value"},
+            "insert": "\n"
+          },
+          {"insert": "Paragraph two\n"},
+        ]);
+
+        expect(document.nodes.length, 3);
+
+        expect(document.nodes[0], isA<ParagraphNode>());
+        expect((document.nodes[0] as ParagraphNode).text.text, "Paragraph one");
+        expect((document.nodes[0] as ParagraphNode).metadata["blockType"], paragraphAttribution);
+        expect(
+          (document.nodes[0] as ParagraphNode).text.getAttributionSpansByFilter((a) => true),
+          const <AttributionSpan>{},
+        );
+
+        expect(document.nodes[1], isA<ParagraphNode>());
+        expect((document.nodes[1] as ParagraphNode).text.text, "Paragraph two");
+
+        expect(document.nodes[2], isA<ParagraphNode>());
+        expect((document.nodes[2] as ParagraphNode).text.text, "");
+      });
     });
 
     group("media >", () {
@@ -299,32 +353,79 @@ void main() {
         expect(image.imageUrl, "https://quilljs.com/assets/images/icon.png");
       }, skip: true);
 
-      // test("a video", () {
-      //   final document = parseQuillDeltaOps();
-      //
-      //   final video = document.nodes[1];
-      //   expect(video, isA<VideoNode>());
-      //   video as VideoNode;
-      //   expect(video.imageUrl, "https://quilljs.com/assets/images/icon.png");
-      // });
-      //
-      // test("audio", () {
-      //   final document = parseQuillDeltaOps();
-      //
-      //   final audio = document.nodes[1];
-      //   expect(audio, isA<AudioNode>());
-      //   audio as AudioNode;
-      //   expect(audio.imageUrl, "https://quilljs.com/assets/images/icon.png");
-      // });
-      //
-      // test("a file", () {
-      //   final document = parseQuillDeltaOps();
-      //
-      //   final file = document.nodes[1];
-      //   expect(file, isA<FileNode>());
-      //   file as FileNode;
-      //   expect(file.imageUrl, "https://quilljs.com/assets/images/icon.png");
-      // });
+      test("a video", () {
+        final document = parseQuillDeltaOps([
+          {"insert": "Paragraph one\n"},
+          {
+            "insert": {
+              "video": "https://quilljs.com/assets/media/video.mp4",
+            },
+          },
+          {"insert": "Paragraph two\n"},
+        ]);
+
+        final video = document.nodes[1];
+        expect(video, isA<VideoNode>());
+        video as VideoNode;
+        expect(video.url, "https://quilljs.com/assets/media/video.mp4");
+      });
+
+      test("audio", () {
+        final document = parseQuillDeltaOps([
+          {"insert": "Paragraph one\n"},
+          {
+            "insert": {
+              "audio": "https://quilljs.com/assets/media/audio.mp3",
+            },
+          },
+          {"insert": "Paragraph two\n"},
+        ]);
+
+        final audio = document.nodes[1];
+        expect(audio, isA<AudioNode>());
+        audio as AudioNode;
+        expect(audio.url, "https://quilljs.com/assets/media/audio.mp3");
+      });
+
+      test("a file", () {
+        final document = parseQuillDeltaOps([
+          {"insert": "Paragraph one\n"},
+          {
+            "insert": {
+              "file": "https://quilljs.com/assets/media/file.pdf",
+            },
+          },
+          {"insert": "Paragraph two\n"},
+        ]);
+
+        final file = document.nodes[1];
+        expect(file, isA<FileNode>());
+        file as FileNode;
+        expect(file.url, "https://quilljs.com/assets/media/file.pdf");
+      });
+
+      test("gracefully handles unknown media block", () {
+        final document = parseQuillDeltaOps([
+          {"insert": "Paragraph one\n"},
+          {
+            "insert": {
+              "unknown": "this block type doesn't exist",
+            },
+          },
+          {"insert": "Paragraph two\n"},
+        ]);
+
+        expect(document.nodes.length, 3);
+
+        expect(document.nodes[0], isA<ParagraphNode>());
+        expect((document.nodes[0] as ParagraphNode).text.text, "Paragraph one");
+
+        expect(document.nodes[1], isA<ParagraphNode>());
+        expect((document.nodes[1] as ParagraphNode).text.text, "Paragraph two");
+
+        expect(document.nodes[2], isA<ParagraphNode>());
+        expect((document.nodes[2] as ParagraphNode).text.text, "");
+      });
     });
   });
 }
@@ -350,54 +451,6 @@ const _imageWithLink = [
     },
   },
   {"insert": "Paragraph two\n"},
-];
-
-const _basicTextStylesDocument = [
-  {"insert": "Kitchen Sink Document"},
-  {
-    "attributes": {"header": 1},
-    "insert": "\n"
-  },
-  {
-    "attributes": {"link": "google.com"},
-    "insert": "Hello"
-  },
-  {"insert": ", "},
-  {
-    "attributes": {"underline": true},
-    "insert": "I'm"
-  },
-  {"insert": " "},
-  {
-    "attributes": {"bold": true},
-    "insert": "some"
-  },
-  {"insert": " "},
-  {
-    "attributes": {"italic": true},
-    "insert": "text"
-  },
-  {"insert": "\n\nI'm a list item"},
-  {
-    "attributes": {"list": "ordered"},
-    "insert": "\n"
-  },
-  {"insert": "I'm another list item"},
-  {
-    "attributes": {"list": "ordered"},
-    "insert": "\n"
-  },
-  {"insert": "\nI'm an un-ordered list item"},
-  {
-    "attributes": {"list": "bullet"},
-    "insert": "\n"
-  },
-  {"insert": "I'm another un-ordered list item"},
-  {
-    "attributes": {"list": "bullet"},
-    "insert": "\n"
-  },
-  {"insert": "\n"}
 ];
 
 const _allTextStylesDocument = [

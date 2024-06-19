@@ -1,5 +1,6 @@
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor_quill/src/content/multimedia.dart';
 import 'package:super_editor_quill/src/parsing/block_formats.dart';
 import 'package:super_editor_quill/src/parsing/inline_formats.dart';
 
@@ -244,49 +245,88 @@ extension OperationParser on Operation {
     final selectedNode = document.getNodeById(selectedNodeId);
     final shouldReplaceSelectedNode = selectedNode is TextNode && selectedNode.text.text.isEmpty;
 
+    String? newNodeId;
+    String? mediaUrl;
+    DocumentNode? newNode;
+
     if (content.containsKey("image")) {
       // This insertion is for an image.
-      final imageNodeId = Editor.createNodeId();
-      final imageUrl = content["image"] as String;
-      final imageNode = ImageNode(
-        id: imageNodeId,
-        imageUrl: imageUrl,
+      newNodeId = Editor.createNodeId();
+      mediaUrl = content["image"] as String;
+      newNode = ImageNode(
+        id: newNodeId,
+        imageUrl: mediaUrl,
       );
-      print("Inserting image: $imageUrl");
-
-      final newParagraphId = Editor.createNodeId();
-
-      editor.execute([
-        shouldReplaceSelectedNode
-            ? ReplaceNodeRequest(
-                existingNodeId: selectedNodeId,
-                newNode: imageNode,
-              )
-            : InsertNodeAfterNodeRequest(
-                existingNodeId: composer.selection!.extent.nodeId,
-                newNode: imageNode,
-              ),
-        InsertNodeAfterNodeRequest(
-          existingNodeId: imageNodeId,
-          newNode: ParagraphNode(
-            id: newParagraphId,
-            text: AttributedText(""),
-          ),
-        ),
-        ChangeSelectionRequest(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: newParagraphId,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
-          SelectionChangeType.insertContent,
-          SelectionReason.contentChange,
-        ),
-      ]);
+      print("Inserting image: $mediaUrl");
     }
 
-    // TODO: video
+    if (content.containsKey("video")) {
+      // This insertion is for a video.
+      newNodeId = Editor.createNodeId();
+      mediaUrl = content["video"] as String;
+      newNode = VideoNode(
+        id: newNodeId,
+        url: mediaUrl,
+      );
+      print("Inserting video: $mediaUrl");
+    }
+
+    if (content.containsKey("audio")) {
+      // This insertion is for a video.
+      newNodeId = Editor.createNodeId();
+      mediaUrl = content["audio"] as String;
+      newNode = AudioNode(
+        id: newNodeId,
+        url: mediaUrl,
+      );
+      print("Inserting audio: $mediaUrl");
+    }
+
+    if (content.containsKey("file")) {
+      // This insertion is for a video.
+      newNodeId = Editor.createNodeId();
+      mediaUrl = content["file"] as String;
+      newNode = FileNode(
+        id: newNodeId,
+        url: mediaUrl,
+      );
+      print("Inserting file: $mediaUrl");
+    }
+
+    if (newNode == null) {
+      // We didn't find any media to insert.
+      return;
+    }
+
+    final newParagraphId = Editor.createNodeId();
+    editor.execute([
+      shouldReplaceSelectedNode
+          ? ReplaceNodeRequest(
+              existingNodeId: selectedNodeId,
+              newNode: newNode,
+            )
+          : InsertNodeAfterNodeRequest(
+              existingNodeId: composer.selection!.extent.nodeId,
+              newNode: newNode,
+            ),
+      InsertNodeAfterNodeRequest(
+        existingNodeId: newNodeId!,
+        newNode: ParagraphNode(
+          id: newParagraphId,
+          text: AttributedText(""),
+        ),
+      ),
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: newParagraphId,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+        SelectionChangeType.insertContent,
+        SelectionReason.contentChange,
+      ),
+    ]);
   }
 
   /// Moves [count] units downstream from the current caret position.
