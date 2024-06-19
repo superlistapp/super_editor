@@ -217,6 +217,16 @@ class SuperEditorInspector {
     return findRichTextInParagraph(nodeId, superEditorFinder).style;
   }
 
+  /// Finds the paragraph with the given [nodeId] and returns its indent level.
+  ///
+  /// Indent levels start at zero and increment by `1` for each level.
+  ///
+  /// {@macro supereditor_finder}
+  static int findParagraphIndent(String nodeId, [Finder? superEditorFinder]) {
+    final component = SuperEditorInspector.findWidgetForComponent(nodeId) as ParagraphComponent;
+    return component.viewModel.indent;
+  }
+
   /// Finds the ordered list item with the given [nodeId] and returns its ordinal value.
   ///
   /// List items ordinals start from 1.
