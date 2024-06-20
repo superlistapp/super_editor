@@ -155,7 +155,12 @@ class TextSelectionPainter extends CustomPainter {
 
     for (final box in selectionBoxes) {
       final rawRect = box.toRect();
-      final rect = Rect.fromLTWH(rawRect.left, rawRect.top - 2, rawRect.width, rawRect.height + 4);
+      final rect = Rect.fromLTWH(
+        rawRect.left,
+        rawRect.top - selectionHighlightBoxVerticalExpansion,
+        rawRect.width,
+        rawRect.height + (selectionHighlightBoxVerticalExpansion * 2),
+      );
 
       canvas.drawRect(
         // Note: If the rect has no width then we've selected an empty line. Give
@@ -173,3 +178,14 @@ class TextSelectionPainter extends CustomPainter {
         selectionColor != oldDelegate.selectionColor;
   }
 }
+
+/// How bigger the selection highlight box is than the natural selection box
+/// of the text in dip.
+///
+/// [TextSelectionPainter] paints the selection highlight box by using the result
+/// of [TextLayout.getBoxesForSelection] and expanding both the top and bottom of
+/// each box by this amount.
+///
+/// This can be used to align other widgets, like the drag handles, with the
+/// selection highlight box.
+const selectionHighlightBoxVerticalExpansion = 2.0;
