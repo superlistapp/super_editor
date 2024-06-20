@@ -430,7 +430,7 @@ void main() {
         expect((document.nodes.first as TaskNode).isComplete, isFalse);
       });
 
-      testWidgets("paragraph to task for incomplete task", (tester) async {
+      testWidgets("paragraph to task for complete task", (tester) async {
         final document = MutableDocument(
           nodes: [
             ParagraphNode(id: "1", text: AttributedText("This is a task")),
