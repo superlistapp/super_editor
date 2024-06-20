@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:super_editor/super_editor.dart';
 
+/// A [BlockDeltaFormat] that applies a header block type to a paragraph.
 class HeaderDeltaFormat extends FilterByNameBlockDeltaFormat {
   static const _header = "header";
 
@@ -40,6 +41,7 @@ class HeaderDeltaFormat extends FilterByNameBlockDeltaFormat {
   }
 }
 
+/// A [BlockDeltaFormat] that applies a blockquote block type to a paragraph.
 class BlockquoteDeltaFormat extends FilterByNameBlockDeltaFormat {
   static const _blockquote = "blockquote";
 
@@ -58,6 +60,7 @@ class BlockquoteDeltaFormat extends FilterByNameBlockDeltaFormat {
   }
 }
 
+/// A [BlockDeltaFormat] that applies a code block type to a paragraph.
 class CodeBlockDeltaFormat extends FilterByNameBlockDeltaFormat {
   static const _code = "code-block";
 
@@ -78,6 +81,7 @@ class CodeBlockDeltaFormat extends FilterByNameBlockDeltaFormat {
   }
 }
 
+/// A [BlockDeltaFormat] that converts a paragraph to a list item or a task.
 class ListDeltaFormat extends FilterByNameBlockDeltaFormat {
   static const _list = "list";
   static const _listOrdered = "ordered";
@@ -90,7 +94,6 @@ class ListDeltaFormat extends FilterByNameBlockDeltaFormat {
     final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
 
     if (_isTask(value as String)) {
-      print("Converting paragraph to task. Paragraph: ${composer.selection!.extent.nodeId}");
       return [
         ConvertParagraphToTaskRequest(
           nodeId: composer.selection!.extent.nodeId,
@@ -99,7 +102,6 @@ class ListDeltaFormat extends FilterByNameBlockDeltaFormat {
       ];
     }
 
-    print("Converting paragraph to list item. Paragraph: ${composer.selection!.extent.nodeId}");
     return [
       ConvertParagraphToListItemRequest(
         nodeId: composer.selection!.extent.nodeId,
@@ -129,6 +131,7 @@ class ListDeltaFormat extends FilterByNameBlockDeltaFormat {
   }
 }
 
+/// A [BlockDeltaFormat] that applies an alignment to a paragraph.
 class AlignDeltaFormat extends FilterByNameBlockDeltaFormat {
   static const _align = "align";
   static const _alignLeft = "left";
@@ -166,6 +169,25 @@ class AlignDeltaFormat extends FilterByNameBlockDeltaFormat {
   }
 }
 
+/// A [BlockDeltaFormat] that applies an indent to a paragraph.
+class IndentParagraphDeltaFormat extends FilterByNameBlockDeltaFormat {
+  static const _indent = "indent";
+
+  const IndentParagraphDeltaFormat() : super(_indent);
+
+  @override
+  List<EditRequest>? doApplyFormat(Editor editor, Object value) {
+    final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
+
+    return [
+      SetParagraphIndentRequest(
+        composer.selection!.extent.nodeId,
+        level: value as int,
+      ),
+    ];
+  }
+}
+
 /// A [BlockDeltaFormat] that filters out any operation that doesn't have
 /// an attribute with the given [name].
 abstract class FilterByNameBlockDeltaFormat implements BlockDeltaFormat {
@@ -187,6 +209,19 @@ abstract class FilterByNameBlockDeltaFormat implements BlockDeltaFormat {
 }
 
 /// A block-level format for a text block, e.g., header, blockquote, code.
+///
+/// Given a Quill Delta text insertion operation, a [BlockDeltaFormat] inspects
+/// the delta attributes for a given block format property. The [BlockDeltaFormat]
+/// then returns the [EditRequest]s necessary to apply that block format to the
+/// currently selected [DocumentNode] in the Super Editor [Document] (which is
+/// available through the [Editor].
+///
+/// For example, a header block delta format might inspect the operation attributes
+/// looking for the key "header". It finds the key "header" with a value of `1`,
+/// signifying a "level 1 header". That block delta format then checks the [editor]
+/// for the currently selected node. Finally, that block delta format assembles an
+/// [EditRequest] to apply a [header1Attribution] to the currently selected
+/// [ParagraphNode].
 abstract interface class BlockDeltaFormat {
   List<EditRequest>? applyTo(Operation operation, Editor editor);
 }

@@ -4,7 +4,7 @@ import 'package:super_editor_quill/src/content/multimedia.dart';
 import 'package:super_editor_quill/src/parsing/block_formats.dart';
 import 'package:super_editor_quill/src/parsing/inline_formats.dart';
 
-/// Parses a fully formed Quill Delta document into a [MutableDocument].
+/// Parses a fully formed Quill Delta document (as JSON) into a [MutableDocument].
 ///
 /// The format of a Delta document looks like:
 ///
@@ -13,6 +13,9 @@ import 'package:super_editor_quill/src/parsing/inline_formats.dart';
 ///         ...
 ///       ]
 ///     }
+///
+/// For more information about the Quill Delta format, see the official
+/// documentation: https://quilljs.com/docs/delta/
 MutableDocument parseQuillDeltaDocument(
   Map<String, dynamic> deltaDocument, {
   List<BlockDeltaFormat> blockFormats = defaultBlockFormats,
@@ -21,15 +24,21 @@ MutableDocument parseQuillDeltaDocument(
   return parseQuillDeltaOps(deltaDocument["ops"], inlineFormats: inlineFormats);
 }
 
-/// Runs a list of Quill Delta operations to construct a [MutableDocument],
-/// beginning with an empty document.
+/// Parses a list Quill Delta operations (as JSON) into a [MutableDocument].
+///
+/// This parser is the same as [parseQuillDeltaDocument] except that this method
+/// directly accepts the operations list instead of the whole document map. This
+/// method is provided for convenience because in some situations only the
+/// operations are exchanged, rather than the whole document object.
 MutableDocument parseQuillDeltaOps(
   List<dynamic> deltaOps, {
   List<BlockDeltaFormat> blockFormats = defaultBlockFormats,
   List<InlineDeltaFormat> inlineFormats = defaultInlineFormats,
 }) {
+  // Deserialize the delta operations JSON into a Dart data structure.
   final deltaDocument = Delta.fromJson(deltaOps);
 
+  // Create a new, empty Super Editor document.
   final document = MutableDocument.empty();
   final composer = MutableDocumentComposer();
   final editor = Editor(
@@ -42,6 +51,8 @@ MutableDocument parseQuillDeltaOps(
     reactionPipeline: [],
   );
 
+  // Place the caret in the (only) empty paragraph so we can begin applying
+  // deltas to the document.
   final firstParagraph = document.nodes.first as ParagraphNode;
   composer.setSelectionWithReason(
     DocumentSelection.collapsed(
@@ -53,6 +64,9 @@ MutableDocument parseQuillDeltaOps(
     SelectionReason.contentChange,
   );
 
+  // Run every Quill Delta operation on the empty document. At the end of this
+  // process the Super Editor document will reflect the desired Quill Delta
+  // document state.
   for (final delta in deltaDocument.operations) {
     delta.applyToDocument(editor, blockFormats: blockFormats, inlineFormats: inlineFormats);
   }
@@ -60,27 +74,32 @@ MutableDocument parseQuillDeltaOps(
   return document;
 }
 
+/// The standard block-level text formats that are parsed from Quill Deltas,
+/// e.g., headers, blockquotes, list items.
 const defaultBlockFormats = [
   HeaderDeltaFormat(),
   BlockquoteDeltaFormat(),
   CodeBlockDeltaFormat(),
   ListDeltaFormat(),
   AlignDeltaFormat(),
+  IndentParagraphDeltaFormat(),
 ];
 
+/// The standard inline text formats that are parsed from Quill Deltas, e.g.,
+/// bold, italics, underline, links.
 const defaultInlineFormats = [
   // Named inline attributes (no parsing).
   NamedInlineDeltaFormat("bold", boldAttribution),
   NamedInlineDeltaFormat("italic", italicsAttribution),
   NamedInlineDeltaFormat("underline", underlineAttribution),
   NamedInlineDeltaFormat("strike", strikethroughAttribution),
-  // TODO: superscript/subscript (needs a superscript attribution in Super Editor)
   NamedInlineDeltaFormat("code", codeAttribution),
 
   // Inline attributes with parsed values.
   ColorDeltaFormat(),
   BackgroundColorDeltaFormat(),
-  // TODO: font format "font" (needs a font attribution in Super Editor)
+  ScriptDeltaFormat(),
+  FontFamilyDeltaFormat(),
   SizeDeltaFormat(),
   LinkDeltaFormat(),
 ];
@@ -88,10 +107,14 @@ const defaultInlineFormats = [
 /// An extension on Quill Delta [Operation]s that adds the ability for an operation to
 /// apply itself to a Super Editor document through an [Editor].
 extension OperationParser on Operation {
-  static const _formula = "formula"; // requires KaTeX
-  static const _image = "image";
-  static const _video = "video";
-
+  /// Applies this operation to a Super Editor document by sending requests
+  /// through the given [editor].
+  ///
+  /// To configure how a given Quill Delta attribute impacts text blocks and text spans,
+  /// provide the desired [blockFormats] and [inlineFormats]. For example, the recognition
+  /// of an attribute called "bold", and the application of a [boldAttribution] to the
+  /// Super Editor document, is implemented by the [BlockDeltaFormat], which should be
+  /// included in [inlineFormats].
   void applyToDocument(
     Editor editor, {
     required List<BlockDeltaFormat> blockFormats,
@@ -101,8 +124,7 @@ extension OperationParser on Operation {
     final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
 
     switch (type) {
-      case _OperationType.insert:
-        print("Running an insert operation...");
+      case DeltaOperationType.insert:
         if (data is String) {
           // This is a text insertion delta.
           _doInsertText(editor, composer, blockFormats, inlineFormats);
@@ -112,13 +134,7 @@ extension OperationParser on Operation {
           _doInsertMedia(editor, composer);
         }
 
-        print("After insert:");
-        final document = editor.context.find<MutableDocument>(Editor.documentKey);
-        for (final node in document.nodes) {
-          print(" - ${node.id} -> ${node.runtimeType}: ${node is TextNode ? node.text.text : ""}");
-        }
-        print("");
-      case _OperationType.retain:
+      case DeltaOperationType.retain:
         final count = data as int;
         final newPosition = _findPositionDownstream(document, composer, count);
         editor.execute([
@@ -128,7 +144,8 @@ extension OperationParser on Operation {
             SelectionReason.contentChange,
           ),
         ]);
-      case _OperationType.delete:
+
+      case DeltaOperationType.delete:
         final count = data as int;
         final newPosition = _findPositionDownstream(document, composer, count);
         editor.execute([
@@ -148,10 +165,21 @@ extension OperationParser on Operation {
     List<BlockDeltaFormat> blockFormats,
     List<InlineDeltaFormat> inlineFormats,
   ) {
-    print("Processing insertion delta '${(data as String).replaceAll("\n", "^")}'. Attributes: $attributes");
     final changeRequests = <EditRequest>[];
 
     // Apply block attributes *before* inserting the new delta text.
+    //
+    // For example, consider the following deltas:
+    //
+    //     ops: [
+    //       { insert: 'Welcome Header' },
+    //       { insert: '\n', attributes: { "header": 1 } },
+    //       { insert: 'This is the content' }
+    //     ]
+    //
+    // Notice that the "header" attribute is included in the delta that follows
+    // the actual header text. That's the behavior we're implementing by applying
+    // block formats here *before* inserting any new text.
     for (final blockFormat in blockFormats) {
       final blockChanges = blockFormat.applyTo(this, editor);
       if (blockChanges != null) {
@@ -160,28 +188,15 @@ extension OperationParser on Operation {
     }
 
     // Insert new delta text and apply inline attributes.
+    //
+    // The process of inserting text also requires that we handle newline characters.
+    // Each newline needs to add a new paragraph. Newlines can appear at the beginning,
+    // the end, and in the middle of a single text insertion.
     var text = data as String;
     var currentNodeId = composer.selection!.extent.nodeId;
     var currentTextPosition = composer.selection!.extent.nodePosition as TextNodePosition;
 
-    // // Strip leading and trailing newlines from the inserted text and explicitly
-    // // insert paragraphs in their place.
-    // final leadingNewlineMatch = RegExp(r'^\n+').firstMatch(text);
-    // final int leadingNewlineCount =
-    //     leadingNewlineMatch != null ? leadingNewlineMatch.end - leadingNewlineMatch.start : 0;
-    //
-    // // Note: we need to be careful that when a string is nothing but newlines, we don't
-    // // match them as both leading and trailing. We choose to handle those as leading and
-    // // then avoid trailing newlines in that case.
-    // final trailingNewlineMatch = RegExp(r'\n+$').firstMatch(text);
-    // final trailingNewlineCount = leadingNewlineCount != text.length && trailingNewlineMatch != null
-    //     ? trailingNewlineMatch.end - trailingNewlineMatch.start
-    //     : 0;
-    //
-    // text = text.substring(leadingNewlineCount, text.length - trailingNewlineCount);
-    //
-    // print("Inserting $leadingNewlineCount leading newlines, and $trailingNewlineCount trailing newlines");
-
+    // The included inline attributes apply to all text within this insert operation.
     final inlineAttributions = <Attribution>{};
     for (final inlineFormat in inlineFormats) {
       final attribution = inlineFormat.from(this);
@@ -190,16 +205,14 @@ extension OperationParser on Operation {
       }
     }
 
+    // Break the insertion text at every newline so we can insert paragraphs.
     final textPerLine = text.split("\n");
-    print("Lines (${textPerLine.length}): $textPerLine");
     for (int i = 0; i < textPerLine.length; i += 1) {
       final line = textPerLine[i];
       final newNodeId = Editor.createNodeId();
 
-      print("Inserting text in node $currentNodeId: '$line'");
-
       changeRequests.addAll([
-        // Insert text.
+        // Insert a line of text.
         InsertTextRequest(
           documentPosition: DocumentPosition(
             nodeId: currentNodeId,
@@ -221,7 +234,7 @@ extension OperationParser on Operation {
       ]);
 
       if (i < textPerLine.length - 1) {
-        // We added a new paragraph. Update the node ID.
+        // This isn't the last line, so we added a new paragraph. Update the node ID.
         currentNodeId = newNodeId;
         currentTextPosition = const TextNodePosition(offset: 0);
       }
@@ -257,7 +270,6 @@ extension OperationParser on Operation {
         id: newNodeId,
         imageUrl: mediaUrl,
       );
-      print("Inserting image: $mediaUrl");
     }
 
     if (content.containsKey("video")) {
@@ -268,7 +280,6 @@ extension OperationParser on Operation {
         id: newNodeId,
         url: mediaUrl,
       );
-      print("Inserting video: $mediaUrl");
     }
 
     if (content.containsKey("audio")) {
@@ -279,7 +290,6 @@ extension OperationParser on Operation {
         id: newNodeId,
         url: mediaUrl,
       );
-      print("Inserting audio: $mediaUrl");
     }
 
     if (content.containsKey("file")) {
@@ -290,7 +300,6 @@ extension OperationParser on Operation {
         id: newNodeId,
         url: mediaUrl,
       );
-      print("Inserting file: $mediaUrl");
     }
 
     if (newNode == null) {
@@ -298,6 +307,7 @@ extension OperationParser on Operation {
       return;
     }
 
+    // Insert the media in the document.
     final newParagraphId = Editor.createNodeId();
     editor.execute([
       shouldReplaceSelectedNode
@@ -382,20 +392,25 @@ extension OperationParser on Operation {
     return caretPosition;
   }
 
-  _OperationType get type {
+  /// Returns the [DeltaOperationType] of this operation.
+  ///
+  /// The [DeltaOperationType] is provided so that developers can use a `switch`
+  /// statement to handle all operation types, rather than repeated if-statements
+  /// on [isInsert], [isRetain], and [isDelete].
+  DeltaOperationType get type {
     if (isInsert) {
-      return _OperationType.insert;
+      return DeltaOperationType.insert;
     } else if (isRetain) {
-      return _OperationType.retain;
+      return DeltaOperationType.retain;
     } else if (isDelete) {
-      return _OperationType.delete;
+      return DeltaOperationType.delete;
     } else {
       throw Exception("Unknown operation type: $this");
     }
   }
 }
 
-enum _OperationType {
+enum DeltaOperationType {
   insert,
   retain,
   delete,

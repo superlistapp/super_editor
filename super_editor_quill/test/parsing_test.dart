@@ -5,7 +5,7 @@ import 'package:super_editor_quill/super_editor_quill.dart';
 
 // Useful links:
 //  - create a Delta document in the browser: https://quilljs.com/docs/delta
-//  - list of support formats (bold, italics, header, etc): https://quilljs.com/docs/formats
+//  - list of supported formats (bold, italics, header, etc): https://quilljs.com/docs/formats
 
 void main() {
   group("Delta document parsing >", () {
@@ -64,7 +64,7 @@ void main() {
             const AttributionSpan(attribution: strikethroughAttribution, start: 45, end: 57),
             const AttributionSpan(attribution: ColorAttribution(Color(0xFFe60000)), start: 60, end: 69),
             const AttributionSpan(attribution: BackgroundColorAttribution(Color(0xFFe60000)), start: 72, end: 87),
-            // TODO: font family - 90 -> 100
+            const AttributionSpan(attribution: FontFamilyAttribution("serif"), start: 90, end: 100),
             const AttributionSpan(attribution: LinkAttribution("google.com"), start: 103, end: 106),
           },
         );
@@ -189,15 +189,16 @@ void main() {
         node = nodes.current;
 
         // Indented paragraphs.
-        // TODO: implement paragraph indentation
         expect(node, isA<ParagraphNode>());
         expect((node as TextNode).text.text, "I'm an indented paragraph at level 1");
+        expect((node as ParagraphNode).indent, 1);
 
         nodes.moveNext();
         node = nodes.current;
 
         expect(node, isA<ParagraphNode>());
         expect((node as TextNode).text.text, "I'm a paragraph indented at level 2");
+        expect((node as ParagraphNode).indent, 2);
 
         nodes.moveNext();
         node = nodes.current;
@@ -210,15 +211,26 @@ void main() {
         node = nodes.current;
 
         // Superscript and subscript.
-        // TODO: implement superscript and subscript
         expect(node, isA<ParagraphNode>());
         expect((node as TextNode).text.text, "Some contentThis is a subscript");
+        expect(
+          node.text.getAttributionSpansByFilter((a) => true),
+          {
+            const AttributionSpan(attribution: subscriptAttribution, start: 12, end: 30),
+          },
+        );
 
         nodes.moveNext();
         node = nodes.current;
 
         expect(node, isA<ParagraphNode>());
         expect((node as TextNode).text.text, "Some contentThis is a superscript");
+        expect(
+          node.text.getAttributionSpansByFilter((a) => true),
+          {
+            const AttributionSpan(attribution: superscriptAttribution, start: 12, end: 32),
+          },
+        );
 
         nodes.moveNext();
         node = nodes.current;
@@ -231,21 +243,38 @@ void main() {
         node = nodes.current;
 
         // Text sizes.
-        // TODO: implement named text sizes
         expect(node, isA<ParagraphNode>());
         expect((node as TextNode).text.text, "HUGE");
+        expect(
+          node.text.getAttributionSpansByFilter((a) => true),
+          {
+            const AttributionSpan(attribution: NamedFontSizeAttribution("huge"), start: 0, end: 3),
+          },
+        );
 
         nodes.moveNext();
         node = nodes.current;
 
         expect(node, isA<ParagraphNode>());
         expect((node as TextNode).text.text, "Large");
+        expect(
+          node.text.getAttributionSpansByFilter((a) => true),
+          {
+            const AttributionSpan(attribution: NamedFontSizeAttribution("large"), start: 0, end: 4),
+          },
+        );
 
         nodes.moveNext();
         node = nodes.current;
 
         expect(node, isA<ParagraphNode>());
         expect((node as TextNode).text.text, "small");
+        expect(
+          node.text.getAttributionSpansByFilter((a) => true),
+          {
+            const AttributionSpan(attribution: NamedFontSizeAttribution("small"), start: 0, end: 4),
+          },
+        );
 
         nodes.moveNext();
         node = nodes.current;
@@ -335,7 +364,15 @@ void main() {
 
     group("media >", () {
       test("an image", () {
-        final document = parseQuillDeltaOps(_imageBetweenTwoParagraph);
+        final document = parseQuillDeltaOps([
+          {"insert": "Paragraph one\n"},
+          {
+            "insert": {
+              "image": "https://quilljs.com/assets/images/icon.png",
+            },
+          },
+          {"insert": "Paragraph two\n"},
+        ]);
 
         final image = document.nodes[1];
         expect(image, isA<ImageNode>());
@@ -343,9 +380,20 @@ void main() {
         expect(image.imageUrl, "https://quilljs.com/assets/images/icon.png");
       });
 
-      // TODO: make it possible to linkify an image
+      // TODO: make it possible to linkify an image (needs added support in SuperEditor).
       test("an image with a link", () {
-        final document = parseQuillDeltaOps(_imageWithLink);
+        final document = parseQuillDeltaOps([
+          {"insert": "Paragraph one\n"},
+          {
+            "insert": {
+              "image": "https://quilljs.com/assets/images/icon.png",
+            },
+            "attributes": {
+              "link": "https://quilljs.com",
+            },
+          },
+          {"insert": "Paragraph two\n"},
+        ]);
 
         final image = document.nodes[1];
         expect(image, isA<ImageNode>());
@@ -429,29 +477,6 @@ void main() {
     });
   });
 }
-
-const _imageBetweenTwoParagraph = [
-  {"insert": "Paragraph one\n"},
-  {
-    "insert": {
-      "image": "https://quilljs.com/assets/images/icon.png",
-    },
-  },
-  {"insert": "Paragraph two\n"},
-];
-
-const _imageWithLink = [
-  {"insert": "Paragraph one\n"},
-  {
-    "insert": {
-      "image": "https://quilljs.com/assets/images/icon.png",
-    },
-    "attributes": {
-      "link": "https://quilljs.com",
-    },
-  },
-  {"insert": "Paragraph two\n"},
-];
 
 const _allTextStylesDocument = [
   {"insert": "All Text Styles"},
