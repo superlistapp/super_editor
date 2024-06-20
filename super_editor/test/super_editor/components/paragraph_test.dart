@@ -71,7 +71,7 @@ void main() {
         expect(SuperEditorInspector.findParagraphIndent("1"), 2);
 
         // Press Shift+Tab to unindent.
-        // TODO: add pressShiftTab to flutter_test_robots
+        // TODO: add pressShiftTab to flutter_test_robots - https://github.com/Flutter-Bounty-Hunters/flutter_test_robots/issues/30
         await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
         await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
@@ -98,6 +98,35 @@ void main() {
         await tester.pump();
 
         // Ensure the indentation didn't change because it was already at zero.
+        expect(SuperEditorInspector.findParagraphIndent("1"), 0);
+      });
+
+      testWidgetsOnDesktop("indents with Tab when caret is in middle of text", (tester) async {
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .pump();
+
+        // Place the caret in the middle of the text.
+        await tester.placeCaretInParagraph("1", 2);
+
+        // Ensure the paragraph isn't indented.
+        expect(SuperEditorInspector.findParagraphIndent("1"), 0);
+
+        // Press Tab to indent the paragraph.
+        await tester.pressTab();
+
+        // Ensure the paragraph is indented.
+        expect(SuperEditorInspector.findParagraphIndent("1"), 1);
+
+        // Press Shift+Tab to unindent.
+        // TODO: add pressShiftTab to flutter_test_robots
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+        await tester.pump();
+
+        // Ensure the paragraph was un-indented.
         expect(SuperEditorInspector.findParagraphIndent("1"), 0);
       });
 
@@ -157,7 +186,7 @@ void main() {
         // Press Backspace to un-indent the task.
         await tester.pressBackspace();
 
-        // Ensure the paragraph was un-indented..
+        // Ensure the paragraph was un-indented.
         expect(SuperEditorInspector.findParagraphIndent("1"), 0);
       });
     });
