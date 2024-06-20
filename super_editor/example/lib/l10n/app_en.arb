@@ -3,6 +3,8 @@
   "labelBold": "Bold",
   "labelItalics": "Italics",
   "labelStrikethrough": "Strikethrough",
+  "labelSuperscript": "Superscript",
+  "labelSubscript": "Subscript",
   "labelLink": "Link",
   "labelTextAlignment": "Text Alignment",
   "labelMoreOptions": "More Options (not implemented)",

@@ -134,6 +134,22 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
           alignment: request.alignment,
         )
       : null,
+  (request) => request is IndentParagraphRequest
+      ? IndentParagraphCommand(
+          request.nodeId,
+        )
+      : null,
+  (request) => request is UnIndentParagraphRequest
+      ? UnIndentParagraphCommand(
+          request.nodeId,
+        )
+      : null,
+  (request) => request is SetParagraphIndentRequest
+      ? SetParagraphIndentCommand(
+          request.nodeId,
+          level: request.level,
+        )
+      : null,
   (request) => request is ChangeParagraphBlockTypeRequest
       ? ChangeParagraphBlockTypeCommand(
           nodeId: request.nodeId,
