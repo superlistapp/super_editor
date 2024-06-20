@@ -38,8 +38,34 @@ const underlineAttribution = NamedAttribution('underline');
 /// Strikethrough style attribution.
 const strikethroughAttribution = NamedAttribution('strikethrough');
 
+/// Superscript style attribution.
+const superscriptAttribution = ScriptAttribution.superscript();
+
+/// Subscript style attribution.
+const subscriptAttribution = ScriptAttribution.subscript();
+
 /// Code style attribution.
 const codeAttribution = NamedAttribution('code');
+
+/// An attribution for superscript and subscript text.
+class ScriptAttribution implements Attribution {
+  static const typeSuper = "superscript";
+  static const typeSub = "subscript";
+
+  const ScriptAttribution.superscript() : type = typeSuper;
+
+  const ScriptAttribution.subscript() : type = typeSub;
+
+  @override
+  String get id => "script";
+
+  final String type;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return other is ScriptAttribution && type == other.type;
+  }
+}
 
 /// Attribution to be used within [AttributedText] to
 /// represent an inline span of a text color change.
@@ -136,6 +162,39 @@ class FontSizeAttribution implements Attribution {
   @override
   String toString() {
     return '[FontSizeAttribution]: $fontSize';
+  }
+}
+
+/// Attribution that says the text within it should use the given
+/// [fontFamily].
+///
+/// Every [FontFamilyAttribution] is considered equivalent so
+/// that [AttributedText] prevents multiple [FontFamilyAttribution]s
+/// from overlapping.
+class FontFamilyAttribution implements Attribution {
+  const FontFamilyAttribution(this.fontFamily);
+
+  @override
+  String get id => 'font_family';
+
+  final String fontFamily;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FontFamilyAttribution && runtimeType == other.runtimeType && fontFamily == other.fontFamily;
+
+  @override
+  int get hashCode => fontFamily.hashCode;
+
+  @override
+  String toString() {
+    return '[FontFamilyAttribution]: $fontFamily';
   }
 }
 
