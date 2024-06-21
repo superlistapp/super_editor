@@ -223,7 +223,7 @@ extension OperationParser on Operation {
         ),
         // Every line of text is followed by a newline, except the last
         // line. If this isn't the last line, add a new paragraph.
-        if (i < textPerLine.length - 1)
+        if (i < textPerLine.length - 1) ...[
           InsertNodeAfterNodeRequest(
             existingNodeId: currentNodeId,
             newNode: ParagraphNode(
@@ -231,6 +231,17 @@ extension OperationParser on Operation {
               text: AttributedText(""),
             ),
           ),
+          ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: newNodeId,
+                nodePosition: const TextNodePosition(offset: 0),
+              ),
+            ),
+            SelectionChangeType.insertContent,
+            SelectionReason.contentChange,
+          ),
+        ],
       ]);
 
       if (i < textPerLine.length - 1) {
@@ -251,7 +262,7 @@ extension OperationParser on Operation {
       return;
     }
 
-    // Check if the selected node is an empty text node. If it, we want to replace it
+    // Check if the selected node is an empty text node. If it is, we want to replace it
     // with the media that we're inserting.
     final document = editor.context.find<MutableDocument>(Editor.documentKey);
     final selectedNodeId = composer.selection!.extent.nodeId;
