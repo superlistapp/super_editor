@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor_quill/src/parsing/parser.dart';
 import 'package:super_editor_quill/src/serializing/serializing.dart';
 
+import 'quill_delta_comparison.dart';
 import 'test_documents.dart';
 
 void main() {
@@ -12,7 +13,7 @@ void main() {
         final deltas = createAllTextStylesSuperEditorDocument().toQuillDeltas();
         final expectedDeltas = Delta.fromJson(allTextStylesDeltaDocument);
 
-        expect(deltas, expectedDeltas);
+        expect(deltas, quillDocumentEquivalentTo(expectedDeltas));
       });
     });
 

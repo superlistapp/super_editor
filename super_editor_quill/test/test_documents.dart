@@ -140,11 +140,6 @@ const allTextStylesDeltaDocument = [
   {
     "attributes": {"code-block": "plain"},
     "insert": "\n"
-  },
-  {"insert": "\n"},
-  {
-    "attributes": {"align": "justify"},
-    "insert": "\n\n"
   }
 ];
 
@@ -208,14 +203,14 @@ MutableDocument createAllTextStylesSuperEditorDocument() {
       ListItemNode(id: "9", itemType: ListItemType.ordered, text: AttributedText("Ordered item 1")),
       ListItemNode(id: "10", itemType: ListItemType.ordered, text: AttributedText("Ordered item 2")),
       ParagraphNode(id: "11", text: AttributedText("")),
-      ListItemNode(id: "12", itemType: ListItemType.ordered, text: AttributedText("Unordered item 1")),
-      ListItemNode(id: "13", itemType: ListItemType.ordered, text: AttributedText("Unordered item 2")),
+      ListItemNode(id: "12", itemType: ListItemType.unordered, text: AttributedText("Unordered item 1")),
+      ListItemNode(id: "13", itemType: ListItemType.unordered, text: AttributedText("Unordered item 2")),
       ParagraphNode(id: "14", text: AttributedText("")),
       TaskNode(id: "15", text: AttributedText("I'm a task that's incomplete"), isComplete: false),
       TaskNode(id: "16", text: AttributedText("I'm a task that's complete"), isComplete: true),
       ParagraphNode(id: "17", text: AttributedText("")),
       ParagraphNode(id: "18", text: AttributedText("I'm an indented paragraph at level 1"), indent: 1),
-      ParagraphNode(id: "19", text: AttributedText("I'm an indented paragraph at level 2"), indent: 2),
+      ParagraphNode(id: "19", text: AttributedText("I'm a paragraph indented at level 2"), indent: 2),
       ParagraphNode(id: "20", text: AttributedText("")),
       ParagraphNode(
         id: "21",
@@ -235,8 +230,8 @@ MutableDocument createAllTextStylesSuperEditorDocument() {
           "Some contentThis is a superscript",
           AttributedSpans(
             attributions: [
-              const SpanMarker(attribution: subscriptAttribution, offset: 12, markerType: SpanMarkerType.start),
-              const SpanMarker(attribution: subscriptAttribution, offset: 32, markerType: SpanMarkerType.end),
+              const SpanMarker(attribution: superscriptAttribution, offset: 12, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: superscriptAttribution, offset: 32, markerType: SpanMarkerType.end),
             ],
           ),
         ),

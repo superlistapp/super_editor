@@ -26,5 +26,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  text_table: ^4.0.3
 
 flutter:
