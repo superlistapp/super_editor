@@ -5,6 +5,7 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_quill/src/content/formatting.dart';
 import 'package:super_editor_quill/src/content/multimedia.dart';
 
+/// A [DeltaSerializer] that serializes [ParagraphNode]s into deltas.
 const paragraphDeltaSerializer = ParagraphDeltaSerializer();
 
 class ParagraphDeltaSerializer extends TextBlockDeltaSerializer {
@@ -28,6 +29,7 @@ class ParagraphDeltaSerializer extends TextBlockDeltaSerializer {
   }
 }
 
+/// A [DataSerializer] that serializes [ListItemNode]s into deltas.
 const listItemDeltaSerializer = ListItemDeltaSerializer();
 
 class ListItemDeltaSerializer extends TextBlockDeltaSerializer {
@@ -54,6 +56,7 @@ class ListItemDeltaSerializer extends TextBlockDeltaSerializer {
   }
 }
 
+/// A [DeltaSerializer] that serializes [TaskNode]s into deltas.
 const taskDeltaSerializer = TaskDeltaSerializer();
 
 class TaskDeltaSerializer extends TextBlockDeltaSerializer {
@@ -75,6 +78,7 @@ class TaskDeltaSerializer extends TextBlockDeltaSerializer {
   }
 }
 
+/// A [DeltaSerializer] that serializes [ImageNode]s into deltas.
 const imageDeltaSerializer = FunctionalDeltaSerializer(_serializeImage);
 bool _serializeImage(node, deltas) {
   if (node is! ImageNode) {
@@ -90,6 +94,7 @@ bool _serializeImage(node, deltas) {
   return true;
 }
 
+/// A [DeltaSerializer] that serializes [VideoNode]s into deltas.
 const videoDeltaSerializer = FunctionalDeltaSerializer(_serializeVideo);
 bool _serializeVideo(node, deltas) {
   if (node is! VideoNode) {
@@ -105,6 +110,7 @@ bool _serializeVideo(node, deltas) {
   return true;
 }
 
+/// A [DeltaSerializer] that serializes [AudioNode]s to deltas.
 const audioDeltaSerializer = FunctionalDeltaSerializer(_serializeAudio);
 bool _serializeAudio(node, deltas) {
   if (node is! AudioNode) {
@@ -120,6 +126,7 @@ bool _serializeAudio(node, deltas) {
   return true;
 }
 
+/// A [DeltaSerializer] that serializes [FileNode]s into deltas.
 const fileDeltaSerializer = FunctionalDeltaSerializer(_serializeFile);
 bool _serializeFile(node, deltas) {
   if (node is! FileNode) {
@@ -159,7 +166,6 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
     for (int i = 0; i < spans.length; i += 1) {
       final span = spans[i];
       final text = textBlock.text.text.substring(span.start, textBlock.text.text.isNotEmpty ? span.end + 1 : span.end);
-      print(" - span: '${text.toNewlineString()}'");
       final inlineAttributes = getInlineAttributesFor(span.attributions);
 
       final previousDelta = deltas.operations.lastOrNull;
@@ -168,15 +174,10 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
         inlineAttributes.isNotEmpty ? inlineAttributes : null,
       );
       if (previousDelta != null && newDelta.canMergeWith(previousDelta)) {
-        print(
-            " - Merging '${(previousDelta.value as String).toNewlineString()}' + '${(newDelta.value as String).toNewlineString()}'");
         deltas.operations[deltas.operations.length - 1] = newDelta.mergeWith(previousDelta);
-        print(
-            " - Merged with previous delta: '${(deltas.operations[deltas.operations.length - 1].value as String).toNewlineString()}'");
         continue;
       }
 
-      print(" - Adding a new delta to the document list");
       deltas.operations.add(newDelta);
     }
 
@@ -188,11 +189,8 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
     final newlineDelta = Operation.insert("\n", blockFormats);
     final previousDelta = deltas.operations[deltas.operations.length - 1];
     if (newlineDelta.canMergeWith(previousDelta)) {
-      print(
-          "Merging a post-paragraph newline with previous delta: '${(previousDelta.value as String).toNewlineString()}'");
       deltas.operations[deltas.operations.length - 1] = newlineDelta.mergeWith(previousDelta);
     } else {
-      print("Adding a standalone post-paragraph newline delta: ${(newlineDelta.value as String).toNewlineString()}");
       deltas.operations.add(newlineDelta);
     }
 
