@@ -1,3 +1,6 @@
+## [0.3.2] - June, 2024
+ * Fix crash when adding attributions that overlap others - you can now control whether a new attribution overwrites conflicting spans when you add it.
+
 ## [0.3.1] - June, 2024
  * Added query `getAllAttributionsThroughout()` to `AttributedText`.
  * Added `copy()` to `AttributedText()`.
