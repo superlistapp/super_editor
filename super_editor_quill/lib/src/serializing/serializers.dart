@@ -80,7 +80,7 @@ class TaskDeltaSerializer extends TextBlockDeltaSerializer {
 
 /// A [DeltaSerializer] that serializes [ImageNode]s into deltas.
 const imageDeltaSerializer = FunctionalDeltaSerializer(_serializeImage);
-bool _serializeImage(node, deltas) {
+bool _serializeImage(DocumentNode node, Delta deltas) {
   if (node is! ImageNode) {
     return false;
   }
@@ -96,7 +96,7 @@ bool _serializeImage(node, deltas) {
 
 /// A [DeltaSerializer] that serializes [VideoNode]s into deltas.
 const videoDeltaSerializer = FunctionalDeltaSerializer(_serializeVideo);
-bool _serializeVideo(node, deltas) {
+bool _serializeVideo(DocumentNode node, Delta deltas) {
   if (node is! VideoNode) {
     return false;
   }
@@ -112,7 +112,7 @@ bool _serializeVideo(node, deltas) {
 
 /// A [DeltaSerializer] that serializes [AudioNode]s to deltas.
 const audioDeltaSerializer = FunctionalDeltaSerializer(_serializeAudio);
-bool _serializeAudio(node, deltas) {
+bool _serializeAudio(DocumentNode node, Delta deltas) {
   if (node is! AudioNode) {
     return false;
   }
@@ -128,7 +128,7 @@ bool _serializeAudio(node, deltas) {
 
 /// A [DeltaSerializer] that serializes [FileNode]s into deltas.
 const fileDeltaSerializer = FunctionalDeltaSerializer(_serializeFile);
-bool _serializeFile(node, deltas) {
+bool _serializeFile(DocumentNode node, Delta deltas) {
   if (node is! FileNode) {
     return false;
   }
@@ -251,39 +251,51 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
     for (final attribution in superEditorAttributions) {
       if (attribution == boldAttribution) {
         attributes["bold"] = true;
+        continue;
       }
       if (attribution == italicsAttribution) {
         attributes["italic"] = true;
+        continue;
       }
       if (attribution == strikethroughAttribution) {
         attributes["strike"] = true;
+        continue;
       }
       if (attribution == underlineAttribution) {
         attributes["underline"] = true;
+        continue;
       }
       if (attribution == superscriptAttribution) {
         attributes["script"] = "super";
+        continue;
       }
       if (attribution == subscriptAttribution) {
         attributes["script"] = "sub";
+        continue;
       }
       if (attribution is ColorAttribution) {
         attributes["color"] = "#${attribution.color.value.toRadixString(16).substring(2)}";
+        continue;
       }
       if (attribution is BackgroundColorAttribution) {
         attributes["background"] = "#${attribution.color.value.toRadixString(16).substring(2)}";
+        continue;
       }
       if (attribution is FontFamilyAttribution) {
         attributes["font"] = attribution.fontFamily;
+        continue;
       }
       if (attribution is NamedFontSizeAttribution) {
         attributes["size"] = attribution.fontSizeName;
+        continue;
       }
       if (attribution is FontSizeAttribution) {
         attributes["size"] = attribution.fontSize;
+        continue;
       }
       if (attribution is LinkAttribution) {
         attributes["link"] = attribution.url;
+        continue;
       }
     }
 
