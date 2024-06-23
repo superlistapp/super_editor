@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
 
+import 'test_documents.dart';
+
 // Useful links:
 //  - create a Delta document in the browser: https://quilljs.com/docs/delta
 //  - list of supported formats (bold, italics, header, etc): https://quilljs.com/docs/formats
@@ -39,7 +41,7 @@ void main() {
       });
 
       test("all text blocks and styles", () {
-        final document = parseQuillDeltaOps(_allTextStylesDocument);
+        final document = parseQuillDeltaOps(allTextStylesDeltaDocument);
 
         final nodes = document.nodes.iterator..moveNext();
         DocumentNode? node = nodes.current;
@@ -307,6 +309,48 @@ void main() {
         expect(node.metadata["blockType"], codeAttribution);
       });
 
+      test("overlapping styles", () {
+        final document = parseQuillDeltaDocument(
+          {
+            "ops": [
+              {"insert": "This "},
+              {
+                "attributes": {"bold": true},
+                "insert": "paragraph ",
+              },
+              {
+                "attributes": {"italic": true, "bold": true},
+                "insert": "has ",
+              },
+              {
+                "attributes": {"underline": true, "italic": true, "bold": true},
+                "insert": "some",
+              },
+              {
+                "attributes": {"underline": true, "italic": true},
+                "insert": " overlapping",
+              },
+              {
+                "attributes": {"underline": true},
+                "insert": " styles",
+              },
+              {"insert": ".\n"},
+            ],
+          },
+        );
+
+        final paragraph = document.nodes.first as ParagraphNode;
+        expect(paragraph.text.text, "This paragraph has some overlapping styles.");
+        expect(
+          paragraph.text.getAttributionSpansByFilter((a) => true),
+          {
+            const AttributionSpan(attribution: boldAttribution, start: 5, end: 22),
+            const AttributionSpan(attribution: italicsAttribution, start: 15, end: 34),
+            const AttributionSpan(attribution: underlineAttribution, start: 19, end: 41),
+          },
+        );
+      });
+
       test("gracefully handles unknown inline text format", () {
         final document = parseQuillDeltaOps([
           {"insert": "Paragraph "},
@@ -477,146 +521,3 @@ void main() {
     });
   });
 }
-
-const _allTextStylesDocument = [
-  {"insert": "All Text Styles"},
-  {
-    "attributes": {"header": 1},
-    "insert": "\n"
-  },
-  {"insert": "Samples of styles: "},
-  {
-    "attributes": {"bold": true},
-    "insert": "bold"
-  },
-  {"insert": ", "},
-  {
-    "attributes": {"italic": true},
-    "insert": "italics"
-  },
-  {"insert": ", "},
-  {
-    "attributes": {"underline": true},
-    "insert": "underline"
-  },
-  {"insert": ", "},
-  {
-    "attributes": {"strike": true},
-    "insert": "strikethrough"
-  },
-  {"insert": ", "},
-  {
-    "attributes": {"color": "#e60000"},
-    "insert": "text color"
-  },
-  {"insert": ", "},
-  {
-    "attributes": {"background": "#e60000"},
-    "insert": "background color"
-  },
-  {"insert": ", "},
-  {
-    "attributes": {"font": "serif"},
-    "insert": "font change"
-  },
-  {"insert": ", "},
-  {
-    "attributes": {"link": "google.com"},
-    "insert": "link"
-  },
-  {"insert": "\n\nLeft aligned\nCenter aligned"},
-  {
-    "attributes": {"align": "center"},
-    "insert": "\n"
-  },
-  {"insert": "Right aligned"},
-  {
-    "attributes": {"align": "right"},
-    "insert": "\n"
-  },
-  {"insert": "Justified"},
-  {
-    "attributes": {"align": "justify"},
-    "insert": "\n"
-  },
-  {"insert": "\nOrdered item 1"},
-  {
-    "attributes": {"list": "ordered"},
-    "insert": "\n"
-  },
-  {"insert": "Ordered item 2"},
-  {
-    "attributes": {"list": "ordered"},
-    "insert": "\n"
-  },
-  {"insert": "\nUnordered item 1"},
-  {
-    "attributes": {"list": "bullet"},
-    "insert": "\n"
-  },
-  {"insert": "Unordered item 2"},
-  {
-    "attributes": {"list": "bullet"},
-    "insert": "\n"
-  },
-  {"insert": "\nI'm a task that's incomplete"},
-  {
-    "attributes": {"list": "unchecked"},
-    "insert": "\n"
-  },
-  {"insert": "I'm a task that's complete"},
-  {
-    "attributes": {"list": "checked"},
-    "insert": "\n"
-  },
-  {"insert": "\nI'm an indented paragraph at level 1"},
-  {
-    "attributes": {"indent": 1},
-    "insert": "\n"
-  },
-  {"insert": "I'm a paragraph indented at level 2"},
-  {
-    "attributes": {"indent": 2},
-    "insert": "\n"
-  },
-  {"insert": "\nSome content"},
-  {
-    "attributes": {"script": "sub"},
-    "insert": "This is a subscript"
-  },
-  {"insert": "\nSome content"},
-  {
-    "attributes": {"script": "super"},
-    "insert": "This is a superscript"
-  },
-  {"insert": "\n\n"},
-  {
-    "attributes": {"size": "huge"},
-    "insert": "HUGE"
-  },
-  {"insert": "\n"},
-  {
-    "attributes": {"size": "large"},
-    "insert": "Large"
-  },
-  {"insert": "\n"},
-  {
-    "attributes": {"size": "small"},
-    "insert": "small"
-  },
-  {"insert": "\n\nThis is a blockquote"},
-  {
-    "attributes": {"blockquote": true},
-    "insert": "\n"
-  },
-  {"insert": "\nThis is a code block"},
-  {
-    "attributes": {"code-block": "plain"},
-    "insert": "\n"
-  },
-  {"insert": "\n"},
-  {
-    "attributes": {"align": "justify"},
-    "insert": "\n\n"
-  }
-];
