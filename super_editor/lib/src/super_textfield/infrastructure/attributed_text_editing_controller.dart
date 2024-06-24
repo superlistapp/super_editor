@@ -659,13 +659,26 @@ class AttributedTextEditingController with ChangeNotifier {
     return text.computeTextSpan(styleBuilder);
   }
 
-  void clear() {
+  void clearText() {
+    _text = AttributedText();
+    _selection = const TextSelection.collapsed(offset: 0);
+    _composingAttributions.clear();
+    _composingRegion = TextRange.empty;
+
+    notifyListeners();
+  }
+
+  void clearTextAndSelection() {
     _text = AttributedText();
     _selection = const TextSelection.collapsed(offset: -1);
     _composingAttributions.clear();
     _composingRegion = TextRange.empty;
 
     notifyListeners();
+  }
+
+  void clear() {
+    clearTextAndSelection();
   }
 
   //------ START: Methods moved here from extension methods ---------
