@@ -804,6 +804,57 @@ void main() {
     });
 
     group("clear", () {
+      test('clears the text', () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText('my text'),
+        );
+
+        controller.clear();
+
+        expect(controller.text.text, isEmpty);
+      });
+
+      test('clears the selection', () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText('my text'),
+          selection: TextSelection.collapsed(offset: 7),
+        );
+
+        controller.clear();
+
+        expect(
+          controller.selection,
+          const TextSelection.collapsed(offset: -1),
+        );
+      });
+
+      test('clears the composing attributions', () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText('my text'),
+          selection: TextSelection.collapsed(offset: 7),
+          composingRegion: TextRange(start: 3, end: 7),
+        );
+        controller.composingAttributions = {
+          boldAttribution,
+        };
+
+        controller.clear();
+
+        expect(controller.composingAttributions, isEmpty);
+      });
+
+      test('clears the composing region', () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText('my text'),
+          selection: TextSelection.collapsed(offset: 7),
+          composingRegion: TextRange(start: 3, end: 7),
+        );
+
+        controller.clear();
+
+        expect(controller.composingRegion, TextRange.empty);
+      });
+
       test('notifies listeners', () {
         int listenerNotifyCount = 0;
 
