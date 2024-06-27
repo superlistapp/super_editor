@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -471,6 +472,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   bool _isCaretDragInProgress = false;
 
+  // Cached view metrics to ignore unnecessary didChangeMetrics calls.
+  Size? _lastSize;
+  ViewPadding? _lastInsets;
+
   @override
   void initState() {
     super.initState();
@@ -493,6 +498,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    final view = View.of(context);
+    _lastSize = view.physicalSize;
+    _lastInsets = view.viewInsets;
 
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
 
@@ -529,6 +538,20 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   @override
   void didChangeMetrics() {
+    // It is possible to get the notification even though the metrics for view are same.
+    final view = View.of(context);
+    final size = view.physicalSize;
+    final insets = view.viewInsets;
+    if (size == _lastSize &&
+        _lastInsets?.left == insets.left &&
+        _lastInsets?.right == insets.right &&
+        _lastInsets?.top == insets.top &&
+        _lastInsets?.bottom == insets.bottom) {
+      return;
+    }
+    _lastSize = size;
+    _lastInsets = insets;
+
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
