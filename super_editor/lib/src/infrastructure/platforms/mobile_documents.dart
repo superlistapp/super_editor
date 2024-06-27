@@ -409,6 +409,11 @@ class DragHandleAutoScroller {
     final scrollPosition = _getScrollPosition();
     final currentScrollOffset = scrollPosition.pixels;
 
+    // The offset calculation below does not work correctly in custom scroll view with sliver header
+    // and causes overscroll so for now clamp the offset.
+    final max = scrollPosition.maxScrollExtent;
+    final min = scrollPosition.minScrollExtent;
+
     if (offsetInViewport.dy < _dragAutoScrollBoundary.leading) {
       // The offset is above the leading boundary. We need to scroll up
       editorGesturesLog.fine("The scrollable needs to scroll up to make offset visible.");
@@ -417,8 +422,8 @@ class DragHandleAutoScroller {
       // at the top edge of the scrollable, so we can't scroll further up.
       if (currentScrollOffset > 0.0) {
         // Jump to the position where the offset sits at the leading boundary.
-        scrollPosition.jumpTo(
-          currentScrollOffset + (offsetInViewport.dy - _dragAutoScrollBoundary.leading),
+        scrollPosition.jumpTo((
+          currentScrollOffset + (offsetInViewport.dy - _dragAutoScrollBoundary.leading).clamp(min, max)),
         );
       }
     } else if (offsetInViewport.dy > _getViewportBox().size.height - _dragAutoScrollBoundary.trailing) {
@@ -429,7 +434,7 @@ class DragHandleAutoScroller {
         // distance below. Scroll to where the offset sits at the trailing boundary.
         final jumpDeltaToShowOffset =
             offsetInViewport.dy + _dragAutoScrollBoundary.trailing - _getViewportBox().size.height;
-        scrollPosition.jumpTo(currentScrollOffset + jumpDeltaToShowOffset);
+        scrollPosition.jumpTo((currentScrollOffset + jumpDeltaToShowOffset).clamp(min, max));
       }
     }
   }
