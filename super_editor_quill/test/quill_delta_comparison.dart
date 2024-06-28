@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:text_table/text_table.dart';
@@ -76,6 +77,10 @@ class EquivalentQuillDocumentMatcher extends Matcher {
                 "Different attributes - Expected: ${_expectedDocument.operations[i].attributes}, Actual: ${actualDocument.operations[i].value}";
           }
           nodeTypeOrContentMismatch = true;
+        } else if (!const DeepCollectionEquality()
+            .equals(_expectedDocument.operations[i].attributes, actualDocument.operations[i].attributes)) {
+          opComparisons[i][2] = "Different attributes";
+          nodeTypeOrContentMismatch = true;
         }
       } else if (i < _expectedDocument.operations.length) {
         opComparisons[i][0] = _expectedDocument.operations[i].describe();
@@ -101,7 +106,8 @@ class EquivalentQuillDocumentMatcher extends Matcher {
 
 extension on Operation {
   String describe() {
-    final writtenValue = value.toString().replaceAll("\n", "⏎");
+    final writtenValue =
+        "${value.toString().replaceAll("\n", "⏎")}, Atts: ${attributes?.entries.map((entry) => "${entry.key}: ${entry.value}").join(", ") ?? "None"}";
     if (isInsert) {
       return "Insert: $writtenValue";
     } else if (isRetain) {

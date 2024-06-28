@@ -68,6 +68,7 @@ class CodeBlockDeltaFormat extends FilterByNameBlockDeltaFormat {
 
   @override
   List<EditRequest>? doApplyFormat(Editor editor, Object value) {
+    print("Applying code block format: $value");
     final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
 
     // TODO: add support for recording the language of the code block, which comes from

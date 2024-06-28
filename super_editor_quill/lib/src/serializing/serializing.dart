@@ -17,6 +17,7 @@ extension QuillDelta on MutableDocument {
     final deltaDocument = Delta();
 
     for (final node in nodes) {
+      print("Serializing node: $node");
       if (node is ParagraphNode && node == nodes.last && node.text.text.isEmpty && nodes.length > 1) {
         // This final, empty paragraph in the document represents the final
         // newline "\n" in the Delta document. But, due to how we serialize

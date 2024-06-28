@@ -136,7 +136,14 @@ const allTextStylesDeltaDocument = [
     "attributes": {"blockquote": true},
     "insert": "\n"
   },
+  // Notice: A multiline code block, while rendered as a single block, is
+  // encoded as independently attributed deltas.
   {"insert": "\nThis is a code block"},
+  {
+    "attributes": {"code-block": "plain"},
+    "insert": "\n"
+  },
+  {"insert": "That spans two lines."},
   {
     "attributes": {"code-block": "plain"},
     "insert": "\n"
@@ -288,8 +295,45 @@ MutableDocument createAllTextStylesSuperEditorDocument() {
       ParagraphNode(id: "29", text: AttributedText("")),
       ParagraphNode(
         id: "30",
-        text: AttributedText("This is a code block"),
+        text: AttributedText("This is a code block\nThat spans two lines."),
         metadata: {"blockType": codeAttribution},
+      ),
+    ],
+  );
+}
+
+const multilineCodeBlockDeltaDocument = [
+  {"insert": "This paragraph is followed by a multiline code block:\nThis is a code block"},
+  {
+    "attributes": {"code-block": "plain"},
+    "insert": "\n",
+  },
+  {"insert": "This is line two"},
+  {
+    "attributes": {"code-block": "plain"},
+    "insert": "\n",
+  },
+  {"insert": "This is line three"},
+  {
+    "attributes": {"code-block": "plain"},
+    "insert": "\n",
+  },
+  {"insert": "\n"},
+];
+
+MutableDocument createMultilineCodeBlockSuperEditorDocument() {
+  return MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: "1",
+        text: AttributedText("This paragraph is followed by a multiline code block:"),
+      ),
+      ParagraphNode(
+        id: "2",
+        text: AttributedText("This is a code block\nThis is line two\nThis is line three"),
+        metadata: {
+          "blockType": codeAttribution,
+        },
       ),
     ],
   );

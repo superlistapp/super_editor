@@ -9,6 +9,13 @@ import 'test_documents.dart';
 void main() {
   group("Delta document serializing >", () {
     group("text >", () {
+      test("multiline code block", () {
+        final deltas = createMultilineCodeBlockSuperEditorDocument().toQuillDeltas();
+        final expectedDeltas = Delta.fromJson(multilineCodeBlockDeltaDocument);
+
+        expect(deltas, quillDocumentEquivalentTo(expectedDeltas));
+      });
+
       test("all text blocks and styles", () {
         final deltas = createAllTextStylesSuperEditorDocument().toQuillDeltas();
         final expectedDeltas = Delta.fromJson(allTextStylesDeltaDocument);
