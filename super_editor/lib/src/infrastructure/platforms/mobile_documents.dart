@@ -429,7 +429,10 @@ class DragHandleAutoScroller {
         // distance below. Scroll to where the offset sits at the trailing boundary.
         final jumpDeltaToShowOffset =
             offsetInViewport.dy + _dragAutoScrollBoundary.trailing - _getViewportBox().size.height;
-        scrollPosition.jumpTo(currentScrollOffset + jumpDeltaToShowOffset);
+        scrollPosition.jumpTo(
+          (currentScrollOffset + jumpDeltaToShowOffset)
+              .clamp(currentScrollOffset, scrollPosition.maxScrollExtent),
+        );
       }
     }
   }
