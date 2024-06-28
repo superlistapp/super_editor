@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/infrastructure/render_sliver_ext.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -13,15 +14,18 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: (_) => LayoutBuilder(
-            builder: (context, constraints) {
-              // The content should be able to take up whatever size it wants, within the available space.
-              expect(constraints.isTight, isFalse);
-              expect(constraints.maxWidth, _windowSize.width);
-              expect(constraints.maxHeight, _windowSize.height);
+          content: (_) => SliverToBoxAdapter(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // The content should be able to take up whatever width it wants, within the available space.
+                // The height is infinite because `ContentLayers` is a sliver.
+                expect(constraints.isTight, isFalse);
+                expect(constraints.maxWidth, _windowSize.width);
+                expect(constraints.maxHeight, double.infinity);
 
-              return const SizedBox.expand();
-            },
+                return SizedBox.fromSize(size: _windowSize);
+              },
+            ),
           ),
         ),
       );
@@ -33,7 +37,9 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: (_) => const SizedBox.expand(),
+          content: (_) => SliverToBoxAdapter(
+            child: SizedBox.fromSize(size: _windowSize),
+          ),
           underlays: [
             _buildSizeValidatingLayer(),
           ],
@@ -47,7 +53,9 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: (_) => const SizedBox.expand(),
+          content: (_) => SliverToBoxAdapter(
+            child: SizedBox.fromSize(size: _windowSize),
+          ),
           overlays: [
             _buildSizeValidatingLayer(),
           ],
@@ -61,7 +69,9 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: (_) => const SizedBox.expand(),
+          content: (_) => SliverToBoxAdapter(
+            child: SizedBox.fromSize(size: _windowSize),
+          ),
           underlays: [
             _buildSizeValidatingLayer(),
           ],
@@ -78,7 +88,9 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: (_) => const SizedBox.expand(),
+          content: (_) => SliverToBoxAdapter(
+            child: SizedBox.fromSize(size: _windowSize),
+          ),
           underlays: [
             _buildSizeValidatingLayer(),
             _buildSizeValidatingLayer(),
@@ -112,7 +124,9 @@ void main() {
             rebuildSignal: contentRebuildSignal,
             buildTracker: contentBuildTracker,
             onBuildScheduled: onBuildScheduled,
-            child: const SizedBox(),
+            child: SliverToBoxAdapter(
+              child: SizedBox.fromSize(size: _windowSize),
+            ),
           ),
           underlays: [
             (context) => _RebuildableContentLayerWidget(
@@ -158,7 +172,9 @@ void main() {
             onLayout: () {
               didContentLayout.value = true;
             },
-            child: const SizedBox.expand(),
+            child: SliverToBoxAdapter(
+              child: SizedBox.fromSize(size: _windowSize),
+            ),
           ),
           underlays: [
             (context) {
@@ -201,7 +217,9 @@ void main() {
               onLayout: () {
                 contentLayoutCount.value += 1;
               },
-              child: const SizedBox.expand(),
+              child: SliverToBoxAdapter(
+                child: SizedBox.fromSize(size: _windowSize),
+              ),
             ),
           ),
           underlays: [
@@ -258,7 +276,9 @@ void main() {
                   onLayout: () {
                     contentLayoutCount.value += 1;
                   },
-                  child: const SizedBox.expand(),
+                  child: SliverToBoxAdapter(
+                    child: SizedBox.fromSize(size: _windowSize),
+                  ),
                 ),
               ),
             ),
@@ -320,7 +340,9 @@ void main() {
               onLayout: () {
                 contentLayoutCount.value += 1;
               },
-              child: const SizedBox.expand(),
+              child: SliverToBoxAdapter(
+                child: SizedBox.fromSize(size: _windowSize),
+              ),
             ),
           ),
           underlays: [
@@ -328,10 +350,13 @@ void main() {
                   elementTracker: underlayElementTracker,
                   onBuild: () {
                     // Ensure that this layer can access the render object of the content.
-                    final contentBox = contentKey.currentContext!.findRenderObject() as RenderBox?;
-                    expect(contentBox, isNotNull);
-                    expect(contentBox!.hasSize, isTrue);
-                    expect(contentBox.localToGlobal(Offset.zero), isNotNull);
+                    final contentSliver = contentKey.currentContext!.findRenderObject() as RenderSliver?;
+                    expect(contentSliver, isNotNull);
+                    expect(contentSliver!.geometry, isNotNull);
+                    final viewport = context.findAncestorRenderObjectOfType<RenderViewport>();
+                    // Build happens during viewport layout, which is not finished at this point. So transform to viewport
+                    // coordinate space is as far as we can go.
+                    expect(contentSliver.localToGlobal(Offset.zero, ancestor: viewport), isNotNull);
                   },
                   child: const SizedBox.expand(),
                 ),
@@ -341,10 +366,13 @@ void main() {
                   elementTracker: overlayElementTracker,
                   onBuild: () {
                     // Ensure that this layer can access the render object of the content.
-                    final contentBox = contentKey.currentContext!.findRenderObject() as RenderBox?;
-                    expect(contentBox, isNotNull);
-                    expect(contentBox!.hasSize, isTrue);
-                    expect(contentBox.localToGlobal(Offset.zero), isNotNull);
+                    final contentSliver = contentKey.currentContext!.findRenderObject() as RenderSliver?;
+                    expect(contentSliver, isNotNull);
+                    expect(contentSliver!.geometry, isNotNull);
+                    final viewport = context.findAncestorRenderObjectOfType<RenderViewport>();
+                    // Build happens during viewport layout, which is not finished at this point. So transform to viewport
+                    // coordinate space is as far as we can go.
+                    expect(contentSliver.localToGlobal(Offset.zero, ancestor: viewport), isNotNull);
                   },
                   child: const SizedBox.expand(),
                 ),
@@ -375,7 +403,9 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: (_) => const SizedBox.expand(),
+          content: (_) => SliverToBoxAdapter(
+            child: SizedBox.fromSize(size: _windowSize),
+          ),
           underlays: [
             (context) {
               // Ensure that this layer can access ancestors.
@@ -468,7 +498,11 @@ Future<void> _pumpScaffold(
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: child,
+        body: CustomScrollView(
+          slivers: [
+            child,
+          ],
+        ),
       ),
     ),
   );
@@ -747,7 +781,7 @@ class _LayoutTrackingWidget extends SingleChildRenderObjectWidget {
   }
 }
 
-class _RenderLayoutTrackingWidget extends RenderProxyBox {
+class _RenderLayoutTrackingWidget extends RenderProxySliver {
   _RenderLayoutTrackingWidget(this._onLayout);
 
   final VoidCallback _onLayout;

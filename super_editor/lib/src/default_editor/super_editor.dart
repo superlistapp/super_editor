@@ -1,6 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart' show ValueListenable, defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -32,6 +33,7 @@ import 'package:super_editor/src/infrastructure/platforms/mac/mac_ime.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_editor/src/infrastructure/render_sliver_ext.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/document_gestures_interaction_overrides.dart';
@@ -132,6 +134,7 @@ class SuperEditor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.plugins = const {},
     this.debugPaint = const DebugPaintConfig(),
+    this.shrinkWrap = false,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         componentBuilders = componentBuilders != null
@@ -323,6 +326,10 @@ class SuperEditor extends StatefulWidget {
   /// Paints some extra visual ornamentation to help with
   /// debugging.
   final DebugPaintConfig debugPaint;
+
+  /// Whether the scroll view used by the editor should shrink-wrap its contents.
+  /// Only used when editor is not inside an scrollable.
+  final bool shrinkWrap;
 
   @override
   SuperEditorState createState() => SuperEditorState();
@@ -611,45 +618,43 @@ class SuperEditorState extends State<SuperEditor> {
             document: widget.document,
             selection: _composer.selectionNotifier,
             isDocumentLayoutAvailable: () =>
-                (_docLayoutKey.currentContext?.findRenderObject() as RenderBox?)?.hasSize == true,
+                (_docLayoutKey.currentContext?.findRenderObject() as RenderSliver?)?.hasSize == true,
             getDocumentLayout: () => editContext.documentLayout,
             placeCaretAtEndOfDocumentOnGainFocus: widget.selectionPolicies.placeCaretAtEndOfDocumentOnGainFocus,
             restorePreviousSelectionOnGainFocus: widget.selectionPolicies.restorePreviousSelectionOnGainFocus,
             clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
-            child: _buildTextInputSystem(
-              child: _buildPlatformSpecificViewportDecorations(
-                controlsScopeContext,
-                child: DocumentScaffold(
-                  documentLayoutLink: _documentLayoutLink,
-                  documentLayoutKey: _docLayoutKey,
-                  gestureBuilder: _buildGestureInteractor,
-                  scrollController: _scrollController,
-                  autoScrollController: _autoScrollController,
-                  scroller: _scroller,
-                  presenter: presenter,
-                  componentBuilders: widget.componentBuilders,
-                  underlays: [
-                    // Add all underlays that the app wants.
-                    for (final underlayBuilder in widget.documentUnderlayBuilders) //
-                      (context) => underlayBuilder.build(context, editContext),
-                  ],
-                  overlays: [
-                    // Layer that positions and sizes leader widgets at the bounds
-                    // of the users selection so that carets, handles, toolbars, and
-                    // other things can follow the selection.
-                    (context) {
-                      return _SelectionLeadersDocumentLayerBuilder(
-                        links: _selectionLinks,
-                        showDebugLeaderBounds: false,
-                      ).build(context, editContext);
-                    },
-                    // Add all overlays that the app wants.
-                    for (final overlayBuilder in widget.documentOverlayBuilders) //
-                      (context) => overlayBuilder.build(context, editContext),
-                  ],
-                  debugPaint: widget.debugPaint,
-                ),
-              ),
+            child: DocumentScaffold(
+              documentLayoutLink: _documentLayoutLink,
+              documentLayoutKey: _docLayoutKey,
+              viewportDecorationBuilder: _buildPlatformSpecificViewportDecorations,
+              textInputBuilder: _buildTextInputSystem,
+              gestureBuilder: _buildGestureInteractor,
+              scrollController: _scrollController,
+              autoScrollController: _autoScrollController,
+              scroller: _scroller,
+              presenter: presenter,
+              componentBuilders: widget.componentBuilders,
+              shrinkWrap: widget.shrinkWrap,
+              underlays: [
+                // Add all underlays that the app wants.
+                for (final underlayBuilder in widget.documentUnderlayBuilders) //
+                  (context) => underlayBuilder.build(context, editContext),
+              ],
+              overlays: [
+                // Layer that positions and sizes leader widgets at the bounds
+                // of the users selection so that carets, handles, toolbars, and
+                // other things can follow the selection.
+                (context) {
+                  return _SelectionLeadersDocumentLayerBuilder(
+                    links: _selectionLinks,
+                    showDebugLeaderBounds: false,
+                  ).build(context, editContext);
+                },
+                // Add all overlays that the app wants.
+                for (final overlayBuilder in widget.documentOverlayBuilders) //
+                  (context) => overlayBuilder.build(context, editContext),
+              ],
+              debugPaint: widget.debugPaint,
             ),
           ),
         );
@@ -689,7 +694,8 @@ class SuperEditorState extends State<SuperEditor> {
 
   /// Builds the widget tree that applies user input, e.g., key
   /// presses from a keyboard, or text deltas from the IME.
-  Widget _buildTextInputSystem({
+  Widget _buildTextInputSystem(
+    BuildContext context, {
     required Widget child,
   }) {
     switch (inputSource) {
