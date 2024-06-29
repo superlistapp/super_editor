@@ -399,8 +399,6 @@ class ChangeParagraphBlockTypeCommand implements EditCommand {
 
     final existingNode = document.getNodeById(nodeId)! as ParagraphNode;
     existingNode.putMetadataValue('blockType', blockType);
-    print("Changing node block type (${existingNode.id}): $blockType");
-    print("Confirm after change: ${existingNode.getMetadataValue('blockType')}");
 
     executor.logChanges([
       DocumentEdit(
