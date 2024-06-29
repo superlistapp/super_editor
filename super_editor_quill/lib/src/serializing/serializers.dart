@@ -158,10 +158,14 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
 
     final textByLine = textBlock.text.split("\n");
     for (int i = 0; i < textByLine.length; i += 1) {
-      //
+      _serializeLine(deltas, blockFormats, textByLine[i]);
     }
 
-    var spans = textBlock.text.computeAttributionSpans().toList();
+    return true;
+  }
+
+  void _serializeLine(Delta deltas, Map<String, dynamic> blockFormats, AttributedText line) {
+    var spans = line.computeAttributionSpans().toList();
     if (spans.isEmpty) {
       // The text is empty. Inject a span so that our loop below doesn't
       // violate list bounds.
@@ -170,7 +174,7 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
 
     for (int i = 0; i < spans.length; i += 1) {
       final span = spans[i];
-      final text = textBlock.text.text.substring(span.start, textBlock.text.text.isNotEmpty ? span.end + 1 : span.end);
+      final text = line.text.substring(span.start, line.text.isNotEmpty ? span.end + 1 : span.end);
       final inlineAttributes = getInlineAttributesFor(span.attributions);
 
       final previousDelta = deltas.operations.lastOrNull;
@@ -180,7 +184,6 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
         inlineAttributes.isNotEmpty ? inlineAttributes : null,
       );
       if (previousDelta != null && !previousDelta.hasBlockFormats && newDelta.canMergeWith(previousDelta)) {
-        print("Merging previous: $previousDelta, with new: $newDelta");
         deltas.operations[deltas.operations.length - 1] = newDelta.mergeWith(previousDelta);
         continue;
       }
@@ -188,11 +191,13 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
       deltas.operations.add(newDelta);
     }
 
-    if (textBlock.text.text.endsWith("\n")) {
+    if (line.text.endsWith("\n")) {
       // There's already a trailing newline. No need to add another one.
-      return true;
+      return;
     }
 
+    // We didn't have a natural trailing newline. Insert a newline as per the
+    // Delta spec.
     final newlineDelta = Operation.insert("\n", blockFormats.isNotEmpty ? blockFormats : null);
     final previousDelta = deltas.operations[deltas.operations.length - 1];
     if (newlineDelta.canMergeWith(previousDelta)) {
@@ -200,8 +205,6 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
     } else {
       deltas.operations.add(newlineDelta);
     }
-
-    return true;
   }
 
   @protected

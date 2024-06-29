@@ -135,29 +135,26 @@ extension OperationParser on Operation {
         }
 
         // Deduplicate all back-to-back code blocks.
-        print("De-duplicating code blocks");
         final document = editor.context.find<MutableDocument>(Editor.documentKey);
         if (document.nodes.length < 3) {
           // Minimum of 3 nodes: code, code, newline.
           break;
         }
-        print("Document has ${document.nodes.length} nodes");
+
         var codeBlocks = <ParagraphNode>[];
         for (int i = document.nodes.length - 2; i >= 0; i -= 1) {
           final node = document.nodes[i];
-          print("Looking at node $i: $node");
           if (node is! ParagraphNode) {
             break;
           }
-          print("Node $i with block type: ${node.getMetadataValue("blockType")}");
           if (node.getMetadataValue("blockType") != codeAttribution) {
             break;
           }
+
           codeBlocks.add(node);
         }
 
         if (codeBlocks.length < 2) {
-          print("There's only ${codeBlocks.length} code blocks. Nothing to de-duplicate.");
           break;
         }
 
@@ -167,7 +164,7 @@ extension OperationParser on Operation {
         for (int i = 2; i < codeBlocks.length; i += 1) {
           codeToMove = codeToMove.copyAndAppend(codeBlocks[i].text.insertString(textToInsert: "\n", startOffset: 0));
         }
-        print("Moving '${codeToMove.text}' to code block above");
+
         editor.execute([
           InsertAttributedTextRequest(
             DocumentPosition(nodeId: mergeNode.id, nodePosition: mergeNode.endPosition),
@@ -223,11 +220,9 @@ extension OperationParser on Operation {
     // Notice that the "header" attribute is included in the delta that follows
     // the actual header text. That's the behavior we're implementing by applying
     // block formats here *before* inserting any new text.
-    print("Processing attributes: $attributes");
     for (final blockFormat in blockFormats) {
       final blockChanges = blockFormat.applyTo(this, editor);
       if (blockChanges != null) {
-        print("Formats handled by $blockFormat - $blockChanges");
         changeRequests.addAll(blockChanges);
       }
     }
@@ -297,9 +292,7 @@ extension OperationParser on Operation {
     }
 
     // Execute the block changes and inline text insertions.
-    print("Applying change requests");
     editor.execute(changeRequests);
-    print("");
   }
 
   void _doInsertMedia(Editor editor, DocumentComposer composer) {
