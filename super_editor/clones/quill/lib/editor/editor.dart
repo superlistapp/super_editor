@@ -225,7 +225,6 @@ class ClearTextAttributionsCommand implements EditCommand {
 
     // Remove attributions.
     for (final entry in nodesAndSelections.entries) {
-      print("Entry - range: ${entry.value}");
       final node = entry.key;
       final range = entry.value.toSpanRange();
 

@@ -67,8 +67,6 @@ class _HomeScreenState extends State<HomeScreen> {
       if (changeList.whereType<DocumentEdit>().isEmpty) {
         return;
       }
-
-      print("Document change: ${changeList.whereType<DocumentEdit>().toList()}");
     }));
   }
 

@@ -177,7 +177,6 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
             selection.base.nodeId == selection.extent.nodeId ? FeatherTextBlock.fromNode(extentNode) : null;
       }
     }
-    print("Selected block format: $selectedBlockFormat");
 
     return IconTheme(
       data: const IconThemeData(
@@ -483,8 +482,6 @@ class _NamedTextSizeSelectorState extends State<_NamedTextSizeSelector> {
         aligner: FunctionalPopoverAligner(popoverAligner),
       ),
       itemBuilder: (context, item, isActive, onTap) {
-        print("Named text size: ${item.id}");
-
         return DecoratedBox(
           decoration: BoxDecoration(
             color: isActive ? Colors.grey.withOpacity(0.2) : Colors.transparent,
