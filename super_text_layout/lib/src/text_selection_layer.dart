@@ -24,6 +24,7 @@ class TextLayoutSelectionHighlight extends StatelessWidget {
       painter: TextSelectionPainter(
         textLayout: textLayout,
         selectionColor: style.color,
+        borderRadius: style.borderRadius,
         textSelection: selection,
       ),
     );
@@ -132,12 +133,14 @@ class TextSelectionPainter extends CustomPainter {
   TextSelectionPainter({
     required this.textLayout,
     required this.textSelection,
+    required this.borderRadius,
     required this.selectionColor,
   }) : _selectionPaint = Paint()..color = selectionColor;
 
   final TextLayout? textLayout;
   final TextSelection? textSelection;
   final Color selectionColor;
+  final BorderRadius borderRadius;
   final Paint _selectionPaint;
 
   @override
@@ -156,11 +159,18 @@ class TextSelectionPainter extends CustomPainter {
     for (final box in selectionBoxes) {
       final rawRect = box.toRect();
       final rect = Rect.fromLTWH(rawRect.left, rawRect.top - 2, rawRect.width, rawRect.height + 4);
+      final rrect = RRect.fromRectAndCorners(rect,
+          topLeft: borderRadius.topLeft,
+          topRight: borderRadius.topRight,
+          bottomLeft: borderRadius.bottomLeft,
+          bottomRight: borderRadius.bottomRight);
 
-      canvas.drawRect(
+      canvas.drawRRect(
         // Note: If the rect has no width then we've selected an empty line. Give
         //       that line a slight width for visibility.
-        rect.width > 0 ? rect : Rect.fromLTWH(rect.left, rect.top, 5, rect.height),
+        rect.width > 0
+            ? rrect
+            : RRect.fromRectAndRadius(Rect.fromLTWH(rect.left, rect.top, 5, rect.height), Radius.zero),
         _selectionPaint,
       );
     }
