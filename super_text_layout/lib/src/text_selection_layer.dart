@@ -76,8 +76,14 @@ class _EmptyHighlightPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, width, height),
+    canvas.drawRRect(
+      RRect.fromRectAndCorners(
+        Rect.fromLTWH(0, 0, width, height),
+        topLeft: style.borderRadius.topLeft,
+        topRight: style.borderRadius.topRight,
+        bottomLeft: style.borderRadius.bottomLeft,
+        bottomRight: style.borderRadius.bottomRight,
+      ),
       Paint()..color = style.color,
     );
   }
@@ -133,7 +139,7 @@ class TextSelectionPainter extends CustomPainter {
   TextSelectionPainter({
     required this.textLayout,
     required this.textSelection,
-    required this.borderRadius,
+    this.borderRadius = BorderRadius.zero,
     required this.selectionColor,
   }) : _selectionPaint = Paint()..color = selectionColor;
 
