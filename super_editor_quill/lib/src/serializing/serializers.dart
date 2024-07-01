@@ -156,24 +156,34 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
 
     final blockFormats = getBlockFormats(textBlock);
 
-    var spans = textBlock.text.computeAttributionSpans().toList();
+    final textByLine = textBlock.text.split("\n");
+    for (int i = 0; i < textByLine.length; i += 1) {
+      _serializeLine(deltas, blockFormats, textByLine[i]);
+    }
+
+    return true;
+  }
+
+  void _serializeLine(Delta deltas, Map<String, dynamic> blockFormats, AttributedText line) {
+    var spans = line.computeAttributionSpans().toList();
     if (spans.isEmpty) {
-      // The text is empty. Inject a span so that our standard delta generation
-      // behavior below still works.
+      // The text is empty. Inject a span so that our loop below doesn't
+      // violate list bounds.
       spans = [const MultiAttributionSpan(attributions: {}, start: 0, end: 0)];
     }
 
     for (int i = 0; i < spans.length; i += 1) {
       final span = spans[i];
-      final text = textBlock.text.text.substring(span.start, textBlock.text.text.isNotEmpty ? span.end + 1 : span.end);
+      final text = line.text.substring(span.start, line.text.isNotEmpty ? span.end + 1 : span.end);
       final inlineAttributes = getInlineAttributesFor(span.attributions);
 
       final previousDelta = deltas.operations.lastOrNull;
+
       final newDelta = Operation.insert(
         text,
         inlineAttributes.isNotEmpty ? inlineAttributes : null,
       );
-      if (previousDelta != null && newDelta.canMergeWith(previousDelta)) {
+      if (previousDelta != null && !previousDelta.hasBlockFormats && newDelta.canMergeWith(previousDelta)) {
         deltas.operations[deltas.operations.length - 1] = newDelta.mergeWith(previousDelta);
         continue;
       }
@@ -181,20 +191,20 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
       deltas.operations.add(newDelta);
     }
 
-    if (textBlock.text.text.endsWith("\n")) {
+    if (line.text.endsWith("\n")) {
       // There's already a trailing newline. No need to add another one.
-      return true;
+      return;
     }
 
-    final newlineDelta = Operation.insert("\n", blockFormats);
+    // We didn't have a natural trailing newline. Insert a newline as per the
+    // Delta spec.
+    final newlineDelta = Operation.insert("\n", blockFormats.isNotEmpty ? blockFormats : null);
     final previousDelta = deltas.operations[deltas.operations.length - 1];
     if (newlineDelta.canMergeWith(previousDelta)) {
       deltas.operations[deltas.operations.length - 1] = newlineDelta.mergeWith(previousDelta);
     } else {
       deltas.operations.add(newlineDelta);
     }
-
-    return true;
   }
 
   @protected
@@ -303,6 +313,30 @@ class TextBlockDeltaSerializer implements DeltaSerializer {
   }
 }
 
+// TODO: Move to AttributedText
+extension Split on AttributedText {
+  List<AttributedText> split(String pattern) {
+    final segments = <AttributedText>[];
+    int segmentStart = 0;
+    int searchIndex = 0;
+    final plainText = text;
+
+    int patternIndex = plainText.indexOf(pattern, searchIndex);
+    while (patternIndex >= 0) {
+      segments.add(copyText(segmentStart, patternIndex));
+      segmentStart = patternIndex + pattern.length;
+      searchIndex = segmentStart;
+
+      patternIndex = plainText.indexOf(pattern, searchIndex);
+    }
+
+    // Copy the final segment that appears after the last instance of the pattern.
+    segments.add(copyText(segmentStart, length));
+
+    return segments;
+  }
+}
+
 /// A [DeltaSerializer] that forwards to a given delegate function.
 class FunctionalDeltaSerializer implements DeltaSerializer {
   const FunctionalDeltaSerializer(this._delegate);
@@ -330,6 +364,28 @@ abstract interface class DeltaSerializer {
 }
 
 extension DeltaSerialization on Operation {
+  // TODO: make this query extensible
+  bool get hasBlockFormats {
+    const blockFormats = {
+      'header',
+      'blockquote',
+      'code-block',
+    };
+
+    if (attributes == null || attributes!.isEmpty) {
+      return false;
+    }
+
+    final formats = attributes!.keys;
+    for (final blockFormat in blockFormats) {
+      if (formats.contains(blockFormat)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   bool canMergeWith(Operation previousDelta) {
     if (!isInsert) {
       // We've only implement this for insertions, for now.

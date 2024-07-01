@@ -645,6 +645,27 @@ class ConvertParagraphToTaskCommand implements EditCommand {
   }
 }
 
+class ConvertTaskToParagraphRequest implements EditRequest {
+  const ConvertTaskToParagraphRequest({
+    required this.nodeId,
+    this.paragraphMetadata,
+  });
+
+  final String nodeId;
+  final Map<String, dynamic>? paragraphMetadata;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ConvertTaskToParagraphRequest &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          paragraphMetadata == other.paragraphMetadata;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ paragraphMetadata.hashCode;
+}
+
 class ConvertTaskToParagraphCommand implements EditCommand {
   const ConvertTaskToParagraphCommand({
     required this.nodeId,
