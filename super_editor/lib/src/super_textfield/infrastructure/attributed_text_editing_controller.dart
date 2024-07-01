@@ -659,13 +659,31 @@ class AttributedTextEditingController with ChangeNotifier {
     return text.computeTextSpan(styleBuilder);
   }
 
-  void clear() {
+  /// Clears the text, composing attributions, composing region, and moves
+  /// the collapsed selection to the start of the now empty text controller.
+  void clearText() {
+    _text = AttributedText();
+    _selection = const TextSelection.collapsed(offset: 0);
+    _composingAttributions.clear();
+    _composingRegion = TextRange.empty;
+
+    notifyListeners();
+  }
+
+  /// Clears the text, selection, composing attributions, and composing region.
+  void clearTextAndSelection() {
     _text = AttributedText();
     _selection = const TextSelection.collapsed(offset: -1);
     _composingAttributions.clear();
     _composingRegion = TextRange.empty;
 
     notifyListeners();
+  }
+
+  /// Clears the text, selection, composing attributions, and composing region.
+  @Deprecated('This will be removed in a future release. Use clearText or clearTextAndSelection instead')
+  void clear() {
+    clearTextAndSelection();
   }
 
   //------ START: Methods moved here from extension methods ---------

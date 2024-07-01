@@ -401,7 +401,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     ]);
 
     // Clear the field and hide the URL bar
-    _urlController!.clear();
+    _urlController!.clearTextAndSelection();
     setState(() {
       _showUrlField = false;
       _urlFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
@@ -695,7 +695,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 setState(() {
                   _urlFocusNode.unfocus();
                   _showUrlField = false;
-                  _urlController!.clear();
+                  _urlController!.clearTextAndSelection();
                 });
               },
             ),

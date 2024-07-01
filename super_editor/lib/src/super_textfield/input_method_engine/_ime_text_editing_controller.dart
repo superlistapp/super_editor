@@ -636,7 +636,19 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   }
 
   @override
+  void clearText() {
+    _realController.clearText();
+  }
+
+  @override
+  void clearTextAndSelection() {
+    _realController.clearTextAndSelection();
+  }
+
+  @override
+  @Deprecated('This will be removed in a future release. Use clearText or clearTextAndSelection instead')
   void clear() {
+    // ignore: deprecated_member_use_from_same_package
     _realController.clear();
   }
 
