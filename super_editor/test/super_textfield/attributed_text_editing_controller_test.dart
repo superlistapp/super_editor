@@ -803,203 +803,91 @@ void main() {
       });
     });
 
-    group("clearText", () {
-      test('clears the text', () {
+    group("clearing text and selection", () {
+      test(
+          'calling the clearText method clears the text, '
+          'composing attributions, composing region, and moves '
+          'the selection to the start', () {
+        int listenerNotifyCount = 0;
         final controller = AttributedTextEditingController(
           text: AttributedText('my text'),
-        );
+          selection: TextSelection.collapsed(offset: 7),
+          composingRegion: TextRange(start: 3, end: 7),
+        )
+          ..composingAttributions = {
+            boldAttribution,
+          }
+          ..addListener(() {
+            listenerNotifyCount += 1;
+          });
 
         controller.clearText();
 
         expect(controller.text.text, isEmpty);
-      });
-
-      test('moves the selection to offset 0 (instead of clearing it)', () {
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-          selection: const TextSelection.collapsed(offset: 7),
-        );
-
-        controller.clearText();
-
         expect(
           controller.selection,
           const TextSelection.collapsed(offset: 0),
         );
-      });
-
-      test('clears the composing attributions', () {
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-          selection: TextSelection.collapsed(offset: 7),
-          composingRegion: TextRange(start: 3, end: 7),
-        );
-        controller.composingAttributions = {
-          boldAttribution,
-        };
-
-        controller.clearText();
-
         expect(controller.composingAttributions, isEmpty);
-      });
-
-      test('clears the composing region', () {
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-          selection: TextSelection.collapsed(offset: 7),
-          composingRegion: TextRange(start: 3, end: 7),
-        );
-
-        controller.clearText();
-
         expect(controller.composingRegion, TextRange.empty);
-      });
-
-      test('notifies listeners', () {
-        int listenerNotifyCount = 0;
-
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-        )..addListener(() {
-          listenerNotifyCount += 1;
-        });
-
-        controller.clearText();
-
         expect(listenerNotifyCount, 1);
       });
-    });
 
-    group("clearTextAndSelection", () {
-      test('clears the text', () {
+      test(
+          'calling the clearTextAndSelection method clears the text, '
+          'composing attributions, composing region, and moves '
+          'the removes the text selection', () {
+        int listenerNotifyCount = 0;
         final controller = AttributedTextEditingController(
           text: AttributedText('my text'),
-        );
+          selection: TextSelection.collapsed(offset: 7),
+          composingRegion: TextRange(start: 3, end: 7),
+        )
+          ..composingAttributions = {
+            boldAttribution,
+          }
+          ..addListener(() {
+            listenerNotifyCount += 1;
+          });
 
         controller.clearTextAndSelection();
 
         expect(controller.text.text, isEmpty);
-      });
-
-      test('clears the selection', () {
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-          selection: TextSelection.collapsed(offset: 7),
-        );
-
-        controller.clearTextAndSelection();
-
         expect(
           controller.selection,
           const TextSelection.collapsed(offset: -1),
         );
-      });
-
-      test('clears the composing attributions', () {
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-          selection: TextSelection.collapsed(offset: 7),
-          composingRegion: TextRange(start: 3, end: 7),
-        );
-        controller.composingAttributions = {
-          boldAttribution,
-        };
-
-        controller.clearTextAndSelection();
-
         expect(controller.composingAttributions, isEmpty);
-      });
-
-      test('clears the composing region', () {
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-          selection: TextSelection.collapsed(offset: 7),
-          composingRegion: TextRange(start: 3, end: 7),
-        );
-
-        controller.clearTextAndSelection();
-
         expect(controller.composingRegion, TextRange.empty);
-      });
-
-      test('notifies listeners', () {
-        int listenerNotifyCount = 0;
-
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-        )..addListener(() {
-          listenerNotifyCount += 1;
-        });
-
-        controller.clearTextAndSelection();
-
         expect(listenerNotifyCount, 1);
       });
-    });
 
-    group("clear", () {
-      test('clears the text', () {
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-        );
-
-        controller.clear();
-
-        expect(controller.text.text, isEmpty);
-      });
-
-      test('clears the selection', () {
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-          selection: TextSelection.collapsed(offset: 7),
-        );
-
-        controller.clear();
-
-        expect(
-          controller.selection,
-          const TextSelection.collapsed(offset: -1),
-        );
-      });
-
-      test('clears the composing attributions', () {
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-          selection: TextSelection.collapsed(offset: 7),
-          composingRegion: TextRange(start: 3, end: 7),
-        );
-        controller.composingAttributions = {
-          boldAttribution,
-        };
-
-        controller.clear();
-
-        expect(controller.composingAttributions, isEmpty);
-      });
-
-      test('clears the composing region', () {
-        final controller = AttributedTextEditingController(
-          text: AttributedText('my text'),
-          selection: TextSelection.collapsed(offset: 7),
-          composingRegion: TextRange(start: 3, end: 7),
-        );
-
-        controller.clear();
-
-        expect(controller.composingRegion, TextRange.empty);
-      });
-
-      test('notifies listeners', () {
+      test(
+          'calling the clear method clears the text, '
+          'composing attributions, composing region, and moves '
+          'the selection to the start', () {
         int listenerNotifyCount = 0;
-
         final controller = AttributedTextEditingController(
           text: AttributedText('my text'),
-        )..addListener(() {
+          selection: TextSelection.collapsed(offset: 7),
+          composingRegion: TextRange(start: 3, end: 7),
+        )
+          ..composingAttributions = {
+            boldAttribution,
+          }
+          ..addListener(() {
             listenerNotifyCount += 1;
           });
 
         controller.clear();
 
+        expect(controller.text.text, isEmpty);
+        expect(
+          controller.selection,
+          const TextSelection.collapsed(offset: -1),
+        );
+        expect(controller.composingAttributions, isEmpty);
+        expect(controller.composingRegion, TextRange.empty);
         expect(listenerNotifyCount, 1);
       });
     });
