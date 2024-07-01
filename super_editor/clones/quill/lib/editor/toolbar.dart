@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:feather/infrastructure/popovers/color_selector.dart';
 import 'package:feather/editor/editor.dart';
 import 'package:feather/infrastructure/popovers/icon_selector.dart';
@@ -7,6 +9,7 @@ import 'package:feather/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:overlord/overlord.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_text_field.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
 
 class FormattingToolbar extends StatefulWidget {
@@ -27,11 +30,21 @@ class FormattingToolbar extends StatefulWidget {
 }
 
 class _FormattingToolbarState extends State<FormattingToolbar> {
+  static const _tapRegionGroupId = 'feather_toolbar';
+
   late DocumentComposer _composer;
   late Document _document;
   late final EditListener _editListener;
 
   final _fullySelectedTextFormats = <Attribution>{};
+
+  final FocusNode _urlFocusNode = FocusNode();
+  final PopoverController _linkPopoverController = PopoverController();
+  ImeAttributedTextEditingController? _urlController;
+
+  final FocusNode _imageFocusNode = FocusNode();
+  final PopoverController _imagePopoverController = PopoverController();
+  ImeAttributedTextEditingController? _imageController;
 
   bool _showDeltas = false;
 
@@ -45,6 +58,14 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
     _composer = widget.editor.composer;
     _composer.selectionNotifier.addListener(_onSelectionChange);
     _document = widget.editor.document;
+
+    _urlController = ImeAttributedTextEditingController() //
+      ..onPerformActionPressed = _onUrlFieldPerformAction
+      ..text = AttributedText("https://");
+
+    _imageController = ImeAttributedTextEditingController() //
+      ..onPerformActionPressed = _onImageFieldPerformAction
+      ..text = AttributedText("https://");
   }
 
   @override
@@ -68,6 +89,9 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
 
   @override
   void dispose() {
+    _urlFocusNode.dispose();
+    _linkPopoverController.dispose();
+
     _composer.selectionNotifier.removeListener(_onSelectionChange);
     widget.editor.removeListener(_editListener);
 
@@ -111,6 +135,112 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
     }
 
     return _document.getAllAttributions(selection);
+  }
+
+  void _showUrlPopover() {
+    _linkPopoverController.open();
+    _urlFocusNode.requestFocus();
+  }
+
+  void _onUrlFieldPerformAction(TextInputAction action) {
+    if (action == TextInputAction.done) {
+      _applyLink();
+    }
+  }
+
+  /// Applies the link entered on the URL textfield to the current
+  /// selected range.
+  void _applyLink() {
+    final url = _urlController!.text.text;
+
+    final selection = widget.editor.composer.selection!;
+    final baseOffset = (selection.base.nodePosition as TextPosition).offset;
+    final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
+    final selectionStart = min(baseOffset, extentOffset);
+    final selectionEnd = max(baseOffset, extentOffset);
+    final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
+
+    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final text = textNode.text;
+
+    final trimmedRange = _trimTextRangeWhitespace(text, selectionRange);
+
+    final linkAttribution = LinkAttribution.fromUri(Uri.parse(url));
+
+    widget.editor.execute([
+      AddTextAttributionsRequest(
+        documentRange: DocumentRange(
+          start: DocumentPosition(
+            nodeId: textNode.id,
+            nodePosition: TextNodePosition(offset: trimmedRange.start),
+          ),
+          end: DocumentPosition(
+            nodeId: textNode.id,
+            nodePosition: TextNodePosition(offset: trimmedRange.end),
+          ),
+        ),
+        attributions: {linkAttribution},
+      ),
+    ]);
+
+    // Clear the field and hide the URL bar
+    _urlController!.clear();
+    _urlFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
+    _linkPopoverController.close();
+    setState(() {});
+  }
+
+  void _showImagePopover() {
+    _imagePopoverController.open();
+    _imageFocusNode.requestFocus();
+  }
+
+  void _onImageFieldPerformAction(TextInputAction action) {
+    if (action == TextInputAction.done) {
+      _applyImageUrl();
+    }
+  }
+
+  void _applyImageUrl() {
+    final url = _imageController!.text.text;
+
+    final selection = widget.editor.composer.selection;
+    if (selection != null) {
+      widget.editor.execute([
+        if (!selection.isCollapsed) //
+          DeleteContentRequest(documentRange: selection),
+        InsertNodeAtCaretRequest(
+          node: ImageNode(
+            id: Editor.createNodeId(),
+            imageUrl: url,
+          ),
+        ),
+      ]);
+    }
+
+    // Clear the field and hide the URL bar
+    _imageController!.clear();
+    _imageFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
+    _imagePopoverController.close();
+    setState(() {});
+  }
+
+  /// Given [text] and a [range] within the [text], the [range] is
+  /// shortened on both sides to remove any trailing whitespace and
+  /// the new range is returned.
+  SpanRange _trimTextRangeWhitespace(AttributedText text, TextRange range) {
+    int startOffset = range.start;
+    int endOffset = range.end;
+
+    while (startOffset < range.end && text.text[startOffset] == ' ') {
+      startOffset += 1;
+    }
+    while (endOffset > startOffset && text.text[endOffset] == ' ') {
+      endOffset -= 1;
+    }
+
+    // Add 1 to the end offset because SpanRange treats the end offset to be exclusive.
+    return SpanRange(startOffset, endOffset + 1);
   }
 
   void _indent() {
@@ -222,22 +352,12 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
             selectedBlockFormat: selectedBlockFormat,
           ),
           _buildSpacer(),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.link),
+          _buildLinkButton(),
+          _buildImageButton(),
+          const IconButton(
+            icon: Icon(Icons.video_file),
+            onPressed: null,
           ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.photo),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.video_file),
-          ),
-          // IconButton(
-          //   onPressed: () {},
-          //   icon: const Icon(Icons.function),
-          // ),
           // TODO: formula
           _buildSpacer(),
           _ToggleBlockFormatButton(
@@ -354,6 +474,146 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
   }
 
   Widget _buildSpacer() => const SizedBox(width: 24);
+
+  /// Builds the link button, which upon tap shows a popover for the user
+  /// to enter a URL.
+  Widget _buildLinkButton() {
+    return PopoverScaffold(
+      parentFocusNode: widget.editorFocusNode,
+      tapRegionGroupId: _tapRegionGroupId,
+      onTapOutside: (controller) => _linkPopoverController.close(),
+      controller: _linkPopoverController,
+      buttonBuilder: (context) => IconButton(
+        onPressed: _showUrlPopover,
+        icon: const Icon(Icons.link),
+      ),
+      popoverBuilder: (context) => _buildLinkPopover(),
+    );
+  }
+
+  Widget _buildLinkPopover() {
+    return Material(
+      shape: const StadiumBorder(),
+      elevation: 5,
+      clipBehavior: Clip.hardEdge,
+      child: Container(
+        width: 400,
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: SuperTextField(
+                focusNode: _urlFocusNode,
+                textController: _urlController,
+                minLines: 1,
+                maxLines: 1,
+                inputSource: TextInputSource.ime,
+                hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                hintBuilder: (context) {
+                  return const Text(
+                    "enter a url...",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                    ),
+                  );
+                },
+                textStyleBuilder: (_) {
+                  return const TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                  );
+                },
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close),
+              iconSize: 20,
+              splashRadius: 16,
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                setState(() {
+                  _urlFocusNode.unfocus();
+                  _urlController!.clear();
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Builds the image button, which upon tap shows a popover for the user
+  /// to enter a URL for an image.
+  Widget _buildImageButton() {
+    return PopoverScaffold(
+      parentFocusNode: widget.editorFocusNode,
+      tapRegionGroupId: _tapRegionGroupId,
+      onTapOutside: (controller) => _imagePopoverController.close(),
+      controller: _imagePopoverController,
+      buttonBuilder: (context) => IconButton(
+        onPressed: _showImagePopover,
+        icon: const Icon(Icons.image),
+      ),
+      popoverBuilder: (context) => _buildImagePopover(),
+    );
+  }
+
+  Widget _buildImagePopover() {
+    return Material(
+      shape: const StadiumBorder(),
+      elevation: 5,
+      clipBehavior: Clip.hardEdge,
+      child: Container(
+        width: 400,
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: SuperTextField(
+                focusNode: _imageFocusNode,
+                textController: _imageController,
+                minLines: 1,
+                maxLines: 1,
+                inputSource: TextInputSource.ime,
+                hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                hintBuilder: (context) {
+                  return const Text(
+                    "enter a url...",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                    ),
+                  );
+                },
+                textStyleBuilder: (_) {
+                  return const TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                  );
+                },
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close),
+              iconSize: 20,
+              splashRadius: 16,
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                setState(() {
+                  _imageFocusNode.unfocus();
+                  _imageController!.clear();
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ToggleInlineFormatButton extends StatelessWidget {

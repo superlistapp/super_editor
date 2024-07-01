@@ -6,6 +6,7 @@ import 'package:feather/editor/code_component.dart';
 import 'package:feather/editor/toolbar.dart';
 import 'package:feather/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
 class FeatherEditor extends StatefulWidget {
@@ -84,6 +85,7 @@ class _FeatherEditorState extends State<FeatherEditor> {
       //       somewhere.
       color: Colors.transparent,
       child: SuperEditor(
+        focusNode: _editorFocusNode,
         editor: widget.editor,
         document: _document,
         composer: _composer,
@@ -92,6 +94,16 @@ class _FeatherEditorState extends State<FeatherEditor> {
           FeatherBlockquoteComponentBuilder(),
           FeatherCodeComponentBuilder(),
           ...defaultComponentBuilders,
+        ],
+        selectionPolicies: const SuperEditorSelectionPolicies(
+          clearSelectionWhenEditorLosesFocus: false,
+          clearSelectionWhenImeConnectionCloses: false,
+        ),
+        keyboardActions: [
+          // When pressing Enter in a code block, insert a newline in the
+          // code block instead of inserting a new empty paragraph.
+          enterToInsertNewlineInCodeBlock,
+          ...defaultImeKeyboardActions,
         ],
       ),
     );
@@ -593,6 +605,32 @@ class ConvertTextBlockToFormatCommand extends EditCommand {
       ),
     );
   }
+}
+
+ExecutionInstruction enterToInsertNewlineInCodeBlock({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final selection = editContext.composer.selection;
+  if (selection == null || (selection.base.nodeId != selection.extent.nodeId)) {
+    return ExecutionInstruction.continueExecution;
+  }
+  final selectedNode = editContext.document.getNodeById(selection.extent.nodeId)!;
+  if (selectedNode is! ParagraphNode || selectedNode.metadata["blockType"] != codeAttribution) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final didInsertNewline = editContext.commonOps.insertPlainText('\n');
+
+  return didInsertNewline ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 enum FeatherTextBlock {
