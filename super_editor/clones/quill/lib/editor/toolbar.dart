@@ -7,9 +7,10 @@ import 'package:feather/infrastructure/popovers/text_item_selector.dart';
 import 'package:feather/infrastructure/super_editor_extensions.dart';
 import 'package:feather/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:overlord/overlord.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_editor/super_text_field.dart';
 import 'package:super_editor_quill/super_editor_quill.dart';
 
 class FormattingToolbar extends StatefulWidget {
@@ -17,12 +18,14 @@ class FormattingToolbar extends StatefulWidget {
     super.key,
     required this.editorFocusNode,
     required this.editor,
+    required this.isShowingDeltas,
     required this.onShowDeltasChange,
   });
 
   final FocusNode editorFocusNode;
   final Editor editor;
 
+  final bool isShowingDeltas;
   final void Function(bool showDeltas) onShowDeltasChange;
 
   @override
@@ -45,8 +48,6 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
   final FocusNode _imageFocusNode = FocusNode();
   final PopoverController _imagePopoverController = PopoverController();
   ImeAttributedTextEditingController? _imageController;
-
-  bool _showDeltas = false;
 
   @override
   void initState() {
@@ -358,17 +359,20 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
             icon: Icon(Icons.video_file),
             onPressed: null,
           ),
-          // TODO: formula
+          const IconButton(
+            icon: Icon(Symbols.function),
+            onPressed: null,
+          ),
           _buildSpacer(),
           _ToggleBlockFormatButton(
             editor: widget.editor,
-            icon: Icons.title,
+            icon: Symbols.format_h1,
             format: FeatherTextBlock.header1,
             selectedBlockFormat: selectedBlockFormat,
           ),
           _ToggleBlockFormatButton(
             editor: widget.editor,
-            icon: Icons.title,
+            icon: Symbols.format_h2,
             iconSize: 14,
             format: FeatherTextBlock.header2,
             selectedBlockFormat: selectedBlockFormat,
@@ -459,14 +463,10 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
           ),
           _buildSpacer(),
           IconButton(
+            icon: Icon(widget.isShowingDeltas ? Symbols.close : Symbols.menu_open),
             onPressed: () {
-              setState(() {
-                _showDeltas = !_showDeltas;
-              });
-
-              widget.onShowDeltasChange(_showDeltas);
+              widget.onShowDeltasChange(!widget.isShowingDeltas);
             },
-            icon: const Icon(Icons.import_export),
           ),
         ],
       ),

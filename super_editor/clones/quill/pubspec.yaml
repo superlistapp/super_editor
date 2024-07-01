@@ -19,6 +19,7 @@ dependencies:
   overlord: ^0.0.3+5
   material_symbols_icons: ^4.2762.0
   dart_quill_delta: ^9.4.6
+  follow_the_leader: ^0.0.4+8
 
 dependency_overrides:
   super_editor:

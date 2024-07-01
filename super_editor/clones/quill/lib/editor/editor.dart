@@ -13,10 +13,12 @@ class FeatherEditor extends StatefulWidget {
   const FeatherEditor({
     super.key,
     required this.editor,
+    required this.isShowingDeltas,
     required this.onShowDeltasChange,
   });
 
   final Editor editor;
+  final bool isShowingDeltas;
   final void Function(bool showDeltas) onShowDeltasChange;
 
   @override
@@ -67,6 +69,7 @@ class _FeatherEditorState extends State<FeatherEditor> {
           FormattingToolbar(
             editorFocusNode: _editorFocusNode,
             editor: widget.editor,
+            isShowingDeltas: widget.isShowingDeltas,
             onShowDeltasChange: widget.onShowDeltasChange,
           ),
           const Divider(thickness: 1, height: 1, color: _borderColor),
@@ -387,6 +390,7 @@ class ToggleTextBlockFormatCommand extends EditCommand {
       executor.executeCommand(
         ChangeParagraphBlockTypeCommand(nodeId: selectedNode.id, blockType: null),
       );
+
       return;
     }
 

@@ -60,7 +60,10 @@ class _HomeScreenState extends State<HomeScreen> {
             : null,
         ...defaultRequestHandlers,
       ],
-      reactionPipeline: List.from(defaultEditorReactions),
+      reactionPipeline: [
+        ...defaultEditorReactions,
+        AlwaysTrailingParagraphReaction(),
+      ],
     );
 
     _editor.addListener(FunctionalEditListener((changeList) {
@@ -79,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: FeatherEditor(
                   editor: _editor,
+                  isShowingDeltas: _showDeltas,
                   onShowDeltasChange: (bool showDeltas) {
                     setState(() {
                       _showDeltas = showDeltas;
@@ -101,7 +105,7 @@ MutableDocument createDocumentWithVaryingStyles() {
   return deserializeMarkdownToDocument('''# Header 1
 This is regular text right below header 1.
 ## Header 2
-This is regular text right below header 1.
+This is regular text right below header 2.
 ### Header 3
 #### Header 4
 ##### Header 5
@@ -245,4 +249,32 @@ MutableDocument createStandardSuperEditorDocument() {
       ),
     ],
   );
+}
+
+class AlwaysTrailingParagraphReaction implements EditReaction {
+  @override
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
+    final lastNode = document.nodes.lastOrNull;
+
+    if (lastNode != null &&
+        lastNode is ParagraphNode &&
+        (lastNode.getMetadataValue("blockType") == paragraphAttribution ||
+            lastNode.getMetadataValue("blockType") == null) &&
+        lastNode.text.text.isEmpty) {
+      // Already have a trailing empty paragraph. Fizzle.
+      return;
+    }
+
+    // We need to insert a trailing empty paragraph.
+    requestDispatcher.execute([
+      InsertNodeAtIndexRequest(
+        nodeIndex: document.nodes.length,
+        newNode: ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(""),
+        ),
+      ),
+    ]);
+  }
 }
