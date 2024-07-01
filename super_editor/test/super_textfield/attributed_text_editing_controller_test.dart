@@ -835,8 +835,8 @@ void main() {
 
       test(
           'calling the clearTextAndSelection method clears the text, '
-          'composing attributions, composing region, and moves '
-          'the removes the text selection', () {
+          'composing attributions, composing region, and removes the '
+          'text selection', () {
         int listenerNotifyCount = 0;
         final controller = AttributedTextEditingController(
           text: AttributedText('my text'),
@@ -864,8 +864,8 @@ void main() {
 
       test(
           'calling the clear method clears the text, '
-          'composing attributions, composing region, and moves '
-          'the selection to the start', () {
+          'composing attributions, composing region, and removes the '
+          'text selection', () {
         int listenerNotifyCount = 0;
         final controller = AttributedTextEditingController(
           text: AttributedText('my text'),
@@ -879,6 +879,7 @@ void main() {
             listenerNotifyCount += 1;
           });
 
+        // ignore: deprecated_member_use_from_same_package
         controller.clear();
 
         expect(controller.text.text, isEmpty);
