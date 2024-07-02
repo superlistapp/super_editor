@@ -461,6 +461,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return;
     }
 
+    final layout = widget.getDocumentLayout();
+    if (layout is ScrollableDocumentLayout) {
+      layout.ensureVisible(selection.base);
+      layout.ensureVisible(selection.extent);
+      return;
+    }
+
     // Calculate the y-value of the selection extent side of the selected content so that we
     // can ensure they're visible.
     final selectionRectInDocumentLayout =
@@ -961,7 +968,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return false;
     }
 
-    final extentRect = _docLayout.getRectForPosition(collapsedPosition)!;
+    final extentRect = _docLayout.getRectForPosition(collapsedPosition);
+    if (extentRect == null) {
+      return false;
+    }
     final caretHitArea = Rect.fromLTRB(
       extentRect.left - 24,
       extentRect.top,
@@ -979,7 +989,11 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       return false;
     }
 
-    final baseRect = _docLayout.getRectForPosition(basePosition)!;
+    final baseRect = _docLayout.getRectForPosition(basePosition);
+    if (baseRect == null) {
+      return false;
+    }
+
     // The following caretRect offset and size were chosen empirically, based
     // on trying to drag the handle from various locations near the handle.
     final caretRect = Rect.fromLTWH(baseRect.left - 24, baseRect.top - 24, 48, baseRect.height + 48);
