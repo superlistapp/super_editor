@@ -675,6 +675,13 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
+    final layout = widget.getDocumentLayout();
+    if (layout is ScrollableDocumentLayout) {
+      layout.ensureVisible(selection.base);
+      layout.ensureVisible(selection.extent);
+      return;
+    }
+
     // Calculate the y-value of the selection extent side of the selected content so that we
     // can ensure they're visible.
     final selectionRectInDocumentLayout =
