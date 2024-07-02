@@ -1017,7 +1017,6 @@ class _HighlightColorButtonState extends State<_HighlightColorButton> {
   Widget build(BuildContext context) {
     return ColorSelector(
       parentFocusNode: widget.editorFocusNode,
-      // tapRegionGroupId: _tapRegionGroupId,
       onSelected: _onChangeHighlightColorRequested,
       showClearButton: true,
       colorButtonBuilder: (_, color) => _buildHighlightColorIcon(color),
@@ -1093,7 +1092,6 @@ class _FontFamilySelectorState extends State<_FontFamilySelector> {
 
     return TextItemSelector(
       parentFocusNode: widget.editorFocusNode,
-      // tapRegionGroupId: _tapRegionGroupId,
       selectedText: textItem,
       items: _availableFonts.map((fontFamily) => TextItem(id: fontFamily, label: fontFamily)).toList(),
       onSelected: (value) => _onChangeFontFamilyRequested(value?.id),
@@ -1162,7 +1160,6 @@ class _AlignmentButtonState extends State<_AlignmentButton> {
 
     return IconSelector(
       parentFocusNode: widget.editorFocusNode,
-      // tapRegionGroupId: _tapRegionGroupId,
       selectedIcon: IconItem(
         id: alignment.name,
         icon: _getTextAlignIcon(alignment),

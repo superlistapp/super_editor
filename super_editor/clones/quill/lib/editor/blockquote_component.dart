@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
+/// A [ComponentBuilder] that builds a blockquote component for the Feather app.
+///
+/// The Feather blockquote is styled differently from the standard Super Editor
+/// blockquote, and therefore requires its own component and builder.
 class FeatherBlockquoteComponentBuilder extends BlockquoteComponentBuilder {
   const FeatherBlockquoteComponentBuilder();
 
@@ -29,6 +33,8 @@ class FeatherBlockquoteComponentBuilder extends BlockquoteComponentBuilder {
   }
 }
 
+/// A Super Editor component that displays a blockquote with a vertical line
+/// on left edge of the block.
 class FeatherBlockquoteComponent extends StatelessWidget {
   const FeatherBlockquoteComponent({
     super.key,
