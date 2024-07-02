@@ -1,3 +1,15 @@
+## [0.3.0-dev.2] - July 2, 2024
+ * DEPENDENCY: Upgraded `attributed_text` to `v0.3.2`.
+ * FEATURE: Tasks can now be indented.
+ * FEATURE: Can convert a paragraph to a task.
+ * FIX: Tasks can be created in the "completed" state.
+ * FEATURE: Added attributions for font family, superscript, and subscript.
+ * ADJUSTMENT: (iOS) - place caret at word boundary on tap.
+ * ADJUSTMENT: (Android) - increased touch area for selection handles.
+ * FEATURE: Automatic linkification for Markdown as the user types.
+ * FIX: Crash in linkification reaction.
+ * FIX: Crash in `SelectedTextColorStrategy`.
+
 ## [0.3.0-dev.1] - June 10, 2024
 MAJOR UPDATE: First taste of the new editor pipeline. 
 
