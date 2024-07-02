@@ -134,6 +134,46 @@ extension OperationParser on Operation {
           _doInsertMedia(editor, composer);
         }
 
+        // Deduplicate all back-to-back code blocks.
+        final document = editor.context.find<MutableDocument>(Editor.documentKey);
+        if (document.nodes.length < 3) {
+          // Minimum of 3 nodes: code, code, newline.
+          break;
+        }
+
+        var codeBlocks = <ParagraphNode>[];
+        for (int i = document.nodes.length - 2; i >= 0; i -= 1) {
+          final node = document.nodes[i];
+          if (node is! ParagraphNode) {
+            break;
+          }
+          if (node.getMetadataValue("blockType") != codeAttribution) {
+            break;
+          }
+
+          codeBlocks.add(node);
+        }
+
+        if (codeBlocks.length < 2) {
+          break;
+        }
+
+        codeBlocks = codeBlocks.reversed.toList();
+        final mergeNode = codeBlocks.first;
+        var codeToMove = codeBlocks[1].text.insertString(textToInsert: "\n", startOffset: 0);
+        for (int i = 2; i < codeBlocks.length; i += 1) {
+          codeToMove = codeToMove.copyAndAppend(codeBlocks[i].text.insertString(textToInsert: "\n", startOffset: 0));
+        }
+
+        editor.execute([
+          InsertAttributedTextRequest(
+            DocumentPosition(nodeId: mergeNode.id, nodePosition: mergeNode.endPosition),
+            codeToMove,
+          ),
+          for (int i = 1; i < codeBlocks.length; i += 1) //
+            DeleteNodeRequest(nodeId: codeBlocks[i].id),
+        ]);
+
       case DeltaOperationType.retain:
         final count = data as int;
         final newPosition = _findPositionDownstream(document, composer, count);

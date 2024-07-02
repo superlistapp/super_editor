@@ -40,6 +40,42 @@ void main() {
         expect(document.nodes.length, 7);
       });
 
+      test("multiline code block", () {
+        // Notice that Delta encodes each line of a code block as a separate attributed
+        // delta. But when a Quill editor renders the code block, it's rendered as one
+        // block. This test ensures that Super Editor accumulates back-to-back code
+        // lines into a single code node.
+        final document = parseQuillDeltaDocument(
+          {
+            "ops": [
+              {"insert": "This is a code block"},
+              {
+                "attributes": {"code-block": "plain"},
+                "insert": "\n"
+              },
+              {"insert": "This is line two"},
+              {
+                "attributes": {"code-block": "plain"},
+                "insert": "\n"
+              },
+              {"insert": "This is line three"},
+              {
+                "attributes": {"code-block": "plain"},
+                "insert": "\n"
+              },
+            ],
+          },
+        );
+
+        expect(
+          (document.nodes[0] as ParagraphNode).text.text,
+          "This is a code block\nThis is line two\nThis is line three",
+        );
+        expect((document.nodes[0] as ParagraphNode).getMetadataValue("blockType"), codeAttribution);
+        expect((document.nodes[1] as ParagraphNode).text.text, "");
+        expect(document.nodes.length, 2);
+      });
+
       test("all text blocks and styles", () {
         final document = parseQuillDeltaOps(allTextStylesDeltaDocument);
 
@@ -303,10 +339,20 @@ void main() {
         nodes.moveNext();
         node = nodes.current;
 
-        // Code block.
+        // Code block - with multiple lines.
         expect(node, isA<ParagraphNode>());
-        expect((node as TextNode).text.text, "This is a code block");
+        expect((node as TextNode).text.text, "This is a code block\nThat spans two lines.");
         expect(node.metadata["blockType"], codeAttribution);
+
+        nodes.moveNext();
+        node = nodes.current;
+
+        // Final newline node.
+        expect(node, isA<ParagraphNode>());
+        expect((node as TextNode).text.text, "");
+
+        // No more nodes.
+        expect(nodes.moveNext(), isFalse);
       });
 
       test("overlapping styles", () {
