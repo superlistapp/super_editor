@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Describe a bug you're experiencing.
-title: ''
+title: "[BUG] - "
 labels: type_bug
 assignees: ''
 
@@ -9,6 +9,9 @@ assignees: ''
 
 **Package Version**
 Which package and version are you using? E.g., "super_editor, GitHub, stable branch"
+
+**User Info**
+To help us understand who is using Super Editor and for what purpose, please include your company name, or say "individual" if you're using it for yourself.
 
 **To Reproduce**
 Steps to reproduce the behavior:

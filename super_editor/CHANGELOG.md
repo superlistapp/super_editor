@@ -1,7 +1,18 @@
-## [x.y.z] - ???
- * FEATURE: Delete words in IME mode (#1161)
-   * Mac: `option + backspace` deletes a word upstream, `option + delete` deletes a word downstream
-   * Windows/Linux: `control + backspace` deletes a word upstream, `control + delete` deletes a word downstream
+## [0.3.0-dev.1] - June 10, 2024
+MAJOR UPDATE: First taste of the new editor pipeline. 
+
+This is a dev release so that you can begin to see the changes coming in the next major version. 
+This release comes with numerous and significant breaking changes. As we get closer to stability 
+for the next release, we'll add website guides to help update all of our users. 
+
+The primary features that we've been working on since last release include:
+ * Undo/Redo
+ * A stable edit pipeline: requests > commands > change list > reactions > listeners
+ * Common reaction features, e.g., hash tags and user tagging
+
+In addition to the major feature work, we've made hundreds of little adjustments, including bugfixes.
+
+We expect a steady stream of dev releases from this point forward, until we reach `v0.3.0`.
 
 ## [0.2.6] - May 28, 2023
  * FEATURE: `SuperReader` now launches URLs when tapping a link (#1151)

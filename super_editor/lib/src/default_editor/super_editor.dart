@@ -1207,12 +1207,19 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   tabToIndentListItem,
   shiftTabToUnIndentListItem,
   backspaceToUnIndentListItem,
+  tabToIndentTask,
+  shiftTabToUnIndentTask,
+  backspaceToUnIndentTask,
+  tabToIndentParagraph,
+  shiftTabToUnIndentParagraph,
+  backspaceToUnIndentParagraph,
   backspaceToConvertTaskToParagraph,
   backspaceToClearParagraphBlockType,
   cmdBToToggleBold,
   cmdIToToggleItalics,
   shiftEnterToInsertNewlineInBlock,
   enterToInsertNewTask,
+  enterToUnIndentParagraph,
   enterToInsertBlockNewline,
   moveToLineStartOrEndWithCtrlAOrE,
   deleteToStartOfLineWithCmdBackspaceOnMac,
@@ -1244,8 +1251,15 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   cmdIToToggleItalics,
   doNothingWithBackspaceOnWeb,
   doNothingWithCtrlOrCmdAndZOnWeb,
+  tabToIndentTask,
+  shiftTabToUnIndentTask,
+  backspaceToUnIndentTask,
+  tabToIndentParagraph,
+  shiftTabToUnIndentParagraph,
+  backspaceToUnIndentParagraph,
   backspaceToConvertTaskToParagraph,
   backspaceToUnIndentListItem,
+  enterToUnIndentParagraph,
   backspaceToClearParagraphBlockType,
   deleteDownstreamCharacterWithCtrlDeleteOnMac,
   scrollOnCtrlOrCmdAndHomeKeyPress,
@@ -1487,6 +1501,14 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
             ? TextDecoration.lineThrough
             : TextDecoration.combine([TextDecoration.lineThrough, newStyle.decoration!]),
       );
+    } else if (attribution == superscriptAttribution) {
+      newStyle = newStyle.copyWith(
+        fontFeatures: [const FontFeature.superscripts()],
+      );
+    } else if (attribution == subscriptAttribution) {
+      newStyle = newStyle.copyWith(
+        fontFeatures: [const FontFeature.subscripts()],
+      );
     } else if (attribution is ColorAttribution) {
       newStyle = newStyle.copyWith(
         color: attribution.color,
@@ -1498,6 +1520,10 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
     } else if (attribution is FontSizeAttribution) {
       newStyle = newStyle.copyWith(
         fontSize: attribution.fontSize,
+      );
+    } else if (attribution is FontFamilyAttribution) {
+      newStyle = newStyle.copyWith(
+        fontFamily: attribution.fontFamily,
       );
     } else if (attribution is LinkAttribution) {
       newStyle = newStyle.copyWith(

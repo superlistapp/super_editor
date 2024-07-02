@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -23,6 +24,7 @@ import 'package:super_editor/src/infrastructure/platforms/ios/floating_cursor.da
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/long_press_selection.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/selection_heuristics.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_editor/src/infrastructure/signal_notifier.dart';
@@ -111,6 +113,7 @@ class SuperEditorIosControlsScope extends InheritedWidget {
 /// the caret, handles, floating cursor, magnifier, and toolbar.
 class SuperEditorIosControlsController {
   SuperEditorIosControlsController({
+    this.useIosSelectionHeuristics = true,
     this.handleColor,
     FloatingCursorController? floatingCursorController,
     this.magnifierBuilder,
@@ -124,6 +127,17 @@ class SuperEditorIosControlsController {
     _shouldShowMagnifier.dispose();
     _shouldShowToolbar.dispose();
   }
+
+  /// Whether to adjust the user's selection similar to the way iOS does.
+  ///
+  /// For example: iOS doesn't let users tap directly on a text offset. Instead,
+  /// iOS places the caret at the end of the word, or beginning of the word,
+  /// based on how close the user is to those locations when he taps.
+  ///
+  /// When this property is `true`, iOS-style heuristics should be used. When
+  /// this value is `false`, the user's gestures should directly impact the
+  /// area they touched.
+  final bool useIosSelectionHeuristics;
 
   /// Color of the text selection drag handles on iOS.
   final Color? handleColor;
@@ -304,6 +318,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   bool get _isLongPressInProgress => _longPressStrategy != null;
   IosLongPressSelectionStrategy? _longPressStrategy;
 
+  // Cached view metrics to ignore unnecessary didChangeMetrics calls.
+  Size? _lastSize;
+  ViewPadding? _lastInsets;
+
   @override
   void initState() {
     super.initState();
@@ -330,6 +348,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    final view = View.of(context);
+    _lastSize = view.physicalSize;
+    _lastInsets = view.viewInsets;
 
     if (_controlsController != null) {
       _controlsController!.floatingCursorController.removeListener(_floatingCursorListener);
@@ -394,6 +416,21 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
 
   @override
   void didChangeMetrics() {
+    // DidChangeMetrics is sometimes called even when metrics doesn't change
+    // (i.e. on iOS with keyboard visible)
+    final view = View.of(context);
+    final size = view.physicalSize;
+    final insets = view.viewInsets;
+    if (size == _lastSize &&
+        _lastInsets?.left == insets.left &&
+        _lastInsets?.right == insets.right &&
+        _lastInsets?.top == insets.top &&
+        _lastInsets?.bottom == insets.bottom) {
+      return;
+    }
+    _lastSize = size;
+    _lastInsets = insets;
+
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Ensure the extent is still visible. Use a
     // post-frame callback to give the rest of the UI a chance to reflow, first.
@@ -641,10 +678,20 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     if (docPosition != null) {
+      late final DocumentPosition adjustedSelectionPosition;
+      if (docPosition.nodePosition is TextNodePosition) {
+        // The user tapped a text position. Adjust the position to the start
+        // or end of the word, as per iOS behavior.
+        adjustedSelectionPosition = _moveTapPositionToWordBoundary(docPosition);
+      } else {
+        // Selection isn't text. Don't adjust the position.
+        adjustedSelectionPosition = docPosition;
+      }
+
       final didTapOnExistingSelection = selection != null &&
           selection.isCollapsed &&
-          selection.extent.nodeId == docPosition.nodeId &&
-          selection.extent.nodePosition.isEquivalentTo(docPosition.nodePosition);
+          selection.extent.nodeId == adjustedSelectionPosition.nodeId &&
+          selection.extent.nodePosition.isEquivalentTo(adjustedSelectionPosition.nodePosition);
 
       if (didTapOnExistingSelection) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
@@ -655,7 +702,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         _controlsController!.hideToolbar();
       }
 
-      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      final tappedComponent = _docLayout.getComponentByNodeId(adjustedSelectionPosition.nodeId)!;
       if (!tappedComponent.isVisualSelectionSupported()) {
         // The user tapped a non-selectable component.
         // Place the document selection at the nearest selectable node
@@ -665,13 +712,13 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
           document: widget.document,
           documentLayoutResolver: widget.getDocumentLayout,
           currentSelection: widget.selection.value,
-          startingNode: widget.document.getNodeById(docPosition.nodeId)!,
+          startingNode: widget.document.getNodeById(adjustedSelectionPosition.nodeId)!,
         );
         return;
       } else {
         // Place the document selection at the location where the
         // user tapped.
-        _selectPosition(docPosition);
+        _selectPosition(adjustedSelectionPosition);
       }
 
       if (didTapOnExistingSelection) {
@@ -689,6 +736,25 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     widget.focusNode.requestFocus();
+  }
+
+  DocumentPosition _moveTapPositionToWordBoundary(DocumentPosition docPosition) {
+    if (!SuperEditorIosControlsScope.rootOf(context).useIosSelectionHeuristics) {
+      // iOS-style adjustments aren't desired. Don't adjust th given position.
+      return docPosition;
+    }
+
+    final text = (widget.document.getNodeById(docPosition.nodeId) as TextNode).text.text;
+    final tapOffset = (docPosition.nodePosition as TextNodePosition).offset;
+    if (tapOffset == text.length) {
+      return docPosition;
+    }
+    final adjustedSelectionOffset = IosHeuristics.adjustTapOffset(text, tapOffset);
+
+    return DocumentPosition(
+      nodeId: docPosition.nodeId,
+      nodePosition: TextNodePosition(offset: adjustedSelectionOffset),
+    );
   }
 
   void _onDoubleTapUp(TapUpDetails details) {

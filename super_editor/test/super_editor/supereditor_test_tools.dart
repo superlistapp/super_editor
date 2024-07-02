@@ -163,6 +163,11 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  TestSuperEditorConfigurator useIosSelectionHeuristics(bool shouldUse) {
+    _config.useIosSelectionHeuristics = shouldUse;
+    return this;
+  }
+
   TestSuperEditorConfigurator withCaretPolicies({
     bool? displayCaretWithExpandedSelection,
   }) {
@@ -526,8 +531,10 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
     super.initState();
 
     _iOsControlsController = SuperEditorIosControlsController(
+      useIosSelectionHeuristics: widget.testConfiguration.useIosSelectionHeuristics,
       toolbarBuilder: widget.testConfiguration.iOSToolbarBuilder,
     );
+
     _androidControlsController = SuperEditorAndroidControlsController(
       toolbarBuilder: widget.testConfiguration.androidToolbarBuilder,
     );
@@ -670,6 +677,9 @@ class SuperEditorTestConfiguration {
   bool displayCaretWithExpandedSelection = true;
   CaretStyle? caretStyle;
 
+  // By default we don't use iOS-style selection heuristics in tests because in tests
+  // we want to know exactly where we're placing the caret.
+  bool useIosSelectionHeuristics = false;
   double? iosCaretWidth;
   Color? iosHandleColor;
   double? iosHandleBallDiameter;

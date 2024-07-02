@@ -282,6 +282,26 @@ class _EditorToolbarState extends State<EditorToolbar> {
     ]);
   }
 
+  /// Toggles superscript styling for the current selected text.
+  void _toggleSuperscript() {
+    widget.editor!.execute([
+      ToggleTextAttributionsRequest(
+        documentRange: widget.composer.selection!,
+        attributions: {superscriptAttribution},
+      ),
+    ]);
+  }
+
+  /// Toggles subscript styling for the current selected text.
+  void _toggleSubscript() {
+    widget.editor!.execute([
+      ToggleTextAttributionsRequest(
+        documentRange: widget.composer.selection!,
+        attributions: {subscriptAttribution},
+      ),
+    ]);
+  }
+
   /// Returns true if the current text selection includes part
   /// or all of a single link, returns false if zero links are
   /// in the selection or if 2+ links are in the selection.
@@ -569,6 +589,22 @@ class _EditorToolbarState extends State<EditorToolbar> {
                   icon: const Icon(Icons.strikethrough_s),
                   splashRadius: 16,
                   tooltip: AppLocalizations.of(context)!.labelStrikethrough,
+                ),
+              ),
+              Center(
+                child: IconButton(
+                  onPressed: _toggleSuperscript,
+                  icon: const Icon(Icons.superscript),
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelSuperscript,
+                ),
+              ),
+              Center(
+                child: IconButton(
+                  onPressed: _toggleSubscript,
+                  icon: const Icon(Icons.subscript),
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelSubscript,
                 ),
               ),
               Center(

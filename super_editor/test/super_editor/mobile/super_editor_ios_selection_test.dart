@@ -10,6 +10,95 @@ import '../supereditor_test_tools.dart';
 void main() {
   group("SuperEditor mobile selection >", () {
     group("iOS >", () {
+      group("on tap >", () {
+        testWidgetsOnIos("when beyond first character > places caret at end of word", (tester) async {
+          // Note: We pump the following text.
+          // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
+          await _pumpAppWithLongText(tester);
+
+          // Tap near the end of a word "consectet|ur".
+          await tester.tapInParagraph("1", 37);
+          await tester.pumpAndSettle();
+
+          // Ensure that the caret is at the end of the world "consectetur|".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 39),
+              ),
+            ),
+          );
+
+          // Tap near the middle of a word "adipi|scing".
+          await tester.tapInParagraph("1", 45);
+          await tester.pumpAndSettle();
+
+          // Ensure that the caret is at the end of the world "adipiscing|".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 50),
+              ),
+            ),
+          );
+
+          // Tap near the beginning of a word "co|nsectetur".
+          await tester.tapInParagraph("1", 30);
+          await tester.pumpAndSettle();
+
+          // Ensure that the caret is at the end of the word "consectetur|".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 39),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnIos("when near first character > places caret at start of word", (tester) async {
+          // Note: We pump the following text.
+          // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
+          await _pumpAppWithLongText(tester);
+
+          // Tap just before first character of word " |consectetur".
+          await tester.tapInParagraph("1", 28);
+          await tester.pumpAndSettle();
+
+          // Ensure that the caret is at the start of the world "|consectetur".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 28),
+              ),
+            ),
+          );
+
+          // Tap just after the start of the word " a|dipiscing".
+          await tester.tapInParagraph("1", 41);
+          await tester.pumpAndSettle();
+
+          // Ensure that the caret is at the start of the word " |adipiscing".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 40),
+              ),
+            ),
+          );
+        });
+      });
+
       group("long press >", () {
         testWidgetsOnIos("selects word under finger", (tester) async {
           await _pumpAppWithLongText(tester);
@@ -17,7 +106,7 @@ void main() {
           // Ensure that no overlay controls are visible.
           _expectNoControlsAreVisible();
 
-          // Long press on the middle of "conse|ctetur"
+          // Long press on the middle of "conse|ctetur".
           await tester.longPressInParagraph("1", 33);
           await tester.pumpAndSettle();
 
@@ -35,7 +124,7 @@ void main() {
 
           await _pumpAppWithLongText(tester);
 
-          // Long press down on the middle of "conse|ctetur"
+          // Long press down on the middle of "conse|ctetur".
           final gesture = await tester.longPressDownInParagraph("1", 33);
           await tester.pump();
 
@@ -311,6 +400,7 @@ Future<void> _pumpAppWithLongText(WidgetTester tester) async {
       .createDocument()
       // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
       .withSingleParagraph()
+      .useIosSelectionHeuristics(true)
       .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) =>
           IOSTextEditingFloatingToolbar(key: mobileToolbarKey, focalPoint: focalPoint))
       .pump();
