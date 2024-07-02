@@ -335,7 +335,10 @@ class AndroidControlsDocumentLayerState
     }
 
     if (selection.isCollapsed && !_controlsController!.shouldShowExpandedHandles.value) {
-      Rect caretRect = documentLayout.getEdgeForPosition(selection.extent)!;
+      Rect? caretRect = documentLayout.getEdgeForPosition(selection.extent);
+      if (caretRect == null) {
+        return null;
+      }
 
       // Default caret width used by the Android caret.
       const caretWidth = 2;
