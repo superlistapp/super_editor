@@ -136,7 +136,14 @@ const allTextStylesDeltaDocument = [
     "attributes": {"blockquote": true},
     "insert": "\n"
   },
+  // Notice: A multiline code block, while rendered as a single block, is
+  // encoded as independently attributed deltas.
   {"insert": "\nThis is a code block"},
+  {
+    "attributes": {"code-block": "plain"},
+    "insert": "\n"
+  },
+  {"insert": "That spans two lines."},
   {
     "attributes": {"code-block": "plain"},
     "insert": "\n"
@@ -288,7 +295,7 @@ MutableDocument createAllTextStylesSuperEditorDocument() {
       ParagraphNode(id: "29", text: AttributedText("")),
       ParagraphNode(
         id: "30",
-        text: AttributedText("This is a code block"),
+        text: AttributedText("This is a code block\nThat spans two lines."),
         metadata: {"blockType": codeAttribution},
       ),
     ],
