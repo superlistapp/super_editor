@@ -423,7 +423,7 @@ class _TextScrollViewState extends State<TextScrollView>
       child: SingleChildScrollView(
         key: _textFieldViewportKey,
         controller: _scrollController,
-        physics: const NeverScrollableScrollPhysics(),
+        physics: isMultiline ? null : const NeverScrollableScrollPhysics(),
         scrollDirection: isMultiline ? Axis.vertical : Axis.horizontal,
         child: Padding(
           padding: widget.padding ?? EdgeInsets.zero,
