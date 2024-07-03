@@ -249,6 +249,80 @@ void main() {
       // Ensure the selection didn't change.
       expect(SuperTextFieldInspector.findSelection(), TextRange.empty);
     });
+
+    testWidgetsOnMobile("multi-line is vertically scrollable when text spans more lines than maxLines", (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText("A\nB\nC"),
+      );
+
+      // Pump the widget tree with a SuperTextField with a maxHeight of 2 lines
+      // of text, which should overflow considering there are 3 lines of text.
+      await _pumpTestApp(
+        tester,
+        textController: controller,
+        minLines: 1,
+        maxLines: 2,
+        maxHeight: 40,
+      );
+
+      // Move selection to the end of the text
+      // TODO: change to simulate user input when IME simulation is available
+      controller.selection = const TextSelection.collapsed(offset: 5);
+      await tester.pumpAndSettle();
+
+      // Ensure the text field has scrolled to the bottom.
+      expect(
+        SuperTextFieldInspector.findScrollOffset(),
+        greaterThan(0.0),
+      );
+
+      // Scroll upwards towards the top of the text field.
+      await tester.drag(find.byType(SuperTextField), const Offset(0, -1000));
+      await tester.pumpAndSettle();
+
+      // Ensure the text field has scrolled back to the top.
+      expect(
+        SuperTextFieldInspector.findScrollOffset(),
+        0.0,
+      );
+    });
+
+    testWidgetsOnDesktop("multi-line is vertically scrollable when text spans more lines than maxLines", (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText("A\nB\nC"),
+      );
+
+      // Pump the widget tree with a SuperTextField with a maxHeight of 2 lines
+      // of text, which should overflow considering there are 3 lines of text.
+      await _pumpTestApp(
+        tester,
+        textController: controller,
+        minLines: 1,
+        maxLines: 2,
+        maxHeight: 40,
+      );
+
+      // Move selection to the end of the text
+      // TODO: change to simulate user input when IME simulation is available
+      controller.selection = const TextSelection.collapsed(offset: 5);
+      await tester.pumpAndSettle();
+
+      // Ensure the text field has scrolled to the bottom.
+      expect(
+        SuperTextFieldInspector.findScrollOffset(),
+        greaterThan(0.0),
+      );
+
+      // Scroll upwards towards the top of the text field.
+      await tester.drag(find.byType(SuperTextField), const Offset(0, -1000));
+      await tester.pumpAndSettle();
+
+      // Ensure the text field has scrolled back to the top.
+      expect(
+        SuperTextFieldInspector.findScrollOffset(),
+        0.0,
+      );
+    });
   });
 }
 
