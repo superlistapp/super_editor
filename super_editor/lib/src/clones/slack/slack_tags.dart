@@ -1102,10 +1102,7 @@ class AdjustSelectionAroundSlackTagReaction implements EditReaction {
       case SelectionChangeType.placeCaret:
       case SelectionChangeType.pushCaret:
       case SelectionChangeType.collapseSelection:
-      // throw AssertionError(
-      //     "An expanded selection reported a SelectionChangeType for a collapsed selection: ${selectionChangeEvent.changeType}\n${selectionChangeEvent.newSelection}");
       case SelectionChangeType.clearSelection:
-      // throw AssertionError("Expected a collapsed selection but there was no selection.");
     }
   }
 
