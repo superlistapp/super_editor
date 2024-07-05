@@ -212,8 +212,8 @@ class FillInComposingSlackTagCommand implements EditCommand {
     // FIXME: Use a transaction to bundle these changes so order doesn't matter.
     if (removeComposingAttributionCommand != null) {
       executor.executeCommand(removeComposingAttributionCommand);
-      print("Attributions immediately after removing composing attribution:");
-      print("${textNode.text.getAttributionSpansByFilter((a) => true)}");
+      editorSlackTagsLog.info("Attributions immediately after removing composing attribution:");
+      editorSlackTagsLog.info("${textNode.text.getAttributionSpansByFilter((a) => true)}");
     }
 
     // Reset the tag index so that we're no longer composing a tag.
@@ -275,14 +275,14 @@ class CancelComposingSlackTagCommand implements EditCommand {
 }
 
 EditCommand? removeSlackComposingTokenAttribution(Document document, SlackTagIndex tagIndex) {
-  print("REMOVING COMPOSING ATTRIBUTION");
+  editorSlackTagsLog.info("REMOVING COMPOSING ATTRIBUTION");
   // Remove any composing attribution for the previous state of the tag.
   // It's possible that the previous composing region disappeared, e.g., due to a deletion.
   final previousTag = tagIndex._composingSlackTag.value!;
   final previousTagNode =
       document.getNodeById(previousTag.contentBounds.start.nodeId); // We assume tags don't cross node boundaries.
   if (previousTagNode == null || previousTagNode is! TextNode) {
-    print("Couldn't find composing attribution. Fizzling.");
+    editorSlackTagsLog.info("Couldn't find composing attribution. Fizzling.");
     return null;
   }
 
@@ -344,7 +344,7 @@ class SlackTagReaction implements EditReaction {
     editorSlackTagsLog.info("Is already composing a tag? ${tagIndex.isComposing}");
 
     if (changeList.length == 1 && changeList.first is SelectionChangeEvent) {
-      print("Selection change event: ${(changeList.first as SelectionChangeEvent).changeType}");
+      editorSlackTagsLog.info("Selection change event: ${(changeList.first as SelectionChangeEvent).changeType}");
     }
 
     // Update the current tag composition.
@@ -425,7 +425,7 @@ class SlackTagReaction implements EditReaction {
     onUpdateComposingTag?.call(newTag);
 
     // Add composing attribution for the updated tag bounds.
-    print("Updating composing attribution with bounds: ${newTag.contentBounds}");
+    editorSlackTagsLog.info("Updating composing attribution with bounds: ${newTag.contentBounds}");
     requestDispatcher.execute([
       AddTextAttributionsRequest(
         documentRange: newTag.contentBounds,
@@ -974,7 +974,7 @@ class AdjustSelectionAroundSlackTagReaction implements EditReaction {
       );
     }
 
-    print(
+    editorSlackTagsLog.fine(
         "Selection after adjusting for tag: ${editContext.find<MutableDocumentComposer>(Editor.composerKey).selection?.extent.nodePosition}");
   }
 
@@ -1241,7 +1241,7 @@ class AdjustSelectionAroundSlackTagReaction implements EditReaction {
       case TextAffinity.downstream:
         // Move to ending edge.
         textOffset = tagAroundCaret.indexedTag.endOffset;
-        print("Pushing to text offset: $textOffset");
+        editorSlackTagsLog.fine("Pushing to text offset: $textOffset");
         break;
     }
 
@@ -1264,7 +1264,7 @@ class AdjustSelectionAroundSlackTagReaction implements EditReaction {
             ),
           );
 
-    print("Setting selection to: $newSelection");
+    editorSlackTagsLog.fine("Setting selection to: $newSelection");
 
     requestDispatcher.execute([
       ChangeSelectionRequest(
