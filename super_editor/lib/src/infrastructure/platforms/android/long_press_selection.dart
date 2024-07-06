@@ -222,10 +222,12 @@ class AndroidDocumentLongPressSelectionStrategy {
 
     final isOverNonTextNode = fingerDocumentPosition.nodePosition is! TextNodePosition;
     if (isOverNonTextNode) {
-      // The user is dragging over content that isn't text, therefore it doesn't have
-      // a concept of "words". Select the whole node.
-      longPressSelectionLog.finer("Dragging over non-text node. Selecting the whole node.");
-      _select(_longPressInitialSelection!.expandTo(fingerDocumentPosition));
+      if (fingerDocumentPosition.nodeId != _longPressInitialSelection!.base.nodeId) {
+        // The user is dragging over content that isn't text, therefore it doesn't have
+        // a concept of "words". Select the whole node.
+        longPressSelectionLog.finer("Dragging over non-text node. Selecting the whole node.");
+        _select(_longPressInitialSelection!.expandTo(fingerDocumentPosition));
+      }
       return;
     }
 
