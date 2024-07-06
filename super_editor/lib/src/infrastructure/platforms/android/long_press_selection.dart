@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -167,17 +168,35 @@ class AndroidDocumentLongPressSelectionStrategy {
       return false;
     }
 
-    _longPressInitialSelection = getWordSelection(docPosition: docPosition, docLayout: _docLayout);
+    if (docPosition.nodePosition is! TextNodePosition) {
+      // Select the whole node.
+      _longPressInitialSelection = DocumentSelection(
+        base: DocumentPosition(
+          nodeId: docPosition.nodeId,
+          nodePosition: UpstreamDownstreamNodePosition.upstream(),
+        ),
+        extent: DocumentPosition(
+          nodeId: docPosition.nodeId,
+          nodePosition: UpstreamDownstreamNodePosition.downstream(),
+        ),
+      );
+    } else {
+      _longPressInitialSelection = getWordSelection(docPosition: docPosition, docLayout: _docLayout);
+    }
+
     _select(_longPressInitialSelection!);
 
     // Initially, the word vs character selection bound tracking is set equal to
     // the word boundaries of the first selected word.
     longPressSelectionLog.finer("Setting initial long-press upstream bound to: ${_longPressInitialSelection!.start}");
     _longPressMostRecentBoundaryNodeId = _longPressInitialSelection!.start.nodeId;
-    _longPressMostRecentUpstreamWordBoundary =
-        (_longPressInitialSelection!.start.nodePosition as TextNodePosition).offset;
-    _longPressMostRecentDownstreamWordBoundary =
-        (_longPressInitialSelection!.end.nodePosition as TextNodePosition).offset;
+
+    if (docPosition.nodePosition is TextNodePosition) {
+      _longPressMostRecentUpstreamWordBoundary =
+          (_longPressInitialSelection!.start.nodePosition as TextNodePosition).offset;
+      _longPressMostRecentDownstreamWordBoundary =
+          (_longPressInitialSelection!.end.nodePosition as TextNodePosition).offset;
+    }
 
     return true;
   }
@@ -219,6 +238,7 @@ class AndroidDocumentLongPressSelectionStrategy {
 
     final fingerIsInInitialWord =
         _document.doesSelectionContainPosition(_longPressInitialSelection!, focalPointDocumentPosition);
+
     if (fingerIsInInitialWord) {
       longPressSelectionLog.finer("Dragging in the initial word.");
       _onLongPressFingerIsInInitialWord(fingerDocumentOffset);
@@ -229,14 +249,19 @@ class AndroidDocumentLongPressSelectionStrategy {
     final textComponent =
         componentUnderFinger is TextComponentState ? componentUnderFinger : componentUnderFinger as ProxyTextComposable;
     final fingerTextOffset = (fingerDocumentPosition.nodePosition as TextNodePosition).offset;
-    final initialSelectionStartOffset = (_longPressInitialSelection!.base.nodePosition as TextNodePosition).offset;
-    final initialSelectionEndOffset = (_longPressInitialSelection!.end.nodePosition as TextNodePosition).offset;
-    final mostRecentBoundaryTextOffset = _longPressSelectionDirection == TextAffinity.upstream
-        ? _longPressMostRecentUpstreamWordBoundary ?? initialSelectionStartOffset
-        : _longPressMostRecentDownstreamWordBoundary ?? initialSelectionEndOffset;
+
+    TextNodePosition? mostRecentBoundaryLine;
+    if (_longPressInitialSelection!.base.nodePosition is TextNodePosition) {
+      final initialSelectionStartOffset = (_longPressInitialSelection!.base.nodePosition as TextNodePosition).offset;
+      final initialSelectionEndOffset = (_longPressInitialSelection!.end.nodePosition as TextNodePosition).offset;
+      final mostRecentBoundaryTextOffset = _longPressSelectionDirection == TextAffinity.upstream
+          ? _longPressMostRecentUpstreamWordBoundary ?? initialSelectionStartOffset
+          : _longPressMostRecentDownstreamWordBoundary ?? initialSelectionEndOffset;
+      mostRecentBoundaryLine =
+          textComponent.getPositionAtStartOfLine(TextNodePosition(offset: mostRecentBoundaryTextOffset));
+    }
+
     final fingerLine = textComponent.getPositionAtStartOfLine(TextNodePosition(offset: fingerTextOffset));
-    final mostRecentBoundaryLine =
-        textComponent.getPositionAtStartOfLine(TextNodePosition(offset: mostRecentBoundaryTextOffset));
     final fingerIsOnNewLine = fingerLine != mostRecentBoundaryLine;
     if (fingerIsOnNewLine || fingerDocumentPosition.nodeId != _longPressMostRecentBoundaryNodeId) {
       // The user either dragged from one line of text to another, or the user dragged
@@ -266,10 +291,13 @@ class AndroidDocumentLongPressSelectionStrategy {
   void _resetWordVsCharacterTracking() {
     longPressSelectionLog.finest("Resetting word-vs-character tracking");
     _longPressMostRecentBoundaryNodeId = _longPressInitialSelection!.start.nodeId;
-    _longPressMostRecentUpstreamWordBoundary =
-        (_longPressInitialSelection!.start.nodePosition as TextNodePosition).offset;
-    _longPressMostRecentDownstreamWordBoundary =
-        (_longPressInitialSelection!.end.nodePosition as TextNodePosition).offset;
+
+    if (_longPressInitialSelection is TextNodePosition) {
+      _longPressMostRecentUpstreamWordBoundary =
+          (_longPressInitialSelection!.start.nodePosition as TextNodePosition).offset;
+      _longPressMostRecentDownstreamWordBoundary =
+          (_longPressInitialSelection!.end.nodePosition as TextNodePosition).offset;
+    }
     _isSelectingByCharacter = false;
     _longPressCharacterSelectionXOffset = 0;
   }
