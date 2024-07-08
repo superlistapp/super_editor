@@ -85,6 +85,9 @@ class IosLongPressSelectionStrategy {
 
     final isOverNonTextNode = fingerDocumentPosition.nodePosition is! TextNodePosition;
     if (isOverNonTextNode) {
+      // Don't change selection if the user long-presses over a non-text node and then
+      // moves the finger over the same node. This prevents the selection from collapsing
+      // when the user moves the finger towards the starting edge of the node.
       if (fingerDocumentPosition.nodeId != _longPressInitialSelection!.base.nodeId) {
         // The user is dragging over content that isn't text, therefore it doesn't have
         // a concept of "words". Select the whole node.
