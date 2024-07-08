@@ -453,7 +453,7 @@ void main() {
 
     group("editing >", () {
       testWidgetsOnAllPlatforms("user can delete pieces of tags", (tester) async {
-        final context = await _pumpTestEditor(
+        await _pumpTestEditor(
           tester,
           singleParagraphEmptyDoc(),
         );

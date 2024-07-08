@@ -808,8 +808,8 @@ void main() {
         int listenerNotifyCount = 0;
         final controller = AttributedTextEditingController(
           text: AttributedText('my text'),
-          selection: TextSelection.collapsed(offset: 7),
-          composingRegion: TextRange(start: 3, end: 7),
+          selection: const TextSelection.collapsed(offset: 7),
+          composingRegion: const TextRange(start: 3, end: 7),
         )
           ..composingAttributions = {
             boldAttribution,
@@ -837,8 +837,8 @@ void main() {
         // throw a compile error, at which time it will be safe to remove it.
         controller
           ..text = AttributedText('my text')
-          ..selection = TextSelection.collapsed(offset: 7)
-          ..composingRegion = TextRange(start: 3, end: 7)
+          ..selection = const TextSelection.collapsed(offset: 7)
+          ..composingRegion = const TextRange(start: 3, end: 7)
           ..composingAttributions = {boldAttribution};
         listenerNotifyCount = 0;
 
@@ -859,8 +859,8 @@ void main() {
         int listenerNotifyCount = 0;
         final controller = AttributedTextEditingController(
           text: AttributedText('my text'),
-          selection: TextSelection.collapsed(offset: 7),
-          composingRegion: TextRange(start: 3, end: 7),
+          selection: const TextSelection.collapsed(offset: 7),
+          composingRegion: const TextRange(start: 3, end: 7),
         )
           ..composingAttributions = {
             boldAttribution,

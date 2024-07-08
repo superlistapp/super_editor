@@ -154,13 +154,12 @@ class Editor implements RequestDispatcher {
       return;
     }
 
-    print("STARTING TRANSACTION");
+    editorEditsLog.info("Starting transaction");
     _isInTransaction = true;
     _activeChangeList = <EditEvent>[];
     _transaction = CommandTransaction([], clock.now());
 
     _onTransactionStart();
-    print("TRANSACTION WAS STARTED");
   }
 
   /// Ends a transaction that was started with a call to [startTransaction].
@@ -213,7 +212,7 @@ class Editor implements RequestDispatcher {
     // transaction.
     _onTransactionEnd();
 
-    print("TRANSACTION WAS ENDED");
+    editorEditsLog.info("Finished transaction");
   }
 
   /// Executes the given [requests].
@@ -224,14 +223,13 @@ class Editor implements RequestDispatcher {
   void execute(List<EditRequest> requests) {
     if (requests.isEmpty) {
       // No changes were requested. Don't waste time starting and ending transactions, etc.
-      print("WARNING: Tried to execute requests without providing any requests!");
-      print(StackTrace.current);
+      editorEditsLog.warning("Tried to execute requests without providing any requests");
       return;
     }
 
-    print("Executing requests:");
+    editorEditsLog.finer("Executing requests:");
     for (final request in requests) {
-      print(" - ${request.runtimeType}");
+      editorEditsLog.finer(" - ${request.runtimeType}");
     }
 
     if (_activeCommandCount == 0 && !_isInTransaction) {
@@ -353,29 +351,29 @@ class Editor implements RequestDispatcher {
   }
 
   void undo() {
-    print("RUNNING UNDO");
+    editorEditsLog.info("Running undo");
     if (history.isEmpty) {
       return;
     }
 
-    print("History before undo:");
+    editorEditsLog.finer("History before undo:");
     for (final transaction in history) {
-      print(" - transaction");
+      editorEditsLog.finer(" - transaction");
       for (final command in transaction.commands) {
-        print("   - ${command.runtimeType}: ${command.describe()}");
+        editorEditsLog.finer("   - ${command.runtimeType}: ${command.describe()}");
       }
     }
-    print("---");
+    editorEditsLog.finer("---");
 
     // Move the latest command from the history to the future.
     final transactionToUndo = history.removeLast();
     future.add(transactionToUndo);
-    print("The commands being undone are:");
+    editorEditsLog.finer("The commands being undone are:");
     for (final command in transactionToUndo.commands) {
-      print("  - ${command.runtimeType}: ${command.describe()}");
+      editorEditsLog.finer("  - ${command.runtimeType}: ${command.describe()}");
     }
 
-    print("Resetting all editables to their last checkpoint...");
+    editorEditsLog.finer("Resetting all editables to their last checkpoint...");
     for (final editable in context._resources.values) {
       // Don't let editables notify listeners during undo.
       editable.onTransactionStart();
@@ -385,11 +383,11 @@ class Editor implements RequestDispatcher {
     }
 
     // Replay all history except for the most recent command transaction.
-    print("Replaying all command history except for the most recent transaction...");
+    editorEditsLog.finer("Replaying all command history except for the most recent transaction...");
     final changeEvents = <EditEvent>[];
     for (final commandTransaction in history) {
       for (final command in commandTransaction.commands) {
-        print("Executing command: ${command.runtimeType}");
+        editorEditsLog.finer("Executing command: ${command.runtimeType}");
         // We re-run the commands without tracking changes and without running reactions
         // because any relevant reactions should have run the first time around, and already
         // submitted their commands.
@@ -398,24 +396,27 @@ class Editor implements RequestDispatcher {
       }
     }
 
+    editorEditsLog.info("Finished undo");
+
+    editorEditsLog.finer("Ending transaction on all editables");
     for (final editable in context._resources.values) {
       // Let editables start notifying listeners again.
       editable.onTransactionEnd(changeEvents);
     }
 
+    // TODO: find out why this is needed. If it's not, remove it.
     _notifyListeners([]);
-    print("DONE WITH UNDO");
   }
 
   void redo() {
-    print("RUNNING REDO");
+    editorEditsLog.info("Running redo");
     if (future.isEmpty) {
       return;
     }
 
-    print("Future transaction:");
+    editorEditsLog.finer("Future transaction:");
     for (final command in future.last.commands) {
-      print(" - ${command.runtimeType}");
+      editorEditsLog.finer(" - ${command.runtimeType}");
     }
 
     for (final editable in context._resources.values) {
@@ -431,12 +432,16 @@ class Editor implements RequestDispatcher {
     }
     history.add(commandTransaction);
 
-    print("DONE WITH REDO");
+    editorEditsLog.info("Finished redo");
 
+    editorEditsLog.finer("Ending transaction on all editables");
     for (final editable in context._resources.values) {
       // Let editables start notifying listeners again.
       editable.onTransactionEnd(edits);
     }
+
+    // TODO: find out why this is needed. If it's not, remove it.
+    _notifyListeners([]);
   }
 
   void _notifyListeners(List<EditEvent> changeList) {
@@ -1240,19 +1245,12 @@ class MutableDocument implements Document, Editable {
 
   @override
   void reset() {
-    print("Resetting the MutableDocument");
-
     _nodes
       ..clear()
       ..addAll(_latestNodesSnapshot.map((node) => node.copy()).toList());
     _refreshNodeIdCaches();
 
     _didReset = true;
-
-    for (final node in _nodes) {
-      print("$node");
-    }
-    print("");
   }
 
   /// Updates all the maps which use the node id as the key.

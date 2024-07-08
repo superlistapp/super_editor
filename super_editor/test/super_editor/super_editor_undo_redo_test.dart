@@ -318,7 +318,7 @@ This is paragraph 3''');
           await widgetTester //
               .createDocument()
               .withSingleEmptyParagraph()
-              .withHistoryGroupingPolicy(MergeRapidTextInputPolicy())
+              .withHistoryGroupingPolicy(const MergeRapidTextInputPolicy())
               .pump();
 
           await widgetTester.placeCaretInParagraph("1", 0);
@@ -330,7 +330,6 @@ This is paragraph 3''');
           expect(SuperEditorInspector.findTextInComponent("1").text, "Hello");
 
           // Undo the typing.
-          print("------------ UNDO -------------");
           await widgetTester.pressCmdZ(widgetTester);
           await widgetTester.pump();
 
@@ -368,7 +367,6 @@ This is paragraph 3''');
           expect(SuperEditorInspector.findTextInComponent("1").text, "Hello World!");
 
           // Undo the typing.
-          print("------------ UNDO -------------");
           await widgetTester.pressCmdZ(widgetTester);
           await widgetTester.pump();
 

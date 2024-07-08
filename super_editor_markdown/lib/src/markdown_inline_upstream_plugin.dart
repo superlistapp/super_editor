@@ -153,6 +153,10 @@ class MarkdownInlineUpstreamSyntaxReaction extends EditReaction {
       return const [];
     }
 
+    final newCaretPosition = DocumentPosition(
+      nodeId: editedNode.id,
+      nodePosition: TextNodePosition(offset: markdownRun.start + markdownRun.replacementText.length),
+    );
     return [
       // Delete the whole run of Markdown text, e.g., "**my bold**".
       DeleteContentRequest(
@@ -179,13 +183,16 @@ class MarkdownInlineUpstreamSyntaxReaction extends EditReaction {
       // were removed.
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: editedNode.id,
-            nodePosition: TextNodePosition(offset: markdownRun.start + markdownRun.replacementText.length),
-          ),
+          position: newCaretPosition,
         ),
         SelectionChangeType.alteredContent,
         SelectionReason.contentChange,
+      ),
+      ChangeComposingRegionRequest(
+        DocumentRange(
+          start: newCaretPosition,
+          end: newCaretPosition,
+        ),
       ),
     ];
   }

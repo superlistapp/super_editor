@@ -672,7 +672,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     }
   }
 
-  @protected
+  @override
   DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(
       BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
     final selection = widget.selection.value;

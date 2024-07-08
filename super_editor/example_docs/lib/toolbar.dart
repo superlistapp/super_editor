@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:example_docs/editor.dart';
 import 'package:example_docs/infrastructure/icon_selector.dart';
 import 'package:example_docs/infrastructure/color_selector.dart';
 import 'package:example_docs/infrastructure/text_item_selector.dart';
