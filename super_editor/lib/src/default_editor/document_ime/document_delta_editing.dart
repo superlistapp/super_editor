@@ -282,17 +282,10 @@ class TextDeltasDocumentEditor {
     editorImeLog
         .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
     final selectionBeforeInsertion = selection.value;
-    // editor.execute([
-    //   ChangeSelectionRequest(
-    //     insertionSelection,
-    //     SelectionChangeType.placeCaret,
-    //     SelectionReason.userInteraction,
-    //   ),
-    // ]);
 
     editorImeLog.fine("Inserting the text at the Document Composer's selection");
     final didInsert = _insertPlainText(
-      insertionSelection,
+      insertionSelection.extent,
       textInserted,
     );
     editorImeLog.fine("Insertion successful? $didInsert");
@@ -310,10 +303,9 @@ class TextDeltasDocumentEditor {
   }
 
   bool _insertPlainText(
-    DocumentSelection insertionSelection,
+    DocumentPosition insertionPosition,
     String text,
   ) {
-    DocumentPosition insertionPosition = insertionSelection.extent;
     editorOpsLog.fine('Attempting to insert "$text" at position: $insertionPosition');
 
     DocumentNode? insertionNode = document.getNodeById(insertionPosition.nodeId);
@@ -342,7 +334,7 @@ class TextDeltasDocumentEditor {
     editorOpsLog.finer("Text before insertion: '${insertionNode.text.text}'");
     editor.execute([
       ChangeSelectionRequest(
-        insertionSelection,
+        DocumentSelection.collapsed(position: insertionPosition),
         SelectionChangeType.placeCaret,
         SelectionReason.userInteraction,
       ),

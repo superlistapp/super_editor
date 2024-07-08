@@ -83,8 +83,11 @@ class Editor implements RequestDispatcher {
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
 
-  final history = <CommandTransaction>[];
-  final future = <CommandTransaction>[];
+  List<CommandTransaction> get history => List.from(_history);
+  final _history = <CommandTransaction>[];
+
+  List<CommandTransaction> get future => List.from(_future);
+  final _future = <CommandTransaction>[];
 
   /// A pipeline of objects that receive change-lists from command execution
   /// and get the first opportunity to spawn additional commands before the
@@ -171,20 +174,20 @@ class Editor implements RequestDispatcher {
     }
 
     if (_transaction!.commands.isNotEmpty) {
-      if (history.isEmpty) {
+      if (_history.isEmpty) {
         // Add this transaction onto the history stack.
-        history.add(_transaction!);
+        _history.add(_transaction!);
       } else {
-        final mergeChoice = historyGroupingPolicy.shouldMergeLatestTransaction(_transaction!, history.last);
+        final mergeChoice = historyGroupingPolicy.shouldMergeLatestTransaction(_transaction!, _history.last);
         switch (mergeChoice) {
           case TransactionMerge.noOpinion:
           case TransactionMerge.doNotMerge:
             // Don't alter the transaction history, just add the new transaction to the history.
-            history.add(_transaction!);
+            _history.add(_transaction!);
           case TransactionMerge.mergeOnTop:
             // Merge this transaction with the transaction just before it. This is used, for example,
             // to group repeated text input into a single undoable transaction.
-            history.last
+            _history.last
               ..commands.addAll(_transaction!.commands)
               ..changes.addAll(_transaction!.changes)
               ..lastChangeTime = clock.now();
@@ -192,7 +195,7 @@ class Editor implements RequestDispatcher {
             // Replaces the most recent transaction with the new transaction. This is used, for example,
             // to throw away unnecessary history about selection and composing region changes, for which
             // only the most recent value is relevant.
-            history
+            _history
               ..removeLast()
               ..add(_transaction!);
         }
@@ -340,7 +343,7 @@ class Editor implements RequestDispatcher {
     }
 
     if (_transaction!.commands.isNotEmpty) {
-      history.add(_transaction!);
+      _history.add(_transaction!);
     }
 
     // FIXME: try removing this notify listeners
@@ -352,12 +355,12 @@ class Editor implements RequestDispatcher {
 
   void undo() {
     editorEditsLog.info("Running undo");
-    if (history.isEmpty) {
+    if (_history.isEmpty) {
       return;
     }
 
     editorEditsLog.finer("History before undo:");
-    for (final transaction in history) {
+    for (final transaction in _history) {
       editorEditsLog.finer(" - transaction");
       for (final command in transaction.commands) {
         editorEditsLog.finer("   - ${command.runtimeType}: ${command.describe()}");
@@ -366,8 +369,8 @@ class Editor implements RequestDispatcher {
     editorEditsLog.finer("---");
 
     // Move the latest command from the history to the future.
-    final transactionToUndo = history.removeLast();
-    future.add(transactionToUndo);
+    final transactionToUndo = _history.removeLast();
+    _future.add(transactionToUndo);
     editorEditsLog.finer("The commands being undone are:");
     for (final command in transactionToUndo.commands) {
       editorEditsLog.finer("  - ${command.runtimeType}: ${command.describe()}");
@@ -385,7 +388,7 @@ class Editor implements RequestDispatcher {
     // Replay all history except for the most recent command transaction.
     editorEditsLog.finer("Replaying all command history except for the most recent transaction...");
     final changeEvents = <EditEvent>[];
-    for (final commandTransaction in history) {
+    for (final commandTransaction in _history) {
       for (final command in commandTransaction.commands) {
         editorEditsLog.finer("Executing command: ${command.runtimeType}");
         // We re-run the commands without tracking changes and without running reactions
@@ -410,12 +413,12 @@ class Editor implements RequestDispatcher {
 
   void redo() {
     editorEditsLog.info("Running redo");
-    if (future.isEmpty) {
+    if (_future.isEmpty) {
       return;
     }
 
     editorEditsLog.finer("Future transaction:");
-    for (final command in future.last.commands) {
+    for (final command in _future.last.commands) {
       editorEditsLog.finer(" - ${command.runtimeType}");
     }
 
@@ -424,13 +427,13 @@ class Editor implements RequestDispatcher {
       editable.onTransactionStart();
     }
 
-    final commandTransaction = future.removeLast();
+    final commandTransaction = _future.removeLast();
     final edits = <EditEvent>[];
     for (final command in commandTransaction.commands) {
       final commandEdits = _executeCommand(command);
       edits.addAll(commandEdits);
     }
-    history.add(commandTransaction);
+    _history.add(commandTransaction);
 
     editorEditsLog.info("Finished redo");
 
@@ -565,7 +568,8 @@ class MergeRepeatSelectionChangesPolicy implements HistoryGroupingPolicy {
         .isEmpty;
 
     if (!isNewTransactionAllSelectionAndComposing) {
-      // The new transaction contains meaningful changes. Don't merge anything.
+      // The new transaction contains meaningful changes. Let other policies decide
+      // what to do.
       return TransactionMerge.noOpinion;
     }
 
@@ -576,7 +580,7 @@ class MergeRepeatSelectionChangesPolicy implements HistoryGroupingPolicy {
     if (!isPreviousTransactionAllSelectionAndComposing) {
       // The previous transaction contains meaningful changes. Add the new selection/composing
       // changes on top so that they're undone with the previous content change.
-      return TransactionMerge.noOpinion;
+      return TransactionMerge.mergeOnTop;
     }
 
     // The previous and new transactions are all selection and composing changes. We don't
@@ -639,13 +643,15 @@ class MergeRapidTextInputPolicy implements HistoryGroupingPolicy {
 }
 
 class CommandTransaction {
-  CommandTransaction(this.commands, this.firstChangeTime) : changes = <EditEvent>[];
+  CommandTransaction(this.commands, this.firstChangeTime)
+      : changes = <EditEvent>[],
+        lastChangeTime = firstChangeTime;
 
   final List<EditCommand> commands;
   final List<EditEvent> changes;
 
   final DateTime firstChangeTime;
-  DateTime? lastChangeTime;
+  DateTime lastChangeTime;
 }
 
 /// An implementation of [CommandExecutor], designed for [Editor].

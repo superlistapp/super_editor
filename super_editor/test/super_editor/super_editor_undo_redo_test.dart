@@ -11,7 +11,7 @@ import 'supereditor_test_tools.dart';
 void main() {
   group("Super Editor > undo redo >", () {
     group("text insertion >", () {
-      testWidgets("insert a word", (widgetTester) async {
+      testWidgets("insert a word", (tester) async {
         final document = deserializeMarkdownToDocument("Hello  world");
         final composer = MutableDocumentComposer();
         final editor = createDefaultDocumentEditor(document: document, composer: composer);
@@ -81,16 +81,16 @@ void main() {
         );
       });
 
-      testWidgetsOnMac("type by character", (widgetTester) async {
-        await widgetTester //
+      testWidgetsOnMac("type by character", (tester) async {
+        await tester //
             .createDocument()
             .withSingleEmptyParagraph()
             .pump();
 
-        await widgetTester.placeCaretInParagraph("1", 0);
+        await tester.placeCaretInParagraph("1", 0);
 
         // Type characters.
-        await widgetTester.typeImeText("Hello");
+        await tester.typeImeText("Hello");
 
         expect(SuperEditorInspector.findTextInComponent("1").text, "Hello");
         expect(
@@ -104,50 +104,50 @@ void main() {
         );
 
         // --- Undo character insertions ---
-        await widgetTester.pressCmdZ(widgetTester);
+        await tester.pressCmdZ(tester);
         _expectDocumentWithCaret("Hell", "1", 4);
 
-        await widgetTester.pressCmdZ(widgetTester);
+        await tester.pressCmdZ(tester);
         _expectDocumentWithCaret("Hel", "1", 3);
 
-        await widgetTester.pressCmdZ(widgetTester);
+        await tester.pressCmdZ(tester);
         _expectDocumentWithCaret("He", "1", 2);
 
-        await widgetTester.pressCmdZ(widgetTester);
+        await tester.pressCmdZ(tester);
         _expectDocumentWithCaret("H", "1", 1);
 
-        await widgetTester.pressCmdZ(widgetTester);
+        await tester.pressCmdZ(tester);
         _expectDocumentWithCaret("", "1", 0);
 
         //----- Redo Changes ----
-        await widgetTester.pressCmdShiftZ(widgetTester);
+        await tester.pressCmdShiftZ(tester);
         _expectDocumentWithCaret("H", "1", 1);
 
-        await widgetTester.pressCmdShiftZ(widgetTester);
+        await tester.pressCmdShiftZ(tester);
         _expectDocumentWithCaret("He", "1", 2);
 
-        await widgetTester.pressCmdShiftZ(widgetTester);
+        await tester.pressCmdShiftZ(tester);
         _expectDocumentWithCaret("Hel", "1", 3);
 
-        await widgetTester.pressCmdShiftZ(widgetTester);
+        await tester.pressCmdShiftZ(tester);
         _expectDocumentWithCaret("Hell", "1", 4);
 
-        await widgetTester.pressCmdShiftZ(widgetTester);
+        await tester.pressCmdShiftZ(tester);
         _expectDocumentWithCaret("Hello", "1", 5);
       });
     });
 
     group("content conversions >", () {
-      testWidgetsOnMac("paragraph to header", (widgetTester) async {
-        final editContext = await widgetTester //
+      testWidgetsOnMac("paragraph to header", (tester) async {
+        final editContext = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
             .pump();
 
-        await widgetTester.placeCaretInParagraph("1", 0);
+        await tester.placeCaretInParagraph("1", 0);
 
         // Type text that causes a conversion to a header node.
-        await widgetTester.typeImeText("# ");
+        await tester.typeImeText("# ");
 
         // Ensure that the paragraph is now a header.
         final document = editContext.document;
@@ -155,8 +155,8 @@ void main() {
         expect(paragraph.metadata['blockType'], header1Attribution);
         expect(SuperEditorInspector.findTextInComponent(document.nodes.first.id).text, "");
 
-        await widgetTester.pressCmdZ(widgetTester);
-        await widgetTester.pump();
+        await tester.pressCmdZ(tester);
+        await tester.pump();
 
         // Ensure that the header attribution is gone.
         paragraph = document.nodes.first as ParagraphNode;
@@ -164,43 +164,43 @@ void main() {
         expect(SuperEditorInspector.findTextInComponent(document.nodes.first.id).text, "# ");
       });
 
-      testWidgetsOnMac("dashes to em dash", (widgetTester) async {
-        await widgetTester //
+      testWidgetsOnMac("dashes to em dash", (tester) async {
+        await tester //
             .createDocument()
             .withSingleEmptyParagraph()
             .pump();
 
-        await widgetTester.placeCaretInParagraph("1", 0);
+        await tester.placeCaretInParagraph("1", 0);
 
-        // Type text that causes a conversion to a header node.
-        await widgetTester.typeImeText("--");
+        // Type text that causes a conversion to an "em" dash.
+        await tester.typeImeText("--");
 
-        // Ensure that the paragraph is now a header.
+        // Ensure that the double dashes are now an "em" dash.
         expect(SuperEditorInspector.findTextInComponent("1").text, "—");
 
-        await widgetTester.pressCmdZ(widgetTester);
-        await widgetTester.pump();
+        await tester.pressCmdZ(tester);
+        await tester.pump();
 
         // Ensure that the em dash was reverted to the regular dashes.
         expect(SuperEditorInspector.findTextInComponent("1").text, "--");
 
         // Continue typing.
-        await widgetTester.typeImeText(" ");
+        await tester.typeImeText(" ");
 
         // Ensure that the dashes weren't reconverted into an em dash.
         expect(SuperEditorInspector.findTextInComponent("1").text, "-- ");
       });
 
-      testWidgetsOnMac("paragraph to list item", (widgetTester) async {
-        final editContext = await widgetTester //
+      testWidgetsOnMac("paragraph to list item", (tester) async {
+        final editContext = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
             .pump();
 
-        await widgetTester.placeCaretInParagraph("1", 0);
+        await tester.placeCaretInParagraph("1", 0);
 
         // Type text that causes a conversion to a list item node.
-        await widgetTester.typeImeText("1. ");
+        await tester.typeImeText("1. ");
 
         // Ensure that the paragraph is now a list item.
         final document = editContext.document;
@@ -208,8 +208,8 @@ void main() {
         expect(node, isA<ListItemNode>());
         expect(SuperEditorInspector.findTextInComponent(document.nodes.first.id).text, "");
 
-        await widgetTester.pressCmdZ(widgetTester);
-        await widgetTester.pump();
+        await tester.pressCmdZ(tester);
+        await tester.pump();
 
         // Ensure that the node is back to a paragraph.
         node = document.nodes.first as TextNode;
@@ -217,16 +217,16 @@ void main() {
         expect(SuperEditorInspector.findTextInComponent(document.nodes.first.id).text, "1. ");
       });
 
-      testWidgetsOnMac("url to a link", (widgetTester) async {
-        await widgetTester //
+      testWidgetsOnMac("url to a link", (tester) async {
+        await tester //
             .createDocument()
             .withSingleEmptyParagraph()
             .pump();
 
-        await widgetTester.placeCaretInParagraph("1", 0);
+        await tester.placeCaretInParagraph("1", 0);
 
         // Type text that causes a conversion to a link.
-        await widgetTester.typeImeText("google.com ");
+        await tester.typeImeText("google.com ");
 
         // Ensure that the URL is now linkified.
         expect(
@@ -240,8 +240,8 @@ void main() {
           },
         );
 
-        await widgetTester.pressCmdZ(widgetTester);
-        await widgetTester.pump();
+        await tester.pressCmdZ(tester);
+        await tester.pump();
 
         // Ensure that the URL is no longer linkified.
         expect(
@@ -250,40 +250,40 @@ void main() {
         );
       });
 
-      testWidgetsOnMac("paragraph to horizontal rule", (widgetTester) async {
-        final editContext = await widgetTester //
+      testWidgetsOnMac("paragraph to horizontal rule", (tester) async {
+        final editContext = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
             .pump();
 
-        await widgetTester.placeCaretInParagraph("1", 0);
+        await tester.placeCaretInParagraph("1", 0);
 
-        await widgetTester.typeImeText("--- ");
+        await tester.typeImeText("--- ");
         expect(editContext.document.nodes.first, isA<HorizontalRuleNode>());
 
-        await widgetTester.pressCmdZ(widgetTester);
-        await widgetTester.pump();
+        await tester.pressCmdZ(tester);
+        await tester.pump();
 
         expect(editContext.document.nodes.first, isA<ParagraphNode>());
         expect(SuperEditorInspector.findTextInComponent(editContext.document.nodes.first.id).text, "—- ");
       });
     });
 
-    testWidgetsOnMac("pasted content", (widgetTester) async {
-      final editContext = await widgetTester //
+    testWidgetsOnMac("pasted content", (tester) async {
+      final editContext = await tester //
           .createDocument()
           .withSingleEmptyParagraph()
           .pump();
 
-      await widgetTester.placeCaretInParagraph("1", 0);
+      await tester.placeCaretInParagraph("1", 0);
 
       // Paste multiple nodes of content.
-      widgetTester.simulateClipboard();
-      await widgetTester.setSimulatedClipboardContent('''
+      tester.simulateClipboard();
+      await tester.setSimulatedClipboardContent('''
 This is paragraph 1
 This is paragraph 2
 This is paragraph 3''');
-      await widgetTester.pressCmdV();
+      await tester.pressCmdV();
 
       // Ensure the pasted content was applied as expected.
       final document = editContext.document;
@@ -293,8 +293,8 @@ This is paragraph 3''');
       expect(SuperEditorInspector.findTextInComponent(document.nodes[2].id).text, "This is paragraph 3");
 
       // Undo the paste.
-      await widgetTester.pressCmdZ(widgetTester);
-      await widgetTester.pump();
+      await tester.pressCmdZ(tester);
+      await tester.pump();
 
       // Ensure we're back to a single empty paragraph.
       expect(document.nodes.length, 1);
@@ -302,8 +302,8 @@ This is paragraph 3''');
 
       // Redo the paste
       // TODO: remove WidgetTester as required argument to this robot method
-      await widgetTester.pressCmdShiftZ(widgetTester);
-      await widgetTester.pump();
+      await tester.pressCmdShiftZ(tester);
+      await tester.pump();
 
       // Ensure the pasted content was applied as expected.
       expect(document.nodes.length, 3);
@@ -314,61 +314,61 @@ This is paragraph 3''');
 
     group("transaction grouping >", () {
       group("text merging >", () {
-        testWidgetsOnMac("merges rapidly inserted text", (widgetTester) async {
-          await widgetTester //
+        testWidgetsOnMac("merges rapidly inserted text", (tester) async {
+          await tester //
               .createDocument()
               .withSingleEmptyParagraph()
               .withHistoryGroupingPolicy(const MergeRapidTextInputPolicy())
               .pump();
 
-          await widgetTester.placeCaretInParagraph("1", 0);
+          await tester.placeCaretInParagraph("1", 0);
 
           // Type characters quickly.
-          await widgetTester.typeImeText("Hello");
+          await tester.typeImeText("Hello");
 
           // Ensure our typed text exists.
           expect(SuperEditorInspector.findTextInComponent("1").text, "Hello");
 
           // Undo the typing.
-          await widgetTester.pressCmdZ(widgetTester);
-          await widgetTester.pump();
+          await tester.pressCmdZ(tester);
+          await tester.pump();
 
           // Ensure that the whole word was undone.
           expect(SuperEditorInspector.findTextInComponent("1").text, "");
         });
 
-        testWidgetsOnMac("separates text typed later", (widgetTester) async {
-          await widgetTester //
+        testWidgetsOnMac("separates text typed later", (tester) async {
+          await tester //
               .createDocument()
               .withSingleEmptyParagraph()
               .withHistoryGroupingPolicy(const MergeRapidTextInputPolicy())
               .pump();
 
-          await widgetTester.placeCaretInParagraph("1", 0);
+          await tester.placeCaretInParagraph("1", 0);
 
           await withClock(Clock(() => DateTime(2024, 05, 26, 12, 0, 0, 0)), () async {
             // Type characters quickly.
-            await widgetTester.typeImeText("Hel");
+            await tester.typeImeText("Hel");
           });
           await withClock(Clock(() => DateTime(2024, 05, 26, 12, 0, 0, 150)), () async {
             // Type characters quickly.
-            await widgetTester.typeImeText("lo ");
+            await tester.typeImeText("lo ");
           });
 
           // Wait a bit.
-          await widgetTester.pump(const Duration(seconds: 3));
+          await tester.pump(const Duration(seconds: 3));
 
           await withClock(Clock(() => DateTime(2024, 05, 26, 12, 0, 3, 0)), () async {
             // Type characters quickly.
-            await widgetTester.typeImeText("World!");
+            await tester.typeImeText("World!");
           });
 
           // Ensure our typed text exists.
           expect(SuperEditorInspector.findTextInComponent("1").text, "Hello World!");
 
           // Undo the typing.
-          await widgetTester.pressCmdZ(widgetTester);
-          await widgetTester.pump();
+          await tester.pressCmdZ(tester);
+          await tester.pump();
 
           // Ensure that the text typed later was removed, but the text typed earlier
           // remains.
@@ -377,54 +377,54 @@ This is paragraph 3''');
       });
 
       group("selection and composing >", () {
-        testWidgetsOnMac("merges transactions with only selection and composing changes", (widgetTester) async {
-          final testContext = await widgetTester //
+        testWidgetsOnMac("merges transactions with only selection and composing changes", (tester) async {
+          final testContext = await tester //
               .createDocument()
               .withLongDoc()
               .withHistoryGroupingPolicy(defaultMergePolicy)
               .pump();
 
-          await widgetTester.placeCaretInParagraph("1", 0);
+          await tester.placeCaretInParagraph("1", 0);
 
           // Ensure we start with one history transaction for placing the caret.
           final editor = testContext.editor;
           expect(editor.history.length, 1);
 
           // Move the selection around a few times.
-          await widgetTester.placeCaretInParagraph("2", 5);
+          await tester.placeCaretInParagraph("2", 5);
 
-          await widgetTester.placeCaretInParagraph("3", 3);
+          await tester.placeCaretInParagraph("3", 3);
 
-          await widgetTester.placeCaretInParagraph("4", 0);
+          await tester.placeCaretInParagraph("4", 0);
 
           // Ensure that all selection changes were merged into the initial transaction.
           expect(editor.history.length, 1);
         });
 
-        testWidgetsOnMac("does not merge transactions when non-selection changes are present", (widgetTester) async {
-          final testContext = await widgetTester //
+        testWidgetsOnMac("does not merge transactions when non-selection changes are present", (tester) async {
+          final testContext = await tester //
               .createDocument()
               .withLongDoc()
               .withHistoryGroupingPolicy(defaultMergePolicy)
               .pump();
 
-          await widgetTester.placeCaretInParagraph("1", 0);
+          await tester.placeCaretInParagraph("1", 0);
 
           // Ensure we start with one history transaction for placing the caret.
           final editor = testContext.editor;
           expect(editor.history.length, 1);
 
           // Type a few characters.
-          await widgetTester.typeImeText("Hello ");
+          await tester.typeImeText("Hello ");
 
           // Move caret to start of paragraph.
-          await widgetTester.placeCaretInParagraph("1", 0);
+          await tester.placeCaretInParagraph("1", 0);
 
-          // Type a few more characters
-          await widgetTester.typeImeText("World ");
+          // Type a few more characters.
+          await tester.typeImeText("World ");
 
-          // Ensure we have 4 transactions: selection, typing, selection, typing.
-          expect(editor.history.length, 4);
+          // Ensure we have 4 transactions: selection, typing+selection, typing.
+          expect(editor.history.length, 3);
         });
       });
     });
