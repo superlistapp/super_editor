@@ -51,6 +51,11 @@ class ParagraphNode extends TextNode {
   }
 
   @override
+  ParagraphNode copy() {
+    return ParagraphNode(id: id, text: text.copyText(0), metadata: Map.from(metadata));
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other && other is ParagraphNode && runtimeType == other.runtimeType && _indent == other._indent;
@@ -321,7 +326,7 @@ class ChangeParagraphAlignmentRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ alignment.hashCode;
 }
 
-class ChangeParagraphAlignmentCommand implements EditCommand {
+class ChangeParagraphAlignmentCommand extends EditCommand {
   const ChangeParagraphAlignmentCommand({
     required this.nodeId,
     required this.alignment,
@@ -329,6 +334,9 @@ class ChangeParagraphAlignmentCommand implements EditCommand {
 
   final String nodeId;
   final TextAlign alignment;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -384,7 +392,7 @@ class ChangeParagraphBlockTypeRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ blockType.hashCode;
 }
 
-class ChangeParagraphBlockTypeCommand implements EditCommand {
+class ChangeParagraphBlockTypeCommand extends EditCommand {
   const ChangeParagraphBlockTypeCommand({
     required this.nodeId,
     required this.blockType,
@@ -392,6 +400,9 @@ class ChangeParagraphBlockTypeCommand implements EditCommand {
 
   final String nodeId;
   final Attribution? blockType;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -427,7 +438,7 @@ class CombineParagraphsRequest implements EditRequest {
 /// in reverse order, the command fizzles.
 ///
 /// If both nodes are not `ParagraphNode`s, the command fizzles.
-class CombineParagraphsCommand implements EditCommand {
+class CombineParagraphsCommand extends EditCommand {
   CombineParagraphsCommand({
     required this.firstNodeId,
     required this.secondNodeId,
@@ -435,6 +446,9 @@ class CombineParagraphsCommand implements EditCommand {
 
   final String firstNodeId;
   final String secondNodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -530,7 +544,7 @@ final _defaultAttributionsToExtend = {
 /// given `splitPosition`, placing all text after `splitPosition` in a
 /// new `ParagraphNode` with the given `newNodeId`, inserted after the
 /// original node.
-class SplitParagraphCommand implements EditCommand {
+class SplitParagraphCommand extends EditCommand {
   SplitParagraphCommand({
     required this.nodeId,
     required this.splitPosition,
@@ -545,6 +559,9 @@ class SplitParagraphCommand implements EditCommand {
   final bool replicateExistingMetadata;
   // TODO: remove the attribution filter and move the decision to an EditReaction in #1296
   final AttributionFilter attributionsToExtendToNewParagraph;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -659,10 +676,13 @@ class SplitParagraphCommand implements EditCommand {
   }
 }
 
-class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
+class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
   DeleteUpstreamAtBeginningOfParagraphCommand(this.node);
 
   final DocumentNode node;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -801,7 +821,7 @@ class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
   }
 }
 
-class Intention implements EditEvent {
+class Intention extends EditEvent {
   Intention.start() : _isStart = true;
 
   Intention.end() : _isStart = false;
@@ -865,12 +885,15 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-class DeleteParagraphCommand implements EditCommand {
+class DeleteParagraphCommand extends EditCommand {
   DeleteParagraphCommand({
     required this.nodeId,
   });
 
   final String nodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1044,7 +1067,7 @@ class SetParagraphIndentRequest implements EditRequest {
   final int level;
 }
 
-class SetParagraphIndentCommand implements EditCommand {
+class SetParagraphIndentCommand extends EditCommand {
   const SetParagraphIndentCommand(
     this.nodeId, {
     required this.level,
@@ -1081,7 +1104,7 @@ class IndentParagraphRequest implements EditRequest {
   final String nodeId;
 }
 
-class IndentParagraphCommand implements EditCommand {
+class IndentParagraphCommand extends EditCommand {
   const IndentParagraphCommand(this.nodeId);
 
   final String nodeId;
@@ -1156,7 +1179,7 @@ class UnIndentParagraphRequest implements EditRequest {
   final String nodeId;
 }
 
-class UnIndentParagraphCommand implements EditCommand {
+class UnIndentParagraphCommand extends EditCommand {
   const UnIndentParagraphCommand(this.nodeId);
 
   final String nodeId;

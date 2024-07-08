@@ -122,9 +122,9 @@ This is a code block.
 /// current block. This is especially important for a code block, in which pressing
 /// Enter inserts a newline inside the code block - it doesn't insert a new paragraph
 /// below the code block.
-class _AlwaysTrailingParagraphReaction implements EditReaction {
+class _AlwaysTrailingParagraphReaction extends EditReaction {
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final lastNode = document.nodes.lastOrNull;
 

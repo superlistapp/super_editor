@@ -14,6 +14,7 @@ import 'default_document_editor_reactions.dart';
 Editor createDefaultDocumentEditor({
   required MutableDocument document,
   required MutableDocumentComposer composer,
+  HistoryGroupingPolicy historyGroupingPolicy = defaultMergePolicy,
 }) {
   final editor = Editor(
     editables: {
@@ -21,6 +22,7 @@ Editor createDefaultDocumentEditor({
       Editor.composerKey: composer,
     },
     requestHandlers: List.from(defaultRequestHandlers),
+    historyGroupingPolicy: historyGroupingPolicy,
     reactionPipeline: List.from(defaultEditorReactions),
   );
 
@@ -51,6 +53,9 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       : null,
   (request) => request is ChangeInteractionModeRequest //
       ? ChangeInteractionModeCommand(isInteractionModeDesired: request.isInteractionModeDesired)
+      : null,
+  (request) => request is RemoveComposerPreferenceStylesRequest //
+      ? RemoveComposerPreferenceStylesCommand(request.stylesToRemove)
       : null,
   (request) => request is InsertTextRequest
       ? InsertTextCommand(
@@ -247,7 +252,6 @@ final defaultRequestHandlers = List.unmodifiable(<EditRequestHandler>[
       ? PasteEditorCommand(
           content: request.content,
           pastePosition: request.pastePosition,
-          composer: request.composer,
         )
       : null,
 ]);

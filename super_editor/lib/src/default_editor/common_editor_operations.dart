@@ -1131,7 +1131,6 @@ class CommonEditorOperations {
       } else {
         editor.execute([const DeleteUpstreamCharacterRequest()]);
         return true;
-        // return _deleteUpstreamCharacter();
       }
     }
 
@@ -2193,6 +2192,10 @@ class CommonEditorOperations {
   void paste() {
     DocumentPosition pastePosition = composer.selection!.extent;
 
+    // Start a transaction so that we can capture both the initial deletion behavior,
+    // and the clipboard content insertion, all as one transaction.
+    editor.startTransaction();
+
     // Delete all currently selected content.
     if (!composer.selection!.isCollapsed) {
       pastePosition = CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
@@ -2219,6 +2222,8 @@ class CommonEditorOperations {
       composer: composer,
       pastePosition: pastePosition,
     );
+
+    editor.endTransaction();
   }
 
   Future<void> _paste({
@@ -2233,7 +2238,6 @@ class CommonEditorOperations {
       PasteEditorRequest(
         content: content,
         pastePosition: pastePosition,
-        composer: composer,
       ),
     ]);
   }
@@ -2243,30 +2247,29 @@ class PasteEditorRequest implements EditRequest {
   PasteEditorRequest({
     required this.content,
     required this.pastePosition,
-    required this.composer,
   });
 
   final String content;
   final DocumentPosition pastePosition;
-  final DocumentComposer composer;
 }
 
-class PasteEditorCommand implements EditCommand {
+class PasteEditorCommand extends EditCommand {
   PasteEditorCommand({
     required String content,
     required DocumentPosition pastePosition,
-    required DocumentComposer composer,
   })  : _content = content,
-        _pastePosition = pastePosition,
-        _composer = composer;
+        _pastePosition = pastePosition;
 
   final String _content;
   final DocumentPosition _pastePosition;
-  final DocumentComposer _composer;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (currentNodeWithSelection is! TextNode) {
       throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
@@ -2345,7 +2348,7 @@ class PasteEditorCommand implements EditCommand {
         SelectionReason.userInteraction,
       ),
     );
-    editorOpsLog.fine('New selection after paste operation: ${_composer.selection}');
+    editorOpsLog.fine('New selection after paste operation: ${composer.selection}');
     editorOpsLog.fine('Done with paste command.');
   }
 
@@ -2437,8 +2440,11 @@ class DeleteUpstreamCharacterRequest implements EditRequest {
   const DeleteUpstreamCharacterRequest();
 }
 
-class DeleteUpstreamCharacterCommand implements EditCommand {
+class DeleteUpstreamCharacterCommand extends EditCommand {
   const DeleteUpstreamCharacterCommand();
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -2488,8 +2494,11 @@ class DeleteDownstreamCharacterRequest implements EditRequest {
   const DeleteDownstreamCharacterRequest();
 }
 
-class DeleteDownstreamCharacterCommand implements EditCommand {
+class DeleteDownstreamCharacterCommand extends EditCommand {
   const DeleteDownstreamCharacterCommand();
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

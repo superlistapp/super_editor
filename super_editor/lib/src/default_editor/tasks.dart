@@ -1,7 +1,24 @@
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/blocks/indentation.dart';
-import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/src/default_editor/multi_node_editing.dart';
+import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/composable_text.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
+
+import 'attributions.dart';
+import 'layout_single_column/layout_single_column.dart';
 
 /// This file includes everything needed to add the concept of a task
 /// to Super Editor. This includes:
@@ -61,6 +78,16 @@ class TaskNode extends TextNode {
   @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is TaskNode && isComplete == other.isComplete && text == other.text;
+  }
+
+  @override
+  TaskNode copy() {
+    return TaskNode(
+      id: id,
+      text: text.copyText(0),
+      metadata: Map.from(metadata),
+      isComplete: isComplete,
+    );
   }
 
   @override
@@ -570,11 +597,14 @@ class ChangeTaskCompletionRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ isComplete.hashCode;
 }
 
-class ChangeTaskCompletionCommand implements EditCommand {
+class ChangeTaskCompletionCommand extends EditCommand {
   ChangeTaskCompletionCommand({required this.nodeId, required this.isComplete});
 
   final String nodeId;
   final bool isComplete;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -614,7 +644,7 @@ class ConvertParagraphToTaskRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ isComplete.hashCode;
 }
 
-class ConvertParagraphToTaskCommand implements EditCommand {
+class ConvertParagraphToTaskCommand extends EditCommand {
   const ConvertParagraphToTaskCommand({
     required this.nodeId,
     this.isComplete = false,
@@ -622,6 +652,9 @@ class ConvertParagraphToTaskCommand implements EditCommand {
 
   final String nodeId;
   final bool isComplete;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -666,7 +699,7 @@ class ConvertTaskToParagraphRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ paragraphMetadata.hashCode;
 }
 
-class ConvertTaskToParagraphCommand implements EditCommand {
+class ConvertTaskToParagraphCommand extends EditCommand {
   const ConvertTaskToParagraphCommand({
     required this.nodeId,
     this.paragraphMetadata,
@@ -674,6 +707,9 @@ class ConvertTaskToParagraphCommand implements EditCommand {
 
   final String nodeId;
   final Map<String, dynamic>? paragraphMetadata;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -710,7 +746,7 @@ class SplitExistingTaskRequest implements EditRequest {
   final String? newNodeId;
 }
 
-class SplitExistingTaskCommand implements EditCommand {
+class SplitExistingTaskCommand extends EditCommand {
   const SplitExistingTaskCommand({
     required this.nodeId,
     required this.splitOffset,
@@ -720,6 +756,9 @@ class SplitExistingTaskCommand implements EditCommand {
   final String nodeId;
   final int splitOffset;
   final String? newNodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext editContext, CommandExecutor executor) {
@@ -803,7 +842,7 @@ class IndentTaskRequest implements EditRequest {
   final String nodeId;
 }
 
-class IndentTaskCommand implements EditCommand {
+class IndentTaskCommand extends EditCommand {
   const IndentTaskCommand(this.nodeId);
 
   final String nodeId;
@@ -852,7 +891,7 @@ class UnIndentTaskRequest implements EditRequest {
   final String nodeId;
 }
 
-class UnIndentTaskCommand implements EditCommand {
+class UnIndentTaskCommand extends EditCommand {
   const UnIndentTaskCommand(this.nodeId);
 
   final String nodeId;
@@ -924,7 +963,7 @@ class SetTaskIndentRequest implements EditRequest {
   final int indent;
 }
 
-class SetTaskIndentCommand implements EditCommand {
+class SetTaskIndentCommand extends EditCommand {
   const SetTaskIndentCommand(this.nodeId, this.indent);
 
   final String nodeId;
@@ -949,9 +988,9 @@ class SetTaskIndentCommand implements EditCommand {
   }
 }
 
-class UpdateSubTaskIndentAfterTaskDeletionReaction implements EditReaction {
+class UpdateSubTaskIndentAfterTaskDeletionReaction extends EditReaction {
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final didDeleteTask = changeList
         .whereType<DocumentEdit>()
         .where((edit) => edit.change is NodeRemovedEvent && (edit.change as NodeRemovedEvent).removedNode is TaskNode)
