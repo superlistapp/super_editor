@@ -2,6 +2,7 @@ import 'package:flutter/rendering.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -44,7 +45,22 @@ class IosLongPressSelectionStrategy {
       return false;
     }
 
-    _longPressInitialSelection = getWordSelection(docPosition: docPosition, docLayout: _docLayout);
+    if (docPosition.nodePosition is! TextNodePosition) {
+      // Select the whole node.
+      _longPressInitialSelection = DocumentSelection(
+        base: DocumentPosition(
+          nodeId: docPosition.nodeId,
+          nodePosition: UpstreamDownstreamNodePosition.upstream(),
+        ),
+        extent: DocumentPosition(
+          nodeId: docPosition.nodeId,
+          nodePosition: UpstreamDownstreamNodePosition.downstream(),
+        ),
+      );
+    } else {
+      _longPressInitialSelection = getWordSelection(docPosition: docPosition, docLayout: _docLayout);
+    }
+
     _select(_longPressInitialSelection!);
     return true;
   }
@@ -69,9 +85,14 @@ class IosLongPressSelectionStrategy {
 
     final isOverNonTextNode = fingerDocumentPosition.nodePosition is! TextNodePosition;
     if (isOverNonTextNode) {
-      // The user is dragging over content that isn't text, therefore it doesn't have
-      // a concept of "words". Select the whole node.
-      _select(_longPressInitialSelection!.expandTo(fingerDocumentPosition));
+      // Don't change selection if the user long-presses over a non-text node and then
+      // moves the finger over the same node. This prevents the selection from collapsing
+      // when the user moves the finger towards the starting edge of the node.
+      if (fingerDocumentPosition.nodeId != _longPressInitialSelection!.base.nodeId) {
+        // The user is dragging over content that isn't text, therefore it doesn't have
+        // a concept of "words". Select the whole node.
+        _select(_longPressInitialSelection!.expandTo(fingerDocumentPosition));
+      }
       return;
     }
 

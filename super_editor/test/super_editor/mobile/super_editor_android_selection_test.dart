@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
@@ -421,6 +424,130 @@ void main() {
               extent: DocumentPosition(
                 nodeId: "1",
                 nodePosition: TextNodePosition(offset: _wordIncididuntEnd),
+              ),
+            ),
+          );
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pump();
+        });
+
+        testWidgetsOnAndroid("selects an image and then by word when jumping down", (tester) async {
+          await tester
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    ImageNode(id: '1', imageUrl: ''),
+                    ParagraphNode(
+                      id: '2',
+                      text: AttributedText('Lorem ipsum dolor'),
+                    )
+                  ],
+                ),
+              )
+              .withAddedComponents(
+            [
+              const FakeImageComponentBuilder(
+                size: Size(100, 100),
+              ),
+            ],
+          ).pump();
+
+          // Long press near the top of the image.
+          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + Offset(0, 10);
+          final gesture = await tester.startGesture(tapDownOffset);
+          await tester.pump(kLongPressTimeout + kPressTimeout);
+
+          // Ensure the image was selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            DocumentSelection(
+              base: DocumentPosition(nodeId: '1', nodePosition: UpstreamDownstreamNodePosition.upstream()),
+              extent: DocumentPosition(nodeId: '1', nodePosition: UpstreamDownstreamNodePosition.downstream()),
+            ),
+          );
+
+          // Drag down from the image to the begining of the paragraph.
+          const dragIncrementCount = 10;
+          final verticalDragDistance =
+              Offset(0, (tester.getTopLeft(find.byType(TextComponent)).dy - tapDownOffset.dy) / dragIncrementCount);
+          for (int i = 0; i < dragIncrementCount; i += 1) {
+            await gesture.moveBy(verticalDragDistance);
+            await tester.pump();
+          }
+
+          // Ensure the selection begins at the image and goes to the end of "Lorem".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(nodeId: '1', nodePosition: UpstreamDownstreamNodePosition.upstream()),
+              extent: DocumentPosition(
+                nodeId: "2",
+                nodePosition: TextNodePosition(offset: 5),
+              ),
+            ),
+          );
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pump();
+        });
+
+        testWidgetsOnAndroid("selects an image and then by word when jumping up", (tester) async {
+          await tester
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    ParagraphNode(
+                      id: '1',
+                      text: AttributedText('Lorem ipsum dolor'),
+                    ),
+                    ImageNode(id: '2', imageUrl: ''),
+                  ],
+                ),
+              )
+              .withAddedComponents(
+            [
+              const FakeImageComponentBuilder(
+                size: Size(100, 100),
+              ),
+            ],
+          ).pump();
+
+          // Long press near the top of the image.
+          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + Offset(0, 10);
+          final gesture = await tester.startGesture(tapDownOffset);
+          await tester.pump(kLongPressTimeout + kPressTimeout);
+
+          // Ensure the image was selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            DocumentSelection(
+              base: DocumentPosition(nodeId: '2', nodePosition: UpstreamDownstreamNodePosition.upstream()),
+              extent: DocumentPosition(nodeId: '2', nodePosition: UpstreamDownstreamNodePosition.downstream()),
+            ),
+          );
+
+          // Drag up from the image to the begining of the paragraph.
+          const dragIncrementCount = 10;
+          final verticalDragDistance =
+              Offset(0, (tester.getTopLeft(find.byType(TextComponent)).dy - tapDownOffset.dy) / dragIncrementCount);
+          for (int i = 0; i < dragIncrementCount; i += 1) {
+            await gesture.moveBy(verticalDragDistance);
+            await tester.pump();
+          }
+
+          // Ensure the selection begins at the image and goes to the beginning of the paragraph.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(nodeId: '2', nodePosition: UpstreamDownstreamNodePosition.downstream()),
+              extent: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 0),
               ),
             ),
           );
