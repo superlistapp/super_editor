@@ -126,7 +126,7 @@ class ClearSelectedStylesRequest implements EditRequest {
   const ClearSelectedStylesRequest();
 }
 
-class ClearSelectedStylesCommand implements EditCommand {
+class ClearSelectedStylesCommand extends EditCommand {
   const ClearSelectedStylesCommand();
 
   @override
@@ -181,7 +181,7 @@ class ClearTextAttributionsRequest implements EditRequest {
   int get hashCode => documentRange.hashCode;
 }
 
-class ClearTextAttributionsCommand implements EditCommand {
+class ClearTextAttributionsCommand extends EditCommand {
   const ClearTextAttributionsCommand(this.documentRange);
 
   final DocumentRange documentRange;
@@ -288,7 +288,7 @@ class ToggleInlineFormatRequest implements EditRequest {
   int get hashCode => inlineFormat.hashCode;
 }
 
-class ToggleInlineFormatCommand implements EditCommand {
+class ToggleInlineFormatCommand extends EditCommand {
   const ToggleInlineFormatCommand(this.inlineFormat);
 
   final Attribution inlineFormat;

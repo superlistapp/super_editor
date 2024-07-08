@@ -37,6 +37,7 @@ dependencies:
   flutter_test:
     sdk: flutter
   flutter_test_robots: ^0.0.24
+  clock: ^1.1.1
 
 dependency_overrides:
   #  # Override to local mono-repo path so devs can test this repo

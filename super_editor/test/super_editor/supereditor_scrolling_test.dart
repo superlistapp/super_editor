@@ -1451,8 +1451,8 @@ void main() {
           .withScrollController(scrollController)
           .pump();
       await tester.tapInParagraph('1', 0);
-      final gesture = await tester.startGesture(Offset(100, 100), kind: PointerDeviceKind.touch);
-      await gesture.moveBy(Offset(0, -100));
+      final gesture = await tester.startGesture(const Offset(100, 100), kind: PointerDeviceKind.touch);
+      await gesture.moveBy(const Offset(0, -100));
       await tester.pumpAndSettle();
       final pixels = scrollController.position.pixels;
       // This should not change scroll position.

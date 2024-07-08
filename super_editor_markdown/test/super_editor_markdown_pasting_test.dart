@@ -353,7 +353,7 @@ Aenean mattis ante justo, quis sollicitudin metus interdum id.''',
     });
 
     testWidgetsOnMac("can paste a link", (tester) async {
-      final (_, document, composer) = await _pumpSuperEditor(
+      final (_, document, _) = await _pumpSuperEditor(
         tester,
         deserializeMarkdownToDocument(""),
       );

@@ -652,6 +652,11 @@ class _ButtonNode extends BlockNode with ChangeNotifier {
   String? copyContent(dynamic selection) => '';
 
   @override
+  DocumentNode copy() {
+    return _ButtonNode(id: id);
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is _ButtonNode && //

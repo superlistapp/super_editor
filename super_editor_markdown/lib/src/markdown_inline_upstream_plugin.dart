@@ -66,7 +66,7 @@ const defaultUpstreamInlineMarkdownParsers = [
 /// Parsing of links is handled differently than all other upstream syntax. Links use a fairly
 /// complicated syntax, so they're identified with a regular expression. All other upstream
 /// inline syntaxes are parsed character by character, moving upstream from the caret position.
-class MarkdownInlineUpstreamSyntaxReaction implements EditReaction {
+class MarkdownInlineUpstreamSyntaxReaction extends EditReaction {
   const MarkdownInlineUpstreamSyntaxReaction(this._parsers);
 
   final List<UpstreamMarkdownInlineSyntax> _parsers;
@@ -153,6 +153,10 @@ class MarkdownInlineUpstreamSyntaxReaction implements EditReaction {
       return const [];
     }
 
+    final newCaretPosition = DocumentPosition(
+      nodeId: editedNode.id,
+      nodePosition: TextNodePosition(offset: markdownRun.start + markdownRun.replacementText.length),
+    );
     return [
       // Delete the whole run of Markdown text, e.g., "**my bold**".
       DeleteContentRequest(
@@ -179,13 +183,16 @@ class MarkdownInlineUpstreamSyntaxReaction implements EditReaction {
       // were removed.
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: editedNode.id,
-            nodePosition: TextNodePosition(offset: markdownRun.start + markdownRun.replacementText.length),
-          ),
+          position: newCaretPosition,
         ),
         SelectionChangeType.alteredContent,
         SelectionReason.contentChange,
+      ),
+      ChangeComposingRegionRequest(
+        DocumentRange(
+          start: newCaretPosition,
+          end: newCaretPosition,
+        ),
       ),
     ];
   }

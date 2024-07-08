@@ -34,6 +34,11 @@ class HorizontalRuleNode extends BlockNode with ChangeNotifier {
   }
 
   @override
+  HorizontalRuleNode copy() {
+    return HorizontalRuleNode(id: id);
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) || other is HorizontalRuleNode && runtimeType == other.runtimeType && id == other.id;
 

@@ -185,7 +185,7 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
     ]);
 
     // Clear the field and hide the URL bar
-    _urlController!.clear();
+    _urlController!.clearTextAndSelection();
     _urlFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
     _linkPopoverController.close();
     setState(() {});
@@ -220,7 +220,7 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
     }
 
     // Clear the field and hide the URL bar
-    _imageController!.clear();
+    _imageController!.clearTextAndSelection();
     _imageFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
     _imagePopoverController.close();
     setState(() {});
@@ -535,7 +535,7 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
               onPressed: () {
                 setState(() {
                   _urlFocusNode.unfocus();
-                  _urlController!.clear();
+                  _urlController!.clearTextAndSelection();
                 });
               },
             ),
@@ -605,7 +605,7 @@ class _FormattingToolbarState extends State<FormattingToolbar> {
               onPressed: () {
                 setState(() {
                   _imageFocusNode.unfocus();
-                  _imageController!.clear();
+                  _imageController!.clearTextAndSelection();
                 });
               },
             ),
