@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -471,6 +472,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   bool _isCaretDragInProgress = false;
 
+  // Cached view metrics to ignore unnecessary didChangeMetrics calls.
+  Size? _lastSize;
+  ViewPadding? _lastInsets;
+
   @override
   void initState() {
     super.initState();
@@ -493,6 +498,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    final view = View.of(context);
+    _lastSize = view.physicalSize;
+    _lastInsets = view.viewInsets;
 
     _controlsController = SuperEditorAndroidControlsScope.rootOf(context);
 
@@ -529,6 +538,20 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   @override
   void didChangeMetrics() {
+    // It is possible to get the notification even though the metrics for view are same.
+    final view = View.of(context);
+    final size = view.physicalSize;
+    final insets = view.viewInsets;
+    if (size == _lastSize &&
+        _lastInsets?.left == insets.left &&
+        _lastInsets?.right == insets.right &&
+        _lastInsets?.top == insets.top &&
+        _lastInsets?.bottom == insets.bottom) {
+      return;
+    }
+    _lastSize = size;
+    _lastInsets = insets;
+
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
@@ -708,6 +731,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (!disableLongPressSelectionForSuperlist) {
       _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
     }
+  }
+
+  void _onTapCancel() {
+    _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = null;
   }
 
   // Runs when a tap down has lasted long enough to signify a long-press.
@@ -1251,6 +1279,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           (TapSequenceGestureRecognizer recognizer) {
             recognizer
               ..onTapDown = _onTapDown
+              ..onTapCancel = _onTapCancel
               ..onTapUp = _onTapUp
               ..onDoubleTapDown = _onDoubleTapDown
               ..onTripleTapDown = _onTripleTapDown
@@ -1650,6 +1679,9 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
           link: _controlsController!.collapsedHandleFocalPoint,
           leaderAnchor: Alignment.bottomCenter,
           followerAnchor: Alignment.topCenter,
+          // Use the offset to account for the invisible expanded touch region around the handle.
+          offset: -Offset(0, AndroidSelectionHandle.defaultTouchRegionExpansion.top) *
+              MediaQuery.devicePixelRatioOf(context),
           child: AnimatedOpacity(
             // When the controller doesn't want the handle to be visible, hide it.
             opacity: shouldShow ? 1.0 : 0.0,
@@ -1697,6 +1729,9 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
             link: _controlsController!.upstreamHandleFocalPoint,
             leaderAnchor: Alignment.bottomLeft,
             followerAnchor: Alignment.topRight,
+            // Use the offset to account for the invisible expanded touch region around the handle.
+            offset:
+                -AndroidSelectionHandle.defaultTouchRegionExpansion.topRight * MediaQuery.devicePixelRatioOf(context),
             child: GestureDetector(
               onTapDown: (_) {
                 // Register tap down to win gesture arena ASAP.
@@ -1726,6 +1761,9 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
             link: _controlsController!.downstreamHandleFocalPoint,
             leaderAnchor: Alignment.bottomRight,
             followerAnchor: Alignment.topLeft,
+            // Use the offset to account for the invisible expanded touch region around the handle.
+            offset:
+                -AndroidSelectionHandle.defaultTouchRegionExpansion.topLeft * MediaQuery.devicePixelRatioOf(context),
             child: GestureDetector(
               onTapDown: (_) {
                 // Register tap down to win gesture arena ASAP.

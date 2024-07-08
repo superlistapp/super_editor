@@ -1,0 +1,72 @@
+name: feather
+description: "A Flutter clone of Quill"
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.6
+  super_editor: any
+  super_editor_quill: any
+  super_editor_markdown: any
+  collection: ^1.18.0
+  overlord: ^0.0.3+5
+  material_symbols_icons: ^4.2762.0
+  dart_quill_delta: ^9.4.6
+  follow_the_leader: ^0.0.4+8
+
+dependency_overrides:
+  super_editor:
+    path: ../../
+  super_editor_quill:
+    path: ../../../super_editor_quill
+  super_editor_markdown:
+    path: ../../../super_editor_markdown
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+
+flutter:
+
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  # assets:
+  #   - images/a_dot_burr.jpeg
+  #   - images/a_dot_ham.jpeg
+
+  fonts:
+    - family: Sans Serif
+      fonts:
+        - asset: assets/fonts/Open_Sans/static/OpenSans-Medium.ttf
+        - asset: assets/fonts/Open_Sans/static/OpenSans-Italic.ttf
+          style: italic
+        - asset: assets/fonts/Open_Sans/static/OpenSans-ExtraBold.ttf
+          weight: 700
+        - asset: assets/fonts/Open_Sans/static/OpenSans-ExtraBoldItalic.ttf
+          style: italic
+          weight: 700
+    - family: Serif
+      fonts:
+        - asset: assets/fonts/EB_Garamond/static/EBGaramond-Regular.ttf
+        - asset: assets/fonts/EB_Garamond/static/EBGaramond-Italic.ttf
+          style: italic
+        - asset: assets/fonts/EB_Garamond/static/EBGaramond-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/EB_Garamond/static/EBGaramond-BoldItalic.ttf
+          style: italic
+          weight: 700
+    - family: Monospace
+      fonts:
+        - asset: assets/fonts/Fira_Mono/FiraMono-Regular.ttf
+        - asset: assets/fonts/Fira_Mono/FiraMono-Bold.ttf
+          weight: 700

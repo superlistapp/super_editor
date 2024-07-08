@@ -171,15 +171,49 @@ class AttributedText {
   /// Adds the given [attribution] to all characters within the given
   /// [range], inclusive.
   ///
-  /// When [autoMerge] is `true`, the new attribution is merged with any
-  /// preceding or following attribution whose [Attribution.canMergeWith] returns
-  /// `true`.
+  /// The effect of adding an attribution is straight forward when the text doesn't
+  /// contain any other attributions with the same ID. However, there are various
+  /// situations where the [attribution] can't necessarily co-exist with other
+  /// attribution spans that already exist in the text.
+  ///
+  /// Attribution overlaps can take one of two forms: mergeable or conflicting.
+  ///
+  /// ## Mergeable Attribution Spans
+  /// An example of a mergeable overlap is where two bold spans overlap each
+  /// other. All bold attributions are interchangeable, so when two bold spans
+  /// overlap, those spans can be merged together into a single span.
+  ///
+  /// However, mergeable overlapping spans are not automatically merged. Instead,
+  /// this decision is left to the user of this class. If you want [AttributedText] to
+  /// merge overlapping mergeable spans, pass `true` for [autoMerge]. Otherwise,
+  /// if [autoMerge] is `false`, an exception is thrown when two mergeable spans
+  /// overlap each other.
+  ///
+  ///
+  /// ## Conflicting Attribution Spans
+  /// An example of a conflicting overlap is where a black text color overlaps a red
+  /// text color. Text is either black, OR red, but never both. Therefore, the black
+  /// attribution cannot co-exist with the red attribution. Something must be done
+  /// to resolve this.
+  ///
+  /// There are two possible ways to handle conflicting overlaps. The new attribution
+  /// can overwrite the existing attribution where they overlap. Or, an exception can be
+  /// thrown. To overwrite the existing attribution with the new attribution, pass `true`
+  /// for [overwriteConflictingSpans]. Otherwise, if [overwriteConflictingSpans]
+  /// is `false`, an exception is thrown.
   void addAttribution(
     Attribution attribution,
     SpanRange range, {
     bool autoMerge = true,
+    bool overwriteConflictingSpans = false,
   }) {
-    spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end, autoMerge: autoMerge);
+    spans.addAttribution(
+      newAttribution: attribution,
+      start: range.start,
+      end: range.end,
+      autoMerge: autoMerge,
+      overwriteConflictingSpans: overwriteConflictingSpans,
+    );
     _notifyListeners();
   }
 

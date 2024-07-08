@@ -163,6 +163,37 @@ void main() {
         ),
       );
     });
+
+    testWidgetsOnArbitraryDesktop("defined by the app receives selection color", (tester) async {
+      await tester //
+          .createDocument()
+          .withCustomContent(
+            MutableDocument(nodes: [
+              ParagraphNode(id: '1', text: AttributedText('Paragraph 1')),
+              _ButtonNode(id: '2'),
+              ParagraphNode(id: '3', text: AttributedText('Paragraph 3')),
+            ]),
+          )
+          .withAddedComponents(
+            [const _ButtonComponentBuilder()],
+          )
+          .withSelectionStyles(
+            const SelectionStyles(selectionColor: Colors.red),
+          )
+          .pump();
+
+      // Drag to select all content.
+      await tester.dragSelectDocumentFromPositionByOffset(
+        from: const DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
+        delta: const Offset(0, 100),
+      );
+
+      // Ensure the selection color from the selection style was applied.
+      expect(
+        tester.widget<SelectableBox>(find.byType(SelectableBox)).selectionColor,
+        Colors.red,
+      );
+    });
   });
 
   group("Unselectable component", () {
@@ -604,6 +635,135 @@ class _UnselectableHorizontalRuleComponent extends StatelessWidget {
           thickness: 1.0,
         ),
       ),
+    );
+  }
+}
+
+/// A [DocumentNode] used to display a button.
+class _ButtonNode extends BlockNode with ChangeNotifier {
+  _ButtonNode({
+    required this.id,
+  });
+
+  @override
+  final String id;
+
+  @override
+  String? copyContent(dynamic selection) => '';
+
+  @override
+  DocumentNode copy() {
+    return _ButtonNode(id: id);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _ButtonNode && //
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+class _ButtonViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
+  _ButtonViewModel({
+    required String nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    DocumentNodeSelection? selection,
+    Color selectionColor = Colors.transparent,
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.selection = selection;
+    this.selectionColor = selectionColor;
+  }
+
+  @override
+  _ButtonViewModel copy() {
+    return _ButtonViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      selection: selection,
+      selectionColor: selectionColor,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is _ButtonViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor;
+
+  @override
+  int get hashCode => super.hashCode ^ nodeId.hashCode ^ selection.hashCode ^ selectionColor.hashCode;
+}
+
+class _ButtonComponent extends StatelessWidget {
+  const _ButtonComponent({
+    Key? key,
+    required this.componentKey,
+    this.selectionColor = Colors.blue,
+    this.selection,
+  }) : super(key: key);
+
+  final GlobalKey componentKey;
+  final Color selectionColor;
+  final DocumentNodeSelection? selection;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: SelectableBox(
+            selection: selection?.nodeSelection as UpstreamDownstreamNodeSelection?,
+            selectionColor: selectionColor,
+            child: BoxComponent(
+              key: componentKey,
+              child: const SizedBox(),
+            ),
+          ),
+        ),
+        Center(
+          child: ElevatedButton(
+            onPressed: () {},
+            child: const Text('My Button'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ButtonComponentBuilder implements ComponentBuilder {
+  const _ButtonComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! _ButtonNode) {
+      return null;
+    }
+
+    return _ButtonViewModel(nodeId: node.id);
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! _ButtonViewModel) {
+      return null;
+    }
+
+    return _ButtonComponent(
+      componentKey: componentContext.componentKey,
+      selection: componentViewModel.selection,
+      selectionColor: componentViewModel.selectionColor,
     );
   }
 }

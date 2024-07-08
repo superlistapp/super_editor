@@ -2394,10 +2394,19 @@ class PasteEditorCommand extends EditCommand {
           looseUrl: true,
         ),
       );
+
       final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
       if (linkCount == 1) {
         // The word is a single URL. Linkify it.
-        final uri = parseLink(word);
+        late final Uri uri;
+        try {
+          uri = parseLink(word);
+        } catch (exception) {
+          // Something went wrong when trying to parse links. This can happen, for example,
+          // due to Markdown syntax around a link, e.g., [My Link](www.something.com). I'm
+          // not sure why that case throws, but it does. We ignore any URL that throws.
+          continue;
+        }
 
         final startOffset = wordBoundary.start;
         // -1 because TextPosition's offset indexes the character after the

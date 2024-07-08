@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
@@ -124,22 +125,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
 
     int? ordinalValue;
     if (node.type == ListItemType.ordered) {
-      // Counts the number of ordered list items above the current node with the same indentation level. Ordered
-      // list items with the same indentation level might be separated by ordered or unordered list items with
-      // different indentation levels.
-      ordinalValue = 1;
-      DocumentNode? nodeAbove = document.getNodeBefore(node);
-      while (nodeAbove != null && nodeAbove is ListItemNode && nodeAbove.indent >= node.indent) {
-        if (nodeAbove.indent == node.indent) {
-          if (nodeAbove.type != ListItemType.ordered) {
-            // We found an unordered list item with the same indentation level as the ordered list item.
-            // Other ordered list items aboce this one do not belong to the same list.
-            break;
-          }
-          ordinalValue = ordinalValue! + 1;
-        }
-        nodeAbove = document.getNodeBefore(nodeAbove);
-      }
+      ordinalValue = computeListItemOrdinalValue(node, document);
     }
 
     return switch (node.type) {
@@ -425,7 +411,7 @@ class UnorderedListItemComponent extends StatefulWidget {
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
     this.dotStyle,
     this.indent = 0,
-    this.indentCalculator = _defaultIndentCalculator,
+    this.indentCalculator = defaultListItemIndentCalculator,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
@@ -589,7 +575,7 @@ class OrderedListItemComponent extends StatefulWidget {
     this.numeralBuilder = _defaultOrderedListItemNumeralBuilder,
     this.numeralStyle = OrderedListNumeralStyle.arabic,
     this.indent = 0,
-    this.indentCalculator = _defaultIndentCalculator,
+    this.indentCalculator = defaultListItemIndentCalculator,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
@@ -607,7 +593,7 @@ class OrderedListItemComponent extends StatefulWidget {
   final OrderedListItemNumeralBuilder numeralBuilder;
   final OrderedListNumeralStyle numeralStyle;
   final int indent;
-  final double Function(TextStyle, int indent) indentCalculator;
+  final TextBlockIndentCalculator indentCalculator;
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool showCaret;
@@ -685,7 +671,8 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
 
 typedef OrderedListItemNumeralBuilder = Widget Function(BuildContext, OrderedListItemComponent);
 
-double _defaultIndentCalculator(TextStyle textStyle, int indent) {
+/// The standard [TextBlockIndentCalculator] used by list items in `SuperEditor`.
+double defaultListItemIndentCalculator(TextStyle textStyle, int indent) {
   return (textStyle.fontSize! * 0.60) * 4 * (indent + 1);
 }
 
@@ -1226,4 +1213,32 @@ ExecutionInstruction splitListItemWhenEnterPressed({
 
   final didSplitListItem = editContext.commonOps.insertBlockLevelNewline();
   return didSplitListItem ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+/// Computes the ordinal value of an ordered list item.
+///
+/// Walks backwards counting the number of ordered list items above the [listItem] with the same indentation level.
+///
+/// The ordinal value starts at 1.
+int computeListItemOrdinalValue(ListItemNode listItem, Document document) {
+  if (listItem.type != ListItemType.ordered) {
+    // Unordered list items do not have an ordinal value.
+    return 0;
+  }
+
+  int ordinalValue = 1;
+  DocumentNode? nodeAbove = document.getNodeBefore(listItem);
+  while (nodeAbove != null && nodeAbove is ListItemNode && nodeAbove.indent >= listItem.indent) {
+    if (nodeAbove.indent == listItem.indent) {
+      if (nodeAbove.type != ListItemType.ordered) {
+        // We found an unordered list item with the same indentation level as the ordered list item.
+        // Other ordered list items above this one do not belong to the same list.
+        break;
+      }
+      ordinalValue = ordinalValue + 1;
+    }
+    nodeAbove = document.getNodeBefore(nodeAbove);
+  }
+
+  return ordinalValue;
 }

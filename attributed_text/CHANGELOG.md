@@ -1,3 +1,11 @@
+## [0.3.2] - June, 2024
+ * Fix crash when adding attributions that overlap others - you can now control whether a new attribution overwrites conflicting spans when you add it.
+
+## [0.3.1] - June, 2024
+ * Added query `getAllAttributionsThroughout()` to `AttributedText`.
+ * Added `copy()` to `AttributedText()`.
+ * Added ability to insert an attribution that splits an existing attribution.
+
 ## [0.3.0] - Feb, 2024
  * [BREAKING] - `AttributedText` and `SpanRange` constructors now use positional parameters istead of named parameters.
  * [FIX] - `AttributedText` now supports differents links for different URLs in the same text blob - previously all links were sent to the same URL withing a single `AttributedText`.
