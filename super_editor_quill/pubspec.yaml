@@ -4,7 +4,7 @@ version: 0.0.1-dev.1
 homepage: https://github.com/superlistapp/super_editor
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
   flutter: ">=1.17.0"
 
 dependencies:
@@ -21,6 +21,8 @@ dependency_overrides:
     path: ../super_editor
   attributed_text:
     path: ../attributed_text
+  super_text_layout:
+    path: ../super_text_layout
 
 dev_dependencies:
   flutter_test:
