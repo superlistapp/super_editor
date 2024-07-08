@@ -85,7 +85,7 @@ class IOSSelectionHandle extends StatelessWidget {
           ),
         Container(
           width: caretWidth,
-          height: caretHeight + ballRadius,
+          height: caretHeight,
           color: color,
         ),
         // Show the ball on the bottom for a downstream handle
