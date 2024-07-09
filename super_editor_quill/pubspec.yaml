@@ -16,9 +16,11 @@ dependencies:
   dart_quill_delta: ^9.4.1
   collection: ^1.18.0
 
-#dependency_overrides:
-#  super_editor:
-#    path: ../super_editor
+dependency_overrides:
+  super_editor:
+    path: ../super_editor
+  super_text_layout:
+    path: ../super_text_layout
 #  attributed_text:
 #    path: ../attributed_text
 
