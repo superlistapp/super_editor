@@ -281,7 +281,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
     ]);
 
     // Clear the field and hide the URL bar
-    _urlController!.clear();
+    _urlController!.clearTextAndSelection();
     _urlFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
     _linkPopoverController.close();
     setState(() {});
@@ -1187,7 +1187,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
               onPressed: () {
                 setState(() {
                   _urlFocusNode.unfocus();
-                  _urlController!.clear();
+                  _urlController!.clearTextAndSelection();
                 });
               },
             ),

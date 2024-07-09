@@ -803,8 +803,8 @@ void main() {
       });
     });
 
-    group("clear", () {
-      test('notifies listeners', () {
+    group("clearing text and selection", () {
+      test("can remove the text, selection, and composing region at the same time", () {
         int listenerNotifyCount = 0;
         final controller = AttributedTextEditingController(
           text: AttributedText('my text'),
@@ -845,6 +845,18 @@ void main() {
         // ignore: deprecated_member_use_from_same_package
         controller.clear();
 
+        expect(controller.text.text, isEmpty);
+        expect(
+          controller.selection,
+          const TextSelection.collapsed(offset: -1),
+        );
+        expect(controller.composingAttributions, isEmpty);
+        expect(controller.composingRegion, TextRange.empty);
+        expect(listenerNotifyCount, 1);
+      });
+
+      test("can remove the text and composing region, and place the caret at the start, at the same time", () {
+        int listenerNotifyCount = 0;
         final controller = AttributedTextEditingController(
           text: AttributedText('my text'),
           selection: const TextSelection.collapsed(offset: 7),
@@ -857,8 +869,15 @@ void main() {
             listenerNotifyCount += 1;
           });
 
-        controller.clear();
+        controller.clearText();
 
+        expect(controller.text.text, isEmpty);
+        expect(
+          controller.selection,
+          const TextSelection.collapsed(offset: 0),
+        );
+        expect(controller.composingAttributions, isEmpty);
+        expect(controller.composingRegion, TextRange.empty);
         expect(listenerNotifyCount, 1);
       });
     });
