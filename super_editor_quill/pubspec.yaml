@@ -19,10 +19,10 @@ dependencies:
 dependency_overrides:
   super_editor:
     path: ../super_editor
-  attributed_text:
-    path: ../attributed_text
   super_text_layout:
     path: ../super_text_layout
+#  attributed_text:
+#    path: ../attributed_text
 
 dev_dependencies:
   flutter_test:
