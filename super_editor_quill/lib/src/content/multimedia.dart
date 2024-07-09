@@ -11,6 +11,11 @@ class VideoNode extends UrlMediaNode {
     super.altText = '',
     super.blockAttribution = videoAttribution,
   });
+
+  @override
+  DocumentNode copy() {
+    return VideoNode(id: id, url: url, altText: altText, blockAttribution: blockquoteAttribution);
+  }
 }
 
 /// [DocumentNode] that represents an audio source at a URL.
@@ -23,6 +28,11 @@ class AudioNode extends UrlMediaNode {
     super.altText = '',
     super.blockAttribution = audioAttribution,
   });
+
+  @override
+  DocumentNode copy() {
+    return AudioNode(id: id, url: url, altText: altText, blockAttribution: blockquoteAttribution);
+  }
 }
 
 /// [DocumentNode] that represents a file at a URL.
@@ -35,6 +45,11 @@ class FileNode extends UrlMediaNode {
     super.altText = '',
     super.blockAttribution = fileAttribution,
   });
+
+  @override
+  DocumentNode copy() {
+    return FileNode(id: id, url: url, altText: altText, blockAttribution: blockquoteAttribution);
+  }
 }
 
 /// [DocumentNode] that represents a media source that exists a given [url].
@@ -84,6 +99,17 @@ class UrlMediaNode extends BlockNode with ChangeNotifier {
   @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is UrlMediaNode && url == other.url && altText == other.altText;
+  }
+
+  @override
+  DocumentNode copy() {
+    return UrlMediaNode(
+      id: id,
+      url: url,
+      altText: altText,
+      blockAttribution: getMetadataValue("blockType"),
+      metadata: metadata,
+    );
   }
 
   @override
