@@ -16,6 +16,7 @@ export 'src/core/styles.dart';
 
 // Super Editor
 export 'src/default_editor/attributions.dart';
+export 'src/default_editor/blocks/indentation.dart';
 export 'src/default_editor/blockquote.dart';
 export 'src/default_editor/box_component.dart';
 export 'src/default_editor/common_editor_operations.dart';
@@ -77,6 +78,7 @@ export 'src/infrastructure/platforms/ios/ios_document_controls.dart';
 export 'src/infrastructure/platforms/ios/floating_cursor.dart';
 export 'src/infrastructure/platforms/ios/toolbar.dart';
 export 'src/infrastructure/platforms/ios/magnifier.dart';
+export 'src/infrastructure/platforms/ios/selection_heuristics.dart';
 export 'src/infrastructure/platforms/mac/mac_ime.dart';
 export 'src/infrastructure/platforms/mobile_documents.dart';
 export 'src/infrastructure/scrolling_diagnostics/scrolling_diagnostics.dart';

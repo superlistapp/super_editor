@@ -7,9 +7,29 @@
 
 <p align="center">Super Editor was initiated by <a href="https://superlist.com">Superlist</a> and is implemented and maintained by the <a href="https://flutterbountyhunters.com">Flutter Bounty Hunters</a>, Superlist, and the contributors.</p>
 
+<br>
 <hr>
+<br>
 
-<p align="center">Do you use Flutter's <b>stable</b> branch? Be sure to checkout <code>super_editor</code>'s <b><a href="https://github.com/superlistapp/super_editor/commits/stable">stable</a></b> branch, for compatibility.<br>Do you use Flutter's <b>master</b> branch? Be sure to checkout <code>super_editor</code>'s <b><a href="https://github.com/superlistapp/super_editor/commits/main">main</a></b> branch, for compabitility.</p>
+<p align="left" style="background: gray;">
+  <b>A Note on Releases (June, 2024):</b><br>
+We've been busy at work on core editor improvements like undo/redo, a stable editor pipeline, and useful editor reactions. These APIs have evolved a lot, so we haven't cut a standard release in a long time. We're still evolving those APIs right now.
+  <br><br>
+  Rest assured, Super Editor and the other projects in this repo are under regular development. We're still here and working hard.
+  <br><br>
+  We're now starting to publish developer releases of Super Editor so that the community can see what we've been working on.
+  <br><br>
+  As a reminder, your project doesn't need to use Pub to use Super Editor. You can depend directly on this GitHub repository to keep up with the latest changes. Please check the section below about our Git branches.
+</p>
+
+<br>
+<hr>
+<br>
+
+<p align="center">
+  <b>A Note on Branches:</b><br>
+Do you use Flutter's <b>stable</b> branch? Be sure to checkout <code>super_editor</code>'s <b><a href="https://github.com/superlistapp/super_editor/commits/stable">stable</a></b> branch, for compatibility.<br>Do you use Flutter's <b>master</b> branch? Be sure to checkout <code>super_editor</code>'s <b><a href="https://github.com/superlistapp/super_editor/commits/main">main</a></b> branch, for compabitility.
+</p>
 
 <hr>
 

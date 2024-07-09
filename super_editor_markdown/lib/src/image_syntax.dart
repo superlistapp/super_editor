@@ -31,11 +31,11 @@ class SuperEditorImageSyntax extends md.LinkSyntax {
     String? tag,
     required List<md.Node> Function() getChildren,
   }) {
-    var text = parser.source!.substring(opener.endPos, parser.pos);
+    var text = parser.source.substring(opener.endPos, parser.pos);
     // The current character is the `]` that closed the link text. Examine the
     // next character, to determine what type of link we might have (a '('
     // means a possible inline link; otherwise a possible reference link).
-    if (parser.pos + 1 >= parser.source!.length) {
+    if (parser.pos + 1 >= parser.source.length) {
       // The `]` is at the end of the document, but this may still be a valid
       // shortcut reference link.
       return _tryCreateReferenceLink(parser, text, getChildren: getChildren);
@@ -67,7 +67,7 @@ class SuperEditorImageSyntax extends md.LinkSyntax {
       parser.advanceBy(1);
       // At this point, we've matched `[...][`. Maybe a *full* reference link,
       // like `[foo][bar]` or a *collapsed* reference link, like `[foo][]`.
-      if (parser.pos + 1 < parser.source!.length && parser.charAt(parser.pos + 1) == AsciiTable.rightBracket) {
+      if (parser.pos + 1 < parser.source.length && parser.charAt(parser.pos + 1) == AsciiTable.rightBracket) {
         // That opening `[` is not actually part of the link. Maybe a
         // *shortcut* reference link (followed by a `[`).
         parser.advanceBy(1);
@@ -100,7 +100,7 @@ class SuperEditorImageSyntax extends md.LinkSyntax {
     // Parse an optional width.
     final width = _tryParseNumber(parser);
 
-    final downstreamCharacter = parser.source!.substring(parser.pos, parser.pos + 1);
+    final downstreamCharacter = parser.source.substring(parser.pos, parser.pos + 1);
     if (downstreamCharacter.toLowerCase() != 'x') {
       // The image size must have a "x" between the width and height, but the input doesn't.  Fizzle.
       return null;

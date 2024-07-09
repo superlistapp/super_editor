@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
@@ -10,6 +13,95 @@ import '../supereditor_test_tools.dart';
 void main() {
   group("SuperEditor mobile selection >", () {
     group("iOS >", () {
+      group("on tap >", () {
+        testWidgetsOnIos("when beyond first character > places caret at end of word", (tester) async {
+          // Note: We pump the following text.
+          // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
+          await _pumpAppWithLongText(tester);
+
+          // Tap near the end of a word "consectet|ur".
+          await tester.tapInParagraph("1", 37);
+          await tester.pumpAndSettle();
+
+          // Ensure that the caret is at the end of the world "consectetur|".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 39),
+              ),
+            ),
+          );
+
+          // Tap near the middle of a word "adipi|scing".
+          await tester.tapInParagraph("1", 45);
+          await tester.pumpAndSettle();
+
+          // Ensure that the caret is at the end of the world "adipiscing|".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 50),
+              ),
+            ),
+          );
+
+          // Tap near the beginning of a word "co|nsectetur".
+          await tester.tapInParagraph("1", 30);
+          await tester.pumpAndSettle();
+
+          // Ensure that the caret is at the end of the word "consectetur|".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 39),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnIos("when near first character > places caret at start of word", (tester) async {
+          // Note: We pump the following text.
+          // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
+          await _pumpAppWithLongText(tester);
+
+          // Tap just before first character of word " |consectetur".
+          await tester.tapInParagraph("1", 28);
+          await tester.pumpAndSettle();
+
+          // Ensure that the caret is at the start of the world "|consectetur".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 28),
+              ),
+            ),
+          );
+
+          // Tap just after the start of the word " a|dipiscing".
+          await tester.tapInParagraph("1", 41);
+          await tester.pumpAndSettle();
+
+          // Ensure that the caret is at the start of the word " |adipiscing".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 40),
+              ),
+            ),
+          );
+        });
+      });
+
       group("long press >", () {
         testWidgetsOnIos("selects word under finger", (tester) async {
           await _pumpAppWithLongText(tester);
@@ -17,7 +109,7 @@ void main() {
           // Ensure that no overlay controls are visible.
           _expectNoControlsAreVisible();
 
-          // Long press on the middle of "conse|ctetur"
+          // Long press on the middle of "conse|ctetur".
           await tester.longPressInParagraph("1", 33);
           await tester.pumpAndSettle();
 
@@ -35,7 +127,7 @@ void main() {
 
           await _pumpAppWithLongText(tester);
 
-          // Long press down on the middle of "conse|ctetur"
+          // Long press down on the middle of "conse|ctetur".
           final gesture = await tester.longPressDownInParagraph("1", 33);
           await tester.pump();
 
@@ -207,6 +299,134 @@ void main() {
           // Release the gesture so the test system doesn't complain.
           await gesture.up();
         });
+
+        testWidgetsOnIos("selects an image and then by word when jumping down", (tester) async {
+          await tester
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    ImageNode(id: '1', imageUrl: ''),
+                    ParagraphNode(
+                      id: '2',
+                      text: AttributedText('Lorem ipsum dolor'),
+                    )
+                  ],
+                ),
+              )
+              .withAddedComponents(
+            [
+              const FakeImageComponentBuilder(
+                size: Size(100, 100),
+              ),
+            ],
+          ).pump();
+
+          // Long press near the top of the image.
+          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + Offset(0, 10);
+          final gesture = await tester.startGesture(tapDownOffset);
+          await tester.pump(kLongPressTimeout + kPressTimeout);
+
+          // Ensure the image was selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            DocumentSelection(
+              base: DocumentPosition(nodeId: '1', nodePosition: UpstreamDownstreamNodePosition.upstream()),
+              extent: DocumentPosition(nodeId: '1', nodePosition: UpstreamDownstreamNodePosition.downstream()),
+            ),
+          );
+
+          // Drag down from the image to the begining of the paragraph.
+          const dragIncrementCount = 10;
+          final verticalDragDistance =
+              Offset(0, (tester.getTopLeft(find.byType(TextComponent)).dy - tapDownOffset.dy) / dragIncrementCount);
+          for (int i = 0; i < dragIncrementCount; i += 1) {
+            await gesture.moveBy(verticalDragDistance);
+            await tester.pump();
+          }
+
+          // Ensure the selection begins at the image and goes to the end of "Lorem".
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(nodeId: '1', nodePosition: UpstreamDownstreamNodePosition.upstream()),
+              extent: DocumentPosition(
+                nodeId: "2",
+                nodePosition: TextNodePosition(offset: 5),
+              ),
+            ),
+          );
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pump();
+        });
+
+        testWidgetsOnIos("selects an image and then by word when jumping up", (tester) async {
+          await tester
+              .createDocument()
+              .withCustomContent(
+                MutableDocument(
+                  nodes: [
+                    ParagraphNode(
+                      id: '1',
+                      text: AttributedText('Lorem ipsum dolor'),
+                    ),
+                    ImageNode(id: '2', imageUrl: ''),
+                  ],
+                ),
+              )
+              .withAddedComponents(
+            [
+              const FakeImageComponentBuilder(
+                size: Size(100, 100),
+              ),
+            ],
+          ).pump();
+
+          // Long press near the top of the image.
+          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + Offset(0, 10);
+          final gesture = await tester.startGesture(tapDownOffset);
+          await tester.pump(kLongPressTimeout + kPressTimeout);
+
+          // Ensure the image was selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            DocumentSelection(
+              base: DocumentPosition(nodeId: '2', nodePosition: UpstreamDownstreamNodePosition.upstream()),
+              extent: DocumentPosition(nodeId: '2', nodePosition: UpstreamDownstreamNodePosition.downstream()),
+            ),
+          );
+
+          // Drag up from the image to the begining of the paragraph.
+          const dragIncrementCount = 10;
+          final verticalDragDistance =
+              Offset(0, (tester.getTopLeft(find.byType(TextComponent)).dy - tapDownOffset.dy) / dragIncrementCount);
+          for (int i = 0; i < dragIncrementCount; i += 1) {
+            await gesture.moveBy(verticalDragDistance);
+            await tester.pump();
+          }
+
+          // Ensure the selection starts at the beginning of the paragraph and goes to the end of the image.
+          //
+          // On iOS, the selection ends up normalized, where the position the appears first in the document
+          // is considered to be the selection base. Therefore, even though we are dragging upstream,
+          // the paragraph is the base of the selection.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+              extent: DocumentPosition(nodeId: '2', nodePosition: UpstreamDownstreamNodePosition.downstream()),
+            ),
+          );
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pump();
+        });
       });
     });
 
@@ -311,6 +531,7 @@ Future<void> _pumpAppWithLongText(WidgetTester tester) async {
       .createDocument()
       // "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...",
       .withSingleParagraph()
+      .useIosSelectionHeuristics(true)
       .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) =>
           IOSTextEditingFloatingToolbar(key: mobileToolbarKey, focalPoint: focalPoint))
       .pump();

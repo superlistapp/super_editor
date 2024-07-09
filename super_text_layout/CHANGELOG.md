@@ -1,3 +1,9 @@
+## [0.1.10] - June, 2024
+ * `FillWidthIfConstrained` uses ancestor constraints instead of ancestor size.
+ * Changed `getLineHeightAtPosition` and `getCharacterBox` to both use `RenderParagraph.getFullHeightForCaret()`.
+ * Nudged the caret offset so that the caret straddles its desired location, instead of sitting completely to the right of it. 
+ * Resolved some lint complaints.
+
 ## [0.1.9] - Feb, 2024
  * [FIX] - `BlinkController.isBlinking` now accounts for the use of `Timer`s in addition to `Ticker`s.
  * [FIX] - Changing `textAlign` for `SuperText` correctly repositions carets, handles, and selection boxes for the newly aligned text.

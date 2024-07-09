@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:example_docs/editor.dart';
 import 'package:example_docs/infrastructure/icon_selector.dart';
 import 'package:example_docs/infrastructure/color_selector.dart';
 import 'package:example_docs/infrastructure/text_item_selector.dart';
@@ -42,7 +41,7 @@ class DocsEditorToolbar extends StatefulWidget {
 }
 
 class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
-  /// Groups the aditional toolbar options popover, which is shown by tapping
+  /// Groups the additional toolbar options popover, which is shown by tapping
   /// the "more items" button with the popovers shown by the toolbar items,
   /// like the color picker.
   static const _tapRegionGroupId = 'docs_toolbar';
@@ -282,7 +281,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
     ]);
 
     // Clear the field and hide the URL bar
-    _urlController!.clear();
+    _urlController!.clearTextAndSelection();
     _urlFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
     _linkPopoverController.close();
     setState(() {});
@@ -621,7 +620,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
         height: 40,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 9.0),
-          child: _GroupedToolbarItens(
+          child: _GroupedToolbarItems(
             tapRegionGroupId: _tapRegionGroupId,
             visibleGroupCount: visibleGroupCount,
             groups: [
@@ -1188,7 +1187,7 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
               onPressed: () {
                 setState(() {
                   _urlFocusNode.unfocus();
-                  _urlController!.clear();
+                  _urlController!.clearTextAndSelection();
                 });
               },
             ),
@@ -1231,8 +1230,8 @@ class _DocsEditorToolbarState extends State<DocsEditorToolbar> {
 /// Only the groups with index less than [visibleGroupCount]
 /// are displayed. When there is any hidden groups, a button is
 /// displayed to show a popover with the remaining groups.
-class _GroupedToolbarItens extends StatefulWidget {
-  const _GroupedToolbarItens({
+class _GroupedToolbarItems extends StatefulWidget {
+  const _GroupedToolbarItems({
     required this.groups,
     required this.visibleGroupCount,
     this.tapRegionGroupId,
@@ -1259,10 +1258,10 @@ class _GroupedToolbarItens extends StatefulWidget {
   final String? tapRegionGroupId;
 
   @override
-  State<_GroupedToolbarItens> createState() => _GroupedToolbarItensState();
+  State<_GroupedToolbarItems> createState() => _GroupedToolbarItemsState();
 }
 
-class _GroupedToolbarItensState extends State<_GroupedToolbarItens> {
+class _GroupedToolbarItemsState extends State<_GroupedToolbarItems> {
   final PopoverController _popoverController = PopoverController();
 
   @override

@@ -4,6 +4,7 @@ import 'package:logging/logging.dart' as logging;
 
 class LogNames {
   static const editor = 'editor';
+  static const editorEdits = 'editor.edits';
   static const editorPolicies = 'editor.policies';
   static const editorScrolling = 'editor.scrolling';
   static const editorGestures = 'editor.gestures';
@@ -48,6 +49,7 @@ class LogNames {
 }
 
 final editorLog = logging.Logger(LogNames.editor);
+final editorEditsLog = logging.Logger(LogNames.editorEdits);
 final editorPoliciesLog = logging.Logger(LogNames.editorPolicies);
 final editorScrollingLog = logging.Logger(LogNames.editorScrolling);
 final editorGesturesLog = logging.Logger(LogNames.editorGestures);

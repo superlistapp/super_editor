@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
@@ -80,6 +81,17 @@ class ListItemNode extends TextNode {
   @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is ListItemNode && type == other.type && indent == other.indent && text == other.text;
+  }
+
+  @override
+  ListItemNode copy() {
+    return ListItemNode(
+      id: id,
+      text: text.copyText(0),
+      itemType: type,
+      indent: indent,
+      metadata: Map.from(metadata),
+    );
   }
 
   @override
@@ -399,7 +411,7 @@ class UnorderedListItemComponent extends StatefulWidget {
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
     this.dotStyle,
     this.indent = 0,
-    this.indentCalculator = _defaultIndentCalculator,
+    this.indentCalculator = defaultListItemIndentCalculator,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
@@ -563,7 +575,7 @@ class OrderedListItemComponent extends StatefulWidget {
     this.numeralBuilder = _defaultOrderedListItemNumeralBuilder,
     this.numeralStyle = OrderedListNumeralStyle.arabic,
     this.indent = 0,
-    this.indentCalculator = _defaultIndentCalculator,
+    this.indentCalculator = defaultListItemIndentCalculator,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
@@ -581,7 +593,7 @@ class OrderedListItemComponent extends StatefulWidget {
   final OrderedListItemNumeralBuilder numeralBuilder;
   final OrderedListNumeralStyle numeralStyle;
   final int indent;
-  final double Function(TextStyle, int indent) indentCalculator;
+  final TextBlockIndentCalculator indentCalculator;
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool showCaret;
@@ -659,7 +671,8 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
 
 typedef OrderedListItemNumeralBuilder = Widget Function(BuildContext, OrderedListItemComponent);
 
-double _defaultIndentCalculator(TextStyle textStyle, int indent) {
+/// The standard [TextBlockIndentCalculator] used by list items in `SuperEditor`.
+double defaultListItemIndentCalculator(TextStyle textStyle, int indent) {
   return (textStyle.fontSize! * 0.60) * 4 * (indent + 1);
 }
 
@@ -812,12 +825,15 @@ class IndentListItemRequest implements EditRequest {
   final String nodeId;
 }
 
-class IndentListItemCommand implements EditCommand {
+class IndentListItemCommand extends EditCommand {
   IndentListItemCommand({
     required this.nodeId,
   });
 
   final String nodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -847,12 +863,15 @@ class UnIndentListItemRequest implements EditRequest {
   final String nodeId;
 }
 
-class UnIndentListItemCommand implements EditCommand {
+class UnIndentListItemCommand extends EditCommand {
   UnIndentListItemCommand({
     required this.nodeId,
   });
 
   final String nodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -889,7 +908,7 @@ class ConvertListItemToParagraphRequest implements EditRequest {
   final Map<String, dynamic>? paragraphMetadata;
 }
 
-class ConvertListItemToParagraphCommand implements EditCommand {
+class ConvertListItemToParagraphCommand extends EditCommand {
   ConvertListItemToParagraphCommand({
     required this.nodeId,
     this.paragraphMetadata,
@@ -897,6 +916,9 @@ class ConvertListItemToParagraphCommand implements EditCommand {
 
   final String nodeId;
   final Map<String, dynamic>? paragraphMetadata;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -933,7 +955,7 @@ class ConvertParagraphToListItemRequest implements EditRequest {
   final ListItemType type;
 }
 
-class ConvertParagraphToListItemCommand implements EditCommand {
+class ConvertParagraphToListItemCommand extends EditCommand {
   ConvertParagraphToListItemCommand({
     required this.nodeId,
     required this.type,
@@ -941,6 +963,9 @@ class ConvertParagraphToListItemCommand implements EditCommand {
 
   final String nodeId;
   final ListItemType type;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -973,7 +998,7 @@ class ChangeListItemTypeRequest implements EditRequest {
   final ListItemType newType;
 }
 
-class ChangeListItemTypeCommand implements EditCommand {
+class ChangeListItemTypeCommand extends EditCommand {
   ChangeListItemTypeCommand({
     required this.nodeId,
     required this.newType,
@@ -981,6 +1006,9 @@ class ChangeListItemTypeCommand implements EditCommand {
 
   final String nodeId;
   final ListItemType newType;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1014,7 +1042,7 @@ class SplitListItemRequest implements EditRequest {
   final String newNodeId;
 }
 
-class SplitListItemCommand implements EditCommand {
+class SplitListItemCommand extends EditCommand {
   SplitListItemCommand({
     required this.nodeId,
     required this.splitPosition,
@@ -1024,6 +1052,9 @@ class SplitListItemCommand implements EditCommand {
   final String nodeId;
   final TextPosition splitPosition;
   final String newNodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

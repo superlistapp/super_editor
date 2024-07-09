@@ -163,6 +163,11 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  TestSuperEditorConfigurator useIosSelectionHeuristics(bool shouldUse) {
+    _config.useIosSelectionHeuristics = shouldUse;
+    return this;
+  }
+
   TestSuperEditorConfigurator withCaretPolicies({
     bool? displayCaretWithExpandedSelection,
   }) {
@@ -241,6 +246,11 @@ class TestSuperEditorConfigurator {
   /// Configures the [SuperEditor] to use the given [gestureMode].
   TestSuperEditorConfigurator withGestureMode(DocumentGestureMode gestureMode) {
     _config.gestureMode = gestureMode;
+    return this;
+  }
+
+  TestSuperEditorConfigurator withHistoryGroupingPolicy(HistoryGroupingPolicy policy) {
+    _config.historyGroupPolicy = policy;
     return this;
   }
 
@@ -417,7 +427,11 @@ class TestSuperEditorConfigurator {
     final layoutKey = _config.layoutKey!;
     final focusNode = _config.focusNode ?? FocusNode();
     final composer = MutableDocumentComposer(initialSelection: _config.selection);
-    final editor = createDefaultDocumentEditor(document: _config.document, composer: composer)
+    final editor = createDefaultDocumentEditor(
+      document: _config.document,
+      composer: composer,
+      historyGroupingPolicy: _config.historyGroupPolicy ?? neverMergePolicy,
+    )
       ..requestHandlers.insertAll(0, _config.addedRequestHandlers)
       ..reactionPipeline.insertAll(0, _config.addedReactions);
 
@@ -526,8 +540,10 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
     super.initState();
 
     _iOsControlsController = SuperEditorIosControlsController(
+      useIosSelectionHeuristics: widget.testConfiguration.useIosSelectionHeuristics,
       toolbarBuilder: widget.testConfiguration.iOSToolbarBuilder,
     );
+
     _androidControlsController = SuperEditorAndroidControlsController(
       toolbarBuilder: widget.testConfiguration.androidToolbarBuilder,
     );
@@ -664,12 +680,16 @@ class SuperEditorTestConfiguration {
   ScrollController? scrollController;
   bool insideCustomScrollView = false;
   DocumentGestureMode? gestureMode;
+  HistoryGroupingPolicy? historyGroupPolicy;
   TextInputSource? inputSource;
   SuperEditorSelectionPolicies? selectionPolicies;
   SelectionStyles? selectionStyles;
   bool displayCaretWithExpandedSelection = true;
   CaretStyle? caretStyle;
 
+  // By default we don't use iOS-style selection heuristics in tests because in tests
+  // we want to know exactly where we're placing the caret.
+  bool useIosSelectionHeuristics = false;
   double? iosCaretWidth;
   Color? iosHandleColor;
   double? iosHandleBallDiameter;

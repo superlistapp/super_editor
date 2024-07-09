@@ -1441,6 +1441,26 @@ void main() {
         findsNothing,
       );
     });
+
+    testWidgetsOnMobile('spurious metrics change is ignored', (tester) async {
+      final scrollController = ScrollController();
+      await tester //
+          .createDocument()
+          .withLongDoc()
+          .withEditorSize(const Size(300, 300))
+          .withScrollController(scrollController)
+          .pump();
+      await tester.tapInParagraph('1', 0);
+      final gesture = await tester.startGesture(const Offset(100, 100), kind: PointerDeviceKind.touch);
+      await gesture.moveBy(const Offset(0, -100));
+      await tester.pumpAndSettle();
+      final pixels = scrollController.position.pixels;
+      // This should not change scroll position.
+      WidgetsBinding.instance.handleMetricsChanged();
+      await Future.microtask(() {});
+      await tester.pump();
+      expect(scrollController.position.pixels, pixels);
+    });
   });
 }
 

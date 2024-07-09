@@ -175,17 +175,17 @@ void main() {
             ]),
           )
           .withAddedComponents(
-            [_ButtonComponentBuilder()],
+            [const _ButtonComponentBuilder()],
           )
           .withSelectionStyles(
-            SelectionStyles(selectionColor: Colors.red),
+            const SelectionStyles(selectionColor: Colors.red),
           )
           .pump();
 
       // Drag to select all content.
       await tester.dragSelectDocumentFromPositionByOffset(
-        from: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
-        delta: Offset(0, 100),
+        from: const DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
+        delta: const Offset(0, 100),
       );
 
       // Ensure the selection color from the selection style was applied.
@@ -652,6 +652,11 @@ class _ButtonNode extends BlockNode with ChangeNotifier {
   String? copyContent(dynamic selection) => '';
 
   @override
+  DocumentNode copy() {
+    return _ButtonNode(id: id);
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is _ButtonNode && //
@@ -721,14 +726,14 @@ class _ButtonComponent extends StatelessWidget {
             selectionColor: selectionColor,
             child: BoxComponent(
               key: componentKey,
-              child: SizedBox(),
+              child: const SizedBox(),
             ),
           ),
         ),
         Center(
           child: ElevatedButton(
             onPressed: () {},
-            child: Text('My Button'),
+            child: const Text('My Button'),
           ),
         ),
       ],

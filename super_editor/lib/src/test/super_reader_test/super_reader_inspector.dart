@@ -107,7 +107,7 @@ class SuperReaderInspector {
   static TextSpan findRichTextInParagraph(String nodeId, [Finder? superReaderFinder]) {
     final documentLayout = _findDocumentLayout(superReaderFinder);
 
-    final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
+    final textComponentState = documentLayout.getComponentByNodeId(nodeId)!;
     final superText = find
         .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
         .evaluate()
@@ -123,7 +123,7 @@ class SuperReaderInspector {
   static TextStyle? findParagraphStyle(String nodeId, [Finder? superDocumentFinder]) {
     final documentLayout = _findDocumentLayout(superDocumentFinder);
 
-    final textComponentState = documentLayout.getComponentByNodeId(nodeId) as TextComponentState;
+    final textComponentState = documentLayout.getComponentByNodeId(nodeId)!;
     final superText = find
         .descendant(of: find.byWidget(textComponentState.widget), matching: find.byType(SuperText))
         .evaluate()
