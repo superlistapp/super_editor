@@ -13,6 +13,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/document_gestures_interaction_overrides.dart';
+import 'package:super_editor/src/infrastructure/eager_pan_gesture_recognizer.dart';
 import 'package:super_editor/src/infrastructure/flutter/build_context.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
@@ -243,6 +244,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
   DragMode? _dragMode;
+  DragStartDetails? _lastDragStartDetails;
   // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
   //       not collapsed/upstream/downstream. Change the type once it's working.
   HandleType? _dragHandleType;
@@ -643,6 +645,9 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _onPanStart(DragStartDetails details) {
+    // Store the details so we can start a drag in the onPanUpdate.
+    _lastDragStartDetails = details;
+
     // Stop waiting for a long-press to start, if a long press isn't already in-progress.
     _globalTapDownOffset = null;
     _tapDownLongPressTimer?.cancel();
@@ -652,8 +657,11 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     //       bit of slop might be the problem.
     final selection = widget.selection.value;
     if (selection == null) {
-      // There isn't a selection, the user is dragging to scroll the document.
-      _startDragScrolling(details);
+      // There isn't a selection, but we still don't know if the user is dragging
+      // vertically or horizontally. Wait until the onPanUpdate event is fired
+      // to decide whether or not we should scroll the document.
+      _dragMode = DragMode.unkown;
+      _updateDragStartLocation(details.globalPosition);
       return;
     }
 
@@ -668,39 +676,17 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       _dragMode = DragMode.extent;
       _dragHandleType = HandleType.downstream;
     } else {
-      // The user isn't dragging over a handle.
-      // Start scrolling the document.
-      _startDragScrolling(details);
+      // The user isn't dragging over a handle, but we still don't know if the user is dragging
+      // vertically or horizontally. Wait until the onPanUpdate event is fired
+      // to decide whether or not we should scroll the document.
+      _dragMode = DragMode.unkown;
+      _updateDragStartLocation(details.globalPosition);
       return;
     }
 
     _controlsController!.hideToolbar();
 
-    _globalStartDragOffset = details.globalPosition;
-    final interactorBox = context.findRenderObject() as RenderBox;
-    final handleOffsetInInteractor = interactorBox.globalToLocal(details.globalPosition);
-    _dragStartInDoc = _interactorOffsetToDocumentOffset(handleOffsetInInteractor);
-
-    if (_dragHandleType != null) {
-      _startDragPositionOffset = _docLayout
-          .getRectForPosition(
-            _dragHandleType! == HandleType.upstream ? selection.base : selection.extent,
-          )!
-          .center;
-    } else {
-      // User is long-press dragging, which is why there's no drag handle type.
-      // In this case, the start drag offset is wherever the user touched.
-      _startDragPositionOffset = _dragStartInDoc!;
-    }
-
-    // We need to record the scroll offset at the beginning of
-    // a drag for the case that this interactor is embedded
-    // within an ancestor Scrollable. We need to use this value
-    // to calculate a scroll delta on every scroll frame to
-    // account for the fact that this interactor is moving within
-    // the ancestor scrollable, despite the fact that the user's
-    // finger/mouse position hasn't changed.
-    _dragStartScrollOffset = scrollPosition.pixels;
+    _updateDragStartLocation(details.globalPosition);
 
     _handleAutoScrolling.startAutoScrollHandleMonitoring();
 
@@ -738,9 +724,29 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
+    if (_dragMode == DragMode.unkown) {
+      if (_globalStartDragOffset == null || (details.globalPosition.dy - _globalStartDragOffset!.dy).abs() < kPanSlop) {
+        // The user is neither dragging a handle of scrolling vertically. The reader doesn't
+        // handle other types of drags.
+        return;
+      }
+
+      // The user is dragging vertically. Start scrolling the document.
+      _startDragScrolling(_lastDragStartDetails!);
+    }
+
     if (_dragMode == DragMode.scroll) {
       // The user is trying to scroll the document. Scroll it, accordingly.
-      _scrollingDrag!.update(details);
+      _scrollingDrag!.update(
+        DragUpdateDetails(
+          globalPosition: details.globalPosition,
+          localPosition: details.localPosition,
+          primaryDelta: details.delta.dy,
+          // Having a primary delta requires that one of the
+          // offset dimensions is zero.
+          delta: Offset(0.0, details.delta.dy),
+        ),
+      );
       return;
     }
 
@@ -805,7 +811,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       return;
     }
 
-    if (_dragMode != null) {
+    if (_dragMode != null && _dragMode != DragMode.unkown) {
       // The user was dragging a selection change in some way, either with handles
       // or with a long-press. Finish that interaction.
       _onDragSelectionEnd();
@@ -824,7 +830,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       return;
     }
 
-    if (_dragMode != null) {
+    if (_dragMode != null && _dragMode != DragMode.unkown) {
       _onDragSelectionEnd();
     }
   }
@@ -949,6 +955,35 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
     _magnifierFocalPoint.value = centerOfContentAtOffset;
   }
 
+  void _updateDragStartLocation(Offset globalOffset) {
+    _globalStartDragOffset = globalOffset;
+    final interactorBox = context.findRenderObject() as RenderBox;
+    final handleOffsetInInteractor = interactorBox.globalToLocal(globalOffset);
+    _dragStartInDoc = _interactorOffsetToDocumentOffset(handleOffsetInInteractor);
+
+    final selection = widget.selection.value;
+    if (_dragHandleType != null && selection != null) {
+      _startDragPositionOffset = _docLayout
+          .getRectForPosition(
+            _dragHandleType! == HandleType.upstream ? selection.base : selection.extent,
+          )!
+          .center;
+    } else {
+      // User is long-press dragging, which is why there's no drag handle type.
+      // In this case, the start drag offset is wherever the user touched.
+      _startDragPositionOffset = _dragStartInDoc!;
+    }
+
+    // We need to record the scroll offset at the beginning of
+    // a drag for the case that this interactor is embedded
+    // within an ancestor Scrollable. We need to use this value
+    // to calculate a scroll delta on every scroll frame to
+    // account for the fact that this interactor is moving within
+    // the ancestor scrollable, despite the fact that the user's
+    // finger/mouse position hasn't changed.
+    _dragStartScrollOffset = scrollPosition.pixels;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.scrollController.hasClients) {
@@ -982,27 +1017,9 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
               ..gestureSettings = gestureSettings;
           },
         ),
-        // We use a combination of a VerticalDragGestureRecognizer and a HorizontalDragGestureRecognizer
-        // instead of a PanGestureRecognizer because `Scrollable` also uses a VerticalDragGestureRecognizer
-        // and we need to beat out any ancestor `Scrollable` in the gesture arena.
-        // Without the HorizontalDragGestureRecognizer, horizontal drags aren't reported here
-        // when the reader has an ancestor `Scrollable`.
-        VerticalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<VerticalDragGestureRecognizer>(
-          () => VerticalDragGestureRecognizer(),
-          (VerticalDragGestureRecognizer instance) {
-            instance
-              ..dragStartBehavior = DragStartBehavior.down
-              ..onDown = _onPanDown
-              ..onStart = _onPanStart
-              ..onUpdate = _onPanUpdate
-              ..onEnd = _onPanEnd
-              ..onCancel = _onPanCancel
-              ..gestureSettings = gestureSettings;
-          },
-        ),
-        HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
-          () => HorizontalDragGestureRecognizer(),
-          (HorizontalDragGestureRecognizer instance) {
+        EagerPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<EagerPanGestureRecognizer>(
+          () => EagerPanGestureRecognizer(),
+          (EagerPanGestureRecognizer instance) {
             instance
               ..dragStartBehavior = DragStartBehavior.down
               ..onDown = _onPanDown
