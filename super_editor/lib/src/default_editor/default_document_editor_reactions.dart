@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:characters/characters.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
@@ -281,7 +282,7 @@ class BlockquoteConversionReaction extends ParagraphPrefixConversionReaction {
 /// the node's text is kept.
 ///
 /// Applied only to all [TextNode]s.
-class HorizontalRuleConversionReaction implements EditReaction {
+class HorizontalRuleConversionReaction extends EditReaction {
   // Matches "---" or "—-" (an em-dash followed by a regular dash) at the beginning of a line,
   // followed by a space.
   static final _hrPattern = RegExp(r'^(---|—-)\s');
@@ -304,7 +305,8 @@ class HorizontalRuleConversionReaction implements EditReaction {
       return;
     }
 
-    final edit = changeList[changeList.length - 2] as DocumentEdit;
+    // final edit = changeList[changeList.length - 2] as DocumentEdit;
+    final edit = changeList.reversed.firstWhere((edit) => edit is DocumentEdit) as DocumentEdit;
     if (edit.change is! TextInsertionEvent) {
       // This reaction requires that the two last events are an insertion event
       // followed by a selection change event.
@@ -352,7 +354,7 @@ class HorizontalRuleConversionReaction implements EditReaction {
 
 /// Base class for [EditReaction]s that want to take action when the user types text at
 /// the beginning of a paragraph, which matches a given [RegExp].
-abstract class ParagraphPrefixConversionReaction implements EditReaction {
+abstract class ParagraphPrefixConversionReaction extends EditReaction {
   const ParagraphPrefixConversionReaction({
     bool requireSpaceInsertion = true,
   }) : _requireSpaceInsertion = requireSpaceInsertion;
@@ -371,17 +373,19 @@ abstract class ParagraphPrefixConversionReaction implements EditReaction {
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final document = editContext.find<MutableDocument>(Editor.documentKey);
-    final didTypeSpaceAtEnd = EditInspector.didTypeSpaceAtEndOfNode(document, changeList);
-    if (_requireSpaceInsertion && !didTypeSpaceAtEnd) {
+    final typedText = EditInspector.findLastTextUserTyped(document, changeList);
+    if (typedText == null) {
+      return;
+    }
+    if (_requireSpaceInsertion && !typedText.text.text.endsWith(" ")) {
       return;
     }
 
-    final edit = changeList[changeList.length - 2] as DocumentEdit;
-    final textInsertionEvent = edit.change as TextInsertionEvent;
-    final paragraph = document.getNodeById(textInsertionEvent.nodeId);
+    final paragraph = document.getNodeById(typedText.nodeId);
     if (paragraph is! ParagraphNode) {
       return;
     }
+
     final match = pattern.firstMatch(paragraph.text.text)?.group(0);
     if (match == null) {
       return;
@@ -406,7 +410,7 @@ abstract class ParagraphPrefixConversionReaction implements EditReaction {
 
 /// When the user creates a new node, and the previous node is just a URL
 /// to an image, the replaces the previous node with the referenced image.
-class ImageUrlConversionReaction implements EditReaction {
+class ImageUrlConversionReaction extends EditReaction {
   const ImageUrlConversionReaction();
 
   @override
@@ -549,7 +553,7 @@ class ImageUrlConversionReaction implements EditReaction {
 /// A plain text URL only has a link applied to it when the user enters a space " "
 /// after a token that looks like a URL. If the user doesn't enter a trailing space,
 /// or the preceding token doesn't look like a URL, then the link attribution isn't aplied.
-class LinkifyReaction implements EditReaction {
+class LinkifyReaction extends EditReaction {
   const LinkifyReaction({
     this.updatePolicy = LinkUpdatePolicy.preserve,
   });
@@ -638,7 +642,7 @@ class LinkifyReaction implements EditReaction {
 
     if (!didInsertSpace) {
       // We didn't linkify any text. Check if we need to update an URL.
-      _tryUpdateLinkAttribution(document, composer, edits);
+      _tryUpdateLinkAttribution(requestDispatcher, document, composer, edits);
     }
   }
 
@@ -718,7 +722,8 @@ class LinkifyReaction implements EditReaction {
   }
 
   /// Update or remove the link attributions if edits happen at the middle of a link.
-  void _tryUpdateLinkAttribution(Document document, MutableDocumentComposer composer, List<EditEvent> changeList) {
+  void _tryUpdateLinkAttribution(RequestDispatcher requestDispatcher, Document document,
+      MutableDocumentComposer composer, List<EditEvent> changeList) {
     if (!const [LinkUpdatePolicy.remove, LinkUpdatePolicy.update].contains(updatePolicy)) {
       // We are configured to NOT change the attributions. Fizzle.
       return;
@@ -743,21 +748,20 @@ class LinkifyReaction implements EditReaction {
 
       insertionOrDeletionEvent = editEvent.change as NodeChangeEvent;
     } else {
-      final selectionEvent = changeList.last;
-      if (selectionEvent is! SelectionChangeEvent) {
-        // The last event isn't a selection event. We expect a URL change
+      final lastSelectionEventIndex = changeList.lastIndexWhere((change) => change is SelectionChangeEvent);
+      if (lastSelectionEventIndex < 1) {
+        // There's no selection change event. We expect a URL change
         // to consist of an insertion or a deletion followed by a selection
         // change. This event list doesn't fit the pattern. Fizzle.
         return;
       }
 
-      final edit = changeList[changeList.length - 2];
+      final edit = changeList[lastSelectionEventIndex - 1];
       if (edit is! DocumentEdit || //
           (edit.change is! TextInsertionEvent && edit.change is! TextDeletedEvent)) {
-        // The second to last event isn't an insertion or deletion. We
-        // expect a URL change to consist of an insertion or a deletion
-        // followed by a selection change. This event list doesn't fit
-        // the pattern. Fizzle.
+        // The event before the selection change isn't an insertion or deletion. We
+        // expect a URL change to consist of an insertion or a deletion followed by
+        // a selection change. This event list doesn't fit the pattern. Fizzle.
         return;
       }
 
@@ -829,10 +833,24 @@ class LinkifyReaction implements EditReaction {
       attributionFilter: (attr) => attr is LinkAttribution,
       range: rangeToUpdate,
     );
-    for (final attributionSpan in attributionsToRemove) {
-      changedNodeText.removeAttribution(attributionSpan.attribution, attributionSpan.range);
-      composer.preferences.removeStyle(attributionSpan.attribution);
-    }
+
+    final linkRange = DocumentRange(
+      start: DocumentPosition(
+        nodeId: changedNodeId,
+        nodePosition: TextNodePosition(offset: rangeToUpdate.start),
+      ),
+      end: DocumentPosition(
+        nodeId: changedNodeId,
+        nodePosition: TextNodePosition(offset: rangeToUpdate.end + 1),
+      ),
+    );
+
+    final linkChangeRequests = <EditRequest>[
+      RemoveTextAttributionsRequest(
+        documentRange: linkRange,
+        attributions: {attributionsToRemove.first.attribution},
+      ),
+    ];
 
     // A URL was changed and we have now removed the original link. Removing
     // the original link was a necessary step for both `LinkUpdatePolicy.remove`
@@ -841,13 +859,30 @@ class LinkifyReaction implements EditReaction {
     // If the policy is `LinkUpdatePolicy.update` then we need to add a new
     // link attribution that reflects the edited URL text. We do that below.
     if (updatePolicy == LinkUpdatePolicy.update) {
-      changedNodeText.addAttribution(
-        LinkAttribution.fromUri(
-          parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
+      linkChangeRequests.add(
+        // Switch out the old link attribution for the new one.
+        AddTextAttributionsRequest(
+          documentRange: linkRange,
+          attributions: {
+            LinkAttribution.fromUri(
+              parseLink(changedNodeText.text.substring(rangeToUpdate.start, rangeToUpdate.end + 1)),
+            )
+          },
         ),
-        rangeToUpdate,
       );
     }
+
+    linkChangeRequests.add(
+      // When the caret is in the middle of a link then the composer will automatically
+      // apply that style to the next character. Remove the current link style
+      // from the composer's preferences, so that as the user types, he doesn't
+      // immediately add the link attribution we just deleted.
+      RemoveComposerPreferenceStylesRequest(
+        attributionsToRemove.map((span) => span.attribution).toSet(),
+      ),
+    );
+
+    requestDispatcher.execute(linkChangeRequests);
   }
 }
 
@@ -883,7 +918,7 @@ enum LinkUpdatePolicy {
 /// dash are removed and an em-dash (—) is inserted.
 ///
 /// This reaction applies to all [TextNode]s in the document.
-class DashConversionReaction implements EditReaction {
+class DashConversionReaction extends EditReaction {
   const DashConversionReaction();
 
   @override
@@ -898,40 +933,36 @@ class DashConversionReaction implements EditReaction {
       return;
     }
 
-    final selectionEvent = changeList.last;
-    if (selectionEvent is! SelectionChangeEvent) {
-      // This reaction requires that the two last events are an insertion event
-      // followed by a selection change event.
-      // The last event isn't a selection event, therefore this reaction
-      // shouldn't apply. Fizzle.
+    TextInsertionEvent? dashInsertionEvent;
+    for (final event in changeList) {
+      if (event is! DocumentEdit) {
+        continue;
+      }
+
+      final change = event.change;
+      if (change is! TextInsertionEvent) {
+        continue;
+      }
+      if (change.text.text != "-") {
+        continue;
+      }
+
+      dashInsertionEvent = change;
+      break;
+    }
+    if (dashInsertionEvent == null) {
+      // The user didn't type a dash.
       return;
     }
 
-    final documentEdit = changeList[changeList.length - 2];
-    if (documentEdit is! DocumentEdit || documentEdit.change is! TextInsertionEvent) {
-      // This reaction requires that the two last events are an insertion event
-      // followed by a selection change event.
-      // The second to last event isn't a text insertion event, therefore this reaction
-      // shouldn't apply. Fizzle.
+    if (dashInsertionEvent.offset == 0) {
+      // There's nothing upstream from this dash, therefore it can't
+      // be a 2nd dash.
       return;
     }
 
-    final insertionEvent = documentEdit.change as TextInsertionEvent;
-
-    if (insertionEvent.text.text != '-') {
-      // The text that was inserted wasn't a dash. The only character that triggers a
-      // conversion is a dash. Fizzle.
-      return;
-    }
-
-    if (insertionEvent.offset < 1) {
-      // The reaction needs at least two characters before the caret, but there's less than two. Fizzle.
-      return;
-    }
-
-    final insertionNode = document.getNodeById(insertionEvent.nodeId) as TextNode;
-
-    final upstreamCharacter = insertionNode.text.text[insertionEvent.offset - 1];
+    final insertionNode = document.getNodeById(dashInsertionEvent.nodeId) as TextNode;
+    final upstreamCharacter = insertionNode.text.text[dashInsertionEvent.offset - 1];
     if (upstreamCharacter != '-') {
       return;
     }
@@ -942,16 +973,16 @@ class DashConversionReaction implements EditReaction {
       DeleteContentRequest(
         documentRange: DocumentRange(
           start: DocumentPosition(
-              nodeId: insertionNode.id, nodePosition: TextNodePosition(offset: insertionEvent.offset - 1)),
+              nodeId: insertionNode.id, nodePosition: TextNodePosition(offset: dashInsertionEvent.offset - 1)),
           end: DocumentPosition(
-              nodeId: insertionNode.id, nodePosition: TextNodePosition(offset: insertionEvent.offset + 1)),
+              nodeId: insertionNode.id, nodePosition: TextNodePosition(offset: dashInsertionEvent.offset + 1)),
         ),
       ),
       InsertTextRequest(
         documentPosition: DocumentPosition(
           nodeId: insertionNode.id,
           nodePosition: TextNodePosition(
-            offset: insertionEvent.offset - 1,
+            offset: dashInsertionEvent.offset - 1,
           ),
         ),
         textToInsert: SpecialCharacters.emDash,
@@ -961,7 +992,7 @@ class DashConversionReaction implements EditReaction {
         DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: insertionNode.id,
-            nodePosition: TextNodePosition(offset: insertionEvent.offset),
+            nodePosition: TextNodePosition(offset: dashInsertionEvent.offset),
           ),
         ),
         SelectionChangeType.placeCaret,
@@ -982,19 +1013,29 @@ class EditInspector {
       return false;
     }
 
-    // If the user typed a space, then the last event should be a selection change.
-    final selectionEvent = edits[edits.length - 1];
-    if (selectionEvent is! SelectionChangeEvent) {
+    // If the user typed a space, then the final document edit should be a text
+    // insertion event with a space " ".
+    DocumentEdit? lastDocumentEditEvent;
+    SelectionChangeEvent? lastSelectionChangeEvent;
+    for (int i = edits.length - 1; i >= 0; i -= 1) {
+      if (edits[i] is DocumentEdit) {
+        lastDocumentEditEvent = edits[i] as DocumentEdit;
+      } else if (lastSelectionChangeEvent == null && edits[i] is SelectionChangeEvent) {
+        lastSelectionChangeEvent = edits[i] as SelectionChangeEvent;
+      }
+
+      if (lastDocumentEditEvent != null) {
+        break;
+      }
+    }
+    if (lastDocumentEditEvent == null) {
+      return false;
+    }
+    if (lastSelectionChangeEvent == null) {
       return false;
     }
 
-    // If the user typed a space, then the second to last event should be a text
-    // insertion event with a space " ".
-    final edit = edits[edits.length - 2];
-    if (edit is! DocumentEdit) {
-      return false;
-    }
-    final textInsertionEvent = edit.change;
+    final textInsertionEvent = lastDocumentEditEvent.change;
     if (textInsertionEvent is! TextInsertionEvent) {
       return false;
     }
@@ -1002,7 +1043,7 @@ class EditInspector {
       return false;
     }
 
-    if (selectionEvent.newSelection!.extent.nodeId != textInsertionEvent.nodeId) {
+    if (lastSelectionChangeEvent.newSelection!.extent.nodeId != textInsertionEvent.nodeId) {
       return false;
     }
 
@@ -1015,58 +1056,62 @@ class EditInspector {
     return true;
   }
 
-  /// Returns `true` if the given [edits] end with the user typing a space at the end of
-  /// a [TextNode], e.g., typing a " " at the end of a paragraph.
-  static bool didTypeSpaceAtEndOfNode(Document document, List<EditEvent> edits) {
-    if (edits.length < 2) {
-      // This reaction requires at least an insertion event and a selection change event.
-      // There are less than two events in the the change list, therefore this reaction
-      // shouldn't apply. Fizzle.
-      return false;
+  /// Finds and returns the last text the user typed within the given [edit]s, or `null` if
+  /// no text was typed.
+  static UserTypedText? findLastTextUserTyped(Document document, List<EditEvent> edits) {
+    final lastSpaceInsertion = edits.whereType<DocumentEdit>().lastWhereOrNull(
+        (edit) => edit.change is TextInsertionEvent && (edit.change as TextInsertionEvent).text.text.endsWith(" "));
+    if (lastSpaceInsertion == null) {
+      // The user didn't insert any text segment that ended with a space.
+      return null;
     }
 
-    // If the user typed a space, then the last event should be a selection change.
-    final selectionEvent = edits[edits.length - 1];
-    if (selectionEvent is! SelectionChangeEvent) {
-      return false;
+    final spaceInsertionChangeIndex = edits.indexWhere((edit) => edit == lastSpaceInsertion);
+    final selectionAfterInsertionIndex =
+        edits.indexWhere((edit) => edit is SelectionChangeEvent, spaceInsertionChangeIndex);
+    if (selectionAfterInsertionIndex < 0) {
+      // The text insertion wasn't followed by a selection change. It's not clear what this
+      // means, but we can't say with confidence that the user typed the space. Perhaps the
+      // space was injected by some other means.
+      return null;
     }
 
-    // If the user typed a space, then the second to last event should be a text
-    // insertion event with a space " ".
-    final edit = edits[edits.length - 2];
-    if (edit is! DocumentEdit) {
-      return false;
+    final newSelection = (edits[selectionAfterInsertionIndex] as SelectionChangeEvent).newSelection;
+    if (newSelection == null) {
+      // There's no selection, which indicates something other than the user typing.
+      return null;
     }
-    final textInsertionEvent = edit.change;
-    if (textInsertionEvent is! TextInsertionEvent) {
-      return false;
-    }
-    if (textInsertionEvent.text.text != " ") {
-      return false;
+    if (!newSelection.isCollapsed) {
+      // The selection is expanded, which indicates something other than the user typing.
+      return null;
     }
 
-    if (selectionEvent.oldSelection == null || selectionEvent.newSelection == null) {
-      return false;
-    }
-    if (selectionEvent.newSelection!.extent.nodeId != textInsertionEvent.nodeId) {
-      return false;
-    }
-
-    final editedNode = document.getNodeById(textInsertionEvent.nodeId)!;
-    if (editedNode is! TextNode) {
-      return false;
+    final textInsertionEvent = lastSpaceInsertion.change as TextInsertionEvent;
+    if (textInsertionEvent.nodeId != newSelection.extent.nodeId) {
+      // The selection is in a different node than where tex was inserted. This indicates
+      // something other than a user typing.
+      return null;
     }
 
-    final caretPosition = selectionEvent.newSelection!.extent.nodePosition as TextNodePosition;
-    final editedText = editedNode.text.text;
-    if (caretPosition.offset != editedText.length) {
-      return false;
+    final newCaretOffset = (newSelection.extent.nodePosition as TextNodePosition).offset;
+    if (textInsertionEvent.offset + textInsertionEvent.text.length != newCaretOffset) {
+      return null;
     }
 
-    // The inserted text was a space, and the caret now sits at the end of
-    // the edited text. We assume this means that the user just typed a space.
-    return true;
+    return UserTypedText(
+      textInsertionEvent.nodeId,
+      textInsertionEvent.offset,
+      textInsertionEvent.text,
+    );
   }
 
   EditInspector._();
+}
+
+class UserTypedText {
+  const UserTypedText(this.nodeId, this.offset, this.text);
+
+  final String nodeId;
+  final int offset;
+  final AttributedText text;
 }
