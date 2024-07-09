@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  super_editor: ^0.2.5
+  super_editor: ^0.3.0-dev
   logging: ^1.0.1
   markdown: ^5.0.0
 

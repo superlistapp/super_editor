@@ -78,6 +78,21 @@ void main() {
         expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
       });
     });
+
+    testWidgetsOnArbitraryDesktop('does not crash when if finds an unkown node type', (tester) async {
+      // Pump an editor with a node that has no corresponding component builder.
+      await tester //
+          .createDocument()
+          .withCustomContent(
+            MutableDocument(
+              nodes: [_UnkownNode(id: '1')],
+            ),
+          )
+          .pump();
+
+      // Reaching this point means the editor did not crash because of the
+      // unkown node.
+    });
   });
 }
 
@@ -179,9 +194,28 @@ class _FakeImageComponentBuilder implements ComponentBuilder {
     return ImageComponent(
       componentKey: componentContext.componentKey,
       imageUrl: componentViewModel.imageUrl,
-      selection: componentViewModel.selection,
+      selection: componentViewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection?,
       selectionColor: componentViewModel.selectionColor,
       imageBuilder: (context, imageUrl) => const SizedBox(height: 100, width: 100),
     );
+  }
+}
+
+/// A [DocumentNode] without any content.
+///
+/// Used to simulate an app-level node type that the editor
+/// doesn't know about.
+class _UnkownNode extends BlockNode with ChangeNotifier {
+  _UnkownNode({required this.id});
+
+  @override
+  final String id;
+
+  @override
+  String? copyContent(NodeSelection selection) => '';
+
+  @override
+  _UnkownNode copy() {
+    return _UnkownNode(id: id);
   }
 }

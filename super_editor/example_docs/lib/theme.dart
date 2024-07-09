@@ -30,16 +30,16 @@ const toolbarButtonPressedColor = Color(0xFFDAE0E6);
 const toolbarDividerColor = Color(0xFFC7C7C7);
 
 /// Computes the background color for toolbar buttons.
-Color? getButtonColor(Set<MaterialState> states) {
-  if (states.contains(MaterialState.pressed)) {
+Color? getButtonColor(Set<WidgetState> states) {
+  if (states.contains(WidgetState.pressed)) {
     return toolbarButtonPressedColor;
   }
 
-  if (states.contains(MaterialState.selected)) {
+  if (states.contains(WidgetState.selected)) {
     return toolbarButtonSelectedColor;
   }
 
-  if (states.contains(MaterialState.hovered)) {
+  if (states.contains(WidgetState.hovered)) {
     return toolbarButtonHoveredColor;
   }
 
@@ -47,20 +47,20 @@ Color? getButtonColor(Set<MaterialState> states) {
 }
 
 final defaultToolbarButtonStyle = ButtonStyle(
-  backgroundColor: MaterialStateProperty.resolveWith(getButtonColor),
-  overlayColor: MaterialStateProperty.all(Colors.transparent),
-  foregroundColor: MaterialStateProperty.all(Colors.black),
-  fixedSize: MaterialStateProperty.all(const Size(30, 30)),
-  minimumSize: MaterialStateProperty.all(const Size(30, 30)),
-  maximumSize: MaterialStateProperty.all(const Size(30, 30)),
-  iconSize: MaterialStateProperty.all(18),
-  padding: MaterialStateProperty.all(EdgeInsets.zero),
-  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+  backgroundColor: WidgetStateProperty.resolveWith(getButtonColor),
+  overlayColor: WidgetStateProperty.all(Colors.transparent),
+  foregroundColor: WidgetStateProperty.all(Colors.black),
+  fixedSize: WidgetStateProperty.all(const Size(30, 30)),
+  minimumSize: WidgetStateProperty.all(const Size(30, 30)),
+  maximumSize: WidgetStateProperty.all(const Size(30, 30)),
+  iconSize: WidgetStateProperty.all(18),
+  padding: WidgetStateProperty.all(EdgeInsets.zero),
+  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
     RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(4.0),
     ),
   ),
-  shadowColor: MaterialStateProperty.all(Colors.transparent),
+  shadowColor: WidgetStateProperty.all(Colors.transparent),
 );
 
 final docsStylesheet = [

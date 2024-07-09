@@ -163,6 +163,11 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  TestSuperEditorConfigurator useIosSelectionHeuristics(bool shouldUse) {
+    _config.useIosSelectionHeuristics = shouldUse;
+    return this;
+  }
+
   TestSuperEditorConfigurator withCaretPolicies({
     bool? displayCaretWithExpandedSelection,
   }) {
@@ -244,6 +249,11 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  TestSuperEditorConfigurator withHistoryGroupingPolicy(HistoryGroupingPolicy policy) {
+    _config.historyGroupPolicy = policy;
+    return this;
+  }
+
   /// Configures the [SuperEditor] to constrain its maxHeight and maxWidth using the given [size].
   TestSuperEditorConfigurator withEditorSize(ui.Size? size) {
     _config.editorSize = size;
@@ -259,6 +269,14 @@ class TestSuperEditorConfigurator {
   /// Configures the [SuperEditor] to use a custom widget tree above [SuperEditor].
   TestSuperEditorConfigurator withCustomWidgetTreeBuilder(WidgetTreeBuilder? builder) {
     _config.widgetTreeBuilder = builder;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to display an [AppBar] with the given height above the [SuperEditor].
+  ///
+  /// If [withCustomWidgetTreeBuilder] is used, this setting is ignored.
+  TestSuperEditorConfigurator withAppBar(double height) {
+    _config.appBarHeight = height;
     return this;
   }
 
@@ -409,7 +427,11 @@ class TestSuperEditorConfigurator {
     final layoutKey = _config.layoutKey!;
     final focusNode = _config.focusNode ?? FocusNode();
     final composer = MutableDocumentComposer(initialSelection: _config.selection);
-    final editor = createDefaultDocumentEditor(document: _config.document, composer: composer)
+    final editor = createDefaultDocumentEditor(
+      document: _config.document,
+      composer: composer,
+      historyGroupingPolicy: _config.historyGroupPolicy ?? neverMergePolicy,
+    )
       ..requestHandlers.insertAll(0, _config.addedRequestHandlers)
       ..reactionPipeline.insertAll(0, _config.addedReactions);
 
@@ -438,6 +460,17 @@ class TestSuperEditorConfigurator {
       // Flutter to pick the web shortcuts.
       shortcuts: defaultFlutterShortcuts,
       home: Scaffold(
+        appBar: _config.appBarHeight != null
+            ? PreferredSize(
+                preferredSize: ui.Size(double.infinity, _config.appBarHeight!),
+                child: SafeArea(
+                  child: SizedBox(
+                    height: _config.appBarHeight!,
+                    child: const ColoredBox(color: Colors.yellow),
+                  ),
+                ),
+              )
+            : null,
         body: superEditor,
       ),
       debugShowCheckedModeBanner: false,
@@ -507,8 +540,10 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
     super.initState();
 
     _iOsControlsController = SuperEditorIosControlsController(
+      useIosSelectionHeuristics: widget.testConfiguration.useIosSelectionHeuristics,
       toolbarBuilder: widget.testConfiguration.iOSToolbarBuilder,
     );
+
     _androidControlsController = SuperEditorAndroidControlsController(
       toolbarBuilder: widget.testConfiguration.androidToolbarBuilder,
     );
@@ -645,12 +680,16 @@ class SuperEditorTestConfiguration {
   ScrollController? scrollController;
   bool insideCustomScrollView = false;
   DocumentGestureMode? gestureMode;
+  HistoryGroupingPolicy? historyGroupPolicy;
   TextInputSource? inputSource;
   SuperEditorSelectionPolicies? selectionPolicies;
   SelectionStyles? selectionStyles;
   bool displayCaretWithExpandedSelection = true;
   CaretStyle? caretStyle;
 
+  // By default we don't use iOS-style selection heuristics in tests because in tests
+  // we want to know exactly where we're placing the caret.
+  bool useIosSelectionHeuristics = false;
   double? iosCaretWidth;
   Color? iosHandleColor;
   double? iosHandleBallDiameter;
@@ -674,6 +713,7 @@ class SuperEditorTestConfiguration {
   final plugins = <SuperEditorPlugin>{};
 
   WidgetTreeBuilder? widgetTreeBuilder;
+  double? appBarHeight;
 }
 
 /// Must return a widget tree containing the given [superEditor]
@@ -902,7 +942,7 @@ class FakeImageComponentBuilder implements ComponentBuilder {
     return ImageComponent(
       componentKey: componentContext.componentKey,
       imageUrl: componentViewModel.imageUrl,
-      selection: componentViewModel.selection,
+      selection: componentViewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection?,
       selectionColor: componentViewModel.selectionColor,
       imageBuilder: (context, imageUrl) => ColoredBox(
         color: fillColor ?? Colors.transparent,

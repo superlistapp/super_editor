@@ -1,5 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/default_editor/layout_single_column/selection_aware_viewmodel.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
 import '../core/document.dart';
@@ -30,6 +31,11 @@ class HorizontalRuleNode extends BlockNode with ChangeNotifier {
   @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is HorizontalRuleNode;
+  }
+
+  @override
+  HorizontalRuleNode copy() {
+    return HorizontalRuleNode(id: id);
   }
 
   @override
@@ -65,7 +71,7 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
 
     return HorizontalRuleComponent(
       componentKey: componentContext.componentKey,
-      selection: componentViewModel.selection,
+      selection: componentViewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection?,
       selectionColor: componentViewModel.selectionColor,
       showCaret: componentViewModel.caret != null,
       caretColor: componentViewModel.caretColor,
@@ -73,19 +79,20 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
   }
 }
 
-class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewModel {
+class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
   HorizontalRuleComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
-    this.selection,
-    required this.selectionColor,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
+    DocumentNodeSelection? selection,
+    Color selectionColor = Colors.transparent,
     this.caret,
     required this.caretColor,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  }) {
+    super.selection = selection;
+    super.selectionColor = selectionColor;
+  }
 
-  UpstreamDownstreamNodeSelection? selection;
-  Color selectionColor;
   UpstreamDownstreamNodePosition? caret;
   Color caretColor;
 

@@ -298,7 +298,7 @@ class ConvertSelectedTextNodeRequest implements EditRequest {
   int get hashCode => newType.hashCode;
 }
 
-class ConvertSelectedTextNodeCommand implements EditCommand {
+class ConvertSelectedTextNodeCommand extends EditCommand {
   ConvertSelectedTextNodeCommand(this.newType);
 
   final TextNodeType newType;

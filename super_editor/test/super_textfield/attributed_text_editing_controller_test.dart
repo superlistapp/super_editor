@@ -803,18 +803,81 @@ void main() {
       });
     });
 
-    group("clear", () {
-      test('notifies listeners', () {
+    group("clearing text and selection", () {
+      test("can remove the text, selection, and composing region at the same time", () {
         int listenerNotifyCount = 0;
-
         final controller = AttributedTextEditingController(
           text: AttributedText('my text'),
-        )..addListener(() {
+          selection: const TextSelection.collapsed(offset: 7),
+          composingRegion: const TextRange(start: 3, end: 7),
+        )
+          ..composingAttributions = {
+            boldAttribution,
+          }
+          ..addListener(() {
             listenerNotifyCount += 1;
           });
 
+        controller.clearTextAndSelection();
+
+        expect(controller.text.text, isEmpty);
+        expect(
+          controller.selection,
+          const TextSelection.collapsed(offset: -1),
+        );
+        expect(controller.composingAttributions, isEmpty);
+        expect(controller.composingRegion, TextRange.empty);
+        expect(listenerNotifyCount, 1);
+
+        // Below here we want to validate that the old deprecated method
+        // .clear() does exactly the same thing as its replacement method
+        // .clearTextAndSelection().
+        //
+        // As soon as the deprecated method is removed, the below code will
+        // throw a compile error, at which time it will be safe to remove it.
+        controller
+          ..text = AttributedText('my text')
+          ..selection = const TextSelection.collapsed(offset: 7)
+          ..composingRegion = const TextRange(start: 3, end: 7)
+          ..composingAttributions = {boldAttribution};
+        listenerNotifyCount = 0;
+
+        // ignore: deprecated_member_use_from_same_package
         controller.clear();
 
+        expect(controller.text.text, isEmpty);
+        expect(
+          controller.selection,
+          const TextSelection.collapsed(offset: -1),
+        );
+        expect(controller.composingAttributions, isEmpty);
+        expect(controller.composingRegion, TextRange.empty);
+        expect(listenerNotifyCount, 1);
+      });
+
+      test("can remove the text and composing region, and place the caret at the start, at the same time", () {
+        int listenerNotifyCount = 0;
+        final controller = AttributedTextEditingController(
+          text: AttributedText('my text'),
+          selection: const TextSelection.collapsed(offset: 7),
+          composingRegion: const TextRange(start: 3, end: 7),
+        )
+          ..composingAttributions = {
+            boldAttribution,
+          }
+          ..addListener(() {
+            listenerNotifyCount += 1;
+          });
+
+        controller.clearText();
+
+        expect(controller.text.text, isEmpty);
+        expect(
+          controller.selection,
+          const TextSelection.collapsed(offset: 0),
+        );
+        expect(controller.composingAttributions, isEmpty);
+        expect(controller.composingRegion, TextRange.empty);
         expect(listenerNotifyCount, 1);
       });
     });

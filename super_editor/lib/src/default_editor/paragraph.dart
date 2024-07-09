@@ -1,6 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -8,10 +8,12 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
@@ -23,8 +25,10 @@ class ParagraphNode extends TextNode {
   ParagraphNode({
     required String id,
     required AttributedText text,
+    int indent = 0,
     Map<String, dynamic>? metadata,
-  }) : super(
+  })  : _indent = indent,
+        super(
           id: id,
           text: text,
           metadata: metadata,
@@ -33,6 +37,31 @@ class ParagraphNode extends TextNode {
       putMetadataValue("blockType", paragraphAttribution);
     }
   }
+
+  /// The indent level of this paragraph - `0` is no indent.
+  int get indent => _indent;
+  int _indent;
+  set indent(int newValue) {
+    if (newValue == _indent) {
+      return;
+    }
+
+    _indent = newValue;
+    notifyListeners();
+  }
+
+  @override
+  ParagraphNode copy() {
+    return ParagraphNode(id: id, text: text.copyText(0), metadata: Map.from(metadata));
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other && other is ParagraphNode && runtimeType == other.runtimeType && _indent == other._indent;
+
+  @override
+  int get hashCode => super.hashCode ^ _indent.hashCode;
 }
 
 class ParagraphComponentBuilder implements ComponentBuilder {
@@ -66,6 +95,8 @@ class ParagraphComponentBuilder implements ComponentBuilder {
     return ParagraphComponentViewModel(
       nodeId: node.id,
       blockType: node.getMetadataValue('blockType'),
+      indent: node.indent,
+      indentCalculator: defaultParagraphIndentCalculator,
       text: node.text,
       textStyleBuilder: noStyleBuilder,
       textDirection: textDirection,
@@ -75,7 +106,7 @@ class ParagraphComponentBuilder implements ComponentBuilder {
   }
 
   @override
-  TextComponent? createComponent(
+  ParagraphComponent? createComponent(
       SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
     if (componentViewModel is! ParagraphComponentViewModel) {
       return null;
@@ -91,22 +122,9 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       editorLayoutLog.finer(' - not painting any text selection');
     }
 
-    return TextComponent(
+    return ParagraphComponent(
       key: componentContext.componentKey,
-      text: componentViewModel.text,
-      textStyleBuilder: componentViewModel.textStyleBuilder,
-      metadata: componentViewModel.blockType != null
-          ? {
-              'blockType': componentViewModel.blockType,
-            }
-          : {},
-      textAlign: componentViewModel.textAlignment,
-      textDirection: componentViewModel.textDirection,
-      textSelection: componentViewModel.selection,
-      selectionColor: componentViewModel.selectionColor,
-      highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
-      composingRegion: componentViewModel.composingRegion,
-      showComposingUnderline: componentViewModel.showComposingUnderline,
+      viewModel: componentViewModel,
     );
   }
 }
@@ -117,10 +135,13 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     this.blockType,
+    this.indent = 0,
+    this.indentCalculator = defaultParagraphIndentCalculator,
     required this.text,
     required this.textStyleBuilder,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
+    this.textScaler,
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
@@ -130,6 +151,9 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
 
   Attribution? blockType;
 
+  int indent;
+  TextBlockIndentCalculator indentCalculator;
+
   @override
   AttributedText text;
   @override
@@ -138,6 +162,12 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   TextDirection textDirection;
   @override
   TextAlign textAlignment;
+
+  /// The text scaling policy.
+  ///
+  /// Defaults to `MediaQuery.textScalerOf()`.
+  TextScaler? textScaler;
+
   @override
   TextSelection? selection;
   @override
@@ -156,10 +186,13 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       maxWidth: maxWidth,
       padding: padding,
       blockType: blockType,
+      indent: indent,
+      indentCalculator: indentCalculator,
       text: text,
       textStyleBuilder: textStyleBuilder,
       textDirection: textDirection,
       textAlignment: textAlignment,
+      textScaler: textScaler,
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
@@ -176,9 +209,11 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           blockType == other.blockType &&
+          indent == other.indent &&
           text == other.text &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
+          textScaler == other.textScaler &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
@@ -190,14 +225,84 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       super.hashCode ^
       nodeId.hashCode ^
       blockType.hashCode ^
+      indent.hashCode ^
       text.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
+      textScaler.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
       highlightWhenEmpty.hashCode ^
       composingRegion.hashCode ^
       showComposingUnderline.hashCode;
+}
+
+/// The standard [TextBlockIndentCalculator] used by paragraphs in `SuperEditor`.
+double defaultParagraphIndentCalculator(TextStyle textStyle, int indent) {
+  return ((textStyle.fontSize ?? 16) * 0.60) * 4 * indent;
+}
+
+/// A document component that displays a paragraph.
+class ParagraphComponent extends StatefulWidget {
+  const ParagraphComponent({
+    Key? key,
+    required this.viewModel,
+    this.showDebugPaint = false,
+  }) : super(key: key);
+
+  final ParagraphComponentViewModel viewModel;
+  final bool showDebugPaint;
+
+  @override
+  State<ParagraphComponent> createState() => _ParagraphComponentState();
+}
+
+class _ParagraphComponentState extends State<ParagraphComponent>
+    with ProxyDocumentComponent<ParagraphComponent>, ProxyTextComposable {
+  final _textKey = GlobalKey();
+
+  @override
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => _textKey;
+
+  @override
+  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Indent spacing on left.
+        SizedBox(
+          width: widget.viewModel.indentCalculator(
+            widget.viewModel.textStyleBuilder({}),
+            widget.viewModel.indent,
+          ),
+        ),
+        // The actual paragraph UI.
+        Expanded(
+          child: TextComponent(
+            key: _textKey,
+            text: widget.viewModel.text,
+            textAlign: widget.viewModel.textAlignment,
+            textScaler: widget.viewModel.textScaler,
+            textStyleBuilder: widget.viewModel.textStyleBuilder,
+            metadata: widget.viewModel.blockType != null
+                ? {
+                    'blockType': widget.viewModel.blockType,
+                  }
+                : {},
+            textSelection: widget.viewModel.selection,
+            selectionColor: widget.viewModel.selectionColor,
+            highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
+            composingRegion: widget.viewModel.composingRegion,
+            showComposingUnderline: widget.viewModel.showComposingUnderline,
+            showDebugPaint: widget.showDebugPaint,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class ChangeParagraphAlignmentRequest implements EditRequest {
@@ -221,7 +326,7 @@ class ChangeParagraphAlignmentRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ alignment.hashCode;
 }
 
-class ChangeParagraphAlignmentCommand implements EditCommand {
+class ChangeParagraphAlignmentCommand extends EditCommand {
   const ChangeParagraphAlignmentCommand({
     required this.nodeId,
     required this.alignment,
@@ -229,6 +334,9 @@ class ChangeParagraphAlignmentCommand implements EditCommand {
 
   final String nodeId;
   final TextAlign alignment;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -284,7 +392,7 @@ class ChangeParagraphBlockTypeRequest implements EditRequest {
   int get hashCode => nodeId.hashCode ^ blockType.hashCode;
 }
 
-class ChangeParagraphBlockTypeCommand implements EditCommand {
+class ChangeParagraphBlockTypeCommand extends EditCommand {
   const ChangeParagraphBlockTypeCommand({
     required this.nodeId,
     required this.blockType,
@@ -292,6 +400,9 @@ class ChangeParagraphBlockTypeCommand implements EditCommand {
 
   final String nodeId;
   final Attribution? blockType;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -327,7 +438,7 @@ class CombineParagraphsRequest implements EditRequest {
 /// in reverse order, the command fizzles.
 ///
 /// If both nodes are not `ParagraphNode`s, the command fizzles.
-class CombineParagraphsCommand implements EditCommand {
+class CombineParagraphsCommand extends EditCommand {
   CombineParagraphsCommand({
     required this.firstNodeId,
     required this.secondNodeId,
@@ -335,6 +446,9 @@ class CombineParagraphsCommand implements EditCommand {
 
   final String firstNodeId;
   final String secondNodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -430,7 +544,7 @@ final _defaultAttributionsToExtend = {
 /// given `splitPosition`, placing all text after `splitPosition` in a
 /// new `ParagraphNode` with the given `newNodeId`, inserted after the
 /// original node.
-class SplitParagraphCommand implements EditCommand {
+class SplitParagraphCommand extends EditCommand {
   SplitParagraphCommand({
     required this.nodeId,
     required this.splitPosition,
@@ -445,6 +559,9 @@ class SplitParagraphCommand implements EditCommand {
   final bool replicateExistingMetadata;
   // TODO: remove the attribution filter and move the decision to an EditReaction in #1296
   final AttributionFilter attributionsToExtendToNewParagraph;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -497,6 +614,7 @@ class SplitParagraphCommand implements EditCommand {
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,
+      indent: node.indent,
       metadata: replicateExistingMetadata ? node.copyMetadata() : {},
     );
 
@@ -558,10 +676,13 @@ class SplitParagraphCommand implements EditCommand {
   }
 }
 
-class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
+class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
   DeleteUpstreamAtBeginningOfParagraphCommand(this.node);
 
   final DocumentNode node;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -700,7 +821,7 @@ class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
   }
 }
 
-class Intention implements EditEvent {
+class Intention extends EditEvent {
   Intention.start() : _isStart = true;
 
   Intention.end() : _isStart = false;
@@ -764,12 +885,15 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-class DeleteParagraphCommand implements EditCommand {
+class DeleteParagraphCommand extends EditCommand {
   DeleteParagraphCommand({
     required this.nodeId,
   });
 
   final String nodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -832,6 +956,50 @@ ExecutionInstruction backspaceToClearParagraphBlockType({
   return didClearBlockType ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
+/// Un-indents the current paragraph if the paragraph is empty and the user
+/// pressed Enter.
+ExecutionInstruction enterToUnIndentParagraph({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final selection = editContext.composer.selection;
+  if (selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!selection.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final paragraph = editContext.document.getNodeById(selection.extent.nodeId);
+  if (paragraph is! ParagraphNode) {
+    // This policy only applies to paragraphs.
+    return ExecutionInstruction.continueExecution;
+  }
+  if (paragraph.indent == 0) {
+    // Nothing to un-indent.
+    return ExecutionInstruction.continueExecution;
+  }
+  if (paragraph.text.text.isNotEmpty) {
+    // We only un-indent when the user presses Enter in an empty paragraph.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  // Un-indent the paragraph.
+  editContext.editor.execute([
+    UnIndentParagraphRequest(paragraph.id),
+  ]);
+
+  return ExecutionInstruction.haltExecution;
+}
+
 ExecutionInstruction enterToInsertBlockNewline({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
@@ -847,6 +1015,244 @@ ExecutionInstruction enterToInsertBlockNewline({
   final didInsertBlockNewline = editContext.commonOps.insertBlockLevelNewline();
 
   return didInsertBlockNewline ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction tabToIndentParagraph({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (HardwareKeyboard.instance.isShiftPressed) {
+    // Don't indent if Shift is pressed - that's for un-indenting.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final selection = editContext.composer.selection;
+  if (selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (selection.base.nodeId != selection.extent.nodeId) {
+    // Selection spans nodes, so even if this selection includes a paragraph,
+    // it includes other stuff, too. So we can't treat this as a paragraph indentation.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! ParagraphNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.editor.execute([
+    IndentParagraphRequest(node.id),
+  ]);
+
+  return ExecutionInstruction.haltExecution;
+}
+
+class SetParagraphIndentRequest implements EditRequest {
+  const SetParagraphIndentRequest(
+    this.nodeId, {
+    required this.level,
+  });
+
+  final String nodeId;
+  final int level;
+}
+
+class SetParagraphIndentCommand extends EditCommand {
+  const SetParagraphIndentCommand(
+    this.nodeId, {
+    required this.level,
+  });
+
+  final String nodeId;
+  final int level;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    final paragraph = document.getNodeById(nodeId);
+    if (paragraph is! ParagraphNode) {
+      // The specified node isn't a paragraph. Nothing for us to indent.
+      return;
+    }
+
+    // Decrease the paragraph indentation of the desired paragraph.
+    paragraph.indent = level;
+
+    // Log all changes.
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(paragraph.id),
+      ),
+    ]);
+  }
+}
+
+class IndentParagraphRequest implements EditRequest {
+  const IndentParagraphRequest(this.nodeId);
+
+  final String nodeId;
+}
+
+class IndentParagraphCommand extends EditCommand {
+  const IndentParagraphCommand(this.nodeId);
+
+  final String nodeId;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    final paragraph = document.getNodeById(nodeId);
+    if (paragraph is! ParagraphNode) {
+      // The specified node isn't a paragraph. Nothing for us to indent.
+      return;
+    }
+
+    // Increase the paragraph indentation.
+    paragraph.indent += 1;
+
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(paragraph.id),
+      ),
+    ]);
+  }
+}
+
+ExecutionInstruction shiftTabToUnIndentParagraph({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!HardwareKeyboard.instance.isShiftPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final selection = editContext.composer.selection;
+  if (selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (selection.base.nodeId != selection.extent.nodeId) {
+    // Selection spans nodes, so even if this selection includes a paragraph,
+    // it includes other stuff, too. So we can't treat this as a paragraph indentation.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! ParagraphNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (node.indent == 0) {
+    // Can't un-indent any further.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.editor.execute([
+    UnIndentParagraphRequest(node.id),
+  ]);
+
+  return ExecutionInstruction.haltExecution;
+}
+
+class UnIndentParagraphRequest implements EditRequest {
+  const UnIndentParagraphRequest(this.nodeId);
+
+  final String nodeId;
+}
+
+class UnIndentParagraphCommand extends EditCommand {
+  const UnIndentParagraphCommand(this.nodeId);
+
+  final String nodeId;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(Editor.documentKey);
+
+    final paragraph = document.getNodeById(nodeId);
+    if (paragraph is! ParagraphNode) {
+      // The specified node isn't a paragraph. Nothing for us to indent.
+      return;
+    }
+
+    if (paragraph.indent == 0) {
+      // This paragraph is already at minimum indent. Nothing to do.
+      return;
+    }
+
+    // Decrease the paragraph indentation of the desired paragraph.
+    paragraph.indent -= 1;
+
+    // Log all changes.
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(paragraph.id),
+      ),
+    ]);
+  }
+}
+
+ExecutionInstruction backspaceToUnIndentParagraph({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final selection = editContext.composer.selection;
+  if (selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (selection.base.nodeId != selection.extent.nodeId) {
+    // Selection spans nodes, so even if this selection includes a paragraph,
+    // it includes other stuff, too. So we can't treat this as a paragraph indentation.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! ParagraphNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if ((editContext.composer.selection!.extent.nodePosition as TextPosition).offset > 0) {
+    // Backspace should only un-indent if the caret is at the start of the text.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (node.indent == 0) {
+    // Can't un-indent any further.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.editor.execute([
+    UnIndentParagraphRequest(node.id),
+  ]);
+
+  return ExecutionInstruction.haltExecution;
 }
 
 ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
@@ -933,6 +1339,36 @@ ExecutionInstruction doNothingWithBackspaceOnWeb({
     // We handle the deletion delta and ignore the key event.
     // We return blocked so the OS can process it.
     return ExecutionInstruction.blocked;
+  }
+
+  return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction doNothingWithCtrlOrCmdAndZOnWeb({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+}) {
+  if (keyEvent is! KeyDownEvent && keyEvent is! KeyRepeatEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.keyZ) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (CurrentPlatform.isApple && !HardwareKeyboard.instance.isMetaPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (!CurrentPlatform.isApple && !HardwareKeyboard.instance.isControlPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (CurrentPlatform.isWeb) {
+    // On web, pressing Cmd + Z on Mac or Ctrl + Z on Windows and Linux
+    // triggers the UNDO action of the HTML text input, which doesn't work for us.
+    // Prevent the browser from handling the shortcut.
+    return ExecutionInstruction.haltExecution;
   }
 
   return ExecutionInstruction.continueExecution;

@@ -351,6 +351,41 @@ Phasellus sed sagittis urna.
 Aenean mattis ante justo, quis sollicitudin metus interdum id.''',
       );
     });
+
+    testWidgetsOnMac("can paste a link", (tester) async {
+      final (_, document, _) = await _pumpSuperEditor(
+        tester,
+        deserializeMarkdownToDocument(""),
+      );
+
+      // Place the caret in empty paragraph.
+      final paragraph = document.nodes.first as TextNode;
+      await tester.placeCaretInParagraph(paragraph.id, 0);
+
+      // Simulate the user copying a markdown snippet.
+      tester
+        ..simulateClipboard()
+        ..setSimulatedClipboardContent("Hello [link](www.google.com)");
+
+      // Paste the markdown content into the empty document.
+      await tester.pressCmdV();
+
+      // Ensure that the Markdown link was linkified.
+      expect(SuperEditorInspector.findTextInComponent(paragraph.id).text, "Hello link");
+      const expectedAttribution = LinkAttribution("www.google.com");
+      expect(SuperEditorInspector.findTextInComponent(paragraph.id).getAttributionSpansByFilter((a) => true), {
+        const AttributionSpan(attribution: expectedAttribution, start: 6, end: 9),
+      });
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: paragraph.id,
+            nodePosition: const TextNodePosition(offset: 10),
+          ),
+        ),
+      );
+    });
   });
 }
 

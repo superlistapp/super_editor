@@ -89,6 +89,25 @@ void main() {
       expect(SuperEditorInspector.isMobileMagnifierVisible(), isFalse);
     });
 
+    testWidgetsOnIos("does not show toolbar upon first tap", (tester) async {
+      await tester //
+          .createDocument()
+          .withTwoEmptyParagraphs()
+          .pump();
+
+      // Place the caret at the beginning of the document.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Ensure the toolbar isn't visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
+
+      // Place the caret at the beginning of the second paragraph, at the same offset.
+      await tester.placeCaretInParagraph("2", 0);
+
+      // Ensure the toolbar isn't visible.
+      expect(SuperEditorInspector.isMobileToolbarVisible(), isFalse);
+    });
+
     testWidgetsOnIos("shows magnifier when dragging expanded handle", (tester) async {
       await _pumpSingleParagraphApp(tester);
 

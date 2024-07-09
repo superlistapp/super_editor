@@ -440,7 +440,8 @@ class _IosToolbarFocalPointDocumentLayerState extends DocumentLayoutLayerState<I
   }
 
   @override
-  Rect? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+  Rect? computeLayoutDataWithDocumentLayout(
+      BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
     final documentSelection = widget.selection.value;
     if (documentSelection == null) {
       return null;
@@ -671,8 +672,56 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     }
   }
 
-  @override
-  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(BuildContext context, DocumentLayout documentLayout) {
+  /// Computes a zero width `Rect` that represents the x and y offsets and the height
+  /// of the upstream or downstream handle in content space.
+  ///
+  /// The `Rect` returned by [DocumentLayout.getRectForPosition] doesn't match the
+  /// top and bottom of the selection hightlight box. This method computes an
+  /// expanded selection based on the given [position], computes the box for that
+  /// selection, and returns the edge of the selection box.
+  Rect _computeRectForExpandedHandle(DocumentPosition position) {
+    final component = widget.documentLayout.getComponentByNodeId(position.nodeId);
+    if (component == null) {
+      return Rect.zero;
+    }
+
+    // Check if we have a position to the right of the current position within the same node.
+    NodePosition? extentNodePosition = component.movePositionRight(position.nodePosition);
+    bool isExtentDownstream = extentNodePosition != null;
+
+    if (extentNodePosition == null) {
+      // Couldn't find a valid position to the right. Look for a position to the left
+      // of the current position within the same node.
+      extentNodePosition = component.movePositionLeft(position.nodePosition);
+    }
+
+    if (extentNodePosition == null) {
+      // We couldn't expand the selection neither to the left of the right. Fallback
+      // to rect for the position, which relies on Flutter's computation for the
+      // caret offset and height. Flutter's computation produces different offset
+      // a height from what is returned by the selection highlight box.
+      return widget.documentLayout.getRectForPosition(position)!;
+    }
+
+    final rectForSelection = widget.documentLayout.getRectForSelection(
+      position,
+      DocumentPosition(
+        nodeId: position.nodeId,
+        nodePosition: extentNodePosition,
+      ),
+    )!;
+
+    return Rect.fromLTWH(
+      isExtentDownstream ? rectForSelection.left : rectForSelection.right,
+      rectForSelection.top,
+      0,
+      rectForSelection.bottom - rectForSelection.top,
+    );
+  }
+
+  @protected
+  DocumentSelectionLayout? computeLayoutDataWithDocumentLayout(
+      BuildContext contentLayersContext, BuildContext documentContext, DocumentLayout documentLayout) {
     final selection = widget.selection.value;
     if (selection == null) {
       return null;
@@ -684,13 +733,25 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       // Default caret width used by IOSCollapsedHandle.
       const caretWidth = 2;
 
-      final layerBox = context.findRenderObject() as RenderBox?;
-      if (layerBox != null && layerBox.hasSize && caretRect.left + caretWidth >= layerBox.size.width) {
+      // Use the content's RenderBox instead of the layer's RenderBox to get the layer's width.
+      //
+      // ContentLayers works in four steps:
+      //
+      // 1. The content is built.
+      // 2. The content is laid out.
+      // 3. The layers are built.
+      // 4. The layers are laid out.
+      //
+      // The computeLayoutData method is called during the layer's build, which means that the
+      // layer's RenderBox is outdated, because it wasn't laid out yet for the current frame.
+      // Use the content's RenderBox, which was already laid out for the current frame.
+      final contentBox = documentContext.findRenderObject() as RenderBox?;
+      if (contentBox != null && contentBox.hasSize && caretRect.left + caretWidth >= contentBox.size.width) {
         // Ajust the caret position to make it entirely visible because it's currently placed
         // partially or entirely outside of the layers' bounds. This can happen for downstream selections
         // of block components that take all the available width.
         caretRect = Rect.fromLTWH(
-          layerBox.size.width - caretWidth,
+          contentBox.size.width - caretWidth,
           caretRect.top,
           caretRect.width,
           caretRect.height,
@@ -702,12 +763,12 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       );
     } else {
       return DocumentSelectionLayout(
-        upstream: documentLayout.getRectForPosition(
+        upstream: _computeRectForExpandedHandle(
           widget.document.selectUpstreamPosition(selection.base, selection.extent),
-        )!,
-        downstream: documentLayout.getRectForPosition(
+        ),
+        downstream: _computeRectForExpandedHandle(
           widget.document.selectDownstreamPosition(selection.base, selection.extent),
-        )!,
+        ),
         expandedSelectionBounds: documentLayout.getRectForSelection(
           selection.base,
           selection.extent,
@@ -790,19 +851,22 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     required Rect upstream,
     required Color debugColor,
   }) {
+    final ballRadius = widget.handleBallDiameter / 2;
     return Positioned(
       key: _upstreamHandleKey,
       left: upstream.left,
-      top: upstream.top - widget.handleBallDiameter,
+      // Move the handle up so the ball is above the selected area and add half
+      // of the radius to make the ball overlap the selected area.
+      top: upstream.top - selectionHighlightBoxVerticalExpansion - widget.handleBallDiameter + (ballRadius / 2),
       child: FractionalTranslation(
         translation: const Offset(-0.5, 0),
         child: IOSSelectionHandle.upstream(
           key: DocumentKeys.upstreamHandle,
           color: widget.handleColor,
           handleType: HandleType.upstream,
-          caretHeight: upstream.height,
+          caretHeight: upstream.height + (selectionHighlightBoxVerticalExpansion * 2) - (ballRadius / 2),
           caretWidth: widget.caretWidth,
-          ballRadius: widget.handleBallDiameter / 2,
+          ballRadius: ballRadius,
         ),
       ),
     );
@@ -812,19 +876,20 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     required Rect downstream,
     required Color debugColor,
   }) {
+    final ballRadius = widget.handleBallDiameter / 2;
     return Positioned(
       key: _downstreamHandleKey,
       left: downstream.left,
-      top: downstream.top,
+      top: downstream.top - selectionHighlightBoxVerticalExpansion,
       child: FractionalTranslation(
         translation: const Offset(-0.5, 0),
         child: IOSSelectionHandle.downstream(
           key: DocumentKeys.downstreamHandle,
           color: widget.handleColor,
           handleType: HandleType.downstream,
-          caretHeight: downstream.height,
+          caretHeight: downstream.height + (selectionHighlightBoxVerticalExpansion * 2) - (ballRadius / 2),
           caretWidth: widget.caretWidth,
-          ballRadius: widget.handleBallDiameter / 2,
+          ballRadius: ballRadius,
         ),
       ),
     );

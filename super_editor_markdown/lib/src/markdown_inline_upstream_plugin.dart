@@ -53,10 +53,7 @@ const defaultUpstreamInlineMarkdownParsers = [
 /// caret and converts it into attributions.
 ///
 /// Inline Markdown syntax includes things like `**token**` for bold, `*token*` for
-/// italics, and `~token~` for strikethrough. Links aren't included because their complex
-/// syntax makes upstream parsing a poor strategy for identifying them. For linkification,
-/// consider using a batch Markdown parsing approach, or consider identifying URLs directly,
-/// without requiring any Markdown syntax.
+/// italics, `~token~` for strikethrough, and `[name](url)` for links.
 ///
 /// When this reaction finds inline Markdown syntax, that syntax is removed when the corresponding
 /// attribution is applied. For example, "**bold**" becomes "bold" with a bold attribution
@@ -65,7 +62,11 @@ const defaultUpstreamInlineMarkdownParsers = [
 /// This reaction only identifies spans of Markdown styles within individual [TextNode]s, which
 /// immediately precedes the caret. For example, "Hello **bold**|" will apply the bold style,
 /// but "Hello **bold** wo|" won't apply bold.
-class MarkdownInlineUpstreamSyntaxReaction implements EditReaction {
+///
+/// Parsing of links is handled differently than all other upstream syntax. Links use a fairly
+/// complicated syntax, so they're identified with a regular expression. All other upstream
+/// inline syntaxes are parsed character by character, moving upstream from the caret position.
+class MarkdownInlineUpstreamSyntaxReaction extends EditReaction {
   const MarkdownInlineUpstreamSyntaxReaction(this._parsers);
 
   final List<UpstreamMarkdownInlineSyntax> _parsers;
@@ -152,6 +153,10 @@ class MarkdownInlineUpstreamSyntaxReaction implements EditReaction {
       return const [];
     }
 
+    final newCaretPosition = DocumentPosition(
+      nodeId: editedNode.id,
+      nodePosition: TextNodePosition(offset: markdownRun.start + markdownRun.replacementText.length),
+    );
     return [
       // Delete the whole run of Markdown text, e.g., "**my bold**".
       DeleteContentRequest(
@@ -178,13 +183,16 @@ class MarkdownInlineUpstreamSyntaxReaction implements EditReaction {
       // were removed.
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: editedNode.id,
-            nodePosition: TextNodePosition(offset: markdownRun.start + markdownRun.replacementText.length),
-          ),
+          position: newCaretPosition,
         ),
         SelectionChangeType.alteredContent,
         SelectionReason.contentChange,
+      ),
+      ChangeComposingRegionRequest(
+        DocumentRange(
+          start: newCaretPosition,
+          end: newCaretPosition,
+        ),
       ),
     ];
   }
@@ -235,6 +243,14 @@ class _UpstreamInlineMarkdownParser {
       // Can't possibly have an upstream Markdown syntax when the caret is
       // at the beginning of the text.
       return null;
+    }
+
+    // Run the special case of parsing a link. This is a special case because the syntax
+    // is complicated enough that we don't want to try to accumulate characters as the
+    // user types.
+    final linkRun = _tryCreateLinkRun();
+    if (linkRun != null) {
+      return linkRun;
     }
 
     int offset = caretOffset - 1;
@@ -293,6 +309,66 @@ class _UpstreamInlineMarkdownParser {
       // Note: end offset is exclusive.
       caretOffset,
     );
+  }
+
+  _InlineMarkdownRun? _tryCreateLinkRun() {
+    if (caretOffset < 2) {
+      // There's not enough text before the caret to possibly hold a link. Fizzle.
+      return null;
+    }
+
+    final characterAtCaret = attributedText.text[caretOffset - 1]; // -1 because caret sits after character
+    if (characterAtCaret != " ") {
+      // Don't linkify unless the user just inserted a space after the token.
+      return null;
+    }
+
+    final endOfTokenOffset = caretOffset - 2;
+    if (attributedText.text[endOfTokenOffset] != ")") {
+      // All links end with a ")", therefore we know the upstream token
+      // isn't a link. Short-circuit return.
+      return null;
+    }
+
+    final markdownLinkRegex = RegExp(r'\[([\w\s\d]+)]\(((?:|https?://)[\w\d./?=#]+)\)');
+    final matches = markdownLinkRegex.allMatches(attributedText.text);
+    if (matches.isEmpty) {
+      // Didn't find any links.
+      return null;
+    }
+
+    // Found some links. See if any of them are immediately upstream.
+    for (final match in matches) {
+      if (match.end - 1 == endOfTokenOffset) {
+        // We found a Markdown link immediately upstream. Return it.
+        final linkName = match.group(1)!;
+        final linkUrl = match.group(2)!;
+        final linkAttribution = LinkAttribution(linkUrl);
+
+        return _InlineMarkdownRun(
+          AttributedText(
+            "$linkName ", // Explicitly add the trailing space so the caret stays after the space.
+            AttributedSpans(attributions: [
+              SpanMarker(
+                attribution: linkAttribution,
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              SpanMarker(
+                attribution: linkAttribution,
+                offset: linkName.length - 1,
+                markerType: SpanMarkerType.end,
+              ),
+            ]),
+          ),
+          match.start,
+          match.end + 1, // +1 to include the space after the link so the caret stays in same place.
+        );
+      }
+    }
+
+    // We found links, but none of them are immediately upstream.
+    return null;
   }
 
   void _updatePossibleSyntaxes(String character, int characterIndex) {
@@ -485,10 +561,17 @@ class StyleUpstreamMarkdownToken implements UpstreamMarkdownToken {
         }
 
         if (_openingSyntax == _closingSyntax) {
-          // We just found an opening syntax that matches our closing syntax.
-          // Therefore, we have found a complete Markdown run.
-          _isComplete = true;
-          _phase = _done;
+          if (_allParsedText.length == _openingSyntax.length * 2) {
+            // We just found an opening syntax that matches our closing syntax,
+            // but there is no text between the opening and closing syntax.
+            // Therefore, this is an invalid Markdown style.
+            _isValid = false;
+          } else {
+            // We just found an opening syntax that matches our closing syntax.
+            // Therefore, we have found a complete Markdown run.
+            _isComplete = true;
+            _phase = _done;
+          }
         }
       case _done:
         // More characters were added after already finding a complete Markdown

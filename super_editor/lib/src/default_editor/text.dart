@@ -166,6 +166,11 @@ class TextNode extends DocumentNode with ChangeNotifier {
   }
 
   @override
+  TextNode copy() {
+    return TextNode(id: id, text: text.copyText(0), metadata: Map.from(metadata));
+  }
+
+  @override
   String toString() => '[TextNode] - text: $text, metadata: ${copyMetadata()}';
 
   @override
@@ -1187,7 +1192,7 @@ class AddTextAttributionsRequest implements EditRequest {
 // TODO: the add/remove/toggle commands are almost identical except for what they
 //       do to ranges of text. Pull out the common range calculation behavior.
 /// Applies the given `attributions` to the given `documentSelection`.
-class AddTextAttributionsCommand implements EditCommand {
+class AddTextAttributionsCommand extends EditCommand {
   AddTextAttributionsCommand({
     required this.documentRange,
     required this.attributions,
@@ -1197,6 +1202,9 @@ class AddTextAttributionsCommand implements EditCommand {
   final DocumentRange documentRange;
   final Set<Attribution> attributions;
   final bool autoMerge;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1306,7 +1314,7 @@ class RemoveTextAttributionsRequest implements EditRequest {
 }
 
 /// Removes the given `attributions` from the given `documentSelection`.
-class RemoveTextAttributionsCommand implements EditCommand {
+class RemoveTextAttributionsCommand extends EditCommand {
   RemoveTextAttributionsCommand({
     required this.documentRange,
     required this.attributions,
@@ -1314,6 +1322,9 @@ class RemoveTextAttributionsCommand implements EditCommand {
 
   final DocumentRange documentRange;
   final Set<Attribution> attributions;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1425,7 +1436,7 @@ class ToggleTextAttributionsRequest implements EditRequest {
 /// if none of the content in the selection contains any of the
 /// given `attributions`. Otherwise, all the given `attributions`
 /// are removed from the content within the `documentSelection`.
-class ToggleTextAttributionsCommand implements EditCommand {
+class ToggleTextAttributionsCommand extends EditCommand {
   ToggleTextAttributionsCommand({
     required this.documentRange,
     required this.attributions,
@@ -1433,6 +1444,9 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
   final DocumentRange documentRange;
   final Set<Attribution> attributions;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   // TODO: The structure of this command looks nearly identical to the two other attribution
   // commands above. We collect nodes and then we loop through them to apply an operation.
@@ -1552,11 +1566,14 @@ class ToggleTextAttributionsCommand implements EditCommand {
           // see that we made a change, and re-renders the text in the document.
           node.text = AttributedText(
             node.text.text,
-            node.text.spans.copy(),
-          )..addAttribution(
-              attribution,
-              range,
-            );
+            node.text.spans.copy()
+              ..addAttribution(
+                newAttribution: attribution,
+                start: range.start,
+                end: range.end,
+                autoMerge: true,
+              ),
+          );
         }
 
         final wasAttributionAdded = node.text.hasAttributionAt(range.start, attribution: attribution);
@@ -1591,6 +1608,10 @@ class AttributionChangeEvent extends NodeChangeEvent {
   final Set<Attribution> attributions;
 
   @override
+  String describe() =>
+      "${change == AttributionChange.added ? "Added" : "Removed"} attributions ($nodeId) - ${range.start} -> ${range.end}: $attributions";
+
+  @override
   String toString() => "AttributionChangeEvent ('$nodeId' - ${range.start} -> ${range.end} ($change): '$attributions')";
 
   @override
@@ -1623,7 +1644,7 @@ class ChangeSingleColumnLayoutComponentStylesRequest implements EditRequest {
   final SingleColumnLayoutComponentStyles styles;
 }
 
-class ChangeSingleColumnLayoutComponentStylesCommand implements EditCommand {
+class ChangeSingleColumnLayoutComponentStylesCommand extends EditCommand {
   ChangeSingleColumnLayoutComponentStylesCommand({
     required this.nodeId,
     required this.styles,
@@ -1631,6 +1652,9 @@ class ChangeSingleColumnLayoutComponentStylesCommand implements EditCommand {
 
   final String nodeId;
   final SingleColumnLayoutComponentStyles styles;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1659,7 +1683,7 @@ class InsertTextRequest implements EditRequest {
   final Set<Attribution> attributions;
 }
 
-class InsertTextCommand implements EditCommand {
+class InsertTextCommand extends EditCommand {
   InsertTextCommand({
     required this.documentPosition,
     required this.textToInsert,
@@ -1669,6 +1693,13 @@ class InsertTextCommand implements EditCommand {
   final DocumentPosition documentPosition;
   final String textToInsert;
   final Set<Attribution> attributions;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  String describe() =>
+      "Insert text - ${documentPosition.nodeId} @ ${(documentPosition.nodePosition as TextNodePosition).offset} - '$textToInsert'";
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -1728,6 +1759,9 @@ class TextInsertionEvent extends NodeChangeEvent {
   final AttributedText text;
 
   @override
+  String describe() => "Inserted text ($nodeId) @ $offset: '${text.text}'";
+
+  @override
   String toString() => "TextInsertionEvent ('$nodeId' - $offset -> '${text.text}')";
 
   @override
@@ -1752,6 +1786,9 @@ class TextDeletedEvent extends NodeChangeEvent {
 
   final int offset;
   final AttributedText deletedText;
+
+  @override
+  String describe() => "Deleted text ($nodeId) @ $offset: ${deletedText.text}";
 
   @override
   String toString() => "TextDeletedEvent ('$nodeId' - $offset -> '${deletedText.text}')";
@@ -1820,7 +1857,7 @@ class InsertAttributedTextRequest implements EditRequest {
   final AttributedText textToInsert;
 }
 
-class InsertAttributedTextCommand implements EditCommand {
+class InsertAttributedTextCommand extends EditCommand {
   InsertAttributedTextCommand({
     required this.documentPosition,
     required this.textToInsert,
@@ -1828,6 +1865,9 @@ class InsertAttributedTextCommand implements EditCommand {
 
   final DocumentPosition documentPosition;
   final AttributedText textToInsert;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

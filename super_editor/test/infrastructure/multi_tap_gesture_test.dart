@@ -43,8 +43,7 @@ void main() {
         ),
       );
 
-      TestGesture gesture =
-          await tester.startGesture(tester.getCenter(tapTargetFinder));
+      TestGesture gesture = await tester.startGesture(tester.getCenter(tapTargetFinder));
       await tester.pump();
       expect(tapDownCount, 1);
       expect(tapCount, 0);
@@ -138,8 +137,7 @@ void main() {
         }),
       );
 
-      TestGesture gesture =
-          await tester.startGesture(tester.getCenter(tapTargetFinder));
+      TestGesture gesture = await tester.startGesture(tester.getCenter(tapTargetFinder));
       await tester.pump();
       expect(tapDownCount, 0);
       expect(tapCount, 0);
@@ -215,8 +213,7 @@ void main() {
         ),
       );
 
-      TestGesture gesture =
-          await tester.startGesture(tester.getCenter(tapTargetFinder));
+      TestGesture gesture = await tester.startGesture(tester.getCenter(tapTargetFinder));
       await tester.pump();
       expect(tapDownCount, 0);
       expect(tapCount, 0);
@@ -269,8 +266,7 @@ void main() {
       expect(timeoutCount, 1);
     });
 
-    testWidgets("can ignore single tap and double tap gestures",
-        (tester) async {
+    testWidgets("can ignore single tap and double tap gestures", (tester) async {
       final recognizer = TapSequenceGestureRecognizer(
         supportedDevices: {PointerDeviceKind.touch},
         reportPrecedingGestures: false,
@@ -311,8 +307,7 @@ void main() {
         ),
       );
 
-      TestGesture gesture =
-          await tester.startGesture(tester.getCenter(tapTargetFinder));
+      TestGesture gesture = await tester.startGesture(tester.getCenter(tapTargetFinder));
       await tester.pump();
       expect(tapDownCount, 0);
       expect(tapCount, 0);
@@ -374,6 +369,75 @@ void main() {
 
       await tester.pumpAndSettle();
     });
+
+    testWidgets("cancels tap if another recognizer wins after tap down", (tester) async {
+      int tapDownCount = 0;
+      int tapCancelCount = 0;
+      int tapUpCount = 0;
+      int dragUpdateCount = 0;
+
+      // Pump a tree with a tap recognizer and a drag recognizer to check if dragging
+      // after onTapDown was called causes the tap to be cancelled.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Center(
+            child: RawGestureDetector(
+              gestures: {
+                HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
+                  () => HorizontalDragGestureRecognizer(),
+                  (HorizontalDragGestureRecognizer recognizer) {
+                    recognizer.onUpdate = (_) {
+                      dragUpdateCount += 1;
+                    };
+                  },
+                ),
+                TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+                  () => TapSequenceGestureRecognizer(),
+                  (TapSequenceGestureRecognizer recognizer) {
+                    recognizer
+                      ..onTapDown = (_) {
+                        tapDownCount += 1;
+                      }
+                      ..onTapUp = (_) {
+                        tapUpCount += 1;
+                      }
+                      ..onTapCancel = () {
+                        tapCancelCount += 1;
+                      };
+                  },
+                ),
+              },
+              child: Container(
+                key: const ValueKey('tap-target'),
+                width: 48,
+                height: 48,
+                color: Colors.red,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Start the gesture, this should fire onTapDown.
+      final gesture = await tester.startGesture(tester.getCenter(tapTargetFinder));
+      await tester.pump(kTapMinTime);
+
+      // Trigger a horizontal drag.
+      await gesture.moveBy(const Offset(20, 0));
+      await tester.pump();
+      await gesture.moveBy(const Offset(20, 0));
+      await tester.pump();
+
+      // Release the gesture.
+      await gesture.up();
+      await tester.pump();
+
+      // Ensure that onTapCancel was called and onTapUp was not.
+      expect(tapDownCount, 1);
+      expect(tapCancelCount, 1);
+      expect(tapUpCount, 0);
+      expect(dragUpdateCount, 1);
+    });
   });
 }
 
@@ -391,8 +455,7 @@ Widget _buildGestureScaffold(
     home: Center(
       child: RawGestureDetector(
         gestures: {
-          TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<
-              TapSequenceGestureRecognizer>(
+          TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
             () => recognizer,
             (TapSequenceGestureRecognizer recognizer) {
               recognizer

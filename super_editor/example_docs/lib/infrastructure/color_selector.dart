@@ -145,10 +145,10 @@ class _ColorSelectorState extends State<ColorSelector> {
       child: TextButton.icon(
         onPressed: () => _onItemSelected(null),
         style: ButtonStyle(
-          foregroundColor: MaterialStateProperty.all(Colors.black),
-          backgroundColor: MaterialStateProperty.resolveWith(getButtonColor),
-          padding: MaterialStateProperty.all(const EdgeInsets.all(5)),
-          shape: MaterialStateProperty.all(
+          foregroundColor: WidgetStateProperty.all(Colors.black),
+          backgroundColor: WidgetStateProperty.resolveWith(getButtonColor),
+          padding: WidgetStateProperty.all(const EdgeInsets.all(5)),
+          shape: WidgetStateProperty.all(
             const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(5)),
             ),
@@ -223,10 +223,10 @@ class _ColorSelectorState extends State<ColorSelector> {
       child: TextButton(
         onPressed: () {},
         style: ButtonStyle(
-          foregroundColor: MaterialStateProperty.all(Colors.black),
-          backgroundColor: MaterialStateProperty.resolveWith(getButtonColor),
-          padding: MaterialStateProperty.all(const EdgeInsets.all(5)),
-          shape: MaterialStateProperty.all(
+          foregroundColor: WidgetStateProperty.all(Colors.black),
+          backgroundColor: WidgetStateProperty.resolveWith(getButtonColor),
+          padding: WidgetStateProperty.all(const EdgeInsets.all(5)),
+          shape: WidgetStateProperty.all(
             const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(5)),
             ),

@@ -1,6 +1,6 @@
 name: super_editor
 description: Configurable, composable, extensible text editor and document renderer for Flutter.
-version: 0.2.6-dev.1
+version: 0.3.0-dev.2
 homepage: https://github.com/superlistapp/super_editor
 
 screenshots:
@@ -21,14 +21,14 @@ dependencies:
   flutter:
     sdk: flutter
 
-  attributed_text: ^0.3.0
+  attributed_text: ^0.3.2
   characters: ^1.2.0
   collection: ^1.15.0
   follow_the_leader: ^0.0.4+8
   http: ">=0.13.1 <2.0.0"
   linkify: ^5.0.0
   logging: ^1.0.1
-  super_text_layout: ^0.1.9
+  super_text_layout: ^0.1.10
   url_launcher: ^6.1.9
   uuid: ^4.0.0
   overlord: ^0.0.3+5
@@ -36,15 +36,16 @@ dependencies:
   # Dependencies for testing tools that we ship with super_editor
   flutter_test:
     sdk: flutter
-  flutter_test_robots: 0.0.23
+  flutter_test_robots: ^0.0.24
+  clock: ^1.1.1
 
 dependency_overrides:
-  #  # Override to local mono-repo path so devs can test this repo
-  #  # against changes that they're making to other mono-repo packages
-#  attributed_text:
-#    path: ../attributed_text
-#  super_text_layout:
-#    path: ../super_text_layout
+  # Override to local mono-repo path so devs can test this repo
+  # against changes that they're making to other mono-repo packages
+  attributed_text:
+    path: ../attributed_text
+  super_text_layout:
+    path: ../super_text_layout
 
 dev_dependencies:
   flutter_lints: ^2.0.1
@@ -59,6 +60,7 @@ dev_dependencies:
   golden_runner:
     path: ../golden_runner
   flutter_test_runners: ^0.0.4
+  golden_bricks: ^1.0.0
 
 flutter:
   # no Flutter configuration

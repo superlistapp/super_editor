@@ -4,11 +4,13 @@ import 'dart:ui';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:linkify/linkify.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/default_editor/default_document_editor_reactions.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
@@ -1129,7 +1131,6 @@ class CommonEditorOperations {
       } else {
         editor.execute([const DeleteUpstreamCharacterRequest()]);
         return true;
-        // return _deleteUpstreamCharacter();
       }
     }
 
@@ -2191,6 +2192,10 @@ class CommonEditorOperations {
   void paste() {
     DocumentPosition pastePosition = composer.selection!.extent;
 
+    // Start a transaction so that we can capture both the initial deletion behavior,
+    // and the clipboard content insertion, all as one transaction.
+    editor.startTransaction();
+
     // Delete all currently selected content.
     if (!composer.selection!.isCollapsed) {
       pastePosition = CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
@@ -2217,6 +2222,8 @@ class CommonEditorOperations {
       composer: composer,
       pastePosition: pastePosition,
     );
+
+    editor.endTransaction();
   }
 
   Future<void> _paste({
@@ -2231,7 +2238,6 @@ class CommonEditorOperations {
       PasteEditorRequest(
         content: content,
         pastePosition: pastePosition,
-        composer: composer,
       ),
     ]);
   }
@@ -2241,30 +2247,29 @@ class PasteEditorRequest implements EditRequest {
   PasteEditorRequest({
     required this.content,
     required this.pastePosition,
-    required this.composer,
   });
 
   final String content;
   final DocumentPosition pastePosition;
-  final DocumentComposer composer;
 }
 
-class PasteEditorCommand implements EditCommand {
+class PasteEditorCommand extends EditCommand {
   PasteEditorCommand({
     required String content,
     required DocumentPosition pastePosition,
-    required DocumentComposer composer,
   })  : _content = content,
-        _pastePosition = pastePosition,
-        _composer = composer;
+        _pastePosition = pastePosition;
 
   final String _content;
   final DocumentPosition _pastePosition;
-  final DocumentComposer _composer;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (currentNodeWithSelection is! TextNode) {
       throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
@@ -2343,7 +2348,7 @@ class PasteEditorCommand implements EditCommand {
         SelectionReason.userInteraction,
       ),
     );
-    editorOpsLog.fine('New selection after paste operation: ${_composer.selection}');
+    editorOpsLog.fine('New selection after paste operation: ${composer.selection}');
     editorOpsLog.fine('Done with paste command.');
   }
 
@@ -2381,11 +2386,27 @@ class PasteEditorCommand implements EditCommand {
 
     for (final wordBoundary in wordBoundaries) {
       final word = wordBoundary.textInside(pastedText);
-      final link = Uri.tryParse(word);
 
-      if (link != null && link.hasScheme && link.hasAuthority) {
-        // Valid url. Apply [LinkAttribution] to the url
-        final linkAttribution = LinkAttribution.fromUri(link);
+      final extractedLinks = linkify(
+        word,
+        options: const LinkifyOptions(
+          humanize: false,
+          looseUrl: true,
+        ),
+      );
+
+      final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+      if (linkCount == 1) {
+        // The word is a single URL. Linkify it.
+        late final Uri uri;
+        try {
+          uri = parseLink(word);
+        } catch (exception) {
+          // Something went wrong when trying to parse links. This can happen, for example,
+          // due to Markdown syntax around a link, e.g., [My Link](www.something.com). I'm
+          // not sure why that case throws, but it does. We ignore any URL that throws.
+          continue;
+        }
 
         final startOffset = wordBoundary.start;
         // -1 because TextPosition's offset indexes the character after the
@@ -2394,7 +2415,7 @@ class PasteEditorCommand implements EditCommand {
 
         // Add link attribution.
         linkAttributionSpans.addAttribution(
-          newAttribution: linkAttribution,
+          newAttribution: LinkAttribution.fromUri(uri),
           start: startOffset,
           end: endOffset,
         );
@@ -2419,8 +2440,11 @@ class DeleteUpstreamCharacterRequest implements EditRequest {
   const DeleteUpstreamCharacterRequest();
 }
 
-class DeleteUpstreamCharacterCommand implements EditCommand {
+class DeleteUpstreamCharacterCommand extends EditCommand {
   const DeleteUpstreamCharacterCommand();
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -2470,8 +2494,11 @@ class DeleteDownstreamCharacterRequest implements EditRequest {
   const DeleteDownstreamCharacterRequest();
 }
 
-class DeleteDownstreamCharacterCommand implements EditCommand {
+class DeleteDownstreamCharacterCommand extends EditCommand {
   const DeleteDownstreamCharacterCommand();
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {

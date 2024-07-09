@@ -173,6 +173,11 @@ class PatternTagIndex with ChangeNotifier implements Editable {
       notifyListeners();
     }
   }
+
+  @override
+  void reset() {
+    _tags.clear();
+  }
 }
 
 /// An [EditReaction] that creates, updates, and removes pattern tags.
@@ -194,7 +199,7 @@ class PatternTagIndex with ChangeNotifier implements Editable {
 ///     #.
 ///     ##
 ///
-class PatternTagReaction implements EditReaction {
+class PatternTagReaction extends EditReaction {
   PatternTagReaction({
     TagRule tagRule = hashTagRule,
   }) : _tagRule = tagRule;
@@ -463,6 +468,11 @@ class PatternTagReaction implements EditReaction {
 
         triggerSymbolIndex = nextTriggerSymbolIndex;
       }
+    }
+
+    if (spanRemovals.isEmpty) {
+      // We didn't find any tags to break up. No need to submit change requests.
+      return;
     }
 
     // Execute the attribution removals and additions.

@@ -500,6 +500,11 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     _tapDownLongPressTimer = Timer(kLongPressTimeout, _onLongPressDown);
   }
 
+  void _onTapCancel() {
+    _tapDownLongPressTimer?.cancel();
+    _tapDownLongPressTimer = null;
+  }
+
   // Runs when a tap down has lasted long enough to signify a long-press.
   void _onLongPressDown() {
     if (_isScrolling) {
@@ -1054,6 +1059,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
             (TapSequenceGestureRecognizer recognizer) {
               recognizer
                 ..onTapDown = _onTapDown
+                ..onTapCancel = _onTapCancel
                 ..onTapUp = _onTapUp
                 ..onDoubleTapDown = _onDoubleTapDown
                 ..onTripleTapDown = _onTripleTapDown

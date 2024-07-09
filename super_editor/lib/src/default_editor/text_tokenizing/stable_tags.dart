@@ -162,7 +162,7 @@ class FillInComposingStableTagRequest implements EditRequest {
   int get hashCode => tag.hashCode ^ tagRule.hashCode;
 }
 
-class FillInComposingUserTagCommand implements EditCommand {
+class FillInComposingUserTagCommand extends EditCommand {
   const FillInComposingUserTagCommand(
     this._tag,
     this._tagRule,
@@ -170,6 +170,9 @@ class FillInComposingUserTagCommand implements EditCommand {
 
   final String _tag;
   final TagRule _tagRule;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -278,10 +281,13 @@ class CancelComposingStableTagRequest implements EditRequest {
   int get hashCode => tagRule.hashCode;
 }
 
-class CancelComposingStableTagCommand implements EditCommand {
+class CancelComposingStableTagCommand extends EditCommand {
   const CancelComposingStableTagCommand(this._tagRule);
 
   final TagRule _tagRule;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -363,7 +369,7 @@ extension StableTagIndexEditable on EditContext {
 
 /// An [EditReaction] that creates, updates, and removes composing stable tags, and commits those
 /// composing tags, causing them to become uneditable.
-class TagUserReaction implements EditReaction {
+class TagUserReaction extends EditReaction {
   const TagUserReaction({
     required TagRule tagRule,
     this.onUpdateComposingStableTag,
@@ -1076,6 +1082,13 @@ class StableTagIndex with ChangeNotifier implements Editable {
       notifyListeners();
     }
   }
+
+  @override
+  void reset() {
+    _composingStableTag.value = null;
+    _committedTags.clear();
+    _cancelledTags.clear();
+  }
 }
 
 class ComposingStableTag {
@@ -1094,10 +1107,13 @@ class ComposingStableTag {
 
   @override
   int get hashCode => contentBounds.hashCode ^ token.hashCode;
+
+  @override
+  String toString() => "[ComposingStableTag] - '$token', bounds: $contentBounds";
 }
 
 /// An [EditReaction] that prevents partial selection of a stable user tag.
-class AdjustSelectionAroundTagReaction implements EditReaction {
+class AdjustSelectionAroundTagReaction extends EditReaction {
   const AdjustSelectionAroundTagReaction(this._tagRule);
 
   final TagRule _tagRule;

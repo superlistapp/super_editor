@@ -1,5 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/default_editor/layout_single_column/selection_aware_viewmodel.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
 import '../core/document.dart';
@@ -82,6 +83,17 @@ class ImageNode extends BlockNode with ChangeNotifier {
   }
 
   @override
+  ImageNode copy() {
+    return ImageNode(
+      id: id,
+      imageUrl: imageUrl,
+      expectedBitmapSize: expectedBitmapSize,
+      altText: altText,
+      metadata: Map.from(metadata),
+    );
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ImageNode &&
@@ -122,27 +134,28 @@ class ImageComponentBuilder implements ComponentBuilder {
       componentKey: componentContext.componentKey,
       imageUrl: componentViewModel.imageUrl,
       expectedSize: componentViewModel.expectedSize,
-      selection: componentViewModel.selection,
+      selection: componentViewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection?,
       selectionColor: componentViewModel.selectionColor,
     );
   }
 }
 
-class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
+class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
   ImageComponentViewModel({
-    required String nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required super.nodeId,
+    super.maxWidth,
+    super.padding = EdgeInsets.zero,
     required this.imageUrl,
     this.expectedSize,
-    this.selection,
-    required this.selectionColor,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+    DocumentNodeSelection? selection,
+    Color selectionColor = Colors.transparent,
+  }) {
+    this.selection = selection;
+    this.selectionColor = selectionColor;
+  }
 
   String imageUrl;
   ExpectedSize? expectedSize;
-  UpstreamDownstreamNodeSelection? selection;
-  Color selectionColor;
 
   @override
   ImageComponentViewModel copy() {

@@ -282,6 +282,26 @@ class _EditorToolbarState extends State<EditorToolbar> {
     ]);
   }
 
+  /// Toggles superscript styling for the current selected text.
+  void _toggleSuperscript() {
+    widget.editor!.execute([
+      ToggleTextAttributionsRequest(
+        documentRange: widget.composer.selection!,
+        attributions: {superscriptAttribution},
+      ),
+    ]);
+  }
+
+  /// Toggles subscript styling for the current selected text.
+  void _toggleSubscript() {
+    widget.editor!.execute([
+      ToggleTextAttributionsRequest(
+        documentRange: widget.composer.selection!,
+        attributions: {subscriptAttribution},
+      ),
+    ]);
+  }
+
   /// Returns true if the current text selection includes part
   /// or all of a single link, returns false if zero links are
   /// in the selection or if 2+ links are in the selection.
@@ -403,7 +423,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     ]);
 
     // Clear the field and hide the URL bar
-    _urlController!.clear();
+    _urlController!.clearTextAndSelection();
     setState(() {
       _showUrlField = false;
       _urlFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
@@ -573,6 +593,22 @@ class _EditorToolbarState extends State<EditorToolbar> {
               ),
               Center(
                 child: IconButton(
+                  onPressed: _toggleSuperscript,
+                  icon: const Icon(Icons.superscript),
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelSuperscript,
+                ),
+              ),
+              Center(
+                child: IconButton(
+                  onPressed: _toggleSubscript,
+                  icon: const Icon(Icons.subscript),
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelSubscript,
+                ),
+              ),
+              Center(
+                child: IconButton(
                   onPressed: _areMultipleLinksSelected() ? null : _onLinkPressed,
                   icon: const Icon(Icons.link),
                   color: _isSingleLinkSelected() ? const Color(0xFF007AFF) : IconTheme.of(context).color,
@@ -697,7 +733,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 setState(() {
                   _urlFocusNode.unfocus();
                   _showUrlField = false;
-                  _urlController!.clear();
+                  _urlController!.clearTextAndSelection();
                 });
               },
             ),
