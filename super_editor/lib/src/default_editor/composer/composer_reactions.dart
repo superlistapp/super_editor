@@ -71,7 +71,7 @@ class UpdateComposerTextStylesReaction extends EditReaction {
   }
 
   void _updateComposerStylesAtCaret(EditContext editContext) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
 
     if (composer.selection?.extent == _previousSelectionExtent) {

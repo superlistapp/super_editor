@@ -608,7 +608,7 @@ class ChangeTaskCompletionCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final taskNode = context.find<MutableDocument>(Editor.documentKey).getNodeById(nodeId);
+    final taskNode = context.document.getNodeById(nodeId);
     if (taskNode is! TaskNode) {
       return;
     }
@@ -658,7 +658,7 @@ class ConvertParagraphToTaskCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final existingNode = document.getNodeById(nodeId);
     if (existingNode is! ParagraphNode) {
       editorOpsLog.warning(
@@ -713,7 +713,7 @@ class ConvertTaskToParagraphCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final taskNode = node as TaskNode;
     final newMetadata = Map<String, dynamic>.from(paragraphMetadata ?? {});
@@ -762,7 +762,7 @@ class SplitExistingTaskCommand extends EditCommand {
 
   @override
   void execute(EditContext editContext, CommandExecutor executor) {
-    final document = editContext.find<MutableDocument>(Editor.documentKey);
+    final document = editContext.document;
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
     final selection = composer.selection;
 
@@ -849,7 +849,7 @@ class IndentTaskCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final task = document.getNodeById(nodeId);
     if (task is! TaskNode) {
@@ -898,7 +898,7 @@ class UnIndentTaskCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final task = document.getNodeById(nodeId);
     if (task is! TaskNode) {
@@ -971,7 +971,7 @@ class SetTaskIndentCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final task = document.getNodeById(nodeId);
     if (task is! TaskNode) {
@@ -1003,7 +1003,7 @@ class UpdateSubTaskIndentAfterTaskDeletionReaction extends EditReaction {
     // At least one task was deleted. We're not sure where in the document the
     // tasks were before being deleted. Therefore, we check and fix every task
     // indentation in the document.
-    final document = editorContext.find<MutableDocument>(Editor.documentKey);
+    final document = editorContext.document;
     final changeIndentationRequests = <EditRequest>[];
     int maxIndentation = 0;
     for (int i = 0; i < document.nodeCount; i += 1) {
