@@ -64,8 +64,6 @@ void main() {
               trackBuilds: true,
               child: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,

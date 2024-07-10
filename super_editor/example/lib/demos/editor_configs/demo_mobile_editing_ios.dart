@@ -98,8 +98,6 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> with Single
                 focusNode: _editorFocusNode,
                 documentLayoutKey: _docLayoutKey,
                 editor: _docEditor,
-                document: _doc,
-                composer: _composer,
                 gestureMode: DocumentGestureMode.iOS,
                 inputSource: TextInputSource.ime,
                 selectionLayerLinks: _selectionLayerLinks,

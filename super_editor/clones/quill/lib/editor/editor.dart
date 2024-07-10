@@ -28,27 +28,6 @@ class FeatherEditor extends StatefulWidget {
 class _FeatherEditorState extends State<FeatherEditor> {
   final _editorFocusNode = FocusNode();
 
-  late MutableDocument _document;
-  late MutableDocumentComposer _composer;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _document = widget.editor.context.find<MutableDocument>(Editor.documentKey);
-    _composer = widget.editor.context.find<MutableDocumentComposer>(Editor.composerKey);
-  }
-
-  @override
-  void didUpdateWidget(FeatherEditor oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.editor != oldWidget.editor) {
-      _document = widget.editor.context.find<MutableDocument>(Editor.documentKey);
-      _composer = widget.editor.context.find<MutableDocumentComposer>(Editor.composerKey);
-    }
-  }
-
   @override
   void dispose() {
     _editorFocusNode.dispose();
@@ -90,8 +69,6 @@ class _FeatherEditorState extends State<FeatherEditor> {
       child: SuperEditor(
         focusNode: _editorFocusNode,
         editor: widget.editor,
-        document: _document,
-        composer: _composer,
         stylesheet: featherStylesheet,
         componentBuilders: const [
           FeatherBlockquoteComponentBuilder(),

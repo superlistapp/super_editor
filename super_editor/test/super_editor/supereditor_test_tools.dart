@@ -585,8 +585,6 @@ class _TestSuperEditorState extends State<_TestSuperEditor> {
       autofocus: widget.testConfiguration.autoFocus,
       tapRegionGroupId: widget.testConfiguration.tapRegionGroupId,
       editor: widget.testDocumentContext.editor,
-      document: widget.testDocumentContext.document,
-      composer: widget.testDocumentContext.composer,
       documentLayoutKey: widget.testDocumentContext.layoutKey,
       inputSource: widget.testConfiguration.inputSource,
       selectionPolicies: widget.testConfiguration.selectionPolicies ?? const SuperEditorSelectionPolicies(),

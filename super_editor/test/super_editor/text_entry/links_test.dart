@@ -688,8 +688,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -754,8 +752,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -822,8 +818,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -891,8 +885,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -959,8 +951,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,
@@ -1028,8 +1018,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 componentBuilders: [
                   TaskComponentBuilder(editor),
                   ...defaultComponentBuilders,

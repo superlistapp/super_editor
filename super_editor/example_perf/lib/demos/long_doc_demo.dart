@@ -26,11 +26,7 @@ class _LongDocDemoState extends State<LongDocDemo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SuperEditor(
-        document: _doc,
-        composer: _composer,
-        editor: _docEditor,
-      ),
+      body: SuperEditor(editor: _docEditor),
     );
   }
 }

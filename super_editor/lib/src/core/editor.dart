@@ -998,8 +998,16 @@ extension StandardEditables on Editor {
   /// Finds and returns the [MutableDocument] within the [Editor].
   MutableDocument get document => context.find<MutableDocument>(Editor.documentKey);
 
+  /// Finds and returns the [MutableDocument] within the [Editor], or `null` if no [MutableDocument]
+  /// is in the [Editor].
+  MutableDocument? get maybeDocument => context.findMaybe<MutableDocument>(Editor.documentKey);
+
   /// Finds and returns the [MutableDocumentComposer] within the [Editor].
   MutableDocumentComposer get composer => context.find<MutableDocumentComposer>(Editor.composerKey);
+
+  /// Finds and returns the [MutableDocumentComposer] within the [Editor], or `null` if no
+  /// [MutableDocumentComposer] is in the [Editor].
+  MutableDocumentComposer? get maybeComposer => context.findMaybe<MutableDocumentComposer>(Editor.composerKey);
 }
 
 /// Extensions that provide direct, type-safe access to [Editable]s that are
@@ -1012,8 +1020,16 @@ extension StandardEditablesInContext on EditContext {
   /// Finds and returns the [MutableDocument] within the [EditContext].
   MutableDocument get document => find<MutableDocument>(Editor.documentKey);
 
+  /// Finds and returns the [MutableDocument] within the [EditContext], or `null` if no [MutableDocument]
+  /// is in the [EditContext].
+  MutableDocument? get maybeDocument => findMaybe<MutableDocument>(Editor.documentKey);
+
   /// Finds and returns the [MutableDocumentComposer] within the [EditContext].
   MutableDocumentComposer get composer => find<MutableDocumentComposer>(Editor.composerKey);
+
+  /// Finds and returns the [MutableDocumentComposer] within the [EditContext], or `null` if no
+  /// [MutableDocumentComposer] is in the [EditContext].
+  MutableDocumentComposer? get maybeComposer => findMaybe<MutableDocumentComposer>(Editor.composerKey);
 }
 
 /// An in-memory, mutable [Document].

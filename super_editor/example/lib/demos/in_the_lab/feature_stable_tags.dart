@@ -110,8 +110,6 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
     return IntrinsicHeight(
       child: SuperEditor(
         editor: _editor,
-        document: _document,
-        composer: _composer,
         focusNode: _editorFocusNode,
         stylesheet: defaultStylesheet.copyWith(
           inlineTextStyler: (attributions, existingStyle) {
