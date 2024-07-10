@@ -117,8 +117,6 @@ class _EditorReaderSwitchDemoState extends State<_EditorReaderSwitchDemo> {
   Widget _buildEditorOrReader() {
     if (widget.isEditable.value) {
       return SuperEditor(
-        document: widget.document,
-        composer: _composer,
         editor: _docEditor,
       );
     } else {

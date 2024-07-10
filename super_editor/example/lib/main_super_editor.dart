@@ -235,8 +235,6 @@ class _StandardEditorState extends State<_StandardEditor> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: widget.editor,
-      document: widget.document,
-      composer: widget.composer,
       focusNode: _editorFocusNode,
       scrollController: _scrollController,
       documentLayoutKey: _docLayoutKey,

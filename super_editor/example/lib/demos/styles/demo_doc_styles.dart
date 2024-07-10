@@ -137,8 +137,6 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
-      document: _doc,
-      composer: _composer,
       stylesheet: _createStyles(),
     );
   }

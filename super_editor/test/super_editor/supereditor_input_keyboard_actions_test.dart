@@ -2557,8 +2557,6 @@ Future<void> _pumpEditorWithTaskComponent(
       home: Scaffold(
         body: SuperEditor(
           editor: editor,
-          document: document,
-          composer: composer,
           componentBuilders: [
             TaskComponentBuilder(editor),
             ...defaultComponentBuilders,

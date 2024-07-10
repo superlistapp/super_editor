@@ -41,8 +41,6 @@ class _LoseFocusDemoState extends State<LoseFocusDemo> {
               ),
               child: SuperEditor(
                 editor: _docEditor,
-                document: _doc,
-                composer: _composer,
                 inputSource: TextInputSource.ime,
                 stylesheet: defaultStylesheet.copyWith(
                   documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),

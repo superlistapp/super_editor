@@ -677,8 +677,6 @@ Future<Editor> _pumpScaffold(WidgetTester tester, {MutableDocument? document}) a
       home: Scaffold(
         body: SuperEditor(
           editor: editor,
-          document: document,
-          composer: composer,
         ),
       ),
     ),
