@@ -63,7 +63,7 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
     setState(() {
       _actions.clear();
 
-      for (final node in _document.nodes) {
+      for (final node in _document) {
         if (node is! TextNode) {
           continue;
         }

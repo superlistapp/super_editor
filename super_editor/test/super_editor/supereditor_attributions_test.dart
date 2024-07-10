@@ -23,13 +23,13 @@ void main() {
           final doc = SuperEditorInspector.findDocument()!;
 
           // Place the caret at "bold|".
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 6);
+          await tester.placeCaretInParagraph(doc.first.id, 6);
 
           // Type at an offset that should expand the bold attribution.
           await tester.typeImeText("er");
 
           // Place the caret at "text|".
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 13);
+          await tester.placeCaretInParagraph(doc.first.id, 13);
 
           // Type at an offset that shouldn't expand any attributions.
           await tester.typeImeText(".");
@@ -48,13 +48,13 @@ void main() {
           final doc = SuperEditorInspector.findDocument()!;
 
           // Place the caret at b|ld.
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 3);
+          await tester.placeCaretInParagraph(doc.first.id, 3);
 
           // Type at an offset that should expand the bold attribution.
           await tester.typeImeText("o");
 
           // Place the caret at A|.
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 1);
+          await tester.placeCaretInParagraph(doc.first.id, 1);
 
           // Type at an offset that shouldn't expand any attributions.
           await tester.typeImeText("nother");
@@ -73,13 +73,13 @@ void main() {
           final doc = SuperEditorInspector.findDocument()!;
 
           // Place the caret at This is a|.
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 9);
+          await tester.placeCaretInParagraph(doc.first.id, 9);
 
           // Type at an offset that should expand the link attribution.
           await tester.typeImeText("nother");
 
           // Place the caret at google|.
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 30);
+          await tester.placeCaretInParagraph(doc.first.id, 30);
 
           // Type at an offset that shouldn't expand any attributions.
           await tester.typeImeText(".");
@@ -100,7 +100,7 @@ void main() {
           final doc = SuperEditorInspector.findDocument()!;
 
           // Place the caret at |text.
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 7);
+          await tester.placeCaretInParagraph(doc.first.id, 7);
 
           // Press left arrow to place the caret at bold|.
           await tester.pressLeftArrow();
@@ -128,7 +128,7 @@ void main() {
           final doc = SuperEditorInspector.findDocument()!;
 
           // Place the caret at A|.
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 1);
+          await tester.placeCaretInParagraph(doc.first.id, 1);
 
           // Press right arrow twice to place the caret at b|ld.
           await tester.pressRightArrow();
@@ -159,7 +159,7 @@ void main() {
           final doc = SuperEditorInspector.findDocument()!;
 
           // Place the caret at |to google.
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 15);
+          await tester.placeCaretInParagraph(doc.first.id, 15);
 
           // Press left arrow twice to place caret at lin|k.
           await tester.pressLeftArrow();
@@ -598,8 +598,8 @@ void main() {
           final editor = context.editor;
           final document = context.document;
 
-          final firstNode = document.nodes[0] as ParagraphNode;
-          final secondNode = document.nodes[1] as ParagraphNode;
+          final firstNode = document.getNodeAt(0) as ParagraphNode;
+          final secondNode = document.getNodeAt(1) as ParagraphNode;
 
           // Apply the bold attribution, starting after the last character of the first node.
           editor.toggleAttributionsForDocumentSelection(
@@ -646,8 +646,8 @@ void main() {
           final editor = context.editor;
           final document = context.document;
 
-          final firstNode = document.nodes[0] as ParagraphNode;
-          final secondNode = document.nodes[1] as ParagraphNode;
+          final firstNode = document.getNodeAt(0) as ParagraphNode;
+          final secondNode = document.getNodeAt(1) as ParagraphNode;
 
           // Apply the bold attribution, with a selection that start at the beginning of the first node and ends
           // before the first character of the second node.
@@ -1138,7 +1138,7 @@ void main() {
           final doc = SuperEditorInspector.findDocument()!;
 
           // Place the caret at |bold.
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 2);
+          await tester.placeCaretInParagraph(doc.first.id, 2);
 
           // Type some letters.
           await tester.typeImeText("very ");
@@ -1160,7 +1160,7 @@ void main() {
           final composer = context.findEditContext().composer;
 
           // Place the caret at the end of the paragraph.
-          await tester.placeCaretInParagraph(doc.nodes.first.id, 19);
+          await tester.placeCaretInParagraph(doc.first.id, 19);
 
           // Toggle the bold attribution.
           composer.preferences.toggleStyle(boldAttribution);

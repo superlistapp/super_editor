@@ -145,11 +145,11 @@ class SuperReaderInspector {
       throw Exception('SuperReader not found');
     }
 
-    if (index >= doc.nodes.length) {
-      throw Exception('Tried to access index $index in a document where the max index is ${doc.nodes.length - 1}');
+    if (index >= doc.nodeCount) {
+      throw Exception('Tried to access index $index in a document where the max index is ${doc.nodeCount - 1}');
     }
 
-    final node = doc.nodes[index];
+    final node = doc.getNodeAt(index);
     if (node is! NodeType) {
       throw Exception('Tried to access a ${node.runtimeType} as $NodeType');
     }

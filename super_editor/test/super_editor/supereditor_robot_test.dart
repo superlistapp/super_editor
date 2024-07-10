@@ -254,7 +254,7 @@ void main() {
           .withInputSource(TextInputSource.keyboard)
           .pump();
 
-      final nodeId = testContext.document.nodes.first.id;
+      final nodeId = testContext.document.first.id;
 
       // Tap to place the caret in the first paragraph.
       await tester.placeCaretInParagraph(nodeId, 0);
@@ -276,7 +276,7 @@ void main() {
           .withInputSource(TextInputSource.ime)
           .pump();
 
-      final nodeId = testContext.document.nodes.first.id;
+      final nodeId = testContext.document.first.id;
 
       // Tap to place the caret in the first paragraph.
       await tester.placeCaretInParagraph(nodeId, 0);

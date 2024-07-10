@@ -66,7 +66,7 @@ Future<void> pasteMarkdown({
   // Paste the structured content into the document.
   editor.execute([
     PasteStructuredContentEditorRequest(
-      content: deserializedMarkdown.nodes,
+      content: deserializedMarkdown,
       pastePosition: pastePosition,
     ),
   ]);

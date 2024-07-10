@@ -40,7 +40,7 @@ void main() {
           )
           .pump();
 
-      final nodeId = context.document.nodes.first.id;
+      final nodeId = context.document.first.id;
 
       // Place the caret at the start of the document to show the drag handle.
       await tester.placeCaretInParagraph(nodeId, 0);
@@ -92,7 +92,7 @@ void main() {
           )
           .pump();
 
-      final nodeId = context.document.nodes.first.id;
+      final nodeId = context.document.first.id;
 
       // Double tap to show the expanded handle.
       await tester.doubleTapInParagraph(nodeId, 0);

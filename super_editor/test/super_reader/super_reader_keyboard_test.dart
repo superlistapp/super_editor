@@ -277,7 +277,7 @@ Future<String> _pumpSingleLineAndSelectAWord(
       .autoFocus(true)
       .pump();
 
-  final nodeId = testContext.documentContext.document.nodes.first.id;
+  final nodeId = testContext.documentContext.document.first.id;
 
   await tester.doubleTapInParagraph(nodeId, offset);
 
@@ -299,7 +299,7 @@ Future<String> _pumpDoubleLine(
       .autoFocus(true)
       .pump();
 
-  final nodeId = testContext.documentContext.document.nodes.first.id;
+  final nodeId = testContext.documentContext.document.first.id;
 
   await tester.doubleTapInParagraph(nodeId, offset);
 

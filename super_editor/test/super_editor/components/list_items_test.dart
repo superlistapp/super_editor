@@ -28,7 +28,7 @@ void main() {
         expect(richText.text.style!.color, Colors.blue);
 
         // Tap to place caret.
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(doc.first.id, 0);
 
         // Convert the list item to a paragraph.
         testContext.findEditContext().commonOps.convertToParagraph(
@@ -46,7 +46,7 @@ void main() {
         // Convert the paragraph back to an unordered list item.
         testContext.findEditContext().commonOps.convertToListItem(
               ListItemType.unordered,
-              (doc.nodes.first as ParagraphNode).text,
+              (doc.first as ParagraphNode).text,
             );
         await tester.pumpAndSettle();
 
@@ -72,7 +72,7 @@ void main() {
         expect(richText.text.style!.color, Colors.blue);
 
         // Tap to place caret.
-        await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+        await tester.placeCaretInParagraph(doc.first.id, 0);
 
         // Convert the list item to a paragraph.
         testContext.findEditContext().commonOps.convertToParagraph(
@@ -90,7 +90,7 @@ void main() {
         // Convert the paragraph back to an ordered list item.
         testContext.findEditContext().commonOps.convertToListItem(
               ListItemType.ordered,
-              (doc.nodes.first as ParagraphNode).text,
+              (doc.first as ParagraphNode).text,
             );
         await tester.pumpAndSettle();
 
@@ -106,7 +106,7 @@ void main() {
         await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.nodes.first as ListItemNode;
+        final listItemNode = doc.first as ListItemNode;
 
         // Place caret at the first list item, which has one level of indentation.
         await tester.placeCaretInParagraph(listItemNode.id, 0);
@@ -149,7 +149,7 @@ void main() {
         await _pumpUnorderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.nodes.last as ListItemNode;
+        final listItemNode = doc.last as ListItemNode;
 
         // Place caret at the last list item, which has two levels of indentation.
         // For some reason, taping at the first character isn't displaying any caret,
@@ -195,7 +195,7 @@ void main() {
         await _pumpUnorderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.nodes.last as ListItemNode;
+        final listItemNode = doc.last as ListItemNode;
 
         // Place caret at the last list item, which has two levels of indentation.
         // For some reason, taping at the first character isn't displaying any caret,
@@ -222,7 +222,7 @@ void main() {
         final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
-        await tester.placeCaretInParagraph(document.nodes.last.id, 6);
+        await tester.placeCaretInParagraph(document.last.id, 6);
 
         // Type at the end of the list item to generate a composing region,
         // simulating the Samsung keyboard.
@@ -239,22 +239,22 @@ void main() {
         await tester.pressEnter();
 
         // Ensure that a new, empty list item was created.
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
 
         // Ensure the existing item remains the same.
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "Item 12");
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "Item 12");
 
         // Ensure the new item has the correct list item type and indentation.
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -270,7 +270,7 @@ void main() {
         final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
-        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+        await tester.placeCaretInParagraph(document.first.id, 6);
 
         // Type at the end of the list item to generate a composing region,
         // simulating the Samsung keyboard.
@@ -287,22 +287,22 @@ void main() {
         await tester.typeImeText("\n");
 
         // Ensure that a new, empty list item was created.
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
 
         // Ensure the existing item remains the same.
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "Item 12");
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "Item 12");
 
         // Ensure the new item has the correct list item type and indentation.
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -318,7 +318,7 @@ void main() {
         final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
-        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+        await tester.placeCaretInParagraph(document.first.id, 6);
 
         // Type at the end of the list item to generate a composing region,
         // simulating the Samsung keyboard.
@@ -335,22 +335,22 @@ void main() {
         await tester.testTextInput.receiveAction(TextInputAction.newline);
 
         // Ensure that a new, empty list item was created.
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
 
         // Ensure the existing item remains the same.
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "Item 12");
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "Item 12");
 
         // Ensure the new item has the correct list item type and indentation.
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -366,24 +366,24 @@ void main() {
         final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
-        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+        await tester.placeCaretInParagraph(document.first.id, 5);
 
         // Press enter to split the existing item into two.
         await tester.pressEnter();
 
         // Ensure that a new item was created with part of the previous item.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "List ");
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "Item");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "List ");
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -400,24 +400,24 @@ void main() {
         final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
-        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+        await tester.placeCaretInParagraph(document.first.id, 5);
 
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText("\n");
 
         // Ensure that a new item was created with part of the previous item.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "List ");
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "Item");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "List ");
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -434,24 +434,24 @@ void main() {
         final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
-        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+        await tester.placeCaretInParagraph(document.first.id, 5);
 
         // On iOS, pressing ENTER generates a newline action.
         await tester.testTextInput.receiveAction(TextInputAction.newline);
 
         // Ensure that a new item was created with part of the previous item.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "List ");
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "Item");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.unordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "List ");
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).type, ListItemType.unordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -473,31 +473,31 @@ void main() {
    - Second unoredered item""") //
             .pump();
 
-        expect(context.document.nodes.length, 6);
+        expect(context.document.nodeCount, 6);
 
         // Ensure the nodes have the correct type.
-        expect(context.document.nodes[0], isA<ListItemNode>());
-        expect((context.document.nodes[0] as ListItemNode).type, ListItemType.ordered);
+        expect(context.document.getNodeAt(0), isA<ListItemNode>());
+        expect((context.document.getNodeAt(0) as ListItemNode).type, ListItemType.ordered);
 
-        expect(context.document.nodes[1], isA<ListItemNode>());
-        expect((context.document.nodes[1] as ListItemNode).type, ListItemType.unordered);
+        expect(context.document.getNodeAt(1), isA<ListItemNode>());
+        expect((context.document.getNodeAt(1) as ListItemNode).type, ListItemType.unordered);
 
-        expect(context.document.nodes[2], isA<ListItemNode>());
-        expect((context.document.nodes[2] as ListItemNode).type, ListItemType.unordered);
+        expect(context.document.getNodeAt(2), isA<ListItemNode>());
+        expect((context.document.getNodeAt(2) as ListItemNode).type, ListItemType.unordered);
 
-        expect(context.document.nodes[3], isA<ListItemNode>());
-        expect((context.document.nodes[3] as ListItemNode).type, ListItemType.ordered);
+        expect(context.document.getNodeAt(3), isA<ListItemNode>());
+        expect((context.document.getNodeAt(3) as ListItemNode).type, ListItemType.ordered);
 
-        expect(context.document.nodes[4], isA<ListItemNode>());
-        expect((context.document.nodes[4] as ListItemNode).type, ListItemType.unordered);
+        expect(context.document.getNodeAt(4), isA<ListItemNode>());
+        expect((context.document.getNodeAt(4) as ListItemNode).type, ListItemType.unordered);
 
-        expect(context.document.nodes[5], isA<ListItemNode>());
-        expect((context.document.nodes[5] as ListItemNode).type, ListItemType.unordered);
+        expect(context.document.getNodeAt(5), isA<ListItemNode>());
+        expect((context.document.getNodeAt(5) as ListItemNode).type, ListItemType.unordered);
 
         // Ensure the sequence was kept.
         final firstOrderedItem = tester.widget<OrderedListItemComponent>(
           find.ancestor(
-            of: find.byWidget(SuperEditorInspector.findWidgetForComponent(context.document.nodes[0].id)),
+            of: find.byWidget(SuperEditorInspector.findWidgetForComponent(context.document.getNodeAt(0)!.id)),
             matching: find.byType(OrderedListItemComponent),
           ),
         );
@@ -505,7 +505,7 @@ void main() {
 
         final secondOrderedItem = tester.widget<OrderedListItemComponent>(
           find.ancestor(
-            of: find.byWidget(SuperEditorInspector.findWidgetForComponent(context.document.nodes[3].id)),
+            of: find.byWidget(SuperEditorInspector.findWidgetForComponent(context.document.getNodeAt(3)!.id)),
             matching: find.byType(OrderedListItemComponent),
           ),
         );
@@ -526,21 +526,21 @@ void main() {
 """) //
             .pump();
 
-        expect(context.document.nodes.length, 6);
+        expect(context.document.nodeCount, 6);
 
         // Ensure the nodes have the correct type.
         for (int i = 0; i < 6; i++) {
-          expect(context.document.nodes[i], isA<ListItemNode>());
-          expect((context.document.nodes[i] as ListItemNode).type, ListItemType.ordered);
+          expect(context.document.getNodeAt(i), isA<ListItemNode>());
+          expect((context.document.getNodeAt(i) as ListItemNode).type, ListItemType.ordered);
         }
 
         // Ensure the sequence was kept.
-        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[0].id), 1);
-        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[1].id), 2);
-        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[2].id), 1);
-        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[3].id), 2);
-        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[4].id), 3);
-        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[5].id), 1);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.getNodeAt(0)!.id), 1);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.getNodeAt(1)!.id), 2);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.getNodeAt(2)!.id), 1);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.getNodeAt(3)!.id), 2);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.getNodeAt(4)!.id), 3);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.getNodeAt(5)!.id), 1);
       });
 
       testWidgetsOnArbitraryDesktop('restarts item order when separated by an unordered item', (tester) async {
@@ -555,32 +555,32 @@ void main() {
 2. Second ordered item""") //
             .pump();
 
-        expect(context.document.nodes.length, 6);
+        expect(context.document.nodeCount, 6);
 
         // Ensure the nodes have the correct type.
-        expect(context.document.nodes[0], isA<ListItemNode>());
-        expect((context.document.nodes[0] as ListItemNode).type, ListItemType.ordered);
+        expect(context.document.getNodeAt(0), isA<ListItemNode>());
+        expect((context.document.getNodeAt(0) as ListItemNode).type, ListItemType.ordered);
 
-        expect(context.document.nodes[1], isA<ListItemNode>());
-        expect((context.document.nodes[1] as ListItemNode).type, ListItemType.ordered);
+        expect(context.document.getNodeAt(1), isA<ListItemNode>());
+        expect((context.document.getNodeAt(1) as ListItemNode).type, ListItemType.ordered);
 
-        expect(context.document.nodes[2], isA<ListItemNode>());
-        expect((context.document.nodes[2] as ListItemNode).type, ListItemType.unordered);
+        expect(context.document.getNodeAt(2), isA<ListItemNode>());
+        expect((context.document.getNodeAt(2) as ListItemNode).type, ListItemType.unordered);
 
-        expect(context.document.nodes[3], isA<ListItemNode>());
-        expect((context.document.nodes[3] as ListItemNode).type, ListItemType.unordered);
+        expect(context.document.getNodeAt(3), isA<ListItemNode>());
+        expect((context.document.getNodeAt(3) as ListItemNode).type, ListItemType.unordered);
 
-        expect(context.document.nodes[4], isA<ListItemNode>());
-        expect((context.document.nodes[4] as ListItemNode).type, ListItemType.ordered);
+        expect(context.document.getNodeAt(4), isA<ListItemNode>());
+        expect((context.document.getNodeAt(4) as ListItemNode).type, ListItemType.ordered);
 
-        expect(context.document.nodes[5], isA<ListItemNode>());
-        expect((context.document.nodes[5] as ListItemNode).type, ListItemType.ordered);
+        expect(context.document.getNodeAt(5), isA<ListItemNode>());
+        expect((context.document.getNodeAt(5) as ListItemNode).type, ListItemType.ordered);
 
         // Ensure the sequence restarted after the unordered items.
-        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[0].id), 1);
-        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[1].id), 2);
-        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[4].id), 1);
-        expect(SuperEditorInspector.findListItemOrdinal(context.document.nodes[5].id), 2);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.getNodeAt(0)!.id), 1);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.getNodeAt(1)!.id), 2);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.getNodeAt(4)!.id), 1);
+        expect(SuperEditorInspector.findListItemOrdinal(context.document.getNodeAt(5)!.id), 2);
       });
 
       testWidgetsOnArbitraryDesktop('does not keep sequence for items split by paragraphs', (tester) async {
@@ -594,21 +594,21 @@ A paragraph
 2. Second ordered item""") //
             .pump();
 
-        expect(context.document.nodes.length, 3);
+        expect(context.document.nodeCount, 3);
 
         // Ensure the nodes have the correct type.
-        expect(context.document.nodes[0], isA<ListItemNode>());
-        expect((context.document.nodes[0] as ListItemNode).type, ListItemType.ordered);
+        expect(context.document.getNodeAt(0), isA<ListItemNode>());
+        expect((context.document.getNodeAt(0) as ListItemNode).type, ListItemType.ordered);
 
-        expect(context.document.nodes[1], isA<ParagraphNode>());
+        expect(context.document.getNodeAt(1), isA<ParagraphNode>());
 
-        expect(context.document.nodes[2], isA<ListItemNode>());
-        expect((context.document.nodes[2] as ListItemNode).type, ListItemType.ordered);
+        expect(context.document.getNodeAt(2), isA<ListItemNode>());
+        expect((context.document.getNodeAt(2) as ListItemNode).type, ListItemType.ordered);
 
         // Ensure the sequence reset when reaching the second list item.
         final firstOrderedItem = tester.widget<OrderedListItemComponent>(
           find.ancestor(
-            of: find.byWidget(SuperEditorInspector.findWidgetForComponent(context.document.nodes[0].id)),
+            of: find.byWidget(SuperEditorInspector.findWidgetForComponent(context.document.getNodeAt(0)!.id)),
             matching: find.byType(OrderedListItemComponent),
           ),
         );
@@ -616,7 +616,7 @@ A paragraph
 
         final secondOrderedItem = tester.widget<OrderedListItemComponent>(
           find.ancestor(
-            of: find.byWidget(SuperEditorInspector.findWidgetForComponent(context.document.nodes[2].id)),
+            of: find.byWidget(SuperEditorInspector.findWidgetForComponent(context.document.getNodeAt(2)!.id)),
             matching: find.byType(OrderedListItemComponent),
           ),
         );
@@ -627,7 +627,7 @@ A paragraph
         await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.nodes.first as ListItemNode;
+        final listItemNode = doc.first as ListItemNode;
 
         // Place caret at the first list item, which has one level of indentation.
         await tester.placeCaretInParagraph(listItemNode.id, 0);
@@ -670,7 +670,7 @@ A paragraph
         await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.nodes.last as ListItemNode;
+        final listItemNode = doc.last as ListItemNode;
 
         // Place caret at the last list item, which has two levels of indentation.
         // For some reason, taping at the first character isn't displaying any caret,
@@ -716,7 +716,7 @@ A paragraph
         await _pumpOrderedListWithTextField(tester);
 
         final doc = SuperEditorInspector.findDocument()!;
-        final listItemNode = doc.nodes.last as ListItemNode;
+        final listItemNode = doc.last as ListItemNode;
 
         // Place caret at the last list item, which has two levels of indentation.
         // For some reason, taping at the first character isn't displaying any caret,
@@ -743,28 +743,28 @@ A paragraph
         final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
-        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+        await tester.placeCaretInParagraph(document.first.id, 6);
 
         // Press enter to create a new list item.
         await tester.pressEnter();
 
         // Ensure that a new, empty list item was created.
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
 
         // Ensure the existing item remains the same.
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "Item 1");
 
         // Ensure the new item has the correct list item type and indentation.
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -780,28 +780,28 @@ A paragraph
         final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
-        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+        await tester.placeCaretInParagraph(document.first.id, 6);
 
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText("\n");
 
         // Ensure that a new, empty list item was created.
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
 
         // Ensure the existing item remains the same.
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "Item 1");
 
         // Ensure the new item has the correct list item type and indentation.
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -817,28 +817,28 @@ A paragraph
         final document = context.findEditContext().document;
 
         // Place the caret at the end of the list item.
-        await tester.placeCaretInParagraph(document.nodes.first.id, 6);
+        await tester.placeCaretInParagraph(document.first.id, 6);
 
         // On iOS, pressing ENTER generates a newline action.
         await tester.testTextInput.receiveAction(TextInputAction.newline);
 
         // Ensure that a new, empty list item was created.
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
 
         // Ensure the existing item remains the same.
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "Item 1");
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "Item 1");
 
         // Ensure the new item has the correct list item type and indentation.
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "");
+        expect((document.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -854,24 +854,24 @@ A paragraph
         final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
-        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+        await tester.placeCaretInParagraph(document.first.id, 5);
 
         // Press enter to split the existing item into two.
         await tester.pressEnter();
 
         // Ensure that a new item was created with part of the previous item.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "List ");
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "Item");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "List ");
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -888,24 +888,24 @@ A paragraph
         final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
-        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+        await tester.placeCaretInParagraph(document.first.id, 5);
 
         // On Android, pressing ENTER generates a "\n" insertion.
         await tester.typeImeText("\n");
 
         // Ensure that a new item was created with part of the previous item.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "List ");
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "Item");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "List ");
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -922,24 +922,24 @@ A paragraph
         final document = context.findEditContext().document;
 
         // Place the caret at "List |Item"
-        await tester.placeCaretInParagraph(document.nodes.first.id, 5);
+        await tester.placeCaretInParagraph(document.first.id, 5);
 
         // On iOS, pressing ENTER generates a newline action.
         await tester.testTextInput.receiveAction(TextInputAction.newline);
 
         // Ensure that a new item was created with part of the previous item.
-        expect(document.nodes.length, 2);
-        expect(document.nodes.first, isA<ListItemNode>());
-        expect((document.nodes.first as ListItemNode).text.text, "List ");
-        expect(document.nodes.last, isA<ListItemNode>());
-        expect((document.nodes.last as ListItemNode).text.text, "Item");
-        expect((document.nodes.last as ListItemNode).type, ListItemType.ordered);
-        expect((document.nodes.last as ListItemNode).indent, 0);
+        expect(document.nodeCount, 2);
+        expect(document.first, isA<ListItemNode>());
+        expect((document.first as ListItemNode).text.text, "List ");
+        expect(document.last, isA<ListItemNode>());
+        expect((document.last as ListItemNode).text.text, "Item");
+        expect((document.last as ListItemNode).type, ListItemType.ordered);
+        expect((document.last as ListItemNode).indent, 0);
         expect(
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: document.nodes.last.id,
+              nodeId: document.last.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),

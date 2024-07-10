@@ -35,7 +35,7 @@ void main() {
         await tester.typeImeText("Hello");
 
         // Ensure the text was typed.
-        expect((document.nodes.first as ParagraphNode).text.text, "Hello<- text here");
+        expect((document.first as ParagraphNode).text.text, "Hello<- text here");
       });
 
       testWidgetsOnAllPlatforms('in the middle of existing text', (tester) async {
@@ -58,7 +58,7 @@ void main() {
         await tester.typeImeText("Hello");
 
         // Ensure the text was typed.
-        expect((document.nodes.first as ParagraphNode).text.text, "text here ->Hello<---");
+        expect((document.first as ParagraphNode).text.text, "text here ->Hello<---");
       });
 
       testWidgetsOnAllPlatforms('at the end of existing text', (tester) async {
@@ -81,7 +81,7 @@ void main() {
         await tester.typeImeText("Hello");
 
         // Ensure the text was typed.
-        expect((document.nodes.first as ParagraphNode).text.text, "text here ->Hello");
+        expect((document.first as ParagraphNode).text.text, "text here ->Hello");
       });
     });
 
@@ -125,7 +125,7 @@ void main() {
 
       // Ensure that the editor didn't receive the performAction call, and didn't
       // insert a new node.
-      expect(document.nodes.length, 1);
+      expect(document.nodeCount, 1);
     });
 
     testWidgetsOnAndroid('allows app to handle newline action', (tester) async {
@@ -165,7 +165,7 @@ void main() {
 
       // Ensure that the editor didn't receive the performAction call, and didn't
       // insert a new node.
-      expect(document.nodes.length, 1);
+      expect(document.nodeCount, 1);
     });
 
     testWidgetsOnMac('allows apps to handle selectors in their own way', (tester) async {
@@ -353,7 +353,7 @@ void main() {
           ),
         ]);
 
-        expect((document.nodes.first as ParagraphNode).text.text, "This is a sentence. ");
+        expect((document.first as ParagraphNode).text.text, "This is a sentence. ");
       });
 
       testWidgets('can type compound character in an empty paragraph', (tester) async {
@@ -395,7 +395,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Ensure that the empty paragraph now reads "¨".
-        expect((editContext.document.nodes[1] as ParagraphNode).text.text, "¨");
+        expect((editContext.document.getNodeAt(1)! as ParagraphNode).text.text, "¨");
 
         // Ensure that the IME still has the invisible characters.
         expect(deltaClient.currentTextEditingValue!.text, ". ¨");
@@ -420,7 +420,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Ensure that the empty paragraph now reads "ü".
-        expect((editContext.document.nodes[1] as ParagraphNode).text.text, "ü");
+        expect((editContext.document.getNodeAt(1)! as ParagraphNode).text.text, "ü");
       });
     });
 
@@ -494,13 +494,13 @@ void main() {
 
         // Ensure the paragraph was split.
         expect(
-          (doc.nodes[0] as ParagraphNode).text.text,
+          (doc.getNodeAt(0)! as ParagraphNode).text.text,
           'Before the line break ',
         );
 
         // Ensure the paragraph was split.
         expect(
-          (doc.nodes[1] as ParagraphNode).text.text,
+          (doc.getNodeAt(1)! as ParagraphNode).text.text,
           'new line',
         );
 
@@ -509,7 +509,7 @@ void main() {
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes[1].id,
+              nodeId: doc.getNodeAt(1)!.id,
               nodePosition: const TextNodePosition(offset: 0),
             ),
           ),
@@ -530,7 +530,7 @@ Paragraph two
         final doc = SuperEditorInspector.findDocument()!;
 
         // Place caret at the start of the second paragraph.
-        await tester.placeCaretInParagraph(doc.nodes[1].id, 0);
+        await tester.placeCaretInParagraph(doc.getNodeAt(1)!.id, 0);
 
         // Sends the deletion delta followed by non-text deltas.
         //
@@ -559,7 +559,7 @@ Paragraph two
 
         // Ensure the paragraph was merged.
         expect(
-          (doc.nodes[0] as ParagraphNode).text.text,
+          (doc.getNodeAt(0)! as ParagraphNode).text.text,
           'Paragraph oneParagraph two',
         );
 
@@ -568,7 +568,7 @@ Paragraph two
           SuperEditorInspector.findDocumentSelection(),
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes[0].id,
+              nodeId: doc.getNodeAt(0)!.id,
               nodePosition: const TextNodePosition(offset: 13),
             ),
           ),
@@ -793,7 +793,7 @@ Paragraph two
             .pump();
 
         // Place the caret at the end of the paragraph.
-        await tester.placeCaretInParagraph(testContext.document.nodes.first.id, 3);
+        await tester.placeCaretInParagraph(testContext.document.first.id, 3);
 
         // Type a letter simulating a typo. The current text results in "Fixs".
         await tester.typeImeText('s');
@@ -952,9 +952,9 @@ Paragraph two
         final document = testContext.document;
 
         // Ensure the replacement was ignored and a new empty node was added.
-        expect(document.nodes.length, 2);
-        expect((document.nodes[0] as TextNode).text.text, 'run tom');
-        expect((document.nodes[1] as TextNode).text.text, '');
+        expect(document.nodeCount, 2);
+        expect((document.getNodeAt(0)! as TextNode).text.text, 'run tom');
+        expect((document.getNodeAt(1)! as TextNode).text.text, '');
       });
     });
 
@@ -1021,7 +1021,7 @@ Paragraph two
           .withInputSource(TextInputSource.ime)
           .pump();
 
-      final nodeId = testContext.document.nodes.first.id;
+      final nodeId = testContext.document.first.id;
 
       // Place the caret at the beginning of the paragraph.
       await tester.placeCaretInParagraph(nodeId, 0);
@@ -1040,7 +1040,7 @@ Paragraph two
           .withInputSource(TextInputSource.ime)
           .pump();
 
-      final nodeId = testContext.document.nodes.first.id;
+      final nodeId = testContext.document.first.id;
 
       // Place the caret at the end of the paragraph.
       await tester.placeCaretInParagraph(nodeId, 19);
@@ -1079,7 +1079,7 @@ Paragraph two
       final doc = SuperEditorInspector.findDocument()!;
 
       // Place caret at the start of the second paragraph.
-      await tester.placeCaretInParagraph(doc.nodes[1].id, 0);
+      await tester.placeCaretInParagraph(doc.getNodeAt(1)!.id, 0);
 
       // Simulates the user pressing BACKSPACE, which generates a deletion delta.
       // This deletion will cause the two paragraphs to be merged.
@@ -1102,7 +1102,7 @@ Paragraph two
 
       // Ensure the paragraph was merged.
       expect(
-        (doc.nodes[0] as ParagraphNode).text.text,
+        (doc.getNodeAt(0)! as ParagraphNode).text.text,
         'Paragraph oneParagraph two',
       );
     });

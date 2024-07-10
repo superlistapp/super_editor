@@ -21,13 +21,13 @@ void main() {
           },
         );
 
-        expect((document.nodes[0] as TextNode).text.text, "");
-        expect((document.nodes[1] as TextNode).text.text, "Line one");
-        expect((document.nodes[2] as TextNode).text.text, "Line two");
-        expect((document.nodes[3] as TextNode).text.text, "Line three");
-        expect((document.nodes[4] as TextNode).text.text, "Line four");
-        expect((document.nodes[5] as TextNode).text.text, "");
-        expect((document.nodes[6] as TextNode).text.text, "");
+        expect((document.getNodeAt(0)! as TextNode).text.text, "");
+        expect((document.getNodeAt(1)! as TextNode).text.text, "Line one");
+        expect((document.getNodeAt(2)! as TextNode).text.text, "Line two");
+        expect((document.getNodeAt(3)! as TextNode).text.text, "Line three");
+        expect((document.getNodeAt(4)! as TextNode).text.text, "Line four");
+        expect((document.getNodeAt(5)! as TextNode).text.text, "");
+        expect((document.getNodeAt(6)! as TextNode).text.text, "");
 
         // A note on the length of the document. If this document is placed in a
         // Quill editor, there will only be 6 lines the user can edit. This seems
@@ -37,7 +37,7 @@ void main() {
         // we parse every newline, including the trailing newline, so the length
         // of this document is 7. If that's a problem, we can make the parser
         // more intelligent about this later.
-        expect(document.nodes.length, 7);
+        expect(document.nodeCount, 7);
       });
 
       test("multiline code block", () {
@@ -68,18 +68,18 @@ void main() {
         );
 
         expect(
-          (document.nodes[0] as ParagraphNode).text.text,
+          (document.getNodeAt(0)! as ParagraphNode).text.text,
           "This is a code block\nThis is line two\nThis is line three",
         );
-        expect((document.nodes[0] as ParagraphNode).getMetadataValue("blockType"), codeAttribution);
-        expect((document.nodes[1] as ParagraphNode).text.text, "");
-        expect(document.nodes.length, 2);
+        expect((document.getNodeAt(0)! as ParagraphNode).getMetadataValue("blockType"), codeAttribution);
+        expect((document.getNodeAt(1)! as ParagraphNode).text.text, "");
+        expect(document.nodeCount, 2);
       });
 
       test("all text blocks and styles", () {
         final document = parseQuillDeltaOps(allTextStylesDeltaDocument);
 
-        final nodes = document.nodes.iterator..moveNext();
+        final nodes = document.iterator..moveNext();
         DocumentNode? node = nodes.current;
 
         // Check the header.
@@ -385,7 +385,7 @@ void main() {
           },
         );
 
-        final paragraph = document.nodes.first as ParagraphNode;
+        final paragraph = document.first as ParagraphNode;
         expect(paragraph.text.text, "This paragraph has some overlapping styles.");
         expect(
           paragraph.text.getAttributionSpansByFilter((a) => true),
@@ -408,20 +408,20 @@ void main() {
           {"insert": "\nParagraph two\n"},
         ]);
 
-        expect(document.nodes.length, 3);
+        expect(document.nodeCount, 3);
 
-        expect(document.nodes[0], isA<ParagraphNode>());
-        expect((document.nodes[0] as ParagraphNode).text.text, "Paragraph one");
+        expect(document.getNodeAt(0)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(0)! as ParagraphNode).text.text, "Paragraph one");
         expect(
-          (document.nodes[0] as ParagraphNode).text.getAttributionSpansByFilter((a) => true),
+          (document.getNodeAt(0)! as ParagraphNode).text.getAttributionSpansByFilter((a) => true),
           const <AttributionSpan>{},
         );
 
-        expect(document.nodes[1], isA<ParagraphNode>());
-        expect((document.nodes[1] as ParagraphNode).text.text, "Paragraph two");
+        expect(document.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(1)! as ParagraphNode).text.text, "Paragraph two");
 
-        expect(document.nodes[2], isA<ParagraphNode>());
-        expect((document.nodes[2] as ParagraphNode).text.text, "");
+        expect(document.getNodeAt(2)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(2)! as ParagraphNode).text.text, "");
       });
 
       test("gracefully handles unknown text block format", () {
@@ -434,21 +434,21 @@ void main() {
           {"insert": "Paragraph two\n"},
         ]);
 
-        expect(document.nodes.length, 3);
+        expect(document.nodeCount, 3);
 
-        expect(document.nodes[0], isA<ParagraphNode>());
-        expect((document.nodes[0] as ParagraphNode).text.text, "Paragraph one");
-        expect((document.nodes[0] as ParagraphNode).metadata["blockType"], paragraphAttribution);
+        expect(document.getNodeAt(0)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(0)! as ParagraphNode).text.text, "Paragraph one");
+        expect((document.getNodeAt(0)! as ParagraphNode).metadata["blockType"], paragraphAttribution);
         expect(
-          (document.nodes[0] as ParagraphNode).text.getAttributionSpansByFilter((a) => true),
+          (document.getNodeAt(0)! as ParagraphNode).text.getAttributionSpansByFilter((a) => true),
           const <AttributionSpan>{},
         );
 
-        expect(document.nodes[1], isA<ParagraphNode>());
-        expect((document.nodes[1] as ParagraphNode).text.text, "Paragraph two");
+        expect(document.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(1)! as ParagraphNode).text.text, "Paragraph two");
 
-        expect(document.nodes[2], isA<ParagraphNode>());
-        expect((document.nodes[2] as ParagraphNode).text.text, "");
+        expect(document.getNodeAt(2)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(2)! as ParagraphNode).text.text, "");
       });
     });
 
@@ -464,7 +464,7 @@ void main() {
           {"insert": "Paragraph two\n"},
         ]);
 
-        final image = document.nodes[1];
+        final image = document.getNodeAt(1)!;
         expect(image, isA<ImageNode>());
         image as ImageNode;
         expect(image.imageUrl, "https://quilljs.com/assets/images/icon.png");
@@ -485,7 +485,7 @@ void main() {
           {"insert": "Paragraph two\n"},
         ]);
 
-        final image = document.nodes[1];
+        final image = document.getNodeAt(1)!;
         expect(image, isA<ImageNode>());
         image as ImageNode;
         expect(image.imageUrl, "https://quilljs.com/assets/images/icon.png");
@@ -502,7 +502,7 @@ void main() {
           {"insert": "Paragraph two\n"},
         ]);
 
-        final video = document.nodes[1];
+        final video = document.getNodeAt(1)!;
         expect(video, isA<VideoNode>());
         video as VideoNode;
         expect(video.url, "https://quilljs.com/assets/media/video.mp4");
@@ -519,7 +519,7 @@ void main() {
           {"insert": "Paragraph two\n"},
         ]);
 
-        final audio = document.nodes[1];
+        final audio = document.getNodeAt(1)!;
         expect(audio, isA<AudioNode>());
         audio as AudioNode;
         expect(audio.url, "https://quilljs.com/assets/media/audio.mp3");
@@ -536,7 +536,7 @@ void main() {
           {"insert": "Paragraph two\n"},
         ]);
 
-        final file = document.nodes[1];
+        final file = document.getNodeAt(1)!;
         expect(file, isA<FileNode>());
         file as FileNode;
         expect(file.url, "https://quilljs.com/assets/media/file.pdf");
@@ -553,16 +553,16 @@ void main() {
           {"insert": "Paragraph two\n"},
         ]);
 
-        expect(document.nodes.length, 3);
+        expect(document.nodeCount, 3);
 
-        expect(document.nodes[0], isA<ParagraphNode>());
-        expect((document.nodes[0] as ParagraphNode).text.text, "Paragraph one");
+        expect(document.getNodeAt(0)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(0)! as ParagraphNode).text.text, "Paragraph one");
 
-        expect(document.nodes[1], isA<ParagraphNode>());
-        expect((document.nodes[1] as ParagraphNode).text.text, "Paragraph two");
+        expect(document.getNodeAt(1)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(1)! as ParagraphNode).text.text, "Paragraph two");
 
-        expect(document.nodes[2], isA<ParagraphNode>());
-        expect((document.nodes[2] as ParagraphNode).text.text, "");
+        expect(document.getNodeAt(2)!, isA<ParagraphNode>());
+        expect((document.getNodeAt(2)! as ParagraphNode).text.text, "");
       });
     });
   });

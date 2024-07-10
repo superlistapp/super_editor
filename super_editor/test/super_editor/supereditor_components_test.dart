@@ -164,7 +164,7 @@ Future<void> _pumpImageTestApp(
                 width: double.infinity,
               ).toMetadata(),
             ),
-            ...longTextDoc().nodes,
+            ...longTextDoc(),
           ],
         ),
       )
