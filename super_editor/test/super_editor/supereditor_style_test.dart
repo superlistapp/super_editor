@@ -60,8 +60,8 @@ void main() {
 
       final doc = testContext.findEditContext().document;
 
-      final firstParagraphId = doc.nodes[0].id;
-      final secondParagraphId = doc.nodes[1].id;
+      final firstParagraphId = doc.getNodeAt(0)!.id;
+      final secondParagraphId = doc.getNodeAt(1)!.id;
 
       // Ensure the rule for paragraph is applied.
       expect(SuperEditorInspector.findParagraphStyle(firstParagraphId)!.color, Colors.red);
@@ -157,7 +157,7 @@ A paragraph
           .withLongTextContent()
           .pump();
 
-      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.last.id, 0);
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.last.id, 0);
 
       final presenter = tester.state<SuperEditorState>(find.byType(SuperEditor)).presenter;
       presenter.addChangeListener(SingleColumnLayoutPresenterChangeListener(

@@ -15,7 +15,7 @@ void main() {
         final document = deserializeMarkdownToDocument("Hello  world");
         final composer = MutableDocumentComposer();
         final editor = createDefaultDocumentEditor(document: document, composer: composer);
-        final paragraphId = document.nodes.first.id;
+        final paragraphId = document.first.id;
 
         editor.execute([
           ChangeSelectionRequest(
@@ -151,17 +151,17 @@ void main() {
 
         // Ensure that the paragraph is now a header.
         final document = editContext.document;
-        var paragraph = document.nodes.first as ParagraphNode;
+        var paragraph = document.first as ParagraphNode;
         expect(paragraph.metadata['blockType'], header1Attribution);
-        expect(SuperEditorInspector.findTextInComponent(document.nodes.first.id).text, "");
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).text, "");
 
         await tester.pressCmdZ(tester);
         await tester.pump();
 
         // Ensure that the header attribution is gone.
-        paragraph = document.nodes.first as ParagraphNode;
+        paragraph = document.first as ParagraphNode;
         expect(paragraph.metadata['blockType'], paragraphAttribution);
-        expect(SuperEditorInspector.findTextInComponent(document.nodes.first.id).text, "# ");
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).text, "# ");
       });
 
       testWidgetsOnMac("dashes to em dash", (tester) async {
@@ -204,17 +204,17 @@ void main() {
 
         // Ensure that the paragraph is now a list item.
         final document = editContext.document;
-        var node = document.nodes.first as TextNode;
+        var node = document.first as TextNode;
         expect(node, isA<ListItemNode>());
-        expect(SuperEditorInspector.findTextInComponent(document.nodes.first.id).text, "");
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).text, "");
 
         await tester.pressCmdZ(tester);
         await tester.pump();
 
         // Ensure that the node is back to a paragraph.
-        node = document.nodes.first as TextNode;
+        node = document.first as TextNode;
         expect(node, isA<ParagraphNode>());
-        expect(SuperEditorInspector.findTextInComponent(document.nodes.first.id).text, "1. ");
+        expect(SuperEditorInspector.findTextInComponent(document.first.id).text, "1. ");
       });
 
       testWidgetsOnMac("url to a link", (tester) async {
@@ -259,13 +259,13 @@ void main() {
         await tester.placeCaretInParagraph("1", 0);
 
         await tester.typeImeText("--- ");
-        expect(editContext.document.nodes.first, isA<HorizontalRuleNode>());
+        expect(editContext.document.first, isA<HorizontalRuleNode>());
 
         await tester.pressCmdZ(tester);
         await tester.pump();
 
-        expect(editContext.document.nodes.first, isA<ParagraphNode>());
-        expect(SuperEditorInspector.findTextInComponent(editContext.document.nodes.first.id).text, "—- ");
+        expect(editContext.document.first, isA<ParagraphNode>());
+        expect(SuperEditorInspector.findTextInComponent(editContext.document.first.id).text, "—- ");
       });
     });
 
@@ -287,18 +287,18 @@ This is paragraph 3''');
 
       // Ensure the pasted content was applied as expected.
       final document = editContext.document;
-      expect(document.nodes.length, 3);
-      expect(SuperEditorInspector.findTextInComponent(document.nodes[0].id).text, "This is paragraph 1");
-      expect(SuperEditorInspector.findTextInComponent(document.nodes[1].id).text, "This is paragraph 2");
-      expect(SuperEditorInspector.findTextInComponent(document.nodes[2].id).text, "This is paragraph 3");
+      expect(document.nodeCount, 3);
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(0)!.id).text, "This is paragraph 1");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(1)!.id).text, "This is paragraph 2");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(2)!.id).text, "This is paragraph 3");
 
       // Undo the paste.
       await tester.pressCmdZ(tester);
       await tester.pump();
 
       // Ensure we're back to a single empty paragraph.
-      expect(document.nodes.length, 1);
-      expect(SuperEditorInspector.findTextInComponent(document.nodes[0].id).text, "");
+      expect(document.nodeCount, 1);
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(0)!.id).text, "");
 
       // Redo the paste
       // TODO: remove WidgetTester as required argument to this robot method
@@ -306,10 +306,10 @@ This is paragraph 3''');
       await tester.pump();
 
       // Ensure the pasted content was applied as expected.
-      expect(document.nodes.length, 3);
-      expect(SuperEditorInspector.findTextInComponent(document.nodes[0].id).text, "This is paragraph 1");
-      expect(SuperEditorInspector.findTextInComponent(document.nodes[1].id).text, "This is paragraph 2");
-      expect(SuperEditorInspector.findTextInComponent(document.nodes[2].id).text, "This is paragraph 3");
+      expect(document.nodeCount, 3);
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(0)!.id).text, "This is paragraph 1");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(1)!.id).text, "This is paragraph 2");
+      expect(SuperEditorInspector.findTextInComponent(document.getNodeAt(2)!.id).text, "This is paragraph 3");
     });
 
     group("transaction grouping >", () {

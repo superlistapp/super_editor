@@ -31,14 +31,14 @@ String serializeDocumentToMarkdown(
 
   StringBuffer buffer = StringBuffer();
 
-  for (int i = 0; i < doc.nodes.length; ++i) {
+  for (int i = 0; i < doc.nodeCount; ++i) {
     if (i > 0) {
       // Add a new line before every node, except the first node.
       buffer.writeln("");
     }
 
     // Serialize the current node to markdown.
-    final node = doc.nodes[i];
+    final node = doc.getNodeAt(i)!;
     for (final serializer in nodeSerializers) {
       final serialization = serializer.serialize(doc, node);
       if (serialization != null) {
@@ -139,7 +139,7 @@ class ListItemNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Lis
     buffer.write('$indent$symbol ${node.text.toMarkdown()}');
 
     final nodeIndex = document.getNodeIndexById(node.id);
-    final nodeBelow = nodeIndex < document.nodes.length - 1 ? document.nodes[nodeIndex + 1] : null;
+    final nodeBelow = nodeIndex < document.nodeCount - 1 ? document.getNodeAt(nodeIndex + 1) : null;
     if (nodeBelow != null && (nodeBelow is! ListItemNode || nodeBelow.type != node.type)) {
       // This list item is the last item in the list. Add an extra
       // blank line after it.
@@ -201,7 +201,7 @@ class ParagraphNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Pa
     // paragraph so that we can tell the difference between separate
     // paragraphs vs. newlines within a single paragraph.
     final nodeIndex = document.getNodeIndexById(node.id);
-    if (nodeIndex != document.nodes.length - 1) {
+    if (nodeIndex != document.nodeCount - 1) {
       buffer.writeln();
     }
 
@@ -456,7 +456,7 @@ class HeaderNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Parag
     // paragraph so that we can tell the difference between separate
     // paragraphs vs. newlines within a single paragraph.
     final nodeIndex = document.getNodeIndexById(node.id);
-    if (nodeIndex != document.nodes.length - 1) {
+    if (nodeIndex != document.nodeCount - 1) {
       buffer.writeln();
     }
 

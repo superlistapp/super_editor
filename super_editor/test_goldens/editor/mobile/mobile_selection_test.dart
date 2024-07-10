@@ -21,7 +21,7 @@ void main() {
             .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .withAndroidToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .pump();
-        final nodeId = testContext.findEditContext().document.nodes.first.id;
+        final nodeId = testContext.findEditContext().document.first.id;
 
         await tester.placeCaretInParagraph(nodeId, 15);
 
@@ -40,7 +40,7 @@ void main() {
             .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .withAndroidToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .pump();
-        final nodeId = testContext.findEditContext().document.nodes.first.id;
+        final nodeId = testContext.findEditContext().document.first.id;
 
         await tester.doubleTapInParagraph(nodeId, 15);
 
@@ -59,7 +59,7 @@ void main() {
             .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .withAndroidToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .pump();
-        final nodeId = testContext.findEditContext().document.nodes.first.id;
+        final nodeId = testContext.findEditContext().document.first.id;
 
         await tester.placeCaretInParagraph(nodeId, 15);
 
@@ -78,7 +78,7 @@ void main() {
             .withiOSToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .withAndroidToolbarBuilder((context, mobileToolbarKey, focalPoint) => const SizedBox())
             .pump();
-        final nodeId = testContext.findEditContext().document.nodes.first.id;
+        final nodeId = testContext.findEditContext().document.first.id;
 
         await tester.doubleTapInParagraph(nodeId, 15);
 

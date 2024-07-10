@@ -53,7 +53,7 @@ void main() {
 
       // Keeps track of the build count for each node.
       Map<String, int> buildCountPerNode = {
-        for (var node in document.nodes) //
+        for (final node in document) //
           node.id: 0,
       };
 
@@ -151,7 +151,7 @@ void main() {
 /// Only works for nodes that include a `SuperText` in its tree.
 Map<String, int> _findRebuildCountPerNode(Document document) {
   final rebuildCountPerNode = <String, int>{};
-  for (final node in document.nodes) {
+  for (final node in document) {
     final widget = SuperEditorInspector.findWidgetForComponent<Widget>(node.id);
 
     final superTextState = (find

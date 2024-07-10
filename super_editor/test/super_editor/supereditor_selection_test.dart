@@ -143,7 +143,7 @@ void main() {
           .createDocument() //
           .fromMarkdown("This is paragraph one.\nThis is paragraph two.") //
           .pump();
-      final nodeId = testContext.findEditContext().document.nodes.first.id;
+      final nodeId = testContext.findEditContext().document.first.id;
 
       /// Triple tap on the first line in the paragraph node.
       await tester.tripleTapInParagraph(nodeId, 10);
@@ -174,7 +174,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.findEditContext().document.nodes.first.id;
+      final firstParagraphId = testContext.findEditContext().document.first.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -201,7 +201,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final secondParagraphId = testContext.findEditContext().document.nodes.last.id;
+      final secondParagraphId = testContext.findEditContext().document.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -233,7 +233,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final secondParagraphId = testContext.findEditContext().document.nodes.last.id;
+      final secondParagraphId = testContext.findEditContext().document.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -265,7 +265,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.findEditContext().document.nodes.first.id;
+      final firstParagraphId = testContext.findEditContext().document.first.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -292,8 +292,8 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.findEditContext().document.nodes.first.id;
-      final secondParagraphId = testContext.findEditContext().document.nodes.last.id;
+      final firstParagraphId = testContext.findEditContext().document.first.id;
+      final secondParagraphId = testContext.findEditContext().document.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -323,8 +323,8 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.findEditContext().document.nodes.first.id;
-      final secondParagraphId = testContext.findEditContext().document.nodes.last.id;
+      final firstParagraphId = testContext.findEditContext().document.first.id;
+      final secondParagraphId = testContext.findEditContext().document.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -495,7 +495,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: doc!.nodes.last.id,
+            nodeId: doc!.last.id,
             nodePosition: const TextNodePosition(offset: 477),
           ),
         ),
@@ -539,7 +539,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: doc!.nodes.last.id,
+            nodeId: doc!.last.id,
             nodePosition: const TextNodePosition(offset: 477),
           ),
         ),
@@ -573,7 +573,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: doc!.nodes.last.id,
+            nodeId: doc!.last.id,
             nodePosition: const TextNodePosition(offset: 477),
           ),
         ),
@@ -599,7 +599,7 @@ void main() {
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: doc!.nodes.last.id,
+            nodeId: doc!.last.id,
             nodePosition: const TextNodePosition(offset: 477),
           ),
         ),
@@ -642,7 +642,7 @@ Second Paragraph
       await tester.pumpAndSettle();
 
       final doc = SuperEditorInspector.findDocument();
-      final secondParagraphNodeId = doc!.nodes[1].id;
+      final secondParagraphNodeId = doc!.getNodeAt(1)!.id;
 
       // Ensure selection is at the last character of the second paragraph.
       expect(
@@ -1179,7 +1179,7 @@ Second Paragraph
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: doc.nodes.last.id,
+            nodeId: doc.last.id,
             nodePosition: const TextNodePosition(offset: 477),
           ),
         ),
@@ -1190,7 +1190,7 @@ Second Paragraph
         ChangeSelectionRequest(
           DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: doc.nodes.last.id,
+              nodeId: doc.last.id,
               nodePosition: const TextNodePosition(offset: 477),
             ),
           ),

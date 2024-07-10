@@ -20,7 +20,7 @@ void main() {
 
       // Place the caret at the beginning of the empty document and
       // add some text to give us a non-empty paragraph.
-      await tester.placeCaretInParagraph(doc.nodes.first.id, 0);
+      await tester.placeCaretInParagraph(doc.first.id, 0);
       await tester.typeImeText("Pasted text: ");
 
       // Paste text into the paragraph.
@@ -30,7 +30,7 @@ void main() {
       await tester.pressCmdV();
 
       // Ensure that the text was pasted into the paragraph.
-      final nodeId = doc.nodes.first.id;
+      final nodeId = doc.first.id;
       expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Pasted text: This was pasted here");
     });
 
@@ -44,7 +44,7 @@ void main() {
       final doc = SuperEditorInspector.findDocument()!;
 
       // Place the caret at the end of the list item.
-      await tester.placeCaretInParagraph(doc.nodes.first.id, 12);
+      await tester.placeCaretInParagraph(doc.first.id, 12);
       await tester.typeImeText(" "); // <- manually add a space because Markdown strips it
 
       // Paste text into the paragraph.
@@ -54,7 +54,7 @@ void main() {
       await tester.pressCmdV();
 
       // Ensure that the text was pasted into the paragraph.
-      final nodeId = doc.nodes.first.id;
+      final nodeId = doc.first.id;
       expect(SuperEditorInspector.findTextInComponent(nodeId).text, "Pasted text: This was pasted here");
     });
 
@@ -85,10 +85,10 @@ This is the third paragraph''');
 
       // Ensure three paragraphs were created.
       final doc = testContext.document;
-      expect(doc.nodes.length, 3);
-      expect((doc.nodes[0] as ParagraphNode).text.text, 'This is a paragraph');
-      expect((doc.nodes[1] as ParagraphNode).text.text, 'This is a second paragraph');
-      expect((doc.nodes[2] as ParagraphNode).text.text, 'This is the third paragraph');
+      expect(doc.nodeCount, 3);
+      expect((doc.getNodeAt(0)! as ParagraphNode).text.text, 'This is a paragraph');
+      expect((doc.getNodeAt(1)! as ParagraphNode).text.text, 'This is a second paragraph');
+      expect((doc.getNodeAt(2)! as ParagraphNode).text.text, 'This is the third paragraph');
     });
   });
 }

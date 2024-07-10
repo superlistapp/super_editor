@@ -53,7 +53,7 @@ MutableDocument parseQuillDeltaOps(
 
   // Place the caret in the (only) empty paragraph so we can begin applying
   // deltas to the document.
-  final firstParagraph = document.nodes.first as ParagraphNode;
+  final firstParagraph = document.first as ParagraphNode;
   composer.setSelectionWithReason(
     DocumentSelection.collapsed(
       position: DocumentPosition(
@@ -136,14 +136,14 @@ extension OperationParser on Operation {
 
         // Deduplicate all back-to-back code blocks.
         final document = editor.context.find<MutableDocument>(Editor.documentKey);
-        if (document.nodes.length < 3) {
+        if (document.nodeCount < 3) {
           // Minimum of 3 nodes: code, code, newline.
           break;
         }
 
         var codeBlocks = <ParagraphNode>[];
-        for (int i = document.nodes.length - 2; i >= 0; i -= 1) {
-          final node = document.nodes[i];
+        for (int i = document.nodeCount - 2; i >= 0; i -= 1) {
+          final node = document.getNodeAt(i)!;
           if (node is! ParagraphNode) {
             break;
           }

@@ -65,7 +65,7 @@ void main() {
           .createDocument() //
           .fromMarkdown("This is paragraph one.\nThis is paragraph two.") //
           .pump();
-      final nodeId = testContext.documentContext.document.nodes.first.id;
+      final nodeId = testContext.documentContext.document.first.id;
 
       /// Triple tap on the first line in the paragraph node.
       await tester.tripleTapInParagraph(nodeId, 10);
@@ -96,7 +96,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.documentContext.document.nodes.first.id;
+      final firstParagraphId = testContext.documentContext.document.first.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -123,7 +123,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final secondParagraphId = testContext.documentContext.document.nodes.last.id;
+      final secondParagraphId = testContext.documentContext.document.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -156,7 +156,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final secondParagraphId = testContext.documentContext.document.nodes.last.id;
+      final secondParagraphId = testContext.documentContext.document.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -189,7 +189,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.documentContext.document.nodes.first.id;
+      final firstParagraphId = testContext.documentContext.document.first.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -216,8 +216,8 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.documentContext.document.nodes.first.id;
-      final secondParagraphId = testContext.documentContext.document.nodes.last.id;
+      final firstParagraphId = testContext.documentContext.document.first.id;
+      final secondParagraphId = testContext.documentContext.document.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -250,8 +250,8 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.documentContext.document.nodes.first.id;
-      final secondParagraphId = testContext.documentContext.document.nodes.last.id;
+      final firstParagraphId = testContext.documentContext.document.first.id;
+      final secondParagraphId = testContext.documentContext.document.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -300,7 +300,7 @@ spans multiple lines.''',
           .pump();
 
       final document = SuperReaderInspector.findDocument()!;
-      final paragraphNode = document.nodes.first as ParagraphNode;
+      final paragraphNode = document.first as ParagraphNode;
 
       await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
@@ -346,7 +346,7 @@ spans multiple lines.''',
           .pump();
 
       final document = SuperReaderInspector.findDocument()!;
-      final paragraphNode = document.nodes.first as ParagraphNode;
+      final paragraphNode = document.first as ParagraphNode;
 
       await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
@@ -394,8 +394,8 @@ spans multiple lines.''',
           .pump();
 
       final document = SuperReaderInspector.findDocument()!;
-      final titleNode = document.nodes.first as ParagraphNode;
-      final paragraphNode = document.nodes[1] as ParagraphNode;
+      final titleNode = document.first as ParagraphNode;
+      final paragraphNode = document.getNodeAt(1)! as ParagraphNode;
 
       await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
@@ -443,8 +443,8 @@ spans multiple lines.''',
           .pump();
 
       final document = SuperReaderInspector.findDocument()!;
-      final titleNode = document.nodes.first as ParagraphNode;
-      final paragraphNode = document.nodes[1] as ParagraphNode;
+      final titleNode = document.first as ParagraphNode;
+      final paragraphNode = document.getNodeAt(1)! as ParagraphNode;
 
       await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(

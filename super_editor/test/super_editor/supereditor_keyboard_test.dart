@@ -394,7 +394,7 @@ void main() {
       // Ensure the document doesn't change.
       expect(
         SuperEditorInspector.findTextInComponent('1').text,
-        (singleParagraphDoc().nodes.first as TextNode).text.text,
+        (singleParagraphDoc().first as TextNode).text.text,
       );
       expect(
         SuperEditorInspector.findDocumentSelection(),
@@ -444,7 +444,7 @@ void main() {
             .pump();
 
         // Place the caret in Super Editor to open the IME.
-        final nodeId = testContext.findEditContext().document.nodes.first.id;
+        final nodeId = testContext.findEditContext().document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Ensure that the document has a selection
@@ -494,7 +494,7 @@ void main() {
             .pump();
 
         // Place the caret in Super Editor.
-        final nodeId = testContext.findEditContext().document.nodes.first.id;
+        final nodeId = testContext.findEditContext().document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Ensure that the document has a selection
@@ -569,7 +569,7 @@ void main() {
             .pump();
 
         // Place the caret in Super Editor to open the IME.
-        final nodeId = testContext.findEditContext().document.nodes.first.id;
+        final nodeId = testContext.findEditContext().document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Ensure that the document has a selection
@@ -624,7 +624,7 @@ void main() {
             .pump();
 
         // Place the caret in Super Editor.
-        final nodeId = testContext.findEditContext().document.nodes.first.id;
+        final nodeId = testContext.findEditContext().document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Ensure that the document has a selection
@@ -693,7 +693,7 @@ void main() {
             .pump();
 
         // Place the caret in Super Editor.
-        final nodeId = testContext.findEditContext().document.nodes.first.id;
+        final nodeId = testContext.findEditContext().document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Ensure that the document has a selection
@@ -780,7 +780,7 @@ void main() {
         expect(find.byKey(firstPageKey), findsNothing);
 
         // Place the caret in Super Editor.
-        final nodeId = superEditorAndContext.context.findEditContext().document.nodes.first.id;
+        final nodeId = superEditorAndContext.context.findEditContext().document.first.id;
         await tester.placeCaretInParagraph(nodeId, 0);
 
         // Ensure that the document has a selection
@@ -852,10 +852,10 @@ void main() {
       final document = SuperEditorInspector.findDocument()!;
 
       // Ensure the document was created with one node.
-      expect(document.nodes.length, 1);
+      expect(document.nodeCount, 1);
 
       // Tap to give focus to the editor.
-      await tester.placeCaretInParagraph(document.nodes.first.id, 0);
+      await tester.placeCaretInParagraph(document.first.id, 0);
 
       // Ensure that IME input is enabled. To check IME input, we arbitrarily simulate a newline action from
       // the IME. If the editor responds to the newline, it means IME input is enabled.
@@ -864,7 +864,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Ensure a new node was added.
-      expect(document.nodes.length, 2);
+      expect(document.nodeCount, 2);
     });
   });
 }
@@ -880,7 +880,7 @@ Future<String> _pumpSingleLineWithCaret(
       .withInputSource(inputSource)
       .pump();
 
-  final nodeId = testContext.findEditContext().document.nodes.first.id;
+  final nodeId = testContext.findEditContext().document.first.id;
 
   await tester.placeCaretInParagraph(nodeId, offset);
 
@@ -898,7 +898,7 @@ Future<String> _pumpDoubleLineWithCaret(WidgetTester tester,
       .fromMarkdown("This is the first paragraph.\nThis is the second paragraph.")
       .pump();
 
-  final nodeId = testContext.findEditContext().document.nodes.first.id;
+  final nodeId = testContext.findEditContext().document.first.id;
 
   await tester.placeCaretInParagraph(nodeId, offset);
 

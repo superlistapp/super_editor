@@ -913,7 +913,7 @@ class UnIndentTaskCommand extends EditCommand {
 
     final subTasks = <TaskNode>[];
     int index = document.getNodeIndexById(task.id) + 1;
-    while (index < document.nodes.length) {
+    while (index < document.nodeCount) {
       final subTask = document.getNodeAt(index);
       if (subTask is! TaskNode) {
         break;
@@ -1006,7 +1006,7 @@ class UpdateSubTaskIndentAfterTaskDeletionReaction extends EditReaction {
     final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final changeIndentationRequests = <EditRequest>[];
     int maxIndentation = 0;
-    for (int i = 0; i < document.nodes.length; i += 1) {
+    for (int i = 0; i < document.nodeCount; i += 1) {
       final node = document.getNodeAt(i);
       if (node is! TaskNode) {
         // This node isn't a task. The first task in a list of tasks

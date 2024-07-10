@@ -631,7 +631,7 @@ class MergeRapidTextInputPolicy implements HistoryGroupingPolicy {
       return TransactionMerge.noOpinion;
     }
 
-    if (newTransaction.firstChangeTime.difference(previousTransaction.lastChangeTime!) > _maxMergeTime) {
+    if (newTransaction.firstChangeTime.difference(previousTransaction.lastChangeTime) > _maxMergeTime) {
       // The text insertions were far enough apart in time that we don't want to merge them.
       return TransactionMerge.noOpinion;
     }
@@ -989,7 +989,7 @@ class FunctionalEditListener implements EditListener {
 }
 
 /// An in-memory, mutable [Document].
-class MutableDocument implements Document, Editable {
+class MutableDocument with Iterable<DocumentNode> implements Document, Editable {
   /// Creates an in-memory, mutable version of a [Document].
   ///
   /// Initializes the content of this [MutableDocument] with the given [nodes],
@@ -1026,7 +1026,10 @@ class MutableDocument implements Document, Editable {
   final List<DocumentNode> _nodes;
 
   @override
-  List<DocumentNode> get nodes => UnmodifiableListView(_nodes);
+  int get nodeCount => _nodes.length;
+
+  @override
+  bool get isEmpty => _nodes.isEmpty;
 
   /// Maps a node id to its index in the node list.
   final Map<String, int> _nodeIndicesById = {};
@@ -1035,6 +1038,15 @@ class MutableDocument implements Document, Editable {
   final Map<String, DocumentNode> _nodesById = {};
 
   final _listeners = <DocumentChangeListener>[];
+
+  @override
+  Iterator<DocumentNode> get iterator => _nodes.iterator;
+
+  @override
+  DocumentNode? get firstOrNull => _nodes.lastOrNull;
+
+  @override
+  DocumentNode? get lastOrNull => _nodes.lastOrNull;
 
   @override
   DocumentNode? getNodeById(String nodeId) {
@@ -1206,13 +1218,12 @@ class MutableDocument implements Document, Editable {
   /// ignores the runtime type of the [Document], itself.
   @override
   bool hasEquivalentContent(Document other) {
-    final otherNodes = other.nodes;
-    if (_nodes.length != otherNodes.length) {
+    if (_nodes.length != other.nodeCount) {
       return false;
     }
 
     for (int i = 0; i < _nodes.length; ++i) {
-      if (!_nodes[i].hasEquivalentContent(otherNodes[i])) {
+      if (!_nodes[i].hasEquivalentContent(other.getNodeAt(i)!)) {
         return false;
       }
     }
@@ -1277,7 +1288,7 @@ class MutableDocument implements Document, Editable {
       identical(this, other) ||
       other is MutableDocument &&
           runtimeType == other.runtimeType &&
-          const DeepCollectionEquality().equals(_nodes, other.nodes);
+          const DeepCollectionEquality().equals(_nodes, other._nodes);
 
   @override
   int get hashCode => _nodes.hashCode;

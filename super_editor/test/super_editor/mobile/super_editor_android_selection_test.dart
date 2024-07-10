@@ -456,14 +456,14 @@ void main() {
           ).pump();
 
           // Long press near the top of the image.
-          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + Offset(0, 10);
+          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + const Offset(0, 10);
           final gesture = await tester.startGesture(tapDownOffset);
           await tester.pump(kLongPressTimeout + kPressTimeout);
 
           // Ensure the image was selected.
           expect(
             SuperEditorInspector.findDocumentSelection(),
-            DocumentSelection(
+            const DocumentSelection(
               base: DocumentPosition(nodeId: '1', nodePosition: UpstreamDownstreamNodePosition.upstream()),
               extent: DocumentPosition(nodeId: '1', nodePosition: UpstreamDownstreamNodePosition.downstream()),
             ),
@@ -518,14 +518,14 @@ void main() {
           ).pump();
 
           // Long press near the top of the image.
-          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + Offset(0, 10);
+          final tapDownOffset = tester.getTopLeft(find.byType(ImageComponent)) + const Offset(0, 10);
           final gesture = await tester.startGesture(tapDownOffset);
           await tester.pump(kLongPressTimeout + kPressTimeout);
 
           // Ensure the image was selected.
           expect(
             SuperEditorInspector.findDocumentSelection(),
-            DocumentSelection(
+            const DocumentSelection(
               base: DocumentPosition(nodeId: '2', nodePosition: UpstreamDownstreamNodePosition.upstream()),
               extent: DocumentPosition(nodeId: '2', nodePosition: UpstreamDownstreamNodePosition.downstream()),
             ),

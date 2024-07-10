@@ -602,19 +602,18 @@ bool moveCaretDown({
 /// Returns `true` if any content was selected, or `false` if the document
 /// is empty.
 bool selectAll(Document document, ValueNotifier<DocumentSelection?> selection) {
-  final nodes = document.nodes;
-  if (nodes.isEmpty) {
+  if (document.isEmpty) {
     return false;
   }
 
   selection.value = DocumentSelection(
     base: DocumentPosition(
-      nodeId: nodes.first.id,
-      nodePosition: nodes.first.beginningPosition,
+      nodeId: document.first.id,
+      nodePosition: document.first.beginningPosition,
     ),
     extent: DocumentPosition(
-      nodeId: nodes.last.id,
-      nodePosition: nodes.last.endPosition,
+      nodeId: document.last.id,
+      nodePosition: document.last.endPosition,
     ),
   );
 
