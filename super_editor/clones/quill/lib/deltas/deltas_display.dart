@@ -1,5 +1,4 @@
 import 'package:dart_quill_delta/dart_quill_delta.dart';
-import 'package:feather/infrastructure/super_editor_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:super_editor/super_editor.dart';

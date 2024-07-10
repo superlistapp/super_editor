@@ -837,7 +837,7 @@ class IndentListItemCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent >= 6) {
@@ -875,7 +875,7 @@ class UnIndentListItemCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent > 0) {
@@ -922,7 +922,7 @@ class ConvertListItemToParagraphCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     final newMetadata = Map<String, dynamic>.from(paragraphMetadata ?? {});
@@ -969,7 +969,7 @@ class ConvertParagraphToListItemCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final paragraphNode = node as ParagraphNode;
 
@@ -1012,7 +1012,7 @@ class ChangeListItemTypeCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final existingListItem = document.getNodeById(nodeId) as ListItemNode;
 
     final newListItemNode = ListItemNode(
@@ -1058,7 +1058,7 @@ class SplitListItemCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
 
     final node = document.getNodeById(nodeId);

@@ -1209,7 +1209,7 @@ class AddTextAttributionsCommand extends EditCommand {
   @override
   void execute(EditContext context, CommandExecutor executor) {
     editorDocLog.info('Executing AddTextAttributionsCommand');
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final nodes = document.getNodesInside(documentRange.start, documentRange.end);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentRange');
@@ -1329,7 +1329,7 @@ class RemoveTextAttributionsCommand extends EditCommand {
   @override
   void execute(EditContext context, CommandExecutor executor) {
     editorDocLog.info('Executing RemoveTextAttributionsCommand');
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final nodes = document.getNodesInside(documentRange.start, documentRange.end);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentRange');
@@ -1455,7 +1455,7 @@ class ToggleTextAttributionsCommand extends EditCommand {
   @override
   void execute(EditContext context, CommandExecutor executor) {
     editorDocLog.info('Executing ToggleTextAttributionsCommand');
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final nodes = document.getNodesInside(documentRange.start, documentRange.end);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentRange');
@@ -1658,7 +1658,7 @@ class ChangeSingleColumnLayoutComponentStylesCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId)!;
 
     styles.applyTo(node);
@@ -1703,7 +1703,7 @@ class InsertTextCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
@@ -1827,7 +1827,7 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final extentNode = document.getNodeById(nodeId) as TextNode;
     if (extentNode is ParagraphNode) {
@@ -1871,7 +1871,7 @@ class InsertAttributedTextCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
@@ -1969,7 +1969,7 @@ class InsertCharacterAtCaretCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
 
     if (composer.selection == null) {

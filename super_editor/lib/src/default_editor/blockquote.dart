@@ -250,7 +250,7 @@ class ConvertBlockquoteToParagraphCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final blockquote = node as ParagraphNode;
     final newParagraphNode = ParagraphNode(
@@ -343,7 +343,7 @@ class SplitBlockquoteCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     final blockquote = node as ParagraphNode;
     final text = blockquote.text;

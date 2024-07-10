@@ -48,7 +48,7 @@ class PasteStructuredContentEditorCommand extends EditCommand {
       return;
     }
 
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (currentNodeWithSelection is! TextNode) {
@@ -292,7 +292,7 @@ class InsertNodeAtIndexCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     document.insertNodeAt(nodeIndex, newNode);
     executor.logChanges([
       DocumentEdit(
@@ -323,7 +323,7 @@ class InsertNodeBeforeNodeCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final existingNode = document.getNodeById(existingNodeId)!;
     document.insertNodeBefore(existingNode: existingNode, newNode: newNode);
 
@@ -356,7 +356,7 @@ class InsertNodeAfterNodeCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final existingNode = document.getNodeById(existingNodeId)!;
     document.insertNodeAfter(existingNode: existingNode, newNode: newNode);
 
@@ -385,7 +385,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
 
     if (composer.selection == null) {
@@ -518,7 +518,7 @@ class MoveNodeCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     // Log all the move changes that will happen when we move the target node
     // elsewhere in the document.
@@ -586,7 +586,7 @@ class ReplaceNodeCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final oldNode = document.getNodeById(existingNodeId)!;
     document.replaceNode(oldNode: oldNode, newNode: newNode);
 
@@ -631,7 +631,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final oldNode = document.getNodeById(nodeId);
     if (oldNode == null) {
@@ -691,7 +691,7 @@ class DeleteContentCommand extends EditCommand {
   @override
   void execute(EditContext context, CommandExecutor executor) {
     _log.log('DeleteSelectionCommand', 'DocumentEditor: deleting selection: $documentRange');
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final nodes = document.getNodesInside(documentRange.start, documentRange.end);
     final normalizedRange = documentRange.normalize(document);
 
@@ -1072,7 +1072,7 @@ class DeleteNodeCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     _log.log('DeleteNodeCommand', 'DocumentEditor: deleting node: $nodeId');
 
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     if (node == null) {
       _log.log('DeleteNodeCommand', 'No such node. Returning.');

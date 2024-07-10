@@ -320,7 +320,7 @@ class DeleteUpstreamAtBeginningOfBlockNodeCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final documentLayoutEditable = context.find<DocumentLayoutEditable>(Editor.layoutKey);
 
