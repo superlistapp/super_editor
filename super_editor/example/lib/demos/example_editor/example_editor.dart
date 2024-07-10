@@ -377,8 +377,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
             controller: _iosControlsController,
             child: SuperEditor(
               editor: _docEditor,
-              document: _doc,
-              composer: _composer,
               focusNode: _editorFocusNode,
               scrollController: _scrollController,
               documentLayoutKey: _docLayoutKey,

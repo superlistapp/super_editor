@@ -78,8 +78,6 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
                 SliverToBoxAdapter(
                   child: SuperEditor(
                     editor: _docEditor,
-                    document: _doc,
-                    composer: _composer,
                     stylesheet: defaultStylesheet.copyWith(
                       documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
                     ),

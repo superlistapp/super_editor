@@ -63,8 +63,6 @@ class _DocsEditorState extends State<DocsEditor> {
         return SuperEditor(
           focusNode: _editorFocusNode,
           editor: widget.editor,
-          document: widget.document,
-          composer: widget.composer,
           stylesheet: defaultStylesheet.copyWith(
             addRulesAfter: docsStylesheet,
             inlineTextStyler: _applyFontFamily,

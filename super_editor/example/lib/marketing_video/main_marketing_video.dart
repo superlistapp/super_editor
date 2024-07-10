@@ -193,8 +193,6 @@ class _MarketingVideoState extends State<MarketingVideo> {
         child: SuperEditor(
           documentLayoutKey: _docLayoutKey,
           editor: _editor,
-          document: _document,
-          composer: _composer,
           stylesheet: defaultStylesheet.copyWith(
             documentPadding: const EdgeInsets.all(16),
             addRulesAfter: [

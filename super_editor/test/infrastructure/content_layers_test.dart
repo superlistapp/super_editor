@@ -424,8 +424,6 @@ void main() {
               rebuildSignal: rebuildSignal,
               builder: (context) => SuperEditor(
                 editor: editorContext.context.editor,
-                document: editorContext.context.document,
-                composer: editorContext.context.composer,
                 inputSource: TextInputSource.keyboard,
               ),
             ),

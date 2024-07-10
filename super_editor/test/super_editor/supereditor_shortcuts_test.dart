@@ -83,8 +83,6 @@ Future<void> _pumpShortcutsAndSuperEditor(
             },
             child: SuperEditor(
               editor: editor,
-              document: document,
-              composer: composer,
               keyboardActions: keyboardActions,
             ),
           ),

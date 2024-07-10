@@ -177,8 +177,6 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
               child: SuperEditor(
                 focusNode: _focusNode,
                 editor: _editor,
-                document: _doc,
-                composer: _composer,
                 softwareKeyboardController: _keyboardController,
                 selectionPolicies: const SuperEditorSelectionPolicies(
                   clearSelectionWhenEditorLosesFocus: false,

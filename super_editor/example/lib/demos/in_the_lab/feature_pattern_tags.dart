@@ -64,8 +64,6 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
     return IntrinsicHeight(
       child: SuperEditor(
         editor: _editor,
-        document: _document,
-        composer: _composer,
         stylesheet: defaultStylesheet.copyWith(
           inlineTextStyler: (attributions, existingStyle) {
             TextStyle style = defaultInlineTextStyler(attributions, existingStyle);

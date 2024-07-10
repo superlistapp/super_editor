@@ -72,8 +72,6 @@ class _SelectedTextColorsDemoState extends State<SelectedTextColorsDemo> {
   Widget _buildEditor() {
     return SuperEditor(
       editor: _editor,
-      document: _document,
-      composer: _composer,
       stylesheet: defaultStylesheet.copyWith(
         selectedTextColorStrategy: _selectedTextColorStrategy,
         addRulesAfter: [
