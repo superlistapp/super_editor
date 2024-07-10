@@ -109,8 +109,6 @@ class _ActionTagsFeatureDemoState extends State<ActionTagsFeatureDemo> {
     return IntrinsicHeight(
       child: SuperEditor(
         editor: _editor,
-        document: _document,
-        composer: _composer,
         focusNode: _editorFocusNode,
         componentBuilders: [
           TaskComponentBuilder(_editor),

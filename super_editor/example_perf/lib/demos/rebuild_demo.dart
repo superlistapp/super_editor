@@ -54,8 +54,6 @@ class _RebuildCountDemoState extends State<RebuildCountDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
-      document: _doc,
-      composer: _composer,
       stylesheet: defaultStylesheet.copyWith(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
       ),

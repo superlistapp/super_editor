@@ -105,8 +105,6 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               focusNode: _editorFocusNode,
               documentLayoutKey: _docLayoutKey,
               editor: _docEditor,
-              document: _doc,
-              composer: _composer,
               overlayController: _overlayController,
               gestureMode: DocumentGestureMode.android,
               inputSource: TextInputSource.ime,

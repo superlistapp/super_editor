@@ -71,8 +71,6 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
-      document: _doc,
-      composer: _composer,
       stylesheet: Stylesheet(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
         rules: defaultStylesheet.rules,

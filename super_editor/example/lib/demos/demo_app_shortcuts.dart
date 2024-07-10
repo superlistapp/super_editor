@@ -52,11 +52,7 @@ class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
             child: Column(
               children: [
                 Expanded(
-                  child: SuperEditor(
-                    editor: _editor,
-                    document: _doc,
-                    composer: _composer,
-                  ),
+                  child: SuperEditor(editor: _editor),
                 ),
                 const TextField(
                   decoration: InputDecoration(

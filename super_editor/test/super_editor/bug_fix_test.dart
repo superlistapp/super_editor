@@ -24,8 +24,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 gestureMode: DocumentGestureMode.mouse,
                 inputSource: TextInputSource.keyboard,
               ),
@@ -96,8 +94,6 @@ void main() {
             home: Scaffold(
               body: SuperEditor(
                 editor: editor,
-                document: document,
-                composer: composer,
                 gestureMode: DocumentGestureMode.mouse,
                 inputSource: TextInputSource.keyboard,
               ),

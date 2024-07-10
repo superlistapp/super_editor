@@ -123,8 +123,6 @@ Future<(Editor, Document)> _pumpScaffold(WidgetTester tester, String contentMark
       body: Center(
         child: SuperEditor(
           editor: editor,
-          document: document,
-          composer: composer,
           componentBuilders: [
             TaskComponentBuilder(editor),
             ...defaultComponentBuilders,

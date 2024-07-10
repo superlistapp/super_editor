@@ -551,8 +551,6 @@ Future<(Document, Editor)> _pumpScaffold(WidgetTester tester, [String initialMar
       home: Scaffold(
         body: SuperEditor(
           editor: editor,
-          document: document,
-          composer: composer,
           plugins: {
             MarkdownInlineUpstreamSyntaxPlugin(),
           },

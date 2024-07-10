@@ -37,8 +37,6 @@ void main() {
           home: Scaffold(
             body: SuperEditor(
               editor: editor,
-              document: document,
-              composer: composer,
               keyboardActions: [
                 pasteMarkdownOnCmdAndCtrlV,
                 ...defaultKeyboardActions,
@@ -401,8 +399,6 @@ Future<(Editor, MutableDocument, MutableDocumentComposer)> _pumpSuperEditor(
       home: Scaffold(
         body: SuperEditor(
           editor: editor,
-          document: document,
-          composer: composer,
           keyboardActions: [
             pasteMarkdownOnCmdAndCtrlV,
             ...defaultKeyboardActions,
