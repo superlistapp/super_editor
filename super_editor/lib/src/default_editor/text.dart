@@ -64,6 +64,12 @@ class TextNode extends DocumentNode with ChangeNotifier {
     }
   }
 
+  TextNode copyWithText(AttributedText newText) => TextNode(
+        id: id,
+        text: newText,
+        metadata: metadata,
+      );
+
   @override
   TextNodePosition get beginningPosition => const TextNodePosition(offset: 0);
 
@@ -180,6 +186,10 @@ class TextNode extends DocumentNode with ChangeNotifier {
 
   @override
   int get hashCode => super.hashCode ^ id.hashCode ^ _text.hashCode;
+}
+
+extension TextNodeExtensions on DocumentNode {
+  TextNode get asTextNode => this as TextNode;
 }
 
 extension DocumentSelectionWithText on Document {
@@ -1275,15 +1285,20 @@ class AddTextAttributionsCommand extends EditCommand {
 
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
-        node.text = AttributedText(
-          node.text.text,
-          node.text.spans.copy()
-            ..addAttribution(
-              newAttribution: attribution,
-              start: range.start,
-              end: range.end,
-              autoMerge: autoMerge,
+        document.replaceNodeById(
+          node.id,
+          node.copyWithText(
+            AttributedText(
+              node.text.text,
+              node.text.spans.copy()
+                ..addAttribution(
+                  newAttribution: attribution,
+                  start: range.start,
+                  end: range.end,
+                  autoMerge: autoMerge,
+                ),
             ),
+          ),
         );
 
         executor.logChanges([
@@ -1537,42 +1552,44 @@ class ToggleTextAttributionsCommand extends EditCommand {
     }
 
     for (final entry in nodesAndSelections.entries) {
-      for (Attribution attribution in attributions) {
-        final node = entry.key;
-        final range = entry.value;
+      var node = entry.key;
+      final range = entry.value;
 
+      for (Attribution attribution in attributions) {
         editorDocLog.info(' - toggling attribution: $attribution. Range: $range');
 
         if (alreadyHasAttributions) {
           // Attribution is present throughout the user selection. Remove attribution.
-
           editorDocLog.info(' - Removing attribution: $attribution. Range: $range');
 
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
-          node.text = AttributedText(
-            node.text.text,
-            node.text.spans.copy(),
-          )..removeAttribution(
-              attribution,
-              range,
-            );
+          node = node.copyWithText(
+            AttributedText(
+              node.text.text,
+              node.text.spans.copy(),
+            )..removeAttribution(
+                attribution,
+                range,
+              ),
+          );
         } else {
           // Attribution isn't present throughout the user selection. Apply attribution.
-
           editorDocLog.info(' - Adding attribution: $attribution. Range: $range');
 
           // Create a new AttributedText with updated attribution spans, so that the presentation system can
           // see that we made a change, and re-renders the text in the document.
-          node.text = AttributedText(
-            node.text.text,
-            node.text.spans.copy()
-              ..addAttribution(
-                newAttribution: attribution,
-                start: range.start,
-                end: range.end,
-                autoMerge: true,
-              ),
+          node = node.copyWithText(
+            AttributedText(
+              node.text.text,
+              node.text.spans.copy()
+                ..addAttribution(
+                  newAttribution: attribution,
+                  start: range.start,
+                  end: range.end,
+                  autoMerge: true,
+                ),
+            ),
           );
         }
 
@@ -1588,6 +1605,10 @@ class ToggleTextAttributionsCommand extends EditCommand {
           ),
         ]);
       }
+
+      // Now that all attributions have been applied to the node, replace the
+      // old node in the Document with the updated node.
+      document.replaceNodeById(node.id, node);
     }
 
     editorDocLog.info(' - done toggling attributions');

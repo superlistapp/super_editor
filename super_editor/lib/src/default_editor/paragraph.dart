@@ -51,6 +51,14 @@ class ParagraphNode extends TextNode {
   }
 
   @override
+  ParagraphNode copyWithText(AttributedText newText) => ParagraphNode(
+        id: id,
+        text: newText,
+        indent: indent,
+        metadata: metadata,
+      );
+
+  @override
   ParagraphNode copy() {
     return ParagraphNode(id: id, text: text.copyText(0), metadata: Map.from(metadata));
   }
