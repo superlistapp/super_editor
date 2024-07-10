@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../super_reader/reader_test_tools.dart';
+
 void main() {
   group('MutableDocument', () {
     group('.moveNode()', () {
@@ -73,32 +75,44 @@ void main() {
 
         document.moveNode(nodeId: 'move-me', targetIndex: 0);
         expect(
-          document.nodes,
-          [
-            node, // Node exists at index 0
-            HorizontalRuleNode(id: '0'),
-            HorizontalRuleNode(id: '2'),
-          ],
+          document,
+          documentEquivalentTo(
+            MutableDocument(
+              nodes: [
+                node, // Node exists at index 0
+                HorizontalRuleNode(id: '0'),
+                HorizontalRuleNode(id: '2'),
+              ],
+            ),
+          ),
         );
 
         document.moveNode(nodeId: 'move-me', targetIndex: 2);
         expect(
-          document.nodes,
-          [
-            HorizontalRuleNode(id: '0'),
-            HorizontalRuleNode(id: '2'),
-            node, // Node exists at index 2
-          ],
+          document,
+          documentEquivalentTo(
+            MutableDocument(
+              nodes: [
+                HorizontalRuleNode(id: '0'),
+                HorizontalRuleNode(id: '2'),
+                node, // Node exists at index 2
+              ],
+            ),
+          ),
         );
 
         document.moveNode(nodeId: 'move-me', targetIndex: 1);
         expect(
-          document.nodes,
-          [
-            HorizontalRuleNode(id: '0'),
-            node, // Node exists at index 1
-            HorizontalRuleNode(id: '2'),
-          ],
+          document,
+          documentEquivalentTo(
+            MutableDocument(
+              nodes: [
+                HorizontalRuleNode(id: '0'),
+                node, // Node exists at index 1
+                HorizontalRuleNode(id: '2'),
+              ],
+            ),
+          ),
         );
       });
     });
@@ -117,9 +131,9 @@ void main() {
       document.replaceNode(oldNode: oldNode, newNode: newNode);
 
       // oldNode does not exist
-      expect(document.nodes.contains(oldNode), false);
+      expect(document.contains(oldNode), false);
       // newNode exists at index 1
-      expect(document.nodes.indexOf(newNode), 1);
+      expect(document.getNodeIndexById(newNode.id), 1);
     });
 
     test('it is equal to another document when both documents are empty', () {

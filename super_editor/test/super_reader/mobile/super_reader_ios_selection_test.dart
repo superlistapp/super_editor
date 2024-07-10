@@ -262,7 +262,7 @@ multiple lines.''',
             .insideCustomScrollView()
             .pump();
 
-        final paragraphNode = testContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.document.first as ParagraphNode;
 
         // Double tap to select "SuperEditor".
         await SuperReaderRobot(tester).doubleTapInParagraph(paragraphNode.id, 0);
@@ -306,7 +306,7 @@ multiple lines.''',
             .insideCustomScrollView()
             .pump();
 
-        final paragraphNode = testContext.document.nodes.first as ParagraphNode;
+        final paragraphNode = testContext.document.first as ParagraphNode;
 
         // Double tap to select "SuperEditor".
         await SuperReaderRobot(tester).doubleTapInParagraph(paragraphNode.id, 0);

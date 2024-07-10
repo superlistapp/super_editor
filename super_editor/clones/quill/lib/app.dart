@@ -126,7 +126,7 @@ class _AlwaysTrailingParagraphReaction extends EditReaction {
   @override
   void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final document = editorContext.find<MutableDocument>(Editor.documentKey);
-    final lastNode = document.nodes.lastOrNull;
+    final lastNode = document.lastOrNull;
 
     if (lastNode != null &&
         lastNode is ParagraphNode &&
@@ -140,7 +140,7 @@ class _AlwaysTrailingParagraphReaction extends EditReaction {
     // We need to insert a trailing empty paragraph.
     requestDispatcher.execute([
       InsertNodeAtIndexRequest(
-        nodeIndex: document.nodes.length,
+        nodeIndex: document.nodeCount,
         newNode: ParagraphNode(
           id: Editor.createNodeId(),
           text: AttributedText(""),

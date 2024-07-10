@@ -216,7 +216,7 @@ class _LastBlockMatcher implements _BlockMatcher {
 
   @override
   bool matches(Document document, DocumentNode node) {
-    return document.getNodeIndexById(node.id) == document.nodes.length - 1;
+    return document.getNodeIndexById(node.id) == document.nodeCount - 1;
   }
 }
 

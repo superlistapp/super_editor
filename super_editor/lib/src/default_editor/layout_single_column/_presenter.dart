@@ -164,17 +164,17 @@ class SingleColumnLayoutPresenter {
       // The document changed. All view models were invalidated. Create a
       // new base document view model.
       final viewModels = <SingleColumnLayoutComponentViewModel>[];
-      for (int i = 0; i < _document.nodes.length; i += 1) {
+      for (int i = 0; i < _document.nodeCount; i += 1) {
         SingleColumnLayoutComponentViewModel? viewModel;
         for (final builder in _componentBuilders) {
-          viewModel = builder.createViewModel(_document, _document.nodes[i]);
+          viewModel = builder.createViewModel(_document, _document.getNodeAt(i)!);
           if (viewModel != null) {
             break;
           }
         }
         if (viewModel == null) {
           throw Exception(
-              "Couldn't find styler to create component for document node: ${_document.nodes[i].runtimeType}");
+              "Couldn't find styler to create component for document node: ${_document.getNodeAt(i)!.runtimeType}");
         }
         viewModels.add(viewModel);
       }

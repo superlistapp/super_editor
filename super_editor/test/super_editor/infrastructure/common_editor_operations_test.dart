@@ -44,8 +44,8 @@ void main() {
 
         commonOps.deleteSelection();
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first.id, "2");
+        expect(document.nodeCount, 1);
+        expect(document.first.id, "2");
         expect(composer.selection!.extent.nodeId, "2");
         expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
@@ -82,8 +82,8 @@ void main() {
 
         commonOps.deleteSelection();
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first.id, "2");
+        expect(document.nodeCount, 1);
+        expect(document.first.id, "2");
         expect(composer.selection!.extent.nodeId, "2");
         expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
@@ -120,8 +120,8 @@ void main() {
 
         commonOps.deleteSelection();
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first.id, "1");
+        expect(document.nodeCount, 1);
+        expect(document.first.id, "1");
         expect(composer.selection!.extent.nodeId, "1");
         expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 50));
       });
@@ -153,9 +153,9 @@ void main() {
 
         commonOps.deleteSelection();
 
-        expect(document.nodes.length, 1);
-        expect(document.nodes.first, isA<ParagraphNode>());
-        expect(document.nodes.first.id, "1");
+        expect(document.nodeCount, 1);
+        expect(document.first, isA<ParagraphNode>());
+        expect(document.first.id, "1");
         expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
     });

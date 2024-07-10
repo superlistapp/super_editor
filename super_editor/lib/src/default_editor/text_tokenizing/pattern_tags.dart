@@ -71,7 +71,7 @@ class PatternTagPlugin extends SuperEditorPlugin {
   void _initializePatternTagIndex(Editor editor) {
     final document = editor.context.find<MutableDocument>(Editor.documentKey);
 
-    for (final node in document.nodes) {
+    for (final node in document) {
       if (node is! TextNode) {
         continue;
       }

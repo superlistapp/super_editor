@@ -269,7 +269,7 @@ void main() {
           ]);
 
         // Ensure that our reaction ran in the middle of the requests.
-        expect((document.nodes.first as TextNode).text.text, "Hello");
+        expect((document.first as TextNode).text.text, "Hello");
       });
 
       test('reactions receive a change list with events from earlier reactions', () {
@@ -497,7 +497,7 @@ void main() {
         ]);
 
         // Verify content changes.
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
         expect(document.getNodeAt(0)!.id, "1");
         expect(document.getNodeAt(1)!.id, "2");
 

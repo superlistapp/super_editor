@@ -22,7 +22,7 @@ class PasteStructuredContentEditorRequest implements EditRequest {
     required this.pastePosition,
   });
 
-  final List<DocumentNode> content;
+  final Document content;
   final DocumentPosition pastePosition;
 }
 
@@ -30,12 +30,12 @@ class PasteStructuredContentEditorRequest implements EditRequest {
 /// given paste position within the document.
 class PasteStructuredContentEditorCommand extends EditCommand {
   PasteStructuredContentEditorCommand({
-    required List<DocumentNode> content,
+    required Document content,
     required DocumentPosition pastePosition,
   })  : _content = content,
         _pastePosition = pastePosition;
 
-  final List<DocumentNode> _content;
+  final Document _content;
   final DocumentPosition _pastePosition;
 
   @override
@@ -127,7 +127,7 @@ class PasteStructuredContentEditorCommand extends EditCommand {
   void _pasteMultipleNodes(
     CommandExecutor executor,
     MutableDocument document,
-    List<DocumentNode> pastedNodes,
+    Document pastedNodes,
     TextNode currentNodeWithSelection,
   ) {
     final textNode = document.getNode(_pastePosition) as TextNode;
@@ -865,7 +865,7 @@ class DeleteContentCommand extends EditCommand {
 
     _log.log('_deleteNodesBetweenFirstAndLast', ' - start node index: $startIndex');
     _log.log('_deleteNodesBetweenFirstAndLast', ' - end node index: $endIndex');
-    _log.log('_deleteNodesBetweenFirstAndLast', ' - initially ${document.nodes.length} nodes');
+    _log.log('_deleteNodesBetweenFirstAndLast', ' - initially ${document.nodeCount} nodes');
 
     // Remove nodes from last to first so that indices don't get
     // screwed up during removal.

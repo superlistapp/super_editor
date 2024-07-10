@@ -486,35 +486,34 @@ class EquivalentDocumentMatcher extends Matcher {
     bool nodeCountMismatch = false;
     bool nodeTypeOrContentMismatch = false;
 
-    if (_expectedDocument.nodes.length != actualDocument.nodes.length) {
-      messages
-          .add("expected ${_expectedDocument.nodes.length} document nodes but found ${actualDocument.nodes.length}");
+    if (_expectedDocument.nodeCount != actualDocument.nodeCount) {
+      messages.add("expected ${_expectedDocument.nodeCount} document nodes but found ${actualDocument.nodeCount}");
       nodeCountMismatch = true;
     } else {
       messages.add("document have the same number of nodes");
     }
 
-    final maxNodeCount = max(_expectedDocument.nodes.length, actualDocument.nodes.length);
+    final maxNodeCount = max(_expectedDocument.nodeCount, actualDocument.nodeCount);
     final nodeComparisons = List.generate(maxNodeCount, (index) => ["", "", " "]);
     for (int i = 0; i < maxNodeCount; i += 1) {
-      if (i < _expectedDocument.nodes.length && i < actualDocument.nodes.length) {
-        nodeComparisons[i][0] = _expectedDocument.nodes[i].runtimeType.toString();
-        nodeComparisons[i][1] = actualDocument.nodes[i].runtimeType.toString();
+      if (i < _expectedDocument.nodeCount && i < actualDocument.nodeCount) {
+        nodeComparisons[i][0] = _expectedDocument.getNodeAt(i)!.runtimeType.toString();
+        nodeComparisons[i][1] = actualDocument.getNodeAt(i)!.runtimeType.toString();
 
-        if (_expectedDocument.nodes[i].runtimeType != actualDocument.nodes[i].runtimeType) {
+        if (_expectedDocument.getNodeAt(i)!.runtimeType != actualDocument.getNodeAt(i)!.runtimeType) {
           nodeComparisons[i][2] = "Wrong Type";
           nodeTypeOrContentMismatch = true;
-        } else if (!_expectedDocument.nodes[i].hasEquivalentContent(actualDocument.nodes[i])) {
+        } else if (!_expectedDocument.getNodeAt(i)!.hasEquivalentContent(actualDocument.getNodeAt(i)!)) {
           nodeComparisons[i][2] = "Different Content";
           nodeTypeOrContentMismatch = true;
         }
-      } else if (i < _expectedDocument.nodes.length) {
-        nodeComparisons[i][0] = _expectedDocument.nodes[i].runtimeType.toString();
+      } else if (i < _expectedDocument.nodeCount) {
+        nodeComparisons[i][0] = _expectedDocument.getNodeAt(i)!.runtimeType.toString();
         nodeComparisons[i][1] = "NA";
         nodeComparisons[i][2] = "Missing Node";
-      } else if (i < actualDocument.nodes.length) {
+      } else if (i < actualDocument.nodeCount) {
         nodeComparisons[i][0] = "NA";
-        nodeComparisons[i][1] = actualDocument.nodes[i].runtimeType.toString();
+        nodeComparisons[i][1] = actualDocument.getNodeAt(i)!.runtimeType.toString();
         nodeComparisons[i][2] = "Missing Node";
       }
     }
