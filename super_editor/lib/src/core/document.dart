@@ -28,11 +28,11 @@ abstract class Document implements Iterable<DocumentNode> {
 
   /// Returns the first [DocumentNode] in this [Document], or `null` if this
   /// [Document] is empty.
-  DocumentNode? get firstNodeOrNull;
+  DocumentNode? get firstOrNull;
 
   /// Returns the last [DocumentNode] in this [Document], or `null` if this
   /// [Document] is empty.
-  DocumentNode? get lastNodeOrNull;
+  DocumentNode? get lastOrNull;
 
   /// Returns the [DocumentNode] with the given [nodeId], or [null]
   /// if no such node exists.
