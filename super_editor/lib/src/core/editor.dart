@@ -988,6 +988,34 @@ class FunctionalEditListener implements EditListener {
   void onEdit(List<EditEvent> changeList) => _onEdit(changeList);
 }
 
+/// Extensions that provide direct, type-safe access to [Editable]s that are
+/// expected to exist in all [Editor]s.
+///
+/// This extension is similar to [StandardEditablesInContext], except this extension
+/// operates on an [Editor] and the other operates on [EditContext]s. Both exist
+/// for convenience.
+extension StandardEditables on Editor {
+  /// Finds and returns the [MutableDocument] within the [Editor].
+  MutableDocument get document => context.find<MutableDocument>(Editor.documentKey);
+
+  /// Finds and returns the [MutableDocumentComposer] within the [Editor].
+  MutableDocumentComposer get composer => context.find<MutableDocumentComposer>(Editor.composerKey);
+}
+
+/// Extensions that provide direct, type-safe access to [Editable]s that are
+/// expected to exist in all [EditContext]s.
+///
+/// This extension is similar to [StandardEditables], except this extension
+/// operates on an [EditContext] and the other operates on [Editor]s. Both exist
+/// for convenience.
+extension StandardEditablesInContext on EditContext {
+  /// Finds and returns the [MutableDocument] within the [EditContext].
+  MutableDocument get document => find<MutableDocument>(Editor.documentKey);
+
+  /// Finds and returns the [MutableDocumentComposer] within the [EditContext].
+  MutableDocumentComposer get composer => find<MutableDocumentComposer>(Editor.composerKey);
+}
+
 /// An in-memory, mutable [Document].
 class MutableDocument with Iterable<DocumentNode> implements Document, Editable {
   /// Creates an in-memory, mutable version of a [Document].

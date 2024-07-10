@@ -4,7 +4,6 @@ import 'package:feather/infrastructure/popovers/color_selector.dart';
 import 'package:feather/editor/editor.dart';
 import 'package:feather/infrastructure/popovers/icon_selector.dart';
 import 'package:feather/infrastructure/popovers/text_item_selector.dart';
-import 'package:feather/infrastructure/super_editor_extensions.dart';
 import 'package:feather/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
