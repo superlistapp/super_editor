@@ -340,7 +340,7 @@ class ChangeParagraphAlignmentCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final existingNode = document.getNodeById(nodeId)! as ParagraphNode;
 
@@ -406,7 +406,7 @@ class ChangeParagraphBlockTypeCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final existingNode = document.getNodeById(nodeId)! as ParagraphNode;
     existingNode.putMetadataValue('blockType', blockType);
@@ -454,7 +454,7 @@ class CombineParagraphsCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     editorDocLog.info('Executing CombineParagraphsCommand');
     editorDocLog.info(' - merging "$firstNodeId" <- "$secondNodeId"');
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final secondNode = document.getNodeById(secondNodeId);
     if (secondNode is! TextNode) {
       editorDocLog.info('WARNING: Cannot merge node of type: $secondNode into node above.');
@@ -567,7 +567,7 @@ class SplitParagraphCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     editorDocLog.info('Executing SplitParagraphCommand');
 
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     if (node is! ParagraphNode) {
       editorDocLog.info('WARNING: Cannot split paragraph for node of type: $node.');
@@ -695,7 +695,7 @@ class DeleteUpstreamAtBeginningOfParagraphCommand extends EditCommand {
       return;
     }
 
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final documentLayoutEditable = context.find<DocumentLayoutEditable>(Editor.layoutKey);
 
@@ -899,7 +899,7 @@ class DeleteParagraphCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     editorDocLog.info('Executing DeleteParagraphCommand');
     editorDocLog.info(' - deleting "$nodeId"');
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
     final node = document.getNodeById(nodeId);
     if (node is! TextNode) {
       editorDocLog.shout('WARNING: Cannot delete node of type: $node.');
@@ -1078,7 +1078,7 @@ class SetParagraphIndentCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final paragraph = document.getNodeById(nodeId);
     if (paragraph is! ParagraphNode) {
@@ -1111,7 +1111,7 @@ class IndentParagraphCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final paragraph = document.getNodeById(nodeId);
     if (paragraph is! ParagraphNode) {
@@ -1186,7 +1186,7 @@ class UnIndentParagraphCommand extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(Editor.documentKey);
+    final document = context.document;
 
     final paragraph = document.getNodeById(nodeId);
     if (paragraph is! ParagraphNode) {
