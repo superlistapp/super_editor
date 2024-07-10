@@ -109,19 +109,18 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   }
 
   void _selectAll() {
-    final nodes = _document.nodes;
-    if (nodes.isEmpty) {
+    if (_document.isEmpty) {
       return;
     }
 
     _selection.value = DocumentSelection(
       base: DocumentPosition(
-        nodeId: nodes.first.id,
-        nodePosition: nodes.first.beginningPosition,
+        nodeId: _document.first.id,
+        nodePosition: _document.first.beginningPosition,
       ),
       extent: DocumentPosition(
-        nodeId: nodes.last.id,
-        nodePosition: nodes.last.endPosition,
+        nodeId: _document.last.id,
+        nodePosition: _document.last.endPosition,
       ),
     );
   }

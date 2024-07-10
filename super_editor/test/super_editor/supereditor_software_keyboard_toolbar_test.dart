@@ -21,7 +21,7 @@ void main() {
       final document = SuperEditorInspector.findDocument()!;
 
       // Place the caret at the beginning of the empty document.
-      await tester.placeCaretInParagraph(document.nodes.first.id, 0);
+      await tester.placeCaretInParagraph(document.first.id, 0);
 
       // Convert the empty paragraph into a horizontal rule.
       final toolbarOps = KeyboardEditingToolbarOperations(
@@ -35,10 +35,10 @@ void main() {
 
       // Ensure the first node is now a horizontal rule node, and there's a
       // a second node, which is a paragraph node.
-      final firstNode = document.nodes.first;
+      final firstNode = document.first;
       expect(firstNode, isA<HorizontalRuleNode>());
 
-      final secondNode = document.nodes[1];
+      final secondNode = document.getNodeAt(1)!;
       expect(secondNode, isA<ParagraphNode>());
       expect((secondNode as ParagraphNode).text.text, isEmpty);
 

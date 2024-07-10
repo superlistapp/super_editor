@@ -41,19 +41,19 @@ void main() {
         await tester.pressEnter();
 
         // Ensure we created the new nodes.
-        expect(document.nodes.length, 3);
+        expect(document.nodeCount, 3);
 
         // Select the new nodes.
         editor.execute([
           ChangeSelectionRequest(
             DocumentSelection(
               base: DocumentPosition(
-                nodeId: document.nodes[2].id,
-                nodePosition: document.nodes[2].endPosition,
+                nodeId: document.getNodeAt(2)!.id,
+                nodePosition: document.getNodeAt(2)!.endPosition,
               ),
               extent: DocumentPosition(
-                nodeId: document.nodes[1].id,
-                nodePosition: document.nodes[1].beginningPosition,
+                nodeId: document.getNodeAt(1)!.id,
+                nodePosition: document.getNodeAt(1)!.beginningPosition,
               ),
             ),
             SelectionChangeType.expandSelection,
@@ -68,12 +68,12 @@ void main() {
 
         // Bug #429 - the deletion threw an error due to a selection
         // type mismatch.
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
         expect(composer.selection!.isCollapsed, true);
         expect(
           composer.selection!.extent,
           DocumentPosition(
-            nodeId: document.nodes.last.id,
+            nodeId: document.last.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         );
@@ -117,12 +117,12 @@ void main() {
           ChangeSelectionRequest(
             DocumentSelection(
               base: DocumentPosition(
-                nodeId: document.nodes[1].id,
-                nodePosition: document.nodes[1].beginningPosition,
+                nodeId: document.getNodeAt(1)!.id,
+                nodePosition: document.getNodeAt(1)!.beginningPosition,
               ),
               extent: DocumentPosition(
-                nodeId: document.nodes[2].id,
-                nodePosition: document.nodes[2].endPosition,
+                nodeId: document.getNodeAt(2)!.id,
+                nodePosition: document.getNodeAt(2)!.endPosition,
               ),
             ),
             SelectionChangeType.expandSelection,
@@ -138,12 +138,12 @@ void main() {
         // The bug was a problem with an expanded upstream selection.
         // Here we make sure that deleting an expanded downstream
         // selection works, too.
-        expect(document.nodes.length, 2);
+        expect(document.nodeCount, 2);
         expect(composer.selection!.isCollapsed, true);
         expect(
           composer.selection!.extent,
           DocumentPosition(
-            nodeId: document.nodes.last.id,
+            nodeId: document.last.id,
             nodePosition: const TextNodePosition(offset: 0),
           ),
         );

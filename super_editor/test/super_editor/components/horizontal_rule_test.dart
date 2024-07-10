@@ -26,15 +26,15 @@ Paragraph 2
 
       // Place the caret at the end of the horizontal rule, by first placing the caret in the paragraph after the
       // horizontal rule, and then pressing the left arrow to move it up.
-      await tester.placeCaretInParagraph(document.nodes.last.id, 0);
+      await tester.placeCaretInParagraph(document.last.id, 0);
       await tester.pressLeftArrow();
 
       // Type at the end of the horizontal rule
       await tester.typeImeText('new paragraph');
 
       // Ensure that the new text was inserted in a new paragraph after the horizontal rule.
-      expect(document.nodes.length, 4);
-      final insertedNode = document.nodes[2];
+      expect(document.nodeCount, 4);
+      final insertedNode = document.getNodeAt(2)!;
       expect(insertedNode, isA<ParagraphNode>());
       expect((insertedNode as ParagraphNode).text.text, 'new paragraph');
       expect(
@@ -65,15 +65,15 @@ Paragraph 2
 
       // Place the caret at the beginning of the horizontal rule, by first placing the caret in the paragraph before the
       // horizontal rule, and then pressing the right arrow to move it down.
-      await tester.placeCaretInParagraph(document.nodes.first.id, 11);
+      await tester.placeCaretInParagraph(document.first.id, 11);
       await tester.pressRightArrow();
 
       // Type at the beginning of the horizontal rule
       await tester.typeImeText('new paragraph');
 
       // Ensure that the new text was inserted in a new paragraph before the horizontal rule.
-      expect(document.nodes.length, 4);
-      final insertedNode = document.nodes[1];
+      expect(document.nodeCount, 4);
+      final insertedNode = document.getNodeAt(1)!;
       expect(insertedNode, isA<ParagraphNode>());
       expect((insertedNode as ParagraphNode).text.text, 'new paragraph');
       expect(

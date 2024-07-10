@@ -16,8 +16,8 @@ extension QuillDelta on MutableDocument {
   }) {
     final deltaDocument = Delta();
 
-    for (final node in nodes) {
-      if (node is ParagraphNode && node == nodes.last && node.text.text.isEmpty && nodes.length > 1) {
+    for (final node in this) {
+      if (node is ParagraphNode && node == last && node.text.text.isEmpty && nodeCount > 1) {
         // This final, empty paragraph in the document represents the final
         // newline "\n" in the Delta document. But, due to how we serialize
         // deltas, the node/delta before this one already inserted a newline,

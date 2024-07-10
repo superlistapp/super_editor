@@ -209,8 +209,7 @@ class CommonEditorOperations {
   ///
   /// Always returns [true].
   bool selectAll() {
-    final nodes = document.nodes;
-    if (nodes.isEmpty) {
+    if (document.isEmpty) {
       return false;
     }
 
@@ -218,12 +217,12 @@ class CommonEditorOperations {
       ChangeSelectionRequest(
         DocumentSelection(
           base: DocumentPosition(
-            nodeId: nodes.first.id,
-            nodePosition: nodes.first.beginningPosition,
+            nodeId: document.first.id,
+            nodePosition: document.first.beginningPosition,
           ),
           extent: DocumentPosition(
-            nodeId: nodes.last.id,
-            nodePosition: nodes.last.endPosition,
+            nodeId: document.last.id,
+            nodePosition: document.last.endPosition,
           ),
         ),
         SelectionChangeType.expandSelection,
@@ -665,11 +664,11 @@ class CommonEditorOperations {
       return false;
     }
 
-    if (document.nodes.isEmpty) {
+    if (document.isEmpty) {
       return false;
     }
 
-    final firstNode = document.nodes.first;
+    final firstNode = document.first;
 
     if (expand) {
       final currentExtentNode = document.getNodeById(composer.selection!.extent.nodeId);
@@ -729,11 +728,11 @@ class CommonEditorOperations {
       return false;
     }
 
-    if (document.nodes.isEmpty) {
+    if (document.isEmpty) {
       return false;
     }
 
-    final lastNode = document.nodes.last;
+    final lastNode = document.last;
 
     if (expand) {
       final currentExtentNode = document.getNodeById(composer.selection!.extent.nodeId);

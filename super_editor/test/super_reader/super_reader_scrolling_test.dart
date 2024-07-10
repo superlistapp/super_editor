@@ -21,7 +21,7 @@ void main() {
           .pump();
 
       final document = SuperReaderInspector.findDocument()!;
-      final firstParagraph = document.nodes.first as ParagraphNode;
+      final firstParagraph = document.first as ParagraphNode;
 
       final dragGesture = await tester.startDocumentDragFromPosition(
         from: DocumentPosition(
@@ -56,7 +56,7 @@ void main() {
           .pump();
 
       final document = SuperReaderInspector.findDocument()!;
-      final lastParagraph = document.nodes.last as ParagraphNode;
+      final lastParagraph = document.last as ParagraphNode;
 
       // Jump to the end of the document
       scrollController.jumpTo(scrollController.position.maxScrollExtent);
@@ -95,8 +95,8 @@ void main() {
           .pump();
 
       final document = SuperReaderInspector.findDocument()!;
-      final firstParagraph = document.nodes.first as ParagraphNode;
-      final lastParagraph = document.nodes.last as ParagraphNode;
+      final firstParagraph = document.first as ParagraphNode;
+      final lastParagraph = document.last as ParagraphNode;
 
       final dragGesture = await tester.startDocumentDragFromPosition(
         from: DocumentPosition(
@@ -140,8 +140,8 @@ void main() {
           .pump();
 
       final document = SuperReaderInspector.findDocument()!;
-      final firstParagraph = document.nodes.first as ParagraphNode;
-      final lastParagraph = document.nodes.last as ParagraphNode;
+      final firstParagraph = document.first as ParagraphNode;
+      final lastParagraph = document.last as ParagraphNode;
 
       // Place the caret at the end of the document, which causes the editor to
       // scroll to the bottom.
@@ -195,7 +195,7 @@ void main() {
           .forDesktop() //
           .pump();
       final document = SuperReaderInspector.findDocument()!;
-      final lastParagraph = document.nodes.last as ParagraphNode;
+      final lastParagraph = document.last as ParagraphNode;
 
       // Place the caret at the end of the document, which should cause the
       // editor to scroll to the bottom.

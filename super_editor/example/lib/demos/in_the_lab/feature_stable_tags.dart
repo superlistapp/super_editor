@@ -64,7 +64,7 @@ class _UserTagsFeatureDemoState extends State<UserTagsFeatureDemo> {
     setState(() {
       _users.clear();
 
-      for (final node in _document.nodes) {
+      for (final node in _document) {
         if (node is! TextNode) {
           continue;
         }

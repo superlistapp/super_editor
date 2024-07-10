@@ -17,10 +17,22 @@ import 'package:flutter/widgets.dart';
 /// content.
 ///
 /// To edit the content of a document, see [DocumentEditor].
-abstract class Document {
-  /// Returns all of the content within the document as a list
-  /// of [DocumentNode]s.
-  List<DocumentNode> get nodes;
+abstract class Document implements Iterable<DocumentNode> {
+  /// The number of [DocumentNode]s in this [Document].
+  int get nodeCount;
+
+  /// Returns `true` if this [Document] has zero nodes, or `false` if it
+  /// has `1+ nodes.
+  @override
+  bool get isEmpty;
+
+  /// Returns the first [DocumentNode] in this [Document], or `null` if this
+  /// [Document] is empty.
+  DocumentNode? get firstOrNull;
+
+  /// Returns the last [DocumentNode] in this [Document], or `null` if this
+  /// [Document] is empty.
+  DocumentNode? get lastOrNull;
 
   /// Returns the [DocumentNode] with the given [nodeId], or [null]
   /// if no such node exists.
@@ -240,7 +252,7 @@ class DocumentPosition {
   ///
   /// ```dart
   /// final documentPosition = DocumentPosition(
-  ///   nodeId: documentEditor.document.nodes.first.id,
+  ///   nodeId: documentEditor.document.first.id,
   ///   nodePosition: TextNodePosition(offset: 1),
   /// );
   /// ```

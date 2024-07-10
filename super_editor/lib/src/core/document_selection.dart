@@ -376,11 +376,9 @@ extension InspectDocumentSelection on Document {
   /// from upstream to downstream.
   List<DocumentNode> getNodesInContentOrder(DocumentSelection selection) {
     final upstreamPosition = selectUpstreamPosition(selection.base, selection.extent);
-    final upstreamIndex = getNodeIndexById(upstreamPosition.nodeId);
     final downstreamPosition = selectDownstreamPosition(selection.base, selection.extent);
-    final downstreamIndex = getNodeIndexById(downstreamPosition.nodeId);
 
-    return nodes.sublist(upstreamIndex, downstreamIndex + 1);
+    return getNodesInside(upstreamPosition, downstreamPosition);
   }
 
   /// Given [docPosition1] and [docPosition2], returns the `DocumentPosition` that

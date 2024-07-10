@@ -166,7 +166,7 @@ void main() {
         // Place caret at "adipiscing elit|.". In portrait mode, this character
         // is displayed on the second line. In landscape mode, it's displayed
         // on the first line.
-        await tester.placeCaretInParagraph(context.document.nodes.first.id, 54);
+        await tester.placeCaretInParagraph(context.document.first.id, 54);
 
         await screenMatchesGolden(tester, 'super-editor-caret-rotation-portrait-landscape-before-ios');
 
@@ -189,7 +189,7 @@ void main() {
         // Place caret at "adipiscing elit|.". In portrait mode, this character
         // is displayed on the second line. In landscape mode, it's displayed
         // on the first line.
-        await tester.placeCaretInParagraph(context.document.nodes.first.id, 54);
+        await tester.placeCaretInParagraph(context.document.first.id, 54);
 
         await screenMatchesGolden(tester, 'super-editor-caret-rotation-portrait-landscape-before-android');
 
@@ -212,7 +212,7 @@ void main() {
         // Place caret at "adipiscing elit|.". In portrait mode, this character
         // is displayed on the second line. In landscape mode, it's displayed
         // on the first line.
-        await tester.placeCaretInParagraph(context.document.nodes.first.id, 54);
+        await tester.placeCaretInParagraph(context.document.first.id, 54);
 
         await screenMatchesGolden(tester, 'super-editor-caret-rotation-landscape-portrait-before-ios');
 
@@ -235,7 +235,7 @@ void main() {
         // Place caret at "adipiscing elit|.". In portrait mode, this character
         // is displayed on the second line. In landscape mode, it's displayed
         // on the first line.
-        await tester.placeCaretInParagraph(context.document.nodes.first.id, 54);
+        await tester.placeCaretInParagraph(context.document.first.id, 54);
 
         await screenMatchesGolden(tester, 'super-editor-caret-rotation-landscape-portrait-before-android');
 
