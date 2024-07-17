@@ -251,8 +251,11 @@ void main() {
     });
 
     testWidgetsOnMobile("multi-line is vertically scrollable when text spans more lines than maxLines", (tester) async {
+      final initialText = "The first line of text in the field\n"
+          "The second line of text in the field\n"
+          "The third line of text in the field";
       final controller = AttributedTextEditingController(
-        text: AttributedText("A\nB\nC"),
+        text: AttributedText(initialText),
       );
 
       // Pump the widget tree with a SuperTextField with a maxHeight of 2 lines
@@ -265,31 +268,38 @@ void main() {
         maxHeight: 40,
       );
 
-      // Move selection to the end of the text
-      // TODO: change to simulate user input when IME simulation is available
-      controller.selection = const TextSelection.collapsed(offset: 5);
+      double getTextBottom() {
+        return tester.getBottomRight(find.byType(SuperTextField)).dy;
+      }
+
+      double getViewportBottom() {
+        return tester.getBottomRight(find.byType(SuperText)).dy;
+      }
+
+      // Ensure the text field has not yet scrolled.
+      expect(getTextBottom(), lessThan(getViewportBottom()));
+
+      // Scroll down to reveal the last line of text.
+      await tester.drag(find.byType(SuperTextField), const Offset(0, -1000.0));
       await tester.pumpAndSettle();
 
       // Ensure the text field has scrolled to the bottom.
-      expect(
-        SuperTextFieldInspector.findScrollOffset(),
-        greaterThan(0.0),
-      );
+      expect(getTextBottom(), equals(getViewportBottom()));
 
-      // Scroll upwards towards the top of the text field.
-      await tester.drag(find.byType(SuperTextField), const Offset(0, -1000));
+      // Scroll back up to the top of the text field.
+      await tester.drag(find.byType(SuperTextField), const Offset(0, 1000.0));
       await tester.pumpAndSettle();
 
       // Ensure the text field has scrolled back to the top.
-      expect(
-        SuperTextFieldInspector.findScrollOffset(),
-        0.0,
-      );
+      expect(getTextBottom(), lessThan(getViewportBottom()));
     });
 
     testWidgetsOnDesktop("multi-line is vertically scrollable when text spans more lines than maxLines", (tester) async {
+      final initialText = "The first line of text in the field\n"
+          "The second line of text in the field\n"
+          "The third line of text in the field";
       final controller = AttributedTextEditingController(
-        text: AttributedText("A\nB\nC"),
+        text: AttributedText(initialText),
       );
 
       // Pump the widget tree with a SuperTextField with a maxHeight of 2 lines
@@ -302,26 +312,38 @@ void main() {
         maxHeight: 40,
       );
 
-      // Move selection to the end of the text
-      // TODO: change to simulate user input when IME simulation is available
-      controller.selection = const TextSelection.collapsed(offset: 5);
+      double getTextBottom() {
+        return tester.getBottomRight(find.byType(SuperTextField)).dy;
+      }
+
+      double getViewportBottom() {
+        return tester.getBottomRight(find.byType(SuperText)).dy;
+      }
+
+      // Ensure the text field has not yet scrolled.
+      expect(getTextBottom(), lessThan(getViewportBottom()));
+
+      // Scroll down to reveal the last line of text.
+      await tester.drag(
+        find.byType(SuperTextField),
+        const Offset(0, -1000.0),
+        kind: PointerDeviceKind.trackpad,
+      );
       await tester.pumpAndSettle();
 
       // Ensure the text field has scrolled to the bottom.
-      expect(
-        SuperTextFieldInspector.findScrollOffset(),
-        greaterThan(0.0),
-      );
+      expect(getTextBottom(), equals(getViewportBottom()));
 
-      // Scroll upwards towards the top of the text field.
-      await tester.drag(find.byType(SuperTextField), const Offset(0, -1000));
+      // Scroll back up to the top of the text field.
+      await tester.drag(
+        find.byType(SuperTextField),
+        const Offset(0, 1000.0),
+        kind: PointerDeviceKind.trackpad,
+      );
       await tester.pumpAndSettle();
 
       // Ensure the text field has scrolled back to the top.
-      expect(
-        SuperTextFieldInspector.findScrollOffset(),
-        0.0,
-      );
+      expect(getTextBottom(), lessThan(getViewportBottom()));
     });
   });
 }
