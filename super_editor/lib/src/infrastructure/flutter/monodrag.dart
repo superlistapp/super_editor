@@ -9,6 +9,8 @@ import 'package:flutter/scheduler.dart';
 /// Flutter's `DragGestureRecognizer` relies on private abstract methods to work. Since the
 /// built-in subclasses live on the same package, they can override these methods, but we don't.
 ///
+/// Original file: https://github.com/flutter/flutter/blob/02aaaa0bf9096fc85c76d316fec1ce2b2890fcc3/packages/flutter/lib/src/gestures/monodrag.dart
+///
 /// This class can be removed if https://github.com/flutter/flutter/issues/151446 is resolved.
 abstract class DragGestureRecognizer extends OneSequenceGestureRecognizer {
   /// Initialize the object.

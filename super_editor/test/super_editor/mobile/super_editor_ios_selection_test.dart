@@ -480,7 +480,7 @@ void main() {
           }
 
           // Ensure that dragging doesn't cause the editor to scroll.
-          //expect(scrollController.offset, 0);
+          expect(scrollController.offset, 0);
 
           // Drag vertically.
           for (int i = 1; i < 10; i += 1) {
