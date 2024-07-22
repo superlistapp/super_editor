@@ -353,6 +353,10 @@ class Editor implements RequestDispatcher {
     _isReacting = false;
   }
 
+  bool canUndo() => _history.isNotEmpty;
+
+  bool canRedo() => _future.isNotEmpty;
+
   void undo() {
     editorEditsLog.info("Running undo");
     if (_history.isEmpty) {
