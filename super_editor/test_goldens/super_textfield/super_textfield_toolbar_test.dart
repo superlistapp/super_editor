@@ -8,7 +8,7 @@ import '../test_tools_goldens.dart';
 
 void main() {
   group('SuperTextField', () {
-    testGoldensOnAndroid('displays toolbar pointing down for expanded selection', (tester) async {
+    testGoldensOniOS('displays toolbar pointing down for expanded selection', (tester) async {
       // Pumps a widget tree with a SuperTextField at the bottom of the screen.
       await _pumpSuperTextfieldToolbarTestApp(
         tester,
@@ -16,7 +16,6 @@ void main() {
           bottom: 50,
           child: _buildSuperTextField(
             text: 'Arrow pointing down',
-            configuration: SuperTextFieldPlatformConfiguration.iOS,
           ),
         ),
       );
@@ -57,13 +56,12 @@ void main() {
       );
     });
 
-    testGoldensOnAndroid('displays toolbar pointing up for expanded selection', (tester) async {
+    testGoldensOniOS('displays toolbar pointing up for expanded selection', (tester) async {
       // Pumps a widget tree with a SuperTextField at the top of the screen.
       await _pumpSuperTextfieldToolbarTestApp(
         tester,
         child: _buildSuperTextField(
           text: 'Arrow pointing up',
-          configuration: SuperTextFieldPlatformConfiguration.iOS,
         ),
       );
 
