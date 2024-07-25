@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/test/flutter_extensions/finders.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -494,8 +495,21 @@ class SuperEditorInspector {
     }
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      final iOSCaretLayer = _findIosControlsLayer(superEditorFinder);
-      return iOSCaretLayer.isCaretVisible;
+      final element = find
+          .descendant(
+            of: find.byKey(DocumentKeys.caret),
+            matching: find.byType(BlinkingCaret),
+          )
+          .evaluate()
+          .singleOrNull as StatefulElement?;
+
+      if (element == null) {
+        // The caret isn't in the tree. It can't be visible.
+        return false;
+      }
+
+      final state = element.state as BlinkingCaretState;
+      return state.isVisible;
     }
 
     final desktopCaretLayer = _findDesktopCaretOverlay(superEditorFinder);
