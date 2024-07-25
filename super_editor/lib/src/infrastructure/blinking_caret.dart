@@ -28,8 +28,6 @@ class BlinkingCaret extends StatefulWidget {
 }
 
 class BlinkingCaretState extends State<BlinkingCaret> with SingleTickerProviderStateMixin {
-  bool get isVisible => _caretBlinkController.opacity == 1.0;
-
   // Controls the blinking caret animation.
   late BlinkController _caretBlinkController;
 
