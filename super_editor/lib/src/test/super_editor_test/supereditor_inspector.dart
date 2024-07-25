@@ -495,21 +495,8 @@ class SuperEditorInspector {
     }
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      final element = find
-          .descendant(
-            of: find.byKey(DocumentKeys.caret),
-            matching: find.byType(BlinkingCaret),
-          )
-          .evaluate()
-          .singleOrNull as StatefulElement?;
-
-      if (element == null) {
-        // The caret isn't in the tree. It can't be visible.
-        return false;
-      }
-
-      final state = element.state as BlinkingCaretState;
-      return state.isVisible;
+      final iOSCaretLayer = _findIosControlsLayer(superEditorFinder);
+      return iOSCaretLayer.isCaretVisible;
     }
 
     final desktopCaretLayer = _findDesktopCaretOverlay(superEditorFinder);
