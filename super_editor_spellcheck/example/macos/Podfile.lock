@@ -1,0 +1,22 @@
+PODS:
+  - FlutterMacOS (1.0.0)
+  - super_editor_spellcheck (0.0.1):
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - super_editor_spellcheck (from `Flutter/ephemeral/.symlinks/plugins/super_editor_spellcheck/macos`)
+
+EXTERNAL SOURCES:
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  super_editor_spellcheck:
+    :path: Flutter/ephemeral/.symlinks/plugins/super_editor_spellcheck/macos
+
+SPEC CHECKSUMS:
+  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+  super_editor_spellcheck: 5063cbc89fc64c395067cf5b25fd56081920949b
+
+PODFILE CHECKSUM: 236401fc2c932af29a9fcf0e97baeeb2d750d367
+
+COCOAPODS: 1.15.2
