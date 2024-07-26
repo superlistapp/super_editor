@@ -1403,21 +1403,24 @@ class RemoveTextAttributionsCommand extends EditCommand {
 
     // Add attributions.
     for (final entry in nodesAndSelections.entries) {
+      var node = entry.key;
+      final range = entry.value.toSpanRange();
+
       for (Attribution attribution in attributions) {
-        final node = entry.key;
-        final range = entry.value.toSpanRange();
         editorDocLog.info(' - removing attribution: $attribution. Range: $range');
 
         // Create a new AttributedText with updated attribution spans, so that the presentation system can
         // see that we made a change, and re-renders the text in the document.
-        node.text = AttributedText(
-          node.text.text,
-          node.text.spans.copy()
-            ..removeAttribution(
-              attributionToRemove: attribution,
-              start: range.start,
-              end: range.end,
-            ),
+        node = node.copyWithText(
+          AttributedText(
+            node.text.text,
+            node.text.spans.copy()
+              ..removeAttribution(
+                attributionToRemove: attribution,
+                start: range.start,
+                end: range.end,
+              ),
+          ),
         );
 
         executor.logChanges([
@@ -1431,6 +1434,10 @@ class RemoveTextAttributionsCommand extends EditCommand {
           ),
         ]);
       }
+
+      // Now that attribution changes are done for the given node, replace
+      // the existing document node with the updated node.
+      document.replaceNodeById(node.id, node);
     }
 
     editorDocLog.info(' - done adding attributions');
@@ -1726,7 +1733,7 @@ class InsertTextCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.document;
 
-    final textNode = document.getNodeById(documentPosition.nodeId);
+    var textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
       return;
@@ -1734,10 +1741,22 @@ class InsertTextCommand extends EditCommand {
 
     final textPosition = documentPosition.nodePosition as TextPosition;
     final textOffset = textPosition.offset;
-    textNode.text = textNode.text.insertString(
-      textToInsert: textToInsert,
-      startOffset: textOffset,
-      applyAttributions: attributions,
+    // textNode.text = textNode.text.insertString(
+    //   textToInsert: textToInsert,
+    //   startOffset: textOffset,
+    //   applyAttributions: attributions,
+    // );
+    print("Inserting text into node ${textNode.id}: '$textToInsert'");
+    textNode = textNode.copyWithText(
+      textNode.text.insertString(
+        textToInsert: textToInsert,
+        startOffset: textOffset,
+        applyAttributions: attributions,
+      ),
+    );
+    document.replaceNodeById(
+      textNode.id,
+      textNode,
     );
 
     executor.logChanges([
