@@ -1,7 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:super_editor_spellcheck/super_editor_spellcheck.dart';
 
 void main() {
@@ -16,34 +17,42 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-  final _superEditorSpellcheckPlugin = SuperEditorSpellcheck();
+  final _superEditorSpellcheckPlugin = SuperEditorSpellCheckerPlugin();
+  final _textController = TextEditingController(text: 'Helo, Worl!');
+
+  List<TextSuggestion> _suggestions = [];
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+
+    _textController.addListener(_onTextChanged);
+    _fetchSuggestions();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion =
-          await _superEditorSpellcheckPlugin.getPlatformVersion() ?? 'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
+  @override
+  void dispose() {
+    _textController.removeListener(_onTextChanged);
+    _textController.dispose();
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    _fetchSuggestions();
+  }
+
+  Future<void> _fetchSuggestions() async {
+    final suggestions = await _superEditorSpellcheckPlugin.checkSpelling(
+      PlatformDispatcher.instance.locale,
+      _textController.text,
+    );
+
+    if (!mounted) {
+      return;
     }
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
     setState(() {
-      _platformVersion = platformVersion;
+      _suggestions = suggestions;
     });
   }
 
@@ -54,10 +63,29 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
-        body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+        body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: [
+              TextField(
+                controller: _textController,
+              ),
+              _suggestions.isEmpty
+                  ? const Text('No spelling errors found.')
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: _suggestions.map(_buildSuggestions).toList(),
+                    ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSuggestions(TextSuggestion span) {
+    return Text(
+      '${_textController.text.substring(span.start, span.end)}: ${span.suggestions.join(', ')}',
     );
   }
 }
