@@ -498,9 +498,6 @@ void main() {
           text.getAttributedRange({actionTagCancelledAttribution}, 7),
           const SpanRange(7, 7),
         );
-
-        // Add a space, cause the tag to end.
-        await tester.typeImeText(" ");
       });
 
       testWidgetsOnAllPlatforms("only notifies tag index listeners when tags change", (tester) async {
