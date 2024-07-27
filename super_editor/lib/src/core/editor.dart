@@ -1087,7 +1087,7 @@ class MutableDocument with Iterable<DocumentNode> implements Document, Editable 
   Iterator<DocumentNode> get iterator => _nodes.iterator;
 
   @override
-  DocumentNode? get firstOrNull => _nodes.lastOrNull;
+  DocumentNode? get firstOrNull => _nodes.firstOrNull;
 
   @override
   DocumentNode? get lastOrNull => _nodes.lastOrNull;
