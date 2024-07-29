@@ -13,8 +13,8 @@ class SuperEditorSpellCheckerPlugin {
   ///
   /// Returns an empty list if no spelling errors are found or if the [locale]
   /// isn't supported by the spell checker.
-  Future<List<TextSuggestion>> checkSpelling(Locale locale, String text) async {
-    final results = await _spellCheckApi.checkSpelling(locale.toLanguageTag(), text);
+  Future<List<TextSuggestion>> fetchSuggestions(Locale locale, String text) async {
+    final results = await _spellCheckApi.fetchSuggestions(locale.toLanguageTag(), text);
 
     return results
         .where((e) => e != null) //

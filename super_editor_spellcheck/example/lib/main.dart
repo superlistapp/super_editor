@@ -42,7 +42,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _fetchSuggestions() async {
-    final suggestions = await _superEditorSpellcheckPlugin.checkSpelling(
+    final suggestions = await _superEditorSpellcheckPlugin.fetchSuggestions(
       PlatformDispatcher.instance.locale,
       _textController.text,
     );

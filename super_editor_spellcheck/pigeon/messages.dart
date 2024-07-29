@@ -8,12 +8,12 @@ import 'package:pigeon/pigeon.dart';
 abstract class SpellCheckApi {
   /// Checks the given [text] for spelling errors with the given [language].
   ///
-  /// Returns a list of [SuggestionSpan]s, where each spans represents a
+  /// Returns a list of [TextSuggestion]s, where each spans represents a
   /// misspelled word, with the possible suggestions.
   ///
   /// Returns an empty list if no spelling errors are found or if the [language]
   /// isn't supported by the spell checker.
-  List<TextSuggestion> checkSpelling(String language, String text);
+  List<TextSuggestion> fetchSuggestions(String language, String text);
 }
 
 /// A range containing a misspelled word and its suggestions.

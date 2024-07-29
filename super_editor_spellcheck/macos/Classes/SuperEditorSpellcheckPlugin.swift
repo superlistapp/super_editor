@@ -17,7 +17,7 @@ public class SuperEditorSpellcheckPlugin: SpellCheckApi {
   ///
   /// Returns an empty list if no spelling errors are found or if the `language`
   /// isn't supported by the spell checker.
-  func checkSpelling(language: String, text: String) throws -> [TextSuggestion] {
+  func fetchSuggestions(language: String, text: String) throws -> [TextSuggestion] {
     var result : [TextSuggestion] = [];
 
     if (language.isEmpty || text.isEmpty) {

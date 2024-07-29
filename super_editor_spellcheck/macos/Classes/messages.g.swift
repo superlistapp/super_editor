@@ -134,12 +134,12 @@ class messagesPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
 protocol SpellCheckApi {
   /// Checks the given [text] for spelling errors with the given [language].
   ///
-  /// Returns a list of [SuggestionSpan]s, where each spans represents a
+  /// Returns a list of [TextSuggestion]s, where each spans represents a
   /// misspelled word, with the possible suggestions.
   ///
   /// Returns an empty list if no spelling errors are found or if the [language]
   /// isn't supported by the spell checker.
-  func checkSpelling(language: String, text: String) throws -> [TextSuggestion]
+  func fetchSuggestions(language: String, text: String) throws -> [TextSuggestion]
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -150,26 +150,26 @@ class SpellCheckApiSetup {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
     /// Checks the given [text] for spelling errors with the given [language].
     ///
-    /// Returns a list of [SuggestionSpan]s, where each spans represents a
+    /// Returns a list of [TextSuggestion]s, where each spans represents a
     /// misspelled word, with the possible suggestions.
     ///
     /// Returns an empty list if no spelling errors are found or if the [language]
     /// isn't supported by the spell checker.
-    let checkSpellingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.checkSpelling\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let fetchSuggestionsChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.fetchSuggestions\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      checkSpellingChannel.setMessageHandler { message, reply in
+      fetchSuggestionsChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let languageArg = args[0] as! String
         let textArg = args[1] as! String
         do {
-          let result = try api.checkSpelling(language: languageArg, text: textArg)
+          let result = try api.fetchSuggestions(language: languageArg, text: textArg)
           reply(wrapResult(result))
         } catch {
           reply(wrapError(error))
         }
       }
     } else {
-      checkSpellingChannel.setMessageHandler(nil)
+      fetchSuggestionsChannel.setMessageHandler(nil)
     }
   }
 }

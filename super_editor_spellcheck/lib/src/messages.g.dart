@@ -88,13 +88,13 @@ class SpellCheckApi {
 
   /// Checks the given [text] for spelling errors with the given [language].
   ///
-  /// Returns a list of [SuggestionSpan]s, where each spans represents a
+  /// Returns a list of [TextSuggestion]s, where each spans represents a
   /// misspelled word, with the possible suggestions.
   ///
   /// Returns an empty list if no spelling errors are found or if the [language]
   /// isn't supported by the spell checker.
-  Future<List<TextSuggestion?>> checkSpelling(String language, String text) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.checkSpelling$__pigeon_messageChannelSuffix';
+  Future<List<TextSuggestion?>> fetchSuggestions(String language, String text) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.fetchSuggestions$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
