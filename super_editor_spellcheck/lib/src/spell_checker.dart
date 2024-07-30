@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:super_editor_spellcheck/src/messages.g.dart';
 
 /// Plugin to check spelling errors in text using the native macOS spell checker.
-class SuperEditorSpellCheckerPlugin {
-  final SpellCheckApi _spellCheckApi = SpellCheckApi();
+class SuperEditorSpellCheckerMacPlugin {
+  final SpellCheckMac _spellCheckApi = SpellCheckMac();
 
   /// Returns a unique tag to identified this spell checked object.
   ///
@@ -28,6 +28,9 @@ class SuperEditorSpellCheckerPlugin {
   ///
   /// Returns an empty list if no spelling errors are found or if the [locale]
   /// isn't supported by the spell checker.
+  ///
+  /// If the same misspelled word is found multiple times in the text, it will be
+  /// included in the list multiple times, since each range is different.
   Future<List<TextSuggestion>> fetchSuggestions(Locale locale, String text) async {
     final results = await _spellCheckApi.fetchSuggestions(
       text: text,
@@ -218,7 +221,7 @@ class SuperEditorSpellCheckerPlugin {
 
   /// Returns the array of ignored words for a document identified by [documentTag].
   Future<List<String>> ignoredWords({required int documentTag}) async {
-    final words = await _spellCheckApi.ignoredWords(documentTag: documentTag);
+    final words = await _spellCheckApi.ignoredWords(documentTag);
     if (words == null) {
       return <String>[];
     }

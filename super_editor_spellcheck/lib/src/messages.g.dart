@@ -179,11 +179,11 @@ class _PigeonCodec extends StandardMessageCodec {
   }
 }
 
-class SpellCheckApi {
-  /// Constructor for [SpellCheckApi].  The [binaryMessenger] named argument is
+class SpellCheckMac {
+  /// Constructor for [SpellCheckMac].  The [binaryMessenger] named argument is
   /// available for dependency injection.  If it is left null, the default
   /// BinaryMessenger will be used which routes to the host platform.
-  SpellCheckApi({BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''})
+  SpellCheckMac({BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''})
       : __pigeon_binaryMessenger = binaryMessenger,
         __pigeon_messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
   final BinaryMessenger? __pigeon_binaryMessenger;
@@ -194,13 +194,13 @@ class SpellCheckApi {
 
   /// Checks the given [text] for spelling errors with the given [language].
   ///
-  /// Returns a list of [TextSuggestion]s, where each spans represents a
+  /// Returns a list of [TextSuggestion]s, where each span represents a
   /// misspelled word, with the possible suggestions.
   ///
   /// Returns an empty list if no spelling errors are found or if the [language]
   /// isn't supported by the spell checker.
   Future<List<TextSuggestion?>> fetchSuggestions({required String text, required String language}) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.fetchSuggestions$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.fetchSuggestions$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -230,7 +230,7 @@ class SpellCheckApi {
   ///
   /// Use this method to generate tags to avoid collisions with other objects that can be spell checked.
   Future<int> uniqueSpellDocumentTag() async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.uniqueSpellDocumentTag$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.uniqueSpellDocumentTag$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -261,7 +261,7 @@ class SpellCheckApi {
   /// The spell checker will release any resources associated with the document,
   /// including but not necessarily limited to, ignored words.
   Future<void> closeSpellDocument(int tag) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.closeSpellDocument$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.closeSpellDocument$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -282,7 +282,7 @@ class SpellCheckApi {
     }
   }
 
-  /// Starts the search for a misspelled word in [stringToCheck] starting at [startingOffset]
+  /// Searches for a misspelled word in [stringToCheck] starting at [startingOffset]
   /// within the string object.
   ///
   /// - [stringToCheck]: The string object containing the words to spellcheck.
@@ -290,7 +290,7 @@ class SpellCheckApi {
   /// - [language]: The language of the words in the string.
   /// - [wrap]: `true` to indicate that spell checking should continue at the beginning of the string
   ///   when the end of the string is reached; `false` to indicate that spellchecking should stop
-  ///   at the end of the document.
+  ///   at the end of the string.
   /// - [inSpellDocumentWithTag]: An identifier unique within the application
   ///   used to inform the spell checker which document that text is associated, potentially
   ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
@@ -298,7 +298,7 @@ class SpellCheckApi {
   ///
   /// Returns the range of the first misspelled word.
   Future<Range> checkSpelling({required String stringToCheck, required int startingOffset, String? language, bool wrap = false, int inSpellDocumentWithTag = 0,}) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.checkSpelling$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.checkSpelling$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -335,15 +335,15 @@ class SpellCheckApi {
   ///   in for text not associated with a particular document.
   ///
   /// Returns an array of strings containing possible replacement words.
-  Future<List<String?>?> guesses({required Range range, required String text, String? language, int inSpellDocumentWithTag = 0,}) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.guesses$__pigeon_messageChannelSuffix';
+  Future<List<String?>?> guesses({required String text, required Range range, String? language, int inSpellDocumentWithTag = 0,}) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.guesses$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
       binaryMessenger: __pigeon_binaryMessenger,
     );
     final List<Object?>? __pigeon_replyList =
-        await __pigeon_channel.send(<Object?>[range, text, language, inSpellDocumentWithTag]) as List<Object?>?;
+        await __pigeon_channel.send(<Object?>[text, range, language, inSpellDocumentWithTag]) as List<Object?>?;
     if (__pigeon_replyList == null) {
       throw _createConnectionError(__pigeon_channelName);
     } else if (__pigeon_replyList.length > 1) {
@@ -357,7 +357,7 @@ class SpellCheckApi {
     }
   }
 
-  /// Initiates a grammatical analysis of a given string.
+  /// Performs a grammatical analysis of a given string.
   ///
   /// - [stringToCheck]: The string to analyze.
   /// - [startingOffset]: Location within string at which to start the analysis.
@@ -369,7 +369,7 @@ class SpellCheckApi {
   ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
   ///   in for text not associated with a particular document.
   Future<PlatformCheckGrammarResult> checkGrammar({required String stringToCheck, required int startingOffset, String? language, bool wrap = false, int inSpellDocumentWithTag = 0,}) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.checkGrammar$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.checkGrammar$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -409,7 +409,7 @@ class SpellCheckApi {
   /// Returns the list of complete words from the spell checker dictionary in the order
   /// they should be presented to the user.
   Future<List<String?>?> completions({required Range partialWordRange, required String text, String? language, int inSpellDocumentWithTag = 0,}) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.completions$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.completions$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -432,7 +432,7 @@ class SpellCheckApi {
 
   /// Returns the number of words in the specified string.
   Future<int> countWords({required String text, String? language}) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.countWords$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.countWords$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -460,7 +460,7 @@ class SpellCheckApi {
 
   /// Adds the [word] to the spell checker dictionary.
   Future<void> learnWord(String word) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.learnWord$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.learnWord$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -483,7 +483,7 @@ class SpellCheckApi {
 
   /// Indicates whether the spell checker has learned a given word.
   Future<bool> hasLearnedWord(String word) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.hasLearnedWord$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.hasLearnedWord$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -511,7 +511,7 @@ class SpellCheckApi {
 
   /// Tells the spell checker to unlearn a given word.
   Future<void> unlearnWord(String word) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.unlearnWord$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.unlearnWord$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -535,7 +535,7 @@ class SpellCheckApi {
   /// Instructs the spell checker to ignore all future occurrences of [word] in the document
   /// identified by [documentTag].
   Future<void> ignoreWord({required String word, required int documentTag}) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.ignoreWord$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.ignoreWord$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -557,8 +557,8 @@ class SpellCheckApi {
   }
 
   /// Returns the array of ignored words for a document identified by [documentTag].
-  Future<List<String?>?> ignoredWords({required int documentTag}) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.ignoredWords$__pigeon_messageChannelSuffix';
+  Future<List<String?>?> ignoredWords(int documentTag) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.ignoredWords$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -579,10 +579,10 @@ class SpellCheckApi {
     }
   }
 
-  /// Initializes the ignored-words document (a dictionary identified by [documentTag] with [words]),
-  /// an array of words to ignore.
+  /// Updates the ignored-words document (a dictionary identified by [documentTag] with [words])
+  /// with a list of [words] to ignore.
   Future<void> setIgnoredWords({required List<String?> words, required int documentTag}) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.setIgnoredWords$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.setIgnoredWords$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
@@ -605,7 +605,7 @@ class SpellCheckApi {
 
   /// Returns the dictionary used when replacing words.
   Future<Map<String?, String?>> userReplacementsDictionary() async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.userReplacementsDictionary$__pigeon_messageChannelSuffix';
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.userReplacementsDictionary$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,

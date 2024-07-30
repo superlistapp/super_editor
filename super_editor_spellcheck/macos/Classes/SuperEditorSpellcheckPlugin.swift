@@ -3,11 +3,11 @@ import Foundation
 import AppKit
 
 /// Plugin to check spelling errors in text using the native macOS spell checker.
-public class SuperEditorSpellcheckPlugin: SpellCheckApi {
+public class SuperEditorSpellcheckPlugin: SpellCheckMac {
 
   public static func register(with registrar: FlutterPluginRegistrar) {
     let instance = SuperEditorSpellcheckPlugin()
-    SpellCheckApiSetup.setUp(binaryMessenger: registrar.messenger, api: instance)
+    SpellCheckMacSetup.setUp(binaryMessenger: registrar.messenger, api: instance)
   }
 
   /// Checks the given `text` for spelling errors with the given `language`.
@@ -158,7 +158,7 @@ public class SuperEditorSpellcheckPlugin: SpellCheckApi {
   ///   in for text not associated with a particular document.
   ///
   /// Returns an array of strings containing possible replacement words.
-  func guesses(range: Range, text: String, language: String?, inSpellDocumentWithTag: Int64) throws -> [String?]? {
+  func guesses(text: String, range: Range, language: String?, inSpellDocumentWithTag: Int64) throws -> [String?]? {
     let spellChecker = NSSpellChecker.shared;
 
     return spellChecker.guesses(

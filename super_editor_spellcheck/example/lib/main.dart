@@ -18,7 +18,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final _superEditorSpellcheckPlugin = SuperEditorSpellCheckerPlugin();
+  final _superEditorSpellcheckPlugin = SuperEditorSpellCheckerMacPlugin();
   final _textController = TextEditingController(text: 'She go to the store everys day.');
 
   List<TextSuggestion> _suggestions = [];
@@ -30,6 +30,7 @@ class _MyAppState extends State<MyApp> {
   int? _documentTag;
   Map<String, String> _userReplacementsDictionary = <String, String>{};
   List<String> _completionsForLastWord = [];
+  Timer? _searchTimer;
 
   @override
   void initState() {
@@ -50,20 +51,26 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _onTextChanged() {
-    _fetchSuggestions();
+    _searchTimer?.cancel();
+    _searchTimer = Timer(
+      const Duration(milliseconds: 300),
+      _fetchSuggestions,
+    );
   }
 
   Future<void> _fetchSuggestions() async {
+    final textToSearch = _textController.text;
+
     int? tag = _documentTag;
     tag ??= await _superEditorSpellcheckPlugin.uniqueSpellDocumentTag();
 
     final suggestions = await _superEditorSpellcheckPlugin.fetchSuggestions(
       PlatformDispatcher.instance.locale,
-      _textController.text,
+      textToSearch,
     );
 
     final firstMisspelled = await _superEditorSpellcheckPlugin.checkSpelling(
-      stringToCheck: _textController.text,
+      stringToCheck: textToSearch,
       startingOffset: 0,
       locale: PlatformDispatcher.instance.locale,
     );
@@ -71,33 +78,39 @@ class _MyAppState extends State<MyApp> {
     final firstSuggestions = firstMisspelled.isValid
         ? await _superEditorSpellcheckPlugin.guesses(
             range: firstMisspelled,
-            text: _textController.text,
+            text: textToSearch,
             locale: PlatformDispatcher.instance.locale,
           )
         : <String>[];
 
     final grammarAnalysis = await _superEditorSpellcheckPlugin.checkGrammar(
-      stringToCheck: _textController.text,
+      stringToCheck: textToSearch,
       startingOffset: 0,
       locale: PlatformDispatcher.instance.locale,
     );
 
     final wordCount = await _superEditorSpellcheckPlugin.countWords(
-      text: _textController.text,
+      text: textToSearch,
       locale: PlatformDispatcher.instance.locale,
     );
 
     final replacements = await _superEditorSpellcheckPlugin.userReplacementsDictionary();
 
-    final completionOffset = max(_textController.text.lastIndexOf(' '), 0);
+    final completionOffset = max(textToSearch.lastIndexOf(' '), 0);
 
     final completions = await _superEditorSpellcheckPlugin.completions(
-      partialWordRange: TextRange(start: completionOffset, end: _textController.text.length),
-      text: _textController.text,
+      partialWordRange: TextRange(start: completionOffset, end: textToSearch.length),
+      text: textToSearch,
       locale: PlatformDispatcher.instance.locale,
     );
 
     if (!mounted) {
+      return;
+    }
+
+    if (textToSearch != _textController.text) {
+      // The user changed the text while the search was happening. Ignore the results,
+      // because a new search will happen.
       return;
     }
 

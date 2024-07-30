@@ -5,10 +5,10 @@ import 'package:pigeon/pigeon.dart';
   swiftOut: 'macos/Classes/messages.g.swift',
 ))
 @HostApi()
-abstract class SpellCheckApi {
+abstract class SpellCheckMac {
   /// Checks the given [text] for spelling errors with the given [language].
   ///
-  /// Returns a list of [TextSuggestion]s, where each spans represents a
+  /// Returns a list of [TextSuggestion]s, where each span represents a
   /// misspelled word, with the possible suggestions.
   ///
   /// Returns an empty list if no spelling errors are found or if the [language]
@@ -29,7 +29,7 @@ abstract class SpellCheckApi {
   /// including but not necessarily limited to, ignored words.
   void closeSpellDocument(int tag);
 
-  /// Starts the search for a misspelled word in [stringToCheck] starting at [startingOffset]
+  /// Searches for a misspelled word in [stringToCheck] starting at [startingOffset]
   /// within the string object.
   ///
   /// - [stringToCheck]: The string object containing the words to spellcheck.
@@ -37,7 +37,7 @@ abstract class SpellCheckApi {
   /// - [language]: The language of the words in the string.
   /// - [wrap]: `true` to indicate that spell checking should continue at the beginning of the string
   ///   when the end of the string is reached; `false` to indicate that spellchecking should stop
-  ///   at the end of the document.
+  ///   at the end of the string.
   /// - [inSpellDocumentWithTag]: An identifier unique within the application
   ///   used to inform the spell checker which document that text is associated, potentially
   ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
@@ -64,13 +64,13 @@ abstract class SpellCheckApi {
   ///
   /// Returns an array of strings containing possible replacement words.
   List<String?>? guesses({
-    required Range range,
     required String text,
+    required Range range,
     String? language,
     int inSpellDocumentWithTag = 0,
   });
 
-  /// Initiates a grammatical analysis of a given string.
+  /// Performs a grammatical analysis of a given string.
   ///
   /// - [stringToCheck]: The string to analyze.
   /// - [startingOffset]: Location within string at which to start the analysis.
@@ -126,10 +126,10 @@ abstract class SpellCheckApi {
   void ignoreWord({required String word, required int documentTag});
 
   /// Returns the array of ignored words for a document identified by [documentTag].
-  List<String>? ignoredWords({required int documentTag});
+  List<String>? ignoredWords(int documentTag);
 
-  /// Initializes the ignored-words document (a dictionary identified by [documentTag] with [words]),
-  /// an array of words to ignore.
+  /// Updates the ignored-words document (a dictionary identified by [documentTag] with [words])
+  /// with a list of [words] to ignore.
   void setIgnoredWords({required List<String> words, required int documentTag});
 
   /// Returns the dictionary used when replacing words.
