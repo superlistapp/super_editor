@@ -132,25 +132,52 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       editorStyleLog.finer('   - extent: ${textSelection?.extent}');
 
       if (viewModel is TextComponentViewModel) {
-        final componentTextColor = viewModel.textStyleBuilder({}).color;
+        AttributedText? textWithSelectionAttributions;
 
-        final textWithSelectionAttributions =
-            textSelection != null && _selectedTextColorStrategy != null && componentTextColor != null
-                ? (viewModel.text.copyText(0)
-                  ..addAttribution(
-                    ColorAttribution(_selectedTextColorStrategy!(
-                      originalTextColor: componentTextColor,
-                      selectionHighlightColor: _selectionStyles.selectionColor,
-                    )),
-                    SpanRange(textSelection.start, textSelection.end - 1),
-                    // The selected range might already have a color attribution. We want to override it
-                    // with the selected text color.
-                    overwriteConflictingSpans: true,
-                  ))
-                : viewModel.text;
+        if (textSelection != null && _selectedTextColorStrategy != null) {
+          final selectedRange = SpanRange(textSelection.start, textSelection.end - 1);
+
+          final componentTextColor = viewModel.textStyleBuilder({}).color;
+          if (componentTextColor != null) {
+            // Compute the selected text color for the default color of the node. If there is any
+            // text color attributions in the selected range, they will override this color.
+            textWithSelectionAttributions = viewModel.text.copyText(0)
+              ..addAttribution(
+                ColorAttribution(_selectedTextColorStrategy!(
+                  originalTextColor: componentTextColor,
+                  selectionHighlightColor: _selectionStyles.selectionColor,
+                )),
+                selectedRange,
+                // Override any existing color attributions.
+                overwriteConflictingSpans: true,
+              );
+          }
+
+          final coloredSpans = viewModel.text.getAttributionSpansInRange(
+            attributionFilter: (attr) => attr is ColorAttribution,
+            range: selectedRange,
+            // We should only change the selected portion of each span.
+            resizeSpansToFitInRange: true,
+          );
+          if (coloredSpans.isNotEmpty) {
+            // Compute and apply the selected text color for each span that has a color attribution.
+            textWithSelectionAttributions ??= viewModel.text.copyText(0);
+            for (final span in coloredSpans) {
+              textWithSelectionAttributions.addAttribution(
+                ColorAttribution(_selectedTextColorStrategy!(
+                  originalTextColor: (span.attribution as ColorAttribution).color,
+                  selectionHighlightColor: _selectionStyles.selectionColor,
+                )),
+                SpanRange(span.start, span.end),
+                // Override any existing color attributions.
+                overwriteConflictingSpans: true,
+              );
+            }
+          }
+        }
 
         viewModel
-          ..text = textWithSelectionAttributions
+          ..text = textWithSelectionAttributions ?? viewModel.text
           ..selection = textSelection
           ..selectionColor = _selectionStyles.selectionColor
           ..highlightWhenEmpty = highlightWhenEmpty;
