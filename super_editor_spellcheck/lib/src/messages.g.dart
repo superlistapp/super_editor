@@ -49,6 +49,97 @@ class TextSuggestion {
   }
 }
 
+/// A range of characters in a string of text.
+///
+/// The text included in the range includes the character at [start], but not
+/// the one at [end].
+///
+/// This is used because we can't use `TextRange` in pigeon.
+class Range {
+  Range({
+    required this.start,
+    required this.end,
+  });
+
+  int start;
+
+  int end;
+
+  Object encode() {
+    return <Object?>[
+      start,
+      end,
+    ];
+  }
+
+  static Range decode(Object result) {
+    result as List<Object?>;
+    return Range(
+      start: result[0]! as int,
+      end: result[1]! as int,
+    );
+  }
+}
+
+/// The result of a grammatical analysis.
+class PlatformCheckGrammarResult {
+  PlatformCheckGrammarResult({
+    this.firstError,
+    this.details,
+  });
+
+  /// The range of the first error found in the text or `null` if no errors were found.
+  Range? firstError;
+
+  /// A list of details about the grammatical errors found in the text or `null`
+  /// if no errors were found.
+  List<PlatformGrammaticalAnalysisDetail?>? details;
+
+  Object encode() {
+    return <Object?>[
+      firstError,
+      details,
+    ];
+  }
+
+  static PlatformCheckGrammarResult decode(Object result) {
+    result as List<Object?>;
+    return PlatformCheckGrammarResult(
+      firstError: result[0] as Range?,
+      details: (result[1] as List<Object?>?)?.cast<PlatformGrammaticalAnalysisDetail?>(),
+    );
+  }
+}
+
+/// A detail about a grammatical error found in a text.
+class PlatformGrammaticalAnalysisDetail {
+  PlatformGrammaticalAnalysisDetail({
+    required this.range,
+    required this.userDescription,
+  });
+
+  /// The range of the grammatical error in the text.
+  Range range;
+
+  /// A description of the grammatical error.
+  String userDescription;
+
+  Object encode() {
+    return <Object?>[
+      range,
+      userDescription,
+    ];
+  }
+
+  static PlatformGrammaticalAnalysisDetail decode(Object result) {
+    result as List<Object?>;
+    return PlatformGrammaticalAnalysisDetail(
+      range: result[0]! as Range,
+      userDescription: result[1]! as String,
+    );
+  }
+}
+
 
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
@@ -56,6 +147,15 @@ class _PigeonCodec extends StandardMessageCodec {
   void writeValue(WriteBuffer buffer, Object? value) {
     if (value is TextSuggestion) {
       buffer.putUint8(129);
+      writeValue(buffer, value.encode());
+    } else     if (value is Range) {
+      buffer.putUint8(130);
+      writeValue(buffer, value.encode());
+    } else     if (value is PlatformCheckGrammarResult) {
+      buffer.putUint8(131);
+      writeValue(buffer, value.encode());
+    } else     if (value is PlatformGrammaticalAnalysisDetail) {
+      buffer.putUint8(132);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -67,6 +167,12 @@ class _PigeonCodec extends StandardMessageCodec {
     switch (type) {
       case 129: 
         return TextSuggestion.decode(readValue(buffer)!);
+      case 130: 
+        return Range.decode(readValue(buffer)!);
+      case 131: 
+        return PlatformCheckGrammarResult.decode(readValue(buffer)!);
+      case 132: 
+        return PlatformGrammaticalAnalysisDetail.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -93,7 +199,7 @@ class SpellCheckApi {
   ///
   /// Returns an empty list if no spelling errors are found or if the [language]
   /// isn't supported by the spell checker.
-  Future<List<TextSuggestion?>> fetchSuggestions(String language, String text) async {
+  Future<List<TextSuggestion?>> fetchSuggestions({required String text, required String language}) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.fetchSuggestions$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
@@ -101,7 +207,7 @@ class SpellCheckApi {
       binaryMessenger: __pigeon_binaryMessenger,
     );
     final List<Object?>? __pigeon_replyList =
-        await __pigeon_channel.send(<Object?>[language, text]) as List<Object?>?;
+        await __pigeon_channel.send(<Object?>[text, language]) as List<Object?>?;
     if (__pigeon_replyList == null) {
       throw _createConnectionError(__pigeon_channelName);
     } else if (__pigeon_replyList.length > 1) {
@@ -117,6 +223,411 @@ class SpellCheckApi {
       );
     } else {
       return (__pigeon_replyList[0] as List<Object?>?)!.cast<TextSuggestion?>();
+    }
+  }
+
+  /// Returns a unique tag to identified this spell checked object.
+  ///
+  /// Use this method to generate tags to avoid collisions with other objects that can be spell checked.
+  Future<int> uniqueSpellDocumentTag() async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.uniqueSpellDocumentTag$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(null) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else if (__pigeon_replyList[0] == null) {
+      throw PlatformException(
+        code: 'null-error',
+        message: 'Host platform returned null value for non-null return value.',
+      );
+    } else {
+      return (__pigeon_replyList[0] as int?)!;
+    }
+  }
+
+  /// Notifies the receiver that the user has finished with the tagged document.
+  ///
+  /// The spell checker will release any resources associated with the document,
+  /// including but not necessarily limited to, ignored words.
+  Future<void> closeSpellDocument(int tag) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.closeSpellDocument$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[tag]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  /// Starts the search for a misspelled word in [stringToCheck] starting at [startingOffset]
+  /// within the string object.
+  ///
+  /// - [stringToCheck]: The string object containing the words to spellcheck.
+  /// - [startingOffset]: The offset within the string object at which to start the spellchecking.
+  /// - [language]: The language of the words in the string.
+  /// - [wrap]: `true` to indicate that spell checking should continue at the beginning of the string
+  ///   when the end of the string is reached; `false` to indicate that spellchecking should stop
+  ///   at the end of the document.
+  /// - [inSpellDocumentWithTag]: An identifier unique within the application
+  ///   used to inform the spell checker which document that text is associated, potentially
+  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+  ///   in for text not associated with a particular document.
+  ///
+  /// Returns the range of the first misspelled word.
+  Future<Range> checkSpelling({required String stringToCheck, required int startingOffset, String? language, bool wrap = false, int inSpellDocumentWithTag = 0,}) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.checkSpelling$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[stringToCheck, startingOffset, language, wrap, inSpellDocumentWithTag]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else if (__pigeon_replyList[0] == null) {
+      throw PlatformException(
+        code: 'null-error',
+        message: 'Host platform returned null value for non-null return value.',
+      );
+    } else {
+      return (__pigeon_replyList[0] as Range?)!;
+    }
+  }
+
+  /// Returns an array of possible substitutions for the specified string.
+  ///
+  /// - [range]: The range of the string to check.
+  /// - [text]: The string to guess.
+  /// - [language]: The language of the string.
+  /// - [inSpellDocumentWithTag]: An identifier unique within the application
+  ///   used to inform the spell checker which document that text is associated, potentially
+  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+  ///   in for text not associated with a particular document.
+  ///
+  /// Returns an array of strings containing possible replacement words.
+  Future<List<String?>?> guesses({required Range range, required String text, String? language, int inSpellDocumentWithTag = 0,}) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.guesses$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[range, text, language, inSpellDocumentWithTag]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return (__pigeon_replyList[0] as List<Object?>?)?.cast<String?>();
+    }
+  }
+
+  /// Initiates a grammatical analysis of a given string.
+  ///
+  /// - [stringToCheck]: The string to analyze.
+  /// - [startingOffset]: Location within string at which to start the analysis.
+  /// - [language]: Language to use in string.
+  /// - [wrap]: `true` to specify that the analysis continue to the beginning of string when
+  ///   the end is reached. `false` to have the analysis stop at the end of string.
+  /// - [inSpellDocumentWithTag]: An identifier unique within the application
+  ///   used to inform the spell checker which document that text is associated, potentially
+  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+  ///   in for text not associated with a particular document.
+  Future<PlatformCheckGrammarResult> checkGrammar({required String stringToCheck, required int startingOffset, String? language, bool wrap = false, int inSpellDocumentWithTag = 0,}) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.checkGrammar$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[stringToCheck, startingOffset, language, wrap, inSpellDocumentWithTag]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else if (__pigeon_replyList[0] == null) {
+      throw PlatformException(
+        code: 'null-error',
+        message: 'Host platform returned null value for non-null return value.',
+      );
+    } else {
+      return (__pigeon_replyList[0] as PlatformCheckGrammarResult?)!;
+    }
+  }
+
+  /// Provides a list of complete words that the user might be trying to type based on a
+  /// partial word in a given string.
+  ///
+  /// - [partialWordRange] - Range that identifies a partial word in string.
+  /// - [text] - String with the partial word from which to generate the result.
+  /// - [language]: Language to use in string.
+  /// - [inSpellDocumentWithTag]: An identifier unique within the application
+  ///   used to inform the spell checker which document that text is associated, potentially
+  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+  ///   in for text not associated with a particular document.
+  ///
+  /// Returns the list of complete words from the spell checker dictionary in the order
+  /// they should be presented to the user.
+  Future<List<String?>?> completions({required Range partialWordRange, required String text, String? language, int inSpellDocumentWithTag = 0,}) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.completions$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[partialWordRange, text, language, inSpellDocumentWithTag]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return (__pigeon_replyList[0] as List<Object?>?)?.cast<String?>();
+    }
+  }
+
+  /// Returns the number of words in the specified string.
+  Future<int> countWords({required String text, String? language}) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.countWords$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[text, language]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else if (__pigeon_replyList[0] == null) {
+      throw PlatformException(
+        code: 'null-error',
+        message: 'Host platform returned null value for non-null return value.',
+      );
+    } else {
+      return (__pigeon_replyList[0] as int?)!;
+    }
+  }
+
+  /// Adds the [word] to the spell checker dictionary.
+  Future<void> learnWord(String word) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.learnWord$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[word]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  /// Indicates whether the spell checker has learned a given word.
+  Future<bool> hasLearnedWord(String word) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.hasLearnedWord$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[word]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else if (__pigeon_replyList[0] == null) {
+      throw PlatformException(
+        code: 'null-error',
+        message: 'Host platform returned null value for non-null return value.',
+      );
+    } else {
+      return (__pigeon_replyList[0] as bool?)!;
+    }
+  }
+
+  /// Tells the spell checker to unlearn a given word.
+  Future<void> unlearnWord(String word) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.unlearnWord$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[word]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  /// Instructs the spell checker to ignore all future occurrences of [word] in the document
+  /// identified by [documentTag].
+  Future<void> ignoreWord({required String word, required int documentTag}) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.ignoreWord$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[word, documentTag]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  /// Returns the array of ignored words for a document identified by [documentTag].
+  Future<List<String?>?> ignoredWords({required int documentTag}) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.ignoredWords$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[documentTag]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return (__pigeon_replyList[0] as List<Object?>?)?.cast<String?>();
+    }
+  }
+
+  /// Initializes the ignored-words document (a dictionary identified by [documentTag] with [words]),
+  /// an array of words to ignore.
+  Future<void> setIgnoredWords({required List<String?> words, required int documentTag}) async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.setIgnoredWords$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[words, documentTag]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  /// Returns the dictionary used when replacing words.
+  Future<Map<String?, String?>> userReplacementsDictionary() async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.userReplacementsDictionary$__pigeon_messageChannelSuffix';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(null) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else if (__pigeon_replyList[0] == null) {
+      throw PlatformException(
+        code: 'null-error',
+        message: 'Host platform returned null value for non-null return value.',
+      );
+    } else {
+      return (__pigeon_replyList[0] as Map<Object?, Object?>?)!.cast<String?, String?>();
     }
   }
 }

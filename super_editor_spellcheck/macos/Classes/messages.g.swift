@@ -94,11 +94,102 @@ struct TextSuggestion {
     ]
   }
 }
+
+/// A range of characters in a string of text.
+///
+/// The text included in the range includes the character at [start], but not
+/// the one at [end].
+///
+/// This is used because we can't use `TextRange` in pigeon.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct Range {
+  var start: Int64
+  var end: Int64
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ __pigeon_list: [Any?]) -> Range? {
+    let start = __pigeon_list[0] is Int64 ? __pigeon_list[0] as! Int64 : Int64(__pigeon_list[0] as! Int32)
+    let end = __pigeon_list[1] is Int64 ? __pigeon_list[1] as! Int64 : Int64(__pigeon_list[1] as! Int32)
+
+    return Range(
+      start: start,
+      end: end
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      start,
+      end,
+    ]
+  }
+}
+
+/// The result of a grammatical analysis.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct PlatformCheckGrammarResult {
+  /// The range of the first error found in the text or `null` if no errors were found.
+  var firstError: Range? = nil
+  /// A list of details about the grammatical errors found in the text or `null`
+  /// if no errors were found.
+  var details: [PlatformGrammaticalAnalysisDetail?]? = nil
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ __pigeon_list: [Any?]) -> PlatformCheckGrammarResult? {
+    let firstError: Range? = nilOrValue(__pigeon_list[0])
+    let details: [PlatformGrammaticalAnalysisDetail?]? = nilOrValue(__pigeon_list[1])
+
+    return PlatformCheckGrammarResult(
+      firstError: firstError,
+      details: details
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      firstError,
+      details,
+    ]
+  }
+}
+
+/// A detail about a grammatical error found in a text.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct PlatformGrammaticalAnalysisDetail {
+  /// The range of the grammatical error in the text.
+  var range: Range
+  /// A description of the grammatical error.
+  var userDescription: String
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ __pigeon_list: [Any?]) -> PlatformGrammaticalAnalysisDetail? {
+    let range = __pigeon_list[0] as! Range
+    let userDescription = __pigeon_list[1] as! String
+
+    return PlatformGrammaticalAnalysisDetail(
+      range: range,
+      userDescription: userDescription
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      range,
+      userDescription,
+    ]
+  }
+}
 private class messagesPigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
     case 129:
       return TextSuggestion.fromList(self.readValue() as! [Any?])
+    case 130:
+      return Range.fromList(self.readValue() as! [Any?])
+    case 131:
+      return PlatformCheckGrammarResult.fromList(self.readValue() as! [Any?])
+    case 132:
+      return PlatformGrammaticalAnalysisDetail.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -109,6 +200,15 @@ private class messagesPigeonCodecWriter: FlutterStandardWriter {
   override func writeValue(_ value: Any) {
     if let value = value as? TextSuggestion {
       super.writeByte(129)
+      super.writeValue(value.toList())
+    } else if let value = value as? Range {
+      super.writeByte(130)
+      super.writeValue(value.toList())
+    } else if let value = value as? PlatformCheckGrammarResult {
+      super.writeByte(131)
+      super.writeValue(value.toList())
+    } else if let value = value as? PlatformGrammaticalAnalysisDetail {
+      super.writeByte(132)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -139,7 +239,88 @@ protocol SpellCheckApi {
   ///
   /// Returns an empty list if no spelling errors are found or if the [language]
   /// isn't supported by the spell checker.
-  func fetchSuggestions(language: String, text: String) throws -> [TextSuggestion]
+  func fetchSuggestions(text: String, language: String) throws -> [TextSuggestion]
+  /// Returns a unique tag to identified this spell checked object.
+  ///
+  /// Use this method to generate tags to avoid collisions with other objects that can be spell checked.
+  func uniqueSpellDocumentTag() throws -> Int64
+  /// Notifies the receiver that the user has finished with the tagged document.
+  ///
+  /// The spell checker will release any resources associated with the document,
+  /// including but not necessarily limited to, ignored words.
+  func closeSpellDocument(tag: Int64) throws
+  /// Starts the search for a misspelled word in [stringToCheck] starting at [startingOffset]
+  /// within the string object.
+  ///
+  /// - [stringToCheck]: The string object containing the words to spellcheck.
+  /// - [startingOffset]: The offset within the string object at which to start the spellchecking.
+  /// - [language]: The language of the words in the string.
+  /// - [wrap]: `true` to indicate that spell checking should continue at the beginning of the string
+  ///   when the end of the string is reached; `false` to indicate that spellchecking should stop
+  ///   at the end of the document.
+  /// - [inSpellDocumentWithTag]: An identifier unique within the application
+  ///   used to inform the spell checker which document that text is associated, potentially
+  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+  ///   in for text not associated with a particular document.
+  ///
+  /// Returns the range of the first misspelled word.
+  func checkSpelling(stringToCheck: String, startingOffset: Int64, language: String?, wrap: Bool, inSpellDocumentWithTag: Int64) throws -> Range
+  /// Returns an array of possible substitutions for the specified string.
+  ///
+  /// - [range]: The range of the string to check.
+  /// - [text]: The string to guess.
+  /// - [language]: The language of the string.
+  /// - [inSpellDocumentWithTag]: An identifier unique within the application
+  ///   used to inform the spell checker which document that text is associated, potentially
+  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+  ///   in for text not associated with a particular document.
+  ///
+  /// Returns an array of strings containing possible replacement words.
+  func guesses(range: Range, text: String, language: String?, inSpellDocumentWithTag: Int64) throws -> [String?]?
+  /// Initiates a grammatical analysis of a given string.
+  ///
+  /// - [stringToCheck]: The string to analyze.
+  /// - [startingOffset]: Location within string at which to start the analysis.
+  /// - [language]: Language to use in string.
+  /// - [wrap]: `true` to specify that the analysis continue to the beginning of string when
+  ///   the end is reached. `false` to have the analysis stop at the end of string.
+  /// - [inSpellDocumentWithTag]: An identifier unique within the application
+  ///   used to inform the spell checker which document that text is associated, potentially
+  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+  ///   in for text not associated with a particular document.
+  func checkGrammar(stringToCheck: String, startingOffset: Int64, language: String?, wrap: Bool, inSpellDocumentWithTag: Int64) throws -> PlatformCheckGrammarResult
+  /// Provides a list of complete words that the user might be trying to type based on a
+  /// partial word in a given string.
+  ///
+  /// - [partialWordRange] - Range that identifies a partial word in string.
+  /// - [text] - String with the partial word from which to generate the result.
+  /// - [language]: Language to use in string.
+  /// - [inSpellDocumentWithTag]: An identifier unique within the application
+  ///   used to inform the spell checker which document that text is associated, potentially
+  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+  ///   in for text not associated with a particular document.
+  ///
+  /// Returns the list of complete words from the spell checker dictionary in the order
+  /// they should be presented to the user.
+  func completions(partialWordRange: Range, text: String, language: String?, inSpellDocumentWithTag: Int64) throws -> [String]?
+  /// Returns the number of words in the specified string.
+  func countWords(text: String, language: String?) throws -> Int64
+  /// Adds the [word] to the spell checker dictionary.
+  func learnWord(word: String) throws
+  /// Indicates whether the spell checker has learned a given word.
+  func hasLearnedWord(word: String) throws -> Bool
+  /// Tells the spell checker to unlearn a given word.
+  func unlearnWord(word: String) throws
+  /// Instructs the spell checker to ignore all future occurrences of [word] in the document
+  /// identified by [documentTag].
+  func ignoreWord(word: String, documentTag: Int64) throws
+  /// Returns the array of ignored words for a document identified by [documentTag].
+  func ignoredWords(documentTag: Int64) throws -> [String]?
+  /// Initializes the ignored-words document (a dictionary identified by [documentTag] with [words]),
+  /// an array of words to ignore.
+  func setIgnoredWords(words: [String], documentTag: Int64) throws
+  /// Returns the dictionary used when replacing words.
+  func userReplacementsDictionary() throws -> [String: String]
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -159,10 +340,10 @@ class SpellCheckApiSetup {
     if let api = api {
       fetchSuggestionsChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
-        let languageArg = args[0] as! String
-        let textArg = args[1] as! String
+        let textArg = args[0] as! String
+        let languageArg = args[1] as! String
         do {
-          let result = try api.fetchSuggestions(language: languageArg, text: textArg)
+          let result = try api.fetchSuggestions(text: textArg, language: languageArg)
           reply(wrapResult(result))
         } catch {
           reply(wrapError(error))
@@ -170,6 +351,296 @@ class SpellCheckApiSetup {
       }
     } else {
       fetchSuggestionsChannel.setMessageHandler(nil)
+    }
+    /// Returns a unique tag to identified this spell checked object.
+    ///
+    /// Use this method to generate tags to avoid collisions with other objects that can be spell checked.
+    let uniqueSpellDocumentTagChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.uniqueSpellDocumentTag\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      uniqueSpellDocumentTagChannel.setMessageHandler { _, reply in
+        do {
+          let result = try api.uniqueSpellDocumentTag()
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      uniqueSpellDocumentTagChannel.setMessageHandler(nil)
+    }
+    /// Notifies the receiver that the user has finished with the tagged document.
+    ///
+    /// The spell checker will release any resources associated with the document,
+    /// including but not necessarily limited to, ignored words.
+    let closeSpellDocumentChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.closeSpellDocument\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      closeSpellDocumentChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let tagArg = args[0] is Int64 ? args[0] as! Int64 : Int64(args[0] as! Int32)
+        do {
+          try api.closeSpellDocument(tag: tagArg)
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      closeSpellDocumentChannel.setMessageHandler(nil)
+    }
+    /// Starts the search for a misspelled word in [stringToCheck] starting at [startingOffset]
+    /// within the string object.
+    ///
+    /// - [stringToCheck]: The string object containing the words to spellcheck.
+    /// - [startingOffset]: The offset within the string object at which to start the spellchecking.
+    /// - [language]: The language of the words in the string.
+    /// - [wrap]: `true` to indicate that spell checking should continue at the beginning of the string
+    ///   when the end of the string is reached; `false` to indicate that spellchecking should stop
+    ///   at the end of the document.
+    /// - [inSpellDocumentWithTag]: An identifier unique within the application
+    ///   used to inform the spell checker which document that text is associated, potentially
+    ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+    ///   in for text not associated with a particular document.
+    ///
+    /// Returns the range of the first misspelled word.
+    let checkSpellingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.checkSpelling\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      checkSpellingChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let stringToCheckArg = args[0] as! String
+        let startingOffsetArg = args[1] is Int64 ? args[1] as! Int64 : Int64(args[1] as! Int32)
+        let languageArg: String? = nilOrValue(args[2])
+        let wrapArg = args[3] as! Bool
+        let inSpellDocumentWithTagArg = args[4] is Int64 ? args[4] as! Int64 : Int64(args[4] as! Int32)
+        do {
+          let result = try api.checkSpelling(stringToCheck: stringToCheckArg, startingOffset: startingOffsetArg, language: languageArg, wrap: wrapArg, inSpellDocumentWithTag: inSpellDocumentWithTagArg)
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      checkSpellingChannel.setMessageHandler(nil)
+    }
+    /// Returns an array of possible substitutions for the specified string.
+    ///
+    /// - [range]: The range of the string to check.
+    /// - [text]: The string to guess.
+    /// - [language]: The language of the string.
+    /// - [inSpellDocumentWithTag]: An identifier unique within the application
+    ///   used to inform the spell checker which document that text is associated, potentially
+    ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+    ///   in for text not associated with a particular document.
+    ///
+    /// Returns an array of strings containing possible replacement words.
+    let guessesChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.guesses\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      guessesChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let rangeArg = args[0] as! Range
+        let textArg = args[1] as! String
+        let languageArg: String? = nilOrValue(args[2])
+        let inSpellDocumentWithTagArg = args[3] is Int64 ? args[3] as! Int64 : Int64(args[3] as! Int32)
+        do {
+          let result = try api.guesses(range: rangeArg, text: textArg, language: languageArg, inSpellDocumentWithTag: inSpellDocumentWithTagArg)
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      guessesChannel.setMessageHandler(nil)
+    }
+    /// Initiates a grammatical analysis of a given string.
+    ///
+    /// - [stringToCheck]: The string to analyze.
+    /// - [startingOffset]: Location within string at which to start the analysis.
+    /// - [language]: Language to use in string.
+    /// - [wrap]: `true` to specify that the analysis continue to the beginning of string when
+    ///   the end is reached. `false` to have the analysis stop at the end of string.
+    /// - [inSpellDocumentWithTag]: An identifier unique within the application
+    ///   used to inform the spell checker which document that text is associated, potentially
+    ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+    ///   in for text not associated with a particular document.
+    let checkGrammarChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.checkGrammar\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      checkGrammarChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let stringToCheckArg = args[0] as! String
+        let startingOffsetArg = args[1] is Int64 ? args[1] as! Int64 : Int64(args[1] as! Int32)
+        let languageArg: String? = nilOrValue(args[2])
+        let wrapArg = args[3] as! Bool
+        let inSpellDocumentWithTagArg = args[4] is Int64 ? args[4] as! Int64 : Int64(args[4] as! Int32)
+        do {
+          let result = try api.checkGrammar(stringToCheck: stringToCheckArg, startingOffset: startingOffsetArg, language: languageArg, wrap: wrapArg, inSpellDocumentWithTag: inSpellDocumentWithTagArg)
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      checkGrammarChannel.setMessageHandler(nil)
+    }
+    /// Provides a list of complete words that the user might be trying to type based on a
+    /// partial word in a given string.
+    ///
+    /// - [partialWordRange] - Range that identifies a partial word in string.
+    /// - [text] - String with the partial word from which to generate the result.
+    /// - [language]: Language to use in string.
+    /// - [inSpellDocumentWithTag]: An identifier unique within the application
+    ///   used to inform the spell checker which document that text is associated, potentially
+    ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
+    ///   in for text not associated with a particular document.
+    ///
+    /// Returns the list of complete words from the spell checker dictionary in the order
+    /// they should be presented to the user.
+    let completionsChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.completions\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      completionsChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let partialWordRangeArg = args[0] as! Range
+        let textArg = args[1] as! String
+        let languageArg: String? = nilOrValue(args[2])
+        let inSpellDocumentWithTagArg = args[3] is Int64 ? args[3] as! Int64 : Int64(args[3] as! Int32)
+        do {
+          let result = try api.completions(partialWordRange: partialWordRangeArg, text: textArg, language: languageArg, inSpellDocumentWithTag: inSpellDocumentWithTagArg)
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      completionsChannel.setMessageHandler(nil)
+    }
+    /// Returns the number of words in the specified string.
+    let countWordsChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.countWords\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      countWordsChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let textArg = args[0] as! String
+        let languageArg: String? = nilOrValue(args[1])
+        do {
+          let result = try api.countWords(text: textArg, language: languageArg)
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      countWordsChannel.setMessageHandler(nil)
+    }
+    /// Adds the [word] to the spell checker dictionary.
+    let learnWordChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.learnWord\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      learnWordChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let wordArg = args[0] as! String
+        do {
+          try api.learnWord(word: wordArg)
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      learnWordChannel.setMessageHandler(nil)
+    }
+    /// Indicates whether the spell checker has learned a given word.
+    let hasLearnedWordChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.hasLearnedWord\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      hasLearnedWordChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let wordArg = args[0] as! String
+        do {
+          let result = try api.hasLearnedWord(word: wordArg)
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      hasLearnedWordChannel.setMessageHandler(nil)
+    }
+    /// Tells the spell checker to unlearn a given word.
+    let unlearnWordChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.unlearnWord\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      unlearnWordChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let wordArg = args[0] as! String
+        do {
+          try api.unlearnWord(word: wordArg)
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      unlearnWordChannel.setMessageHandler(nil)
+    }
+    /// Instructs the spell checker to ignore all future occurrences of [word] in the document
+    /// identified by [documentTag].
+    let ignoreWordChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.ignoreWord\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      ignoreWordChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let wordArg = args[0] as! String
+        let documentTagArg = args[1] is Int64 ? args[1] as! Int64 : Int64(args[1] as! Int32)
+        do {
+          try api.ignoreWord(word: wordArg, documentTag: documentTagArg)
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      ignoreWordChannel.setMessageHandler(nil)
+    }
+    /// Returns the array of ignored words for a document identified by [documentTag].
+    let ignoredWordsChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.ignoredWords\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      ignoredWordsChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let documentTagArg = args[0] is Int64 ? args[0] as! Int64 : Int64(args[0] as! Int32)
+        do {
+          let result = try api.ignoredWords(documentTag: documentTagArg)
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      ignoredWordsChannel.setMessageHandler(nil)
+    }
+    /// Initializes the ignored-words document (a dictionary identified by [documentTag] with [words]),
+    /// an array of words to ignore.
+    let setIgnoredWordsChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.setIgnoredWords\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      setIgnoredWordsChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let wordsArg = args[0] as! [String]
+        let documentTagArg = args[1] is Int64 ? args[1] as! Int64 : Int64(args[1] as! Int32)
+        do {
+          try api.setIgnoredWords(words: wordsArg, documentTag: documentTagArg)
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      setIgnoredWordsChannel.setMessageHandler(nil)
+    }
+    /// Returns the dictionary used when replacing words.
+    let userReplacementsDictionaryChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckApi.userReplacementsDictionary\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      userReplacementsDictionaryChannel.setMessageHandler { _, reply in
+        do {
+          let result = try api.userReplacementsDictionary()
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      userReplacementsDictionaryChannel.setMessageHandler(nil)
     }
   }
 }
