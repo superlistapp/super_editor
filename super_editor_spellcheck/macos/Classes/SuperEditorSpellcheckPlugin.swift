@@ -20,14 +20,17 @@ public class SuperEditorSpellcheckPlugin: SpellCheckApi {
   func fetchSuggestions(text: String, language: String) throws -> [TextSuggestion] {
     var result : [TextSuggestion] = [];
 
-    if (language.isEmpty || text.isEmpty) {
-      // We can't look for misspelled words without a language or text.
+    if (text.isEmpty) {
+      // We can't look for misspelled words without a text.
       return result;
     }
 
-    let spellChecker = NSSpellChecker.shared;
+    if (language.isEmpty) {
+      throw PigeonError(code: "missing_language", message: "The argument 'language' must not be empty", details: "");
+    }
 
-    // Convert dart locale to macOS language code. For example, converts "pt-BR" to "pt_BR".
+    let spellChecker = NSSpellChecker.shared;
+    
     var languageCode = language.replacingOccurrences(of: "-", with: "_")
     if (!spellChecker.availableLanguages.contains(languageCode)){
       // The given language isn't supported by the spell checker. It might be the case that
@@ -49,8 +52,7 @@ public class SuperEditorSpellcheckPlugin: SpellCheckApi {
 
     // The start of the substring we are looking at.
     var currentOffset = 0;
-    var shouldContinue = true;
-    while (shouldContinue && currentOffset < text.count) {
+    while (currentOffset < text.count) {
       let misspelledRange = spellChecker.checkSpelling(
         of: text,
         startingAt: currentOffset,
@@ -60,33 +62,32 @@ public class SuperEditorSpellcheckPlugin: SpellCheckApi {
         wordCount: nil
       );
 
-      if (misspelledRange.location != NSNotFound) {
-        // We found a misspeled word. Check for suggestions.
-        let guesses = spellChecker.guesses(
-          forWordRange: misspelledRange,
-          in: text,
-          language: languageCode,
-          inSpellDocumentWithTag: 0
-        );
-
-        // Only append the suggestion span if we have suggestions.
-        // It wouldn't help to return a misspelled word without suggestions.
-        if (guesses?.isEmpty == false) {
-          result.append(TextSuggestion(
-            start: Int64(misspelledRange.location),
-            // Transform the end to be exclusive, to match the Dart TextRange.
-            end: Int64(misspelledRange.location + misspelledRange.length),
-            suggestions: guesses!
-          ));
-        }
-
-        // Place the offset after the current word to continue the search.
-        currentOffset += misspelledRange.location + misspelledRange.length;
+      if (misspelledRange.location == NSNotFound) {
+        // There are no more misspelled words in the text.
+        break;
       }
 
-      // If we found a misspelled word, we should continue the search until
-      // no more misspelled words are found.
-      shouldContinue = misspelledRange.location != NSNotFound;
+      // We found a misspeled word. Check for suggestions.
+      let guesses = spellChecker.guesses(
+        forWordRange: misspelledRange,
+        in: text,
+        language: languageCode,
+        inSpellDocumentWithTag: 0
+      );
+
+      // Only append the suggestion span if we have suggestions.
+      // It wouldn't help to return a misspelled word without suggestions.
+      if (guesses?.isEmpty == false) {
+        result.append(TextSuggestion(
+          start: Int64(misspelledRange.location),
+          // Transform the end to be exclusive, to match the Dart TextRange.
+          end: Int64(misspelledRange.location + misspelledRange.length),
+          suggestions: guesses!
+        ));
+      }
+
+      // Place the offset after the current word to continue the search.
+      currentOffset += misspelledRange.location + misspelledRange.length;
     };
 
     return result;

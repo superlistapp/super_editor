@@ -31,7 +31,7 @@ class SuperEditorSpellCheckerPlugin {
   Future<List<TextSuggestion>> fetchSuggestions(Locale locale, String text) async {
     final results = await _spellCheckApi.fetchSuggestions(
       text: text,
-      language: locale.toLanguageTag(),
+      language: _convertDartLocaleToMacLanguageCode(locale)!,
     );
 
     return results
@@ -64,7 +64,7 @@ class SuperEditorSpellCheckerPlugin {
     final result = await _spellCheckApi.checkSpelling(
       stringToCheck: stringToCheck,
       startingOffset: startingOffset,
-      language: locale?.toLanguageTag(),
+      language: _convertDartLocaleToMacLanguageCode(locale),
       wrap: wrap,
       inSpellDocumentWithTag: inSpellDocumentWithTag,
     );
@@ -94,7 +94,7 @@ class SuperEditorSpellCheckerPlugin {
     final result = await _spellCheckApi.guesses(
       range: Range(start: range.start, end: range.end),
       text: text,
-      language: locale?.toLanguageTag(),
+      language: _convertDartLocaleToMacLanguageCode(locale),
       inSpellDocumentWithTag: inSpellDocumentWithTag,
     );
 
@@ -128,7 +128,7 @@ class SuperEditorSpellCheckerPlugin {
     final result = await _spellCheckApi.checkGrammar(
       stringToCheck: stringToCheck,
       startingOffset: startingOffset,
-      language: locale?.toLanguageTag(),
+      language: _convertDartLocaleToMacLanguageCode(locale),
       inSpellDocumentWithTag: inSpellDocumentWithTag,
       wrap: wrap,
     );
@@ -173,7 +173,7 @@ class SuperEditorSpellCheckerPlugin {
     final result = await _spellCheckApi.completions(
       partialWordRange: Range(start: partialWordRange.start, end: partialWordRange.end),
       text: text,
-      language: locale.toLanguageTag(),
+      language: _convertDartLocaleToMacLanguageCode(locale),
       inSpellDocumentWithTag: inSpellDocumentWithTag,
     );
 
@@ -191,7 +191,7 @@ class SuperEditorSpellCheckerPlugin {
   Future<int> countWords({required String text, required Locale locale}) async {
     return await _spellCheckApi.countWords(
       text: text,
-      language: locale.toLanguageTag(),
+      language: _convertDartLocaleToMacLanguageCode(locale),
     );
   }
 
@@ -241,6 +241,19 @@ class SuperEditorSpellCheckerPlugin {
     dict.removeWhere((k, v) => k == null || v == null);
 
     return dict.cast<String, String>();
+  }
+
+  /// Converts the dart locale to macOS language code.
+  ///
+  /// For example, converts "pt-BR" to "pt_BR".
+  ///
+  /// Returns `null` if the [locale] is `null`.
+  String? _convertDartLocaleToMacLanguageCode(Locale? locale) {
+    if (locale == null) {
+      return null;
+    }
+
+    return locale.toLanguageTag().replaceAll("-", "_");
   }
 }
 
