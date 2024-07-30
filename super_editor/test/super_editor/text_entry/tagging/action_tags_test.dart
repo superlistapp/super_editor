@@ -651,6 +651,27 @@ void main() {
       });
     });
   });
+
+  group("selections >", () {
+    testWidgetsOnAllPlatforms("upstream cancelled action tag from block node", (tester) async {
+      await _pumpTestEditor(
+        tester,
+        paragraphThenHrDoc(),
+      );
+
+      // Create cancelled action tag
+      await tester.placeCaretInParagraph("1", 0);
+      await tester.typeImeText("/header ");
+
+      // Place cursor at the end of the horizontal rule/block node
+      await tester.pressDownArrow();
+      await tester.pressRightArrow();
+
+      // Select upstream towards the cancelled action tag
+      await tester.pressShiftLeftArrow();
+      await tester.pressShiftUpArrow();
+    });
+  });
 }
 
 Future<TestDocumentContext> _pumpTestEditor(
