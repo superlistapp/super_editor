@@ -25,8 +25,8 @@ import 'package:super_editor/src/infrastructure/touch_controls.dart';
 ///
 /// - When the user drags a collapsed handle, the selection is placed
 ///   at the drag handle focal point.
-class AndroidDocumentDragHandleSelectionStrategy {
-  AndroidDocumentDragHandleSelectionStrategy({
+class AndroidTextFieldDragHandleSelectionStrategy {
+  AndroidTextFieldDragHandleSelectionStrategy({
     required Document document,
     required DocumentLayout documentLayout,
     required void Function(DocumentSelection) select,

@@ -1362,7 +1362,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   //
   // The drag handle type varies independently from the drag selection bound.
   HandleType? _dragHandleType;
-  AndroidDocumentDragHandleSelectionStrategy? _dragHandleSelectionStrategy;
+  AndroidTextFieldDragHandleSelectionStrategy? _dragHandleSelectionStrategy;
 
   final _dragHandleSelectionGlobalFocalPoint = ValueNotifier<Offset?>(null);
   final _magnifierFocalPoint = ValueNotifier<Offset?>(null);
@@ -1500,7 +1500,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
     _dragHandleSelectionGlobalFocalPoint.value = centerOfContentAtOffset;
     _magnifierFocalPoint.value = centerOfContentAtOffset;
 
-    _dragHandleSelectionStrategy = AndroidDocumentDragHandleSelectionStrategy(
+    _dragHandleSelectionStrategy = AndroidTextFieldDragHandleSelectionStrategy(
       document: widget.document,
       documentLayout: widget.getDocumentLayout(),
       select: _updateDragHandleSelection,
