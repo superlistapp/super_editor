@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:example/demos/infrastructure/flutter/sliver_padding.dart';
+import 'package:flutter/material.dart' hide SliverPadding;
 import 'package:super_editor/super_editor.dart';
 
 /// This demo proves that a read-only document can layout and
