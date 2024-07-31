@@ -10,87 +10,10 @@ public class SuperEditorSpellcheckPlugin: SpellCheckMac {
     SpellCheckMacSetup.setUp(binaryMessenger: registrar.messenger, api: instance)
   }
 
-  /// Checks the given `text` for spelling errors with the given `language`.
-  ///
-  /// Returns a list of `TextSuggestion`s, where each entry represents a
-  /// misspelled word, with the possible suggestions.
-  ///
-  /// Returns an empty list if no spelling errors are found or if the `language`
-  /// isn't supported by the spell checker.
-  func fetchSuggestions(text: String, language: String) throws -> [TextSuggestion] {
-    var result : [TextSuggestion] = [];
-
-    if (text.isEmpty) {
-      // We can't look for misspelled words without a text.
-      return result;
-    }
-
-    if (language.isEmpty) {
-      throw PigeonError(code: "missing_language", message: "The argument 'language' must not be empty", details: "");
-    }
-
-    let spellChecker = NSSpellChecker.shared;
-    
-    var languageCode = language.replacingOccurrences(of: "-", with: "_")
-    if (!spellChecker.availableLanguages.contains(languageCode)){
-      // The given language isn't supported by the spell checker. It might be the case that
-      // the user has a language configured with an incompatible region. For example,
-      // a user might have "en-BR" configured, which means that the language is English,
-      // but the region is Brazil. In this case, we should try to use only the language.
-      let firstPart = languageCode.components(separatedBy: "_").first;
-      if (firstPart == nil) {
-        // The language code isn't in the format language_REGION. Fizzle.
-        return result;
-      }
-
-      languageCode = firstPart!;
-      if (!spellChecker.availableLanguages.contains(languageCode)){
-        // The given language isn't supported by the spell checker. Fizzle.
-        return result;
-      }
-    }
-
-    // The start of the substring we are looking at.
-    var currentOffset = 0;
-    while (currentOffset < text.count) {
-      let misspelledRange = spellChecker.checkSpelling(
-        of: text,
-        startingAt: currentOffset,
-        language: languageCode,
-        wrap: false,
-        inSpellDocumentWithTag: 0,
-        wordCount: nil
-      );
-
-      if (misspelledRange.location == NSNotFound) {
-        // There are no more misspelled words in the text.
-        break;
-      }
-
-      // We found a misspeled word. Check for suggestions.
-      let guesses = spellChecker.guesses(
-        forWordRange: misspelledRange,
-        in: text,
-        language: languageCode,
-        inSpellDocumentWithTag: 0
-      );
-
-      // Only append the suggestion span if we have suggestions.
-      // It wouldn't help to return a misspelled word without suggestions.
-      if (guesses?.isEmpty == false) {
-        result.append(TextSuggestion(
-          start: Int64(misspelledRange.location),
-          // Transform the end to be exclusive, to match the Dart TextRange.
-          end: Int64(misspelledRange.location + misspelledRange.length),
-          suggestions: guesses!
-        ));
-      }
-
-      // Place the offset after the current word to continue the search.
-      currentOffset += misspelledRange.location + misspelledRange.length;
-    };
-
-    return result;
+  /// A list containing all the available spell checking languages. The languages are ordered
+  /// in the user’s preferred order as set in the system preferences.
+  func availableLanguages() throws -> [String?] {
+    return NSSpellChecker.shared.availableLanguages;
   }
 
   /// Returns a unique tag to identified this spell checked object.

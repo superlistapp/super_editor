@@ -15,40 +15,6 @@ PlatformException _createConnectionError(String channelName) {
   );
 }
 
-/// A range containing a misspelled word and its suggestions.
-///
-/// The [end] index is exclusive.
-class TextSuggestion {
-  TextSuggestion({
-    required this.start,
-    required this.end,
-    required this.suggestions,
-  });
-
-  int start;
-
-  int end;
-
-  List<String?> suggestions;
-
-  Object encode() {
-    return <Object?>[
-      start,
-      end,
-      suggestions,
-    ];
-  }
-
-  static TextSuggestion decode(Object result) {
-    result as List<Object?>;
-    return TextSuggestion(
-      start: result[0]! as int,
-      end: result[1]! as int,
-      suggestions: (result[2] as List<Object?>?)!.cast<String?>(),
-    );
-  }
-}
-
 /// A range of characters in a string of text.
 ///
 /// The text included in the range includes the character at [start], but not
@@ -145,17 +111,14 @@ class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
   void writeValue(WriteBuffer buffer, Object? value) {
-    if (value is TextSuggestion) {
+    if (value is Range) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
-    } else     if (value is Range) {
+    } else     if (value is PlatformCheckGrammarResult) {
       buffer.putUint8(130);
       writeValue(buffer, value.encode());
-    } else     if (value is PlatformCheckGrammarResult) {
-      buffer.putUint8(131);
-      writeValue(buffer, value.encode());
     } else     if (value is PlatformGrammaticalAnalysisDetail) {
-      buffer.putUint8(132);
+      buffer.putUint8(131);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -166,12 +129,10 @@ class _PigeonCodec extends StandardMessageCodec {
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
       case 129: 
-        return TextSuggestion.decode(readValue(buffer)!);
-      case 130: 
         return Range.decode(readValue(buffer)!);
-      case 131: 
+      case 130: 
         return PlatformCheckGrammarResult.decode(readValue(buffer)!);
-      case 132: 
+      case 131: 
         return PlatformGrammaticalAnalysisDetail.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -192,22 +153,17 @@ class SpellCheckMac {
 
   final String __pigeon_messageChannelSuffix;
 
-  /// Checks the given [text] for spelling errors with the given [language].
-  ///
-  /// Returns a list of [TextSuggestion]s, where each span represents a
-  /// misspelled word, with the possible suggestions.
-  ///
-  /// Returns an empty list if no spelling errors are found or if the [language]
-  /// isn't supported by the spell checker.
-  Future<List<TextSuggestion?>> fetchSuggestions({required String text, required String language}) async {
-    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.fetchSuggestions$__pigeon_messageChannelSuffix';
+  /// A list containing all the available spell checking languages. The languages are ordered
+  /// in the user’s preferred order as set in the system preferences.
+  Future<List<String?>> availableLanguages() async {
+    final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.availableLanguages$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
       pigeonChannelCodec,
       binaryMessenger: __pigeon_binaryMessenger,
     );
     final List<Object?>? __pigeon_replyList =
-        await __pigeon_channel.send(<Object?>[text, language]) as List<Object?>?;
+        await __pigeon_channel.send(null) as List<Object?>?;
     if (__pigeon_replyList == null) {
       throw _createConnectionError(__pigeon_channelName);
     } else if (__pigeon_replyList.length > 1) {
@@ -222,7 +178,7 @@ class SpellCheckMac {
         message: 'Host platform returned null value for non-null return value.',
       );
     } else {
-      return (__pigeon_replyList[0] as List<Object?>?)!.cast<TextSuggestion?>();
+      return (__pigeon_replyList[0] as List<Object?>?)!.cast<String?>();
     }
   }
 

@@ -64,37 +64,6 @@ private func nilOrValue<T>(_ value: Any?) -> T? {
   return value as! T?
 }
 
-/// A range containing a misspelled word and its suggestions.
-///
-/// The [end] index is exclusive.
-///
-/// Generated class from Pigeon that represents data sent in messages.
-struct TextSuggestion {
-  var start: Int64
-  var end: Int64
-  var suggestions: [String?]
-
-  // swift-format-ignore: AlwaysUseLowerCamelCase
-  static func fromList(_ __pigeon_list: [Any?]) -> TextSuggestion? {
-    let start = __pigeon_list[0] is Int64 ? __pigeon_list[0] as! Int64 : Int64(__pigeon_list[0] as! Int32)
-    let end = __pigeon_list[1] is Int64 ? __pigeon_list[1] as! Int64 : Int64(__pigeon_list[1] as! Int32)
-    let suggestions = __pigeon_list[2] as! [String?]
-
-    return TextSuggestion(
-      start: start,
-      end: end,
-      suggestions: suggestions
-    )
-  }
-  func toList() -> [Any?] {
-    return [
-      start,
-      end,
-      suggestions,
-    ]
-  }
-}
-
 /// A range of characters in a string of text.
 ///
 /// The text included in the range includes the character at [start], but not
@@ -183,12 +152,10 @@ private class messagesPigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
     case 129:
-      return TextSuggestion.fromList(self.readValue() as! [Any?])
-    case 130:
       return Range.fromList(self.readValue() as! [Any?])
-    case 131:
+    case 130:
       return PlatformCheckGrammarResult.fromList(self.readValue() as! [Any?])
-    case 132:
+    case 131:
       return PlatformGrammaticalAnalysisDetail.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
@@ -198,17 +165,14 @@ private class messagesPigeonCodecReader: FlutterStandardReader {
 
 private class messagesPigeonCodecWriter: FlutterStandardWriter {
   override func writeValue(_ value: Any) {
-    if let value = value as? TextSuggestion {
+    if let value = value as? Range {
       super.writeByte(129)
       super.writeValue(value.toList())
-    } else if let value = value as? Range {
+    } else if let value = value as? PlatformCheckGrammarResult {
       super.writeByte(130)
       super.writeValue(value.toList())
-    } else if let value = value as? PlatformCheckGrammarResult {
-      super.writeByte(131)
-      super.writeValue(value.toList())
     } else if let value = value as? PlatformGrammaticalAnalysisDetail {
-      super.writeByte(132)
+      super.writeByte(131)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -232,14 +196,9 @@ class messagesPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
 
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol SpellCheckMac {
-  /// Checks the given [text] for spelling errors with the given [language].
-  ///
-  /// Returns a list of [TextSuggestion]s, where each span represents a
-  /// misspelled word, with the possible suggestions.
-  ///
-  /// Returns an empty list if no spelling errors are found or if the [language]
-  /// isn't supported by the spell checker.
-  func fetchSuggestions(text: String, language: String) throws -> [TextSuggestion]
+  /// A list containing all the available spell checking languages. The languages are ordered
+  /// in the user’s preferred order as set in the system preferences.
+  func availableLanguages() throws -> [String?]
   /// Returns a unique tag to identified this spell checked object.
   ///
   /// Use this method to generate tags to avoid collisions with other objects that can be spell checked.
@@ -329,28 +288,20 @@ class SpellCheckMacSetup {
   /// Sets up an instance of `SpellCheckMac` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: SpellCheckMac?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    /// Checks the given [text] for spelling errors with the given [language].
-    ///
-    /// Returns a list of [TextSuggestion]s, where each span represents a
-    /// misspelled word, with the possible suggestions.
-    ///
-    /// Returns an empty list if no spelling errors are found or if the [language]
-    /// isn't supported by the spell checker.
-    let fetchSuggestionsChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.fetchSuggestions\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    /// A list containing all the available spell checking languages. The languages are ordered
+    /// in the user’s preferred order as set in the system preferences.
+    let availableLanguagesChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.availableLanguages\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      fetchSuggestionsChannel.setMessageHandler { message, reply in
-        let args = message as! [Any?]
-        let textArg = args[0] as! String
-        let languageArg = args[1] as! String
+      availableLanguagesChannel.setMessageHandler { _, reply in
         do {
-          let result = try api.fetchSuggestions(text: textArg, language: languageArg)
+          let result = try api.availableLanguages()
           reply(wrapResult(result))
         } catch {
           reply(wrapError(error))
         }
       }
     } else {
-      fetchSuggestionsChannel.setMessageHandler(nil)
+      availableLanguagesChannel.setMessageHandler(nil)
     }
     /// Returns a unique tag to identified this spell checked object.
     ///

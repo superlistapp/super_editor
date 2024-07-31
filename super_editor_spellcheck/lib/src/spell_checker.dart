@@ -6,6 +6,17 @@ import 'package:super_editor_spellcheck/src/messages.g.dart';
 class SuperEditorSpellCheckerMacPlugin {
   final SpellCheckMac _spellCheckApi = SpellCheckMac();
 
+  /// A list containing all the available spell checking languages. The languages are ordered
+  /// in the user’s preferred order as set in the system preferences.
+  Future<List<String>> availableLanguages() async {
+    final languages = await _spellCheckApi.availableLanguages();
+
+    return languages //
+        .where((e) => e != null)
+        .cast<String>()
+        .toList();
+  }
+
   /// Returns a unique tag to identified this spell checked object.
   ///
   /// Use this method to generate tags to avoid collisions with other objects that can be spell checked.
@@ -31,16 +42,77 @@ class SuperEditorSpellCheckerMacPlugin {
   ///
   /// If the same misspelled word is found multiple times in the text, it will be
   /// included in the list multiple times, since each range is different.
-  Future<List<TextSuggestion>> fetchSuggestions(Locale locale, String text) async {
-    final results = await _spellCheckApi.fetchSuggestions(
-      text: text,
-      language: _convertDartLocaleToMacLanguageCode(locale)!,
-    );
+  Future<List<TextSuggestion>> fetchSuggestions(
+    Locale locale,
+    String text, {
+    int inSpellDocumentWithTag = 0,
+  }) async {
+    final language = _convertDartLocaleToMacLanguageCode(locale);
+    if (language?.isNotEmpty != true) {
+      throw Exception("The argument 'language' must not be empty");
+    }
 
-    return results
-        .where((e) => e != null) //
-        .cast<TextSuggestion>()
-        .toList();
+    final result = <TextSuggestion>[];
+    if (text.isEmpty) {
+      // We can't look for misspelled words without a text.
+      return result;
+    }
+
+    final availableLanguages = await _spellCheckApi.availableLanguages();
+
+    String languageCode = language!.replaceFirst("-", "_");
+    if (!availableLanguages.contains(languageCode)) {
+      // The given language isn't supported by the spell checker. It might be the case that
+      // the user has a language configured with an incompatible region. For example,
+      // a user might have "en-BR" configured, which means that the language is English,
+      // but the region is Brazil. In this case, we should try to use only the language.
+      languageCode = language.split("_").first;
+      if (!availableLanguages.contains(languageCode)) {
+        // The given language isn't supported by the spell checker. Fizzle.
+        return result;
+      }
+    }
+
+    // The start of the substring we are looking at.
+    int currentOffset = 0;
+    while (currentOffset < text.length) {
+      final misspelledRange = await _spellCheckApi.checkSpelling(
+        stringToCheck: text,
+        startingOffset: currentOffset,
+        language: languageCode,
+        wrap: false,
+        inSpellDocumentWithTag: 0,
+      );
+
+      if (misspelledRange.start == -1) {
+        // There are no more misspelled words in the text.
+        break;
+      }
+
+      // We found a misspeled word. Check for suggestions.
+      final guesses = await _spellCheckApi.guesses(
+        text: text,
+        range: misspelledRange,
+        language: languageCode,
+        inSpellDocumentWithTag: inSpellDocumentWithTag,
+      );
+
+      // Only append the suggestion span if we have suggestions.
+      // It wouldn't help to return a misspelled word without suggestions.
+      if (guesses?.isEmpty == false) {
+        result.add(
+          TextSuggestion(
+            range: TextRange(start: misspelledRange.start, end: misspelledRange.end),
+            suggestions: guesses!,
+          ),
+        );
+      }
+
+      // Place the offset after the current word to continue the search.
+      currentOffset += misspelledRange.end;
+    }
+
+    return result;
   }
 
   /// Starts the search for a misspelled word in [stringToCheck] starting at [startingOffset]
@@ -278,4 +350,15 @@ class GrammaticalAnalysisDetail {
 
   final TextRange range;
   final String userDescription;
+}
+
+/// A range containing a misspelled word and its suggestions.
+class TextSuggestion {
+  TextSuggestion({
+    required this.range,
+    required this.suggestions,
+  });
+
+  final TextRange range;
+  final List<String?> suggestions;
 }

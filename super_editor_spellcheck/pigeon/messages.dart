@@ -6,17 +6,9 @@ import 'package:pigeon/pigeon.dart';
 ))
 @HostApi()
 abstract class SpellCheckMac {
-  /// Checks the given [text] for spelling errors with the given [language].
-  ///
-  /// Returns a list of [TextSuggestion]s, where each span represents a
-  /// misspelled word, with the possible suggestions.
-  ///
-  /// Returns an empty list if no spelling errors are found or if the [language]
-  /// isn't supported by the spell checker.
-  List<TextSuggestion> fetchSuggestions({
-    required String text,
-    required String language,
-  });
+  /// A list containing all the available spell checking languages. The languages are ordered
+  /// in the user’s preferred order as set in the system preferences.
+  List<String?> availableLanguages();
 
   /// Returns a unique tag to identified this spell checked object.
   ///
@@ -134,21 +126,6 @@ abstract class SpellCheckMac {
 
   /// Returns the dictionary used when replacing words.
   Map<String, String> userReplacementsDictionary();
-}
-
-/// A range containing a misspelled word and its suggestions.
-///
-/// The [end] index is exclusive.
-class TextSuggestion {
-  TextSuggestion({
-    required this.start,
-    required this.end,
-    required this.suggestions,
-  });
-
-  final int start;
-  final int end;
-  final List<String?> suggestions;
 }
 
 /// A range of characters in a string of text.
