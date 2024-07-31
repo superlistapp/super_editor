@@ -332,7 +332,7 @@ void main() {
                 ),
                 extent: DocumentPosition(
                   nodeId: "1",
-                  nodePosition: TextNodePosition(offset: 45),
+                  nodePosition: TextNodePosition(offset: 50),
                 ),
               ),
             );
