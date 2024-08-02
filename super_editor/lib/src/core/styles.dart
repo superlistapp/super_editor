@@ -339,6 +339,9 @@ class Styles {
   /// Applies a [TextAlign] to a text node.
   static const String textAlign = 'textAlign';
 
+  /// Applies an [UnderlineStyle] to all spelling errors in a text node.
+  static const String spellingErrorUnderlineStyle = 'spellingErrorUnderlineStyle';
+
   /// Applies a [AttributionStyleAdjuster] to a text node.
   static const String inlineTextStyler = 'inlineTextStyler';
 

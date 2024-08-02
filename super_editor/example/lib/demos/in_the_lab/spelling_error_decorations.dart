@@ -70,6 +70,15 @@ class _SpellingErrorDecorationsDemoState extends State<SpellingErrorDecorationsD
       stylesheet: defaultStylesheet.copyWith(
         addRulesAfter: [
           ...darkModeStyles,
+          StyleRule(
+            BlockSelector.all,
+            (doc, docNode) {
+              print("Processing StyleRule for node: ${docNode}");
+              return {
+                Styles.spellingErrorUnderlineStyle: SquiggleUnderlineStyle(color: Colors.blue),
+              };
+            },
+          ),
         ],
       ),
       documentOverlayBuilders: [

@@ -8,6 +8,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
@@ -201,6 +202,14 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   TextRange? composingRegion;
   @override
   bool showComposingUnderline;
+
+  @override
+  void applyStyles(Map<String, dynamic> styles) {
+    print("applyStyles() to paragraph");
+    super.applyStyles(styles);
+
+    spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
+  }
 
   @override
   ParagraphComponentViewModel copy() {
