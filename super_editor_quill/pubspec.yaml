@@ -1,20 +1,24 @@
 name: super_editor_quill
 description: "Quill extensions for Super Editor"
-version: 0.0.1-dev.1
+version: 0.1.0-dev.2
 homepage: https://github.com/superlistapp/super_editor
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: '>=3.0.0 <4.0.0'
   flutter: ">=1.17.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  super_editor: ^0.3.0-dev
+  super_editor: ^0.3.0-dev.2
   logging: ^1.0.1
   dart_quill_delta: ^9.4.1
   collection: ^1.18.0
+
+  # For public testing tools
+  matcher: ^0.12.16+1
+  text_table: ^4.0.3
 
 dependency_overrides:
   super_editor:
@@ -25,9 +29,10 @@ dependency_overrides:
 #    path: ../attributed_text
 
 dev_dependencies:
+  # Note: some testing dependencies are listed as regular dependencies
+  #       so we can export testing tools.
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
-  text_table: ^4.0.3
 
 flutter:
