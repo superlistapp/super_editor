@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -17,6 +18,7 @@ import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'layout_single_column/layout_single_column.dart';
 import 'text_tools.dart';
@@ -102,6 +104,10 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       textDirection: textDirection,
       textAlignment: textAlign,
       selectionColor: const Color(0x00000000),
+      spellingErrors: node.text
+          .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
+          .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
+          .toList(),
     );
   }
 
@@ -145,6 +151,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    this.spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
+    this.spellingErrors = const <TextRange>[],
     this.composingRegion,
     this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
@@ -174,6 +182,21 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
+
+  UnderlineStyle spellingErrorUnderlineStyle;
+  List<TextRange> spellingErrors;
+
+  @override
+  List<Underlines> get underlines {
+    return [
+      if (spellingErrors.isNotEmpty) //
+        Underlines(
+          style: spellingErrorUnderlineStyle,
+          underlines: spellingErrors,
+        ),
+    ];
+  }
+
   @override
   TextRange? composingRegion;
   @override
@@ -196,6 +219,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
+      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
+      spellingErrors: spellingErrors,
       composingRegion: composingRegion,
       showComposingUnderline: showComposingUnderline,
     );
@@ -217,6 +242,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
+          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
           composingRegion == other.composingRegion &&
           showComposingUnderline == other.showComposingUnderline;
 
@@ -233,6 +260,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selection.hashCode ^
       selectionColor.hashCode ^
       highlightWhenEmpty.hashCode ^
+      spellingErrorUnderlineStyle.hashCode ^
+      spellingErrors.hashCode ^
       composingRegion.hashCode ^
       showComposingUnderline.hashCode;
 }
@@ -295,6 +324,13 @@ class _ParagraphComponentState extends State<ParagraphComponent>
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
+            underlines: [
+              if (widget.viewModel.spellingErrors.isNotEmpty)
+                Underlines(
+                  style: widget.viewModel.spellingErrorUnderlineStyle,
+                  underlines: widget.viewModel.spellingErrors,
+                ),
+            ],
             composingRegion: widget.viewModel.composingRegion,
             showComposingUnderline: widget.viewModel.showComposingUnderline,
             showDebugPaint: widget.showDebugPaint,

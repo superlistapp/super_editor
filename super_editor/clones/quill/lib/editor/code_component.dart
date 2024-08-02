@@ -81,6 +81,7 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    this.underlines = const [],
     this.composingRegion,
     this.showComposingUnderline = false,
   });
@@ -99,6 +100,10 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
+
+  @override
+  List<Underlines> underlines;
+
   @override
   TextRange? composingRegion;
   @override

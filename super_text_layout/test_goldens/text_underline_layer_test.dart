@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:super_text_layout/src/super_text.dart';
 import 'package:super_text_layout/src/text_underline_layer.dart';
 
 import 'test_tools.dart';
@@ -10,31 +11,38 @@ void main() {
     await pumpThreeLinePlainSuperText(
       tester,
       beneathBuilder: (context, textLayout) {
-        return TextUnderlineLayer(
-          textLayout: textLayout,
-          underlines: const [
-            TextLayoutUnderline(
-              style: UnderlineStyle(
-                color: Colors.lightBlue,
-                thickness: 4,
+        return MultiLayerBuilder([
+          (context, textLayout) => TextUnderlineLayer(
+                textLayout: textLayout,
+                style: StraightUnderlineStyle(
+                  color: Colors.lightBlue,
+                  thickness: 4,
+                ),
+                underlines: const [
+                  TextLayoutUnderline(
+                    range: TextSelection(
+                      baseOffset: 36,
+                      extentOffset: 79,
+                    ),
+                  ),
+                ],
               ),
-              range: TextSelection(
-                baseOffset: 36,
-                extentOffset: 79,
-              ),
-            ),
-            TextLayoutUnderline(
-              style: UnderlineStyle(
-                color: Colors.lightBlue,
-                thickness: 4,
-              ),
-              range: TextSelection(
-                baseOffset: 88,
-                extentOffset: 110,
-              ),
-            ),
-          ],
-        );
+          (context, textLayout) => TextUnderlineLayer(
+                textLayout: textLayout,
+                style: StraightUnderlineStyle(
+                  color: Colors.lightBlue,
+                  thickness: 4,
+                ),
+                underlines: const [
+                  TextLayoutUnderline(
+                    range: TextSelection(
+                      baseOffset: 88,
+                      extentOffset: 110,
+                    ),
+                  ),
+                ],
+              )
+        ]).build(context, textLayout);
       },
     );
 

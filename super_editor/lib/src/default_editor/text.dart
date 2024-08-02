@@ -499,6 +499,15 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   bool get highlightWhenEmpty;
   set highlightWhenEmpty(bool highlight);
 
+  /// Groups of underlines that should be painted with the text.
+  ///
+  /// This property only exposes a getter so that subclasses can synthesize [underlines]
+  /// from other properties, such as spelling errors, grammar errors, etc.
+  ///
+  /// If subclasses want the underlines to be directly mutable, then subclasses can
+  /// introduces a corresponding setter, or declare a mutable variable.
+  List<Underlines> get underlines;
+
   TextRange? get composingRegion;
   set composingRegion(TextRange? composingRegion);
 
@@ -537,6 +546,8 @@ class TextWithHintComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
+    this.spellingErrorUnderlineStyle,
+    this.spellingErrors = const [],
     this.composingRegion,
     this.showComposingUnderline = false,
     this.showDebugPaint = false,
@@ -552,8 +563,13 @@ class TextWithHintComponent extends StatefulWidget {
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool highlightWhenEmpty;
+
+  final UnderlineStyle? spellingErrorUnderlineStyle;
+  final List<TextRange> spellingErrors;
+
   final TextRange? composingRegion;
   final bool showComposingUnderline;
+
   final bool showDebugPaint;
 
   @override
@@ -602,6 +618,13 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
           textSelection: widget.textSelection,
           selectionColor: widget.selectionColor,
           highlightWhenEmpty: widget.highlightWhenEmpty,
+          underlines: [
+            if (widget.spellingErrors.isNotEmpty)
+              Underlines(
+                style: widget.spellingErrorUnderlineStyle ?? const SquiggleUnderlineStyle(),
+                underlines: widget.spellingErrors,
+              ),
+          ],
           composingRegion: widget.composingRegion,
           showComposingUnderline: widget.showComposingUnderline,
           showDebugPaint: widget.showDebugPaint,
@@ -626,6 +649,7 @@ class TextComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
+    this.underlines = const [],
     this.composingRegion,
     this.showComposingUnderline = false,
     this.showDebugPaint = false,
@@ -651,6 +675,13 @@ class TextComponent extends StatefulWidget {
   final Color selectionColor;
 
   final bool highlightWhenEmpty;
+
+  /// Groups of underlines.
+  ///
+  /// Each [Underlines] group contains some number of underlines, along with a style that
+  /// applies to those underlines. Multiple styles of underlines are displayed by providing
+  /// multiple [Underlines].
+  final List<Underlines> underlines;
 
   /// The span of text that's currently sitting in the IME's composing region,
   /// which is underlined by this component.
@@ -1103,17 +1134,26 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
                   ),
                 ),
               // Underline beneath the composing region.
-              if (widget.composingRegion != null)
+              if (widget.composingRegion != null && widget.showComposingUnderline)
                 TextUnderlineLayer(
                   textLayout: textLayout,
+                  style: StraightUnderlineStyle(
+                    color: widget.textStyleBuilder({}).color ?? //
+                        (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                  ),
                   underlines: [
                     TextLayoutUnderline(
-                      style: UnderlineStyle(
-                        color: widget.textStyleBuilder({}).color ?? //
-                            (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
-                      ),
                       range: widget.composingRegion!,
                     ),
+                  ],
+                ),
+              for (final underlines in widget.underlines)
+                TextUnderlineLayer(
+                  textLayout: textLayout,
+                  style: underlines.style,
+                  underlines: [
+                    for (final range in underlines.underlines) //
+                      TextLayoutUnderline(range: range),
                   ],
                 ),
             ],
@@ -1175,6 +1215,18 @@ class _ProxyTextDocumentComponentState extends State<ProxyTextDocumentComponent>
   Widget build(BuildContext context) {
     return widget.child;
   }
+}
+
+/// A group of text ranges that should be displayed with underlines, along with the [style]
+/// of those underlines.
+class Underlines {
+  const Underlines({
+    required this.style,
+    required this.underlines,
+  });
+
+  final UnderlineStyle style;
+  final List<TextRange> underlines;
 }
 
 class AddTextAttributionsRequest implements EditRequest {

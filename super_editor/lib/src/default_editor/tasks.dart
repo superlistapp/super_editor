@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -16,6 +17,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'attributions.dart';
 import 'layout_single_column/layout_single_column.dart';
@@ -185,6 +187,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    this.spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(),
+    this.spellingErrors = const [],
     this.composingRegion,
     this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
@@ -209,6 +213,21 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
+
+  UnderlineStyle spellingErrorUnderlineStyle;
+  List<TextRange> spellingErrors;
+
+  @override
+  List<Underlines> get underlines {
+    return [
+      if (spellingErrors.isNotEmpty) //
+        Underlines(
+          style: spellingErrorUnderlineStyle,
+          underlines: spellingErrors,
+        ),
+    ];
+  }
+
   @override
   TextRange? composingRegion;
   @override
@@ -230,6 +249,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       selection: selection,
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
+      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
+      spellingErrors: List.from(spellingErrors),
       composingRegion: composingRegion,
       showComposingUnderline: showComposingUnderline,
     );
@@ -249,6 +270,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
+          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
           composingRegion == other.composingRegion &&
           showComposingUnderline == other.showComposingUnderline;
 
@@ -263,6 +286,8 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       selection.hashCode ^
       selectionColor.hashCode ^
       highlightWhenEmpty.hashCode ^
+      spellingErrorUnderlineStyle.hashCode ^
+      spellingErrors.hashCode ^
       composingRegion.hashCode ^
       showComposingUnderline.hashCode;
 }

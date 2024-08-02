@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -10,6 +11,7 @@ import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../core/document.dart';
 import 'layout_single_column/layout_single_column.dart';
@@ -203,6 +205,8 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    this.spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(),
+    this.spellingErrors = const [],
     this.composingRegion,
     this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
@@ -223,6 +227,21 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
+
+  UnderlineStyle spellingErrorUnderlineStyle;
+  List<TextRange> spellingErrors;
+
+  @override
+  List<Underlines> get underlines {
+    return [
+      if (spellingErrors.isNotEmpty) //
+        Underlines(
+          style: spellingErrorUnderlineStyle,
+          underlines: spellingErrors,
+        ),
+    ];
+  }
+
   @override
   TextRange? composingRegion;
   @override
@@ -240,6 +259,9 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
           textDirection == other.textDirection &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
+          highlightWhenEmpty == other.highlightWhenEmpty &&
+          spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(spellingErrors, spellingErrors) &&
           composingRegion == other.composingRegion &&
           showComposingUnderline == other.showComposingUnderline;
 
@@ -252,7 +274,11 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
       textDirection.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
-      composingRegion.hashCode;
+      highlightWhenEmpty.hashCode ^
+      spellingErrorUnderlineStyle.hashCode ^
+      spellingErrors.hashCode ^
+      composingRegion.hashCode ^
+      showComposingUnderline.hashCode;
 }
 
 class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
@@ -269,6 +295,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
     super.selection,
     required super.selectionColor,
     super.highlightWhenEmpty = false,
+    super.spellingErrors,
     super.composingRegion,
     super.showComposingUnderline = false,
   });
