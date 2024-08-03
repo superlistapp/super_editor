@@ -80,13 +80,12 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       selectionColor: componentViewModel.selectionColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
       composingRegion: componentViewModel.composingRegion,
-      showComposingUnderline: componentViewModel.showComposingUnderline,
+      showComposingUnderline: componentViewModel.showComposingRegionUnderline,
     );
   }
 }
 
-class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel
-    with ProseTextComponentViewModel, TextComponentViewModel {
+class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   BlockquoteComponentViewModel({
     required String nodeId,
     double? maxWidth,
@@ -100,11 +99,14 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    TextRange? composingRegion,
+    bool showComposingRegionUnderline = false,
     UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
     List<TextRange> spellingErrors = const <TextRange>[],
-    this.composingRegion,
-    this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.composingRegion = composingRegion;
+    this.showComposingRegionUnderline = showComposingRegionUnderline;
+
     this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
     this.spellingErrors = spellingErrors;
   }
@@ -123,11 +125,6 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
-
-  @override
-  TextRange? composingRegion;
-  @override
-  bool showComposingUnderline;
 
   Color backgroundColor;
   BorderRadius borderRadius;
@@ -157,7 +154,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel
       spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
       spellingErrors: List.from(spellingErrors),
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
     );
   }
 
@@ -179,7 +176,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel
           spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
           const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
           composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline;
+          showComposingRegionUnderline == other.showComposingRegionUnderline;
 
   @override
   int get hashCode =>
@@ -196,7 +193,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel
       spellingErrorUnderlineStyle.hashCode ^
       spellingErrors.hashCode ^
       composingRegion.hashCode ^
-      showComposingUnderline.hashCode;
+      showComposingRegionUnderline.hashCode;
 }
 
 /// Displays a blockquote in a document.
@@ -244,8 +241,6 @@ class BlockquoteComponent extends StatelessWidget {
           textSelection: textSelection,
           selectionColor: selectionColor,
           highlightWhenEmpty: highlightWhenEmpty,
-          composingRegion: composingRegion,
-          showComposingUnderline: showComposingUnderline,
           showDebugPaint: showDebugPaint,
         ),
       ),

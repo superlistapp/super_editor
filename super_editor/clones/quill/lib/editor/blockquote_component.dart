@@ -28,7 +28,7 @@ class FeatherBlockquoteComponentBuilder extends BlockquoteComponentBuilder {
       selectionColor: componentViewModel.selectionColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
       composingRegion: componentViewModel.composingRegion,
-      showComposingUnderline: componentViewModel.showComposingUnderline,
+      showComposingUnderline: componentViewModel.showComposingRegionUnderline,
     );
   }
 }
@@ -84,8 +84,6 @@ class FeatherBlockquoteComponent extends StatelessWidget {
           textSelection: textSelection,
           selectionColor: selectionColor,
           highlightWhenEmpty: highlightWhenEmpty,
-          composingRegion: composingRegion,
-          showComposingUnderline: showComposingUnderline,
           showDebugPaint: showDebugPaint,
         ),
       ),

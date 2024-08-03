@@ -168,7 +168,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
         composingRegion: componentViewModel.composingRegion,
-        showComposingUnderline: componentViewModel.showComposingUnderline,
+        showComposingUnderline: componentViewModel.showComposingRegionUnderline,
       );
     } else if (componentViewModel is OrderedListItemComponentViewModel) {
       return OrderedListItemComponent(
@@ -182,7 +182,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
         composingRegion: componentViewModel.composingRegion,
-        showComposingUnderline: componentViewModel.showComposingUnderline,
+        showComposingUnderline: componentViewModel.showComposingRegionUnderline,
       );
     }
 
@@ -192,8 +192,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
   }
 }
 
-abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel
-    with ProseTextComponentViewModel, TextComponentViewModel {
+abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   ListItemComponentViewModel({
     required String nodeId,
     double? maxWidth,
@@ -206,11 +205,14 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    TextRange? composingRegion,
+    bool showComposingRegionUnderline = false,
     UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
     List<TextRange> spellingErrors = const <TextRange>[],
-    this.composingRegion,
-    this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.composingRegion = composingRegion;
+    this.showComposingRegionUnderline = showComposingRegionUnderline;
+
     this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
     this.spellingErrors = spellingErrors;
   }
@@ -233,11 +235,6 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
   bool highlightWhenEmpty;
 
   @override
-  TextRange? composingRegion;
-  @override
-  bool showComposingUnderline;
-
-  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other &&
@@ -253,7 +250,7 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
           spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
           const DeepCollectionEquality().equals(spellingErrors, spellingErrors) &&
           composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline;
+          showComposingRegionUnderline == other.showComposingRegionUnderline;
 
   @override
   int get hashCode =>
@@ -268,7 +265,7 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
       spellingErrorUnderlineStyle.hashCode ^
       spellingErrors.hashCode ^
       composingRegion.hashCode ^
-      showComposingUnderline.hashCode;
+      showComposingRegionUnderline.hashCode;
 }
 
 class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
@@ -287,7 +284,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
     super.highlightWhenEmpty = false,
     super.spellingErrors,
     super.composingRegion,
-    super.showComposingUnderline = false,
+    super.showComposingRegionUnderline = false,
   });
 
   ListItemDotStyle dotStyle = const ListItemDotStyle();
@@ -316,7 +313,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
       selection: selection,
       selectionColor: selectionColor,
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
     );
   }
 
@@ -348,7 +345,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     required super.selectionColor,
     super.highlightWhenEmpty = false,
     super.composingRegion,
-    super.showComposingUnderline = false,
+    super.showComposingRegionUnderline = false,
   });
 
   final int? ordinalValue;
@@ -375,7 +372,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
       selection: selection,
       selectionColor: selectionColor,
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
     );
   }
 
@@ -509,8 +506,6 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
               textScaler: textScaler,
               selectionColor: widget.selectionColor,
               highlightWhenEmpty: widget.highlightWhenEmpty,
-              composingRegion: widget.composingRegion,
-              showComposingUnderline: widget.showComposingUnderline,
               showDebugPaint: widget.showDebugPaint,
             ),
           ),
@@ -675,8 +670,6 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
               textScaler: textScaler,
               selectionColor: widget.selectionColor,
               highlightWhenEmpty: widget.highlightWhenEmpty,
-              composingRegion: widget.composingRegion,
-              showComposingUnderline: widget.showComposingUnderline,
               showDebugPaint: widget.showDebugPaint,
             ),
           ),

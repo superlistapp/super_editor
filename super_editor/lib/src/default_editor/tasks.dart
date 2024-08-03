@@ -171,8 +171,7 @@ class TaskComponentBuilder implements ComponentBuilder {
 /// various properties in the view model. For example, one phase applies
 /// all [StyleRule]s, and another phase configures content selection
 /// and caret appearance.
-class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel
-    with ProseTextComponentViewModel, TextComponentViewModel {
+class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   TaskComponentViewModel({
     required String nodeId,
     double? maxWidth,
@@ -188,11 +187,14 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    TextRange? composingRegion,
+    bool showComposingRegionUnderline = false,
     UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
     List<TextRange> spellingErrors = const <TextRange>[],
-    this.composingRegion,
-    this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.composingRegion = composingRegion;
+    this.showComposingRegionUnderline = showComposingRegionUnderline;
+
     this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
     this.spellingErrors = spellingErrors;
   }
@@ -219,11 +221,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel
   bool highlightWhenEmpty;
 
   @override
-  TextRange? composingRegion;
-  @override
-  bool showComposingUnderline;
-
-  @override
   TaskComponentViewModel copy() {
     return TaskComponentViewModel(
       nodeId: nodeId,
@@ -242,7 +239,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel
       spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
       spellingErrors: List.from(spellingErrors),
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
     );
   }
 
@@ -263,7 +260,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel
           spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
           const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
           composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline;
+          showComposingRegionUnderline == other.showComposingRegionUnderline;
 
   @override
   int get hashCode =>
@@ -279,7 +276,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel
       spellingErrorUnderlineStyle.hashCode ^
       spellingErrors.hashCode ^
       composingRegion.hashCode ^
-      showComposingUnderline.hashCode;
+      showComposingRegionUnderline.hashCode;
 }
 
 /// The standard [TextBlockIndentCalculator] used by tasks in `SuperEditor`.
@@ -359,8 +356,6 @@ class _TaskComponentState extends State<TaskComponent> with ProxyDocumentCompone
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
-            composingRegion: widget.viewModel.composingRegion,
-            showComposingUnderline: widget.viewModel.showComposingUnderline,
             showDebugPaint: widget.showDebugPaint,
           ),
         ),

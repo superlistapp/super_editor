@@ -216,8 +216,10 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     }
 
     editorImeLog.fine("Received edit deltas from platform: ${textEditingDeltas.length} deltas");
+    print("Received edit deltas from platform: ${textEditingDeltas.length} deltas");
     for (final delta in textEditingDeltas) {
       editorImeLog.fine("$delta");
+      print(" - delta (${delta.runtimeType}) composing: ${delta.composing}");
     }
 
     final imeValueBeforeChange = currentTextEditingValue;

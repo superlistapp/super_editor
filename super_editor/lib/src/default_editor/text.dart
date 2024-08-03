@@ -469,36 +469,6 @@ class TextNodePosition extends TextPosition implements NodePosition {
   int get hashCode => super.hashCode ^ super.offset.hashCode;
 }
 
-/// Mixin for all [TextComponentViewModels]s that include prose-style
-/// writing (typical English, Spanish, etc).
-///
-/// A counter-example would be a text node filled with code - that's
-/// not prose.
-///
-/// This mixin adds common expectations for prose, including spelling
-/// error underlines.
-mixin ProseTextComponentViewModel on SingleColumnLayoutComponentViewModel {
-  UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle();
-  List<TextRange> spellingErrors = [];
-
-  List<Underlines> get underlines {
-    return [
-      if (spellingErrors.isNotEmpty) //
-        Underlines(
-          style: spellingErrorUnderlineStyle,
-          underlines: spellingErrors,
-        ),
-    ];
-  }
-
-  @override
-  void applyStyles(Map<String, dynamic> styles) {
-    super.applyStyles(styles);
-
-    spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
-  }
-}
-
 /// Mixin for all [SingleColumnLayoutComponentViewModel]s that represent
 /// a text-based block, e.g., paragraph, blockquote, list item.
 ///
@@ -529,20 +499,39 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   bool get highlightWhenEmpty;
   set highlightWhenEmpty(bool highlight);
 
+  /// The span of text that's currently sitting in the IME's composing region,
+  /// which is underlined by this component.
+  TextRange? composingRegion;
+  UnderlineStyle composingRegionUnderlineStyle = const SquiggleUnderlineStyle();
+
+  /// Whether to underline the [composingRegion].
+  ///
+  /// Showing the underline is optional because the behavior differs between
+  /// platforms, e.g., Mac shows an underline but Windows and Linux don't.
+  bool showComposingRegionUnderline = true;
+
+  List<TextRange> spellingErrors = [];
+  UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle();
+
   /// Groups of underlines that should be painted with the text.
   ///
-  /// This property only exposes a getter so that subclasses can synthesize [underlines]
-  /// from other properties, such as spelling errors, grammar errors, etc.
-  ///
-  /// If subclasses want the underlines to be directly mutable, then subclasses can
-  /// introduces a corresponding setter, or declare a mutable variable.
-  List<Underlines> get underlines;
-
-  TextRange? get composingRegion;
-  set composingRegion(TextRange? composingRegion);
-
-  bool get showComposingUnderline;
-  set showComposingUnderline(bool showComposingUnderline);
+  /// By default this property generates underlines based on other
+  /// properties in this object, such as [composingRegion]. Subclasses
+  /// can change this behavior by overriding this property.
+  // List<Underlines> get underlines {
+  //   return [
+  //     if (composingRegion != null && showComposingRegionUnderline)
+  //       Underlines(
+  //         style: composingRegionUnderlineStyle,
+  //         underlines: [composingRegion!],
+  //       ),
+  //     if (spellingErrors.isNotEmpty) //
+  //       Underlines(
+  //         style: spellingErrorUnderlineStyle,
+  //         underlines: spellingErrors,
+  //       ),
+  //   ];
+  // }
 
   @override
   void applyStyles(Map<String, dynamic> styles) {
@@ -556,6 +545,11 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
 
       return inlineTextStyler(attributions, baseStyle);
     };
+
+    composingRegionUnderlineStyle = styles[Styles.composingRegionUnderlineStyle] ?? composingRegionUnderlineStyle;
+    showComposingRegionUnderline = styles[Styles.showComposingRegionUnderline] ?? showComposingRegionUnderline;
+
+    spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
   }
 }
 
@@ -655,8 +649,6 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
                 underlines: widget.spellingErrors,
               ),
           ],
-          composingRegion: widget.composingRegion,
-          showComposingUnderline: widget.showComposingUnderline,
           showDebugPaint: widget.showDebugPaint,
         ),
       ],
@@ -680,8 +672,6 @@ class TextComponent extends StatefulWidget {
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
     this.underlines = const [],
-    this.composingRegion,
-    this.showComposingUnderline = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -712,16 +702,6 @@ class TextComponent extends StatefulWidget {
   /// applies to those underlines. Multiple styles of underlines are displayed by providing
   /// multiple [Underlines].
   final List<Underlines> underlines;
-
-  /// The span of text that's currently sitting in the IME's composing region,
-  /// which is underlined by this component.
-  final TextRange? composingRegion;
-
-  /// Whether to underline the [composingRegion].
-  ///
-  /// Showing the underline is optional because the behavior differs between
-  /// platforms, e.g., Mac shows an underline but Windows and Linux don't.
-  final bool showComposingUnderline;
 
   final bool showDebugPaint;
 
@@ -1162,20 +1142,6 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
                   style: SelectionHighlightStyle(
                     color: widget.selectionColor,
                   ),
-                ),
-              // Underline beneath the composing region.
-              if (widget.composingRegion != null && widget.showComposingUnderline)
-                TextUnderlineLayer(
-                  textLayout: textLayout,
-                  style: StraightUnderlineStyle(
-                    color: widget.textStyleBuilder({}).color ?? //
-                        (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
-                  ),
-                  underlines: [
-                    TextLayoutUnderline(
-                      range: widget.composingRegion!,
-                    ),
-                  ],
                 ),
               for (final underlines in widget.underlines)
                 TextUnderlineLayer(

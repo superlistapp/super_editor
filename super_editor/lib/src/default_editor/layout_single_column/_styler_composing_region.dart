@@ -96,11 +96,9 @@ class SingleColumnLayoutComposingRegionStyler extends SingleColumnLayoutStylePha
       textComposingRegion = TextRange(start: startPosition.offset, end: endPosition.offset);
     }
 
-    // TODO: instead of reporting the composing region to the view model, have the view model
-    //       take a collection of underlines with underline styles.
     viewModel
       ..composingRegion = textComposingRegion
-      ..showComposingUnderline = true;
+      ..showComposingRegionUnderline = true;
 
     return viewModel;
   }

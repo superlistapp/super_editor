@@ -135,8 +135,7 @@ class ParagraphComponentBuilder implements ComponentBuilder {
   }
 }
 
-class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel
-    with ProseTextComponentViewModel, TextComponentViewModel {
+class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   ParagraphComponentViewModel({
     required String nodeId,
     double? maxWidth,
@@ -152,11 +151,14 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
+    TextRange? composingRegion,
+    bool showComposingRegionUnderline = false,
     UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
     List<TextRange> spellingErrors = const <TextRange>[],
-    this.composingRegion,
-    this.showComposingUnderline = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.composingRegion = composingRegion;
+    this.showComposingRegionUnderline = showComposingRegionUnderline;
+
     this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
     this.spellingErrors = spellingErrors;
   }
@@ -188,11 +190,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel
   bool highlightWhenEmpty;
 
   @override
-  TextRange? composingRegion;
-  @override
-  bool showComposingUnderline;
-
-  @override
   ParagraphComponentViewModel copy() {
     return ParagraphComponentViewModel(
       nodeId: nodeId,
@@ -212,7 +209,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel
       spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
       spellingErrors: spellingErrors,
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
     );
   }
 
@@ -235,7 +232,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel
           spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
           const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
           composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline;
+          showComposingRegionUnderline == other.showComposingRegionUnderline;
 
   @override
   int get hashCode =>
@@ -253,7 +250,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel
       spellingErrorUnderlineStyle.hashCode ^
       spellingErrors.hashCode ^
       composingRegion.hashCode ^
-      showComposingUnderline.hashCode;
+      showComposingRegionUnderline.hashCode;
 }
 
 /// The standard [TextBlockIndentCalculator] used by paragraphs in `SuperEditor`.
@@ -315,14 +312,17 @@ class _ParagraphComponentState extends State<ParagraphComponent>
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
             underlines: [
-              if (widget.viewModel.spellingErrors.isNotEmpty)
+              if (widget.viewModel.composingRegion != null && widget.viewModel.showComposingRegionUnderline)
+                Underlines(
+                  style: widget.viewModel.composingRegionUnderlineStyle,
+                  underlines: [widget.viewModel.composingRegion!],
+                ),
+              if (widget.viewModel.spellingErrors.isNotEmpty) //
                 Underlines(
                   style: widget.viewModel.spellingErrorUnderlineStyle,
                   underlines: widget.viewModel.spellingErrors,
                 ),
             ],
-            composingRegion: widget.viewModel.composingRegion,
-            showComposingUnderline: widget.viewModel.showComposingUnderline,
             showDebugPaint: widget.showDebugPaint,
           ),
         ),
