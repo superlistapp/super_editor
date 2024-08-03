@@ -311,18 +311,7 @@ class _ParagraphComponentState extends State<ParagraphComponent>
             textSelection: widget.viewModel.selection,
             selectionColor: widget.viewModel.selectionColor,
             highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
-            underlines: [
-              if (widget.viewModel.composingRegion != null && widget.viewModel.showComposingRegionUnderline)
-                Underlines(
-                  style: widget.viewModel.composingRegionUnderlineStyle,
-                  underlines: [widget.viewModel.composingRegion!],
-                ),
-              if (widget.viewModel.spellingErrors.isNotEmpty) //
-                Underlines(
-                  style: widget.viewModel.spellingErrorUnderlineStyle,
-                  underlines: widget.viewModel.spellingErrors,
-                ),
-            ],
+            underlines: widget.viewModel.createUnderlines(),
             showDebugPaint: widget.showDebugPaint,
           ),
         ),

@@ -502,7 +502,7 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   /// The span of text that's currently sitting in the IME's composing region,
   /// which is underlined by this component.
   TextRange? composingRegion;
-  UnderlineStyle composingRegionUnderlineStyle = const SquiggleUnderlineStyle();
+  UnderlineStyle composingRegionUnderlineStyle = const StraightUnderlineStyle();
 
   /// Whether to underline the [composingRegion].
   ///
@@ -513,25 +513,20 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   List<TextRange> spellingErrors = [];
   UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle();
 
-  /// Groups of underlines that should be painted with the text.
-  ///
-  /// By default this property generates underlines based on other
-  /// properties in this object, such as [composingRegion]. Subclasses
-  /// can change this behavior by overriding this property.
-  // List<Underlines> get underlines {
-  //   return [
-  //     if (composingRegion != null && showComposingRegionUnderline)
-  //       Underlines(
-  //         style: composingRegionUnderlineStyle,
-  //         underlines: [composingRegion!],
-  //       ),
-  //     if (spellingErrors.isNotEmpty) //
-  //       Underlines(
-  //         style: spellingErrorUnderlineStyle,
-  //         underlines: spellingErrors,
-  //       ),
-  //   ];
-  // }
+  List<Underlines> createUnderlines() {
+    return [
+      if (composingRegion != null && showComposingRegionUnderline)
+        Underlines(
+          style: composingRegionUnderlineStyle,
+          underlines: [composingRegion!],
+        ),
+      if (spellingErrors.isNotEmpty) //
+        Underlines(
+          style: spellingErrorUnderlineStyle,
+          underlines: spellingErrors,
+        ),
+    ];
+  }
 
   @override
   void applyStyles(Map<String, dynamic> styles) {

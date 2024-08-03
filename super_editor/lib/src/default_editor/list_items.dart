@@ -137,6 +137,10 @@ class ListItemComponentBuilder implements ComponentBuilder {
           text: node.text,
           textStyleBuilder: noStyleBuilder,
           selectionColor: const Color(0x00000000),
+          spellingErrors: node.text
+              .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
+              .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
+              .toList(),
         ),
       ListItemType.ordered => OrderedListItemComponentViewModel(
           nodeId: node.id,
@@ -145,6 +149,10 @@ class ListItemComponentBuilder implements ComponentBuilder {
           text: node.text,
           textStyleBuilder: noStyleBuilder,
           selectionColor: const Color(0x00000000),
+          spellingErrors: node.text
+              .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
+              .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
+              .toList(),
         ),
     };
   }
@@ -167,8 +175,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
-        composingRegion: componentViewModel.composingRegion,
-        showComposingUnderline: componentViewModel.showComposingRegionUnderline,
+        underlines: componentViewModel.createUnderlines(),
       );
     } else if (componentViewModel is OrderedListItemComponentViewModel) {
       return OrderedListItemComponent(
@@ -181,8 +188,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
-        composingRegion: componentViewModel.composingRegion,
-        showComposingUnderline: componentViewModel.showComposingRegionUnderline,
+        underlines: componentViewModel.createUnderlines(),
       );
     }
 
@@ -344,6 +350,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     super.selection,
     required super.selectionColor,
     super.highlightWhenEmpty = false,
+    super.spellingErrors,
     super.composingRegion,
     super.showComposingRegionUnderline = false,
   });
@@ -431,8 +438,7 @@ class UnorderedListItemComponent extends StatefulWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
+    this.underlines = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -448,8 +454,9 @@ class UnorderedListItemComponent extends StatefulWidget {
   final bool showCaret;
   final Color caretColor;
   final bool highlightWhenEmpty;
-  final TextRange? composingRegion;
-  final bool showComposingUnderline;
+
+  final List<Underlines> underlines;
+
   final bool showDebugPaint;
 
   @override
@@ -506,6 +513,7 @@ class _UnorderedListItemComponentState extends State<UnorderedListItemComponent>
               textScaler: textScaler,
               selectionColor: widget.selectionColor,
               highlightWhenEmpty: widget.highlightWhenEmpty,
+              underlines: widget.underlines,
               showDebugPaint: widget.showDebugPaint,
             ),
           ),
@@ -593,8 +601,7 @@ class OrderedListItemComponent extends StatefulWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
+    this.underlines = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -611,8 +618,9 @@ class OrderedListItemComponent extends StatefulWidget {
   final bool showCaret;
   final Color caretColor;
   final bool highlightWhenEmpty;
-  final TextRange? composingRegion;
-  final bool showComposingUnderline;
+
+  final List<Underlines> underlines;
+
   final bool showDebugPaint;
 
   @override
@@ -670,6 +678,7 @@ class _OrderedListItemComponentState extends State<OrderedListItemComponent> {
               textScaler: textScaler,
               selectionColor: widget.selectionColor,
               highlightWhenEmpty: widget.highlightWhenEmpty,
+              underlines: widget.underlines,
               showDebugPaint: widget.showDebugPaint,
             ),
           ),
