@@ -15,7 +15,9 @@ class _SpellingErrorDecorationsDemoState extends State<SpellingErrorDecorationsD
   late final MutableDocumentComposer _composer;
   late final Editor _editor;
 
-  var _decoration = _DecorationType.line;
+  // The meaning of a `null` decoration is a desire to set
+  // the decoration in the stylesheet.
+  _DecorationType? _decoration = _DecorationType.squiggles;
 
   @override
   void initState() {
@@ -64,21 +66,31 @@ class _SpellingErrorDecorationsDemoState extends State<SpellingErrorDecorationsD
     return SuperEditor(
       editor: _editor,
       componentBuilders: [
-        SpellingErrorParagraphComponentBuilder(_decoration.style),
+        // When `_decoration` is non-null, we apply it directly to our own
+        // custom component to show direct application. When it's `null`,
+        // we specify the decoration in the stylesheet and let it flow down
+        // to the standard components.
+        //
+        // As a result, we're able to demo both direct and indirect application
+        // of the underline style.
+        if (_decoration != null) //
+          SpellingErrorParagraphComponentBuilder(_decoration!.style),
         ...defaultComponentBuilders,
       ],
       stylesheet: defaultStylesheet.copyWith(
         addRulesAfter: [
           ...darkModeStyles,
-          StyleRule(
-            BlockSelector.all,
-            (doc, docNode) {
-              print("Processing StyleRule for node: ${docNode}");
-              return {
-                Styles.spellingErrorUnderlineStyle: SquiggleUnderlineStyle(color: Colors.blue),
-              };
-            },
-          ),
+          // When `_decoration` is null, place the underline in the
+          // stylesheet instead of applying it directly to each component.
+          if (_decoration == null)
+            StyleRule(
+              BlockSelector.all,
+              (doc, docNode) {
+                return {
+                  Styles.spellingErrorUnderlineStyle: SquiggleUnderlineStyle(color: Colors.blue),
+                };
+              },
+            ),
         ],
       ),
       documentOverlayBuilders: [
@@ -95,6 +107,16 @@ class _SpellingErrorDecorationsDemoState extends State<SpellingErrorDecorationsD
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          _buildButton(
+            label: "From Stylesheet",
+            isEnabled: _decoration != null,
+            onPressed: () {
+              setState(() {
+                _decoration = null;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
           _buildButton(
             label: "Line",
             isEnabled: _decoration != _DecorationType.line,

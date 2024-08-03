@@ -171,7 +171,8 @@ class TaskComponentBuilder implements ComponentBuilder {
 /// various properties in the view model. For example, one phase applies
 /// all [StyleRule]s, and another phase configures content selection
 /// and caret appearance.
-class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
+class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel
+    with ProseTextComponentViewModel, TextComponentViewModel {
   TaskComponentViewModel({
     required String nodeId,
     double? maxWidth,
@@ -187,11 +188,14 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-    this.spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(),
-    this.spellingErrors = const [],
+    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
+    List<TextRange> spellingErrors = const <TextRange>[],
     this.composingRegion,
     this.showComposingUnderline = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
+    this.spellingErrors = spellingErrors;
+  }
 
   int indent;
   TextBlockIndentCalculator indentCalculator;
@@ -213,20 +217,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
-
-  UnderlineStyle spellingErrorUnderlineStyle;
-  List<TextRange> spellingErrors;
-
-  @override
-  List<Underlines> get underlines {
-    return [
-      if (spellingErrors.isNotEmpty) //
-        Underlines(
-          style: spellingErrorUnderlineStyle,
-          underlines: spellingErrors,
-        ),
-    ];
-  }
 
   @override
   TextRange? composingRegion;

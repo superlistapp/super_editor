@@ -469,6 +469,36 @@ class TextNodePosition extends TextPosition implements NodePosition {
   int get hashCode => super.hashCode ^ super.offset.hashCode;
 }
 
+/// Mixin for all [TextComponentViewModels]s that include prose-style
+/// writing (typical English, Spanish, etc).
+///
+/// A counter-example would be a text node filled with code - that's
+/// not prose.
+///
+/// This mixin adds common expectations for prose, including spelling
+/// error underlines.
+mixin ProseTextComponentViewModel on SingleColumnLayoutComponentViewModel {
+  UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle();
+  List<TextRange> spellingErrors = [];
+
+  List<Underlines> get underlines {
+    return [
+      if (spellingErrors.isNotEmpty) //
+        Underlines(
+          style: spellingErrorUnderlineStyle,
+          underlines: spellingErrors,
+        ),
+    ];
+  }
+
+  @override
+  void applyStyles(Map<String, dynamic> styles) {
+    super.applyStyles(styles);
+
+    spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
+  }
+}
+
 /// Mixin for all [SingleColumnLayoutComponentViewModel]s that represent
 /// a text-based block, e.g., paragraph, blockquote, list item.
 ///

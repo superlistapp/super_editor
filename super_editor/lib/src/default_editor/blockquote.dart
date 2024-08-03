@@ -85,7 +85,8 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
   }
 }
 
-class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
+class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel
+    with ProseTextComponentViewModel, TextComponentViewModel {
   BlockquoteComponentViewModel({
     required String nodeId,
     double? maxWidth,
@@ -99,11 +100,14 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-    this.spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(),
-    this.spellingErrors = const [],
+    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
+    List<TextRange> spellingErrors = const <TextRange>[],
     this.composingRegion,
     this.showComposingUnderline = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
+    this.spellingErrors = spellingErrors;
+  }
 
   @override
   AttributedText text;
@@ -119,20 +123,6 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
-
-  UnderlineStyle spellingErrorUnderlineStyle;
-  List<TextRange> spellingErrors;
-
-  @override
-  List<Underlines> get underlines {
-    return [
-      if (spellingErrors.isNotEmpty) //
-        Underlines(
-          style: spellingErrorUnderlineStyle,
-          underlines: spellingErrors,
-        ),
-    ];
-  }
 
   @override
   TextRange? composingRegion;

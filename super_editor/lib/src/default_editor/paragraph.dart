@@ -8,7 +8,6 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/editor.dart';
-import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blocks/indentation.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
@@ -16,8 +15,8 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
-import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/platforms/platform.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -136,7 +135,8 @@ class ParagraphComponentBuilder implements ComponentBuilder {
   }
 }
 
-class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
+class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel
+    with ProseTextComponentViewModel, TextComponentViewModel {
   ParagraphComponentViewModel({
     required String nodeId,
     double? maxWidth,
@@ -152,11 +152,14 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-    this.spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
-    this.spellingErrors = const <TextRange>[],
+    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
+    List<TextRange> spellingErrors = const <TextRange>[],
     this.composingRegion,
     this.showComposingUnderline = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
+    this.spellingErrors = spellingErrors;
+  }
 
   Attribution? blockType;
 
@@ -184,32 +187,10 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   @override
   bool highlightWhenEmpty;
 
-  UnderlineStyle spellingErrorUnderlineStyle;
-  List<TextRange> spellingErrors;
-
-  @override
-  List<Underlines> get underlines {
-    return [
-      if (spellingErrors.isNotEmpty) //
-        Underlines(
-          style: spellingErrorUnderlineStyle,
-          underlines: spellingErrors,
-        ),
-    ];
-  }
-
   @override
   TextRange? composingRegion;
   @override
   bool showComposingUnderline;
-
-  @override
-  void applyStyles(Map<String, dynamic> styles) {
-    print("applyStyles() to paragraph");
-    super.applyStyles(styles);
-
-    spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
-  }
 
   @override
   ParagraphComponentViewModel copy() {
