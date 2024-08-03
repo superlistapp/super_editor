@@ -148,6 +148,10 @@ class TaskComponentBuilder implements ComponentBuilder {
       text: node.text,
       textStyleBuilder: noStyleBuilder,
       selectionColor: const Color(0x00000000),
+      spellingErrors: node.text
+          .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
+          .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
+          .toList(),
     );
   }
 

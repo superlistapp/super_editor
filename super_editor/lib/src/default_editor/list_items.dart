@@ -320,6 +320,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
       selectionColor: selectionColor,
       composingRegion: composingRegion,
       showComposingRegionUnderline: showComposingRegionUnderline,
+      spellingErrors: List.from(spellingErrors),
     );
   }
 
@@ -380,6 +381,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
       selectionColor: selectionColor,
       composingRegion: composingRegion,
       showComposingRegionUnderline: showComposingRegionUnderline,
+      spellingErrors: List.from(spellingErrors),
     );
   }
 
