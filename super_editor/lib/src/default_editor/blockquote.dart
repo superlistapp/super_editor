@@ -79,8 +79,7 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       textSelection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
-      composingRegion: componentViewModel.composingRegion,
-      showComposingUnderline: componentViewModel.showComposingRegionUnderline,
+      underlines: componentViewModel.createUnderlines(),
     );
   }
 }
@@ -208,8 +207,7 @@ class BlockquoteComponent extends StatelessWidget {
     required this.backgroundColor,
     required this.borderRadius,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
+    this.underlines = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -221,8 +219,7 @@ class BlockquoteComponent extends StatelessWidget {
   final Color backgroundColor;
   final BorderRadius borderRadius;
   final bool highlightWhenEmpty;
-  final TextRange? composingRegion;
-  final bool showComposingUnderline;
+  final List<Underlines> underlines;
   final bool showDebugPaint;
 
   @override
@@ -241,6 +238,7 @@ class BlockquoteComponent extends StatelessWidget {
           textSelection: textSelection,
           selectionColor: selectionColor,
           highlightWhenEmpty: highlightWhenEmpty,
+          underlines: underlines,
           showDebugPaint: showDebugPaint,
         ),
       ),
