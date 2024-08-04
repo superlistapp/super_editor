@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
-import 'package:super_text_layout/src/super_text.dart';
 import 'package:super_text_layout/src/text_underline_layer.dart';
 
 import 'test_tools.dart';
