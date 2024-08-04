@@ -191,7 +191,7 @@ Future<void> Function(WidgetTester) _createWidgetTest({
     _addSpellingError(tester, editor, document);
 
     await screenMatchesGolden(tester,
-        "super-editor_text-entry_spelling-error-shows-underline_${contentTypeName}_${defaultTargetPlatform.name}_${testNameQualifier}_1");
+        "super-editor_text-entry_spelling-error-shows-underline_${contentTypeName}_${defaultTargetPlatform.name}_${testNameQualifier}");
   };
 }
 

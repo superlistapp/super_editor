@@ -11,38 +11,27 @@ void main() {
     await pumpThreeLinePlainSuperText(
       tester,
       beneathBuilder: (context, textLayout) {
-        return MultiLayerBuilder([
-          (context, textLayout) => TextUnderlineLayer(
-                textLayout: textLayout,
-                style: const StraightUnderlineStyle(
-                  color: Colors.lightBlue,
-                  thickness: 4,
-                ),
-                underlines: const [
-                  TextLayoutUnderline(
-                    range: TextSelection(
-                      baseOffset: 36,
-                      extentOffset: 79,
-                    ),
-                  ),
-                ],
+        return TextUnderlineLayer(
+          textLayout: textLayout,
+          style: const StraightUnderlineStyle(
+            color: Colors.lightBlue,
+            thickness: 4,
+          ),
+          underlines: const [
+            TextLayoutUnderline(
+              range: TextSelection(
+                baseOffset: 36,
+                extentOffset: 79,
               ),
-          (context, textLayout) => TextUnderlineLayer(
-                textLayout: textLayout,
-                style: const StraightUnderlineStyle(
-                  color: Colors.lightBlue,
-                  thickness: 4,
-                ),
-                underlines: const [
-                  TextLayoutUnderline(
-                    range: TextSelection(
-                      baseOffset: 88,
-                      extentOffset: 110,
-                    ),
-                  ),
-                ],
-              )
-        ]).build(context, textLayout);
+            ),
+            TextLayoutUnderline(
+              range: TextSelection(
+                baseOffset: 88,
+                extentOffset: 110,
+              ),
+            ),
+          ],
+        );
       },
     );
 

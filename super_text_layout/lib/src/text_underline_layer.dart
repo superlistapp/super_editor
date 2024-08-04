@@ -57,9 +57,6 @@ class TextUnderlineLayerState extends State<TextUnderlineLayer> with TickerProvi
 
     return CustomPaint(
       size: Size.infinite,
-      // painter: _UnderlinePainter(underlines: _computeUnderlineLineSegments()),
-      // painter: _DottedPainter(underlines: _computeUnderlineLineSegments()),
-      // painter: SquiggleUnderlinePainter(underlines: _computeUnderlineLineSegments()),
       painter: widget.style.createPainter(_computeUnderlineLineSegments()),
     );
   }
