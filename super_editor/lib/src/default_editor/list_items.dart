@@ -288,9 +288,10 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
     super.selection,
     required super.selectionColor,
     super.highlightWhenEmpty = false,
-    super.spellingErrors,
     super.composingRegion,
     super.showComposingRegionUnderline = false,
+    super.spellingErrorUnderlineStyle,
+    super.spellingErrors,
   });
 
   ListItemDotStyle dotStyle = const ListItemDotStyle();
@@ -320,6 +321,7 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
       selectionColor: selectionColor,
       composingRegion: composingRegion,
       showComposingRegionUnderline: showComposingRegionUnderline,
+      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
       spellingErrors: List.from(spellingErrors),
     );
   }
@@ -351,9 +353,10 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
     super.selection,
     required super.selectionColor,
     super.highlightWhenEmpty = false,
-    super.spellingErrors,
     super.composingRegion,
     super.showComposingRegionUnderline = false,
+    super.spellingErrorUnderlineStyle,
+    super.spellingErrors,
   });
 
   final int? ordinalValue;
@@ -381,6 +384,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
       selectionColor: selectionColor,
       composingRegion: composingRegion,
       showComposingRegionUnderline: showComposingRegionUnderline,
+      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
       spellingErrors: List.from(spellingErrors),
     );
   }

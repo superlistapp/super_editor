@@ -16,12 +16,28 @@ void testGoldensOnAllPlatforms(
   String description,
   WidgetTesterCallback test, {
   bool skip = false,
+  Size? windowSize,
 }) {
-  testGoldensOnAndroid(description, test, skip: skip);
-  testGoldensOniOS(description, test, skip: skip);
-  testGoldensOnMac(description, test, skip: skip);
-  testGoldensOnWindows(description, test, skip: skip);
-  testGoldensOnLinux(description, test, skip: skip);
+  testGoldensOnAndroid(description, test, windowSize: windowSize, skip: skip);
+  testGoldensOniOS(description, test, windowSize: windowSize, skip: skip);
+  testGoldensOnMac(description, test, windowSize: windowSize, skip: skip);
+  testGoldensOnWindows(description, test, windowSize: windowSize, skip: skip);
+  testGoldensOnLinux(description, test, windowSize: windowSize, skip: skip);
+}
+
+/// Runs one golden test for Android and iOS.
+///
+/// It's the job of the test implementation to include the platform name in the golden
+/// file name - if this is not done, all tests will overwrite the same golden file(s).
+@isTest
+void testGoldensOnMobile(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+  Size? windowSize,
+}) {
+  testGoldensOnAndroid(description, test, windowSize: windowSize, skip: skip);
+  testGoldensOniOS(description, test, windowSize: windowSize, skip: skip);
 }
 
 /// A golden test that configures itself as a Android platform before executing the

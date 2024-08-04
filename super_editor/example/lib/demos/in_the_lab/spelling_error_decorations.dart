@@ -1,7 +1,6 @@
 import 'package:example/demos/in_the_lab/in_the_lab_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_text_layout/super_text_layout.dart';
 
 class SpellingErrorDecorationsDemo extends StatefulWidget {
   const SpellingErrorDecorationsDemo({super.key});
