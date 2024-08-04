@@ -272,7 +272,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
         layerBeneathBuilder: (context, textLayout) {
           return TextUnderlineLayer(
             textLayout: textLayout,
-            style: StraightUnderlineStyle(color: Colors.black),
+            style: const StraightUnderlineStyle(color: Colors.black),
             underlines: const [
               TextLayoutUnderline(
                 range: TextSelection(baseOffset: 42, extentOffset: 45),

@@ -14,7 +14,7 @@ void main() {
         return MultiLayerBuilder([
           (context, textLayout) => TextUnderlineLayer(
                 textLayout: textLayout,
-                style: StraightUnderlineStyle(
+                style: const StraightUnderlineStyle(
                   color: Colors.lightBlue,
                   thickness: 4,
                 ),
@@ -29,7 +29,7 @@ void main() {
               ),
           (context, textLayout) => TextUnderlineLayer(
                 textLayout: textLayout,
-                style: StraightUnderlineStyle(
+                style: const StraightUnderlineStyle(
                   color: Colors.lightBlue,
                   thickness: 4,
                 ),
