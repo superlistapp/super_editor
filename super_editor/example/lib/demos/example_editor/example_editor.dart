@@ -56,7 +56,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _doc = createInitialDocument()..addListener(_onDocumentChange);
     _composer = MutableDocumentComposer();
     _composer.selectionNotifier.addListener(_hideOrShowToolbar);
-    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer);
+    _docEditor = createDefaultDocumentEditor(document: _doc, composer: _composer, isHistoryEnabled: true);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       document: _doc,
