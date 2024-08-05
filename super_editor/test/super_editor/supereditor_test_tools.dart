@@ -249,6 +249,11 @@ class TestSuperEditorConfigurator {
     return this;
   }
 
+  TestSuperEditorConfigurator enableHistory(bool isHistoryEnabled) {
+    _config.isHistoryEnabled = isHistoryEnabled;
+    return this;
+  }
+
   TestSuperEditorConfigurator withHistoryGroupingPolicy(HistoryGroupingPolicy policy) {
     _config.historyGroupPolicy = policy;
     return this;
@@ -431,6 +436,7 @@ class TestSuperEditorConfigurator {
       document: _config.document,
       composer: composer,
       historyGroupingPolicy: _config.historyGroupPolicy ?? neverMergePolicy,
+      isHistoryEnabled: _config.isHistoryEnabled,
     )
       ..requestHandlers.insertAll(0, _config.addedRequestHandlers)
       ..reactionPipeline.insertAll(0, _config.addedReactions);
@@ -678,6 +684,7 @@ class SuperEditorTestConfiguration {
   ScrollController? scrollController;
   bool insideCustomScrollView = false;
   DocumentGestureMode? gestureMode;
+  bool isHistoryEnabled = false;
   HistoryGroupingPolicy? historyGroupPolicy;
   TextInputSource? inputSource;
   SuperEditorSelectionPolicies? selectionPolicies;
