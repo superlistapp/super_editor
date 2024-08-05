@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -23,12 +21,16 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   late MutableDocumentComposer _composer;
   late Editor _editor;
   final _keyboardController = SoftwareKeyboardController();
-  final _keyboardState = ValueNotifier(_InputState.closed);
-  final _nonKeyboardEditorState = ValueNotifier(_InputState.closed);
+
+  late final KeyboardPanelController _keyboardPanelController;
+
+  bool _isKeyboardPanelVisible = false;
 
   @override
   void initState() {
     super.initState();
+
+    _keyboardPanelController = KeyboardPanelController(softwareKeyboardController: _keyboardController);
 
     _focusNode = FocusNode();
 
@@ -36,17 +38,10 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
     _composer = MutableDocumentComposer() //
       ..selectionNotifier.addListener(_onSelectionChange);
     _editor = createDefaultDocumentEditor(document: _doc, composer: _composer);
-
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      // Check the IME connection at the end of the frame so that SuperEditor has
-      // an opportunity to connect to our software keyboard controller.
-      _keyboardState.value = _keyboardController.isConnectedToIme ? _InputState.open : _InputState.closed;
-    });
   }
 
   @override
   void dispose() {
-    _closeKeyboard();
     _composer.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -124,7 +119,7 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   void _onSelectionChange() {
     print("Demo: _onSelectionChange()");
     print(" - selection: ${_composer.selection}");
-    if (_nonKeyboardEditorState.value == _InputState.open) {
+    if (_isKeyboardPanelVisible) {
       // If the user is currently editing with the non-keyboard editing
       // panel, don't open the keyboard to cover it.
       return;
@@ -144,14 +139,9 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
     _keyboardController.open();
   }
 
-  void _closeKeyboard() {
-    print("Closing keyboard (and disconnecting from IME)");
-    _keyboardController.close();
-  }
-
   void _endEditing() {
     print("End editing");
-    _keyboardController.close();
+    _keyboardPanelController.closeKeyboardAndPanel();
 
     _editor.execute([
       const ClearSelectionRequest(),
@@ -169,155 +159,200 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: Stack(
+      body: KeyboardPanelScaffold(
+        controller: _keyboardPanelController,
+        contentBuilder: _buildSuperEditor,
+        aboveKeyboardBuilder: _buildTopPanel,
+        keyboardPanelBuilder: _buildKeyboardPanel,
+      ),
+    );
+  }
+
+  Widget _buildSuperEditor(BuildContext context, bool isKeyboardPanelVisible) {
+    _isKeyboardPanelVisible = isKeyboardPanelVisible;
+
+    return SuperEditor(
+      focusNode: _focusNode,
+      editor: _editor,
+      softwareKeyboardController: _keyboardController,
+      selectionPolicies: const SuperEditorSelectionPolicies(
+        clearSelectionWhenEditorLosesFocus: false,
+        // Currently, closing the software keyboard causes the IME connection to close.
+        clearSelectionWhenImeConnectionCloses: false,
+      ),
+      imePolicies: const SuperEditorImePolicies(
+        openKeyboardOnSelectionChange: false,
+      ),
+    );
+  }
+
+  Widget _buildTopPanel(BuildContext context, bool isKeyboardPanelVisible) {
+    return Container(
+      width: double.infinity,
+      height: 54,
+      color: Colors.grey.shade100,
+      child: Row(
         children: [
-          Positioned.fill(
-            child: Padding(
-              padding: MediaQuery.of(context).viewInsets,
-              child: SuperEditor(
-                focusNode: _focusNode,
-                editor: _editor,
-                softwareKeyboardController: _keyboardController,
-                selectionPolicies: const SuperEditorSelectionPolicies(
-                  clearSelectionWhenEditorLosesFocus: false,
-                ),
-                imePolicies: const SuperEditorImePolicies(
-                  openKeyboardOnSelectionChange: false,
-                ),
-              ),
-            ),
+          const SizedBox(width: 24),
+          GestureDetector(
+            onTap: _endEditing,
+            child: const Icon(Icons.close),
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _BehindKeyboardPanel(
-              keyboardState: _keyboardState,
-              nonKeyboardEditorState: _nonKeyboardEditorState,
-              onOpenKeyboard: _openKeyboard,
-              onCloseKeyboard: _closeKeyboard,
-              onEndEditing: _endEditing,
-            ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => _keyboardPanelController.toggleKeyboard(),
+            child: Icon(isKeyboardPanelVisible ? Icons.keyboard : Icons.keyboard_hide),
           ),
+          const SizedBox(width: 24),
         ],
       ),
     );
   }
-}
 
-class _BehindKeyboardPanel extends StatefulWidget {
-  const _BehindKeyboardPanel({
-    Key? key,
-    required this.keyboardState,
-    required this.nonKeyboardEditorState,
-    required this.onOpenKeyboard,
-    required this.onCloseKeyboard,
-    required this.onEndEditing,
-  }) : super(key: key);
-
-  final ValueNotifier<_InputState> keyboardState;
-  final ValueNotifier<_InputState> nonKeyboardEditorState;
-  final VoidCallback onOpenKeyboard;
-  final VoidCallback onCloseKeyboard;
-  final VoidCallback onEndEditing;
-
-  @override
-  State<_BehindKeyboardPanel> createState() => __BehindKeyboardPanelState();
-}
-
-class __BehindKeyboardPanelState extends State<_BehindKeyboardPanel> {
-  double _maxBottomInsets = 0.0;
-  double _latestBottomInsets = 0.0;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    final newBottomInset = MediaQuery.of(context).viewInsets.bottom;
-    print("_BehindKeyboardPanel didChangeDependencies() - bottom inset: $newBottomInset");
-    if (newBottomInset > _maxBottomInsets) {
-      print("Setting max bottom insets to: $newBottomInset");
-      _maxBottomInsets = newBottomInset;
-      widget.nonKeyboardEditorState.value = _InputState.open;
-
-      if (widget.keyboardState.value != _InputState.open) {
-        setState(() {
-          widget.keyboardState.value = _InputState.open;
-        });
-      }
-    } else if (newBottomInset > _latestBottomInsets) {
-      print("Keyboard is opening. We're already expanded");
-      // The keyboard is expanding, but we're already expanded. Make sure
-      // that our internal accounting for keyboard state is updated.
-      if (widget.keyboardState.value != _InputState.open) {
-        setState(() {
-          widget.keyboardState.value = _InputState.open;
-        });
-      }
-    } else if (widget.nonKeyboardEditorState.value == _InputState.closed) {
-      // We don't want to be expanded. Follow the keyboard back down.
-      _maxBottomInsets = newBottomInset;
-    } else {
-      // The keyboard is collapsing, but we want to stay expanded. Make sure
-      // our internal accounting for keyboard state is updated.
-      if (widget.keyboardState.value == _InputState.open) {
-        setState(() {
-          widget.keyboardState.value = _InputState.closed;
-        });
-      }
-    }
-
-    _latestBottomInsets = newBottomInset;
-  }
-
-  void _closeKeyboardAndPanel() {
-    setState(() {
-      widget.nonKeyboardEditorState.value = _InputState.closed;
-      _maxBottomInsets = min(_latestBottomInsets, _maxBottomInsets);
-    });
-
-    widget.onEndEditing();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    print("Building toolbar. Is expanded? ${widget.keyboardState.value == _InputState.open}");
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: double.infinity,
-          height: 54,
-          color: Colors.grey.shade100,
-          child: Row(
-            children: [
-              const SizedBox(width: 24),
-              GestureDetector(
-                onTap: _closeKeyboardAndPanel,
-                child: const Icon(Icons.close),
+  Widget _buildKeyboardPanel(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Alignment',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildKeyboardPanelButton(
+                    onPressed: () {},
+                    child: Icon(Icons.format_align_left),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildKeyboardPanelButton(
+                    onPressed: () {},
+                    child: Icon(Icons.format_align_center),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildKeyboardPanelButton(
+                    onPressed: () {},
+                    child: Icon(Icons.format_align_right),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildKeyboardPanelButton(
+                    onPressed: () {},
+                    child: Icon(Icons.format_align_justify),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Text Style',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildKeyboardPanelButton(
+                    onPressed: () {},
+                    child: Icon(Icons.format_bold),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildKeyboardPanelButton(
+                    onPressed: () {},
+                    child: Icon(Icons.format_italic),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildKeyboardPanelButton(
+                    onPressed: () {},
+                    child: Icon(Icons.format_strikethrough),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Convertions',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: _buildKeyboardPanelButton(
+                onPressed: () {},
+                child: Text('Header 1'),
               ),
-              const Spacer(),
-              GestureDetector(
-                onTap: widget.keyboardState.value == _InputState.open ? widget.onCloseKeyboard : widget.onOpenKeyboard,
-                child: Icon(widget.keyboardState.value == _InputState.open ? Icons.keyboard_hide : Icons.keyboard),
+            ),
+            SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: _buildKeyboardPanelButton(
+                onPressed: () {},
+                child: Text('Header 2'),
               ),
-              const SizedBox(width: 24),
-            ],
-          ),
+            ),
+            SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: _buildKeyboardPanelButton(
+                onPressed: () {},
+                child: Text('Blockquote'),
+              ),
+            ),
+            SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: _buildKeyboardPanelButton(
+                onPressed: () {},
+                child: Text('Ordered List'),
+              ),
+            ),
+            SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: _buildKeyboardPanelButton(
+                onPressed: () {},
+                child: Text('Unordered List'),
+              ),
+            ),
+          ],
         ),
-        SizedBox(
-          width: double.infinity,
-          height: _maxBottomInsets,
-          child: ColoredBox(
-            color: Colors.grey.shade300,
-          ),
-        ),
-      ],
+      ),
     );
   }
-}
 
-enum _InputState {
-  open,
-  closed,
+  Widget _buildKeyboardPanelButton({
+    required VoidCallback onPressed,
+    required Widget child,
+  }) {
+    return TextButton(
+      style: ButtonStyle(
+        foregroundColor: WidgetStateProperty.all<Color>(Colors.black),
+        backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+        minimumSize: WidgetStateProperty.all<Size>(Size(0, 60)),
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
+        ),
+        textStyle: WidgetStateProperty.all<TextStyle>(
+          TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      onPressed: onPressed,
+      child: child,
+    );
+  }
 }
