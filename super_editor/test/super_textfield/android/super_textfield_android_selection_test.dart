@@ -166,6 +166,239 @@ void main() {
       // Ensure the toolbar disappeared.
       expect(find.byType(AndroidTextEditingFloatingToolbar), findsNothing);
     });
+
+    group("drag handle selection > ", () {
+      testWidgetsOnAndroid("selects by word when dragging downstream", (tester) async {
+        final controller = AttributedTextEditingController(
+          text: AttributedText("Lorem ipsum dolor sit amet consectetur"),
+        );
+
+        // Pump a tree with a text field wide enough that we know it won't be scrollable.
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 1000,
+                child: SuperTextField(
+                  textController: controller,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Double tap to select the word "dolor".
+        await tester.doubleTapAtSuperTextField(14);
+        await tester.pumpAndSettle();
+
+        // Ensure the word was selected.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          TextSelection(baseOffset: 12, extentOffset: 17),
+        );
+
+        // Drag the downstream handle to the beginning of the downstream word.
+        // "Lorem ipsum [dolor sit a]met"
+        //                          ^ position 23
+        final textLayout = SuperTextFieldInspector.findProseTextLayout();
+        final downstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 17));
+        final desiredPositionBox = textLayout.getCharacterBox(TextPosition(offset: 23));
+        final gesture = await tester.dragDownstreamMobileHandleByDistanceInSuperTextField(
+          Offset(desiredPositionBox!.right - downstreamPositionBox!.right, 0.0),
+        );
+
+        // Ensure the upstream handle remained where it began and the downstream handle
+        // jumped to the end of the partially selected word.
+        //
+        // "Lorem ipsum [dolor sit amet]"
+        //                             ^ position 26
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(
+            baseOffset: 12,
+            extentOffset: 26,
+          ),
+        );
+
+        // Release the gesture so the test system doesn't complain.
+        await gesture.up();
+        await tester.pump();
+      });
+
+      testWidgetsOnAndroid("selects by character when dragging downstream in reverse", (tester) async {
+        final controller = AttributedTextEditingController(
+          text: AttributedText("Lorem ipsum dolor sit amet consectetur"),
+        );
+
+        // Pump a tree with a text field wide enough that we know it won't be scrollable.
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 1000,
+                child: SuperTextField(
+                  textController: controller,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Double tap to select the word "consectetur".
+        await tester.doubleTapAtSuperTextField(34);
+        await tester.pumpAndSettle();
+
+        // Ensure the word was selected.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          TextSelection(baseOffset: 27, extentOffset: 38),
+        );
+
+        // Drag the downstream handle towards the beginning of the selected word.
+        // "Lorem ipsum dolor sit amet [con]sectetur"
+        //                                 ^ position 30
+        final textLayout = SuperTextFieldInspector.findProseTextLayout();
+        final downstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 38));
+        final desiredPositionBox = textLayout.getCharacterBox(TextPosition(offset: 30));
+        final gesture = await tester.dragDownstreamMobileHandleByDistanceInSuperTextField(
+          Offset(desiredPositionBox!.left - downstreamPositionBox!.right, 0.0),
+        );
+
+        // Ensure that part of the downstream word is selected because we're now
+        // in per-character selection mode.
+        //
+        // "Lorem ipsum dolor sit amet [con]sectetur"
+        //                             ^ position 27
+        //                                 ^ position 30
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(
+            baseOffset: 27,
+            extentOffset: 30,
+          ),
+        );
+
+        // Release the gesture so the test system doesn't complain.
+        await gesture.up();
+        await tester.pump();
+      });
+
+      testWidgetsOnAndroid("selects by word when dragging upstream", (tester) async {
+        final controller = AttributedTextEditingController(
+          text: AttributedText("Lorem ipsum dolor sit amet consectetur"),
+        );
+
+        // Pump a tree with a text field wide enough that we know it won't be scrollable.
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 1000,
+                child: SuperTextField(
+                  textController: controller,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Double tap to select the word "dolor".
+        await tester.doubleTapAtSuperTextField(14);
+        await tester.pumpAndSettle();
+
+        // Ensure the word was selected.
+        // Ensure the word was selected.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          TextSelection(baseOffset: 12, extentOffset: 17),
+        );
+
+        // Drag the upstream handle to the end of the upstream word.
+        // "Lorem ipsu[m dolor] sit amet"
+        //            ^ position 10
+        final textLayout = SuperTextFieldInspector.findProseTextLayout();
+        final upstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 12));
+        final desiredPositionBox = textLayout.getCharacterBox(TextPosition(offset: 10));
+        final gesture = await tester.dragUpstreamMobileHandleByDistanceInSuperTextField(
+          Offset(desiredPositionBox!.left - upstreamPositionBox!.left, 0.0),
+        );
+
+        // Ensure the downstream handle remained where it began and the upstream handle
+        // jumped to the beginning of the partially selected word.
+        //
+        // "Lorem [ipsum dolor] sit amet"
+        //        ^ position 6
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(
+            baseOffset: 6,
+            extentOffset: 17,
+          ),
+        );
+
+        // Release the gesture so the test system doesn't complain.
+        await gesture.up();
+        await tester.pump();
+      });
+
+      testWidgetsOnAndroid("selects by character when dragging upstream in reverse", (tester) async {
+        final controller = AttributedTextEditingController(
+          text: AttributedText("Lorem ipsum dolor sit amet consectetur"),
+        );
+
+        // Pump a tree with a text field wide enough that we know it won't be scrollable.
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 1000,
+                child: SuperTextField(
+                  textController: controller,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Double tap to select the word "consectetur".
+        await tester.doubleTapAtSuperTextField(34);
+        await tester.pumpAndSettle();
+
+        // Ensure the word was selected.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          TextSelection(baseOffset: 27, extentOffset: 38),
+        );
+
+        // Drag the upstream handle towards the end of the selected word.
+        // "Lorem ipsum dolor sit amet consect[etur]"
+        //                                    ^ position 34
+        final textLayout = SuperTextFieldInspector.findProseTextLayout();
+        final upstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 27));
+        final desiredPositionBox = textLayout.getCharacterBox(TextPosition(offset: 34));
+        final gesture = await tester.dragUpstreamMobileHandleByDistanceInSuperTextField(
+          Offset(desiredPositionBox!.left - upstreamPositionBox!.left, 0.0),
+        );
+
+        // Ensure that part of the downstream word is selected because we're now
+        // in per-character selection mode.
+        //
+        // "Lorem ipsum dolor sit amet consect[etur]"
+        //                                    ^ position 34
+        //                                         ^ position 38
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection(
+            baseOffset: 34,
+            extentOffset: 38,
+          ),
+        );
+
+        // Release the gesture so the test system doesn't complain.
+        await gesture.up();
+        await tester.pump();
+      });
+    });
   });
 }
 

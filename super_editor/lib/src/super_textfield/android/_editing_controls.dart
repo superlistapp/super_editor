@@ -8,6 +8,7 @@ import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
+import 'package:super_editor/src/super_textfield/android/drag_handle_selection.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
@@ -110,6 +111,8 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
   bool _isDraggingExtent = false;
   Offset? _globalDragOffset;
   Offset? _localDragOffset;
+  AndroidDocumentDragHandleSelectionStrategy? _dragHandleSelectionStrategy;
+
   // The offset between where the user touched the drag handle and
   // the vertical middle of the line of text that contains the
   // text position. We need this small offset because on Android the
@@ -205,6 +208,11 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
           .globalToLocal(globalOffsetInMiddleOfLine),
     );
     widget.textScrollController.addListener(_updateSelectionForDragHandleAfterScrollChange);
+    _dragHandleSelectionStrategy = AndroidDocumentDragHandleSelectionStrategy(
+      textContentKey: widget.textContentKey,
+      textLayout: _textLayout,
+      select: _updateDragHandleSelection,
+    )..onHandlePanStart(details, widget.editingController.textController.selection, HandleType.collapsed);
 
     setState(() {
       _isDraggingCollapsed = true;
@@ -240,7 +248,14 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
           .globalToLocal(details.globalPosition + _touchHandleOffsetFromLineOfText!),
     );
     widget.textScrollController.addListener(_updateSelectionForDragHandleAfterScrollChange);
+
     _log.fine(' - updated auto scrolling for touch offset');
+
+    _dragHandleSelectionStrategy = AndroidDocumentDragHandleSelectionStrategy(
+      textContentKey: widget.textContentKey,
+      textLayout: _textLayout,
+      select: _updateDragHandleSelection,
+    )..onHandlePanStart(details, widget.editingController.textController.selection, HandleType.upstream);
 
     setState(() {
       _isDraggingCollapsed = false;
@@ -270,6 +285,12 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
           .globalToLocal(details.globalPosition + _touchHandleOffsetFromLineOfText!),
     );
     widget.textScrollController.addListener(_updateSelectionForDragHandleAfterScrollChange);
+
+    _dragHandleSelectionStrategy = AndroidDocumentDragHandleSelectionStrategy(
+      textContentKey: widget.textContentKey,
+      textLayout: _textLayout,
+      select: _updateDragHandleSelection,
+    )..onHandlePanStart(details, widget.editingController.textController.selection, HandleType.downstream);
 
     setState(() {
       _isDraggingCollapsed = false;
@@ -317,6 +338,12 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     });
   }
 
+  void _updateDragHandleSelection(TextSelection selection) {
+    if (selection != widget.editingController.textController.selection) {
+      widget.editingController.textController.selection = selection;
+    }
+  }
+
   /// Calculates a new text selection based on the handle that the user is dragging
   /// as well as the current scroll offset, at the end of the current frame.
   ///
@@ -342,21 +369,8 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
   void _updateSelectionForCurrentDragHandleOffset() {
     final textBox = (widget.textContentKey.currentContext!.findRenderObject() as RenderBox);
     final textOffset = textBox.globalToLocal(_globalDragOffset! + _touchHandleOffsetFromLineOfText!);
-    final textLayout = widget.textContentKey.currentState!.textLayout;
-    if (_isDraggingCollapsed) {
-      widget.editingController.textController.selection = TextSelection.collapsed(
-        offset: textLayout.getPositionNearestToOffset(textOffset).offset,
-      );
-    } else if (_isDraggingBase) {
-      _log.fine('Dragging base. New offset: ${textLayout.getPositionNearestToOffset(textOffset).offset}');
-      widget.editingController.textController.selection = widget.editingController.textController.selection.copyWith(
-        baseOffset: textLayout.getPositionNearestToOffset(textOffset).offset,
-      );
-    } else if (_isDraggingExtent) {
-      widget.editingController.textController.selection = widget.editingController.textController.selection.copyWith(
-        extentOffset: textLayout.getPositionNearestToOffset(textOffset).offset,
-      );
-    }
+
+    _dragHandleSelectionStrategy!.onHandlePanUpdate(textOffset);
   }
 
   void _onPanEnd(DragEndDetails details) {
