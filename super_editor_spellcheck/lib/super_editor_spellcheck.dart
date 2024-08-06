@@ -1,8 +1,3 @@
-
-import 'super_editor_spellcheck_platform_interface.dart';
-
-class SuperEditorSpellcheck {
-  Future<String?> getPlatformVersion() {
-    return SuperEditorSpellcheckPlatform.instance.getPlatformVersion();
-  }
-}
+export 'src/messages.g.dart';
+export 'src/spell_checker.dart';
+export 'src/spell_checker_mac.dart';
