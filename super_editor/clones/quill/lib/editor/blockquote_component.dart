@@ -28,7 +28,7 @@ class FeatherBlockquoteComponentBuilder extends BlockquoteComponentBuilder {
       selectionColor: componentViewModel.selectionColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
       composingRegion: componentViewModel.composingRegion,
-      showComposingUnderline: componentViewModel.showComposingUnderline,
+      showComposingRegionUnderline: componentViewModel.showComposingRegionUnderline,
     );
   }
 }
@@ -48,7 +48,7 @@ class FeatherBlockquoteComponent extends StatelessWidget {
     required this.borderRadius,
     this.highlightWhenEmpty = false,
     this.composingRegion,
-    this.showComposingUnderline = false,
+    this.showComposingRegionUnderline = false,
     this.showDebugPaint = false,
   });
 
@@ -62,7 +62,7 @@ class FeatherBlockquoteComponent extends StatelessWidget {
   final BorderRadius borderRadius;
   final bool highlightWhenEmpty;
   final TextRange? composingRegion;
-  final bool showComposingUnderline;
+  final bool showComposingRegionUnderline;
   final bool showDebugPaint;
 
   @override
@@ -84,11 +84,20 @@ class FeatherBlockquoteComponent extends StatelessWidget {
           textSelection: textSelection,
           selectionColor: selectionColor,
           highlightWhenEmpty: highlightWhenEmpty,
-          composingRegion: composingRegion,
-          showComposingUnderline: showComposingUnderline,
+          underlines: _createUnderlines(),
           showDebugPaint: showDebugPaint,
         ),
       ),
     );
+  }
+
+  List<Underlines> _createUnderlines() {
+    return [
+      if (composingRegion != null && showComposingRegionUnderline)
+        Underlines(
+          style: const StraightUnderlineStyle(),
+          underlines: [composingRegion!],
+        ),
+    ];
   }
 }

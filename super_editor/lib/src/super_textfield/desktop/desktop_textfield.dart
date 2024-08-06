@@ -510,12 +510,12 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
             if (widget.textController?.composingRegion.isValid == true && _shouldShowComposingUnderline)
               TextUnderlineLayer(
                 textLayout: textLayout,
+                style: StraightUnderlineStyle(
+                  color: widget.textStyleBuilder({}).color ?? //
+                      (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                ),
                 underlines: [
                   TextLayoutUnderline(
-                    style: UnderlineStyle(
-                      color: widget.textStyleBuilder({}).color ?? //
-                          (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
-                    ),
                     range: widget.textController!.composingRegion,
                   ),
                 ],

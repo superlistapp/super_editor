@@ -61,8 +61,7 @@ class FeatherCodeComponentBuilder implements ComponentBuilder {
       textSelection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
-      composingRegion: componentViewModel.composingRegion,
-      showComposingUnderline: componentViewModel.showComposingUnderline,
+      underlines: componentViewModel.createUnderlines(),
     );
   }
 }
@@ -81,9 +80,17 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
-  });
+    TextRange? composingRegion,
+    bool showComposingRegionUnderline = false,
+    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
+    List<TextRange> spellingErrors = const <TextRange>[],
+  }) {
+    this.composingRegion = composingRegion;
+    this.showComposingRegionUnderline = showComposingRegionUnderline;
+
+    this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
+    this.spellingErrors = spellingErrors;
+  }
 
   @override
   AttributedText text;
@@ -99,10 +106,6 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
   Color selectionColor;
   @override
   bool highlightWhenEmpty;
-  @override
-  TextRange? composingRegion;
-  @override
-  bool showComposingUnderline;
 
   Color backgroundColor;
   BorderRadius borderRadius;
@@ -130,7 +133,9 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
       composingRegion: composingRegion,
-      showComposingUnderline: showComposingUnderline,
+      showComposingRegionUnderline: showComposingRegionUnderline,
+      spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
+      spellingErrors: List.from(spellingErrors),
     );
   }
 
@@ -150,7 +155,7 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
           selectionColor == other.selectionColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
           composingRegion == other.composingRegion &&
-          showComposingUnderline == other.showComposingUnderline;
+          showComposingRegionUnderline == other.showComposingRegionUnderline;
 
   @override
   int get hashCode =>
@@ -165,7 +170,7 @@ class CodeBlockComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selectionColor.hashCode ^
       highlightWhenEmpty.hashCode ^
       composingRegion.hashCode ^
-      showComposingUnderline.hashCode;
+      showComposingRegionUnderline.hashCode;
 }
 
 class CodeBlockComponent extends StatelessWidget {
@@ -180,8 +185,7 @@ class CodeBlockComponent extends StatelessWidget {
     required this.backgroundColor,
     required this.borderRadius,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
+    this.underlines = const [],
     this.showDebugPaint = false,
   });
 
@@ -194,8 +198,9 @@ class CodeBlockComponent extends StatelessWidget {
   final Color backgroundColor;
   final BorderRadius borderRadius;
   final bool highlightWhenEmpty;
-  final TextRange? composingRegion;
-  final bool showComposingUnderline;
+
+  final List<Underlines> underlines;
+
   final bool showDebugPaint;
 
   @override
@@ -216,8 +221,7 @@ class CodeBlockComponent extends StatelessWidget {
           textSelection: textSelection,
           selectionColor: selectionColor,
           highlightWhenEmpty: highlightWhenEmpty,
-          composingRegion: composingRegion,
-          showComposingUnderline: showComposingUnderline,
+          underlines: underlines,
           showDebugPaint: showDebugPaint,
         ),
       ),

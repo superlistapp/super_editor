@@ -628,12 +628,12 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             if (widget.textController?.composingRegion.isValid == true && widget.showComposingUnderline)
               TextUnderlineLayer(
                 textLayout: textLayout,
+                style: StraightUnderlineStyle(
+                  color: widget.textStyleBuilder({}).color ?? //
+                      (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                ),
                 underlines: [
                   TextLayoutUnderline(
-                    style: UnderlineStyle(
-                      color: widget.textStyleBuilder({}).color ?? //
-                          (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
-                    ),
                     range: widget.textController!.composingRegion,
                   ),
                 ],
