@@ -679,6 +679,7 @@ void main() {
       );
 
       // If we reach the end without exception, then ActionTagComposingReaction did not fail due to selection.base.nodePosition not being a TextNodePosition.
+      // See also: https://github.com/superlistapp/super_editor/pull/2201
     });
   });
 }
