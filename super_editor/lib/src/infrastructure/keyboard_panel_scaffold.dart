@@ -13,12 +13,14 @@ import 'package:super_editor/src/default_editor/document_ime/document_input_ime.
 /// visible, or above the software keyboard, when visible. If neither the keyboard panel nor
 /// the software keyboard are visible, the widget is positioned at the bottom of the screen.
 ///
-/// The widget returned by [contentBuilder] is positioned at the top, using all the available
-/// height.
+/// The widget returned by [contentBuilder] is positioned above the above-keyboard panel,
+/// using all the remaining height.
 ///
 /// Use the [controller] to show/hide the keyboard panel and software keyboard.
 ///
-/// It is required that [Scaffold.resizeToAvoidBottomInset] is set to `false`.
+/// It is required that the enclosing [Scaffold] has `resizeToAvoidBottomInset` set to `false`,
+/// otherwise we can't get the software keyboard height to size the keyboard panel. If
+/// `resizeToAvoidBottomInset` is set to `true`, the panel won't be displayed.
 class KeyboardPanelScaffold extends StatefulWidget {
   const KeyboardPanelScaffold({
     super.key,
