@@ -164,7 +164,7 @@ extension SuperEditorRobot on WidgetTester {
   /// {@macro supereditor_finder}
   Future<void> tapAtDocumentPosition(DocumentPosition position, [Finder? superEditorFinder]) async {
     final documentLayout = _findDocumentLayout(superEditorFinder);
-    final positionRectInDoc = documentLayout.getRectForPosition(position)!;
+    final positionRectInDoc = _getRectForDocumentPosition(position, documentLayout, superEditorFinder);
     final globalTapOffset = documentLayout.getAncestorOffsetFromDocumentOffset(positionRectInDoc.center);
 
     await tapAt(globalTapOffset);
@@ -436,17 +436,67 @@ extension SuperEditorRobot on WidgetTester {
     return textLayout.getOffsetForCaret(position) + Offset(affinity == TextAffinity.upstream ? -1 : 1, 5);
   }
 
+  /// Returns the bounding box around the given [position], within the associated component.
+  ///
+  /// If the component is a block component, the returned [Rect] will be half of its width.
+  Rect _getRectForDocumentPosition(DocumentPosition position, DocumentLayout documentLayout,
+      [Finder? superEditorFinder]) {
+    final component = documentLayout.getComponentByNodeId(position.nodeId);
+    if (component == null) {
+      throw Exception('No component found for node ID: ${position.nodeId}');
+    }
+
+    if (component.getBeginningPosition() is UpstreamDownstreamNodePosition) {
+      // The component is a block component. Compute the rect manually, because
+      // `getRectForPosition` returns always the rect of the whole block.
+      // The returned rect will be half of the width of the component.
+      final componentBox = component.context.findRenderObject() as RenderBox;
+      final edge = component.getEdgeForPosition(position.nodePosition);
+
+      final positionRect = position.nodePosition == UpstreamDownstreamNodePosition.upstream()
+          // For upstream position, the edge is a zero width rect starting from the left.
+          ? Rect.fromLTWH(
+              edge.left,
+              edge.top,
+              componentBox.size.width / 2,
+              componentBox.size.height,
+            )
+          // For downstream position, the edge is a zero width rect starting at the right.
+          // Subtract half of the width to make it start from the center.
+          : Rect.fromLTWH(
+              edge.left - componentBox.size.width / 2,
+              edge.top,
+              componentBox.size.width / 2,
+              componentBox.size.height,
+            );
+
+      // Translate the rect to global coordinates.
+      final documentLayoutElement = _findDocumentLayoutElement(superEditorFinder);
+      final docOffset = componentBox.localToGlobal(Offset.zero, ancestor: documentLayoutElement.findRenderObject());
+      return positionRect.translate(docOffset.dx, docOffset.dy);
+    }
+
+    // The component isn't a block node. Use the default implementation for getRectForPosition.
+    return documentLayout.getRectForPosition(position)!;
+  }
+
   /// Finds and returns the [DocumentLayout] within the only [SuperEditor] in the
   /// widget tree, or within the [SuperEditor] found via the optional [superEditorFinder].
   DocumentLayout _findDocumentLayout([Finder? superEditorFinder]) {
+    final documentLayoutElement = _findDocumentLayoutElement(superEditorFinder);
+    return documentLayoutElement.state as DocumentLayout;
+  }
+
+  /// Finds and returns the document layout element within the only [SuperEditor] in the
+  /// widget tree, or within the [SuperEditor] found via the optional [superEditorFinder].
+  StatefulElement _findDocumentLayoutElement([Finder? superEditorFinder]) {
     late final Finder layoutFinder;
     if (superEditorFinder != null) {
       layoutFinder = find.descendant(of: superEditorFinder, matching: find.byType(SingleColumnDocumentLayout));
     } else {
       layoutFinder = find.byType(SingleColumnDocumentLayout);
     }
-    final documentLayoutElement = layoutFinder.evaluate().single as StatefulElement;
-    return documentLayoutElement.state as DocumentLayout;
+    return layoutFinder.evaluate().single as StatefulElement;
   }
 
   /// Finds the [GlobalKey] that's attached to the [TextComponent], which presents the
