@@ -187,10 +187,17 @@ class SpellCheckMac {
   }
 
   /// {@template mac_spell_checker_unique_spell_document_tag}
-  /// Returns a unique tag that identifies a single document in the spell checking system.
+  /// Returns a unique tag to partition stateful operations in the spell checking system.
   ///
-  /// Use this method to generate tags to avoid collisions when there are multiple different
+  /// Use the tag returned by this method in the spell checking methods when there are different
   /// texts being spell checked.
+  ///
+  /// For example, if there are two texts being spell checked, with tags `1` and `2`,
+  /// the spell checker will keep the state of the ignored words separate for each one. If an
+  /// ignored word is added to the tag `1`, it won't be seen as misspelled for tag `1`, but it
+  /// will be for the tag `2`.
+  ///
+  /// Call [closeSpellDocument] when you are done with the tag to release resources.
   /// {@endtemplate}
   Future<int> uniqueSpellDocumentTag() async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.uniqueSpellDocumentTag$__pigeon_messageChannelSuffix';
