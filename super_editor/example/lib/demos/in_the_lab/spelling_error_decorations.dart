@@ -45,11 +45,6 @@ class _SpellingErrorDecorationsDemoState extends State<SpellingErrorDecorationsD
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return InTheLabScaffold(
       content: Center(
