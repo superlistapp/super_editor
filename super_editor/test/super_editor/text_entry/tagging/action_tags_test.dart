@@ -653,7 +653,9 @@ void main() {
   });
 
   group("selections >", () {
-    testWidgetsOnAllPlatforms("upstream cancelled action tag from block node", (tester) async {
+    testWidgetsOnAllPlatforms(
+        "exception in ActionTagComposingReaction when selecting upstream from BlockNode while cancelled action tag exists",
+        (tester) async {
       await _pumpTestEditor(
         tester,
         paragraphThenHrDoc(),
