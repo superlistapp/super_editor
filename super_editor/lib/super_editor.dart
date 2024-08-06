@@ -87,7 +87,6 @@ export 'src/infrastructure/strings.dart';
 export 'src/super_textfield/super_textfield.dart';
 export 'src/infrastructure/touch_controls.dart';
 export 'src/infrastructure/text_input.dart';
-export 'src/infrastructure/viewport_size_reporting.dart';
 export 'src/infrastructure/popovers.dart';
 export 'src/infrastructure/selectable_list.dart';
 export 'src/infrastructure/actions.dart';

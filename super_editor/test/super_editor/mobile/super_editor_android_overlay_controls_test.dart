@@ -329,7 +329,7 @@ void main() {
                             childCount: 50,
                           ),
                         ),
-                        SliverToBoxAdapter(child: superEditor),
+                        superEditor,
                       ],
                     ),
                   ),

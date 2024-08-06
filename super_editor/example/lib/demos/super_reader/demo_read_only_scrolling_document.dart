@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:example/demos/infrastructure/flutter/sliver_padding.dart';
+import 'package:flutter/material.dart' hide SliverPadding;
 import 'package:super_editor/super_editor.dart';
 
 /// This demo proves that a read-only document can layout and
@@ -33,9 +34,7 @@ class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewD
     return CustomScrollView(
       slivers: [
         _buildCollapsingAppBar(),
-        SliverToBoxAdapter(
-          child: _buildReadOnlyDocument(),
-        ),
+        _buildReadOnlyDocument(),
         SliverList(
           delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
             return _buildListItem(index);
@@ -63,9 +62,9 @@ class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewD
   }
 
   Widget _buildReadOnlyDocument() {
-    return Padding(
+    return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 96.0, vertical: 48.0),
-      child: SingleColumnDocumentLayout(
+      sliver: SingleColumnDocumentLayout(
         presenter: SingleColumnLayoutPresenter(
           document: _doc,
           componentBuilders: defaultComponentBuilders,

@@ -61,35 +61,34 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
   }
 
   Widget _buildEditor() {
-    return IntrinsicHeight(
-      child: SuperEditor(
-        editor: _editor,
-        stylesheet: defaultStylesheet.copyWith(
-          inlineTextStyler: (attributions, existingStyle) {
-            TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
+    return SuperEditor(
+      editor: _editor,
+      shrinkWrap: true,
+      stylesheet: defaultStylesheet.copyWith(
+        inlineTextStyler: (attributions, existingStyle) {
+          TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
 
-            if (attributions.whereType<PatternTagAttribution>().isNotEmpty) {
-              style = style.copyWith(
-                color: Colors.orange,
-              );
-            }
+        if (attributions.whereType<PatternTagAttribution>().isNotEmpty) {
+          style = style.copyWith(
+            color: Colors.orange,
+          );
+        }
 
-            return style;
-          },
-          addRulesAfter: [
-            ...darkModeStyles,
-          ],
-        ),
-        documentOverlayBuilders: [
-          DefaultCaretOverlayBuilder(
-            caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
-          ),
-        ],
-        plugins: {
-          _hashTagPlugin,
-        },
+        return style;
+      },
+      addRulesAfter: [
+        ...darkModeStyles,
+      ],
+    ),
+    documentOverlayBuilders: [
+      DefaultCaretOverlayBuilder(
+        caretStyle: CaretStyle().copyWith(color: Colors.redAccent),
       ),
-    );
+    ],
+    plugins: {
+      _hashTagPlugin,
+    },
+        );
   }
 
   Widget _buildTagList() {
