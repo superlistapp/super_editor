@@ -21,8 +21,8 @@ PlatformException _createConnectionError(String channelName) {
 /// the one at [end].
 ///
 /// This is used because we can't use `TextRange` in pigeon.
-class Range {
-  Range({
+class PigeonRange {
+  PigeonRange({
     required this.start,
     required this.end,
   });
@@ -38,9 +38,9 @@ class Range {
     ];
   }
 
-  static Range decode(Object result) {
+  static PigeonRange decode(Object result) {
     result as List<Object?>;
-    return Range(
+    return PigeonRange(
       start: result[0]! as int,
       end: result[1]! as int,
     );
@@ -48,18 +48,18 @@ class Range {
 }
 
 /// The result of a grammatical analysis.
-class PlatformCheckGrammarResult {
-  PlatformCheckGrammarResult({
+class PigeonCheckGrammarResult {
+  PigeonCheckGrammarResult({
     this.firstError,
     this.details,
   });
 
   /// The range of the first error found in the text or `null` if no errors were found.
-  Range? firstError;
+  PigeonRange? firstError;
 
   /// A list of details about the grammatical errors found in the text or `null`
   /// if no errors were found.
-  List<PlatformGrammaticalAnalysisDetail?>? details;
+  List<PigeonGrammaticalAnalysisDetail?>? details;
 
   Object encode() {
     return <Object?>[
@@ -68,24 +68,24 @@ class PlatformCheckGrammarResult {
     ];
   }
 
-  static PlatformCheckGrammarResult decode(Object result) {
+  static PigeonCheckGrammarResult decode(Object result) {
     result as List<Object?>;
-    return PlatformCheckGrammarResult(
-      firstError: result[0] as Range?,
-      details: (result[1] as List<Object?>?)?.cast<PlatformGrammaticalAnalysisDetail?>(),
+    return PigeonCheckGrammarResult(
+      firstError: result[0] as PigeonRange?,
+      details: (result[1] as List<Object?>?)?.cast<PigeonGrammaticalAnalysisDetail?>(),
     );
   }
 }
 
 /// A detail about a grammatical error found in a text.
-class PlatformGrammaticalAnalysisDetail {
-  PlatformGrammaticalAnalysisDetail({
+class PigeonGrammaticalAnalysisDetail {
+  PigeonGrammaticalAnalysisDetail({
     required this.range,
     required this.userDescription,
   });
 
   /// The range of the grammatical error in the text.
-  Range range;
+  PigeonRange range;
 
   /// A description of the grammatical error.
   String userDescription;
@@ -97,10 +97,10 @@ class PlatformGrammaticalAnalysisDetail {
     ];
   }
 
-  static PlatformGrammaticalAnalysisDetail decode(Object result) {
+  static PigeonGrammaticalAnalysisDetail decode(Object result) {
     result as List<Object?>;
-    return PlatformGrammaticalAnalysisDetail(
-      range: result[0]! as Range,
+    return PigeonGrammaticalAnalysisDetail(
+      range: result[0]! as PigeonRange,
       userDescription: result[1]! as String,
     );
   }
@@ -111,13 +111,13 @@ class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
   void writeValue(WriteBuffer buffer, Object? value) {
-    if (value is Range) {
+    if (value is PigeonRange) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
-    } else     if (value is PlatformCheckGrammarResult) {
+    } else     if (value is PigeonCheckGrammarResult) {
       buffer.putUint8(130);
       writeValue(buffer, value.encode());
-    } else     if (value is PlatformGrammaticalAnalysisDetail) {
+    } else     if (value is PigeonGrammaticalAnalysisDetail) {
       buffer.putUint8(131);
       writeValue(buffer, value.encode());
     } else {
@@ -129,11 +129,11 @@ class _PigeonCodec extends StandardMessageCodec {
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
       case 129: 
-        return Range.decode(readValue(buffer)!);
+        return PigeonRange.decode(readValue(buffer)!);
       case 130: 
-        return PlatformCheckGrammarResult.decode(readValue(buffer)!);
+        return PigeonCheckGrammarResult.decode(readValue(buffer)!);
       case 131: 
-        return PlatformGrammaticalAnalysisDetail.decode(readValue(buffer)!);
+        return PigeonGrammaticalAnalysisDetail.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -153,8 +153,12 @@ class SpellCheckMac {
 
   final String __pigeon_messageChannelSuffix;
 
-  /// A list containing all the available spell checking languages. The languages are ordered
-  /// in the user’s preferred order as set in the system preferences.
+  /// {@template mac_spell_checker_available_languages}
+  /// A list containing all the available spell checking languages.
+  ///
+  /// The languages are ordered in the user’s preferred order as set in the
+  /// system preferences.
+  /// {@endtemplate}
   Future<List<String?>> availableLanguages() async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.availableLanguages$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -182,9 +186,12 @@ class SpellCheckMac {
     }
   }
 
-  /// Returns a unique tag to identified this spell checked object.
+  /// {@template mac_spell_checker_unique_spell_document_tag}
+  /// Returns a unique tag that identifies a single document in the spell checking system.
   ///
-  /// Use this method to generate tags to avoid collisions with other objects that can be spell checked.
+  /// Use this method to generate tags to avoid collisions when there are multiple different
+  /// texts being spell checked.
+  /// {@endtemplate}
   Future<int> uniqueSpellDocumentTag() async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.uniqueSpellDocumentTag$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -212,10 +219,12 @@ class SpellCheckMac {
     }
   }
 
-  /// Notifies the receiver that the user has finished with the tagged document.
+  /// {@template mac_spell_checker_close_spell_document}
+  /// Notifies the spell checking system that the user has finished with the tagged document.
   ///
   /// The spell checker will release any resources associated with the document,
   /// including but not necessarily limited to, ignored words.
+  /// {@endtemplate}
   Future<void> closeSpellDocument(int tag) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.closeSpellDocument$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -238,22 +247,17 @@ class SpellCheckMac {
     }
   }
 
-  /// Searches for a misspelled word in [stringToCheck] starting at [startingOffset]
-  /// within the string object.
+  /// {@template mac_spell_checker_check_spelling}
+  /// Searches for a misspelled word in [stringToCheck], starting at [startingOffset], and returns the
+  /// [TextRange] surrounding the misspelled word.
   ///
-  /// - [stringToCheck]: The string object containing the words to spellcheck.
-  /// - [startingOffset]: The offset within the string object at which to start the spellchecking.
-  /// - [language]: The language of the words in the string.
-  /// - [wrap]: `true` to indicate that spell checking should continue at the beginning of the string
-  ///   when the end of the string is reached; `false` to indicate that spellchecking should stop
-  ///   at the end of the string.
-  /// - [inSpellDocumentWithTag]: An identifier unique within the application
-  ///   used to inform the spell checker which document that text is associated, potentially
-  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
-  ///   in for text not associated with a particular document.
+  /// If no misspelled word is found, a [TextRange] is returned with bounds of `-1`, which can also be
+  /// queried more conveniently with [TextRange.isValid].
   ///
-  /// Returns the range of the first misspelled word.
-  Future<Range> checkSpelling({required String stringToCheck, required int startingOffset, String? language, bool wrap = false, int inSpellDocumentWithTag = 0,}) async {
+  /// To find all (or multiple) misspelled words in a given string, call this
+  /// method repeatedly, passing in different values for [startingOffset].
+  /// {@endtemplate}
+  Future<PigeonRange> checkSpelling({required String stringToCheck, required int startingOffset, String? language, bool wrap = false, int inSpellDocumentWithTag = 0,}) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.checkSpelling$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
@@ -276,22 +280,20 @@ class SpellCheckMac {
         message: 'Host platform returned null value for non-null return value.',
       );
     } else {
-      return (__pigeon_replyList[0] as Range?)!;
+      return (__pigeon_replyList[0] as PigeonRange?)!;
     }
   }
 
-  /// Returns an array of possible substitutions for the specified string.
+  /// {@template mac_spell_checker_guesses}
+  /// Returns possible substitutions for the specified misspelled word at [range] inside the [text].
   ///
-  /// - [range]: The range of the string to check.
-  /// - [text]: The string to guess.
-  /// - [language]: The language of the string.
-  /// - [inSpellDocumentWithTag]: An identifier unique within the application
-  ///   used to inform the spell checker which document that text is associated, potentially
-  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
-  ///   in for text not associated with a particular document.
-  ///
-  /// Returns an array of strings containing possible replacement words.
-  Future<List<String?>?> guesses({required String text, required Range range, String? language, int inSpellDocumentWithTag = 0,}) async {
+  /// - [range]: The range, within the [text], for which possible substitutions should be generated.
+  /// - [text]: The string containing the word/text for which substitutions should be generated.
+  /// - [inSpellDocumentWithTag]: The (optional) ID of the loaded document that contains the given [text],
+  ///   which is used to provide additional context to the substitution guesses. A value of '0' instructs
+  ///   the guessing system to consider the [text] in isolation, without connection to any given document.
+  /// {@endtemplate}
+  Future<List<String?>?> guesses({required String text, required PigeonRange range, String? language, int inSpellDocumentWithTag = 0,}) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.guesses$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
@@ -313,18 +315,18 @@ class SpellCheckMac {
     }
   }
 
-  /// Performs a grammatical analysis of a given string.
+  /// {@template mac_spell_checker_check_grammar}
+  /// Performs a grammatical analysis of [stringToCheck], starting at [startingOffset].
   ///
-  /// - [stringToCheck]: The string to analyze.
-  /// - [startingOffset]: Location within string at which to start the analysis.
-  /// - [language]: Language to use in string.
-  /// - [wrap]: `true` to specify that the analysis continue to the beginning of string when
-  ///   the end is reached. `false` to have the analysis stop at the end of string.
-  /// - [inSpellDocumentWithTag]: An identifier unique within the application
-  ///   used to inform the spell checker which document that text is associated, potentially
-  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
-  ///   in for text not associated with a particular document.
-  Future<PlatformCheckGrammarResult> checkGrammar({required String stringToCheck, required int startingOffset, String? language, bool wrap = false, int inSpellDocumentWithTag = 0,}) async {
+  /// - [stringToCheck]: The string containing the text to be analyzed.
+  /// - [startingOffset]: Location within the text at which the analysis should start.
+  /// - [wrap]: `true` to specify that the analysis continue to the beginning of the text when
+  ///   the end is reached. `false` to have the analysis stop at the end of the text.
+  /// - [inSpellDocumentWithTag]: The (optional) ID of the loaded document that contains the given [text],
+  ///   which is used to provide additional context to the substitution guesses. A value of '0' instructs
+  ///   the guessing system to consider the [stringToCheck] in isolation, without connection to any given document.
+  /// {@endtemplate}
+  Future<PigeonCheckGrammarResult> checkGrammar({required String stringToCheck, required int startingOffset, String? language, bool wrap = false, int inSpellDocumentWithTag = 0,}) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.checkGrammar$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
@@ -347,24 +349,23 @@ class SpellCheckMac {
         message: 'Host platform returned null value for non-null return value.',
       );
     } else {
-      return (__pigeon_replyList[0] as PlatformCheckGrammarResult?)!;
+      return (__pigeon_replyList[0] as PigeonCheckGrammarResult?)!;
     }
   }
 
-  /// Provides a list of complete words that the user might be trying to type based on a
-  /// partial word in a given string.
+  /// {@template mac_spell_checker_completions}
+  /// Provides a list of complete words that the user might be trying to type based on a partial word
+  /// at [partialWordRange] in the given [text].
   ///
-  /// - [partialWordRange] - Range that identifies a partial word in string.
-  /// - [text] - String with the partial word from which to generate the result.
-  /// - [language]: Language to use in string.
-  /// - [inSpellDocumentWithTag]: An identifier unique within the application
-  ///   used to inform the spell checker which document that text is associated, potentially
-  ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
-  ///   in for text not associated with a particular document.
+  /// - [partialWordRange] - The range, within the [text], for which possible completions should be generated.
+  /// - [text] - The string containing the partial word for which completions should be generated.
+  /// - [inSpellDocumentWithTag]: The (optional) ID of the loaded document that contains the given [text],
+  ///   which is used to provide additional context to the substitution guesses. A value of '0' instructs
+  ///   the guessing system to consider the [text] in isolation, without connection to any given document.
   ///
-  /// Returns the list of complete words from the spell checker dictionary in the order
-  /// they should be presented to the user.
-  Future<List<String?>?> completions({required Range partialWordRange, required String text, String? language, int inSpellDocumentWithTag = 0,}) async {
+  /// The items of the list are in the order they should be presented to the user.
+  /// {@endtemplate}
+  Future<List<String?>?> completions({required PigeonRange partialWordRange, required String text, String? language, int inSpellDocumentWithTag = 0,}) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.completions$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
@@ -386,7 +387,9 @@ class SpellCheckMac {
     }
   }
 
+  /// {@template mac_spell_checker_count_words}
   /// Returns the number of words in the specified string.
+  /// {@endtemplate}
   Future<int> countWords({required String text, String? language}) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.countWords$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -414,7 +417,9 @@ class SpellCheckMac {
     }
   }
 
+  /// {@template mac_spell_checker_learn_word}
   /// Adds the [word] to the spell checker dictionary.
+  /// {@endtemplate}
   Future<void> learnWord(String word) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.learnWord$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -437,7 +442,9 @@ class SpellCheckMac {
     }
   }
 
+  /// {@template mac_spell_checker_has_learned_word}
   /// Indicates whether the spell checker has learned a given word.
+  /// {@endtemplate}
   Future<bool> hasLearnedWord(String word) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.hasLearnedWord$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -465,7 +472,9 @@ class SpellCheckMac {
     }
   }
 
+  /// {@template mac_spell_checker_unlearn_word}
   /// Tells the spell checker to unlearn a given word.
+  /// {@endtemplate}
   Future<void> unlearnWord(String word) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.unlearnWord$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -488,8 +497,10 @@ class SpellCheckMac {
     }
   }
 
+  /// {@template mac_spell_checker_ignore_word}
   /// Instructs the spell checker to ignore all future occurrences of [word] in the document
   /// identified by [documentTag].
+  /// {@endtemplate}
   Future<void> ignoreWord({required String word, required int documentTag}) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.ignoreWord$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -512,7 +523,9 @@ class SpellCheckMac {
     }
   }
 
+  /// {@template mac_spell_checker_ignored_words}
   /// Returns the array of ignored words for a document identified by [documentTag].
+  /// {@endtemplate}
   Future<List<String?>?> ignoredWords(int documentTag) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.ignoredWords$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -535,8 +548,10 @@ class SpellCheckMac {
     }
   }
 
+  /// {@template mac_spell_checker_set_ignored_words}
   /// Updates the ignored-words document (a dictionary identified by [documentTag] with [words])
   /// with a list of [words] to ignore.
+  /// {@endtemplate}
   Future<void> setIgnoredWords({required List<String?> words, required int documentTag}) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.setIgnoredWords$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -559,7 +574,14 @@ class SpellCheckMac {
     }
   }
 
-  /// Returns the dictionary used when replacing words.
+  /// {@template mac_spell_checker_user_replacements_dictionary}
+  /// Returns the dictionary used when replacing words, as defined by the user in the system preferences.
+  ///
+  /// This can be used to create an UI with replacement options when the user types a certain
+  /// combination of characters. For example, the user might want to automatically replace
+  /// "omw" with "on my way". When the user types "omw", an UI should display "on my way" as
+  /// a possible replacement.
+  /// {@endtemplate}
   Future<Map<String?, String?>> userReplacementsDictionary() async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.super_editor_spellcheck.SpellCheckMac.userReplacementsDictionary$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(

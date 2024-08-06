@@ -48,7 +48,7 @@ public class SuperEditorSpellcheckPlugin: SpellCheckMac {
   ///   in for text not associated with a particular document.
   ///
   /// Returns the range of the first misspelled word.
-  func checkSpelling(stringToCheck: String, startingOffset: Int64, language: String?, wrap: Bool, inSpellDocumentWithTag: Int64) throws -> Range {
+  func checkSpelling(stringToCheck: String, startingOffset: Int64, language: String?, wrap: Bool, inSpellDocumentWithTag: Int64) throws -> PigeonRange {
     let spellChecker = NSSpellChecker.shared;
 
     let result = spellChecker.checkSpelling(
@@ -61,10 +61,10 @@ public class SuperEditorSpellcheckPlugin: SpellCheckMac {
     );
 
     if (result.location == NSNotFound) {
-      return Range(start: -1, end: -1);
+      return PigeonRange(start: -1, end: -1);
     }
 
-    return Range(
+    return PigeonRange(
       start: Int64(result.location),
       end: Int64(result.location + result.length)
     );
@@ -81,7 +81,7 @@ public class SuperEditorSpellcheckPlugin: SpellCheckMac {
   ///   in for text not associated with a particular document.
   ///
   /// Returns an array of strings containing possible replacement words.
-  func guesses(text: String, range: Range, language: String?, inSpellDocumentWithTag: Int64) throws -> [String?]? {
+  func guesses(text: String, range: PigeonRange, language: String?, inSpellDocumentWithTag: Int64) throws -> [String?]? {
     let spellChecker = NSSpellChecker.shared;
 
     return spellChecker.guesses(
@@ -103,7 +103,7 @@ public class SuperEditorSpellcheckPlugin: SpellCheckMac {
   ///   used to inform the spell checker which document that text is associated, potentially
   ///   for many purposes, not necessarily just for ignored words. A value of 0 can be passed
   ///   in for text not associated with a particular document.
-  func checkGrammar(stringToCheck: String, startingOffset: Int64, language: String?, wrap: Bool, inSpellDocumentWithTag: Int64) throws -> PlatformCheckGrammarResult {
+  func checkGrammar(stringToCheck: String, startingOffset: Int64, language: String?, wrap: Bool, inSpellDocumentWithTag: Int64) throws -> PigeonCheckGrammarResult {
     let spellChecker = NSSpellChecker.shared;
     
     var details: NSArray?;
@@ -117,14 +117,14 @@ public class SuperEditorSpellcheckPlugin: SpellCheckMac {
     );
     
     if (grammarRange.location == NSNotFound || details == nil) {
-      return PlatformCheckGrammarResult(
-        firstError: Range(start: -1, end: -1),
+      return PigeonCheckGrammarResult(
+        firstError: PigeonRange(start: -1, end: -1),
         details: []
       );
     }
     
     let grammarDetails = details as! [[String: Any]];    
-    let analysisDetails : [PlatformGrammaticalAnalysisDetail] = grammarDetails.compactMap{ (detail: [String: Any]) -> PlatformGrammaticalAnalysisDetail? in
+    let analysisDetails : [PigeonGrammaticalAnalysisDetail] = grammarDetails.compactMap{ (detail: [String: Any]) -> PigeonGrammaticalAnalysisDetail? in
       let range = detail["NSGrammarRange"] as? NSRange;
       let userDescription = detail["NSGrammarUserDescription"] as? String;
       
@@ -133,14 +133,14 @@ public class SuperEditorSpellcheckPlugin: SpellCheckMac {
           
       }
       
-      return PlatformGrammaticalAnalysisDetail(
-        range: Range(start: Int64(range!.location), end: Int64(range!.location + range!.length)), 
+      return PigeonGrammaticalAnalysisDetail(
+        range: PigeonRange(start: Int64(range!.location), end: Int64(range!.location + range!.length)), 
         userDescription: userDescription!
       );
     };
     
-    return PlatformCheckGrammarResult(
-      firstError: Range(start: Int64(grammarRange.location), end: Int64(grammarRange.location + grammarRange.length)),
+    return PigeonCheckGrammarResult(
+      firstError: PigeonRange(start: Int64(grammarRange.location), end: Int64(grammarRange.location + grammarRange.length)),
       details: analysisDetails
     );
   }
@@ -202,7 +202,7 @@ public class SuperEditorSpellcheckPlugin: SpellCheckMac {
   ///
   /// Returns the list of complete words from the spell checker dictionary in the order
   /// they should be presented to the user.
-  func completions(partialWordRange: Range, text: String, language: String?, inSpellDocumentWithTag: Int64) throws -> [String]? {
+  func completions(partialWordRange: PigeonRange, text: String, language: String?, inSpellDocumentWithTag: Int64) throws -> [String]? {
     let spellChecker = NSSpellChecker.shared;
 
     return spellChecker.completions(      

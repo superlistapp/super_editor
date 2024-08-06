@@ -18,7 +18,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final _superEditorSpellcheckPlugin = SuperEditorSpellCheckerMacPlugin();
+  final _superEditorSpellcheckPlugin = SuperEditorSpellCheckerPlugin();
   final _textController = TextEditingController(text: 'She go to the store everys day.');
 
   List<TextSuggestion> _suggestions = [];
@@ -45,7 +45,7 @@ class _MyAppState extends State<MyApp> {
     _textController.removeListener(_onTextChanged);
     _textController.dispose();
     if (_documentTag != null) {
-      _superEditorSpellcheckPlugin.closeSpellDocumentWithTag(_documentTag!);
+      _superEditorSpellcheckPlugin.macSpellChecker.closeSpellDocumentWithTag(_documentTag!);
     }
     super.dispose();
   }
@@ -60,57 +60,78 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _fetchSuggestions() async {
     final textToSearch = _textController.text;
+    final locale = PlatformDispatcher.instance.locale;
 
     int? tag = _documentTag;
-    tag ??= await _superEditorSpellcheckPlugin.uniqueSpellDocumentTag();
+    tag ??= await _superEditorSpellcheckPlugin.macSpellChecker.uniqueSpellDocumentTag();
+
+    final language = _superEditorSpellcheckPlugin.macSpellChecker.convertDartLocaleToMacLanguageCode(locale)!;
 
     final suggestions = await _superEditorSpellcheckPlugin.fetchSuggestions(
-      PlatformDispatcher.instance.locale,
+      locale,
       textToSearch,
     );
 
-    final firstMisspelled = await _superEditorSpellcheckPlugin.checkSpelling(
-      stringToCheck: textToSearch,
-      startingOffset: 0,
-      locale: PlatformDispatcher.instance.locale,
-    );
-
-    final firstSuggestions = firstMisspelled.isValid
-        ? await _superEditorSpellcheckPlugin.guesses(
-            range: firstMisspelled,
-            text: textToSearch,
-            locale: PlatformDispatcher.instance.locale,
-          )
-        : <String>[];
-
-    final grammarAnalysis = await _superEditorSpellcheckPlugin.checkGrammar(
-      stringToCheck: textToSearch,
-      startingOffset: 0,
-      locale: PlatformDispatcher.instance.locale,
-    );
-
-    final wordCount = await _superEditorSpellcheckPlugin.countWords(
-      text: textToSearch,
-      locale: PlatformDispatcher.instance.locale,
-    );
-
-    final replacements = await _superEditorSpellcheckPlugin.userReplacementsDictionary();
-
-    final completionOffset = max(textToSearch.lastIndexOf(' '), 0);
-
-    final completions = await _superEditorSpellcheckPlugin.completions(
-      partialWordRange: TextRange(start: completionOffset, end: textToSearch.length),
-      text: textToSearch,
-      locale: PlatformDispatcher.instance.locale,
-    );
-
-    if (!mounted) {
+    if (_shouldAbortCurrentSearch(textToSearch)) {
       return;
     }
 
-    if (textToSearch != _textController.text) {
-      // The user changed the text while the search was happening. Ignore the results,
-      // because a new search will happen.
+    final firstMisspelled = await _superEditorSpellcheckPlugin.macSpellChecker.checkSpelling(
+      stringToCheck: textToSearch,
+      startingOffset: 0,
+      language: language,
+    );
+
+    if (_shouldAbortCurrentSearch(textToSearch)) {
+      return;
+    }
+
+    final firstSuggestions = firstMisspelled.isValid
+        ? await _superEditorSpellcheckPlugin.macSpellChecker.guesses(
+            range: firstMisspelled,
+            text: textToSearch,
+            language: language,
+          )
+        : <String>[];
+
+    if (_shouldAbortCurrentSearch(textToSearch)) {
+      return;
+    }
+
+    final grammarAnalysis = await _superEditorSpellcheckPlugin.macSpellChecker.checkGrammar(
+      stringToCheck: textToSearch,
+      startingOffset: 0,
+      language: language,
+    );
+
+    if (_shouldAbortCurrentSearch(textToSearch)) {
+      return;
+    }
+
+    final wordCount = await _superEditorSpellcheckPlugin.macSpellChecker.countWords(
+      text: textToSearch,
+      language: language,
+    );
+
+    if (_shouldAbortCurrentSearch(textToSearch)) {
+      return;
+    }
+
+    final replacements = await _superEditorSpellcheckPlugin.macSpellChecker.userReplacementsDictionary();
+
+    if (_shouldAbortCurrentSearch(textToSearch)) {
+      return;
+    }
+
+    final completionOffset = max(textToSearch.lastIndexOf(' '), 0);
+
+    final completions = await _superEditorSpellcheckPlugin.macSpellChecker.completions(
+      partialWordRange: TextRange(start: completionOffset, end: textToSearch.length),
+      text: textToSearch,
+      language: language,
+    );
+
+    if (_shouldAbortCurrentSearch(textToSearch)) {
       return;
     }
 
@@ -124,6 +145,20 @@ class _MyAppState extends State<MyApp> {
       _userReplacementsDictionary = replacements;
       _completionsForLastWord = completions;
     });
+  }
+
+  bool _shouldAbortCurrentSearch(String textToSearch) {
+    if (!mounted) {
+      return true;
+    }
+
+    if (textToSearch != _textController.text) {
+      // The user changed the text while the search was happening. Ignore the results,
+      // because a new search will happen.
+      return true;
+    }
+
+    return false;
   }
 
   @override
@@ -178,7 +213,7 @@ class _MyAppState extends State<MyApp> {
 
   Widget _buildSuggestions(TextSuggestion span) {
     return Text(
-      '${_textController.text.substring(span.start, span.end)}: ${span.suggestions.join(', ')}',
+      '${_textController.text.substring(span.range.start, span.range.end)}: ${span.suggestions.join(', ')}',
     );
   }
 
