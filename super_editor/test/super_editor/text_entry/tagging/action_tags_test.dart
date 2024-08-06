@@ -668,8 +668,15 @@ void main() {
       await tester.pressRightArrow();
 
       // Select upstream towards the cancelled action tag
-      await tester.pressShiftLeftArrow();
-      await tester.pressShiftUpArrow();
+      await expectLater(
+        () async {
+          await tester.pressShiftLeftArrow();
+          await tester.pressShiftUpArrow();
+        },
+        returnsNormally,
+      );
+
+      // If we reach the end without exception, then ActionTagComposingReaction did not fail due to selection.base.nodePosition not being a TextNodePosition.
     });
   });
 }
