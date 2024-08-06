@@ -12,22 +12,18 @@ void main() {
       beneathBuilder: (context, textLayout) {
         return TextUnderlineLayer(
           textLayout: textLayout,
+          style: const StraightUnderlineStyle(
+            color: Colors.lightBlue,
+            thickness: 4,
+          ),
           underlines: const [
             TextLayoutUnderline(
-              style: UnderlineStyle(
-                color: Colors.lightBlue,
-                thickness: 4,
-              ),
               range: TextSelection(
                 baseOffset: 36,
                 extentOffset: 79,
               ),
             ),
             TextLayoutUnderline(
-              style: UnderlineStyle(
-                color: Colors.lightBlue,
-                thickness: 4,
-              ),
               range: TextSelection(
                 baseOffset: 88,
                 extentOffset: 110,

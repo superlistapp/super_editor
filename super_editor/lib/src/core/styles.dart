@@ -339,6 +339,21 @@ class Styles {
   /// Applies a [TextAlign] to a text node.
   static const String textAlign = 'textAlign';
 
+  /// Applies an [UnderlineStyle] to the composing region, e.g., the word
+  /// the user is currently editing on mobile.
+  static const String composingRegionUnderlineStyle = 'composingRegionUnderlineStyle';
+
+  /// Whether to show an underline beneath the text that is currently in
+  /// the composing region.
+  ///
+  /// It's common for Android to show an underline beneath the composing region.
+  /// Showing an underline may not be expected on desktop. With this property app
+  /// developers can make that choice for themselves.
+  static const String showComposingRegionUnderline = 'showComposingRegionUnderline';
+
+  /// Applies an [UnderlineStyle] to all spelling errors in a text node.
+  static const String spellingErrorUnderlineStyle = 'spellingErrorUnderlineStyle';
+
   /// Applies a [AttributionStyleAdjuster] to a text node.
   static const String inlineTextStyler = 'inlineTextStyler';
 
