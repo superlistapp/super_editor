@@ -198,8 +198,8 @@ void main() {
         );
 
         // Drag the downstream handle to the beginning of the downstream word.
-        // "Lorem ipsum dolor sit a|met"
-        //                         ^ position 23
+        // "Lorem ipsum [dolor sit a]met"
+        //                          ^ position 23
         final textLayout = SuperTextFieldInspector.findProseTextLayout();
         final downstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 17));
         final desiredPositionBox = textLayout.getCharacterBox(TextPosition(offset: 23));
@@ -207,10 +207,11 @@ void main() {
           Offset(desiredPositionBox!.right - downstreamPositionBox!.right, 0.0),
         );
 
-        // Ensure the original word and downstream word are both selected.'
+        // Ensure the upstream handle remained where it began and the downstream handle
+        // jumped to the end of the partially selected word.
         //
-        // "Lorem ipsum dolor sit amet|"
-        //                            ^ position 26
+        // "Lorem ipsum [dolor sit amet]"
+        //                             ^ position 26
         expect(
           SuperTextFieldInspector.findSelection(),
           const TextSelection(
@@ -254,8 +255,8 @@ void main() {
         );
 
         // Drag the downstream handle towards the beginning of the selected word.
-        // "Lorem ipsum dolor sit amet con|sectetur"
-        //                                ^ position 30
+        // "Lorem ipsum dolor sit amet [con]sectetur"
+        //                                 ^ position 30
         final textLayout = SuperTextFieldInspector.findProseTextLayout();
         final downstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 38));
         final desiredPositionBox = textLayout.getCharacterBox(TextPosition(offset: 30));
@@ -266,7 +267,7 @@ void main() {
         // Ensure that part of the downstream word is selected because we're now
         // in per-character selection mode.
         //
-        // "Lorem ipsum dolor sit amet |con|sectetur"
+        // "Lorem ipsum dolor sit amet [con]sectetur"
         //                             ^ position 27
         //                                 ^ position 30
         expect(
@@ -313,7 +314,7 @@ void main() {
         );
 
         // Drag the upstream handle to the end of the upstream word.
-        // "Lorem ipsu|m dolor sit amet"
+        // "Lorem ipsu[m dolor] sit amet"
         //            ^ position 10
         final textLayout = SuperTextFieldInspector.findProseTextLayout();
         final upstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 12));
@@ -322,9 +323,10 @@ void main() {
           Offset(desiredPositionBox!.left - upstreamPositionBox!.left, 0.0),
         );
 
-        // Ensure the original word and downstream word are both selected.'
+        // Ensure the downstream handle remained where it began and the upstream handle
+        // jumped to the beginning of the partially selected word.
         //
-        // "Lorem |ipsum dolor sit amet"
+        // "Lorem [ipsum dolor] sit amet"
         //        ^ position 6
         expect(
           SuperTextFieldInspector.findSelection(),
@@ -369,7 +371,7 @@ void main() {
         );
 
         // Drag the upstream handle towards the end of the selected word.
-        // "Lorem ipsum dolor sit amet consect|etur"
+        // "Lorem ipsum dolor sit amet consect[etur]"
         //                                    ^ position 34
         final textLayout = SuperTextFieldInspector.findProseTextLayout();
         final upstreamPositionBox = textLayout.getCharacterBox(TextPosition(offset: 27));
@@ -381,7 +383,7 @@ void main() {
         // Ensure that part of the downstream word is selected because we're now
         // in per-character selection mode.
         //
-        // "Lorem ipsum dolor sit amet consect|etur|"
+        // "Lorem ipsum dolor sit amet consect[etur]"
         //                                    ^ position 34
         //                                         ^ position 38
         expect(

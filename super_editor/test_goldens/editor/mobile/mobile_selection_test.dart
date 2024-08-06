@@ -332,6 +332,10 @@ void main() {
                 ),
                 extent: DocumentPosition(
                   nodeId: "1",
+                  // We are dragging until the middle of a word, but since Android
+                  // selects by word instead of by character, the selection expands
+                  // to the end of the word. The drag line in the golden won't match
+                  // the drag handle position.
                   nodePosition: TextNodePosition(offset: 50),
                 ),
               ),
