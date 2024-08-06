@@ -256,7 +256,7 @@ class CancelComposingActionTagCommand extends EditCommand {
       AddTextAttributionsCommand(
         documentRange: textNode.selectionBetween(
           composingToken.indexedTag.startOffset,
-          composingToken.indexedTag.endOffset,
+          composingToken.indexedTag.startOffset + 1,
         ),
         attributions: {actionTagCancelledAttribution},
       ),

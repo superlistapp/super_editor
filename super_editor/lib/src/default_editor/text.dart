@@ -1429,7 +1429,7 @@ class RemoveTextAttributionsCommand extends EditCommand {
       nodesAndSelections.putIfAbsent(textNode, () => selectionRange);
     }
 
-    // Add attributions.
+    // Remove attributions.
     for (final entry in nodesAndSelections.entries) {
       for (Attribution attribution in attributions) {
         final node = entry.key;
