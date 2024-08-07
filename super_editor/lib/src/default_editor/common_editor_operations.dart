@@ -1199,6 +1199,9 @@ class CommonEditorOperations {
         SelectionChangeType.deleteContent,
         SelectionReason.userInteraction,
       ),
+      // Since two paragraphs were combined, the composing region might point
+      // to a deleted paragraph. Clear it.
+      ClearComposingRegionRequest(),
     ]);
 
     return true;
