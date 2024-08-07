@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Flutter - Text Field" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="filePath" value="$PROJECT_DIR$/example/lib/flutter_demos/main_flutter_textfield.dart" />
+    <method v="2" />
+  </configuration>
+</component>
