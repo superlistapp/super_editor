@@ -1628,7 +1628,8 @@ Paragraph two
       // Simulate the user pressing BACKSPACE to merge the paragraphs.
       // Now that we are deleting a whitespace, mac reports a deleteBackward: selector
       // instead of a deletion delta.
-      await tester.pressBackspace();
+      await _receiveSelector('deleteBackward:');
+      await tester.pump();
 
       // Ensure the composing region was cleared in the IME.
       expect(composingBase, -1);
@@ -1746,4 +1747,21 @@ Future<void> _typeSpaceAdaptive(WidgetTester tester) async {
   }
 
   await tester.typeImeText(' ');
+}
+
+/// Simulates a `TextInputClient.performSelectors` call from the platform.
+Future<void> _receiveSelector(String selectorName) async {
+  await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
+    SystemChannels.textInput.name,
+    SystemChannels.textInput.codec.encodeMethodCall(
+      MethodCall(
+        "TextInputClient.performSelectors",
+        [
+          -1,
+          [selectorName],
+        ],
+      ),
+    ),
+    null,
+  );
 }
