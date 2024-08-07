@@ -18,6 +18,7 @@ void main() {
     // editorImeDeltasLog,
     // editorIosFloatingCursorLog,
     // editorKeyLog,
+    // editorEditsLog,
     // editorOpsLog,
     // editorLayoutLog,
     // editorDocLog,
@@ -178,7 +179,9 @@ class _EditorHistoryPanelState extends State<_EditorHistoryPanel> {
                     titleTextStyle: TextStyle(
                       fontSize: 16,
                     ),
-                    subtitle: Text("${history.changes.map((event) => event.describe()).join("\n")}"),
+                    subtitle: Text(
+                      "${history.commands.map((command) => command.describe()).join("\n\n")}\n-------------\n${history.changes.map((event) => event.describe()).join("\n\n")}",
+                    ),
                     subtitleTextStyle: TextStyle(
                       color: Colors.white.withOpacity(0.5),
                       fontSize: 10,

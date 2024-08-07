@@ -333,11 +333,12 @@ class TextDeltasDocumentEditor {
     editorOpsLog.fine("Executing text insertion command.");
     editorOpsLog.finer("Text before insertion: '${insertionNode.text.text}'");
     editor.execute([
-      ChangeSelectionRequest(
-        DocumentSelection.collapsed(position: insertionPosition),
-        SelectionChangeType.placeCaret,
-        SelectionReason.userInteraction,
-      ),
+      if (selection.value != DocumentSelection.collapsed(position: insertionPosition))
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(position: insertionPosition),
+          SelectionChangeType.placeCaret,
+          SelectionReason.userInteraction,
+        ),
       InsertTextRequest(
         documentPosition: insertionPosition,
         textToInsert: text,
