@@ -294,15 +294,15 @@ class UnorderedListItemComponentViewModel extends ListItemComponentViewModel {
     super.spellingErrors,
   });
 
-  ListItemDotStyle dotStyle = const ListItemDotStyle();
+  ListItemDotStyle dotStyle;
 
   @override
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
-    dotStyle = ListItemDotStyle(
+    dotStyle = dotStyle.copyWith(
       color: styles[Styles.dotColor],
-      shape: styles[Styles.dotShape] ?? BoxShape.circle,
-      size: styles[Styles.dotSize] ?? const Size(4, 4),
+      shape: styles[Styles.dotShape],
+      size: styles[Styles.dotSize],
     );
   }
 
@@ -365,7 +365,7 @@ class OrderedListItemComponentViewModel extends ListItemComponentViewModel {
   @override
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
-    numeralStyle = styles[Styles.listNumeralStyle] ?? OrderedListNumeralStyle.arabic;
+    numeralStyle = styles[Styles.listNumeralStyle] ?? numeralStyle;
   }
 
   @override
@@ -424,6 +424,20 @@ class ListItemDotStyle {
 
   @override
   int get hashCode => super.hashCode ^ color.hashCode ^ shape.hashCode ^ size.hashCode;
+
+  /// Returns a copy of this [ListItemDotStyle] with optional new values
+  /// for [color], [shape], and [size].
+  ListItemDotStyle copyWith({
+    Color? color,
+    BoxShape? shape,
+    Size? size,
+  }) {
+    return ListItemDotStyle(
+      color: color ?? this.color,
+      shape: shape ?? this.shape,
+      size: size ?? this.size,
+    );
+  }
 }
 
 /// Displays a un-ordered list item in a document.
