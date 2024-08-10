@@ -178,25 +178,13 @@ void main() {
               const FakeImageComponentBuilder(size: Size(1000, 400)),
               ...defaultComponentBuilders,
             ])
+            .enableHistory(true)
             .autoFocus(true)
             .pump();
 
-        // Place the caret on the trailing edge of the image.
-        testContext.editor.execute([
-          const ChangeSelectionRequest(
-            DocumentSelection.collapsed(
-              position: DocumentPosition(nodeId: "1", nodePosition: UpstreamDownstreamNodePosition.downstream()),
-            ),
-            SelectionChangeType.placeCaret,
-            SelectionReason.userInteraction,
-          ),
-        ]);
-        await tester.pump();
-
-        // TODO: fix block node selection - we requested downstream and it selected upstream: https://github.com/superlistapp/super_editor/issues/2197
-        // await tester.tapAtDocumentPosition(
-        //   const DocumentPosition(nodeId: "1", nodePosition: UpstreamDownstreamNodePosition.downstream()),
-        // );
+        await tester.tapAtDocumentPosition(
+          const DocumentPosition(nodeId: "1", nodePosition: UpstreamDownstreamNodePosition.downstream()),
+        );
 
         // Press enter to insert a new paragraph.
         await tester.pressEnter();
