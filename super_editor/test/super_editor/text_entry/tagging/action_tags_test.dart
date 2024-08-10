@@ -633,6 +633,38 @@ void main() {
       });
     });
   });
+
+  group("selections >", () {
+    testWidgetsOnAllPlatforms("can find tag that surrounds the extent position when the selection is expanded",
+        (tester) async {
+      await _pumpTestEditor(
+        tester,
+        paragraphThenHrDoc(),
+      );
+
+      // Create cancelled action tag
+      await tester.placeCaretInParagraph("1", 0);
+      await tester.typeImeText("/header ");
+
+      // Place cursor at the end of the horizontal rule/block node
+      await tester.pressDownArrow();
+      await tester.pressRightArrow();
+
+      // Select upstream towards the cancelled action tag
+      await expectLater(
+        () async {
+          await tester.pressShiftLeftArrow();
+          await tester.pressShiftUpArrow();
+        },
+        returnsNormally,
+      );
+
+      // If we reach the end without exception, then ActionTagComposingReaction did not blow up due to the base or extent
+      // position, and type of content at those positions.
+      //
+      // Original bug: https://github.com/superlistapp/super_editor/pull/2201
+    });
+  });
 }
 
 Future<TestDocumentContext> _pumpTestEditor(
