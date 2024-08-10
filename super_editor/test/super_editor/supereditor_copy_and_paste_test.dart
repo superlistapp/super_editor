@@ -145,6 +145,7 @@ This is the third paragraph''');
       final testContext = await tester //
           .createDocument()
           .withSingleEmptyParagraph()
+          .enableHistory(true)
           .pump();
 
       // Place the caret at the empty paragraph.
