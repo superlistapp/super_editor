@@ -13,11 +13,33 @@ import 'supereditor_test_tools.dart';
 
 void main() {
   group("Super Editor > undo redo >", () {
+    testWidgets("can be disabled", (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .enableHistory(false)
+          .pump();
+
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Type some text that we'll attempt to undo.
+      await tester.typeImeText("a");
+
+      // Ensure we entered the "a".
+      expect(SuperEditorInspector.findTextInComponent("1").text, "a");
+
+      // Try to run undo.
+      await tester.pressCmdZ(tester);
+
+      // Ensure that the text was unchanged.
+      expect(SuperEditorInspector.findTextInComponent("1").text, "a");
+    });
+
     group("text insertion >", () {
       testWidgets("insert a word", (tester) async {
         final document = deserializeMarkdownToDocument("Hello  world");
         final composer = MutableDocumentComposer();
-        final editor = createDefaultDocumentEditor(document: document, composer: composer);
+        final editor = createDefaultDocumentEditor(document: document, composer: composer, isHistoryEnabled: true);
         final paragraphId = document.first.id;
 
         editor.execute([
@@ -88,6 +110,7 @@ void main() {
         await tester //
             .createDocument()
             .withSingleEmptyParagraph()
+            .enableHistory(true)
             .pump();
 
         await tester.placeCaretInParagraph("1", 0);
@@ -209,6 +232,7 @@ void main() {
         final editContext = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
+            .enableHistory(true)
             .pump();
 
         await tester.placeCaretInParagraph("1", 0);
@@ -235,6 +259,7 @@ void main() {
         await tester //
             .createDocument()
             .withSingleEmptyParagraph()
+            .enableHistory(true)
             .pump();
 
         await tester.placeCaretInParagraph("1", 0);
@@ -262,6 +287,7 @@ void main() {
         final editContext = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
+            .enableHistory(true)
             .pump();
 
         await tester.placeCaretInParagraph("1", 0);
@@ -288,6 +314,7 @@ void main() {
         await tester //
             .createDocument()
             .withSingleEmptyParagraph()
+            .enableHistory(true)
             .pump();
 
         await tester.placeCaretInParagraph("1", 0);
@@ -321,6 +348,7 @@ void main() {
         final editContext = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
+            .enableHistory(true)
             .pump();
 
         await tester.placeCaretInParagraph("1", 0);
@@ -340,6 +368,7 @@ void main() {
       final editContext = await tester //
           .createDocument()
           .withSingleEmptyParagraph()
+          .enableHistory(true)
           .pump();
 
       await tester.placeCaretInParagraph("1", 0);
@@ -385,6 +414,7 @@ This is paragraph 3''');
           await tester //
               .createDocument()
               .withSingleEmptyParagraph()
+              .enableHistory(true)
               .withHistoryGroupingPolicy(const MergeRapidTextInputPolicy())
               .pump();
 
@@ -408,6 +438,7 @@ This is paragraph 3''');
           await tester //
               .createDocument()
               .withSingleEmptyParagraph()
+              .enableHistory(true)
               .withHistoryGroupingPolicy(const MergeRapidTextInputPolicy())
               .pump();
 
@@ -448,6 +479,7 @@ This is paragraph 3''');
           final testContext = await tester //
               .createDocument()
               .withLongDoc()
+              .enableHistory(true)
               .withHistoryGroupingPolicy(defaultMergePolicy)
               .pump();
 
@@ -472,6 +504,7 @@ This is paragraph 3''');
           final testContext = await tester //
               .createDocument()
               .withLongDoc()
+              .enableHistory(true)
               .withHistoryGroupingPolicy(defaultMergePolicy)
               .pump();
 
