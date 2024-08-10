@@ -12,7 +12,7 @@ class RainbowBuilder extends StatefulWidget {
   final Widget Function(BuildContext, Color) builder;
 
   @override
-  _RainbowBuilderState createState() => _RainbowBuilderState();
+  State<RainbowBuilder> createState() => _RainbowBuilderState();
 }
 
 class _RainbowBuilderState extends State<RainbowBuilder> with SingleTickerProviderStateMixin {
