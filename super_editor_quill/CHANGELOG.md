@@ -1,3 +1,6 @@
+## 0.1.0-dev.2
+* Expose Quill Delta document matcher so others can write tests with it.
+
 ## 0.1.0-dev.1
 Initial pre-release:
 
