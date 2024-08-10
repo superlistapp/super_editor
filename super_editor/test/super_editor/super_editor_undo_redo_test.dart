@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:clock/clock.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:flutter_test_runners/flutter_test_runners.dart';
@@ -157,6 +160,58 @@ void main() {
 
         await tester.pressCmdShiftZ(tester);
         _expectDocumentWithCaret("Hello", "1", 5);
+      });
+
+      testWidgetsOnMac("undo when typing after an image", (tester) async {
+        // A reported bug found that when inserting a paragraph after an image, typing some
+        // text, and then undo'ing the text, the paragraph's text duplicates during the
+        // undo operation: https://github.com/superlistapp/super_editor/issues/2164
+        // TODO: The root cause of this problem was mutability of DocumentNode's. Delete this test after completing: https://github.com/superlistapp/super_editor/issues/2166
+        final testContext = await tester
+            .createDocument() //
+            .withCustomContent(MutableDocument(
+              nodes: [
+                ImageNode(id: "1", imageUrl: "https://fakeimage.com/myimage.png"),
+              ],
+            ))
+            .withComponentBuilders([
+              const FakeImageComponentBuilder(size: Size(1000, 400)),
+              ...defaultComponentBuilders,
+            ])
+            .enableHistory(true)
+            .autoFocus(true)
+            .pump();
+
+        await tester.tapAtDocumentPosition(
+          const DocumentPosition(nodeId: "1", nodePosition: UpstreamDownstreamNodePosition.downstream()),
+        );
+
+        // Press enter to insert a new paragraph.
+        await tester.pressEnter();
+
+        // Ensure we inserted a paragraph.
+        expect(testContext.document.nodeCount, 2);
+        expect(testContext.document.getNodeAt(0), isA<ImageNode>());
+        expect(testContext.document.getNodeAt(1), isA<TextNode>());
+
+        // Type some text.
+        await tester.pressKey(LogicalKeyboardKey.keyA);
+
+        // Wait long enough to avoid combining actions into a single transaction.
+        await tester.pump(const Duration(seconds: 2));
+
+        // Type more text.
+        await tester.pressKey(LogicalKeyboardKey.keyB);
+
+        // Ensure we inserted the text.
+        expect((testContext.document.getNodeAt(1) as TextNode).text.text, "ab");
+
+        // Undo the text insertion.
+        // TODO: remove `tester` reference after updating flutter_test_robots
+        await tester.pressCmdZ(tester);
+
+        // Ensure that the paragraph removed the last entered character.
+        expect((testContext.document.getNodeAt(1) as TextNode).text.text, "a");
       });
     });
 
