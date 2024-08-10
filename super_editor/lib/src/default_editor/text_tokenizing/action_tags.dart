@@ -316,7 +316,7 @@ class ActionTagComposingReaction extends EditReaction {
         tagRule: _tagRule,
         nodeId: textNode.id,
         text: textNode.text,
-        expansionPosition: base.nodePosition as TextNodePosition,
+        expansionPosition: extent.nodePosition as TextNodePosition,
         isTokenCandidate: (attributions) => !attributions.contains(actionTagCancelledAttribution),
       );
     }
