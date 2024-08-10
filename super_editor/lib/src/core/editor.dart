@@ -410,7 +410,6 @@ class Editor implements RequestDispatcher {
     final changeEvents = <EditEvent>[];
     for (final commandTransaction in _history) {
       for (final command in commandTransaction.commands) {
-        editorEditsLog.finer("Executing command: ${command.runtimeType}");
         // We re-run the commands without tracking changes and without running reactions
         // because any relevant reactions should have run the first time around, and already
         // submitted their commands.
