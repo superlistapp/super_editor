@@ -367,6 +367,10 @@ class ChangeSelectionCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
     final initialSelection = composer.selection;
+    if (initialSelection == newSelection) {
+      // Selection is already where it should be.
+      return;
+    }
 
     composer.setSelectionWithReason(newSelection, reason);
 
@@ -397,7 +401,24 @@ class SelectionChangeEvent extends EditEvent {
   final String reason;
 
   @override
-  String describe() => "Selection - ${changeType.name}, $reason";
+  String describe() {
+    final buffer = StringBuffer("Selection - ${changeType.name}, $reason");
+    if (newSelection == null) {
+      buffer.write(" (SELECTION REMOVED)");
+      return buffer.toString();
+    }
+
+    if (newSelection!.isCollapsed) {
+      buffer.write(" (at ${newSelection!.extent.nodeId} - ${newSelection!.extent.nodePosition}");
+      return buffer.toString();
+    }
+
+    buffer
+      ..writeln("")
+      ..writeln(" - from: ${newSelection!.base.nodeId} - ${newSelection!.base.nodePosition}")
+      ..write(" - to: ${newSelection!.extent.nodeId} - ${newSelection!.extent.nodePosition}");
+    return buffer.toString();
+  }
 
   @override
   String toString() => "[SelectionChangeEvent] - New selection: $newSelection, change type: $changeType";
