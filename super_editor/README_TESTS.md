@@ -1,6 +1,11 @@
 # Running tests
 
-In order to run the golden tests, docker must be installed. Activate the golden_runner with:
+In order to run the golden tests, Docker must be installed. See docs for installing Docker Desktop:
+- macOS: https://docs.docker.com/desktop/install/mac-install/
+- Linux: https://docs.docker.com/desktop/install/linux-install/
+- Windows: https://docs.docker.com/desktop/install/windows-install/
+
+Activate the golden_runner with:
 
 ```console
 dart pub global activate --source path ../golden_runner

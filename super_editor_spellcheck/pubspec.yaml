@@ -4,8 +4,8 @@ version: 0.0.1
 homepage:
 
 environment:
-  sdk: '>=3.5.0-131.0.dev <4.0.0'
-  flutter: '>=3.3.0'
+  sdk: ">=3.5.0-131.0.dev <4.0.0"
+  flutter: ">=3.3.0"
 
 dependencies:
   flutter:
@@ -16,6 +16,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  pigeon: ^21.1.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

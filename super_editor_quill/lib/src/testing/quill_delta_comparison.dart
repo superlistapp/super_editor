@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:matcher/matcher.dart';
 import 'package:text_table/text_table.dart';
 
 /// Creates a [Matcher] that compares an actual Quill [Delta] document
