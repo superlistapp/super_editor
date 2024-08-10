@@ -8,6 +8,7 @@ import 'package:super_editor/src/infrastructure/platforms/android/selection_hand
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../../test_tools.dart';
 import '../supereditor_test_tools.dart';
 
 void main() {
@@ -548,6 +549,248 @@ void main() {
               extent: DocumentPosition(
                 nodeId: "1",
                 nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+          );
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pump();
+        });
+      });
+
+      group("expanded handle >", () {
+        testWidgetsOnAndroid("selects by word when dragging downstream", (tester) async {
+          await _pumpAppWithLongText(tester);
+
+          // Double tap to select the word "dolor".
+          await tester.doubleTapInParagraph("1", 14);
+          await tester.pumpAndSettle();
+
+          // Ensure the word was selected.
+          expect(SuperEditorInspector.findDocumentSelection(), _wordDolorSelection);
+
+          // Drag the downstream handle to the beginning of the downstream word.
+          // "Lorem ipsum dolor s|it amet"
+          //                     ^ position 19
+          //
+          // We do this with manual distances because the attempt to look up character
+          // offsets was producing unpredictable results.
+          final gesture = await tester.pressDownOnDownstreamMobileHandle();
+          const dragIncrementCount = 10;
+          const downstreamDragDistance = 30 / dragIncrementCount;
+          for (int i = 0; i < dragIncrementCount; i += 1) {
+            await gesture.moveBy(const Offset(downstreamDragDistance, 0));
+            await tester.pump();
+          }
+
+          // Ensure the original word and downstream word are both selected.
+          //
+          // "Lorem ipsum dolor sit| amet"
+          //                       ^ position 21
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 12),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 21),
+                ),
+              ),
+            ),
+          );
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pump();
+        });
+
+        testWidgetsOnAndroid("selects by character when dragging downstream in reverse", (tester) async {
+          await _pumpAppWithLongText(tester);
+
+          // Double tap to select the word "do|lor".
+          await tester.doubleTapInParagraph("1", 14);
+          await tester.pumpAndSettle();
+
+          // Ensure the word was selected.
+          expect(SuperEditorInspector.findDocumentSelection(), _wordDolorSelection);
+
+          // Drag near the end of the downstream word.
+          // "Lorem ipsum dolor si|t amet"
+          //                      ^ position 20
+          //
+          // We do this with manual distances because the attempt to look up character
+          // offsets was producing unpredictable results.
+          final gesture = await tester.pressDownOnDownstreamMobileHandle();
+          const dragIncrementCount = 10;
+          const dragDistance = 60 / dragIncrementCount;
+          for (int i = 0; i < dragIncrementCount; i += 1) {
+            await gesture.moveBy(const Offset(dragDistance, 0));
+            await tester.pump();
+          }
+
+          // Ensure the original word and downstream word are both selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 12),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 21),
+                ),
+              ),
+            ),
+          );
+
+          // Drag in reverse toward the initial selection.
+          //
+          // Drag far enough to trigger a per-character selection, and then
+          // drag a little more to deselect some characters.
+          const upstreamDragDistance = -30 / dragIncrementCount;
+          for (int i = 0; i < dragIncrementCount; i += 1) {
+            await gesture.moveBy(const Offset(upstreamDragDistance, 0));
+            await tester.pump();
+          }
+
+          // Ensure that part of the downstream word is selected because we're now
+          // in per-character selection mode.
+          //
+          // "Lorem ipsum dolor s|it amet"
+          //                     ^ position 19
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            selectionEquivalentTo(
+              const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 12),
+                ),
+                extent: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+              ),
+            ),
+          );
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pump();
+        });
+
+        testWidgetsOnAndroid("selects by word when dragging upstream", (tester) async {
+          await _pumpAppWithLongText(tester);
+
+          // Double tap to select the word "dolor".
+          await tester.doubleTapInParagraph("1", 14);
+          await tester.pumpAndSettle();
+
+          // Ensure the word was selected.
+          expect(SuperEditorInspector.findDocumentSelection(), _wordDolorSelection);
+
+          // Drag upstream to the end of the upstream word.
+          // "Lorem ipsu|m dolor sit amet"
+          //            ^ position 10
+          //
+          // We do this with manual distances because the attempt to look up character
+          // offsets was producing unpredictable results.
+          final gesture = await tester.pressDownOnUpstreamMobileHandle();
+          const dragIncrementCount = 10;
+          const upstreamDragDistance = -30 / dragIncrementCount;
+          for (int i = 0; i < dragIncrementCount; i += 1) {
+            await gesture.moveBy(const Offset(upstreamDragDistance, 0));
+            await tester.pump();
+          }
+
+          // Ensure the original word and upstream word are both selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 6),
+              ),
+              extent: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 17),
+              ),
+            ),
+          );
+
+          // Release the gesture so the test system doesn't complain.
+          await gesture.up();
+          await tester.pump();
+        });
+
+        testWidgetsOnAndroid("selects by character when dragging upstream in reverse", (tester) async {
+          await _pumpAppWithLongText(tester);
+
+          // Double tap to select the word "dolor".
+          await tester.doubleTapInParagraph("1", 14);
+          await tester.pumpAndSettle();
+
+          // Ensure the word was selected.
+          expect(SuperEditorInspector.findDocumentSelection(), _wordDolorSelection);
+
+          // Drag near the end of the upstream word.
+          // "Lorem ip|sum dolor sit amet"
+          //          ^ position 8
+          //
+          // We do this with manual distances because the attempt to look up character
+          // offsets was producing unpredictable results.
+          final gesture = await tester.pressDownOnUpstreamMobileHandle();
+          const dragIncrementCount = 10;
+          const upstreamDragDistance = -75.0 / dragIncrementCount;
+          for (int i = 0; i < dragIncrementCount; i += 1) {
+            await gesture.moveBy(const Offset(upstreamDragDistance, 0));
+            await tester.pump();
+          }
+
+          // Ensure the original word and upstream word are both selected.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 6),
+              ),
+              extent: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 17),
+              ),
+            ),
+          );
+
+          // Drag in reverse toward the initial selection.
+          const downstreamDragDistance = 45 / dragIncrementCount;
+          for (int i = 0; i < dragIncrementCount; i += 1) {
+            await gesture.moveBy(const Offset(downstreamDragDistance, 0));
+            await tester.pump();
+          }
+
+          // Ensure that part of the upstream word is selected because we're now
+          // in per-character selection mode.
+          //
+          // "Lorem ipsu|m dolor sit amet"
+          //            ^ position 10
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection(
+              base: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 10),
+              ),
+              extent: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 17),
               ),
             ),
           );
