@@ -17,7 +17,18 @@ void main() {
     });
 
     testWidgetsOnMobile('shows above-keyboard panel at the bottom when there is no keyboard', (tester) async {
-      await _pumpTestApp(tester);
+      final softwareKeyboardController = SoftwareKeyboardController();
+      final controller = KeyboardPanelController(softwareKeyboardController: softwareKeyboardController);
+
+      await _pumpTestApp(
+        tester,
+        controller: controller,
+        softwareKeyboardController: softwareKeyboardController,
+      );
+
+      // Request to show the above-keyboard panel.
+      controller.showAboveKeyboardPanel();
+      await tester.pump();
 
       // Ensure the above-keyboard panel sits at the bottom of the screen.
       expect(
@@ -37,7 +48,18 @@ void main() {
     });
 
     testWidgetsOnMobile('shows above-keyboard panel above the keyboard', (tester) async {
-      await _pumpTestApp(tester);
+      final softwareKeyboardController = SoftwareKeyboardController();
+      final controller = KeyboardPanelController(softwareKeyboardController: softwareKeyboardController);
+
+      await _pumpTestApp(
+        tester,
+        controller: controller,
+        softwareKeyboardController: softwareKeyboardController,
+      );
+
+      // Request to show the above-keyboard panel.
+      controller.showAboveKeyboardPanel();
+      await tester.pump();
 
       // Place the caret at the beginning of the document to show the software keyboard.
       await tester.placeCaretInParagraph('1', 0);
@@ -59,6 +81,10 @@ void main() {
         controller: controller,
         softwareKeyboardController: softwareKeyboardController,
       );
+
+      // Request to show the above-keyboard panel.
+      controller.showAboveKeyboardPanel();
+      await tester.pump();
 
       // Place the caret at the beginning of the document to show the software keyboard.
       await tester.placeCaretInParagraph('1', 0);
@@ -112,6 +138,10 @@ void main() {
         softwareKeyboardController: softwareKeyboardController,
       );
 
+      // Request to show the above-keyboard panel.
+      controller.showAboveKeyboardPanel();
+      await tester.pump();
+
       // Place the caret at the beginning of the document to show the software keyboard.
       await tester.placeCaretInParagraph('1', 0);
 
@@ -141,6 +171,10 @@ void main() {
         controller: controller,
         softwareKeyboardController: softwareKeyboardController,
       );
+
+      // Request to show the above-keyboard panel.
+      controller.showAboveKeyboardPanel();
+      await tester.pump();
 
       // Place the caret at the beginning of the document to show the software keyboard.
       await tester.placeCaretInParagraph('1', 0);
@@ -176,6 +210,10 @@ void main() {
         softwareKeyboardController: softwareKeyboardController,
       );
 
+      // Request to show the above-keyboard panel.
+      controller.showAboveKeyboardPanel();
+      await tester.pump();
+
       // Place the caret at the beginning of the document to show the software keyboard.
       await tester.placeCaretInParagraph('1', 0);
 
@@ -209,6 +247,10 @@ void main() {
         controller: controller,
         softwareKeyboardController: softwareKeyboardController,
       );
+
+      // Request to show the above-keyboard panel.
+      controller.showAboveKeyboardPanel();
+      await tester.pump();
 
       // Place the caret at the beginning of the document to show the software keyboard.
       await tester.placeCaretInParagraph('1', 0);

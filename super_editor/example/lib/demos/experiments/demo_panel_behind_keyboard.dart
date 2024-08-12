@@ -159,11 +159,18 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: KeyboardPanelScaffold(
-        controller: _keyboardPanelController,
-        contentBuilder: _buildSuperEditor,
-        aboveKeyboardBuilder: _buildTopPanel,
-        keyboardPanelBuilder: _buildKeyboardPanel,
+      body: SafeArea(
+        bottom: false,
+        left: false,
+        right: false,
+        child: Column(
+          children: [
+            _buildTopPanelToggle(context),
+            Expanded(
+              child: _buildSuperEditor(context, _isKeyboardPanelVisible),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -183,6 +190,20 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
       imePolicies: const SuperEditorImePolicies(
         openKeyboardOnSelectionChange: false,
       ),
+    );
+  }
+
+  Widget _buildTopPanelToggle(BuildContext context) {
+    return KeyboardPanelScaffold(
+      controller: _keyboardPanelController,
+      aboveKeyboardBuilder: _buildTopPanel,
+      keyboardPanelBuilder: _buildKeyboardPanel,
+      contentBuilder: (context, wantsToShowKeyboardPanel) {
+        return ElevatedButton(
+          onPressed: _keyboardPanelController.toggleAboveKeyboardPanel,
+          child: Text('Toggle above-keyboard panel'),
+        );
+      },
     );
   }
 
@@ -210,121 +231,124 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   }
 
   Widget _buildKeyboardPanel(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Alignment',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildKeyboardPanelButton(
-                    onPressed: () {},
-                    child: Icon(Icons.format_align_left),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: _buildKeyboardPanelButton(
-                    onPressed: () {},
-                    child: Icon(Icons.format_align_center),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: _buildKeyboardPanelButton(
-                    onPressed: () {},
-                    child: Icon(Icons.format_align_right),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: _buildKeyboardPanelButton(
-                    onPressed: () {},
-                    child: Icon(Icons.format_align_justify),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Text Style',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildKeyboardPanelButton(
-                    onPressed: () {},
-                    child: Icon(Icons.format_bold),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: _buildKeyboardPanelButton(
-                    onPressed: () {},
-                    child: Icon(Icons.format_italic),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: _buildKeyboardPanelButton(
-                    onPressed: () {},
-                    child: Icon(Icons.format_strikethrough),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Convertions',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(
-              width: double.infinity,
-              child: _buildKeyboardPanelButton(
-                onPressed: () {},
-                child: Text('Header 1'),
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Alignment',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
-            SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: _buildKeyboardPanelButton(
-                onPressed: () {},
-                child: Text('Header 2'),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildKeyboardPanelButton(
+                      onPressed: () {},
+                      child: Icon(Icons.format_align_left),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKeyboardPanelButton(
+                      onPressed: () {},
+                      child: Icon(Icons.format_align_center),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKeyboardPanelButton(
+                      onPressed: () {},
+                      child: Icon(Icons.format_align_right),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKeyboardPanelButton(
+                      onPressed: () {},
+                      child: Icon(Icons.format_align_justify),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: _buildKeyboardPanelButton(
-                onPressed: () {},
-                child: Text('Blockquote'),
+              SizedBox(height: 8),
+              Text(
+                'Text Style',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
-            SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: _buildKeyboardPanelButton(
-                onPressed: () {},
-                child: Text('Ordered List'),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildKeyboardPanelButton(
+                      onPressed: () {},
+                      child: Icon(Icons.format_bold),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKeyboardPanelButton(
+                      onPressed: () {},
+                      child: Icon(Icons.format_italic),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKeyboardPanelButton(
+                      onPressed: () {},
+                      child: Icon(Icons.format_strikethrough),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: _buildKeyboardPanelButton(
-                onPressed: () {},
-                child: Text('Unordered List'),
+              SizedBox(height: 8),
+              Text(
+                'Convertions',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              SizedBox(
+                width: double.infinity,
+                child: _buildKeyboardPanelButton(
+                  onPressed: () {},
+                  child: Text('Header 1'),
+                ),
+              ),
+              SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: _buildKeyboardPanelButton(
+                  onPressed: () {},
+                  child: Text('Header 2'),
+                ),
+              ),
+              SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: _buildKeyboardPanelButton(
+                  onPressed: () {},
+                  child: Text('Blockquote'),
+                ),
+              ),
+              SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: _buildKeyboardPanelButton(
+                  onPressed: () {},
+                  child: Text('Ordered List'),
+                ),
+              ),
+              SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: _buildKeyboardPanelButton(
+                  onPressed: () {},
+                  child: Text('Unordered List'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

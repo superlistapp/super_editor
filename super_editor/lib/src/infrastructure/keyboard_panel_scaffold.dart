@@ -79,6 +79,9 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
   /// the keyboard panel, we need to animated it ourselves.
   late final AnimationController _panelExitAnimation;
 
+  /// Shows/hides the [OverlayPortal] containing the keyboard panel and above-keyboard panel.
+  final OverlayPortalController _overlayPortalController = OverlayPortalController();
+
   @override
   void initState() {
     super.initState();
@@ -127,6 +130,17 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
   }
 
   void _onKeyboardPanelChanged() {
+    if (!widget.controller.wantsToShowAboveKeyboardPanel && !widget.controller.wantsToShowKeyboardPanel) {
+      _overlayPortalController.hide();
+      return;
+    }
+
+    if (!_overlayPortalController.isShowing) {
+      // The user wants to show the above-keyboard panel or the keyboard panel, but the overlay
+      // isn't visible. Show it.
+      _overlayPortalController.show();
+    }
+
     if (!widget.controller.wantsToShowKeyboardPanel &&
         !widget.controller.wantsToShowSoftwareKeyboard &&
         _latestViewInsets.bottom == 0.0) {
@@ -185,23 +199,34 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
         // and the keyboard panel was previously visible. Otherwise, there will be an empty
         // region between the top of the software keyboard and the bottom of the above-keyboard panel.
         (widget.controller.wantsToShowSoftwareKeyboard && _latestViewInsets.bottom < _keyboardHeight);
-    return Column(
-      children: [
-        Expanded(
-          child: widget.contentBuilder(
-            context,
-            widget.controller.wantsToShowKeyboardPanel,
+
+    return OverlayPortal(
+      controller: _overlayPortalController,
+      overlayChildBuilder: (context) {
+        return Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.controller.wantsToShowAboveKeyboardPanel)
+                widget.aboveKeyboardBuilder(
+                  context,
+                  widget.controller.wantsToShowKeyboardPanel,
+                ),
+              SizedBox(
+                height: _keyboardHeight,
+                child: wantsToShowKeyboardPanel ? widget.keyboardPanelBuilder(context) : null,
+              ),
+            ],
           ),
-        ),
-        widget.aboveKeyboardBuilder(
-          context,
-          widget.controller.wantsToShowKeyboardPanel,
-        ),
-        SizedBox(
-          height: _keyboardHeight,
-          child: wantsToShowKeyboardPanel ? widget.keyboardPanelBuilder(context) : null,
-        ),
-      ],
+        );
+      },
+      child: widget.contentBuilder(
+        context,
+        widget.controller.wantsToShowKeyboardPanel,
+      ),
     );
   }
 }
@@ -219,6 +244,9 @@ class KeyboardPanelController with ChangeNotifier {
 
   bool get wantsToShowSoftwareKeyboard => _wantsToShowSoftwareKeyboard;
   bool _wantsToShowSoftwareKeyboard = false;
+
+  bool get wantsToShowAboveKeyboardPanel => _wantsToShowAboveKeyboardPanel;
+  bool _wantsToShowAboveKeyboardPanel = false;
 
   void showKeyboardPanel() {
     _wantsToShowKeyboardPanel = true;
@@ -248,5 +276,23 @@ class KeyboardPanelController with ChangeNotifier {
     _wantsToShowSoftwareKeyboard = false;
     softwareKeyboardController.close();
     notifyListeners();
+  }
+
+  void showAboveKeyboardPanel() {
+    _wantsToShowAboveKeyboardPanel = true;
+    notifyListeners();
+  }
+
+  void hideAboveKeyboardPanel() {
+    _wantsToShowAboveKeyboardPanel = false;
+    notifyListeners();
+  }
+
+  void toggleAboveKeyboardPanel() {
+    if (_wantsToShowAboveKeyboardPanel) {
+      hideAboveKeyboardPanel();
+    } else {
+      showAboveKeyboardPanel();
+    }
   }
 }
