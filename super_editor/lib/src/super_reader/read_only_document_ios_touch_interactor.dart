@@ -660,7 +660,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       // There isn't a selection, but we still don't know if the user is dragging
       // vertically or horizontally. Wait until the onPanUpdate event is fired
       // to decide whether or not we should scroll the document.
-      _dragMode = DragMode.unkown;
+      _dragMode = DragMode.waitingForScrollDirection;
       _updateDragStartLocation(details.globalPosition);
       return;
     }
@@ -679,7 +679,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       // The user isn't dragging over a handle, but we still don't know if the user is dragging
       // vertically or horizontally. Wait until the onPanUpdate event is fired
       // to decide whether or not we should scroll the document.
-      _dragMode = DragMode.unkown;
+      _dragMode = DragMode.waitingForScrollDirection;
       _updateDragStartLocation(details.globalPosition);
       return;
     }
@@ -724,7 +724,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    if (_dragMode == DragMode.unkown) {
+    if (_dragMode == DragMode.waitingForScrollDirection) {
       if (_globalStartDragOffset == null || (details.globalPosition.dy - _globalStartDragOffset!.dy).abs() < kPanSlop) {
         // The user is neither dragging a handle of scrolling vertically. The reader doesn't
         // handle other types of drags.
@@ -811,7 +811,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       return;
     }
 
-    if (_dragMode != null && _dragMode != DragMode.unkown) {
+    if (_dragMode != null && _dragMode != DragMode.waitingForScrollDirection) {
       // The user was dragging a selection change in some way, either with handles
       // or with a long-press. Finish that interaction.
       _onDragSelectionEnd();
@@ -830,7 +830,7 @@ class _SuperReaderIosDocumentTouchInteractorState extends State<SuperReaderIosDo
       return;
     }
 
-    if (_dragMode != null && _dragMode != DragMode.unkown) {
+    if (_dragMode != null && _dragMode != DragMode.waitingForScrollDirection) {
       _onDragSelectionEnd();
     }
   }

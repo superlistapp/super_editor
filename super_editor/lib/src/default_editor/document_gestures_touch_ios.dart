@@ -307,7 +307,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   final _magnifierFocalPointInDocumentSpace = ValueNotifier<Offset?>(null);
   Offset? _dragEndInInteractor;
   DragMode? _dragMode;
-  DragStartDetails? _lastDragStartDetails;
+  DragStartDetails? _dragStartDetails;
   // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
   //       not collapsed/upstream/downstream. Change the type once it's working.
   HandleType? _dragHandleType;
@@ -898,8 +898,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onPanStart(DragStartDetails details) {
-    // Store the details so we can start a drag in the onPanUpdate.
-    _lastDragStartDetails = details;
+    // Store the gesture start details to disambiguate horizontal vs vertical dragging, later.
+    _dragStartDetails = details;
 
     // Stop waiting for a long-press to start, if a long press isn't already in-progress.
     _globalTapDownOffset = null;
@@ -913,7 +913,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       // There isn't a selection, but we still don't know if the user is dragging
       // vertically or horizontally. Wait until the onPanUpdate event is fired
       // to decide whether or not we should scroll the document.
-      _dragMode = DragMode.unkown;
+      _dragMode = DragMode.waitingForScrollDirection;
       _updateDragStartLocation(details.globalPosition);
       return;
     }
@@ -935,7 +935,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       // The user isn't dragging over a handle, but we still don't know if the user is dragging
       // vertically or horizontally. Wait until the onPanUpdate event is fired
       // to decide whether or not we should scroll the document.
-      _dragMode = DragMode.unkown;
+      _dragMode = DragMode.waitingForScrollDirection;
       _updateDragStartLocation(details.globalPosition);
 
       return;
@@ -997,10 +997,10 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    if (_dragMode == DragMode.unkown) {
+    if (_dragMode == DragMode.waitingForScrollDirection) {
       if (_globalStartDragOffset != null && (details.globalPosition.dy - _globalStartDragOffset!.dy).abs() > kPanSlop) {
         // The user is dragging vertically. Start scrolling the document.
-        _startDragScrolling(_lastDragStartDetails!);
+        _startDragScrolling(_dragStartDetails!);
       }
     }
 
@@ -1112,7 +1112,7 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
         // or with a long-press. Finish that interaction.
         _onDragSelectionEnd();
         break;
-      case DragMode.unkown:
+      case DragMode.waitingForScrollDirection:
         _dragMode = null;
         break;
       case null:
@@ -1469,7 +1469,7 @@ enum DragMode {
   // Dragging to scroll the document.
   scroll,
   // We still don't know if the user is dragging vertically or horizontally.
-  unkown,
+  waitingForScrollDirection,
 }
 
 /// Adds and removes an iOS-style editor toolbar, as dictated by an ancestor
