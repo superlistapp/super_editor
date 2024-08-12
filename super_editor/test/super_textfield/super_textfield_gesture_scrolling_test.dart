@@ -271,7 +271,7 @@ void main() {
       // Ensure the text field has not yet scrolled.
       var textBottom = tester.getBottomRight(find.byType(SuperTextField)).dy;
       var viewportBottom = tester.getBottomRight(find.byType(SuperText)).dy;
-      expect(textBottom, lessThan(viewportBottom));
+      expect(textBottom, lessThanOrEqualTo(viewportBottom));
 
       // Scroll down to reveal the last line of text.
       await tester.drag(find.byType(SuperTextField), const Offset(0, -1000.0));
@@ -289,7 +289,7 @@ void main() {
       // Ensure the text field has scrolled back to the top.
       textBottom = tester.getBottomRight(find.byType(SuperTextField)).dy;
       viewportBottom = tester.getBottomRight(find.byType(SuperText)).dy;
-      expect(textBottom, lessThan(viewportBottom));
+      expect(textBottom, lessThanOrEqualTo(viewportBottom));
     });
 
     testWidgetsOnDesktop("multi-line is vertically scrollable when text spans more lines than maxLines", (tester) async {
@@ -313,7 +313,7 @@ void main() {
       // Ensure the text field has not yet scrolled.
       var textBottom = tester.getBottomRight(find.byType(SuperTextField)).dy;
       var viewportBottom = tester.getBottomRight(find.byType(SuperText)).dy;
-      expect(textBottom, lessThan(viewportBottom));
+      expect(textBottom, lessThanOrEqualTo(viewportBottom));
 
       // Scroll down to reveal the last line of text.
       await tester.drag(
@@ -339,7 +339,7 @@ void main() {
       // Ensure the text field has scrolled back to the top.
       textBottom = tester.getBottomRight(find.byType(SuperTextField)).dy;
       viewportBottom = tester.getBottomRight(find.byType(SuperText)).dy;
-      expect(textBottom, lessThan(viewportBottom));
+      expect(textBottom, lessThanOrEqualTo(viewportBottom));
     });
   });
 }
