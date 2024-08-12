@@ -413,18 +413,6 @@ class ListItemDotStyle {
   final BoxShape shape;
   final Size size;
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ListItemDotStyle &&
-          runtimeType == other.runtimeType &&
-          color == other.color &&
-          shape == other.shape &&
-          size == other.size;
-
-  @override
-  int get hashCode => super.hashCode ^ color.hashCode ^ shape.hashCode ^ size.hashCode;
-
   /// Returns a copy of this [ListItemDotStyle] with optional new values
   /// for [color], [shape], and [size].
   ListItemDotStyle copyWith({
@@ -438,6 +426,18 @@ class ListItemDotStyle {
       size: size ?? this.size,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ListItemDotStyle &&
+          runtimeType == other.runtimeType &&
+          color == other.color &&
+          shape == other.shape &&
+          size == other.size;
+
+  @override
+  int get hashCode => super.hashCode ^ color.hashCode ^ shape.hashCode ^ size.hashCode;
 }
 
 /// Displays a un-ordered list item in a document.
