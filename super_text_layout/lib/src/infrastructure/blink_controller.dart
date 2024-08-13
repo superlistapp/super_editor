@@ -25,14 +25,17 @@ class BlinkController with ChangeNotifier {
     required TickerProvider tickerProvider,
     Duration flashPeriod = const Duration(milliseconds: 500),
     bool animate = false,
+    Duration fadeDuration = const Duration(milliseconds: 200),
   })  : _flashPeriod = flashPeriod,
+        _fadeDuration = fadeDuration,
         _animate = animate {
     _ticker = tickerProvider.createTicker(_onTick);
   }
 
   BlinkController.withTimer({
     Duration flashPeriod = const Duration(milliseconds: 500),
-  }) : _flashPeriod = flashPeriod;
+  })  : _fadeDuration = Duration.zero,
+        _flashPeriod = flashPeriod;
 
   @override
   void dispose() {
@@ -47,10 +50,13 @@ class BlinkController with ChangeNotifier {
 
   Timer? _timer;
 
-  final Duration _flashPeriod;
-
   /// Duration to switch between visible and invisible.
   Duration get flashPeriod => _flashPeriod;
+  final Duration _flashPeriod;
+
+  /// Duration of the fade in or out transition when switching
+  /// between visible and invisible.
+  final Duration _fadeDuration;
 
   /// Returns `true` if this controller is currently animating a blinking
   /// signal, or `false` if it's not.
@@ -70,10 +76,15 @@ class BlinkController with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Whether or not the caret is currently visible.
+  ///
+  /// It's possible that [isVisible] is `false` while [opacity] is greater than `0.0`
+  /// when the caret is fading out.
+  bool get isVisible => _isVisible;
   bool _isVisible = true;
 
-  double _opacity = 1.0;
   double get opacity => _opacity;
+  double _opacity = 1.0;
 
   /// Whether or not the caret should animate its opacity.
   bool _animate = false;
@@ -145,11 +156,8 @@ class BlinkController with ChangeNotifier {
   }
 
   void _onTick(Duration elapsedTime) {
-    final fadeAnimationDuration = _flashPeriod ~/ 2;
-
     if (isBlinking && _animate && !_remainOpaqueUntilNextBlink) {
-      final percentage =
-          ((elapsedTime - _lastBlinkTime).inMilliseconds / fadeAnimationDuration.inMilliseconds).clamp(0.0, 1.0);
+      final percentage = ((elapsedTime - _lastBlinkTime).inMilliseconds / _fadeDuration.inMilliseconds).clamp(0.0, 1.0);
       _opacity = _isVisible ? percentage : 1 - percentage;
       notifyListeners();
     }
