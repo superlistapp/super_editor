@@ -60,6 +60,7 @@ void main() {
 
       // Jump to the end of the document
       scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      await tester.pump();
 
       final dragGesture = await tester.startDocumentDragFromPosition(
         from: DocumentPosition(
@@ -175,7 +176,7 @@ void main() {
         DocumentSelection(
           base: DocumentPosition(
             nodeId: lastParagraph.id,
-            nodePosition: lastParagraph.endPosition.copyWith(affinity: TextAffinity.upstream),
+            nodePosition: lastParagraph.endPosition,
           ),
           extent: DocumentPosition(
             nodeId: firstParagraph.id,
@@ -566,7 +567,7 @@ void main() {
 
         // Drag an arbitrary amount of pixels from the top of the reader.
         final dragGesture = await tester.dragByFrameCount(
-          startLocation: tester.getRect(find.byType(SuperReader)).topCenter + const Offset(0, 5),
+          startLocation: tester.getRect(find.byType(Viewport)).topCenter + const Offset(0, 5),
           totalDragOffset: const Offset(0, 400.0),
         );
 

@@ -2524,9 +2524,7 @@ Future<TestDocumentContext> _pumpPageScrollSliverTestSetup(
                 ),
                 expandedHeight: 200.0,
               ),
-              SliverToBoxAdapter(
-                child: superEditor,
-              ),
+              superEditor,
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (BuildContext context, int index) {
