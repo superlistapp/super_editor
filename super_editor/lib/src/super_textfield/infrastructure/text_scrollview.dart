@@ -423,6 +423,8 @@ class _TextScrollViewState extends State<TextScrollView>
       child: SingleChildScrollView(
         key: _textFieldViewportKey,
         controller: _scrollController,
+        // Passing null for scroll physics for multiline text fields will
+        // apply an appropriate physics for the underlying host platform.
         physics: isMultiline ? null : const NeverScrollableScrollPhysics(),
         scrollDirection: isMultiline ? Axis.vertical : Axis.horizontal,
         child: Padding(
