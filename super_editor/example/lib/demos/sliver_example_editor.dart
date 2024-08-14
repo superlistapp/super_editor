@@ -75,16 +75,14 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: SuperEditor(
-                    editor: _docEditor,
-                    stylesheet: defaultStylesheet.copyWith(
-                      documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
-                    ),
-                    debugPaint: const DebugPaintConfig(
-                      gestures: _showDebugPaint,
-                      scrollingMinimapId: _showDebugPaint ? "sliver_demo" : null,
-                    ),
+                SuperEditor(
+                  editor: _docEditor,
+                  stylesheet: defaultStylesheet.copyWith(
+                    documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+                  ),
+                  debugPaint: const DebugPaintConfig(
+                    gestures: _showDebugPaint,
+                    scrollingMinimapId: _showDebugPaint ? "sliver_demo" : null,
                   ),
                 ),
                 SliverList(

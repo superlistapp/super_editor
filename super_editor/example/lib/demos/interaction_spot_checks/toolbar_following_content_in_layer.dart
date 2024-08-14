@@ -40,49 +40,52 @@ class _ToolbarFollowingContentInLayerState extends State<ToolbarFollowingContent
       child: SpotCheckScaffold(
         content: KeyedSubtree(
           key: _viewportKey,
-          child: ContentLayers(
-            overlays: [
-              (_) => LeaderLayoutLayer(
-                    leaderLink: _leaderLink,
-                    leaderBoundsKey: _leaderBoundsKey,
-                  ),
-            ],
-            content: (_) => Center(
-              child: Column(
-                children: [
-                  const Spacer(),
-                  ValueListenableBuilder(
-                    valueListenable: _expansionExtent,
-                    builder: (context, expansionExtent, _) {
-                      return Container(
-                        height: 12,
-                        width: _baseContentWidth + (2 * expansionExtent) + 2, // +2 for border
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
-                        ),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            key: _leaderBoundsKey,
-                            width: _baseContentWidth + expansionExtent,
-                            height: 10,
-                            color: Colors.white.withOpacity(0.2),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 96),
-                  TextButton(
-                    onPressed: () {
-                      _expansionExtent.value = Random().nextDouble() * 200;
-                    },
-                    child: Text("Change Size"),
-                  ),
-                  const Spacer(),
+          child: CustomScrollView(
+            shrinkWrap: true,
+            slivers: [
+              ContentLayers(
+                overlays: [
+                  (_) => LeaderLayoutLayer(
+                        leaderLink: _leaderLink,
+                        leaderBoundsKey: _leaderBoundsKey,
+                      ),
                 ],
+                content: (_) => SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      ValueListenableBuilder(
+                        valueListenable: _expansionExtent,
+                        builder: (context, expansionExtent, _) {
+                          return Container(
+                            height: 12,
+                            width: _baseContentWidth + (2 * expansionExtent) + 2, // +2 for border
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                            ),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                key: _leaderBoundsKey,
+                                width: _baseContentWidth + expansionExtent,
+                                height: 10,
+                                color: Colors.white.withOpacity(0.2),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 96),
+                      TextButton(
+                        onPressed: () {
+                          _expansionExtent.value = Random().nextDouble() * 200;
+                        },
+                        child: Text("Change Size"),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -158,18 +161,22 @@ class LeaderLayoutLayerState extends ContentLayerState<LeaderLayoutLayer, Rect> 
       return const SizedBox();
     }
 
-    return Center(
-      child: SizedBox(
-        width: layoutData.size.width * 2,
-        height: layoutData.size.height,
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Leader(
-            link: widget.leaderLink,
-            child: SizedBox.fromSize(
-              size: layoutData.size,
-              child: ColoredBox(
-                color: Colors.red,
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 24.0),
+        child: SizedBox(
+          width: layoutData.size.width * 2,
+          height: layoutData.size.height,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Leader(
+              link: widget.leaderLink,
+              child: SizedBox.fromSize(
+                size: layoutData.size,
+                child: ColoredBox(
+                  color: Colors.red,
+                ),
               ),
             ),
           ),

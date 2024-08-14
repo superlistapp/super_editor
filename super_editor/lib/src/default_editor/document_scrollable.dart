@@ -33,6 +33,7 @@ class DocumentScrollable extends StatefulWidget {
     this.scroller,
     this.scrollingMinimapId,
     this.showDebugPaint = false,
+    required this.shrinkWrap,
     required this.child,
   }) : super(key: key);
 
@@ -61,6 +62,10 @@ class DocumentScrollable extends StatefulWidget {
 
   /// This widget's child, which should include a document.
   final Widget child;
+
+  /// Whether to shrink wrap the [CustomScrollView] that's used to host
+  /// the editor content. Only used when there's no ancestor [Scrollable].
+  final bool shrinkWrap;
 
   @override
   State<DocumentScrollable> createState() => _DocumentScrollableState();
@@ -180,12 +185,14 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
   Widget build(BuildContext context) {
     final ancestorScrollable = context.findAncestorScrollableWithVerticalScroll;
     _ancestorScrollPosition = ancestorScrollable?.position;
-
+    if (ancestorScrollable != null) {
+      return widget.child;
+    }
     return Stack(
       children: [
-        _ancestorScrollPosition == null //
-            ? _buildScroller(child: widget.child) //
-            : widget.child,
+        _buildScroller(
+          child: widget.child,
+        ),
         if (widget.showDebugPaint)
           ..._buildScrollingDebugPaint(
             includesScrollView: ancestorScrollable == null,
@@ -202,10 +209,11 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
       behavior: scrollBehavior,
       child: ScrollConfiguration(
         behavior: scrollBehavior.copyWith(scrollbars: false),
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           controller: _scrollController,
+          shrinkWrap: widget.shrinkWrap,
           physics: const NeverScrollableScrollPhysics(),
-          child: child,
+          slivers: [child],
         ),
       ),
     );
@@ -378,7 +386,14 @@ class AutoScrollController with ChangeNotifier {
     // The scroll position changed. Probably because the position scrolled
     // up or down. Notify our listeners so that they can adjust the document
     // selection bounds or other related properties.
-    notifyListeners();
+    //
+    // The scroll position may trigger layout changes, notify the listeners
+    // after the layout settles.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (hasScrollable) {
+        notifyListeners();
+      }
+    });
   }
 
   /// Stops controlling a [Scrollable] that was attached with [attachScrollable].
