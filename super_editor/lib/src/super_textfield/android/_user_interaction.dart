@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
@@ -316,9 +317,14 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
       return;
     }
 
-    widget.textController.selection = TextSelection.collapsed(
+    final newSelection = TextSelection.collapsed(
       offset: _globalOffsetToTextPosition(details.globalPosition).offset,
     );
+
+    if (newSelection != widget.textController.selection) {
+      widget.textController.selection = newSelection;
+      HapticFeedback.lightImpact();
+    }
 
     setState(() {
       _globalDragOffset = _globalDragOffset! + details.delta;
