@@ -84,6 +84,7 @@ class ReadOnlyDocumentKeyboardInteractor extends StatelessWidget {
   Widget build(BuildContext context) {
     return Focus(
       focusNode: focusNode,
+      includeSemantics: false,
       onKeyEvent: _onKeyEventPressed,
       autofocus: autofocus,
       child: child,
