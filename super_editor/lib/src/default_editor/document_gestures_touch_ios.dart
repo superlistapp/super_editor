@@ -157,6 +157,11 @@ class SuperEditorIosControlsController {
   /// Controls the iOS floating cursor.
   late final FloatingCursorController floatingCursorController;
 
+  /// Reports the offset where the caret is being dragged, in content space.
+  ///
+  /// If the caret is not being dragged, this value is `null`.
+  final ValueNotifier<Offset?> caretDragOffset = ValueNotifier<Offset?>(null);
+
   /// Whether the iOS magnifier should be displayed right now.
   ValueListenable<bool> get shouldShowMagnifier => _shouldShowMagnifier;
   final _shouldShowMagnifier = ValueNotifier<bool>(false);
@@ -1053,6 +1058,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     }
 
     if (_dragHandleType == HandleType.collapsed) {
+      _controlsController!.caretDragOffset.value =
+          _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalDragOffset!));
       widget.editor.execute([
         ChangeSelectionRequest(
           DocumentSelection.collapsed(
@@ -1135,6 +1142,8 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
     } else {
       _onHandleDragEnd();
     }
+
+    _controlsController!.caretDragOffset.value = null;
 
     widget.dragHandleAutoScroller.value?.stopAutoScrollHandleMonitoring();
     scrollPosition.removeListener(_onAutoScrollChange);
@@ -1327,18 +1336,26 @@ class _IosDocumentTouchInteractorState extends State<IosDocumentTouchInteractor>
       // A drag isn't happening. Magnify the position that the user tapped.
       docPositionToMagnify =
           _docLayout.getDocumentPositionNearestToOffset(_globalTapDownOffset! + Offset(0, scrollPosition.pixels));
+      final centerOfContentAtOffset = _interactorOffsetToDocumentOffset(
+        _docLayout.getRectForPosition(docPositionToMagnify!)!.center,
+      );
+
+      _magnifierFocalPointInDocumentSpace.value = centerOfContentAtOffset;
     } else {
       final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
       final dragScrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
       docPositionToMagnify = _docLayout
           .getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
+      final centerOfContentAtOffset = _interactorOffsetToDocumentOffset(
+        _docLayout.getRectForPosition(docPositionToMagnify!)!.center,
+      );
+      _magnifierFocalPointInDocumentSpace.value = Offset(
+        _interactorOffsetToDocumentOffset(interactorBox.globalToLocal(_globalDragOffset!)).dx,
+        // The user can move the caret freely in the x-axis, but the caret is snaped to the selection
+        // at the y-axis.
+        centerOfContentAtOffset.dy,
+      );
     }
-
-    final centerOfContentAtOffset = _interactorOffsetToDocumentOffset(
-      _docLayout.getRectForPosition(docPositionToMagnify!)!.center,
-    );
-
-    _magnifierFocalPointInDocumentSpace.value = centerOfContentAtOffset;
   }
 
   @override
@@ -1939,6 +1956,8 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
       return const ContentLayerProxyWidget(child: SizedBox());
     }
 
+    final controlsScope = SuperEditorIosControlsScope.rootOf(context);
+
     return IosHandlesDocumentLayer(
       document: editContext.document,
       documentLayout: editContext.documentLayout,
@@ -1949,13 +1968,12 @@ class SuperEditorIosHandlesDocumentLayerBuilder implements SuperEditorLayerBuild
           const ClearComposingRegionRequest(),
         ]);
       },
-      handleColor: handleColor ??
-          SuperEditorIosControlsScope.maybeRootOf(context)?.handleColor ??
-          Theme.of(context).primaryColor,
+      handleColor: handleColor ?? controlsScope.handleColor ?? Theme.of(context).primaryColor,
       caretWidth: caretWidth ?? 2,
       handleBallDiameter: handleBallDiameter ?? defaultIosHandleBallDiameter,
-      shouldCaretBlink: SuperEditorIosControlsScope.rootOf(context).shouldCaretBlink,
-      floatingCursorController: SuperEditorIosControlsScope.rootOf(context).floatingCursorController,
+      shouldCaretBlink: controlsScope.shouldCaretBlink,
+      floatingCursorController: controlsScope.floatingCursorController,
+      caretDragOffset: controlsScope.caretDragOffset,
     );
   }
 }
