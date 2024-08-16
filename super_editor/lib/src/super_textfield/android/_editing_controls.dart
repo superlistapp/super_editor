@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -341,6 +342,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
   void _updateDragHandleSelection(TextSelection selection) {
     if (selection != widget.editingController.textController.selection) {
       widget.editingController.textController.selection = selection;
+      HapticFeedback.lightImpact();
     }
   }
 
