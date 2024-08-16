@@ -58,7 +58,7 @@ Future<void> main() async {
             tester, 'super_editor_list_item_unordered_aligns_dot_with_text_with_font_sizes_and_line_multiplier');
       });
 
-      testGoldensOnMac('allows customizing the dot size', (tester) async {
+      testGoldensOnMac('allows customizing the dot size with stylesheet', (tester) async {
         await tester //
             .createDocument()
             .fromMarkdown('- Item 1')
@@ -76,10 +76,28 @@ Future<void> main() async {
             )
             .pump();
 
-        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_size');
+        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_size_stylesheet');
       });
 
-      testGoldensOnMac('allows customizing the dot shape', (tester) async {
+      testGoldensOnMac('allows customizing the dot size with component builder', (tester) async {
+        await tester //
+            .createDocument()
+            .fromMarkdown('- Item 1')
+            .useStylesheet(_createStylesheet())
+            .withAddedComponents(
+          [
+            _ListItemWithCustomStyleBuilder(
+              dotStyle: ListItemDotStyle(
+                size: const Size(14, 14),
+              ),
+            ),
+          ],
+        ).pump();
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_size_component_builder');
+      });
+
+      testGoldensOnMac('allows customizing the dot shape with stylesheet', (tester) async {
         await tester //
             .createDocument()
             .fromMarkdown('- Item 1')
@@ -97,10 +115,28 @@ Future<void> main() async {
             )
             .pump();
 
-        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_shape');
+        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_shape_stylesheet');
       });
 
-      testGoldensOnMac('allows customizing the dot color', (tester) async {
+      testGoldensOnMac('allows customizing the dot size with component builder', (tester) async {
+        await tester //
+            .createDocument()
+            .fromMarkdown('- Item 1')
+            .useStylesheet(_createStylesheet())
+            .withAddedComponents(
+          [
+            _ListItemWithCustomStyleBuilder(
+              dotStyle: ListItemDotStyle(
+                shape: BoxShape.rectangle,
+              ),
+            ),
+          ],
+        ).pump();
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_shape_component_builder');
+      });
+
+      testGoldensOnMac('allows customizing the dot color with stylesheet', (tester) async {
         await tester //
             .createDocument()
             .fromMarkdown('- Item 1')
@@ -118,7 +154,25 @@ Future<void> main() async {
             )
             .pump();
 
-        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_color');
+        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_color_stylesheet');
+      });
+
+      testGoldensOnMac('allows customizing the dot color with component builder', (tester) async {
+        await tester //
+            .createDocument()
+            .fromMarkdown('- Item 1')
+            .useStylesheet(_createStylesheet())
+            .withAddedComponents(
+          [
+            _ListItemWithCustomStyleBuilder(
+              dotStyle: ListItemDotStyle(
+                color: Colors.red,
+              ),
+            ),
+          ],
+        ).pump();
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_unordered_custom_dot_color_component_builder');
       });
     });
 
@@ -170,36 +224,82 @@ Future<void> main() async {
             tester, 'super_editor_list_item_ordered_aligns_dot_with_text_with_font_sizes_and_line_multiplier');
       });
 
-      testGoldensOnMac('allows customizing the numeral as lower roman', (tester) async {
+      testGoldensOnMac('allows customizing the numeral as lower roman with stylesheet', (tester) async {
         await _pumpOrderedListItemStyleTestApp(tester, style: OrderedListNumeralStyle.lowerRoman);
 
-        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_lower_roman_numeral');
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_lower_roman_numeral_stylesheet');
       });
 
-      testGoldensOnMac('allows customizing the numeral as upper roman', (tester) async {
+      testGoldensOnMac('allows customizing the numeral as lower roman with component_builder', (tester) async {
+        await _pumpOrderedListItemStyleTestApp(
+          tester,
+          style: OrderedListNumeralStyle.lowerRoman,
+          fromStylesheet: false,
+        );
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_lower_roman_numeral_component_builder');
+      });
+
+      testGoldensOnMac('allows customizing the numeral as upper roman with stylesheet', (tester) async {
         await _pumpOrderedListItemStyleTestApp(tester, style: OrderedListNumeralStyle.upperRoman);
 
-        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_upper_roman_numeral');
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_upper_roman_numeral_stylesheet');
       });
 
-      testGoldensOnMac('allows customizing the numeral as lower alpha', (tester) async {
+      testGoldensOnMac('allows customizing the numeral as upper roman with component builder', (tester) async {
+        await _pumpOrderedListItemStyleTestApp(
+          tester,
+          style: OrderedListNumeralStyle.upperRoman,
+          fromStylesheet: false,
+        );
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_upper_roman_numeral_component_builder');
+      });
+
+      testGoldensOnMac('allows customizing the numeral as lower alpha with stylesheet', (tester) async {
         await _pumpOrderedListItemStyleTestApp(tester, style: OrderedListNumeralStyle.lowerAlpha);
 
-        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_lower_alpha_numeral');
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_lower_alpha_numeral_stylesheet');
       });
 
-      testGoldensOnMac('allows customizing the numeral as upper alpha', (tester) async {
+      testGoldensOnMac('allows customizing the numeral as lower alpha with component builder', (tester) async {
+        await _pumpOrderedListItemStyleTestApp(
+          tester,
+          style: OrderedListNumeralStyle.lowerAlpha,
+          fromStylesheet: false,
+        );
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_lower_alpha_numeral_component_builder');
+      });
+
+      testGoldensOnMac('allows customizing the numeral as upper alpha with stylesheet', (tester) async {
         await _pumpOrderedListItemStyleTestApp(tester, style: OrderedListNumeralStyle.upperAlpha);
 
-        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_upper_alpha_numeral');
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_upper_alpha_numeral_stylesheet');
+      });
+
+      testGoldensOnMac('allows customizing the numeral as upper alpha with component builder', (tester) async {
+        await _pumpOrderedListItemStyleTestApp(
+          tester,
+          style: OrderedListNumeralStyle.upperAlpha,
+          fromStylesheet: false,
+        );
+
+        await screenMatchesGolden(tester, 'super_editor_list_item_ordered_upper_alpha_numeral_component_builder');
       });
     });
   });
 }
 
+/// Pumps a test app that displays ordered list items with the given [style].
+///
+/// When [fromStylesheet] is `true`, the style is applied via a stylesheet.
+///
+/// When [fromStylesheet] is `false`, the style is applied via a component builder.
 Future<void> _pumpOrderedListItemStyleTestApp(
   WidgetTester tester, {
   required OrderedListNumeralStyle style,
+  bool fromStylesheet = true,
 }) async {
   await tester //
       .createDocument()
@@ -210,19 +310,27 @@ Future<void> _pumpOrderedListItemStyleTestApp(
             text: AttributedText('Item $i.'),
           )
       ]))
-      .useStylesheet(
-        _createStylesheet().copyWith(addRulesAfter: [
-          StyleRule(
-            const BlockSelector('listItem'),
-            (doc, docNode) {
-              return {
-                Styles.listNumeralStyle: style,
-              };
-            },
-          ),
-        ]),
-      )
-      .pump();
+      .useStylesheet(_createStylesheet().copyWith(
+        addRulesAfter: [
+          if (fromStylesheet)
+            StyleRule(
+              const BlockSelector('listItem'),
+              (doc, docNode) {
+                return {
+                  Styles.listNumeralStyle: style,
+                };
+              },
+            ),
+        ],
+      ))
+      .withAddedComponents(
+    [
+      if (!fromStylesheet)
+        _ListItemWithCustomStyleBuilder(
+          numeralStyle: style,
+        ),
+    ],
+  ).pump();
 }
 
 ListItemNode _createListItemNode({
@@ -270,4 +378,47 @@ Stylesheet _createStylesheet({
       ),
     ],
   );
+}
+
+/// A [ComponentBuilder] that styles list items with custom styles.
+///
+/// If [dotStyle] is non-`null`, unordered list items are styled with the given [dotStyle]. Otherwise,
+/// the default style is applied for unordered list items.
+///
+/// If [numeralStyle] is non-`null`, ordered list items are styled with the given [numeralStyle]. Otherwise,
+/// the default style is applied for ordered list items.
+class _ListItemWithCustomStyleBuilder implements ComponentBuilder {
+  const _ListItemWithCustomStyleBuilder({
+    this.dotStyle,
+    this.numeralStyle,
+  });
+
+  final ListItemDotStyle? dotStyle;
+  final OrderedListNumeralStyle? numeralStyle;
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! ListItemNode) {
+      return null;
+    }
+
+    // Use the default component builder to create the view model, because we only want
+    // to customize the style.
+    final viewModel = ListItemComponentBuilder().createViewModel(document, node);
+
+    if (viewModel is UnorderedListItemComponentViewModel && dotStyle != null) {
+      viewModel.dotStyle = dotStyle!;
+    } else if (viewModel is OrderedListItemComponentViewModel && numeralStyle != null) {
+      viewModel.numeralStyle = numeralStyle!;
+    }
+
+    return viewModel;
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    // We can use the default component for list items.
+    return null;
+  }
 }
