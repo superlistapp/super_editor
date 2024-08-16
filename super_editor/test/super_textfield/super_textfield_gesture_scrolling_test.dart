@@ -249,6 +249,98 @@ void main() {
       // Ensure the selection didn't change.
       expect(SuperTextFieldInspector.findSelection(), TextRange.empty);
     });
+
+    testWidgetsOnMobile("multi-line is vertically scrollable when text spans more lines than maxLines", (tester) async {
+      final initialText = "The first line of text in the field\n"
+          "The second line of text in the field\n"
+          "The third line of text in the field";
+      final controller = AttributedTextEditingController(
+        text: AttributedText(initialText),
+      );
+
+      // Pump the widget tree with a SuperTextField with a maxHeight of 2 lines
+      // of text, which should overflow considering there are 3 lines of text.
+      await _pumpTestApp(
+        tester,
+        textController: controller,
+        minLines: 1,
+        maxLines: 2,
+        maxHeight: 40,
+      );
+
+      // Ensure the text field has not yet scrolled.
+      var textTop = tester.getTopRight(find.byType(SuperTextField)).dy;
+      var viewportTop = tester.getTopRight(find.byType(SuperText)).dy;
+      expect(textTop, moreOrLessEquals(viewportTop));
+
+      // Scroll down to reveal the last line of text.
+      await tester.drag(find.byType(SuperTextField), const Offset(0, -1000.0));
+      await tester.pumpAndSettle();
+
+      // Ensure the text field has scrolled to the bottom.
+      var textBottom = tester.getBottomRight(find.byType(SuperTextField)).dy;
+      var viewportBottom = tester.getBottomRight(find.byType(SuperText)).dy;
+      expect(textBottom, moreOrLessEquals(viewportBottom));
+
+      // Scroll back up to the top of the text field.
+      await tester.drag(find.byType(SuperTextField), const Offset(0, 1000.0));
+      await tester.pumpAndSettle();
+
+      // Ensure the text field has scrolled back to the top.
+      textTop = tester.getTopRight(find.byType(SuperTextField)).dy;
+      viewportTop = tester.getTopRight(find.byType(SuperText)).dy;
+      expect(textTop, moreOrLessEquals(viewportTop));
+    });
+
+    testWidgetsOnDesktop("multi-line is vertically scrollable when text spans more lines than maxLines", (tester) async {
+      final initialText = "The first line of text in the field\n"
+          "The second line of text in the field\n"
+          "The third line of text in the field";
+      final controller = AttributedTextEditingController(
+        text: AttributedText(initialText),
+      );
+
+      // Pump the widget tree with a SuperTextField with a maxHeight of 2 lines
+      // of text, which should overflow considering there are 3 lines of text.
+      await _pumpTestApp(
+        tester,
+        textController: controller,
+        minLines: 1,
+        maxLines: 2,
+        maxHeight: 40,
+      );
+
+      // Ensure the text field has not yet scrolled.
+      var textTop = tester.getTopRight(find.byType(SuperTextField)).dy;
+      var viewportTop = tester.getTopRight(find.byType(SuperText)).dy;
+      expect(textTop, moreOrLessEquals(viewportTop));
+
+      // Scroll down to reveal the last line of text.
+      await tester.drag(
+        find.byType(SuperTextField),
+        const Offset(0, -1000.0),
+        kind: PointerDeviceKind.trackpad,
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure the text field has scrolled to the bottom.
+      var textBottom = tester.getBottomRight(find.byType(SuperTextField)).dy;
+      var viewportBottom = tester.getBottomRight(find.byType(SuperText)).dy;
+      expect(textBottom, moreOrLessEquals(viewportBottom));
+
+      // Scroll back up to the top of the text field.
+      await tester.drag(
+        find.byType(SuperTextField),
+        const Offset(0, 1000.0),
+        kind: PointerDeviceKind.trackpad,
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure the text field has scrolled back to the top.
+      textTop = tester.getTopRight(find.byType(SuperTextField)).dy;
+      viewportTop = tester.getTopRight(find.byType(SuperText)).dy;
+      expect(textTop, moreOrLessEquals(viewportTop));
+    });
   });
 }
 
