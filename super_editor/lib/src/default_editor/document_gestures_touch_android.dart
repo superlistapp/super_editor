@@ -1101,6 +1101,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final fingerDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(
       _startDragPositionOffset! + fingerDragDelta - Offset(0, scrollDelta),
     )!;
+    if (fingerDocumentPosition != widget.selection.value!.extent) {
+      HapticFeedback.lightImpact();
+    }
     _selectPosition(fingerDocumentPosition);
   }
 
@@ -1470,6 +1473,7 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
   void _updateDragHandleSelection(DocumentSelection newSelection) {
     if (newSelection != widget.selection.value) {
       widget.setSelection(newSelection);
+      HapticFeedback.lightImpact();
     }
   }
 
