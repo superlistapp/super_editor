@@ -1,3 +1,6 @@
+## [0.3.3] - Aug, 2024
+ * Package metadata update - no functional changes.
+
 ## [0.3.2] - June, 2024
  * Fix crash when adding attributions that overlap others - you can now control whether a new attribution overwrites conflicting spans when you add it.
 
