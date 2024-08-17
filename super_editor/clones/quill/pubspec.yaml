@@ -15,6 +15,7 @@ dependencies:
   super_editor: any
   super_editor_quill: any
   super_editor_markdown: any
+  super_text_layout: any
   collection: ^1.18.0
   overlord: ^0.0.3+5
   material_symbols_icons: ^4.2762.0
