@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:super_editor_spellcheck/src/spell_checker_mac.dart';
+import 'package:super_editor_spellcheck/src/platform/spell_checker_mac.dart';
 
 class SuperEditorSpellCheckerPlugin {
   /// Exposes the macOS spell checker methods.
