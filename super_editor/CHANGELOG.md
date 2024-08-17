@@ -1,3 +1,6 @@
+## [0.3.0-dev.4] - Aug 17, 2024
+ * Package metadata update - no functional changes.
+
 ## [0.3.0-dev.3] - Aug 16, 2024
  * DEPENDENCY: Upgraded `super_text_layout` to `v0.1.11`.
  * BREAKING: Remove `nodes` list from `Document` API in preparation for immutable `Document`s.
