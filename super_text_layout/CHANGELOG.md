@@ -1,3 +1,6 @@
+## [0.1.12] - Aug, 2024
+ * Package metadata update - no functional changes.
+
 ## [0.1.11] - Aug, 2024
  * [BREAKING] - Replaced singular `UnderlineStyle` in `TextUnderlineLayer` with a styler per 
    underline (to support composing, spelling errors, and grammar errors).
