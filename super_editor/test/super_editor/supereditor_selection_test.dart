@@ -85,7 +85,8 @@ void main() {
         expect(richText.getSpanForPosition(const TextPosition(offset: 16))!.style!.color, Colors.green);
       });
 
-      testWidgetsOnArbitraryDesktop("overrides each colored span", (tester) async {
+      testWidgetsOnArbitraryDesktop("can choose new selected text color based on the original text color",
+          (tester) async {
         final stylesheet = defaultStylesheet.copyWith(
           selectedTextColorStrategy: ({required Color originalTextColor, required Color selectionHighlightColor}) {
             if (originalTextColor == Colors.green) {
