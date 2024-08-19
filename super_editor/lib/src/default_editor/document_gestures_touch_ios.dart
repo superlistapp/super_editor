@@ -1826,6 +1826,14 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
       FloatingCursorPolicies.defaultFloatingCursorWidth,
       _floatingCursorHeight,
     );
+
+    _controlsContext!.floatingCursorController.cursorGeometryInDocument.value = Rect.fromLTWH(
+      _floatingCursorFocalPointInDocument!.dx,
+      _floatingCursorFocalPointInDocument!.dy - (_floatingCursorHeight / 2),
+      FloatingCursorPolicies.defaultFloatingCursorWidth,
+      _floatingCursorHeight,
+    );
+
     editorIosFloatingCursorLog.finer(
         "Set floating cursor geometry to: ${_controlsContext!.floatingCursorController.cursorGeometryInViewport.value}");
   }
@@ -1864,6 +1872,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
     editorIosFloatingCursorLog.fine("Floating cursor stopped.");
     _controlsContext!.floatingCursorController.isNearText.value = false;
     _controlsContext!.floatingCursorController.cursorGeometryInViewport.value = null;
+    _controlsContext!.floatingCursorController.cursorGeometryInDocument.value = null;
 
     _floatingCursorFocalPointInDocument = null;
     _floatingCursorFocalPointInViewport = null;
@@ -1886,7 +1895,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
 
   Widget _buildFloatingCursor() {
     return ValueListenableBuilder<Rect?>(
-      valueListenable: _controlsContext!.floatingCursorController.cursorGeometryInViewport,
+      valueListenable: _controlsContext!.floatingCursorController.cursorGeometryInDocument,
       builder: (context, floatingCursorRect, child) {
         if (floatingCursorRect == null) {
           return const SizedBox();
