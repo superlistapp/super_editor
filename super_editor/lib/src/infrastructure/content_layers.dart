@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
@@ -108,6 +110,8 @@ class ContentLayersElement extends RenderObjectElement {
   List<Element> _underlays = <Element>[];
   Element? _content;
   List<Element> _overlays = <Element>[];
+
+  final Set<Element> _forgottenChildren = HashSet<Element>();
 
   @override
   ContentLayers get widget => super.widget as ContentLayers;
@@ -331,6 +335,7 @@ class ContentLayersElement extends RenderObjectElement {
     assert(!debugChildrenHaveDuplicateKeys(widget, [newContent]));
 
     _content = updateChild(_content, newContent, _contentSlot);
+    _forgottenChildren.clear();
   }
 
   @override
@@ -370,7 +375,6 @@ class ContentLayersElement extends RenderObjectElement {
 
   @override
   void removeRenderObjectChild(RenderObject child, Object? slot) {
-    assert(child is RenderBox);
     assert(child.parent == renderObject);
     assert(slot != null);
     assert(_isContentLayersSlot(slot!), "Invalid ContentLayers slot: $slot");
@@ -379,8 +383,14 @@ class ContentLayersElement extends RenderObjectElement {
   }
 
   @override
+  void forgetChild(Element child) {
+    _forgottenChildren.add(child);
+    super.forgetChild(child);
+  }
+
+  @override
   void visitChildren(ElementVisitor visitor) {
-    if (_content != null) {
+    if (_content != null && !_forgottenChildren.contains(_content)) {
       visitor(_content!);
     }
 
@@ -395,11 +405,15 @@ class ContentLayersElement extends RenderObjectElement {
     // ignore: invalid_use_of_protected_member
     if (!WidgetsBinding.instance.locked) {
       for (final Element child in _underlays) {
-        visitor(child);
+        if (!_forgottenChildren.contains(child)) {
+          visitor(child);
+        }
       }
 
       for (final Element child in _overlays) {
-        visitor(child);
+        if (!_forgottenChildren.contains(child)) {
+          visitor(child);
+        }
       }
     }
   }
