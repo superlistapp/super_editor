@@ -288,8 +288,11 @@ class FloatingCursorController {
   /// or not a standard gray caret should be displayed.
   final isNearText = ValueNotifier<bool>(false);
 
-  /// The offset, width, and height of the active floating cursor.
+  /// The offset, width, and height of the active floating cursor in viewport coordinates.
   final cursorGeometryInViewport = ValueNotifier<Rect?>(null);
+
+  /// The offset, width, and height of the active floating cursor in document coordinates.
+  final cursorGeometryInDocument = ValueNotifier<Rect?>(null);
 
   /// Report that the user has activated the floating cursor.
   void onStart() {
