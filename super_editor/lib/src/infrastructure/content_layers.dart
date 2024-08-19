@@ -317,11 +317,11 @@ class ContentLayersElement extends RenderObjectElement {
   void _temporarilyForgetLayers() {
     contentLayersLog.finer("ContentLayersElement - temporarily forgetting layers");
     for (final underlay in _underlays) {
-      forgetChild(underlay);
+      super.forgetChild(underlay);
     }
 
     for (final overlay in _overlays) {
-      forgetChild(overlay);
+      super.forgetChild(overlay);
     }
   }
 
