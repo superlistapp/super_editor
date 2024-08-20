@@ -92,6 +92,24 @@ public class SuperEditorSpellcheckPlugin: SpellCheckMac {
     );
   }  
 
+  /// Returns a single proposed correction if a word is mis-spelled.
+  ///
+  /// - [range]: The range, within the [text], for which a possible should be generated.
+  /// - [text]: The string containing the word/text for which the correction should be generated.
+  /// - [inSpellDocumentWithTag]: The (optional) ID of the loaded document that contains the given [text],
+  ///   which is used to provide additional context to the substitution guesses. A value of '0' instructs
+  ///   the guessing system to consider the [text] in isolation, without connection to any given document.
+  func correction(text: String, range: PigeonRange, language: String, inSpellDocumentWithTag: Int64) throws -> String? {
+    let spellChecker = NSSpellChecker.shared;
+
+    return spellChecker.correction(
+      forWordRange: NSRange(location: Int(range.start), length: Int(range.end - range.start)),
+      in: text,
+      language: language,
+      inSpellDocumentWithTag: Int(inSpellDocumentWithTag)
+    );
+  }
+
   /// Initiates a grammatical analysis of a given string.
   ///
   /// - [stringToCheck]: The string to analyze.
