@@ -513,7 +513,11 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   List<TextRange> spellingErrors = [];
   UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle();
 
+  List<TextRange> grammarErrors = [];
+  UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue);
+
   List<Underlines> createUnderlines() {
+    print("Creating underlines for a text component with ${grammarErrors.length} grammar errors");
     return [
       if (composingRegion != null && showComposingRegionUnderline)
         Underlines(
@@ -524,6 +528,11 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
         Underlines(
           style: spellingErrorUnderlineStyle,
           underlines: spellingErrors,
+        ),
+      if (grammarErrors.isNotEmpty) //
+        Underlines(
+          style: grammarErrorUnderlineStyle,
+          underlines: grammarErrors,
         ),
     ];
   }
@@ -545,6 +554,7 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
     showComposingRegionUnderline = styles[Styles.showComposingRegionUnderline] ?? showComposingRegionUnderline;
 
     spellingErrorUnderlineStyle = styles[Styles.spellingErrorUnderlineStyle] ?? spellingErrorUnderlineStyle;
+    grammarErrorUnderlineStyle = styles[Styles.grammarErrorUnderlineStyle] ?? grammarErrorUnderlineStyle;
   }
 }
 
@@ -569,6 +579,8 @@ class TextWithHintComponent extends StatefulWidget {
     this.showComposingUnderline = false,
     this.spellingErrorUnderlineStyle,
     this.spellingErrors = const [],
+    this.grammarErrorUnderlineStyle,
+    this.grammarErrors = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -588,6 +600,9 @@ class TextWithHintComponent extends StatefulWidget {
 
   final UnderlineStyle? spellingErrorUnderlineStyle;
   final List<TextRange> spellingErrors;
+
+  final UnderlineStyle? grammarErrorUnderlineStyle;
+  final List<TextRange> grammarErrors;
 
   final bool showDebugPaint;
 
@@ -642,6 +657,11 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
               Underlines(
                 style: widget.spellingErrorUnderlineStyle ?? const SquiggleUnderlineStyle(),
                 underlines: widget.spellingErrors,
+              ),
+            if (widget.grammarErrors.isNotEmpty)
+              Underlines(
+                style: widget.grammarErrorUnderlineStyle ?? const SquiggleUnderlineStyle(),
+                underlines: widget.grammarErrors,
               ),
           ],
           showDebugPaint: widget.showDebugPaint,

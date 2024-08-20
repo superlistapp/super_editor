@@ -1,5 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -104,10 +105,6 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       textDirection: textDirection,
       textAlignment: textAlign,
       selectionColor: const Color(0x00000000),
-      spellingErrors: node.text
-          .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
-          .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
-          .toList(),
     );
   }
 
@@ -153,14 +150,19 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.highlightWhenEmpty = false,
     TextRange? composingRegion,
     bool showComposingRegionUnderline = false,
-    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
+    UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.red),
     List<TextRange> spellingErrors = const <TextRange>[],
+    UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
+    List<TextRange> grammarErrors = const <TextRange>[],
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
     this.composingRegion = composingRegion;
     this.showComposingRegionUnderline = showComposingRegionUnderline;
 
     this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
     this.spellingErrors = spellingErrors;
+
+    this.grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
+    this.grammarErrors = grammarErrors;
   }
 
   Attribution? blockType;
@@ -207,7 +209,9 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       selectionColor: selectionColor,
       highlightWhenEmpty: highlightWhenEmpty,
       spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
-      spellingErrors: spellingErrors,
+      spellingErrors: List.from(spellingErrors),
+      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
+      grammarErrors: List.from(grammarErrors),
       composingRegion: composingRegion,
       showComposingRegionUnderline: showComposingRegionUnderline,
     );
@@ -231,6 +235,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           highlightWhenEmpty == other.highlightWhenEmpty &&
           spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
           const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
+          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(grammarErrors, other.grammarErrors) &&
           composingRegion == other.composingRegion &&
           showComposingRegionUnderline == other.showComposingRegionUnderline;
 
@@ -249,6 +255,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       highlightWhenEmpty.hashCode ^
       spellingErrorUnderlineStyle.hashCode ^
       spellingErrors.hashCode ^
+      grammarErrorUnderlineStyle.hashCode ^
+      grammarErrors.hashCode ^
       composingRegion.hashCode ^
       showComposingRegionUnderline.hashCode;
 }

@@ -753,6 +753,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
           presenter: widget.presenter,
           watchNode: componentViewModel.nodeId,
           builder: (context, newComponentViewModel) {
+            print("Creating a _Component with a new view model for node: ${newComponentViewModel.nodeId}");
             // Converts the component view model into a widget.
             return _Component(
               componentBuilders: widget.componentBuilders,
@@ -975,6 +976,8 @@ class _Component extends StatelessWidget {
       componentKey: componentKey,
     );
     for (final componentBuilder in componentBuilders) {
+      print(
+          "Creating component with view model for node ${componentViewModel.nodeId} - ${componentViewModel.runtimeType}");
       var component = componentBuilder.createComponent(componentContext, componentViewModel);
       if (component != null) {
         // TODO: we might need a SizeChangedNotifier here for the case where two components

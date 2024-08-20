@@ -24,6 +24,7 @@ class _SuperEditorSpellcheckScreen extends StatefulWidget {
 
 class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScreen> {
   late final Editor _editor;
+  final _spellingAndGrammarPlugin = SpellingAndGrammarPlugin();
 
   @override
   void initState() {
@@ -40,8 +41,11 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
     return Scaffold(
       body: SuperEditor(
         editor: _editor,
+        customStylePhases: [
+          _spellingAndGrammarPlugin.styler,
+        ],
         plugins: {
-          SpellingAndGrammarPlugin(),
+          _spellingAndGrammarPlugin,
         },
       ),
     );

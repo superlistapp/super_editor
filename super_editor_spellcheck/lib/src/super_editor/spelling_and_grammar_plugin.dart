@@ -6,28 +6,104 @@ import 'package:super_editor_spellcheck/src/platform/spell_checker.dart';
 /// A [SuperEditorPlugin] that checks spelling and grammar across a [Document],
 /// underlines spelling and grammar mistakes, and offers corrections.
 class SpellingAndGrammarPlugin extends SuperEditorPlugin {
-  final _reaction = SpellingAndGrammarReaction();
+  SpellingAndGrammarPlugin({
+    bool isSpellingCheckEnabled = true,
+    UnderlineStyle spellingErrorUnderlineStyle = defaultSpellingErrorUnderlineStyle,
+    bool isGrammarCheckEnabled = true,
+    UnderlineStyle grammarErrorUnderlineStyle = defaultGrammarErrorUnderlineStyle,
+  })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
+        _isGrammarCheckEnabled = isGrammarCheckEnabled;
 
-  // TODO: Move underlines to a styler so that we don't encode temporary stuff in the document.
-  // TODO: Make it possible to add stylers via plugin
-  // TODO: Have this plugin apply spelling error ranges to the styler
+  final _styler = SpellingAndGrammarStyler();
+  late final SpellingAndGrammarReaction _reaction;
+
+  bool get isSpellCheckEnabled => _isSpellCheckEnabled;
+  bool _isSpellCheckEnabled;
+  set isSpellCheckEnabled(bool isEnabled) {
+    _isSpellCheckEnabled = isEnabled;
+    _reaction.isSpellCheckEnabled = isEnabled;
+  }
+
+  set spellingErrorUnderlineStyle(UnderlineStyle style) => _styler.spellingErrorUnderlineStyle = style;
+
+  bool get isGrammarCheckEnabled => _isGrammarCheckEnabled;
+  bool _isGrammarCheckEnabled;
+  set isGrammarCheckEnabled(bool isEnabled) {
+    _isGrammarCheckEnabled = isEnabled;
+    _reaction.isGrammarCheckEnabled = isEnabled;
+  }
+
+  set grammarErrorUnderlineStyle(UnderlineStyle style) => _styler.grammarErrorUnderlineStyle = style;
 
   @override
   void attach(Editor editor) {
+    _reaction = SpellingAndGrammarReaction(_styler);
     editor.reactionPipeline.add(_reaction);
   }
 
   @override
   void detach(Editor editor) {
+    _styler.clearAllErrors();
     editor.reactionPipeline.remove(_reaction);
   }
+
+  SpellingAndGrammarStyler get styler => _styler;
 }
 
 /// An [EditReaction] that runs spelling and grammar checks on all [TextNode]s
 /// in a given [Document].
 class SpellingAndGrammarReaction implements EditReaction {
+  SpellingAndGrammarReaction(this._styler);
+
+  final SpellingAndGrammarStyler _styler;
+
+  bool isSpellCheckEnabled = true;
+
+  set spellingErrorUnderlineStyle(UnderlineStyle style) => _styler.spellingErrorUnderlineStyle = style;
+
+  bool isGrammarCheckEnabled = true;
+
+  set grammarErrorUnderlineStyle(UnderlineStyle style) => _styler.grammarErrorUnderlineStyle = style;
+
+  /// A map from a document node to the ID of the most recent spelling and grammar
+  /// check request ID.
+  ///
+  /// This map is used to ignore spell and grammar check responses that arrive after
+  /// later spelling and grammar checks. This is a concern because we cross an async
+  /// boundary to the platform to run such checks, removing any guarantee about order
+  /// of receipt.
+  final _asyncRequestIds = <String, int>{};
+
   @override
   void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    // No-op - spelling and grammar checks style the document, they don't alter the document.
+    print("modifyContent()");
+  }
+
+  @override
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    print("------ START SYNCHRONOUS REACTION -------");
+    print("react()");
+
+    // Clear our request cache for any nodes that were deleted.
+    for (final event in changeList) {
+      if (event is! DocumentEdit) {
+        continue;
+      }
+
+      final change = event.change;
+      if (change is! NodeRemovedEvent) {
+        continue;
+      }
+
+      _asyncRequestIds.remove(change.nodeId);
+    }
+
+    if (!isSpellCheckEnabled && !isGrammarCheckEnabled) {
+      print(" - neither spelling nor grammar check are enabled. Fizzle.");
+      return;
+    }
+
     final document = editorContext.document;
 
     final changedTextNodes = <String>{};
@@ -46,6 +122,8 @@ class SpellingAndGrammarReaction implements EditReaction {
         continue;
       }
 
+      print("Reacting to text change: ${change.describe()}");
+
       // A TextNode was changed in some way. Queue it for spelling and grammar checks.
       changedTextNodes.add(node.id);
     }
@@ -61,37 +139,100 @@ class SpellingAndGrammarReaction implements EditReaction {
         continue;
       }
 
-      _doSpellingAndGrammarTest(textNode);
+      _findSpellingAndGrammarErrors(textNode);
     }
+    print("------ END SYNCHRONOUS REACTION -------");
   }
 
-  Future<void> _doSpellingAndGrammarTest(TextNode textNode) async {
+  Future<void> _findSpellingAndGrammarErrors(TextNode textNode) async {
+    print("Checking spelling in node: ${textNode.id}");
     final spellChecker = SuperEditorSpellCheckerPlugin().macSpellChecker;
 
-    final spellingErrors = <TextRange>[];
+    // TODO: Investigate whether we can parallelize spelling and grammar checks
+    //       for a given node (and whether it's worth the complexity).
+    final textErrors = <TextError>{};
+
+    // Track this spelling and grammar request to make sure we don't process
+    // the response out of order with other requests.
+    _asyncRequestIds[textNode.id] ??= 0;
+    final requestId = _asyncRequestIds[textNode.id]! + 1;
+    _asyncRequestIds[textNode.id] = _asyncRequestIds[textNode.id]! + 1;
+
     int startingOffset = 0;
-    TextRange prevSpellingError = TextRange.empty;
-    do {
-      prevSpellingError = await spellChecker.checkSpelling(
-        stringToCheck: textNode.text.text,
-        startingOffset: startingOffset,
-      );
+    TextRange prevError = TextRange.empty;
+    if (isSpellCheckEnabled) {
+      do {
+        prevError = await spellChecker.checkSpelling(
+          stringToCheck: textNode.text.text,
+          startingOffset: startingOffset,
+        );
 
-      if (prevSpellingError.isValid) {
-        spellingErrors.add(prevSpellingError);
-        startingOffset = prevSpellingError.end;
+        if (prevError.isValid) {
+          final word = textNode.text.text.substring(prevError.start, prevError.end);
+          print("Misspelled word: '$word'");
 
-        final word = textNode.text.text.substring(prevSpellingError.start, prevSpellingError.end);
-        print("Misspelled word: '$word'");
-      }
-    } while (prevSpellingError.isValid);
+          // Ask platform for spelling correction guesses.
+          final guesses = await spellChecker.guesses(range: prevError, text: word);
 
-    // TODO:
-  }
+          textErrors.add(
+            TextError.spelling(
+              nodeId: textNode.id,
+              range: prevError,
+              value: word,
+              suggestions: guesses,
+            ),
+          );
 
-  @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    // No-op: Spelling and grammar checks shouldn't be undoable on their own,
-    //        so we only implement modifyContent().
+          startingOffset = prevError.end;
+        }
+      } while (prevError.isValid);
+    }
+    print(">>> DONE WITH ASYNC SPELLCHECK - DOING GRAMMAR CHECK");
+
+    if (isGrammarCheckEnabled) {
+      final locale = PlatformDispatcher.instance.locale;
+      final language = spellChecker.convertDartLocaleToMacLanguageCode(locale)!;
+      startingOffset = 0;
+      prevError = TextRange.empty;
+      do {
+        final result = await spellChecker.checkGrammar(
+          stringToCheck: textNode.text.text,
+          startingOffset: startingOffset,
+          language: language,
+        );
+        prevError = result.firstError ?? TextRange.empty;
+
+        if (prevError.isValid) {
+          for (final grammarError in result.details) {
+            final errorRange = grammarError.range;
+            final text = textNode.text.text.substring(errorRange.start, errorRange.end);
+            print("Bad grammar: '$text'");
+            textErrors.add(
+              TextError.grammar(
+                nodeId: textNode.id,
+                range: errorRange,
+                value: text,
+              ),
+            );
+          }
+
+          startingOffset = prevError.end;
+        }
+      } while (prevError.isValid);
+    }
+    print(">>> DONE WITH ASYNC GRAMMAR CHECK - SENDING ERRORS TO STYLER");
+
+    if (requestId != _asyncRequestIds[textNode.id]) {
+      // Another request was started for this node while we were running our
+      // request. Fizzle.
+      return;
+    }
+    // Reset the request ID counter to zero so that we avoid increasing infinitely.
+    _asyncRequestIds[textNode.id] = 0;
+
+    print("Node ${textNode.id} has ${textErrors.length} spelling errors");
+    _styler
+      ..clearErrorsForNode(textNode.id)
+      ..addErrors(textNode.id, textErrors);
   }
 }

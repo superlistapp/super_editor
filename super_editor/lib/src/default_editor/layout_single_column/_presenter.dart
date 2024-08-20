@@ -136,6 +136,7 @@ class SingleColumnLayoutPresenter {
   }
 
   void updateViewModel() {
+    print("Updating whole document view model - earliest dirty phase: $_earliestDirtyPhase");
     editorLayoutLog.info("Calculating an updated view model for document layout.");
     if (_earliestDirtyPhase == _pipeline.length) {
       editorLayoutLog.fine("The presenter is already up to date");
@@ -257,6 +258,7 @@ class SingleColumnLayoutPresenter {
 
       if (nodeIdToComponentMap[nodeId] == newComponent) {
         // The component hasn't changed.
+        print("Component didn't change: $nodeId");
         editorLayoutLog.fine("Component for node $nodeId didn't change at all");
         changeMap[nodeId] = 0;
         continue;
@@ -264,6 +266,7 @@ class SingleColumnLayoutPresenter {
 
       if (nodeIdToComponentMap[nodeId].runtimeType == newComponent.runtimeType) {
         // The component still exists, but it changed.
+        print("Node changed: $nodeId");
         editorLayoutLog
             .fine("Component for node $nodeId is the same runtime type, but changed content. Marking as changed.");
         changeMap[nodeId] = 1;

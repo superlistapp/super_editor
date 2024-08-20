@@ -13,10 +13,13 @@ dependencies:
   plugin_platform_interface: ^2.0.2
 
   super_editor: 0.3.0-dev.3
+  super_text_layout: ^0.1.12
 
 dependency_overrides:
   super_editor:
     path: ../super_editor
+  super_text_layout:
+    path: ../super_text_layout
 
 dev_dependencies:
   flutter_test:

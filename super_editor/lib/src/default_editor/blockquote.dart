@@ -60,10 +60,6 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       textDirection: textDirection,
       textAlignment: textAlign,
       selectionColor: const Color(0x00000000),
-      spellingErrors: node.text
-          .getAttributionSpansByFilter((a) => a == spellingErrorAttribution)
-          .map((a) => TextRange(start: a.start, end: a.end + 1)) // +1 because text range end is exclusive
-          .toList(),
     );
   }
 
@@ -73,6 +69,9 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
     if (componentViewModel is! BlockquoteComponentViewModel) {
       return null;
     }
+
+    print(
+        "About to create a BlockquoteComponent from a view model - view model has ${componentViewModel.grammarErrors.length} grammar errors");
 
     return BlockquoteComponent(
       textKey: componentContext.componentKey,
@@ -106,12 +105,17 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     bool showComposingRegionUnderline = false,
     UnderlineStyle spellingErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Color(0xFFFF0000)),
     List<TextRange> spellingErrors = const <TextRange>[],
+    UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue),
+    List<TextRange> grammarErrors = const <TextRange>[],
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
     this.composingRegion = composingRegion;
     this.showComposingRegionUnderline = showComposingRegionUnderline;
 
     this.spellingErrorUnderlineStyle = spellingErrorUnderlineStyle;
     this.spellingErrors = spellingErrors;
+
+    this.grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
+    this.grammarErrors = grammarErrors;
   }
 
   @override
@@ -156,6 +160,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       highlightWhenEmpty: highlightWhenEmpty,
       spellingErrorUnderlineStyle: spellingErrorUnderlineStyle,
       spellingErrors: List.from(spellingErrors),
+      grammarErrorUnderlineStyle: grammarErrorUnderlineStyle,
+      grammarErrors: List.from(grammarErrors),
       composingRegion: composingRegion,
       showComposingRegionUnderline: showComposingRegionUnderline,
     );
@@ -178,6 +184,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
           highlightWhenEmpty == other.highlightWhenEmpty &&
           spellingErrorUnderlineStyle == other.spellingErrorUnderlineStyle &&
           const DeepCollectionEquality().equals(spellingErrors, other.spellingErrors) &&
+          grammarErrorUnderlineStyle == other.grammarErrorUnderlineStyle &&
+          const DeepCollectionEquality().equals(grammarErrors, other.grammarErrors) &&
           composingRegion == other.composingRegion &&
           showComposingRegionUnderline == other.showComposingRegionUnderline;
 
@@ -195,6 +203,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       highlightWhenEmpty.hashCode ^
       spellingErrorUnderlineStyle.hashCode ^
       spellingErrors.hashCode ^
+      grammarErrorUnderlineStyle.hashCode ^
+      grammarErrors.hashCode ^
       composingRegion.hashCode ^
       showComposingRegionUnderline.hashCode;
 }
