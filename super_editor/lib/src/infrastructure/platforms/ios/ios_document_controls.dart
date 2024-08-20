@@ -642,10 +642,16 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   @visibleForTesting
   bool get isDownstreamHandleDisplayed => layoutData?.downstream != null;
 
-  Offset? _latestCaretDragOfffset;
+  /// The most recent caret position while the user is dragging it, in content space.
+  ///
+  /// Used to detect when the user releases the caret.
+  Offset? _latestCaretDragOffset;
 
   /// Controls the animation of the caret moving from the position where
-  /// the user released it to the selected position.
+  /// the user released the finger to the actual selected position.
+  ///
+  /// For example, the user can release the finger between characters or
+  /// far from the text. The caret then animates to the closest legal position.
   late AnimationController _caretReleaseAnimationController;
 
   void _onSelectionChange() {
@@ -656,7 +662,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   }
 
   void _onCaretDragOffsetChange() {
-    if (_latestCaretDragOfffset != widget.caretDragOffset?.value && widget.caretDragOffset?.value == null) {
+    if (_latestCaretDragOffset != widget.caretDragOffset?.value && widget.caretDragOffset?.value == null) {
       // The user stopped dragging the caret. Animate the caret back to the
       // selected position.
       _caretReleaseAnimationController
@@ -667,7 +673,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
 
     // Schedule a new layout computation because the caret needs to move.
     setState(() {
-      _latestCaretDragOfffset = widget.caretDragOffset?.value;
+      _latestCaretDragOffset = widget.caretDragOffset?.value;
     });
   }
 
@@ -816,10 +822,10 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
         }
       }
 
-      if (_caretReleaseAnimationController.isAnimating && _latestCaretDragOfffset != null) {
+      if (_caretReleaseAnimationController.isAnimating && _latestCaretDragOffset != null) {
         // The caret is animating between the release position and the selected position.
         // Interpolate the current offset.
-        final caretReleaseOffset = Offset(_latestCaretDragOfffset!.dx, snapedCaretRect.top);
+        final caretReleaseOffset = Offset(_latestCaretDragOffset!.dx, snapedCaretRect.top);
         final caretDestinationOffset = snapedCaretRect.topLeft;
         caretRect = Offset.lerp(
               caretReleaseOffset,
