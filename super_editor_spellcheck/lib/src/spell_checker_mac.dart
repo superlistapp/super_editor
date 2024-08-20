@@ -72,6 +72,23 @@ class SuperEditorSpellCheckerMacPlugin {
         .toList();
   }
 
+  /// {@macro mac_spell_checker_correction}
+  Future<String?> correction({
+    required String text,
+    required TextRange range,
+    required String language,
+    int inSpellDocumentWithTag = 0,
+  }) async {
+    final result = await _spellCheckApi.correction(
+      text: text,
+      range: PigeonRange(start: range.start, end: range.end),
+      language: language,
+      inSpellDocumentWithTag: inSpellDocumentWithTag,
+    );
+
+    return result;
+  }
+
   /// {@macro mac_spell_checker_check_grammar}
   Future<CheckGrammarResult> checkGrammar({
     required String stringToCheck,
