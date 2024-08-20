@@ -71,6 +71,22 @@ abstract class SpellCheckMac {
     int inSpellDocumentWithTag = 0,
   });
 
+  /// {@template mac_spell_checker_correction}
+  /// Returns a single proposed correction if a word is mis-spelled.
+  ///
+  /// - [range]: The range, within the [text], for which a possible should be generated.
+  /// - [text]: The string containing the word/text for which the correction should be generated.
+  /// - [inSpellDocumentWithTag]: The (optional) ID of the loaded document that contains the given [text],
+  ///   which is used to provide additional context to the substitution guesses. A value of '0' instructs
+  ///   the guessing system to consider the [text] in isolation, without connection to any given document.
+  /// {@endtemplate}
+  String? correction({
+    required String text,
+    required PigeonRange range,
+    required String language,
+    int inSpellDocumentWithTag = 0,
+  });
+
   /// {@template mac_spell_checker_check_grammar}
   /// Performs a grammatical analysis of [stringToCheck], starting at [startingOffset].
   ///

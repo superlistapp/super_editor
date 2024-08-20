@@ -22,6 +22,7 @@ class _MyAppState extends State<MyApp> {
   final _textController = TextEditingController(text: 'She go to the store everys day.');
 
   List<TextSuggestion> _suggestions = [];
+  String? _correction;
 
   TextRange _firstMispelledWord = TextRange.empty;
   List<String> _firstMispelledWordSuggestions = [];
@@ -98,6 +99,16 @@ class _MyAppState extends State<MyApp> {
       return;
     }
 
+    final correction = await _superEditorSpellcheckPlugin.macSpellChecker.correction(
+      text: textToSearch,
+      range: firstMisspelled,
+      language: language,
+    );
+
+    if (_shouldAbortCurrentSearch(textToSearch)) {
+      return;
+    }
+
     final grammarAnalysis = await _superEditorSpellcheckPlugin.macSpellChecker.checkGrammar(
       stringToCheck: textToSearch,
       startingOffset: 0,
@@ -138,6 +149,7 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _documentTag = tag;
       _suggestions = suggestions;
+      _correction = correction;
       _firstMispelledWord = firstMisspelled;
       _firstMispelledWordSuggestions = firstSuggestions;
       _grammarAnalysis = grammarAnalysis;
@@ -184,6 +196,8 @@ class _MyAppState extends State<MyApp> {
                   _firstMispelledWord.start,
                   _firstMispelledWord.end,
                 )}'),
+              if (_correction != null) //
+                Text('Correction for first misspelled word: $_correction'),
               if (_firstMispelledWordSuggestions.isNotEmpty)
                 Text('Suggestions for first misspelled word: ${_firstMispelledWordSuggestions.join(', ')}'),
               const SizedBox(height: 10),
