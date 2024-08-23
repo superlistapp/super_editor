@@ -565,10 +565,7 @@ class TextWithHintComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
-    this.spellingErrorUnderlineStyle,
-    this.spellingErrors = const [],
+    this.underlines = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -582,12 +579,7 @@ class TextWithHintComponent extends StatefulWidget {
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool highlightWhenEmpty;
-
-  final TextRange? composingRegion;
-  final bool showComposingUnderline;
-
-  final UnderlineStyle? spellingErrorUnderlineStyle;
-  final List<TextRange> spellingErrors;
+  final List<Underlines> underlines;
 
   final bool showDebugPaint;
 
@@ -637,13 +629,7 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
           textSelection: widget.textSelection,
           selectionColor: widget.selectionColor,
           highlightWhenEmpty: widget.highlightWhenEmpty,
-          underlines: [
-            if (widget.spellingErrors.isNotEmpty)
-              Underlines(
-                style: widget.spellingErrorUnderlineStyle ?? const SquiggleUnderlineStyle(),
-                underlines: widget.spellingErrors,
-              ),
-          ],
+          underlines: widget.underlines,
           showDebugPaint: widget.showDebugPaint,
         ),
       ],
