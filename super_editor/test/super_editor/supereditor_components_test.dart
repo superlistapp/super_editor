@@ -140,8 +140,7 @@ class HintTextComponentBuilder implements ComponentBuilder {
       ),
       textSelection: textSelection,
       selectionColor: componentViewModel.selectionColor,
-      composingRegion: componentViewModel.composingRegion,
-      showComposingUnderline: componentViewModel.showComposingRegionUnderline,
+      underlines: componentViewModel.createUnderlines(),
     );
   }
 }
