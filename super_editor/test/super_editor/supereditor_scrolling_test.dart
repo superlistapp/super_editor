@@ -292,7 +292,7 @@ void main() {
       );
     });
 
-    testWidgetsOnAndroid("auto-scrolls to caret position (on Android)", (tester) async {
+    testWidgetsOnAndroid("auto-scrolls to caret position when dragging the spacebar (on Android)", (tester) async {
       // Pump an editor with a size that will cause it to be scrollable.
       const windowSize = Size(800, 400);
       tester.view.physicalSize = windowSize;
@@ -332,9 +332,9 @@ void main() {
       // Ensure that the selection is visible.
       expect(
         SuperEditorInspector.isPositionVisibleGlobally(
-          DocumentPosition(
+          const DocumentPosition(
             nodeId: '1',
-            nodePosition: const TextNodePosition(offset: destinationOffset),
+            nodePosition: TextNodePosition(offset: destinationOffset),
           ),
           windowSize,
         ),
