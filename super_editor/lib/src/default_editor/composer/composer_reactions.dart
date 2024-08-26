@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
-import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/text.dart';
@@ -44,7 +44,7 @@ class UpdateComposerTextStylesReaction extends EditReaction {
 
   final Set<Attribution> _stylesToExtend;
 
-  DocumentPosition? _previousSelectionExtent;
+  DocumentSelection? _previousSelection;
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
@@ -67,36 +67,47 @@ class UpdateComposerTextStylesReaction extends EditReaction {
 
     // Update our internal accounting.
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
-    _previousSelectionExtent = composer.selection?.extent;
+    _previousSelection = composer.selection;
   }
 
   void _updateComposerStylesAtCaret(EditContext editContext) {
     final document = editContext.document;
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
 
-    if (composer.selection?.extent == _previousSelectionExtent) {
+    if (composer.selection?.extent == _previousSelection?.extent && //
+        // Ignore the attributions at the caret only if the previous selection
+        // was already collapsed. If the selection was expanded and the user
+        // placed the caret at the extent of the selection, we should update
+        // the composer attributions.
+        _previousSelection?.isCollapsed == true) {
       return;
     }
 
+    final previousSelectionExtent = _previousSelection?.extent;
     final selectionExtent = composer.selection?.extent;
     if (selectionExtent != null &&
         selectionExtent.nodePosition is TextNodePosition &&
-        _previousSelectionExtent != null &&
-        _previousSelectionExtent!.nodePosition is TextNodePosition) {
+        previousSelectionExtent != null &&
+        previousSelectionExtent.nodePosition is TextNodePosition) {
       // The current and previous selections are text positions. Check for the situation where the two
       // selections are functionally equivalent, but the affinity changed.
       final selectedNodePosition = selectionExtent.nodePosition as TextNodePosition;
-      final previousSelectedNodePosition = _previousSelectionExtent!.nodePosition as TextNodePosition;
+      final previousSelectedNodePosition = previousSelectionExtent.nodePosition as TextNodePosition;
 
-      if (selectionExtent.nodeId == _previousSelectionExtent!.nodeId &&
-          selectedNodePosition.offset == previousSelectedNodePosition.offset) {
+      // Ignore the attributions at the caret only if the previous selection
+      // was already collapsed. If the selection was expanded and the user
+      // placed the caret at the extent of the selection, we should update
+      // the composer attributions.
+      if (selectionExtent.nodeId == previousSelectionExtent.nodeId &&
+          selectedNodePosition.offset == previousSelectedNodePosition.offset &&
+          _previousSelection?.isCollapsed == true) {
         // The text selection changed, but only the affinity is different. An affinity change doesn't alter
         // the selection from the user's perspective, so don't alter any preferences. Return.
         return;
       }
     }
 
-    _previousSelectionExtent = composer.selection?.extent;
+    _previousSelection = composer.selection;
 
     composer.preferences.clearStyles();
 
