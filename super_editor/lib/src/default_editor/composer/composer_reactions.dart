@@ -94,12 +94,12 @@ class UpdateComposerTextStylesReaction extends EditReaction {
       final selectedNodePosition = selectionExtent.nodePosition as TextNodePosition;
       final previousSelectedNodePosition = previousSelectionExtent.nodePosition as TextNodePosition;
 
+      // Ignore the attributions at the caret only if the previous selection
+      // was already collapsed. If the selection was expanded and the user
+      // placed the caret at the extent of the selection, we should update
+      // the composer attributions.
       if (selectionExtent.nodeId == previousSelectionExtent.nodeId &&
           selectedNodePosition.offset == previousSelectedNodePosition.offset &&
-          // Ignore the attributions at the caret only if the previous selection
-          // was already collapsed. If the selection was expanded and the user
-          // placed the caret at the extent of the selection, we should update
-          // the composer attributions.
           _previousSelection?.isCollapsed == true) {
         // The text selection changed, but only the affinity is different. An affinity change doesn't alter
         // the selection from the user's perspective, so don't alter any preferences. Return.
