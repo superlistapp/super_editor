@@ -180,6 +180,56 @@ void main() {
         });
       });
 
+      group("when collapsing the selection", () {
+        testWidgetsOnMac("by keyboard and typing at the end of the attributed text", (tester) async {
+          await tester //
+              .createDocument()
+              .fromMarkdown("A bold text")
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Double tap to select the word "bold".
+          await tester.doubleTapInParagraph(doc.first.id, 4);
+
+          // Press command + b to apply bold attribution to the selected text.
+          await tester.pressCmdB();
+
+          // Press right arrow to place the caret at the end of the word "bold".
+          await tester.pressRightArrow();
+
+          // Type "er" so "bold" becomes "bolder".
+          await tester.typeImeText("er");
+
+          // Ensure the bold attribution was applied to the inserted text.
+          expect(doc, equalsMarkdown("A **bolder** text"));
+        });
+
+        testWidgetsOnMac("by tapping and typing at the end of the attributed text", (tester) async {
+          await tester //
+              .createDocument()
+              .fromMarkdown("A bold text")
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Double tap to select the word "bold".
+          await tester.doubleTapInParagraph(doc.first.id, 4);
+
+          // Press command + b to apply bold attribution to the selected text.
+          await tester.pressCmdB();
+
+          // Place the caret at "bold|".
+          await tester.placeCaretInParagraph(doc.first.id, 6);
+
+          // Type "er" so "bold" becomes "bolder".
+          await tester.typeImeText("er");
+
+          // Ensure the bold attribution was applied to the inserted text.
+          expect(doc, equalsMarkdown("A **bolder** text"));
+        });
+      });
+
       group("when a single node is selected", () {
         testWidgetsOnAllPlatforms("toggles attribution throughout a node", (tester) async {
           final TestDocumentContext context = await tester //
