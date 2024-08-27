@@ -670,6 +670,10 @@ class SuperEditorState extends State<SuperEditor> {
               componentBuilders: widget.componentBuilders,
               shrinkWrap: widget.shrinkWrap,
               underlays: [
+                // Add all underlays from plugins.
+                for (final plugin in widget.plugins) //
+                  for (final underlayBuilder in plugin.documentUnderlayBuilders) //
+                    (context) => underlayBuilder.build(context, editContext),
                 // Add all underlays that the app wants.
                 for (final underlayBuilder in widget.documentUnderlayBuilders) //
                   (context) => underlayBuilder.build(context, editContext),
@@ -684,6 +688,10 @@ class SuperEditorState extends State<SuperEditor> {
                     showDebugLeaderBounds: false,
                   ).build(context, editContext);
                 },
+                // Add all overlays from plugins.
+                for (final plugin in widget.plugins) //
+                  for (final overlayBuilder in plugin.documentOverlayBuilders) //
+                    (context) => overlayBuilder.build(context, editContext),
                 // Add all overlays that the app wants.
                 for (final overlayBuilder in widget.documentOverlayBuilders) //
                   (context) => overlayBuilder.build(context, editContext),
@@ -1042,10 +1050,12 @@ class _SelectionLeadersDocumentLayerBuilder implements SuperEditorLayerBuilder {
 /// [componentBuilders].
 ///
 /// An [Editor] is a logical pipeline of requests, commands, and reactions. It has no direct
-/// connection to a user interface. A [SuperEditor] widget is a complete editor user interface.
-/// When a plugin is given to a [SuperEditor] widget, the [SuperEditor] widget [attach]s the
-/// plugin to its [Editor], and then the [SuperEditor] widget pulls out UI related behaviors
-/// from the plugin for things like keyboard handlers and component builders.
+/// connection to a user interface.
+///
+/// A [SuperEditor] widget is a complete editor user interface. When a plugin is given to a
+/// [SuperEditor] widget, the [SuperEditor] widget [attach]s the plugin to its [Editor], and
+/// then the [SuperEditor] widget pulls out UI related behaviors from the plugin for things
+/// like keyboard handlers and component builders.
 ///
 /// [Editor] extensions are applied differently than the [SuperEditor] UI extensions, because
 /// an [Editor] is mutable, meaning it can be altered. But a [SuperEditor] widget, like all other
@@ -1067,6 +1077,12 @@ abstract class SuperEditorPlugin {
 
   /// Additional [ComponentBuilder]s that will be added to a given [SuperEditor] widget.
   List<ComponentBuilder> get componentBuilders => [];
+
+  /// Additional underlay [SuperEditorLayerBuilder]s that will be added to a given [SuperEditor].
+  List<SuperEditorLayerBuilder> get documentUnderlayBuilders => [];
+
+  /// Additional overlay [SuperEditorLayerBuilder]s that will be added to a given [SuperEditor].
+  List<SuperEditorLayerBuilder> get documentOverlayBuilders => [];
 }
 
 /// A collection of policies that dictate how a [SuperEditor]'s selection will change

@@ -1,0 +1,95 @@
+import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:super_editor/super_editor.dart';
+
+/// Spelling error correction suggestions for all mis-spelled words within
+/// a [Document].
+///
+/// A [SpellingErrorSuggestions] is a repository for spelling error suggestions
+/// shared between the [Document], [Editor], overlays, etc.
+class SpellingErrorSuggestions with ChangeNotifier implements Editable {
+  /// A map from nodes to spelling error suggestions.
+  ///
+  /// Each spelling error suggestion is a map from the text range of the mis-spelled word
+  /// to the suggested replacements for that word.
+  final _suggestions = <String, Map<TextRange, SpellingErrorSuggestion>>{};
+
+  /// Returns suggestions for the mis-spelled [word], which occupies the given [textRange],
+  /// within a node with the given [nodeId].
+  ///
+  /// If the given mis-spelled [word] doesn't exist in [textRange], `null` is returned.
+  ///
+  /// If the given mis-spelled [word] isn't mis-spelled, or the spell checker has
+  /// no suggestions, then `null` is returned.
+  ///
+  /// If the spelling suggestions are still being obtained from the spell checker,
+  /// `null` is returned.
+  SpellingErrorSuggestion? getSuggestionsForWord(String nodeId, TextRange range) {
+    _suggestions[nodeId] ??= <TextRange, SpellingErrorSuggestion>{};
+    return _suggestions[nodeId]![range];
+  }
+
+  /// Replaces all existing spelling suggestions for the node with the given [nodeId] with
+  /// the given [spellingSuggestions].
+  void putSuggestions(String nodeId, Map<TextRange, SpellingErrorSuggestion> spellingSuggestions) {
+    _suggestions[nodeId] ??= <TextRange, SpellingErrorSuggestion>{};
+    _suggestions[nodeId]!
+      ..clear()
+      ..addAll(spellingSuggestions);
+
+    notifyListeners();
+  }
+
+  /// Clears all spelling suggestions for text within the node with the given [nodeId].
+  void clearNode(String nodeId) {
+    _suggestions.remove(nodeId);
+  }
+
+  /// Clears all spelling suggestions for all text in the document.
+  void clear() {
+    _suggestions.clear();
+  }
+
+  @override
+  void onTransactionEnd(List<EditEvent> edits) {}
+
+  @override
+  void onTransactionStart() {}
+
+  @override
+  void reset() {
+    clear();
+  }
+}
+
+class SpellingErrorSuggestion {
+  const SpellingErrorSuggestion(
+      {required this.word, required this.nodeId, required this.range, required this.suggestions});
+
+  final String word;
+  final String nodeId;
+  final TextRange range;
+  final List<String> suggestions;
+
+  DocumentRange get toDocumentRange => DocumentRange(
+        start: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: range.start)),
+        end: DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: TextNodePosition(offset: range.end - 1),
+          // -1 because range is exclusive and doc positions are inclusive
+        ),
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SpellingErrorSuggestion &&
+          runtimeType == other.runtimeType &&
+          word == other.word &&
+          nodeId == other.nodeId &&
+          range == other.range &&
+          const DeepCollectionEquality().equals(suggestions, other.suggestions);
+
+  @override
+  int get hashCode => word.hashCode ^ nodeId.hashCode ^ range.hashCode ^ suggestions.hashCode;
+}

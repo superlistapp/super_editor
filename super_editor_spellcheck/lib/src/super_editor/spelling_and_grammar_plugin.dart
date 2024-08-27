@@ -1,22 +1,40 @@
 import 'dart:ui';
 
+import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_spellcheck/src/platform/spell_checker.dart';
+import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestion_overlay.dart';
+import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestions.dart';
 
 /// A [SuperEditorPlugin] that checks spelling and grammar across a [Document],
-/// underlines spelling and grammar mistakes, and offers corrections.
+/// underlining spelling and grammar mistakes, and offering corrections.
 class SpellingAndGrammarPlugin extends SuperEditorPlugin {
+  static const spellingErrorSuggestionsKey = "SpellingAndGrammarPlugin.spellingErrorSuggestions";
+
   SpellingAndGrammarPlugin({
     bool isSpellingCheckEnabled = true,
     UnderlineStyle spellingErrorUnderlineStyle = defaultSpellingErrorUnderlineStyle,
     bool isGrammarCheckEnabled = true,
     UnderlineStyle grammarErrorUnderlineStyle = defaultGrammarErrorUnderlineStyle,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
-        _isGrammarCheckEnabled = isGrammarCheckEnabled;
+        _isGrammarCheckEnabled = isGrammarCheckEnabled {
+    documentOverlayBuilders = <SuperEditorLayerBuilder>[
+      SpellingErrorSuggestionOverlayBuilder(
+        _spellingErrorSuggestions,
+        _selectedWordLink,
+      ),
+    ];
+  }
+
+  final _spellingErrorSuggestions = SpellingErrorSuggestions();
 
   final _styler = SpellingAndGrammarStyler();
+
+  final _selectedWordLink = LeaderLink();
+
   late final SpellingAndGrammarReaction _reaction;
 
+  /// Whether this reaction checks spelling in the document.
   bool get isSpellCheckEnabled => _isSpellCheckEnabled;
   bool _isSpellCheckEnabled;
   set isSpellCheckEnabled(bool isEnabled) {
@@ -24,8 +42,10 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     _reaction.isSpellCheckEnabled = isEnabled;
   }
 
+  /// The [UnderlineStyle] applied to words of text that are mis-spelled.
   set spellingErrorUnderlineStyle(UnderlineStyle style) => _styler.spellingErrorUnderlineStyle = style;
 
+  /// Whether this reaction checks grammar in the document.
   bool get isGrammarCheckEnabled => _isGrammarCheckEnabled;
   bool _isGrammarCheckEnabled;
   set isGrammarCheckEnabled(bool isEnabled) {
@@ -33,11 +53,23 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     _reaction.isGrammarCheckEnabled = isEnabled;
   }
 
+  /// The [UnderlineStyle] applied to runs of text with incorrect grammar.
   set grammarErrorUnderlineStyle(UnderlineStyle style) => _styler.grammarErrorUnderlineStyle = style;
+
+  /// A [SuperEditor] style phase that applies spelling error and grammar error
+  /// underlines to text in the document.
+  SpellingAndGrammarStyler get styler => _styler;
+
+  /// [SuperEditor] overlay widgets that should be added to the [SuperEditor] this
+  /// plugin is attached to.
+  @override
+  late final List<SuperEditorLayerBuilder> documentOverlayBuilders;
 
   @override
   void attach(Editor editor) {
-    _reaction = SpellingAndGrammarReaction(_styler);
+    editor.context.put(spellingErrorSuggestionsKey, _spellingErrorSuggestions);
+
+    _reaction = SpellingAndGrammarReaction(_spellingErrorSuggestions, _styler);
     editor.reactionPipeline.add(_reaction);
   }
 
@@ -45,15 +77,24 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   void detach(Editor editor) {
     _styler.clearAllErrors();
     editor.reactionPipeline.remove(_reaction);
-  }
 
-  SpellingAndGrammarStyler get styler => _styler;
+    editor.context.remove(spellingErrorSuggestionsKey);
+    _spellingErrorSuggestions.clear();
+  }
+}
+
+extension SpellingAndGrammarExtensions on EditContext {
+  SpellingErrorSuggestions get spellingErrorSuggestions => find<SpellingErrorSuggestions>(
+        SpellingAndGrammarPlugin.spellingErrorSuggestionsKey,
+      );
 }
 
 /// An [EditReaction] that runs spelling and grammar checks on all [TextNode]s
 /// in a given [Document].
 class SpellingAndGrammarReaction implements EditReaction {
-  SpellingAndGrammarReaction(this._styler);
+  SpellingAndGrammarReaction(this._suggestions, this._styler);
+
+  final SpellingErrorSuggestions _suggestions;
 
   final SpellingAndGrammarStyler _styler;
 
@@ -86,6 +127,7 @@ class SpellingAndGrammarReaction implements EditReaction {
     print("react()");
 
     // Clear our request cache for any nodes that were deleted.
+    // Also clear suggestions for deleted nodes.
     for (final event in changeList) {
       if (event is! DocumentEdit) {
         continue;
@@ -96,6 +138,7 @@ class SpellingAndGrammarReaction implements EditReaction {
         continue;
       }
 
+      _suggestions.clearNode(change.nodeId);
       _asyncRequestIds.remove(change.nodeId);
     }
 
@@ -160,6 +203,7 @@ class SpellingAndGrammarReaction implements EditReaction {
 
     int startingOffset = 0;
     TextRange prevError = TextRange.empty;
+    final spellingSuggestions = <TextRange, SpellingErrorSuggestion>{};
     if (isSpellCheckEnabled) {
       do {
         prevError = await spellChecker.checkSpelling(
@@ -181,6 +225,13 @@ class SpellingAndGrammarReaction implements EditReaction {
               value: word,
               suggestions: guesses,
             ),
+          );
+
+          spellingSuggestions[prevError] = SpellingErrorSuggestion(
+            word: word,
+            nodeId: textNode.id,
+            range: prevError,
+            suggestions: guesses,
           );
 
           startingOffset = prevError.end;
@@ -230,9 +281,14 @@ class SpellingAndGrammarReaction implements EditReaction {
     // Reset the request ID counter to zero so that we avoid increasing infinitely.
     _asyncRequestIds[textNode.id] = 0;
 
+    // Display underlines on spelling and grammar errors.
     print("Node ${textNode.id} has ${textErrors.length} spelling errors");
     _styler
       ..clearErrorsForNode(textNode.id)
       ..addErrors(textNode.id, textErrors);
+
+    // Update the shared repository of spelling suggestions so that the user can
+    // see suggestions and select them.
+    _suggestions.putSuggestions(textNode.id, spellingSuggestions);
   }
 }
