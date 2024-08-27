@@ -111,6 +111,10 @@ class ContentLayersElement extends RenderObjectElement {
   Element? _content;
   List<Element> _overlays = <Element>[];
 
+  // We need to track the children for which framework has called `forgetChild`,
+  // these need to be excluded from the visitChildren method until next update().
+  // ForgetChild is called for elements that will be reparented to avoid unmounting
+  // and remounting them.
   final Set<Element> _forgottenChildren = HashSet<Element>();
 
   @override
@@ -317,10 +321,12 @@ class ContentLayersElement extends RenderObjectElement {
   void _temporarilyForgetLayers() {
     contentLayersLog.finer("ContentLayersElement - temporarily forgetting layers");
     for (final underlay in _underlays) {
+      // Calling super.forgetChild directly to avoid adding it to _forgottenChildren.
       super.forgetChild(underlay);
     }
 
     for (final overlay in _overlays) {
+      // Calling super.forgetChild directly to avoid adding it to _forgottenChildren.
       super.forgetChild(overlay);
     }
   }
