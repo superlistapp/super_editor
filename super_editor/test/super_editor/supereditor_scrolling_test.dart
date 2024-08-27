@@ -292,6 +292,56 @@ void main() {
       );
     });
 
+    testWidgetsOnAndroid("auto-scrolls to caret position when dragging the spacebar (on Android)", (tester) async {
+      // Pump an editor with a size that will cause it to be scrollable.
+      const windowSize = Size(800, 400);
+      tester.view.physicalSize = windowSize;
+      addTearDown(() => tester.platformDispatcher.clearAllTestValues());
+
+      await tester //
+          .createDocument() //
+          .withLongTextContent() //
+          .pump();
+
+      // Place the caret at the beginning of the document.
+      await tester.placeCaretInParagraph('1', 0);
+
+      final paragraphImeText = '. ${SuperEditorInspector.findTextInComponent('1').text}';
+
+      // Simulate the user dragging the spacebar to move the caret to
+      // "In aliquet convallis efficitur|.". This position was chosen arbitrarily, we
+      // just need a position that is outside of the viewport.
+      const destinationOffset = 226;
+      int currentOffset = 0;
+      while (currentOffset < destinationOffset) {
+        await tester.ime.sendDeltas(
+          [
+            TextEditingDeltaNonTextUpdate(
+              oldText: paragraphImeText,
+              selection: TextSelection.collapsed(offset: currentOffset),
+              composing: TextRange.empty,
+            ),
+          ],
+          getter: imeClientGetter,
+        );
+
+        await tester.pump();
+        currentOffset += 1;
+      }
+
+      // Ensure that the selection is visible.
+      expect(
+        SuperEditorInspector.isPositionVisibleGlobally(
+          const DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: destinationOffset),
+          ),
+          windowSize,
+        ),
+        isTrue,
+      );
+    });
+
     testWidgetsOnAllPlatforms("doesn't jump the content when typing at the first line", (tester) async {
       final scrollController = ScrollController();
 

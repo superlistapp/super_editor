@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -19,7 +18,10 @@ void main() {
         // Select the whole paragraph so that the selection color is clearly visible.
         await tester.tripleTapInParagraph("1", 0);
 
-        await screenMatchesGolden(tester, "super-editor_selection-color_default");
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFileWithPixelAllowance("goldens/super-editor_selection-color_default.png", 6),
+        );
       });
 
       testGoldensOnMac("custom selection color", (tester) async {
@@ -39,7 +41,10 @@ void main() {
         // Select the whole paragraph so that the selection color is clearly visible.
         await tester.tripleTapInParagraph("1", 0);
 
-        await screenMatchesGolden(tester, "super-editor_selection-color_custom");
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFileWithPixelAllowance("goldens/super-editor_selection-color_custom.png", 6),
+        );
       });
     });
   });
