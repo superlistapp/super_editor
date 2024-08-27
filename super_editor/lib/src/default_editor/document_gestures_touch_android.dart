@@ -699,6 +699,19 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         ..hideExpandedHandles()
         ..hideMagnifier()
         ..hideToolbar();
+      return;
+    }
+
+    // Only scroll the editor to reveal the selection extent if the selection is
+    // collapsed. If the selection is expanded, the user is likely dragging
+    // a selection handle, which already causes auto-scrolling to reveal
+    // the selection extent. If the selection is expanded because the user
+    // double-tapped, the first tap will have already scrolled the editor to
+    // reveal the selection.
+    if (widget.selection.value?.isCollapsed == true) {
+      onNextFrame((_) {
+        _ensureSelectionExtentIsVisible();
+      });
     }
   }
 
