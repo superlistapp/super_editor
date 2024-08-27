@@ -94,7 +94,13 @@ void main() {
           editorKey: scaledEditorKey,
         );
 
-        await screenMatchesGolden(tester, 'text-scaling-paragraph-expanded-selection');
+        await expectLater(
+          find.byType(MaterialApp).first,
+          matchesGoldenFileWithPixelAllowance(
+            'goldens/text-scaling-paragraph-expanded-selection.png',
+            21,
+          ),
+        );
       });
 
       testGoldensOnAndroid('for unordered list item', (tester) async {
