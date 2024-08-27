@@ -1681,14 +1681,43 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
           );
         }
 
-        return AndroidDefaultFollowingCollapsedHandle(
-          focalPoint: _controlsController!.collapsedHandleFocalPoint,
-          shouldShow: shouldShow,
-          gestureCallbacks: gestureCallbacks,
-          child: AndroidSelectionHandle(
-            key: DocumentKeys.androidCaretHandle,
-            handleType: HandleType.collapsed,
-            color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+        // Note: If we pass this widget as the `child` property, it causes repeated starts and stops
+        // of the pan gesture. By building it here, pan events work as expected.
+        return Follower.withOffset(
+          link: _controlsController!.collapsedHandleFocalPoint,
+          leaderAnchor: Alignment.bottomCenter,
+          followerAnchor: Alignment.topCenter,
+          // Use the offset to account for the invisible expanded touch region around the handle.
+          offset: -Offset(0, AndroidSelectionHandle.defaultTouchRegionExpansion.top) *
+              MediaQuery.devicePixelRatioOf(context),
+          child: AnimatedOpacity(
+            // When the controller doesn't want the handle to be visible, hide it.
+            opacity: shouldShow ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 150),
+            child: IgnorePointer(
+              // Don't let the handle respond to touch events when the handle shouldn't
+              // be visible. This is needed because we don't remove the handle from the
+              // tree, we just make it invisible. In theory, invisible widgets aren't
+              // supposed to be hit-testable, but in tests I found that without this
+              // explicit IgnorePointer, gestures were still being captured by this handle.
+              ignoring: !shouldShow,
+              child: GestureDetector(
+                onTapDown: (_) {
+                  // Register tap down to win gesture arena ASAP.
+                },
+                onTap: gestureCallbacks.onTap,
+                onPanStart: gestureCallbacks.onPanStart,
+                onPanUpdate: gestureCallbacks.onPanUpdate,
+                onPanEnd: gestureCallbacks.onPanEnd,
+                onPanCancel: gestureCallbacks.onPanCancel,
+                dragStartBehavior: DragStartBehavior.down,
+                child: AndroidSelectionHandle(
+                  key: DocumentKeys.androidCaretHandle,
+                  handleType: HandleType.collapsed,
+                  color: _controlsController!.controlsColor ?? Theme.of(context).primaryColor,
+                ),
+              ),
+            ),
           ),
         );
       },
@@ -1899,66 +1928,6 @@ class SuperEditorAndroidControlsOverlayManagerState extends State<SuperEditorAnd
           ),
         );
       },
-    );
-  }
-}
-
-/// A default implementation of following behavior and entrance/exit animation for an
-/// Android collapsed selection handle.
-///
-/// The [child] follows the [focalPoint], being aligned with the bottom center of the
-/// [focalPoint]. The [child] is fades in and out of based on the [shouldShow].
-///
-/// Provide a [touchRegionExpansion] to increase the touch region around the handle.
-class AndroidDefaultFollowingCollapsedHandle extends StatelessWidget {
-  const AndroidDefaultFollowingCollapsedHandle({
-    super.key,
-    required this.focalPoint,
-    required this.gestureCallbacks,
-    required this.shouldShow,
-    this.touchRegionExpansion = AndroidSelectionHandle.defaultTouchRegionExpansion,
-    required this.child,
-  });
-
-  final LeaderLink focalPoint;
-  final DocumentHandleGestureCallbacks gestureCallbacks;
-  final EdgeInsets touchRegionExpansion;
-  final bool shouldShow;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Follower.withOffset(
-      link: focalPoint,
-      leaderAnchor: Alignment.bottomCenter,
-      followerAnchor: Alignment.topCenter,
-      // Use the offset to account for the invisible expanded touch region around the handle.
-      offset: -Offset(0, touchRegionExpansion.top) * MediaQuery.devicePixelRatioOf(context),
-      child: AnimatedOpacity(
-        // When the controller doesn't want the handle to be visible, hide it.
-        opacity: shouldShow ? 1.0 : 0.0,
-        duration: const Duration(milliseconds: 150),
-        child: IgnorePointer(
-          // Don't let the handle respond to touch events when the handle shouldn't
-          // be visible. This is needed because we don't remove the handle from the
-          // tree, we just make it invisible. In theory, invisible widgets aren't
-          // supposed to be hit-testable, but in tests I found that without this
-          // explicit IgnorePointer, gestures were still being captured by this handle.
-          ignoring: !shouldShow,
-          child: GestureDetector(
-            onTapDown: (_) {
-              // Register tap down to win gesture arena ASAP.
-            },
-            onTap: gestureCallbacks.onTap,
-            onPanStart: gestureCallbacks.onPanStart,
-            onPanUpdate: gestureCallbacks.onPanUpdate,
-            onPanEnd: gestureCallbacks.onPanEnd,
-            onPanCancel: () => gestureCallbacks.onPanCancel,
-            dragStartBehavior: DragStartBehavior.down,
-            child: child,
-          ),
-        ),
-      ),
     );
   }
 }
