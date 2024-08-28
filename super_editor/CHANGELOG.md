@@ -1,3 +1,10 @@
+## [0.3.0-dev.5] - Aug 27, 2024
+ * FEATURE: Add configurable underlines to `TextWithHintComponent`.
+ * ADJUSTMENT: Increase the types of attributions that are automatically extended when typing immediately after those attributions.
+ * ADJUSTMENT: Convert floating cursor geometry to document coordinates.
+ * FIX: Retain desired composing attributions when collapsing an expanded selection.
+ * FIX: (Android) auto-scroll when selection changes.
+
 ## [0.3.0-dev.4] - Aug 17, 2024
  * Package metadata update - no functional changes.
 
