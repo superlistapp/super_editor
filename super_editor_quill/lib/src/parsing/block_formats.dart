@@ -11,8 +11,12 @@ class HeaderDeltaFormat extends FilterByNameBlockDeltaFormat {
 
   @override
   List<EditRequest>? doApplyFormat(Editor editor, Object value) {
+    if (value is! int) {
+      return null;
+    }
+
     final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
-    final level = value as int;
+    final level = value;
 
     return [
       ChangeParagraphBlockTypeRequest(
@@ -91,9 +95,13 @@ class ListDeltaFormat extends FilterByNameBlockDeltaFormat {
 
   @override
   List<EditRequest>? doApplyFormat(Editor editor, Object value) {
+    if (value is! String) {
+      return null;
+    }
+
     final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
 
-    if (_isTask(value as String)) {
+    if (_isTask(value)) {
       return [
         ConvertParagraphToTaskRequest(
           nodeId: composer.selection!.extent.nodeId,
@@ -143,12 +151,16 @@ class AlignDeltaFormat extends FilterByNameBlockDeltaFormat {
 
   @override
   List<EditRequest>? doApplyFormat(Editor editor, Object value) {
+    if (value is! String) {
+      return null;
+    }
+
     final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
 
     return [
       ChangeParagraphAlignmentRequest(
         nodeId: composer.selection!.extent.nodeId,
-        alignment: _getTextAlignment(value as String),
+        alignment: _getTextAlignment(value),
       ),
     ];
   }
