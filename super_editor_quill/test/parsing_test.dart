@@ -565,5 +565,114 @@ void main() {
         expect((document.getNodeAt(2)! as ParagraphNode).text.text, "");
       });
     });
+
+    group("custom parsers >", () {
+      test("works with ambiguous formats", () {
+        // Consider the standard Delta list item format:
+        // {
+        //   "list": "ordered"
+        // }
+        //
+        // We want to ensure that an ambiguous custom format is respected
+        // without issue, e.g.,
+        // {
+        //   "list": {
+        //     "list": "ordered"
+        //   }
+        // }
+        parseQuillDeltaOps([
+          {"insert": "Paragraph one"},
+          {
+            "attributes": {
+              "header": {
+                "header": 1,
+              },
+            },
+            "insert": "\n"
+          },
+          {"insert": "Paragraph two"},
+          {
+            "attributes": {
+              "blockquote": {
+                "blockquote": true,
+              },
+            },
+            "insert": "\n"
+          },
+          {"insert": "Paragraph three"},
+          {
+            "attributes": {
+              "code-block": {
+                "code-block": "dart",
+              },
+            },
+            "insert": "\n"
+          },
+          {"insert": "Paragraph four"},
+          {
+            "attributes": {
+              "list": {
+                "list": "ordered",
+              },
+            },
+            "insert": "\n"
+          },
+          {"insert": "Paragraph five"},
+          {
+            "attributes": {
+              "align": {
+                "align": "left",
+              },
+            },
+            "insert": "\n"
+          },
+          {"insert": "Paragraph six\n"},
+        ]);
+
+        // If we get here without an exception, the test passes. This means that
+        // the standard
+      });
+
+      test("defers to higher priority ambiguous format", () {
+        // Goal of test: when a custom parser has a format that's ambiguous as compared to
+        // a standard format, the custom parser is used instead of the standard parser,
+        // when the custom parser is higher in the parser list.
+        final document = parseQuillDeltaOps([
+          {"insert": "Paragraph one"},
+          {
+            "attributes": {
+              "list": {
+                "list": "ordered",
+              },
+            },
+            "insert": "\n"
+          },
+          {"insert": "Paragraph two\n"},
+        ], blockFormats: [
+          const _CustomListItemBlockFormat(),
+          ...defaultBlockFormats,
+        ]);
+
+        expect(document.first, isA<TaskNode>());
+      });
+    });
   });
+}
+
+class _CustomListItemBlockFormat extends FilterByNameBlockDeltaFormat {
+  const _CustomListItemBlockFormat() : super("list");
+
+  @override
+  List<EditRequest>? doApplyFormat(Editor editor, Object value) {
+    if (value is! Map<String, dynamic>) {
+      return null;
+    }
+
+    final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
+    return [
+      ConvertParagraphToTaskRequest(
+        nodeId: composer.selection!.extent.nodeId,
+      ),
+    ];
+  }
 }
