@@ -224,6 +224,13 @@ extension OperationParser on Operation {
       final blockChanges = blockFormat.applyTo(this, editor);
       if (blockChanges != null) {
         changeRequests.addAll(blockChanges);
+
+        // We found a format that handled this delta. Ignore the remaining
+        // formats.
+        //
+        // If a situation is found where multiple formats need to act on the same
+        // delta, please file an issue with an explanation.
+        break;
       }
     }
 
