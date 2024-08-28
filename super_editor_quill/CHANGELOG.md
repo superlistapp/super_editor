@@ -1,3 +1,6 @@
+## 0.1.0-dev.4
+* Fix: Avoid throwing an exception when using ambiguous custom delta formats.
+
 ## 0.1.0-dev.3
 * Switch `super_editor` dependency from GitHub version to pre-release version `0.3.0-dev.3`.
 
