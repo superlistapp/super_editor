@@ -205,6 +205,7 @@ final defaultExtendableStyles = Set.unmodifiable({
 });
 
 const defaultExtendableTypes = {
+  FontSizeAttribution,
   ColorAttribution,
   BackgroundColorAttribution,
 };

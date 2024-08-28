@@ -73,10 +73,10 @@ void main() {
             // Place the caret at "Color|".
             await tester.placeCaretInParagraph(document.first.id, 5);
 
-            // Type text that should expand the bold attribution.
+            // Type text that should expand the color attribution.
             await tester.typeImeText("s");
 
-            // Ensure the bold attribution was applied to the inserted text.
+            // Ensure the color attribution was applied to the inserted text.
             final text = SuperEditorInspector.findTextInComponent(document.first.id);
             expect(text.text, "Colors text");
             expect(
@@ -171,10 +171,10 @@ void main() {
             await tester.pressBackspace();
             await tester.pressBackspace();
 
-            // Type at a character that should expand the bold attribution.
+            // Type at a character that should expand the color attribution.
             await tester.typeImeText("s");
 
-            // Ensure the bold attribution was applied to the inserted text.
+            // Ensure the color attribution was applied to the inserted text.
             final text = SuperEditorInspector.findTextInComponent(document.first.id);
             expect(text.text, "Colors");
             expect(
