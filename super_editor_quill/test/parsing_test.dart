@@ -655,6 +655,37 @@ void main() {
 
         expect(document.first, isA<TaskNode>());
       });
+
+      test("can parse inline embeds", () {
+        final document = parseQuillDeltaOps([
+          {"insert": "Have you heard about inline embeds, "},
+          {
+            "insert": {
+              "tag": {
+                "type": "user",
+                "userId": "123456",
+                "text": "@John Smith",
+              },
+            },
+          },
+          {"insert": "?\n"},
+        ], inlineEmbedFormats: [
+          const _UserTagEmbedParser(),
+        ]);
+
+        final text = (document.first as ParagraphNode).text;
+        expect(text.text, "Have you heard about inline embeds, @John Smith?");
+        expect(
+          text.spans,
+          AttributedSpans(
+            attributions: [
+              const SpanMarker(
+                  attribution: _UserTagAttribution("123456"), offset: 36, markerType: SpanMarkerType.start),
+              const SpanMarker(attribution: _UserTagAttribution("123456"), offset: 46, markerType: SpanMarkerType.end),
+            ],
+          ),
+        );
+      });
     });
   });
 }
@@ -675,4 +706,80 @@ class _CustomListItemBlockFormat extends FilterByNameBlockDeltaFormat {
       ),
     ];
   }
+}
+
+class _UserTagEmbedParser implements InlineEmbedFormat {
+  const _UserTagEmbedParser();
+
+  @override
+  bool insert(Editor editor, DocumentComposer composer, Map<String, dynamic> embed) {
+    if (embed
+        case {
+          "tag": {
+            "type": String type,
+            "userId": String userId,
+            "text": String text,
+          },
+        }) {
+      if (type != "user") {
+        // This isn't a user tag. Fizzle.
+        return false;
+      }
+
+      final selection = composer.selection;
+      if (selection == null) {
+        // The selection should always be defined during insertions. This
+        // shouldn't happen. Fizzle.
+        return false;
+      }
+      if (!selection.isCollapsed) {
+        // The selection should always be collapsed during insertions. This
+        // shouldn't happen. Fizzle.
+        return false;
+      }
+
+      final extentPosition = selection.extent;
+      if (extentPosition.nodePosition is! TextNodePosition) {
+        // Insertions should always happen in text nodes. This shouldn't happen.
+        // Fizzle.
+        return false;
+      }
+
+      editor.execute([
+        InsertTextRequest(
+          documentPosition: extentPosition,
+          textToInsert: text,
+          attributions: {
+            _UserTagAttribution(userId),
+          },
+        ),
+      ]);
+
+      return true;
+    }
+
+    return false;
+  }
+}
+
+class _UserTagAttribution implements Attribution {
+  const _UserTagAttribution(this.userId);
+
+  @override
+  String get id => userId;
+
+  final String userId;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return other is _UserTagAttribution && userId == other.userId;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _UserTagAttribution && runtimeType == other.runtimeType && userId == other.userId;
+
+  @override
+  int get hashCode => userId.hashCode;
 }

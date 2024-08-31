@@ -183,3 +183,22 @@ class NamedInlineDeltaFormat implements InlineDeltaFormat {
 abstract interface class InlineDeltaFormat {
   Attribution? from(Operation operation);
 }
+
+abstract interface class InlineEmbedFormat {
+  bool insert(Editor editor, DocumentComposer composer, Map<String, dynamic> embed);
+}
+
+class InlineEmbed {
+  const InlineEmbed(this.text, this.data);
+
+  final AttributedText text;
+  final Object? data;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is InlineEmbed && runtimeType == other.runtimeType && text == other.text && data == other.data;
+
+  @override
+  int get hashCode => text.hashCode ^ data.hashCode;
+}

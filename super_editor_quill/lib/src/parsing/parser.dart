@@ -20,8 +20,13 @@ MutableDocument parseQuillDeltaDocument(
   Map<String, dynamic> deltaDocument, {
   List<BlockDeltaFormat> blockFormats = defaultBlockFormats,
   List<InlineDeltaFormat> inlineFormats = defaultInlineFormats,
+  List<InlineEmbedFormat> inlineEmbedFormats = const [],
 }) {
-  return parseQuillDeltaOps(deltaDocument["ops"], inlineFormats: inlineFormats);
+  return parseQuillDeltaOps(
+    deltaDocument["ops"],
+    inlineFormats: inlineFormats,
+    inlineEmbedFormats: inlineEmbedFormats,
+  );
 }
 
 /// Parses a list Quill Delta operations (as JSON) into a [MutableDocument].
@@ -34,6 +39,7 @@ MutableDocument parseQuillDeltaOps(
   List<dynamic> deltaOps, {
   List<BlockDeltaFormat> blockFormats = defaultBlockFormats,
   List<InlineDeltaFormat> inlineFormats = defaultInlineFormats,
+  List<InlineEmbedFormat> inlineEmbedFormats = const [],
 }) {
   // Deserialize the delta operations JSON into a Dart data structure.
   final deltaDocument = Delta.fromJson(deltaOps);
@@ -68,7 +74,12 @@ MutableDocument parseQuillDeltaOps(
   // process the Super Editor document will reflect the desired Quill Delta
   // document state.
   for (final delta in deltaDocument.operations) {
-    delta.applyToDocument(editor, blockFormats: blockFormats, inlineFormats: inlineFormats);
+    delta.applyToDocument(
+      editor,
+      blockFormats: blockFormats,
+      inlineFormats: inlineFormats,
+      inlineEmbedFormats: inlineEmbedFormats,
+    );
   }
 
   return document;
@@ -119,6 +130,7 @@ extension OperationParser on Operation {
     Editor editor, {
     required List<BlockDeltaFormat> blockFormats,
     required List<InlineDeltaFormat> inlineFormats,
+    required List<InlineEmbedFormat> inlineEmbedFormats,
   }) {
     final document = editor.context.find<MutableDocument>(Editor.documentKey);
     final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
@@ -131,7 +143,7 @@ extension OperationParser on Operation {
         }
         if (data is Object) {
           // This is an embed insertion delta.
-          _doInsertMedia(editor, composer);
+          _doInsertMedia(editor, composer, inlineEmbedFormats);
         }
 
         // Deduplicate all back-to-back code blocks.
@@ -302,12 +314,50 @@ extension OperationParser on Operation {
     editor.execute(changeRequests);
   }
 
-  void _doInsertMedia(Editor editor, DocumentComposer composer) {
+  void _doInsertMedia(Editor editor, DocumentComposer composer, List<InlineEmbedFormat> inlineEmbedFormats) {
     final content = data;
     if (content is! Map<String, dynamic>) {
-      // We don't know what this is.
+      // Quill Deltas expect embeds to be a map, but the data isn't a map.
       return;
     }
+
+    // First, try to interpret this operation as an inline embed and insert it.
+    final didInlineInsert = _maybeInsertInlineEmbed(editor, composer, inlineEmbedFormats, content);
+    if (didInlineInsert) {
+      return;
+    }
+
+    // This operation wasn't a known inline embed. Try inserting as a block embed.
+    _maybeInsertBlockEmbed(editor, composer);
+  }
+
+  /// Attempts to interpret this operation as an inline embed and insert it, returning `true`
+  /// if successful, or `false` if this operation isn't a known inline embed.
+  bool _maybeInsertInlineEmbed(
+    Editor editor,
+    DocumentComposer composer,
+    List<InlineEmbedFormat> inlineEmbedFormats,
+    Map<String, dynamic> data,
+  ) {
+    for (final inlineEmbedFormat in inlineEmbedFormats) {
+      final didInsert = inlineEmbedFormat.insert(editor, composer, data);
+      if (didInsert) {
+        // We found a format that handled this inline embed. Ignore the remaining
+        // formats.
+        //
+        // If a situation is found where multiple formats need to act on the same
+        // embed, please file an issue with an explanation.
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// Attempts to interpret this operation as a block embed and insert it, returning `true`
+  /// if successful, or `false` if this operation isn't a known block embed.
+  bool _maybeInsertBlockEmbed(Editor editor, DocumentComposer composer) {
+    final content = data as Map<String, dynamic>;
 
     // Check if the selected node is an empty text node. If it is, we want to replace it
     // with the media that we're inserting.
@@ -362,7 +412,7 @@ extension OperationParser on Operation {
 
     if (newNode == null) {
       // We didn't find any media to insert.
-      return;
+      return false;
     }
 
     // Insert the media in the document.
@@ -395,6 +445,9 @@ extension OperationParser on Operation {
         SelectionReason.contentChange,
       ),
     ]);
+
+    // This operation is a block embed and we were able to insert the appropriate media.
+    return true;
   }
 
   /// Moves [count] units downstream from the current caret position.
