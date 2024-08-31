@@ -1,3 +1,6 @@
+## 0.1.0-dev.5
+* Feature: Customizable inline embed parsers and serializers.
+
 ## 0.1.0-dev.4
 * Fix: Avoid throwing an exception when using ambiguous custom delta formats.
 
