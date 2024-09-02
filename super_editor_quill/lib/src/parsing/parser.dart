@@ -14,16 +14,27 @@ import 'package:super_editor_quill/src/parsing/inline_formats.dart';
 ///       ]
 ///     }
 ///
+/// {@template parse_deltas_custom_editor}
+/// An [Editor] is used to insert content in the final document. For typical Delta
+/// formats, the default configuration for an [Editor] should work fine, and that's
+/// what this method uses. However, some apps need to run custom commands, especially
+/// for custom inline embeds. In that case, you can provide a [customEditor], which
+/// is configured however you'd like. The [customEditor] must contain a [MutableDocument]
+/// and a [MutableComposer]. The document must be empty.
+/// {@endtemplate}
+///
 /// For more information about the Quill Delta format, see the official
 /// documentation: https://quilljs.com/docs/delta/
 MutableDocument parseQuillDeltaDocument(
   Map<String, dynamic> deltaDocument, {
+  Editor? customEditor,
   List<BlockDeltaFormat> blockFormats = defaultBlockFormats,
   List<InlineDeltaFormat> inlineFormats = defaultInlineFormats,
   List<InlineEmbedFormat> inlineEmbedFormats = const [],
 }) {
   return parseQuillDeltaOps(
     deltaDocument["ops"],
+    customEditor: customEditor,
     inlineFormats: inlineFormats,
     inlineEmbedFormats: inlineEmbedFormats,
   );
@@ -35,8 +46,11 @@ MutableDocument parseQuillDeltaDocument(
 /// directly accepts the operations list instead of the whole document map. This
 /// method is provided for convenience because in some situations only the
 /// operations are exchanged, rather than the whole document object.
+///
+/// {@macro parse_deltas_custom_editor}
 MutableDocument parseQuillDeltaOps(
   List<dynamic> deltaOps, {
+  Editor? customEditor,
   List<BlockDeltaFormat> blockFormats = defaultBlockFormats,
   List<InlineDeltaFormat> inlineFormats = defaultInlineFormats,
   List<InlineEmbedFormat> inlineEmbedFormats = const [],
@@ -44,18 +58,41 @@ MutableDocument parseQuillDeltaOps(
   // Deserialize the delta operations JSON into a Dart data structure.
   final deltaDocument = Delta.fromJson(deltaOps);
 
-  // Create a new, empty Super Editor document.
-  final document = MutableDocument.empty();
-  final composer = MutableDocumentComposer();
-  final editor = Editor(
-    editables: {
-      Editor.documentKey: document,
-      Editor.composerKey: composer,
-    },
-    requestHandlers: List.from(defaultRequestHandlers),
-    // No reactions. Follow the delta operations exactly.
-    reactionPipeline: [],
-  );
+  late final MutableDocument document;
+  late final MutableDocumentComposer composer;
+  late final Editor editor;
+  if (customEditor != null) {
+    // Use the provided custom editor.
+    if (customEditor.context.maybeDocument == null) {
+      throw Exception("The provided customEditor must contain a MutableDocument in its editables.");
+    }
+    if (customEditor.context.maybeComposer == null) {
+      throw Exception("The provided customEditor must contain a MutableDocumentComposer in its editables.");
+    }
+
+    editor = customEditor;
+    document = editor.context.document;
+    composer = editor.context.composer;
+
+    if (document.nodeCount > 1 ||
+        document.first is! ParagraphNode ||
+        (document.first as ParagraphNode).text.length > 0) {
+      throw Exception("The customEditor document must be empty (contain a single, empty ParagraphNode).");
+    }
+  } else {
+    // Create a new, empty Super Editor document.
+    document = MutableDocument.empty();
+    composer = MutableDocumentComposer();
+    editor = Editor(
+      editables: {
+        Editor.documentKey: document,
+        Editor.composerKey: composer,
+      },
+      requestHandlers: List.from(defaultRequestHandlers),
+      // No reactions. Follow the delta operations exactly.
+      reactionPipeline: [],
+    );
+  }
 
   // Place the caret in the (only) empty paragraph so we can begin applying
   // deltas to the document.
