@@ -20,7 +20,7 @@ github:
 navigation:
   items:
     - title: Super Editor
-      url: /super-editor-guides
+      url: /super-editor/guides
     - title: Super Reader
       url: /super-reader-guides
     - title: Super Text Field
