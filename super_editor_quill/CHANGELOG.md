@@ -1,3 +1,6 @@
+## 0.1.0-dev.6
+* Adjustment: A custom `Editor` can now be supplied when parsing deltas.
+
 ## 0.1.0-dev.5
 * Feature: Customizable inline embed parsers and serializers.
 
