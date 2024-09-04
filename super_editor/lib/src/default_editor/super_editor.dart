@@ -526,6 +526,7 @@ class SuperEditorState extends State<SuperEditor> {
     _scroller = DocumentScroller()..addScrollChangeListener(_scrollChangeSignal.notifyListeners);
 
     editContext = SuperEditorContext(
+      editorFocusNode: _focusNode,
       editor: widget.editor,
       document: widget.editor.document,
       composer: _composer,
