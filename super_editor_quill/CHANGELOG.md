@@ -1,3 +1,6 @@
+## 0.1.0-dev.7
+* Feature: Customizable block-level embed parsers.
+
 ## 0.1.0-dev.6
 * Adjustment: A custom `Editor` can now be supplied when parsing deltas.
 
