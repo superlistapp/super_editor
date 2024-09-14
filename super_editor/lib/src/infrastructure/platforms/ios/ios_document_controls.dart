@@ -14,6 +14,7 @@ import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/selection_leader_document_layer.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_listenable_builder.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/floating_cursor.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/render_sliver_ext.dart';
@@ -504,6 +505,7 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
     this.handleBallDiameter = defaultIosHandleBallDiameter,
     required this.shouldCaretBlink,
     this.floatingCursorController,
+    this.caretDragOffset,
     this.showDebugPaint = false,
   });
 
@@ -532,6 +534,11 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
   /// caret when the floating cursor is far away from its nearest text.
   final FloatingCursorController? floatingCursorController;
 
+  /// The offset where the caret is being dragged, in content space.
+  ///
+  /// If the caret is not being dragged, this value must be `null`.
+  final ValueListenable<Offset?>? caretDragOffset;
+
   final bool showDebugPaint;
 
   @override
@@ -541,7 +548,7 @@ class IosHandlesDocumentLayer extends DocumentLayoutLayerStatefulWidget {
 
 @visibleForTesting
 class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesDocumentLayer, DocumentSelectionLayout>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -565,8 +572,15 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   void initState() {
     super.initState();
     _caretBlinkController = BlinkController(tickerProvider: this);
+    _caretReleaseAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+
+    _caretReleaseAnimationController.addListener(_onCaretAnimationChange);
 
     widget.selection.addListener(_onSelectionChange);
+    widget.caretDragOffset?.addListener(_onCaretDragOffsetChange);
     widget.shouldCaretBlink.addListener(_onBlinkModeChange);
     widget.floatingCursorController?.isActive.addListener(_onFloatingCursorActivationChange);
 
@@ -591,6 +605,11 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       oldWidget.floatingCursorController?.isActive.removeListener(_onFloatingCursorActivationChange);
       widget.floatingCursorController?.isActive.addListener(_onFloatingCursorActivationChange);
     }
+
+    if (widget.caretDragOffset != oldWidget.caretDragOffset) {
+      oldWidget.caretDragOffset?.removeListener(_onCaretDragOffsetChange);
+      widget.caretDragOffset?.addListener(_onCaretDragOffsetChange);
+    }
   }
 
   @override
@@ -598,7 +617,9 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     widget.selection.removeListener(_onSelectionChange);
     widget.shouldCaretBlink.removeListener(_onBlinkModeChange);
     widget.floatingCursorController?.isActive.removeListener(_onFloatingCursorActivationChange);
+    widget.caretDragOffset?.removeListener(_onCaretDragOffsetChange);
 
+    _caretReleaseAnimationController.dispose();
     _caretBlinkController.dispose();
     super.dispose();
   }
@@ -624,10 +645,38 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
   @visibleForTesting
   bool get isDownstreamHandleDisplayed => layoutData?.downstream != null;
 
+  /// The most recent caret position while the user is dragging it, in content space.
+  ///
+  /// Used to detect when the user releases the caret.
+  Offset? _latestCaretDragOffset;
+
+  /// Controls the animation of the caret moving from the position where
+  /// the user released the finger to the actual selected position.
+  ///
+  /// For example, the user can release the finger between characters or
+  /// far from the text. The caret then animates to the closest legal position.
+  late AnimationController _caretReleaseAnimationController;
+
   void _onSelectionChange() {
     _updateCaretFlash();
     setState(() {
       // Schedule a new layout computation because the caret and/or handles need to move.
+    });
+  }
+
+  void _onCaretDragOffsetChange() {
+    if (_latestCaretDragOffset != widget.caretDragOffset?.value && widget.caretDragOffset?.value == null) {
+      // The user stopped dragging the caret. Animate the caret back to the
+      // selected position.
+      _caretReleaseAnimationController
+        ..reset()
+        ..forward();
+      return;
+    }
+
+    // Schedule a new layout computation because the caret needs to move.
+    setState(() {
+      _latestCaretDragOffset = widget.caretDragOffset?.value;
     });
   }
 
@@ -665,6 +714,13 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     } else {
       _caretBlinkController.startBlinking();
     }
+  }
+
+  void _onCaretAnimationChange() {
+    // Schedule a new layout to position the caret acording to the animation.
+    setState(() {
+      //
+    });
   }
 
   /// Computes a zero width `Rect` that represents the x and y offsets and the height
@@ -723,7 +779,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     }
 
     if (selection.isCollapsed) {
-      Rect caretRect = documentLayout.getEdgeForPosition(selection.extent)!;
+      Rect snapedCaretRect = documentLayout.getEdgeForPosition(selection.extent)!;
 
       // Default caret width used by IOSCollapsedHandle.
       const caretWidth = 2;
@@ -741,20 +797,50 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       // layer's RenderBox is outdated, because it wasn't laid out yet for the current frame.
       // Use the content's RenderBox, which was already laid out for the current frame.
       final contentBox = documentContext.findRenderObject() as RenderSliver?;
-      if (contentBox != null && contentBox.hasSize && caretRect.left + caretWidth >= contentBox.size.width) {
+      if (contentBox != null && contentBox.hasSize && snapedCaretRect.left + caretWidth >= contentBox.size.width) {
         // Ajust the caret position to make it entirely visible because it's currently placed
         // partially or entirely outside of the layers' bounds. This can happen for downstream selections
         // of block components that take all the available width.
-        caretRect = Rect.fromLTWH(
+        snapedCaretRect = Rect.fromLTWH(
           contentBox.size.width - caretWidth,
-          caretRect.top,
-          caretRect.width,
-          caretRect.height,
+          snapedCaretRect.top,
+          snapedCaretRect.width,
+          snapedCaretRect.height,
         );
+      }
+
+      Rect caretRect = snapedCaretRect;
+      Rect? ghostCaretRect;
+
+      final caretDragOffset = widget.caretDragOffset?.value;
+      if (caretDragOffset != null) {
+        // The user is dragging the caret. Snap it to the y-axis but let the user
+        // move it freely on the x-axis.
+        caretRect = Offset(caretDragOffset.dx, snapedCaretRect.top) & snapedCaretRect.size;
+        final distance = caretRect.topLeft - snapedCaretRect.topLeft;
+        // TODO: should we create a policy for this distance instead of using FloatingCursorPolicies?
+        final isNearText = distance.dx.abs() <= FloatingCursorPolicies.maximumDistanceToBeNearText;
+        if (!isNearText) {
+          ghostCaretRect = snapedCaretRect;
+        }
+      }
+
+      if (_caretReleaseAnimationController.isAnimating && _latestCaretDragOffset != null) {
+        // The caret is animating between the release position and the selected position.
+        // Interpolate the current offset.
+        final caretReleaseOffset = Offset(_latestCaretDragOffset!.dx, snapedCaretRect.top);
+        final caretDestinationOffset = snapedCaretRect.topLeft;
+        caretRect = Offset.lerp(
+              caretReleaseOffset,
+              caretDestinationOffset,
+              Curves.easeInOut.transform(_caretReleaseAnimationController.value),
+            )! &
+            snapedCaretRect.size;
       }
 
       return DocumentSelectionLayout(
         caret: caretRect,
+        ghostCaret: ghostCaretRect,
       );
     } else {
       return DocumentSelectionLayout(
@@ -793,6 +879,8 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
       children: [
         if (layoutData.caret != null) //
           _buildCollapsedHandle(caret: layoutData.caret!),
+        if (layoutData.ghostCaret != null) //
+          _buildGhostCaret(caret: layoutData.ghostCaret!),
         if (layoutData.upstream != null && layoutData.downstream != null) ...[
           _buildUpstreamHandle(
             upstream: layoutData.upstream!,
@@ -830,14 +918,42 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
             return const SizedBox();
           }
 
-          return IOSCollapsedHandle(
-            key: DocumentKeys.caret,
-            controller: _caretBlinkController,
-            color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
-            caretHeight: caret.height,
-            caretWidth: widget.caretWidth,
+          final isDraggingCaret = widget.caretDragOffset?.value != null;
+
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              boxShadow: [
+                if (isDraggingCaret)
+                  BoxShadow(
+                    blurRadius: 5,
+                    offset: const Offset(0.0, 6.0),
+                    color: widget.handleColor,
+                  )
+              ],
+            ),
+            child: IOSCollapsedHandle(
+              key: DocumentKeys.caret,
+              controller: _caretBlinkController,
+              color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
+              caretHeight: caret.height,
+              caretWidth: widget.caretWidth,
+            ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildGhostCaret({
+    required Rect caret,
+  }) {
+    return Positioned(
+      left: caret.left,
+      top: caret.top,
+      child: IOSCollapsedHandle(
+        color: Colors.grey,
+        caretHeight: caret.height,
+        caretWidth: widget.caretWidth,
       ),
     );
   }

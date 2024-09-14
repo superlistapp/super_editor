@@ -194,12 +194,14 @@ class _SelectionLeadersDocumentLayerState
 class DocumentSelectionLayout {
   DocumentSelectionLayout({
     this.caret,
+    this.ghostCaret,
     this.upstream,
     this.downstream,
     this.expandedSelectionBounds,
   });
 
   final Rect? caret;
+  final Rect? ghostCaret;
   final Rect? upstream;
   final Rect? downstream;
   final Rect? expandedSelectionBounds;
