@@ -1885,6 +1885,7 @@ class _EditorFloatingCursorState extends State<EditorFloatingCursor> {
       children: [
         widget.child,
         Stack(
+          clipBehavior: Clip.none,
           children: [
             _buildFloatingCursor(),
           ],
