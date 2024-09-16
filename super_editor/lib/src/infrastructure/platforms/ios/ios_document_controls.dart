@@ -790,6 +790,7 @@ class IosControlsDocumentLayerState extends DocumentLayoutLayerState<IosHandlesD
     }
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         if (layoutData.caret != null) //
           _buildCollapsedHandle(caret: layoutData.caret!),
