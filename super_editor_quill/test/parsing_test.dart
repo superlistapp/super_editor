@@ -40,6 +40,33 @@ void main() {
         expect(document.nodeCount, 7);
       });
 
+      test("plain text followed by block format", () {
+        final document = parseQuillDeltaDocument(
+          {
+            "ops": [
+              {"insert": "This is regular text\nThis is a code block"},
+              {
+                "attributes": {"code-block": "plain"},
+                "insert": "\n"
+              },
+            ],
+          },
+        );
+
+        expect(
+          (document.getNodeAt(0)! as ParagraphNode).text.text,
+          "This is regular text",
+        );
+        expect((document.getNodeAt(0)! as ParagraphNode).getMetadataValue("blockType"), paragraphAttribution);
+        expect(
+          (document.getNodeAt(1)! as ParagraphNode).text.text,
+          "This is a code block",
+        );
+        expect((document.getNodeAt(1)! as ParagraphNode).getMetadataValue("blockType"), codeAttribution);
+        expect((document.getNodeAt(2)! as ParagraphNode).text.text, "");
+        expect(document.nodeCount, 3);
+      });
+
       test("multiline code block", () {
         // Notice that Delta encodes each line of a code block as a separate attributed
         // delta. But when a Quill editor renders the code block, it's rendered as one
@@ -686,6 +713,39 @@ void main() {
           ),
         );
       });
+
+      test("plain text followed by custom block format", () {
+        final document = parseQuillDeltaDocument(
+          {
+            "ops": [
+              {"insert": "This is regular text\nThis is a banner"},
+              {
+                "attributes": {
+                  "banner-color": "red",
+                },
+                "insert": "\n"
+              },
+            ],
+          },
+          blockFormats: [
+            const _BannerBlockFormat(),
+            ...defaultBlockFormats,
+          ],
+        );
+
+        expect(
+          (document.getNodeAt(0)! as ParagraphNode).text.text,
+          "This is regular text",
+        );
+        expect((document.getNodeAt(0)! as ParagraphNode).getMetadataValue("blockType"), paragraphAttribution);
+        expect(
+          (document.getNodeAt(1)! as ParagraphNode).text.text,
+          "This is a banner",
+        );
+        expect(
+            (document.getNodeAt(1)! as ParagraphNode).getMetadataValue("blockType"), const _BannerAttribution("red"));
+        expect(document.nodeCount, 3);
+      });
     });
   });
 }
@@ -706,6 +766,50 @@ class _CustomListItemBlockFormat extends FilterByNameBlockDeltaFormat {
       ),
     ];
   }
+}
+
+class _BannerBlockFormat extends FilterByNameBlockDeltaFormat {
+  const _BannerBlockFormat() : super("banner-color");
+
+  @override
+  List<EditRequest>? doApplyFormat(Editor editor, Object value) {
+    if (value is! String) {
+      return null;
+    }
+
+    final composer = editor.context.find<MutableDocumentComposer>(Editor.composerKey);
+    return [
+      ChangeParagraphBlockTypeRequest(
+        nodeId: composer.selection!.extent.nodeId,
+        blockType: _BannerAttribution(value),
+      ),
+    ];
+  }
+}
+
+class _BannerAttribution implements Attribution {
+  const _BannerAttribution(this.color);
+
+  @override
+  String get id => "banner-$color";
+
+  final String color;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    if (other is! _BannerAttribution) {
+      return false;
+    }
+
+    return color == other.color;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is _BannerAttribution && runtimeType == other.runtimeType && color == other.color;
+
+  @override
+  int get hashCode => color.hashCode;
 }
 
 class _UserTagEmbedParser implements InlineEmbedFormat {
