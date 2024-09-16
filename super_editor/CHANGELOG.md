@@ -1,3 +1,7 @@
+## [0.3.0-dev.6] - Sept 15, 2024
+ * FIX: Don't cut off iOS drag handles in `SuperEditor`.
+ * ADJUSTMENT: Increase iOS drag handle interaction area in `SuperTextField`.
+
 ## [0.3.0-dev.5] - Aug 27, 2024
  * FEATURE: Add configurable underlines to `TextWithHintComponent`.
  * ADJUSTMENT: Increase the types of attributions that are automatically extended when typing immediately after those attributions.
