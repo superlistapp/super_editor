@@ -20,18 +20,18 @@ class EquivalentQuillDocumentMatcher extends Matcher {
   }
 
   @override
-  bool matches(covariant Object target, Map<dynamic, dynamic> matchState) {
-    return _calculateMismatchReason(target, matchState) == null;
+  bool matches(covariant Object item, Map<dynamic, dynamic> matchState) {
+    return _calculateMismatchReason(item, matchState) == null;
   }
 
   @override
   Description describeMismatch(
-    covariant Object target,
+    covariant Object item,
     Description mismatchDescription,
     Map matchState,
     bool verbose,
   ) {
-    final mismatchReason = _calculateMismatchReason(target, matchState);
+    final mismatchReason = _calculateMismatchReason(item, matchState);
     if (mismatchReason != null) {
       mismatchDescription.add(mismatchReason);
     }

@@ -279,6 +279,45 @@ void main() {
 
         expect(deltas, quillDocumentEquivalentTo(expectedDeltas));
       });
+
+      test("doesn't merge custom block with previous delta", () {
+        final deltas = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: "1",
+              text: AttributedText(
+                "This is a regular paragraph.",
+              ),
+            ),
+            ParagraphNode(
+              id: "2",
+              text: AttributedText(
+                "This is a banner (a custom block style).",
+              ),
+              metadata: {
+                'blockType': const _BannerAttribution('red'),
+              },
+            ),
+          ],
+        ).toQuillDeltas(
+          serializers: [
+            const _BannerDeltaSerializer(),
+            ...defaultDeltaSerializers,
+          ],
+        );
+
+        final expectedDeltas = Delta.fromJson([
+          {"insert": "This is a regular paragraph.\nThis is a banner (a custom block style)."},
+          {
+            "insert": "\n",
+            "attributes": {
+              "banner-color": "red",
+            },
+          },
+        ]);
+
+        expect(deltas, quillDocumentEquivalentTo(expectedDeltas));
+      });
     });
   });
 }
@@ -339,4 +378,39 @@ class _UserTagAttribution implements Attribution {
 
   @override
   int get hashCode => userId.hashCode;
+}
+
+class _BannerDeltaSerializer extends TextBlockDeltaSerializer {
+  const _BannerDeltaSerializer();
+
+  @override
+  Map<String, dynamic> getBlockFormats(TextNode textBlock) {
+    final bannerAttribution = textBlock.metadata['blockType'];
+    if (bannerAttribution is! _BannerAttribution) {
+      return super.getBlockFormats(textBlock);
+    }
+
+    final formats = super.getBlockFormats(textBlock);
+    formats['banner-color'] = bannerAttribution.color;
+
+    return formats;
+  }
+}
+
+class _BannerAttribution implements Attribution {
+  const _BannerAttribution(this.color);
+
+  @override
+  String get id => "banner-$color";
+
+  final String color;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    if (other is! _BannerAttribution) {
+      return false;
+    }
+
+    return color == other.color;
+  }
 }
