@@ -35,6 +35,7 @@ MutableDocument parseQuillDeltaDocument(
   return parseQuillDeltaOps(
     deltaDocument["ops"],
     customEditor: customEditor,
+    blockFormats: blockFormats,
     inlineFormats: inlineFormats,
     inlineEmbedFormats: inlineEmbedFormats,
   );
