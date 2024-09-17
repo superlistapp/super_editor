@@ -131,7 +131,7 @@ class _SpellingErrorSuggestionOverlayState
       return null;
     }
 
-    final spellingSuggestion = _findSpellingSuggestionAtSelection(documentSelection);
+    final spellingSuggestion = _findSpellingSuggestionAtSelection(widget.suggestions, documentSelection);
     if (spellingSuggestion == null) {
       // No selected mis-spelled word. Fizzle.
       print("There's no selected mis-spelled word. Fizzling.");
@@ -174,82 +174,103 @@ class _SpellingErrorSuggestionOverlayState
     );
   }
 
-  SpellingErrorSuggestion? _findSpellingSuggestionAtSelection(DocumentSelection selection) {
+  SpellingErrorSuggestion? _findSpellingSuggestionAtSelection(
+      SpellingErrorSuggestions allSuggestions, DocumentSelection selection) {
     print("Looking for a spelling error around the selection...");
+    if (selection.base.nodeId != selection.extent.nodeId) {
+      // It doesn't make sense to correct spelling across paragraphs. Fizzle.
+      return null;
+    }
+
     final textNode = widget.editor.context.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text.text;
+
     final selectionBaseOffset = (selection.base.nodePosition as TextNodePosition).offset;
+    final spellingSuggestionsAtBase = allSuggestions.getSuggestionsAtTextOffset(textNode.id, selectionBaseOffset);
+    if (spellingSuggestionsAtBase == null) {
+      return null;
+    }
+
     final selectionExtentOffset = (selection.extent.nodePosition as TextNodePosition).offset;
-
-    final searchStartOffset = selectionExtentOffset;
-    bool searchingForStart = true;
-    int wordStartOffset = searchStartOffset;
-    print("Looking for start of word, beginning at index: $wordStartOffset");
-    while (wordStartOffset > 0 && searchingForStart) {
-      // Move one character upstream.
-      final upstreamCharacterIndex = getCharacterStartBounds(text, wordStartOffset);
-      print(" - upstream index: $upstreamCharacterIndex");
-      if (text[upstreamCharacterIndex] == " ") {
-        // We found a space, which means the current value of `wordStartOffset`
-        // is the start of the word.
-        print("Searching for start of word - found space at index $upstreamCharacterIndex");
-        searchingForStart = false;
-        continue;
-      }
-
-      print(" - final word start offset: $wordStartOffset");
-      wordStartOffset = upstreamCharacterIndex;
-    }
-    if (selectionBaseOffset < wordStartOffset || selectionExtentOffset < wordStartOffset) {
-      // The selection extends beyond the start of the word. Fizzle.
-      print("Selection extends beyond the start of the word. Fizzling.");
+    final spellingSuggestionsAtExtent = allSuggestions.getSuggestionsAtTextOffset(textNode.id, selectionExtentOffset);
+    if (spellingSuggestionsAtExtent == null) {
       return null;
     }
 
-    bool searchingForEnd = searchStartOffset < text.length && text[searchStartOffset] != " ";
-    int wordEndOffset = searchStartOffset;
-    print("Text: '$text', Length: ${text.length}");
-    while (wordEndOffset < text.length && searchingForEnd) {
-      // Move one character downstream.
-      print(" - searching for end of character that starts at $wordEndOffset");
-      final downstreamCharacterIndex = getCharacterEndBounds(text, wordEndOffset);
-      print(" - downstream character index: $downstreamCharacterIndex");
-      if (downstreamCharacterIndex >= text.length) {
-        // We reached the end of the text without finding a space.
-        wordEndOffset = text.length;
-        continue;
-      }
-
-      if (text[downstreamCharacterIndex] == " ") {
-        // We found a space, which means the current value of `wordEndOffset`
-        // is the end of the word.
-        print(" - found a space at index: $downstreamCharacterIndex");
-        searchingForEnd = false;
-
-        // +1 to make end exclusive.
-        wordEndOffset += 1;
-
-        continue;
-      }
-
-      wordEndOffset = downstreamCharacterIndex;
-    }
-    if (selectionBaseOffset > wordEndOffset || selectionExtentOffset > wordEndOffset) {
-      // The selection extends beyond the end of the word. Fizzle.
-      print("Selection extends beyond end of the word. Fizzling.");
+    if (spellingSuggestionsAtBase.range != spellingSuggestionsAtExtent.range) {
+      // We found different spelling errors. This probably means the selection
+      // spans multiple words, including multiple spelling errors. We can't
+      // suggest a single fix. Fizzle.
       return null;
     }
+    final spellingErrorRange = spellingSuggestionsAtExtent.range;
 
-    print("Word start: $wordStartOffset, end: $wordEndOffset");
-    print("Searching for suggestions for word: '${text.substring(wordStartOffset, wordEndOffset)}'");
+    // final searchStartOffset = selectionExtentOffset;
+    // bool searchingForStart = true;
+    // int wordStartOffset = searchStartOffset;
+    // print("Looking for start of word, beginning at index: $wordStartOffset");
+    // while (wordStartOffset > 0 && searchingForStart) {
+    //   // Move one character upstream.
+    //   final upstreamCharacterIndex = getCharacterStartBounds(text, wordStartOffset);
+    //   print(" - upstream index: $upstreamCharacterIndex");
+    //   if (text[upstreamCharacterIndex] == " ") {
+    //     // We found a space, which means the current value of `wordStartOffset`
+    //     // is the start of the word.
+    //     print("Searching for start of word - found space at index $upstreamCharacterIndex");
+    //     searchingForStart = false;
+    //     continue;
+    //   }
+    //
+    //   print(" - final word start offset: $wordStartOffset");
+    //   wordStartOffset = upstreamCharacterIndex;
+    // }
+    // if (selectionBaseOffset < wordStartOffset || selectionExtentOffset < wordStartOffset) {
+    //   // The selection extends beyond the start of the word. Fizzle.
+    //   print("Selection extends beyond the start of the word. Fizzling.");
+    //   return null;
+    // }
+    //
+    // bool searchingForEnd = searchStartOffset < text.length && text[searchStartOffset] != " ";
+    // int wordEndOffset = searchStartOffset;
+    // print("Text: '$text', Length: ${text.length}");
+    // while (wordEndOffset < text.length && searchingForEnd) {
+    //   // Move one character downstream.
+    //   print(" - searching for end of character that starts at $wordEndOffset");
+    //   final downstreamCharacterIndex = getCharacterEndBounds(text, wordEndOffset);
+    //   print(" - downstream character index: $downstreamCharacterIndex");
+    //   if (downstreamCharacterIndex >= text.length) {
+    //     // We reached the end of the text without finding a space.
+    //     wordEndOffset = text.length;
+    //     continue;
+    //   }
+    //
+    //   if (text[downstreamCharacterIndex] == " ") {
+    //     // We found a space, which means the current value of `wordEndOffset`
+    //     // is the end of the word.
+    //     print(" - found a space at index: $downstreamCharacterIndex");
+    //     searchingForEnd = false;
+    //
+    //     // +1 to make end exclusive.
+    //     wordEndOffset += 1;
+    //
+    //     continue;
+    //   }
+    //
+    //   wordEndOffset = downstreamCharacterIndex;
+    // }
+    // if (selectionBaseOffset > wordEndOffset || selectionExtentOffset > wordEndOffset) {
+    //   // The selection extends beyond the end of the word. Fizzle.
+    //   print("Selection extends beyond end of the word. Fizzling.");
+    //   return null;
+    // }
+
+    print("Word start: ${spellingErrorRange.start}, end: ${spellingErrorRange.end}");
+    print("Searching for suggestions for word: '${text.substring(spellingErrorRange.start, spellingErrorRange.end)}'");
 
     // The user's selection sits somewhere within a word. Check if it's mis-spelled.
     final suggestions = widget.suggestions.getSuggestionsForWord(
       selection.extent.nodeId,
-      TextRange(
-        start: wordStartOffset,
-        end: wordEndOffset,
-      ),
+      TextRange(start: spellingErrorRange.start, end: spellingErrorRange.end),
     );
     print("Suggestions for word: ${suggestions?.suggestions}");
 

@@ -34,6 +34,24 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
       document: MutableDocument.empty(),
       composer: MutableDocumentComposer(),
     );
+
+    _insertMisspelledText();
+  }
+
+  void _insertMisspelledText() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _editor.execute([
+        InsertTextRequest(
+          documentPosition: DocumentPosition(
+            nodeId: _editor.context.document.first.id,
+            nodePosition: _editor.context.document.first.beginningPosition,
+          ),
+          textToInsert:
+              'Flutter is a populr framework developd by Google for buildng natively compilid applications for mobil, web, and desktop from a single code base. Its hot reload featur allows developers to see the changes they make in real-time without havng to restart the app, which can greatly sped up the development proccess. With a rich set of widgets and a customizble UI, Flutter makes it easy to creat beautiful and performant apps quickly.',
+          attributions: {},
+        ),
+      ]);
+    });
   }
 
   @override

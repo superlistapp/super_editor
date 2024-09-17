@@ -14,6 +14,29 @@ class SpellingErrorSuggestions with ChangeNotifier implements Editable {
   /// to the suggested replacements for that word.
   final _suggestions = <String, Map<TextRange, SpellingErrorSuggestion>>{};
 
+  /// Returns spelling correction suggestions for the word at the given [offset],
+  /// or `null` if there's no spelling error at the given [offset], or no suggestions
+  /// for the mis-spelled word at the given [offset].
+  SpellingErrorSuggestion? getSuggestionsAtTextOffset(String nodeId, int offset) {
+    final suggestionsForNode = _suggestions[nodeId];
+    if (suggestionsForNode == null) {
+      return null;
+    }
+
+    final matchingRanges = suggestionsForNode.keys.where((range) => range.start <= offset && range.end >= offset);
+    if (matchingRanges.isEmpty) {
+      return null;
+    }
+    if (matchingRanges.length > 1) {
+      // It shouldn't be possible to have multiple spelling errors at the same
+      // text offset. We don't know what to do. Fizzle.
+      return null;
+    }
+
+    final wordRange = matchingRanges.first;
+    return suggestionsForNode[wordRange];
+  }
+
   /// Returns suggestions for the mis-spelled [word], which occupies the given [textRange],
   /// within a node with the given [nodeId].
   ///

@@ -216,7 +216,8 @@ class SpellingAndGrammarReaction implements EditReaction {
           print("Misspelled word: '$word'");
 
           // Ask platform for spelling correction guesses.
-          final guesses = await spellChecker.guesses(range: prevError, text: word);
+          final guesses = await spellChecker.guesses(range: prevError, text: textNode.text.text);
+          print("Guesses for '$word': $guesses");
 
           textErrors.add(
             TextError.spelling(
