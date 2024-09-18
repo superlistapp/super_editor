@@ -749,7 +749,7 @@ void main() {
 
       await tester //
           .createDocument()
-          .withSingleParagraph()
+          .withLongDoc()
           .withScrollController(scrollController)
           .pump();
 
@@ -781,7 +781,7 @@ void main() {
 
       await tester //
           .createDocument()
-          .withSingleParagraph()
+          .withLongDoc()
           .withScrollController(scrollController)
           .pump();
 

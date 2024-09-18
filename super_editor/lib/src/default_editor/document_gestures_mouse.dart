@@ -17,6 +17,7 @@ import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
 
 import '../infrastructure/document_gestures_interaction_overrides.dart';
 
@@ -51,7 +52,8 @@ class DocumentMouseInteractor extends StatefulWidget {
     this.contentTapHandler,
     required this.autoScroller,
     this.showDebugPaint = false,
-    this.child,
+    required this.child,
+    required this.fillViewport,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -69,12 +71,14 @@ class DocumentMouseInteractor extends StatefulWidget {
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
 
+  final bool fillViewport;
+
   /// Paints some extra visual ornamentation to help with
   /// debugging, when `true`.
   final bool showDebugPaint;
 
   /// The document to display within this [DocumentMouseInteractor].
-  final Widget? child;
+  final Widget child;
 
   @override
   State createState() => _DocumentMouseInteractorState();
@@ -510,16 +514,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog
         .info("Pan update on document, global offset: ${details.globalPosition}, device: $_panGestureDevice");
 
-    if (_panGestureDevice == PointerDeviceKind.trackpad) {
-      // The user dragged using two fingers on a trackpad.
-      // Scroll the document and keep the selection unchanged.
-      // We multiply by -1 because the scroll should be in the opposite
-      // direction of the drag, e.g., dragging up on a trackpad scrolls
-      // the document to downstream direction.
-      _scrollVertically(details.delta.dy * -1);
-      return;
-    }
-
     setState(() {
       _dragEndGlobal = details.globalPosition;
 
@@ -533,13 +527,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   void _onPanEnd(DragEndDetails details) {
     editorGesturesLog.info("Pan end on document, device: $_panGestureDevice");
-
-    if (_panGestureDevice == PointerDeviceKind.trackpad) {
-      // The user ended a pan gesture with two fingers on a trackpad.
-      // We already scrolled the document.
-      widget.autoScroller.goBallistic(-details.velocity.pixelsPerSecond.dy);
-      return;
-    }
     _onDragEnd();
   }
 
@@ -556,25 +543,10 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       _expandSelectionDuringDrag = false;
       _wordSelectionUpstream = null;
       _wordSelectionDownstream = null;
+      _selectionType = SelectionType.position;
     });
 
     widget.autoScroller.disableAutoScrolling();
-  }
-
-  /// Scrolls the document vertically by [delta] pixels.
-  void _scrollVertically(double delta) {
-    widget.autoScroller.jumpBy(delta);
-    _updateDragSelection();
-  }
-
-  /// We prevent SingleChildScrollView from processing mouse events because
-  /// it scrolls by drag by default, which we don't want. However, we do
-  /// still want mouse scrolling. This method re-implements a primitive
-  /// form of mouse scrolling.
-  void _scrollOnMouseWheel(PointerSignalEvent event) {
-    if (event is PointerScrollEvent) {
-      _scrollVertically(event.scrollDelta.dy);
-    }
   }
 
   void _updateDragSelection() {
@@ -747,14 +719,19 @@ Updating drag selection:
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerSignal: _scrollOnMouseWheel,
-      onPointerHover: _onMouseMove,
-      child: _buildCursorStyle(
-        child: _buildGestureInput(
-          child: widget.child ?? const SizedBox(),
+    return SliverHybridStack(
+      fillViewport: widget.fillViewport,
+      children: [
+        Listener(
+          onPointerHover: _onMouseMove,
+          child: _buildCursorStyle(
+            child: _buildGestureInput(
+              child: const SizedBox(),
+            ),
+          ),
         ),
-      ),
+        widget.child,
+      ],
     );
   }
 
@@ -794,7 +771,10 @@ Updating drag selection:
           },
         ),
         PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-          () => PanGestureRecognizer(),
+          () => PanGestureRecognizer(supportedDevices: {
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.touch,
+          }),
           (PanGestureRecognizer recognizer) {
             recognizer
               ..onStart = _onPanStart
