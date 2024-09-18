@@ -378,6 +378,9 @@ void main() {
               const DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 34)),
             );
             await tester.pumpAndSettle();
+            // Wait a bit to ensure that the interactor recognizer doesn't consider this a double
+            // tap.
+            await tester.pump(const Duration(milliseconds: 500));
 
             final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 34, 28);
             final handleRectGlobal = SuperEditorInspector.findMobileCaret().globalRect;
@@ -409,6 +412,9 @@ void main() {
               const DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 34)),
             );
             await tester.pumpAndSettle();
+            // Wait a bit to ensure that the interactor recognizer doesn't consider this a double
+            // tap.
+            await tester.pump(const Duration(milliseconds: 500));
 
             final dragDelta = SuperEditorInspector.findDeltaBetweenCharactersInTextNode("1", 34, 39);
             final handleRectGlobal = SuperEditorInspector.findMobileCaret().globalRect;
