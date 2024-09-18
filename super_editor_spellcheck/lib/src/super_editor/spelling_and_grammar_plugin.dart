@@ -118,14 +118,10 @@ class SpellingAndGrammarReaction implements EditReaction {
   @override
   void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     // No-op - spelling and grammar checks style the document, they don't alter the document.
-    print("modifyContent()");
   }
 
   @override
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    print("------ START SYNCHRONOUS REACTION -------");
-    print("react()");
-
     // Clear our request cache for any nodes that were deleted.
     // Also clear suggestions for deleted nodes.
     for (final event in changeList) {
@@ -143,7 +139,6 @@ class SpellingAndGrammarReaction implements EditReaction {
     }
 
     if (!isSpellCheckEnabled && !isGrammarCheckEnabled) {
-      print(" - neither spelling nor grammar check are enabled. Fizzle.");
       return;
     }
 
@@ -165,8 +160,6 @@ class SpellingAndGrammarReaction implements EditReaction {
         continue;
       }
 
-      print("Reacting to text change: ${change.describe()}");
-
       // A TextNode was changed in some way. Queue it for spelling and grammar checks.
       changedTextNodes.add(node.id);
     }
@@ -184,11 +177,9 @@ class SpellingAndGrammarReaction implements EditReaction {
 
       _findSpellingAndGrammarErrors(textNode);
     }
-    print("------ END SYNCHRONOUS REACTION -------");
   }
 
   Future<void> _findSpellingAndGrammarErrors(TextNode textNode) async {
-    print("Checking spelling in node: ${textNode.id}");
     final spellChecker = SuperEditorSpellCheckerPlugin().macSpellChecker;
 
     // TODO: Investigate whether we can parallelize spelling and grammar checks
@@ -213,11 +204,9 @@ class SpellingAndGrammarReaction implements EditReaction {
 
         if (prevError.isValid) {
           final word = textNode.text.text.substring(prevError.start, prevError.end);
-          print("Misspelled word: '$word'");
 
           // Ask platform for spelling correction guesses.
           final guesses = await spellChecker.guesses(range: prevError, text: textNode.text.text);
-          print("Guesses for '$word': $guesses");
 
           textErrors.add(
             TextError.spelling(
@@ -239,7 +228,6 @@ class SpellingAndGrammarReaction implements EditReaction {
         }
       } while (prevError.isValid);
     }
-    print(">>> DONE WITH ASYNC SPELLCHECK - DOING GRAMMAR CHECK");
 
     if (isGrammarCheckEnabled) {
       final locale = PlatformDispatcher.instance.locale;
@@ -258,7 +246,6 @@ class SpellingAndGrammarReaction implements EditReaction {
           for (final grammarError in result.details) {
             final errorRange = grammarError.range;
             final text = textNode.text.text.substring(errorRange.start, errorRange.end);
-            print("Bad grammar: '$text'");
             textErrors.add(
               TextError.grammar(
                 nodeId: textNode.id,
@@ -272,7 +259,6 @@ class SpellingAndGrammarReaction implements EditReaction {
         }
       } while (prevError.isValid);
     }
-    print(">>> DONE WITH ASYNC GRAMMAR CHECK - SENDING ERRORS TO STYLER");
 
     if (requestId != _asyncRequestIds[textNode.id]) {
       // Another request was started for this node while we were running our
@@ -283,7 +269,6 @@ class SpellingAndGrammarReaction implements EditReaction {
     _asyncRequestIds[textNode.id] = 0;
 
     // Display underlines on spelling and grammar errors.
-    print("Node ${textNode.id} has ${textErrors.length} spelling errors");
     _styler
       ..clearErrorsForNode(textNode.id)
       ..addErrors(textNode.id, textErrors);

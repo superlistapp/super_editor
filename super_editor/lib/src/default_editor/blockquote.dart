@@ -70,9 +70,6 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       return null;
     }
 
-    print(
-        "About to create a BlockquoteComponent from a view model - view model has ${componentViewModel.grammarErrors.length} grammar errors");
-
     return BlockquoteComponent(
       textKey: componentContext.componentKey,
       text: componentViewModel.text,

@@ -65,7 +65,6 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
   }
 
   SingleColumnLayoutComponentViewModel _applyErrors(SingleColumnLayoutComponentViewModel viewModel) {
-    print("Applying errors to node: ${viewModel.nodeId}");
     if (!_errorsByNode.containsKey(viewModel.nodeId)) {
       return viewModel;
     }
@@ -75,7 +74,6 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
     }
 
     final spellingErrors = _errorsByNode[viewModel.nodeId]!.where((error) => error.type == TextErrorType.spelling);
-    print("Styling node with ${spellingErrors.length} spelling errors");
     viewModel.spellingErrorUnderlineStyle = _spellingErrorUnderlineStyle;
     viewModel.spellingErrors
       ..clear()
@@ -84,7 +82,6 @@ class SpellingAndGrammarStyler extends SingleColumnLayoutStylePhase {
       ]);
 
     final grammarErrors = _errorsByNode[viewModel.nodeId]!.where((error) => error.type == TextErrorType.grammar);
-    print("Styling component view model (${viewModel.runtimeType}) with ${grammarErrors.length} grammar errors");
     viewModel.grammarErrorUnderlineStyle = _grammarErrorUnderlineStyle;
     viewModel.grammarErrors
       ..clear()

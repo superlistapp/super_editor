@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
@@ -228,7 +227,6 @@ class _SpellingErrorSuggestionOverlayState
     }
 
     final textNode = widget.editor.context.document.getNodeById(selection.extent.nodeId) as TextNode;
-    final text = textNode.text.text;
 
     final selectionBaseOffset = (selection.base.nodePosition as TextNodePosition).offset;
     final spellingSuggestionsAtBase = allSuggestions.getSuggestionsAtTextOffset(textNode.id, selectionBaseOffset);

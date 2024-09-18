@@ -1,5 +1,7 @@
+import 'dart:ui';
+
 import 'package:collection/collection.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// Spelling error correction suggestions for all mis-spelled words within
