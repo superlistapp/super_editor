@@ -60,6 +60,8 @@ class _SpellingErrorSuggestionOverlayState
     extends DocumentLayoutLayerState<SpellingErrorSuggestionOverlay, SpellingErrorSuggestionLayout> {
   final _suggestionToolbarOverlayController = OverlayPortalController();
 
+  DocumentRange? _ignoredSpellingErrorRange;
+
   final _suggestionListenable = ValueNotifier<SpellingErrorSuggestion?>(null);
 
   @override
@@ -102,7 +104,41 @@ class _SpellingErrorSuggestionOverlayState
   void _onSelectionChange() {
     print("Selection changed - setting state to recompute layout data");
     setState(() {
-      // Re-compute layout data.
+      // If the selection was sitting in an ignored spelling error, and
+      // now the selection is somewhere else, reset the ignored error.
+      if (_ignoredSpellingErrorRange != null) {
+        final selection = widget.editor.context.composer.selection;
+        if (selection == null) {
+          // There's no selection. Therefore, the user isn't still selecting
+          // the mis-spelled word. Reset the ignored word.
+          _ignoredSpellingErrorRange = null;
+        } else {
+          // There's a selection. If it's not still in the ignored word, reset
+          // the ignored word.
+          final ignoredWordAsSelection = DocumentSelection(
+            base: _ignoredSpellingErrorRange!.start,
+            extent: _ignoredSpellingErrorRange!.end.copyWith(
+              // Add one to the downstream offset so that when the caret sits immediately
+              // after the mis-spelled word, it's still considered to sit within the word.
+              // We do this because we don't want to reset the ignored word when the caret
+              // sits immediately after it.
+              nodePosition: TextNodePosition(
+                offset: (_ignoredSpellingErrorRange!.end.nodePosition as TextNodePosition).offset + 1,
+              ),
+            ),
+          );
+          final isBaseInWord =
+              widget.editor.document.doesSelectionContainPosition(ignoredWordAsSelection, selection.base);
+          final isExtentInWord =
+              widget.editor.document.doesSelectionContainPosition(ignoredWordAsSelection, selection.extent);
+
+          if (!isBaseInWord || !isExtentInWord) {
+            _ignoredSpellingErrorRange = null;
+          }
+        }
+      }
+
+      // Also, re-compute layout data.
     });
   }
 
@@ -153,6 +189,12 @@ class _SpellingErrorSuggestionOverlayState
       return null;
     }
 
+    final misspelledWordRange = spellingSuggestion.toDocumentRange;
+    if (misspelledWordRange == _ignoredSpellingErrorRange) {
+      // The user already cancelled the suggestions for this word.
+      return null;
+    }
+
     final selectedComponent = documentLayout.getComponentByNodeId(
       widget.editor.context.composer.selectionNotifier.value!.extent.nodeId,
     );
@@ -163,8 +205,6 @@ class _SpellingErrorSuggestionOverlayState
       print("Selected component is null");
       return null;
     }
-
-    final misspelledWordRange = spellingSuggestion.toDocumentRange;
 
     print("Changing suggestion listenable from ${_suggestionListenable.value} to $spellingSuggestion");
     _suggestionListenable.value = spellingSuggestion;
@@ -233,6 +273,18 @@ class _SpellingErrorSuggestionOverlayState
     return suggestions;
   }
 
+  // Called when the user presses the "x" (cancel) button on the spelling
+  // correction suggestion toolbar.
+  //
+  // The expected behavior is that cancelling the toolbar will hide it,
+  // the toolbar will not re-appear as long as the user's selection remains
+  // within the mis-spelled word, but the toolbar will come back if the
+  // selection moves away and then moves back to the mis-spelled word.
+  void _onCancelPressed() {
+    _suggestionToolbarOverlayController.hide();
+    _ignoredSpellingErrorRange = layoutData?.selectedWordRange;
+  }
+
   @override
   Widget doBuild(BuildContext context, SpellingErrorSuggestionLayout? layoutData) {
     print("Building spelling suggestion overlay - layout data: $layoutData");
@@ -260,6 +312,7 @@ class _SpellingErrorSuggestionOverlayState
             editor: widget.editor,
             selectedWordRange: layoutData.selectedWordRange,
             suggestions: layoutData.suggestions,
+            onCancelPressed: _onCancelPressed,
           ),
         );
       },
@@ -304,12 +357,14 @@ class SpellingSuggestionToolbar extends StatefulWidget {
     required this.editor,
     required this.selectedWordRange,
     required this.suggestions,
+    required this.onCancelPressed,
   });
 
   final FocusNode editorFocusNode;
   final Editor editor;
   final DocumentRange? selectedWordRange;
   final List<String> suggestions;
+  final VoidCallback onCancelPressed;
 
   @override
   State<SpellingSuggestionToolbar> createState() => _SpellingSuggestionToolbarState();
@@ -387,7 +442,10 @@ class _SpellingSuggestionToolbarState extends State<SpellingSuggestionToolbar> {
                   const VerticalDivider(width: 1, color: Colors.grey),
                 ],
                 const SizedBox(width: 6),
-                const Icon(Icons.cancel_outlined, size: 12),
+                GestureDetector(
+                  onTap: widget.onCancelPressed,
+                  child: const Icon(Icons.cancel_outlined, size: 12),
+                ),
                 const SizedBox(width: 6),
               ],
             ),
