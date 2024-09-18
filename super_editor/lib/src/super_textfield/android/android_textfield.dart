@@ -655,6 +655,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
               ? _textEditingController.selection.extent
               : null,
           blinkController: _caretBlinkController,
+          text: _textEditingController.text,
         );
       },
     );

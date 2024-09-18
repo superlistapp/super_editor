@@ -1185,6 +1185,7 @@ class DefaultCaretOverlayBuilder implements SuperEditorLayerBuilder {
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
     return CaretDocumentOverlay(
+      document: editContext.document,
       composer: editContext.composer,
       documentLayoutResolver: () => editContext.documentLayout,
       caretStyle: caretStyle,

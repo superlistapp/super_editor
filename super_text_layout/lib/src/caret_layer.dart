@@ -1,3 +1,4 @@
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/widgets.dart';
 
 import 'infrastructure/blink_controller.dart';
@@ -13,6 +14,7 @@ class TextLayoutCaret extends StatefulWidget {
     required this.style,
     required this.position,
     this.caretTracker,
+    this.text,
   }) : super(key: key);
 
   final TextLayout textLayout;
@@ -22,6 +24,11 @@ class TextLayoutCaret extends StatefulWidget {
   final CaretStyle style;
   final TextPosition? position;
   final LayerLink? caretTracker;
+
+  /// Used to get the content of the selection extent to work around a caret height issue.
+  ///
+  /// This can be removed after https://github.com/flutter/flutter/issues/155330 is fixed.
+  final AttributedText? text;
 
   @override
   State<TextLayoutCaret> createState() => TextLayoutCaretState();
@@ -97,10 +104,33 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
       : null;
 
   @visibleForTesting
-  double? get caretHeight => isCaretPresent
-      ? widget.textLayout.getHeightForCaret(widget.position!) ??
-          widget.textLayout.getLineHeightAtPosition(widget.position!)
-      : null;
+  double? get caretHeight {
+    if (!isCaretPresent) {
+      return null;
+    }
+
+    // Temporary solution for an issue where the caret height gets smaller when the text ends with a space
+    // and the selection sits after the last character. This is caused due to a Flutter bug.
+    //
+    // Remove this code once the bug is fixed.
+    //
+    // See https://github.com/superlistapp/super_editor/issues/2323 for more details.
+    if (widget.text != null &&
+        widget.text!.text.isNotEmpty && //
+        widget.position!.offset == widget.text!.length &&
+        widget.text!.text[widget.text!.text.length - 1] == ' ') {
+      // The selection sits at the end the text and the last character is a space. Use the upstream
+      // character caret height instead of the one computed for the selection extent (which is smaller than
+      // it should be, due to the bug). Since the selection sits after the last character, the upstream
+      // character is the space itself.
+      final upstreamPosition = TextPosition(offset: widget.text!.length - 1);
+      return widget.textLayout.getHeightForCaret(upstreamPosition) ??
+          widget.textLayout.getLineHeightAtPosition(upstreamPosition);
+    }
+
+    return widget.textLayout.getHeightForCaret(widget.position!) ??
+        widget.textLayout.getLineHeightAtPosition(widget.position!);
+  }
 
   @visibleForTesting
   Rect? get localCaretGeometry => isCaretPresent ? caretOffset! & Size(widget.style.width, caretHeight!) : null;

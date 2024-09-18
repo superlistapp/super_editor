@@ -538,6 +538,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
           style: widget.caretStyle,
           position: _controller.selection.extent,
           blinkTimingMode: widget.blinkTimingMode,
+          text: _textFieldContext.controller.text,
         );
       },
     );
