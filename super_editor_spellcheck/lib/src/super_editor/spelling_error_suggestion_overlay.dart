@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_spellcheck/src/super_editor/spelling_error_suggestions.dart';
+import 'package:super_editor_spellcheck/super_editor_spellcheck.dart';
 
 class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
   const SpellingErrorSuggestionOverlayBuilder(
@@ -31,7 +32,7 @@ class SpellingErrorSuggestionOverlay extends DocumentLayoutLayerStatefulWidget {
     required this.editor,
     required this.suggestions,
     required this.selectedWordLink,
-    this.showDebugLeaderBounds = true,
+    this.showDebugLeaderBounds = false,
   });
 
   final FocusNode editorFocusNode;
@@ -66,6 +67,7 @@ class _SpellingErrorSuggestionOverlayState
     super.initState();
 
     widget.editor.context.composer.selectionNotifier.addListener(_onSelectionChange);
+    widget.editor.context.spellingErrorSuggestions.addListener(_onSpellingSuggestionsChange);
 
     _suggestionToolbarOverlayController.show();
   }
@@ -78,6 +80,11 @@ class _SpellingErrorSuggestionOverlayState
       oldWidget.editor.context.composer.selectionNotifier.removeListener(_onSelectionChange);
       widget.editor.context.composer.selectionNotifier.addListener(_onSelectionChange);
     }
+
+    if (widget.editor.context.spellingErrorSuggestions != oldWidget.editor.context.spellingErrorSuggestions) {
+      oldWidget.editor.context.spellingErrorSuggestions.removeListener(_onSpellingSuggestionsChange);
+      widget.editor.context.spellingErrorSuggestions.addListener(_onSpellingSuggestionsChange);
+    }
   }
 
   @override
@@ -87,12 +94,20 @@ class _SpellingErrorSuggestionOverlayState
     }
 
     widget.editor.context.composer.selectionNotifier.removeListener(_onSelectionChange);
+    widget.editor.context.spellingErrorSuggestions.removeListener(_onSpellingSuggestionsChange);
 
     super.dispose();
   }
 
   void _onSelectionChange() {
     print("Selection changed - setting state to recompute layout data");
+    setState(() {
+      // Re-compute layout data.
+    });
+  }
+
+  void _onSpellingSuggestionsChange() {
+    print("Spelling suggestions changed - setting state to recompute layout data");
     setState(() {
       // Re-compute layout data.
     });
@@ -204,65 +219,6 @@ class _SpellingErrorSuggestionOverlayState
       return null;
     }
     final spellingErrorRange = spellingSuggestionsAtExtent.range;
-
-    // final searchStartOffset = selectionExtentOffset;
-    // bool searchingForStart = true;
-    // int wordStartOffset = searchStartOffset;
-    // print("Looking for start of word, beginning at index: $wordStartOffset");
-    // while (wordStartOffset > 0 && searchingForStart) {
-    //   // Move one character upstream.
-    //   final upstreamCharacterIndex = getCharacterStartBounds(text, wordStartOffset);
-    //   print(" - upstream index: $upstreamCharacterIndex");
-    //   if (text[upstreamCharacterIndex] == " ") {
-    //     // We found a space, which means the current value of `wordStartOffset`
-    //     // is the start of the word.
-    //     print("Searching for start of word - found space at index $upstreamCharacterIndex");
-    //     searchingForStart = false;
-    //     continue;
-    //   }
-    //
-    //   print(" - final word start offset: $wordStartOffset");
-    //   wordStartOffset = upstreamCharacterIndex;
-    // }
-    // if (selectionBaseOffset < wordStartOffset || selectionExtentOffset < wordStartOffset) {
-    //   // The selection extends beyond the start of the word. Fizzle.
-    //   print("Selection extends beyond the start of the word. Fizzling.");
-    //   return null;
-    // }
-    //
-    // bool searchingForEnd = searchStartOffset < text.length && text[searchStartOffset] != " ";
-    // int wordEndOffset = searchStartOffset;
-    // print("Text: '$text', Length: ${text.length}");
-    // while (wordEndOffset < text.length && searchingForEnd) {
-    //   // Move one character downstream.
-    //   print(" - searching for end of character that starts at $wordEndOffset");
-    //   final downstreamCharacterIndex = getCharacterEndBounds(text, wordEndOffset);
-    //   print(" - downstream character index: $downstreamCharacterIndex");
-    //   if (downstreamCharacterIndex >= text.length) {
-    //     // We reached the end of the text without finding a space.
-    //     wordEndOffset = text.length;
-    //     continue;
-    //   }
-    //
-    //   if (text[downstreamCharacterIndex] == " ") {
-    //     // We found a space, which means the current value of `wordEndOffset`
-    //     // is the end of the word.
-    //     print(" - found a space at index: $downstreamCharacterIndex");
-    //     searchingForEnd = false;
-    //
-    //     // +1 to make end exclusive.
-    //     wordEndOffset += 1;
-    //
-    //     continue;
-    //   }
-    //
-    //   wordEndOffset = downstreamCharacterIndex;
-    // }
-    // if (selectionBaseOffset > wordEndOffset || selectionExtentOffset > wordEndOffset) {
-    //   // The selection extends beyond the end of the word. Fizzle.
-    //   print("Selection extends beyond end of the word. Fizzling.");
-    //   return null;
-    // }
 
     print("Word start: ${spellingErrorRange.start}, end: ${spellingErrorRange.end}");
     print("Searching for suggestions for word: '${text.substring(spellingErrorRange.start, spellingErrorRange.end)}'");
