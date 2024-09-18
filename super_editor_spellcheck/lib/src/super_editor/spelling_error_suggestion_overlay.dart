@@ -102,7 +102,6 @@ class _SpellingErrorSuggestionOverlayState
   }
 
   void _onSelectionChange() {
-    print("Selection changed - setting state to recompute layout data");
     setState(() {
       // If the selection was sitting in an ignored spelling error, and
       // now the selection is somewhere else, reset the ignored error.
@@ -143,7 +142,6 @@ class _SpellingErrorSuggestionOverlayState
   }
 
   void _onSpellingSuggestionsChange() {
-    print("Spelling suggestions changed - setting state to recompute layout data");
     setState(() {
       // Re-compute layout data.
     });
@@ -155,8 +153,6 @@ class _SpellingErrorSuggestionOverlayState
     BuildContext documentContext,
     DocumentLayout documentLayout,
   ) {
-    print("Computing layout data...");
-    print("Changing _suggestionListenable to null");
     _suggestionListenable.value = null;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -168,24 +164,20 @@ class _SpellingErrorSuggestionOverlayState
     final documentSelection = widget.editor.context.composer.selectionNotifier.value;
     if (documentSelection == null) {
       // No selection upon which to base spell check suggestions.
-      print("There's no selection");
       return null;
     }
     if (documentSelection.base.nodeId != documentSelection.extent.nodeId) {
       // Spelling error suggestions don't display when the user selects across nodes.
-      print("Selection crosses node boundary");
       return null;
     }
     if (documentSelection.extent.nodePosition is! TextNodePosition) {
       // The user isn't selecting text. Fizzle.
-      print("Selection isn't a text selection");
       return null;
     }
 
     final spellingSuggestion = _findSpellingSuggestionAtSelection(widget.suggestions, documentSelection);
     if (spellingSuggestion == null) {
       // No selected mis-spelled word. Fizzle.
-      print("There's no selected mis-spelled word. Fizzling.");
       return null;
     }
 
@@ -202,18 +194,15 @@ class _SpellingErrorSuggestionOverlayState
       // Assume that we're in a momentary transitive state where the document layout
       // just gained or lost a component. We expect this method to run again in a moment
       // to correct for this.
-      print("Selected component is null");
       return null;
     }
 
-    print("Changing suggestion listenable from ${_suggestionListenable.value} to $spellingSuggestion");
     _suggestionListenable.value = spellingSuggestion;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _suggestionToolbarOverlayController.show();
     });
 
-    print("Misspelled word range: $misspelledWordRange");
     return SpellingErrorSuggestionLayout(
       selectedWordBounds: documentLayout.getRectForSelection(
         misspelledWordRange.start,
@@ -230,8 +219,9 @@ class _SpellingErrorSuggestionOverlayState
   }
 
   SpellingErrorSuggestion? _findSpellingSuggestionAtSelection(
-      SpellingErrorSuggestions allSuggestions, DocumentSelection selection) {
-    print("Looking for a spelling error around the selection...");
+    SpellingErrorSuggestions allSuggestions,
+    DocumentSelection selection,
+  ) {
     if (selection.base.nodeId != selection.extent.nodeId) {
       // It doesn't make sense to correct spelling across paragraphs. Fizzle.
       return null;
@@ -260,15 +250,11 @@ class _SpellingErrorSuggestionOverlayState
     }
     final spellingErrorRange = spellingSuggestionsAtExtent.range;
 
-    print("Word start: ${spellingErrorRange.start}, end: ${spellingErrorRange.end}");
-    print("Searching for suggestions for word: '${text.substring(spellingErrorRange.start, spellingErrorRange.end)}'");
-
     // The user's selection sits somewhere within a word. Check if it's mis-spelled.
     final suggestions = widget.suggestions.getSuggestionsForWord(
       selection.extent.nodeId,
       TextRange(start: spellingErrorRange.start, end: spellingErrorRange.end),
     );
-    print("Suggestions for word: ${suggestions?.suggestions}");
 
     return suggestions;
   }
@@ -287,7 +273,6 @@ class _SpellingErrorSuggestionOverlayState
 
   @override
   Widget doBuild(BuildContext context, SpellingErrorSuggestionLayout? layoutData) {
-    print("Building spelling suggestion overlay - layout data: $layoutData");
     if (layoutData == null) {
       return const SizedBox();
     }
@@ -295,18 +280,19 @@ class _SpellingErrorSuggestionOverlayState
     return OverlayPortal(
       controller: _suggestionToolbarOverlayController,
       overlayChildBuilder: (overlayContext) {
-        print("Building OverlayPortal entry");
         if (layoutData.suggestions.isEmpty) {
-          print("No spelling suggestions to show");
           return const SizedBox();
         }
 
-        print("Showing spelling suggestions");
         return Follower.withOffset(
           link: widget.selectedWordLink,
           leaderAnchor: Alignment.bottomLeft,
           followerAnchor: Alignment.topLeft,
           offset: const Offset(0, 16),
+          boundary: ScreenFollowerBoundary(
+            screenSize: MediaQuery.sizeOf(context),
+            devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+          ),
           child: SpellingSuggestionToolbar(
             editorFocusNode: widget.editorFocusNode,
             editor: widget.editor,
@@ -372,8 +358,6 @@ class SpellingSuggestionToolbar extends StatefulWidget {
 
 class _SpellingSuggestionToolbarState extends State<SpellingSuggestionToolbar> {
   void _applySpellingFix(String replacement) {
-    print("Applying spelling replacement: '$replacement'");
-
     widget.editor.execute([
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
