@@ -12,6 +12,190 @@ import 'test_documents.dart';
 void main() {
   group("SuperEditor", () {
     group("applies attributions", () {
+      group("when continuing existing attributions >", () {
+        group("by placing caret >", () {
+          // Bold is a stand-in for any value-based attribution extension, e.g.,
+          // italics, underline, strikethrough.
+          testWidgetsOnAllPlatforms("bold", (tester) async {
+            await tester //
+                .createDocument()
+                .fromMarkdown("A **bold** text")
+                .withInputSource(TextInputSource.ime)
+                .pump();
+
+            final doc = SuperEditorInspector.findDocument()!;
+
+            // Place the caret at "bold|".
+            await tester.placeCaretInParagraph(doc.first.id, 6);
+
+            // Type at an offset that should expand the bold attribution.
+            await tester.typeImeText("er");
+
+            // Ensure the bold attribution was applied to the inserted text.
+            expect(doc, equalsMarkdown("A **bolder** text"));
+          });
+
+          // Text color is a stand-in for any type-based attribution, e.g.,
+          // background color.
+          testWidgetsOnAllPlatforms("text color", (tester) async {
+            final testContext = await tester //
+                .createDocument()
+                .withCustomContent(
+                  MutableDocument(
+                    nodes: [
+                      ParagraphNode(
+                        id: '1',
+                        text: AttributedText(
+                          'Color text',
+                          AttributedSpans(
+                            attributions: [
+                              const SpanMarker(
+                                attribution: ColorAttribution(Colors.orange),
+                                offset: 0,
+                                markerType: SpanMarkerType.start,
+                              ),
+                              const SpanMarker(
+                                attribution: ColorAttribution(Colors.orange),
+                                offset: 4,
+                                markerType: SpanMarkerType.end,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                .pump();
+
+            final document = testContext.document;
+
+            // Place the caret at "Color|".
+            await tester.placeCaretInParagraph(document.first.id, 5);
+
+            // Type text that should expand the color attribution.
+            await tester.typeImeText("s");
+
+            // Ensure the color attribution was applied to the inserted text.
+            final text = SuperEditorInspector.findTextInComponent(document.first.id);
+            expect(text.text, "Colors text");
+            expect(
+              text.spans,
+              AttributedSpans(attributions: [
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 5,
+                  markerType: SpanMarkerType.end,
+                ),
+              ]),
+            );
+          });
+        });
+
+        group("by deleting characters and typing again >", () {
+          // Bold is a stand-in for any value-based attribution extension, e.g.,
+          // italics, underline, strikethrough.
+          testWidgetsOnAllPlatforms("bold", (tester) async {
+            await tester //
+                .createDocument()
+                .fromMarkdown("A **bold** text")
+                .withInputSource(TextInputSource.ime)
+                .pump();
+
+            final doc = SuperEditorInspector.findDocument()!;
+
+            // Place the caret at " text|".
+            await tester.placeCaretInParagraph(doc.first.id, 11);
+
+            // Delete all the back to "bold|".
+            await tester.pressBackspace();
+            await tester.pressBackspace();
+            await tester.pressBackspace();
+            await tester.pressBackspace();
+            await tester.pressBackspace();
+
+            // Type text that should expand the bold attribution.
+            await tester.typeImeText("er");
+
+            // Ensure the bold attribution was applied to the inserted text.
+            expect(doc, equalsMarkdown("A **bolder**"));
+          });
+
+          // Text color is a stand-in for any type-based attribution, e.g.,
+          // background color.
+          testWidgetsOnAllPlatforms("text color", (tester) async {
+            final testContext = await tester //
+                .createDocument()
+                .withCustomContent(
+                  MutableDocument(
+                    nodes: [
+                      ParagraphNode(
+                        id: '1',
+                        text: AttributedText(
+                          'Color text',
+                          AttributedSpans(
+                            attributions: [
+                              const SpanMarker(
+                                attribution: ColorAttribution(Colors.orange),
+                                offset: 0,
+                                markerType: SpanMarkerType.start,
+                              ),
+                              const SpanMarker(
+                                attribution: ColorAttribution(Colors.orange),
+                                offset: 4,
+                                markerType: SpanMarkerType.end,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                .pump();
+
+            final document = testContext.document;
+
+            // Place the caret at " text|".
+            await tester.placeCaretInParagraph(document.first.id, 10);
+
+            // Delete all the back to "Color|".
+            await tester.pressBackspace();
+            await tester.pressBackspace();
+            await tester.pressBackspace();
+            await tester.pressBackspace();
+            await tester.pressBackspace();
+
+            // Type at a character that should expand the color attribution.
+            await tester.typeImeText("s");
+
+            // Ensure the color attribution was applied to the inserted text.
+            final text = SuperEditorInspector.findTextInComponent(document.first.id);
+            expect(text.text, "Colors");
+            expect(
+              text.spans,
+              AttributedSpans(attributions: [
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 0,
+                  markerType: SpanMarkerType.start,
+                ),
+                const SpanMarker(
+                  attribution: ColorAttribution(Colors.orange),
+                  offset: 5,
+                  markerType: SpanMarkerType.end,
+                ),
+              ]),
+            );
+          });
+        });
+      });
+
       group("when selecting by tapping", () {
         testWidgetsOnAllPlatforms("and typing at the end of the attributed text", (tester) async {
           await tester //
@@ -177,6 +361,56 @@ void main() {
 
           // Ensure the link attribution was applied to the inserted text.
           expect(doc, equalsMarkdown("[This is a linnk](https://google.com) pointing to google"));
+        });
+      });
+
+      group("when collapsing the selection", () {
+        testWidgetsOnMac("by keyboard and typing at the end of the attributed text", (tester) async {
+          await tester //
+              .createDocument()
+              .fromMarkdown("A bold text")
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Double tap to select the word "bold".
+          await tester.doubleTapInParagraph(doc.first.id, 4);
+
+          // Press command + b to apply bold attribution to the selected text.
+          await tester.pressCmdB();
+
+          // Press right arrow to place the caret at the end of the word "bold".
+          await tester.pressRightArrow();
+
+          // Type "er" so "bold" becomes "bolder".
+          await tester.typeImeText("er");
+
+          // Ensure the bold attribution was applied to the inserted text.
+          expect(doc, equalsMarkdown("A **bolder** text"));
+        });
+
+        testWidgetsOnMac("by tapping and typing at the end of the attributed text", (tester) async {
+          await tester //
+              .createDocument()
+              .fromMarkdown("A bold text")
+              .pump();
+
+          final doc = SuperEditorInspector.findDocument()!;
+
+          // Double tap to select the word "bold".
+          await tester.doubleTapInParagraph(doc.first.id, 4);
+
+          // Press command + b to apply bold attribution to the selected text.
+          await tester.pressCmdB();
+
+          // Place the caret at "bold|".
+          await tester.placeCaretInParagraph(doc.first.id, 6);
+
+          // Type "er" so "bold" becomes "bolder".
+          await tester.typeImeText("er");
+
+          // Ensure the bold attribution was applied to the inserted text.
+          expect(doc, equalsMarkdown("A **bolder** text"));
         });
       });
 

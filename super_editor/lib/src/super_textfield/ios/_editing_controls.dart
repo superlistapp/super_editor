@@ -515,7 +515,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
       offset: followerOffset,
       child: Transform.translate(
         offset: Offset(
-          -12,
+          -24,
           -selectionHighlightBoxVerticalExpansion +
               (isUpstreamHandle
                   // For the upstream handle, the ball is displayed above the text, partially
@@ -533,7 +533,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls>
             onPanEnd: _onPanEnd,
             onPanCancel: _onPanCancel,
             child: Container(
-              width: 24,
+              width: 48,
               color: widget.showDebugPaint ? Colors.green : Colors.transparent,
               child: showHandle
                   ? isUpstreamHandle

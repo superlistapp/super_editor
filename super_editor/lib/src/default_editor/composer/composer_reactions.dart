@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
-import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/text.dart';
@@ -17,7 +17,8 @@ import 'package:super_editor/src/default_editor/text.dart';
 /// be automatically applied to newly typed text. This reaction identifies these
 /// situations and activates the desired styles in the [DocumentComposer].
 ///
-/// Only the given `stylesToExtend` are automatically activated.
+/// Only the given [styleValuesToExtend], [styleTypesToExtend], [styleSelectorsToExtend]
+/// are automatically activated.
 ///
 /// Styles are activated when placing the caret at the beginning of a paragraph,
 /// and the first character has a style:
@@ -39,12 +40,24 @@ import 'package:super_editor/src/default_editor/text.dart';
 /// styles.
 class UpdateComposerTextStylesReaction extends EditReaction {
   UpdateComposerTextStylesReaction({
+    @Deprecated("Use styleValuesToExtend instead") //
     Set<Attribution>? stylesToExtend,
-  }) : _stylesToExtend = stylesToExtend ?? defaultExtendableStyles;
+    Set<Attribution>? styleValuesToExtend,
+    Set<Type> styleTypesToExtend = defaultExtendableTypes,
+    Set<AttributionExtensionSelector> styleSelectorsToExtend = const {},
+  })  : assert(
+          stylesToExtend == null || styleValuesToExtend == null,
+          "stylesToExtend and styleValuesToExtend are the same thing - you should only provide one",
+        ),
+        _styleValuesToExtend = styleValuesToExtend ?? stylesToExtend ?? defaultExtendableStyles,
+        _styleTypesToExtend = styleTypesToExtend,
+        _styleSelectorsToExtend = styleSelectorsToExtend;
 
-  final Set<Attribution> _stylesToExtend;
+  final Set<Attribution> _styleValuesToExtend;
+  final Set<Type> _styleTypesToExtend;
+  final Set<AttributionExtensionSelector> _styleSelectorsToExtend;
 
-  DocumentPosition? _previousSelectionExtent;
+  DocumentSelection? _previousSelection;
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
@@ -67,36 +80,47 @@ class UpdateComposerTextStylesReaction extends EditReaction {
 
     // Update our internal accounting.
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
-    _previousSelectionExtent = composer.selection?.extent;
+    _previousSelection = composer.selection;
   }
 
   void _updateComposerStylesAtCaret(EditContext editContext) {
     final document = editContext.document;
     final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
 
-    if (composer.selection?.extent == _previousSelectionExtent) {
+    if (composer.selection?.extent == _previousSelection?.extent && //
+        // Ignore the attributions at the caret only if the previous selection
+        // was already collapsed. If the selection was expanded and the user
+        // placed the caret at the extent of the selection, we should update
+        // the composer attributions.
+        _previousSelection?.isCollapsed == true) {
       return;
     }
 
+    final previousSelectionExtent = _previousSelection?.extent;
     final selectionExtent = composer.selection?.extent;
     if (selectionExtent != null &&
         selectionExtent.nodePosition is TextNodePosition &&
-        _previousSelectionExtent != null &&
-        _previousSelectionExtent!.nodePosition is TextNodePosition) {
+        previousSelectionExtent != null &&
+        previousSelectionExtent.nodePosition is TextNodePosition) {
       // The current and previous selections are text positions. Check for the situation where the two
       // selections are functionally equivalent, but the affinity changed.
       final selectedNodePosition = selectionExtent.nodePosition as TextNodePosition;
-      final previousSelectedNodePosition = _previousSelectionExtent!.nodePosition as TextNodePosition;
+      final previousSelectedNodePosition = previousSelectionExtent.nodePosition as TextNodePosition;
 
-      if (selectionExtent.nodeId == _previousSelectionExtent!.nodeId &&
-          selectedNodePosition.offset == previousSelectedNodePosition.offset) {
+      // Ignore the attributions at the caret only if the previous selection
+      // was already collapsed. If the selection was expanded and the user
+      // placed the caret at the extent of the selection, we should update
+      // the composer attributions.
+      if (selectionExtent.nodeId == previousSelectionExtent.nodeId &&
+          selectedNodePosition.offset == previousSelectedNodePosition.offset &&
+          _previousSelection?.isCollapsed == true) {
         // The text selection changed, but only the affinity is different. An affinity change doesn't alter
         // the selection from the user's perspective, so don't alter any preferences. Return.
         return;
       }
     }
 
-    _previousSelectionExtent = composer.selection?.extent;
+    _previousSelection = composer.selection;
 
     composer.preferences.clearStyles();
 
@@ -129,7 +153,19 @@ class UpdateComposerTextStylesReaction extends EditReaction {
     Set<Attribution> allAttributions = node.text.getAllAttributionsAt(offsetWithAttributionsToExtend);
 
     // Add desired expandable styles.
-    final newStyles = allAttributions.where((attribution) => _stylesToExtend.contains(attribution)).toSet();
+    final newStyles = {
+      // Extend any attributions whose value matches a desired value.
+      ...allAttributions.where((attribution) => _styleValuesToExtend.contains(attribution)).toSet(),
+      // Extend any attribution whose class type matches a desired attribution type.
+      if (_styleTypesToExtend.isNotEmpty) //
+        ...allAttributions.where((attribution) => _styleTypesToExtend.contains(attribution.runtimeType)).toSet(),
+      // Extend any attribution that's explicitly selected by a given selector.
+      if (_styleSelectorsToExtend.isNotEmpty) //
+        ...allAttributions
+            .where(
+                (attribution) => _styleSelectorsToExtend.firstWhereOrNull((selector) => selector(attribution)) != null)
+            .toSet(),
+    };
 
     // TODO: we shouldn't have such specific behavior in here. Figure out how to generalize this.
     // Add a link attribution only if the selection sits at the middle of the link.
@@ -149,9 +185,27 @@ class UpdateComposerTextStylesReaction extends EditReaction {
   }
 }
 
+/// A function that returns `true` if the given [attribution] should be automatically
+/// extended when the caret is placed after such an attributed character, and the
+/// user continues to type - or `false` to ignore the [attribution] for future typing.
+///
+/// Example: Typically, when a user places the caret immediately following a bold character,
+/// additional user typing also applies the bold attribution.
+///
+/// Example: Typically, when a user places the caret immediately following a link, the link
+/// doesn't extend to include additional characters.
+typedef AttributionExtensionSelector = bool Function(Attribution attribution);
+
 final defaultExtendableStyles = Set.unmodifiable({
   boldAttribution,
   italicsAttribution,
   underlineAttribution,
   strikethroughAttribution,
+  codeAttribution,
 });
+
+const defaultExtendableTypes = {
+  FontSizeAttribution,
+  ColorAttribution,
+  BackgroundColorAttribution,
+};

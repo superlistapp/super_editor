@@ -517,7 +517,6 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   UnderlineStyle grammarErrorUnderlineStyle = const SquiggleUnderlineStyle(color: Colors.blue);
 
   List<Underlines> createUnderlines() {
-    print("Creating underlines for a text component with ${grammarErrors.length} grammar errors");
     return [
       if (composingRegion != null && showComposingRegionUnderline)
         Underlines(
@@ -575,12 +574,7 @@ class TextWithHintComponent extends StatefulWidget {
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.highlightWhenEmpty = false,
-    this.composingRegion,
-    this.showComposingUnderline = false,
-    this.spellingErrorUnderlineStyle,
-    this.spellingErrors = const [],
-    this.grammarErrorUnderlineStyle,
-    this.grammarErrors = const [],
+    this.underlines = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -594,15 +588,7 @@ class TextWithHintComponent extends StatefulWidget {
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool highlightWhenEmpty;
-
-  final TextRange? composingRegion;
-  final bool showComposingUnderline;
-
-  final UnderlineStyle? spellingErrorUnderlineStyle;
-  final List<TextRange> spellingErrors;
-
-  final UnderlineStyle? grammarErrorUnderlineStyle;
-  final List<TextRange> grammarErrors;
+  final List<Underlines> underlines;
 
   final bool showDebugPaint;
 
@@ -652,18 +638,7 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
           textSelection: widget.textSelection,
           selectionColor: widget.selectionColor,
           highlightWhenEmpty: widget.highlightWhenEmpty,
-          underlines: [
-            if (widget.spellingErrors.isNotEmpty)
-              Underlines(
-                style: widget.spellingErrorUnderlineStyle ?? const SquiggleUnderlineStyle(),
-                underlines: widget.spellingErrors,
-              ),
-            if (widget.grammarErrors.isNotEmpty)
-              Underlines(
-                style: widget.grammarErrorUnderlineStyle ?? const SquiggleUnderlineStyle(),
-                underlines: widget.grammarErrors,
-              ),
-          ],
+          underlines: widget.underlines,
           showDebugPaint: widget.showDebugPaint,
         ),
       ],
