@@ -635,6 +635,20 @@ ExecutionInstruction doNothingWithLeftRightArrowKeysAtMiddleOfTextOnWeb({
     return ExecutionInstruction.continueExecution;
   }
 
+  if ((CurrentPlatform.isApple && HardwareKeyboard.instance.isMetaPressed) ||
+      (const [TargetPlatform.windows, TargetPlatform.linux].contains(defaultTargetPlatform) &&
+          HardwareKeyboard.instance.isControlPressed)) {
+    // Pressing the arrow keys generates non-text deltas on web. However, when pressing CMD + RIGHT
+    // to move the selection to the end of the line, the selection change sometimes reports an offset which
+    // isn't at the end of the line. This seems to be an issue where our text layout is different
+    // from the browser's text layout. For example, the browser breaks the line at a different point
+    // than we do, so pressing CMD + RIGHT moves the selection to where the browser thinks the end of
+    // the line is.
+    //
+    // Don't block the event to let it be handled by our selection movement code.
+    return ExecutionInstruction.continueExecution;
+  }
+
   // On web, pressing left or right arrow keys generates non-text deltas.
   // We handle those deltas to change the selection. However, if the caret sits at the beginning
   // or end of a node, pressing these arrow keys doesn't generate any deltas.
