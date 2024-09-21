@@ -1,10 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -13,7 +11,6 @@ import 'package:super_text_layout/super_text_layout.dart';
 class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
   const CaretDocumentOverlay({
     Key? key,
-    required this.document,
     required this.composer,
     required this.documentLayoutResolver,
     this.caretStyle = const CaretStyle(
@@ -25,13 +22,6 @@ class CaretDocumentOverlay extends DocumentLayoutLayerStatefulWidget {
     this.displayCaretWithExpandedSelection = true,
     this.blinkTimingMode = BlinkTimingMode.ticker,
   }) : super(key: key);
-
-  /// The editor's [Document].
-  ///
-  /// Used to get the content of the selection extent to work around a caret height issue.
-  ///
-  /// This can be removed after https://github.com/flutter/flutter/issues/155330 is fixed.
-  final Document document;
 
   /// The editor's [DocumentComposer], which reports the current selection.
   final DocumentComposer composer;
@@ -177,37 +167,6 @@ class CaretDocumentOverlayState extends DocumentLayoutLayerState<CaretDocumentOv
 
     Rect caretRect =
         documentLayout.getEdgeForPosition(documentSelection.extent)!.translate(-widget.caretStyle.width / 2, 0.0);
-
-    // Temporary solution for an issue where the caret height gets smaller when the text ends with a space
-    // and the selection sits after the last character. This is caused due to a Flutter bug.
-    //
-    // Remove this code once the bug is fixed.
-    //
-    // See https://github.com/superlistapp/super_editor/issues/2323 for more details.
-    final extentNode = widget.document.getNodeById(documentSelection.extent.nodeId);
-    if (extentNode is TextNode &&
-        extentNode.text.text.isNotEmpty &&
-        (documentSelection.extent.nodePosition as TextNodePosition).offset == extentNode.text.text.length &&
-        extentNode.text.text[extentNode.text.text.length - 1] == ' ') {
-      // The selection sits at the end of a text node, which the last character is a space. Use the upstream
-      // character caret height instead of the one computed for the selection extent (which is smaller than
-      // it should be, due to the bug). Since the selection sits after the last character, the upstream
-      // character is the space itself.
-      final upstreamEdge = documentLayout.getEdgeForPosition(
-        DocumentPosition(
-          nodeId: extentNode.id,
-          nodePosition: TextNodePosition(offset: extentNode.text.text.length - 1),
-        ),
-      );
-      if (upstreamEdge != null) {
-        caretRect = Rect.fromLTWH(
-          caretRect.left,
-          caretRect.top,
-          caretRect.width,
-          upstreamEdge.height,
-        );
-      }
-    }
 
     final overlayBox = context.findRenderObject() as RenderBox?;
     if (overlayBox != null && overlayBox.hasSize && caretRect.left + widget.caretStyle.width >= overlayBox.size.width) {

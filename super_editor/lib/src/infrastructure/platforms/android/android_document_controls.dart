@@ -9,7 +9,6 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
-import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/documents/document_layers.dart';
@@ -322,37 +321,6 @@ class AndroidControlsDocumentLayerState
 
     if (selection.isCollapsed && !_controlsController!.shouldShowExpandedHandles.value) {
       Rect caretRect = documentLayout.getEdgeForPosition(selection.extent)!;
-
-      // Temporary solution for an issue where the caret height gets smaller when the text ends with a space
-      // and the selection sits after the last character. This is caused due to a Flutter bug.
-      //
-      // Remove this code once the bug is fixed.
-      //
-      // See https://github.com/superlistapp/super_editor/issues/2323 for more details.
-      final extentNode = widget.document.getNodeById(selection.extent.nodeId);
-      if (extentNode is TextNode &&
-          extentNode.text.text.isNotEmpty &&
-          (selection.extent.nodePosition as TextNodePosition).offset == extentNode.text.text.length &&
-          extentNode.text.text[extentNode.text.text.length - 1] == ' ') {
-        // The selection sits at the end of a text node, which the last character is a space. Use the upstream
-        // character caret height instead of the one computed for the selection extent (which is smaller than
-        // it should be, due to the bug). Since the selection sits after the last character, the upstream
-        // character is the space itself.
-        final upstreamEdge = documentLayout.getEdgeForPosition(
-          DocumentPosition(
-            nodeId: extentNode.id,
-            nodePosition: TextNodePosition(offset: extentNode.text.text.length - 1),
-          ),
-        );
-        if (upstreamEdge != null) {
-          caretRect = Rect.fromLTWH(
-            caretRect.left,
-            caretRect.top,
-            caretRect.width,
-            upstreamEdge.height,
-          );
-        }
-      }
 
       // Default caret width used by the Android caret.
       const caretWidth = 2;

@@ -663,7 +663,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
                   ? _textEditingController.selection.extent
                   : null,
               blinkController: _caretBlinkController,
-              text: _textEditingController.text,
             ),
             IOSFloatingCursor(
               controller: _floatingCursorController,
