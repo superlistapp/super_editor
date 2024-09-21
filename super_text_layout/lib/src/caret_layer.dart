@@ -1,4 +1,3 @@
-import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/widgets.dart';
 
 import 'infrastructure/blink_controller.dart';
@@ -98,14 +97,10 @@ class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSta
       : null;
 
   @visibleForTesting
-  double? get caretHeight {
-    if (!isCaretPresent) {
-      return null;
-    }
-
-    return widget.textLayout.getHeightForCaret(widget.position!) ??
-        widget.textLayout.getLineHeightAtPosition(widget.position!);
-  }
+  double? get caretHeight => isCaretPresent
+      ? widget.textLayout.getHeightForCaret(widget.position!) ??
+          widget.textLayout.getLineHeightAtPosition(widget.position!)
+      : null;
 
   @visibleForTesting
   Rect? get localCaretGeometry => isCaretPresent ? caretOffset! & Size(widget.style.width, caretHeight!) : null;
