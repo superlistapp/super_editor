@@ -195,12 +195,15 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     required RenderLayoutAwareParagraph renderParagraph,
   })  : _richText = richText,
         _renderParagraph = renderParagraph {
-    _textLength = _richText.toPlainText().length;
+    _plainText = _richText.toPlainText();
+    _textLength = _plainText.length;
   }
 
   final InlineSpan _richText;
   final RenderLayoutAwareParagraph _renderParagraph;
   late final int _textLength;
+
+  late final String _plainText;
 
   TextScaler get textScaler => _renderParagraph.textScaler;
 
@@ -293,6 +296,22 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
   double? getHeightForCaret(TextPosition position) {
     if (_renderParagraph.needsLayout) {
       return null;
+    }
+
+    // Temporary solution for an issue where the caret height gets smaller when the text ends with a space
+    // and the caret sits after the last character. This is caused due to a Flutter bug.
+    //
+    // Remove this code once the bug is fixed.
+    //
+    // See https://github.com/superlistapp/super_editor/issues/2323 for more details.
+    if (_plainText.isNotEmpty && //
+        position.offset == _textLength &&
+        _plainText[_textLength - 1] == ' ') {
+      // The given position sits at the end of the text and the last character is a space. Use the upstream
+      // character caret height instead of the one computed for given position (which is smaller than
+      // it should be, due to the bug). Since the position sits after the last character, the upstream
+      // character is the space itself.
+      return _renderParagraph.getFullHeightForCaret(TextPosition(offset: _textLength - 1));
     }
 
     return _renderParagraph.getFullHeightForCaret(position);
