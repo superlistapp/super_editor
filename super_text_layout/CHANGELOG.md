@@ -1,3 +1,8 @@
+## [0.1.13] - Sept, 2024
+ * [FIX] - Caret size is as expected when placed at end of paragraph with preceding space. 
+   This bug was caused by Flutter and we introduced a temporary hack to solve it until 
+   Flutter ships its own fix.
+
 ## [0.1.12] - Aug, 2024
  * Package metadata update - no functional changes.
 
