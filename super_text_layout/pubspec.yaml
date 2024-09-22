@@ -1,7 +1,25 @@
 name: super_text_layout
 description: Configurable, composable, extensible text display for Flutter.
-version: 0.1.9
+version: 0.1.13
 homepage: https://github.com/superlistapp/super_editor
+funding:
+  - https://flutterbountyhunters.com
+  - https://github.com/sponsors/matthew-carroll
+topics:
+  - rich-text
+  - text-layout
+  - text-decorations
+  - super-editor
+  - widget
+screenshots:
+  - description: "Custom text highlights."
+    path: doc/pub/screenshots/text-highlights.png
+  - description: "Paint selections and carets."
+    path: doc/pub/screenshots/selection-and-caret.png
+  - description: "Show widgets near the caret."
+    path: doc/pub/screenshots/follow-the-caret.png
+  - description: "Show multiple user selections at the same time."
+    path: doc/pub/screenshots/multiple-user-selections.png
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -11,7 +29,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  attributed_text: ^0.3.0
+  attributed_text: ^0.3.1
   collection: ^1.18.0
   logging: ^1.0.1
 
