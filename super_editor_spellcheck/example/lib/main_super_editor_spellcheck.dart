@@ -6,11 +6,52 @@ void main() {
   runApp(_SuperEditorSpellcheckPluginApp());
 }
 
-class _SuperEditorSpellcheckPluginApp extends StatelessWidget {
+class _SuperEditorSpellcheckPluginApp extends StatefulWidget {
+  @override
+  State<_SuperEditorSpellcheckPluginApp> createState() => _SuperEditorSpellcheckPluginAppState();
+}
+
+class _SuperEditorSpellcheckPluginAppState extends State<_SuperEditorSpellcheckPluginApp> {
+  var _brightness = Brightness.light;
+
+  void _toggleBrightness() {
+    setState(() {
+      _brightness = _brightness == Brightness.light ? Brightness.dark : Brightness.light;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: _SuperEditorSpellcheckScreen(),
+    return MaterialApp(
+      theme: ThemeData(
+        brightness: _brightness,
+      ),
+      home: Stack(
+        children: [
+          const _SuperEditorSpellcheckScreen(),
+          Positioned(
+            top: 0,
+            bottom: 0,
+            right: 0,
+            child: _buildToolbar(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolbar() {
+    return SizedBox(
+      width: 48,
+      child: Column(
+        children: [
+          const Spacer(),
+          IconButton(
+            onPressed: _toggleBrightness,
+            icon: Icon(_brightness == Brightness.light ? Icons.dark_mode : Icons.light_mode),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -62,6 +103,11 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
         customStylePhases: [
           _spellingAndGrammarPlugin.styler,
         ],
+        stylesheet: defaultStylesheet.copyWith(
+          addRulesAfter: [
+            if (Theme.of(context).brightness == Brightness.dark) ..._darkModeStyles,
+          ],
+        ),
         plugins: {
           _spellingAndGrammarPlugin,
         },
@@ -69,3 +115,37 @@ class _SuperEditorSpellcheckScreenState extends State<_SuperEditorSpellcheckScre
     );
   }
 }
+
+// Makes text light, for use during dark mode styling.
+final _darkModeStyles = [
+  StyleRule(
+    BlockSelector.all,
+    (doc, docNode) {
+      return {
+        Styles.textStyle: const TextStyle(
+          color: Color(0xFFCCCCCC),
+        ),
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header1"),
+    (doc, docNode) {
+      return {
+        Styles.textStyle: const TextStyle(
+          color: Color(0xFF888888),
+        ),
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header2"),
+    (doc, docNode) {
+      return {
+        Styles.textStyle: const TextStyle(
+          color: Color(0xFF888888),
+        ),
+      };
+    },
+  ),
+];

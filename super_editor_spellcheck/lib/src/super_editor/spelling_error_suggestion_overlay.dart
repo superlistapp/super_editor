@@ -7,11 +7,16 @@ import 'package:super_editor_spellcheck/super_editor_spellcheck.dart';
 class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
   const SpellingErrorSuggestionOverlayBuilder(
     this.suggestions,
-    this.selectedWordLink,
-  );
+    this.selectedWordLink, {
+    this.toolbarBuilder = desktopSpellingSuggestionToolbarBuilder,
+  });
 
   final SpellingErrorSuggestions suggestions;
   final LeaderLink selectedWordLink;
+
+  /// Builder that creates the spelling suggestion toolbar, which appears near
+  /// the currently selected mis-spelled word.
+  final SpellingErrorSuggestionToolbarBuilder toolbarBuilder;
 
   @override
   ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) {
@@ -20,6 +25,7 @@ class SpellingErrorSuggestionOverlayBuilder implements SuperEditorLayerBuilder {
       editor: editContext.editor,
       suggestions: suggestions,
       selectedWordLink: selectedWordLink,
+      toolbarBuilder: toolbarBuilder,
     );
   }
 }
@@ -31,6 +37,7 @@ class SpellingErrorSuggestionOverlay extends DocumentLayoutLayerStatefulWidget {
     required this.editor,
     required this.suggestions,
     required this.selectedWordLink,
+    this.toolbarBuilder = desktopSpellingSuggestionToolbarBuilder,
     this.showDebugLeaderBounds = false,
   });
 
@@ -46,6 +53,10 @@ class SpellingErrorSuggestionOverlay extends DocumentLayoutLayerStatefulWidget {
   /// misspelled word - if the selection isn't currently within a word, or if the
   /// selected word isn't misspelled, then this link is left unattached.
   final LeaderLink selectedWordLink;
+
+  /// Builder that creates the spelling suggestion toolbar, which appears near
+  /// the currently selected mis-spelled word.
+  final SpellingErrorSuggestionToolbarBuilder toolbarBuilder;
 
   /// Whether to paint colorful bounds around the leader widgets, for debugging purposes.
   final bool showDebugLeaderBounds;
@@ -275,6 +286,9 @@ class _SpellingErrorSuggestionOverlayState
       return const SizedBox();
     }
 
+    // We display the Follower in an OverlayPortal for two reasons:
+    //  1. Ensure the Follower is above all other content
+    //  2. Ensure the Follower has access to the same theme as the editor
     return OverlayPortal(
       controller: _suggestionToolbarOverlayController,
       overlayChildBuilder: (overlayContext) {
@@ -291,7 +305,7 @@ class _SpellingErrorSuggestionOverlayState
             screenSize: MediaQuery.sizeOf(context),
             devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
           ),
-          child: SpellingSuggestionToolbar(
+          child: DesktopSpellingSuggestionToolbar(
             editorFocusNode: widget.editorFocusNode,
             editor: widget.editor,
             selectedWordRange: layoutData.selectedWordRange,
@@ -334,10 +348,46 @@ class SpellingErrorSuggestionLayout {
   final List<String> suggestions;
 }
 
-class SpellingSuggestionToolbar extends StatefulWidget {
-  const SpellingSuggestionToolbar({
+typedef SpellingErrorSuggestionToolbarBuilder = Widget Function(
+  BuildContext context, {
+  required FocusNode editorFocusNode,
+  Object? tapRegionId,
+  required Editor editor,
+  required DocumentRange selectedWordRange,
+  required List<String> suggestions,
+  required VoidCallback onCancelPressed,
+});
+
+Widget desktopSpellingSuggestionToolbarBuilder(
+  BuildContext context, {
+  required FocusNode editorFocusNode,
+  Object? tapRegionId,
+  required Editor editor,
+  required DocumentRange selectedWordRange,
+  required List<String> suggestions,
+  required VoidCallback onCancelPressed,
+}) {
+  return DesktopSpellingSuggestionToolbar(
+    editorFocusNode: editorFocusNode,
+    tapRegionId: tapRegionId,
+    editor: editor,
+    selectedWordRange: selectedWordRange,
+    suggestions: suggestions,
+    onCancelPressed: onCancelPressed,
+  );
+}
+
+/// A spelling suggestion toolbar, designed for desktop experiences,
+/// which displays a list alternative spellings for a given mis-spelled
+/// word.
+///
+/// When the user clicks on a suggested spelling, the mis-spelled word
+/// is replaced by selected word.
+class DesktopSpellingSuggestionToolbar extends StatefulWidget {
+  const DesktopSpellingSuggestionToolbar({
     super.key,
     required this.editorFocusNode,
+    this.tapRegionId,
     required this.editor,
     required this.selectedWordRange,
     required this.suggestions,
@@ -345,95 +395,108 @@ class SpellingSuggestionToolbar extends StatefulWidget {
   });
 
   final FocusNode editorFocusNode;
+  final Object? tapRegionId;
   final Editor editor;
   final DocumentRange? selectedWordRange;
   final List<String> suggestions;
   final VoidCallback onCancelPressed;
 
   @override
-  State<SpellingSuggestionToolbar> createState() => _SpellingSuggestionToolbarState();
+  State<DesktopSpellingSuggestionToolbar> createState() => _DesktopSpellingSuggestionToolbarState();
 }
 
-class _SpellingSuggestionToolbarState extends State<SpellingSuggestionToolbar> {
+class _DesktopSpellingSuggestionToolbarState extends State<DesktopSpellingSuggestionToolbar> {
   void _applySpellingFix(String replacement) {
-    widget.editor.execute([
-      ChangeSelectionRequest(
-        DocumentSelection.collapsed(
-          position: widget.selectedWordRange!.start,
-        ),
-        SelectionChangeType.alteredContent,
-        SelectionReason.contentChange,
-      ),
-      DeleteContentRequest(
-        documentRange: DocumentRange(
-          start: widget.selectedWordRange!.start,
-          end: widget.selectedWordRange!.end.copyWith(
-            nodePosition: TextNodePosition(
-              // +1 to make end of range exclusive.
-              offset: (widget.selectedWordRange!.end.nodePosition as TextNodePosition).offset + 1,
-            ),
-          ),
-        ),
-      ),
-      InsertTextRequest(
-        documentPosition: widget.selectedWordRange!.start,
-        textToInsert: replacement,
-        attributions: {},
-      ),
-    ]);
+    widget.editor.fixMisspelledWord(widget.selectedWordRange!, replacement);
   }
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
     return Focus(
       parentNode: widget.editorFocusNode,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.grey),
-          borderRadius: const BorderRadius.horizontal(
-            left: Radius.circular(10),
-            right: Radius.circular(34),
-          ),
-          boxShadow: [
-            BoxShadow(
-              offset: const Offset(0, 4),
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 6,
+      child: TapRegion(
+        groupId: widget.tapRegionId,
+        child: Container(
+          decoration: BoxDecoration(
+            color: _getBackgroundColor(brightness),
+            border: Border.all(color: _getBorderColor(brightness)),
+            borderRadius: const BorderRadius.horizontal(
+              left: Radius.circular(10),
+              right: Radius.circular(34),
             ),
-          ],
-        ),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: IntrinsicHeight(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final suggestion in widget.suggestions) ...[
-                  GestureDetector(
-                    onTap: () => _applySpellingFix(suggestion),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      child: Text(
-                        suggestion,
-                        style: const TextStyle(fontSize: 12),
+            boxShadow: [
+              BoxShadow(
+                offset: const Offset(0, 4),
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 6,
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: IntrinsicHeight(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final suggestion in widget.suggestions) ...[
+                    GestureDetector(
+                      onTap: () => _applySpellingFix(suggestion),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Text(
+                          suggestion,
+                          style: const TextStyle(fontSize: 12),
+                        ),
                       ),
                     ),
+                    VerticalDivider(width: 1, color: _getBorderColor(brightness)),
+                  ],
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: widget.onCancelPressed,
+                    child: Icon(
+                      Icons.cancel_outlined,
+                      size: 12,
+                      color: _getTextColor(brightness),
+                    ),
                   ),
-                  const VerticalDivider(width: 1, color: Colors.grey),
+                  const SizedBox(width: 6),
                 ],
-                const SizedBox(width: 6),
-                GestureDetector(
-                  onTap: widget.onCancelPressed,
-                  child: const Icon(Icons.cancel_outlined, size: 12),
-                ),
-                const SizedBox(width: 6),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  Color _getBackgroundColor(Brightness brightness) {
+    switch (brightness) {
+      case Brightness.light:
+        return Colors.white;
+      case Brightness.dark:
+        return Colors.grey.shade900;
+    }
+  }
+
+  Color _getBorderColor(Brightness brightness) {
+    switch (brightness) {
+      case Brightness.light:
+        return Colors.black;
+      case Brightness.dark:
+        return Colors.grey.shade700;
+    }
+  }
+
+  Color _getTextColor(Brightness brightness) {
+    switch (brightness) {
+      case Brightness.light:
+        return Colors.black;
+      case Brightness.dark:
+        return Colors.white;
+    }
   }
 }

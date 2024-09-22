@@ -217,7 +217,7 @@ abstract class ListItemComponentViewModel extends SingleColumnLayoutComponentVie
     this.spellingErrors = spellingErrors;
 
     this.grammarErrorUnderlineStyle = grammarErrorUnderlineStyle;
-    this.grammarErrors = spellingErrors;
+    this.grammarErrors = grammarErrors;
   }
 
   int indent;

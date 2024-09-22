@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:follow_the_leader/follow_the_leader.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_spellcheck/src/platform/spell_checker.dart';
@@ -16,12 +18,14 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
     UnderlineStyle spellingErrorUnderlineStyle = defaultSpellingErrorUnderlineStyle,
     bool isGrammarCheckEnabled = true,
     UnderlineStyle grammarErrorUnderlineStyle = defaultGrammarErrorUnderlineStyle,
+    SpellingErrorSuggestionToolbarBuilder toolbarBuilder = desktopSpellingSuggestionToolbarBuilder,
   })  : _isSpellCheckEnabled = isSpellingCheckEnabled,
         _isGrammarCheckEnabled = isGrammarCheckEnabled {
     documentOverlayBuilders = <SuperEditorLayerBuilder>[
       SpellingErrorSuggestionOverlayBuilder(
         _spellingErrorSuggestions,
         _selectedWordLink,
+        toolbarBuilder: toolbarBuilder,
       ),
     ];
   }
@@ -83,10 +87,48 @@ class SpellingAndGrammarPlugin extends SuperEditorPlugin {
   }
 }
 
-extension SpellingAndGrammarExtensions on EditContext {
+extension SpellingAndGrammarEditableExtensions on EditContext {
   SpellingErrorSuggestions get spellingErrorSuggestions => find<SpellingErrorSuggestions>(
         SpellingAndGrammarPlugin.spellingErrorSuggestionsKey,
       );
+}
+
+extension SpellingAndGrammarEditorExtensions on Editor {
+  /// Deletes the text within the given [wordRange] and replaces it with
+  /// the given [correctSpelling].
+  void fixMisspelledWord(DocumentRange wordRange, String correctSpelling) {
+    execute([
+      // Move caret to start of mis-spelled word so that we ensure the
+      // caret location is legitimate after deleting the word. E.g.,
+      // consider what would happen if the mis-spelled word is the last
+      // word in the given paragraph.
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: wordRange.start,
+        ),
+        SelectionChangeType.alteredContent,
+        SelectionReason.contentChange,
+      ),
+      // Delete the mis-spelled word.
+      DeleteContentRequest(
+        documentRange: DocumentRange(
+          start: wordRange.start,
+          end: wordRange.end.copyWith(
+            nodePosition: TextNodePosition(
+              // +1 to make end of range exclusive.
+              offset: (wordRange.end.nodePosition as TextNodePosition).offset + 1,
+            ),
+          ),
+        ),
+      ),
+      // Insert the correctly spelled word.
+      InsertTextRequest(
+        documentPosition: wordRange.start,
+        textToInsert: correctSpelling,
+        attributions: {},
+      ),
+    ]);
+  }
 }
 
 /// An [EditReaction] that runs spelling and grammar checks on all [TextNode]s
@@ -122,6 +164,11 @@ class SpellingAndGrammarReaction implements EditReaction {
 
   @override
   void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    if (defaultTargetPlatform != TargetPlatform.macOS || kIsWeb) {
+      // We currently only support spell check when running on Mac desktop.
+      return;
+    }
+
     // Clear our request cache for any nodes that were deleted.
     // Also clear suggestions for deleted nodes.
     for (final event in changeList) {
