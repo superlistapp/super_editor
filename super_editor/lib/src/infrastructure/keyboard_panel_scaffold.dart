@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/default_editor/document_ime/document_input_ime.dart';
+import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 
 /// A widget that allows displaying an arbitrary widget occuping the space of the software keyboard.
 ///
@@ -65,7 +66,7 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
   ///   is animated from the latest [_maxBottomInsets] to zero.
   ///
   /// - Otherwise, it is equal to [_maxBottomInsets].
-  double _keyboardHeight = 0.0;
+  final ValueNotifier<double> _keyboardHeight = ValueNotifier<double>(0.0);
 
   /// The latest view insets obtained from the enclosing `MediaQuery`.
   ///
@@ -81,6 +82,10 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
 
   /// Shows/hides the [OverlayPortal] containing the keyboard panel and above-keyboard panel.
   final OverlayPortalController _overlayPortalController = OverlayPortalController();
+
+  bool get _wantsToShowAboveKeyboardPanel =>
+      widget.controller.toolbarVisibility == KeyboardToolbarVisibility.visible ||
+      (widget.controller.toolbarVisibility == KeyboardToolbarVisibility.auto && _keyboardHeight.value > 0);
 
   @override
   void initState() {
@@ -103,6 +108,8 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
     _panelExitAnimation.addListener(_updatePanelForExitAnimation);
 
     widget.controller.addListener(_onKeyboardPanelChanged);
+
+    onNextFrame((ts) => _overlayPortalController.show());
   }
 
   @override
@@ -126,21 +133,11 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
     widget.controller.removeListener(_onKeyboardPanelChanged);
     _panelExitAnimation.removeListener(_updatePanelForExitAnimation);
     _panelExitAnimation.dispose();
+    _overlayPortalController.hide();
     super.dispose();
   }
 
   void _onKeyboardPanelChanged() {
-    if (!widget.controller.wantsToShowAboveKeyboardPanel && !widget.controller.wantsToShowKeyboardPanel) {
-      _overlayPortalController.hide();
-      return;
-    }
-
-    if (!_overlayPortalController.isShowing) {
-      // The user wants to show the above-keyboard panel or the keyboard panel, but the overlay
-      // isn't visible. Show it.
-      _overlayPortalController.show();
-    }
-
     if (!widget.controller.wantsToShowKeyboardPanel &&
         !widget.controller.wantsToShowSoftwareKeyboard &&
         _latestViewInsets.bottom == 0.0) {
@@ -167,7 +164,8 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
     if (newBottomInset > _maxBottomInsets) {
       // The keyboard is expanding.
       _maxBottomInsets = newBottomInset;
-      _keyboardHeight = _maxBottomInsets;
+      _keyboardHeight.value = _maxBottomInsets;
+
       return;
     }
 
@@ -175,7 +173,7 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
       // The keyboard is collapsing and we don't want the keyboard panel to be visible.
       // Follow the keyboard back down.
       _maxBottomInsets = newBottomInset;
-      _keyboardHeight = _maxBottomInsets;
+      _keyboardHeight.value = _maxBottomInsets;
       return;
     }
   }
@@ -184,7 +182,7 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
   /// to close the keyboard panel.
   void _updatePanelForExitAnimation() {
     setState(() {
-      _keyboardHeight = _maxBottomInsets * Curves.easeInQuad.transform(_panelExitAnimation.value);
+      _keyboardHeight.value = _maxBottomInsets * Curves.easeInQuad.transform(_panelExitAnimation.value);
       if (_panelExitAnimation.status == AnimationStatus.dismissed) {
         // The panel has been fully collapsed. Reset the max known bottom insets.
         _maxBottomInsets = 0.0;
@@ -198,29 +196,38 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
         // The keyboard panel should be kept visible while the software keyboard is expanding
         // and the keyboard panel was previously visible. Otherwise, there will be an empty
         // region between the top of the software keyboard and the bottom of the above-keyboard panel.
-        (widget.controller.wantsToShowSoftwareKeyboard && _latestViewInsets.bottom < _keyboardHeight);
+        (widget.controller.wantsToShowSoftwareKeyboard && _latestViewInsets.bottom < _keyboardHeight.value);
 
     return OverlayPortal(
       controller: _overlayPortalController,
       overlayChildBuilder: (context) {
-        return Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.controller.wantsToShowAboveKeyboardPanel)
-                widget.aboveKeyboardBuilder(
-                  context,
-                  widget.controller.wantsToShowKeyboardPanel,
-                ),
-              SizedBox(
-                height: _keyboardHeight,
-                child: wantsToShowKeyboardPanel ? widget.keyboardPanelBuilder(context) : null,
+        return ValueListenableBuilder(
+          valueListenable: _keyboardHeight,
+          builder: (context, currentHeight, child) {
+            if (!_wantsToShowAboveKeyboardPanel && !wantsToShowKeyboardPanel) {
+              return const SizedBox.shrink();
+            }
+
+            return Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_wantsToShowAboveKeyboardPanel)
+                    widget.aboveKeyboardBuilder(
+                      context,
+                      widget.controller.wantsToShowKeyboardPanel,
+                    ),
+                  SizedBox(
+                    height: _keyboardHeight.value,
+                    child: wantsToShowKeyboardPanel ? widget.keyboardPanelBuilder(context) : null,
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
       child: widget.contentBuilder(
@@ -245,8 +252,12 @@ class KeyboardPanelController with ChangeNotifier {
   bool get wantsToShowSoftwareKeyboard => _wantsToShowSoftwareKeyboard;
   bool _wantsToShowSoftwareKeyboard = false;
 
-  bool get wantsToShowAboveKeyboardPanel => _wantsToShowAboveKeyboardPanel;
-  bool _wantsToShowAboveKeyboardPanel = false;
+  KeyboardToolbarVisibility get toolbarVisibility => _toolbarVisibility;
+  KeyboardToolbarVisibility _toolbarVisibility = KeyboardToolbarVisibility.auto;
+  set toolbarVisibility(KeyboardToolbarVisibility value) {
+    _toolbarVisibility = value;
+    notifyListeners();
+  }
 
   void showKeyboardPanel() {
     _wantsToShowKeyboardPanel = true;
@@ -279,20 +290,31 @@ class KeyboardPanelController with ChangeNotifier {
   }
 
   void showAboveKeyboardPanel() {
-    _wantsToShowAboveKeyboardPanel = true;
+    _toolbarVisibility = KeyboardToolbarVisibility.visible;
     notifyListeners();
   }
 
   void hideAboveKeyboardPanel() {
-    _wantsToShowAboveKeyboardPanel = false;
+    _toolbarVisibility = KeyboardToolbarVisibility.hidden;
     notifyListeners();
   }
 
   void toggleAboveKeyboardPanel() {
-    if (_wantsToShowAboveKeyboardPanel) {
+    if (_toolbarVisibility == KeyboardToolbarVisibility.visible) {
       hideAboveKeyboardPanel();
     } else {
       showAboveKeyboardPanel();
     }
   }
+}
+
+enum KeyboardToolbarVisibility {
+  /// The toolbar should stay hidden.
+  hidden,
+
+  /// The toolbar should be visible.
+  visible,
+
+  /// The toolbar should be visible only when the software keyboard is open.
+  auto,
 }
