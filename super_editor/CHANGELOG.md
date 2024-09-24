@@ -1,3 +1,6 @@
+## [0.3.0-dev.7] - Sept 24, 2024
+ * ADJUSTMENT: Change `super_text_layout` dependency from v0.1.13 to v0.1.14.
+
 ## [0.3.0-dev.6] - Sept 15, 2024
  * FIX: Don't cut off iOS drag handles in `SuperEditor`.
  * ADJUSTMENT: Increase iOS drag handle interaction area in `SuperTextField`.
