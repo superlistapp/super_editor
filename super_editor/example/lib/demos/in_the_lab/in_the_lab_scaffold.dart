@@ -30,15 +30,7 @@ class InTheLabScaffold extends StatelessWidget {
             body: Stack(
               children: [
                 Positioned.fill(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: content,
-                      ),
-                      if (supplemental != null) //
-                        _buildSupplementalPanel(),
-                    ],
-                  ),
+                  child: _buildContent(),
                 ),
                 if (overlay != null) //
                   Positioned.fill(
@@ -52,12 +44,88 @@ class InTheLabScaffold extends StatelessWidget {
     );
   }
 
-  Widget _buildSupplementalPanel() {
+  Widget _buildContent() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth / constraints.maxHeight >= 1) {
+          return _buildContentForDesktop();
+        } else {
+          return _buildContentForMobile();
+        }
+      },
+    );
+  }
+
+  Widget _buildContentForDesktop() {
+    return Row(
+      children: [
+        Expanded(
+          child: content,
+        ),
+        if (supplemental != null) //
+          _buildSupplementalSidePanel(),
+      ],
+    );
+  }
+
+  Widget _buildSupplementalSidePanel() {
     return Container(
       width: 250,
       height: double.infinity,
       decoration: BoxDecoration(
         border: Border(left: BorderSide(color: Colors.white.withOpacity(0.1))),
+      ),
+      child: Stack(
+        children: [
+          Center(
+            child: Icon(
+              Icons.biotech,
+              color: Colors.white.withOpacity(0.05),
+              size: 84,
+            ),
+          ),
+          Positioned.fill(
+            child: Center(
+              child: SizedBox(
+                width: double.infinity,
+                child: SingleChildScrollView(
+                  child: supplemental!,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContentForMobile() {
+    return SafeArea(
+      left: false,
+      right: false,
+      bottom: false,
+      child: Padding(
+        // Push the content down below the nav drawer menu button.
+        padding: const EdgeInsets.only(top: 24),
+        child: Column(
+          children: [
+            Expanded(
+              child: content,
+            ),
+            if (supplemental != null) //
+              _buildSupplementalBottomPanel(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSupplementalBottomPanel() {
+    return Container(
+      width: double.infinity,
+      height: 200,
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
       ),
       child: Stack(
         children: [

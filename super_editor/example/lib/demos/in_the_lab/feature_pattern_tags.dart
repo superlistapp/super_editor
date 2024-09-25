@@ -99,15 +99,17 @@ class _HashTagsFeatureDemoState extends State<HashTagsFeatureDemo> {
       return const SizedBox();
     }
 
-    return SingleChildScrollView(
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        alignment: WrapAlignment.center,
-        children: [
-          for (final tag in _tags) //
-            Chip(label: Text(tag.tag.raw)),
-        ],
+    return IntrinsicHeight(
+      child: SingleChildScrollView(
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          alignment: WrapAlignment.center,
+          children: [
+            for (final tag in _tags) //
+              Chip(label: Text(tag.tag.raw)),
+          ],
+        ),
       ),
     );
   }

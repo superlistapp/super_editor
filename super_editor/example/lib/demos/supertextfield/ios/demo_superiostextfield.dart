@@ -76,7 +76,7 @@ class _SuperIOSTextFieldDemoState extends State<SuperIOSTextFieldDemo> {
         maxLines: config.maxLines,
         lineHeight: lineHeight,
         textInputAction: TextInputAction.done,
-        popoverToolbarBuilder: iOSSystemPopoverToolbarWithBackupFlutterVersion,
+        popoverToolbarBuilder: iOSSystemPopoverTextFieldToolbarWithFallback,
         showDebugPaint: config.showDebugPaint,
       ),
     );

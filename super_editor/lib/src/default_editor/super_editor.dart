@@ -36,6 +36,7 @@ import 'package:super_editor/src/undo_redo.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/document_gestures_interaction_overrides.dart';
+import '../infrastructure/platforms/ios/ios_system_context_menu.dart';
 import '../infrastructure/platforms/mobile_documents.dart';
 import 'attributions.dart';
 import 'blockquote.dart';
@@ -826,6 +827,42 @@ class SuperEditorState extends State<SuperEditor> {
         );
     }
   }
+}
+
+/// A [DocumentFloatingToolbarBuilder] that displays the iOS system popover toolbar, if the version of
+/// iOS is recent enough, otherwise builds [defaultIosEditorToolbarBuilder].
+Widget iOSSystemPopoverEditorToolbarWithFallbackBuilder(
+  BuildContext context,
+  Key floatingToolbarKey,
+  LeaderLink focalPoint,
+  CommonEditorOperations editorOps,
+  SuperEditorIosControlsController editorControlsController,
+) {
+  if (CurrentPlatform.isWeb) {
+    // On web, we defer to the browser's internal overlay controls for mobile.
+    return const SizedBox();
+  }
+
+  if (focalPoint.offset == null || focalPoint.leaderSize == null) {
+    // It's unclear when/why this might happen. But there seem to be some
+    // cases, such as placing a caret in an empty document and tapping again
+    // to show the toolbar.
+    return const SizedBox();
+  }
+
+  if (IOSSystemContextMenu.isSupported(context)) {
+    return IOSSystemContextMenu(
+      anchor: focalPoint.offset! & focalPoint.leaderSize!,
+    );
+  }
+
+  return defaultIosEditorToolbarBuilder(
+    context,
+    floatingToolbarKey,
+    focalPoint,
+    editorOps,
+    editorControlsController,
+  );
 }
 
 /// Builds a standard editor-style iOS floating toolbar.

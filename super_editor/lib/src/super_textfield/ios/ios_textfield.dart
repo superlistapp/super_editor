@@ -21,13 +21,13 @@ import 'package:super_text_layout/super_text_layout.dart';
 import '../metrics.dart';
 import '../styles.dart';
 import 'floating_cursor.dart';
-import 'ios_system_context_menu.dart';
+import '../../infrastructure/platforms/ios/ios_system_context_menu.dart';
 import 'user_interaction.dart';
 
 export '../infrastructure/magnifier.dart';
 export 'caret.dart';
 export 'editing_controls.dart';
-export 'ios_system_context_menu.dart';
+export '../../infrastructure/platforms/ios/ios_system_context_menu.dart';
 export 'user_interaction.dart';
 
 final _log = iosTextFieldLog;
@@ -702,7 +702,7 @@ typedef IOSPopoverToolbarBuilder = Widget Function(BuildContext, IOSEditingOverl
 
 /// An [IOSPopoverToolbarBuilder] that displays the iOS system popover toolbar, if the version of
 /// iOS is recent enough, otherwise builds [defaultIosPopoverToolbarBuilder].
-Widget iOSSystemPopoverToolbarWithBackupFlutterVersion(BuildContext context, IOSEditingOverlayController controller) {
+Widget iOSSystemPopoverTextFieldToolbarWithFallback(BuildContext context, IOSEditingOverlayController controller) {
   if (IOSSystemContextMenu.isSupported(context)) {
     return IOSSystemContextMenu(
       anchor: controller.toolbarFocalPoint.offset! & controller.toolbarFocalPoint.leaderSize!,
