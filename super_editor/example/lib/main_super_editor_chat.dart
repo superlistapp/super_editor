@@ -26,6 +26,7 @@ void main() {
   runApp(
     MaterialApp(
       home: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: MobileChatDemo(),
       ),
       debugShowCheckedModeBanner: false,

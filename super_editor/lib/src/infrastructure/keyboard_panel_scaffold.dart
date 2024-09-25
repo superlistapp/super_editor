@@ -22,6 +22,9 @@ import 'package:super_editor/src/infrastructure/flutter/flutter_scheduler.dart';
 /// It is required that the enclosing [Scaffold] has `resizeToAvoidBottomInset` set to `false`,
 /// otherwise we can't get the software keyboard height to size the keyboard panel. If
 /// `resizeToAvoidBottomInset` is set to `true`, the panel won't be displayed.
+///
+/// Place a [KeyboardScaffoldSafeArea] higher in the widget tree to adjust the padding so
+/// that the content is above the keyboard panel and software keyboard.
 class KeyboardPanelScaffold extends StatefulWidget {
   const KeyboardPanelScaffold({
     super.key,
@@ -86,6 +89,8 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
   bool get _wantsToShowAboveKeyboardPanel =>
       widget.controller.toolbarVisibility == KeyboardToolbarVisibility.visible ||
       (widget.controller.toolbarVisibility == KeyboardToolbarVisibility.auto && _keyboardHeight.value > 0);
+
+  final _toolbarKey = GlobalKey();
 
   @override
   void initState() {
@@ -165,7 +170,7 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
       // The keyboard is expanding.
       _maxBottomInsets = newBottomInset;
       _keyboardHeight.value = _maxBottomInsets;
-
+      onNextFrame((ts) => _updateSafeArea());
       return;
     }
 
@@ -174,6 +179,7 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
       // Follow the keyboard back down.
       _maxBottomInsets = newBottomInset;
       _keyboardHeight.value = _maxBottomInsets;
+      onNextFrame((ts) => _updateSafeArea());
       return;
     }
   }
@@ -183,11 +189,23 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
   void _updatePanelForExitAnimation() {
     setState(() {
       _keyboardHeight.value = _maxBottomInsets * Curves.easeInQuad.transform(_panelExitAnimation.value);
+      onNextFrame((ts) => _updateSafeArea());
       if (_panelExitAnimation.status == AnimationStatus.dismissed) {
         // The panel has been fully collapsed. Reset the max known bottom insets.
         _maxBottomInsets = 0.0;
       }
     });
+  }
+
+  /// Update the bottom insets of the enclosing [KeyboardScaffoldSafeArea].
+  void _updateSafeArea() {
+    final keyboardSafeAreaData = KeyboardScaffoldSafeArea.maybeOf(context);
+    if (keyboardSafeAreaData == null) {
+      return;
+    }
+
+    final toolbarSize = (_toolbarKey.currentContext?.findRenderObject() as RenderBox?)?.size;
+    keyboardSafeAreaData.bottomInsets = _keyboardHeight.value + (toolbarSize?.height ?? 0);
   }
 
   @override
@@ -216,9 +234,12 @@ class _KeyboardPanelScaffoldState extends State<KeyboardPanelScaffold> with Sing
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (_wantsToShowAboveKeyboardPanel)
-                    widget.aboveKeyboardBuilder(
-                      context,
-                      widget.controller.wantsToShowKeyboardPanel,
+                    KeyedSubtree(
+                      key: _toolbarKey,
+                      child: widget.aboveKeyboardBuilder(
+                        context,
+                        widget.controller.wantsToShowKeyboardPanel,
+                      ),
                     ),
                   SizedBox(
                     height: _keyboardHeight.value,
@@ -317,4 +338,75 @@ enum KeyboardToolbarVisibility {
 
   /// The toolbar should be visible only when the software keyboard is open.
   auto,
+}
+
+/// Applies padding to the bottom of the child to avoid the software keyboard and
+/// the above-keyboard toolbar.
+///
+/// The padding is set by a [KeyboardPanelScaffold] widget in the subtree.
+class KeyboardScaffoldSafeArea extends StatefulWidget {
+  static KeyboardSafeAreaData of(BuildContext context) {
+    return maybeOf(context)!;
+  }
+
+  static KeyboardSafeAreaData? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<_InheritedKeyboardScaffoldSafeArea>()?.keyboardSafeAreaData;
+  }
+
+  const KeyboardScaffoldSafeArea({
+    super.key,
+    required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  State<KeyboardScaffoldSafeArea> createState() => _KeyboardScaffoldSafeAreaState();
+}
+
+class _KeyboardScaffoldSafeAreaState extends State<KeyboardScaffoldSafeArea> {
+  final KeyboardSafeAreaData _keyboardSafeAreaData = KeyboardSafeAreaData();
+
+  @override
+  Widget build(BuildContext context) {
+    return _InheritedKeyboardScaffoldSafeArea(
+      keyboardSafeAreaData: _keyboardSafeAreaData,
+      child: ListenableBuilder(
+        listenable: _keyboardSafeAreaData,
+        builder: (context, _) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: _keyboardSafeAreaData.bottomInsets),
+            child: widget.child,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _InheritedKeyboardScaffoldSafeArea extends InheritedWidget {
+  const _InheritedKeyboardScaffoldSafeArea({
+    required this.keyboardSafeAreaData,
+    required super.child,
+  });
+
+  final KeyboardSafeAreaData keyboardSafeAreaData;
+
+  @override
+  bool updateShouldNotify(covariant _InheritedKeyboardScaffoldSafeArea oldWidget) {
+    return oldWidget.keyboardSafeAreaData != keyboardSafeAreaData;
+  }
+}
+
+class KeyboardSafeAreaData with ChangeNotifier {
+  KeyboardSafeAreaData({
+    double bottomInsets = 0.0,
+  }) : _bottomInsets = bottomInsets;
+
+  double get bottomInsets => _bottomInsets;
+  double _bottomInsets;
+  set bottomInsets(double value) {
+    _bottomInsets = value;
+    notifyListeners();
+  }
 }
