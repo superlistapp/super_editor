@@ -305,10 +305,11 @@ class _SpellingErrorSuggestionOverlayState
             screenSize: MediaQuery.sizeOf(context),
             devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
           ),
-          child: DesktopSpellingSuggestionToolbar(
+          child: widget.toolbarBuilder(
+            context,
             editorFocusNode: widget.editorFocusNode,
             editor: widget.editor,
-            selectedWordRange: layoutData.selectedWordRange,
+            selectedWordRange: layoutData.selectedWordRange!,
             suggestions: layoutData.suggestions,
             onCancelPressed: _onCancelPressed,
           ),
@@ -351,7 +352,6 @@ class SpellingErrorSuggestionLayout {
 typedef SpellingErrorSuggestionToolbarBuilder = Widget Function(
   BuildContext context, {
   required FocusNode editorFocusNode,
-  Object? tapRegionId,
   required Editor editor,
   required DocumentRange selectedWordRange,
   required List<String> suggestions,
@@ -361,7 +361,6 @@ typedef SpellingErrorSuggestionToolbarBuilder = Widget Function(
 Widget desktopSpellingSuggestionToolbarBuilder(
   BuildContext context, {
   required FocusNode editorFocusNode,
-  Object? tapRegionId,
   required Editor editor,
   required DocumentRange selectedWordRange,
   required List<String> suggestions,
@@ -369,7 +368,6 @@ Widget desktopSpellingSuggestionToolbarBuilder(
 }) {
   return DesktopSpellingSuggestionToolbar(
     editorFocusNode: editorFocusNode,
-    tapRegionId: tapRegionId,
     editor: editor,
     selectedWordRange: selectedWordRange,
     suggestions: suggestions,
